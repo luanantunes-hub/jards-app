@@ -1,10 +1,11 @@
--- T5 (parte 2) da Ticketeria: o custo do meio de pagamento pago pelo comprador, a taxa fixa e o parcelamento escolhido pelo produtor
+-- T5 (parte 2) da Ticketeria: o custo do meio de pagamento e a taxa de 2,5%, os dois pagos pelo PRODUTOR (descontados do preço; o comprador
+-- paga só o preço), e o parcelamento escolhido pelo produtor
 -- (ticketeria_custos_meio, ticketeria_lojas.parcelas_max, ticketeria_pedidos.meio/parcelas/custo_meio_centavos; fn_ticketeria_custo_do_meio,
 -- fn_ticketeria_definir_meio e fn_ticketeria_confirmar_pagamento trocada).
 --
--- A conta do custo (os mesmos casos de tests/ticketeria-custo-meio.test.ts), as regras iniciais provisórias (taxa fixa de R$ 1,35 e os
+-- A conta do custo (os mesmos casos de tests/ticketeria-custo-meio.test.ts), as regras iniciais provisórias (taxa de 2,5% do preço e os
 -- custos do Asaas), a escolha do meio (Pix, cartão à vista e parcelado; o limite de parcelas da loja; pedido pago, vencido ou de valor zero),
--- a confirmação com o custo, o razão que não muda, e quem vê e quem grava. Ids 0d750000-0000-4000-8000-0000000000XX, ou tm.id('XX').
+-- a confirmação pelo preço, o razão líquido do custo, e quem vê e quem grava. Ids 0d750000-0000-4000-8000-0000000000XX, ou tm.id('XX').
 --   A (a0): loja 61 (parcelas_max 1), local 51, setor 41 (100 lugares), evento 71 publicado, sessão 81, ingresso 31 Inteira (lote 21: R$ 60,
 --   10 lugares) e 33 Gratuito (lote 23). a1 admin, a3 leitor.   B (b0): b1 admin.
 -- Rodar: com as migrations da T2, da T3, ticketeria_pagamentos e ticketeria_custo_do_meio na frente, se ainda não estiverem aplicadas.
@@ -13,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(31);
+select plan(32);
 
 create schema tm;
 grant usage on schema tm to authenticated, anon;
@@ -113,7 +114,7 @@ $$;
 
 -- ─── As regras iniciais e a estrutura ───────────────────────────────────────
 
-select is((select row(percentual_bps, fixo_centavos, quem_paga)::text from public.fn_ticketeria_taxa_vigente(tm.id('61'))), '(0,135,comprador)', 'a taxa do Jards sem regra da loja: valor fixo de R$ 1,35, paga pelo comprador');
+select is((select row(percentual_bps, fixo_centavos, quem_paga)::text from public.fn_ticketeria_taxa_vigente(tm.id('61'))), '(250,0,produtor)', 'a taxa do Jards sem regra da loja: 2,5% do preço (250 pontos-base), sem fixo, paga pelo produtor');
 select is((select string_agg(meio || ' ' || parcelas_de || '-' || parcelas_ate || ' ' || percentual_bps || 'bps+' || fixo_centavos, ', ' order by meio, parcelas_de) from public.ticketeria_custos_meio where provedor = 'asaas'),
           'cartao 1-1 299bps+49, cartao 2-6 349bps+49, pix 1-1 0bps+199', 'os custos do Asaas gravados (provisórios): Pix R$ 1,99; cartão 2,99% + R$ 0,49; 2 a 6 parcelas 3,49% + R$ 0,49');
 select ok(not has_function_privilege('authenticated', 'public.fn_ticketeria_custo_do_meio(text, text, integer, bigint)', 'execute') and not has_function_privilege('authenticated', 'public.fn_ticketeria_definir_meio(uuid, text, integer)', 'execute')
@@ -125,32 +126,32 @@ select is((select string_agg(cmd, ',' order by cmd) from pg_policies where schem
 -- ─── A conta do custo ───────────────────────────────────────────────────────
 
 select is(array[
-            public.fn_ticketeria_custo_do_meio('asaas', 'pix', null, 6135), public.fn_ticketeria_custo_do_meio('asaas', 'cartao', 1, 6135),
-            public.fn_ticketeria_custo_do_meio('asaas', 'cartao', 3, 6135), public.fn_ticketeria_custo_do_meio('asaas', 'cartao', 6, 6135),
-            public.fn_ticketeria_custo_do_meio('asaas', 'cartao', null, 6135), public.fn_ticketeria_custo_do_meio('asaas', 'pix', null, 100),
+            public.fn_ticketeria_custo_do_meio('asaas', 'pix', null, 6150), public.fn_ticketeria_custo_do_meio('asaas', 'cartao', 1, 6150),
+            public.fn_ticketeria_custo_do_meio('asaas', 'cartao', 3, 6150), public.fn_ticketeria_custo_do_meio('asaas', 'cartao', 6, 6150),
+            public.fn_ticketeria_custo_do_meio('asaas', 'cartao', null, 6150), public.fn_ticketeria_custo_do_meio('asaas', 'pix', null, 100),
             public.fn_ticketeria_custo_do_meio('asaas', 'cartao', 1, 100), public.fn_ticketeria_custo_do_meio('asaas', 'cartao', 1, 0)],
-          array[199, 240, 273, 273, 240, 199, 54, 51]::bigint[],
-          'o custo "por dentro": Pix R$ 1,99; cartão à vista de R$ 61,35 líquidos custa R$ 2,40 (total R$ 63,75); 2 a 6 parcelas R$ 2,73; valores pequenos (R$ 1 custa R$ 0,54; zero custa só o fixo, R$ 0,51 com o arredondamento para cima)');
+          array[199, 233, 264, 264, 233, 199, 52, 49]::bigint[],
+          'o custo sobre o total pago, para cima: Pix R$ 1,99; cartão à vista de R$ 61,50 custa R$ 2,33; 2 a 6 parcelas R$ 2,64; valores pequenos (R$ 1 custa R$ 0,52; zero custa só o fixo, R$ 0,49)');
 select is(array[
-            tm.tenta($t$select public.fn_ticketeria_custo_do_meio('asaas', 'cartao', 7, 6135)$t$), tm.tenta($t$select public.fn_ticketeria_custo_do_meio('asaas', 'boleto', null, 6135)$t$),
-            tm.tenta($t$select public.fn_ticketeria_custo_do_meio('outro', 'pix', null, 6135)$t$)],
+            tm.tenta($t$select public.fn_ticketeria_custo_do_meio('asaas', 'cartao', 7, 6150)$t$), tm.tenta($t$select public.fn_ticketeria_custo_do_meio('asaas', 'boleto', null, 6150)$t$),
+            tm.tenta($t$select public.fn_ticketeria_custo_do_meio('outro', 'pix', null, 6150)$t$)],
           array['23514 meio_indisponivel', '23514 meio_indisponivel', '23514 meio_indisponivel'], 'parcela sem custo cadastrado, meio que não existe e provedor sem tabela: indisponível');
 -- (a migration e o teste correm na mesma transação: as regras iniciais ficam "de ontem" para as linhas novas valerem mais)
 update public.ticketeria_custos_meio set vigente_desde = now() - interval '1 day';
 insert into public.ticketeria_custos_meio (provedor, meio, parcelas_de, parcelas_ate, percentual_bps, fixo_centavos, vigente_desde) values ('asaas', 'pix', 1, 1, 0, 99, now() - interval '1 minute');
-select is(public.fn_ticketeria_custo_do_meio('asaas', 'pix', null, 6135), 99::bigint, 'uma linha nova em vigor troca o custo, sem migration');
+select is(public.fn_ticketeria_custo_do_meio('asaas', 'pix', null, 6150), 99::bigint, 'uma linha nova em vigor troca o custo, sem migration');
 insert into public.ticketeria_custos_meio (provedor, meio, parcelas_de, parcelas_ate, percentual_bps, fixo_centavos, vigente_desde) values ('asaas', 'pix', 1, 1, 0, 500, now() + interval '1 day');
-select is(public.fn_ticketeria_custo_do_meio('asaas', 'pix', null, 6135), 99::bigint, 'a linha que ainda não entrou em vigor não vale');
+select is(public.fn_ticketeria_custo_do_meio('asaas', 'pix', null, 6150), 99::bigint, 'a linha que ainda não entrou em vigor não vale');
 delete from public.ticketeria_custos_meio where fixo_centavos in (99, 500);
 
 -- ─── Escolher o meio ────────────────────────────────────────────────────────
 
-select is((select row(r ->> 'total_centavos', r ->> 'taxa_centavos', r ->> 'produtor_centavos')::text from tm.reservar('p1', '31', 1) r), '(6135,135,6000)', 'um ingresso de R$ 60: total R$ 61,35 = produtor R$ 60 + taxa R$ 1,35');
-select is(public.fn_ticketeria_definir_meio(tm.pedido('p1'), 'pix', null) - 'pedido_id', '{"meio": "pix", "parcelas": null, "total_centavos": 6135, "custo_meio_centavos": 199, "a_pagar_centavos": 6334}'::jsonb, 'Pix: o comprador paga R$ 63,34, e o produtor segue com os R$ 60');
+select is((select row(r ->> 'total_centavos', r ->> 'taxa_centavos', r ->> 'produtor_centavos')::text from tm.reservar('p1', '31', 1) r), '(6000,150,5850)', 'um ingresso de R$ 60: o comprador paga R$ 60; do preço saem a taxa de 2,5% (R$ 1,50) e sobram R$ 58,50 ao produtor');
+select is(public.fn_ticketeria_definir_meio(tm.pedido('p1'), 'pix', null) - 'pedido_id', '{"meio": "pix", "parcelas": null, "total_centavos": 6000, "custo_meio_centavos": 199, "a_pagar_centavos": 6000, "produtor_recebe_centavos": 5651}'::jsonb, 'Pix: o comprador paga os R$ 60 e o produtor recebe R$ 56,51 (R$ 58,50 menos o Pix de R$ 1,99)');
 select is(tm.tenta(format('select public.fn_ticketeria_definir_meio(%L, %L, 3)', tm.pedido('p1'), 'cartao')), '23514 parcelas_indisponiveis', 'a loja só oferece à vista (parcelas_max 1): 3 parcelas não');
-select is(public.fn_ticketeria_definir_meio(tm.pedido('p1'), 'cartao', 1) ->> 'a_pagar_centavos', '6375', 'cartão à vista: o comprador paga R$ 63,75 (o meio pode ser trocado até pagar)');
+select is(public.fn_ticketeria_definir_meio(tm.pedido('p1'), 'cartao', 1) ->> 'a_pagar_centavos', '6000', 'cartão à vista: o comprador paga os mesmos R$ 60 (o meio pode ser trocado até pagar)');
 update public.ticketeria_lojas set parcelas_max = 6 where id = tm.id('61');
-select is(public.fn_ticketeria_definir_meio(tm.pedido('p1'), 'cartao', 3) - 'pedido_id', '{"meio": "cartao", "parcelas": 3, "total_centavos": 6135, "custo_meio_centavos": 273, "a_pagar_centavos": 6408}'::jsonb, 'o produtor liga o parcelamento até 6x: 3 parcelas custam R$ 2,73 ao comprador');
+select is(public.fn_ticketeria_definir_meio(tm.pedido('p1'), 'cartao', 3) - 'pedido_id', '{"meio": "cartao", "parcelas": 3, "total_centavos": 6000, "custo_meio_centavos": 259, "a_pagar_centavos": 6000, "produtor_recebe_centavos": 5591}'::jsonb, 'o produtor liga o parcelamento até 6x: 3 parcelas custam R$ 2,59 ao produtor, que recebe R$ 55,91; o comprador segue pagando R$ 60');
 select is(array[
             tm.tenta(format('select public.fn_ticketeria_definir_meio(%L, %L, 7)', tm.pedido('p1'), 'cartao')), tm.tenta(format('select public.fn_ticketeria_definir_meio(%L, %L, 0)', tm.pedido('p1'), 'cartao')),
             tm.tenta(format('select public.fn_ticketeria_definir_meio(%L, %L, 2)', tm.pedido('p1'), 'pix')), tm.tenta(format('select public.fn_ticketeria_definir_meio(%L, %L, null)', tm.pedido('p1'), 'boleto')),
@@ -165,15 +166,21 @@ select is(tm.tenta(format('update public.ticketeria_pedidos set meio = null, par
 
 -- ─── Confirmar com o custo ──────────────────────────────────────────────────
 
-select is(tm.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 6135)', tm.pedido('p1'), 'mentira', 'ref-1')), '23514 valor_divergente', 'pagar só o total, sem o custo do meio, não confirma');
-select is(public.fn_ticketeria_confirmar_pagamento(tm.pedido('p1'), 'mentira', 'ref-1', 6408), 'pago', 'pagar o total mais o custo (3 parcelas: R$ 64,08) confirma');
+select is(tm.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 6259)', tm.pedido('p1'), 'mentira', 'ref-1')), '23514 valor_divergente', 'pagar mais que o preço (o preço mais o custo) não confirma');
+select is(public.fn_ticketeria_confirmar_pagamento(tm.pedido('p1'), 'mentira', 'ref-1', 6000), 'pago', 'pagar exatamente o preço (R$ 60) confirma');
 set constraints all immediate;
 select is((select string_agg(p.conta || '=' || p.valor_centavos, ' ' order by p.conta) from public.ticketeria_partidas p join public.ticketeria_transacoes t on t.id = p.transacao_id where t.pedido_id = tm.pedido('p1')),
-          'plataforma=-135 produtor=-6000 psp_a_receber=6135', 'o razão registra o que chega líquido: do produtor os R$ 60 inteiros e do Jards os R$ 1,35 (o custo do meio não é de nenhum dos dois)');
+          'plataforma=-150 produtor=-5591 psp_a_receber=5741', 'o razão registra o que chega líquido do custo do meio (R$ 2,59): do produtor R$ 55,91, do Jards R$ 1,50, e o provedor recebe R$ 57,41');
 select is(tm.tenta(format('select public.fn_ticketeria_definir_meio(%L, %L, null)', tm.pedido('p1'), 'pix')), '23514 pedido_nao_aguarda', 'pedido pago não muda de meio');
-select is((select row(r ->> 'total_centavos')::text from tm.reservar('p2', '31', 2) r), '(12270)', 'dois ingressos: a taxa fixa é por ingresso (2 x R$ 1,35)');
+select is((select row(r ->> 'total_centavos')::text from tm.reservar('p2', '31', 2) r), '(12000)', 'dois ingressos: a taxa é por ingresso (2 x R$ 1,50) e o comprador paga só o preço');
 update public.ticketeria_pedidos set reservado_ate = now() - interval '1 minute' where id = tm.pedido('p2');
 select is(tm.tenta(format('select public.fn_ticketeria_definir_meio(%L, %L, null)', tm.pedido('p2'), 'pix')), '23514 reserva_expirada', 'reserva vencida não escolhe meio');
+
+-- Um custo que come toda a parte do produtor deixa o meio indisponível (aqui, um fixo absurdo de R$ 90 no Pix, que passa dos R$ 58,50 dele).
+insert into public.ticketeria_custos_meio (provedor, meio, parcelas_de, parcelas_ate, percentual_bps, fixo_centavos, vigente_desde) values ('asaas', 'pix', 1, 1, 0, 9000, now() - interval '1 second');
+select is((select row(r ->> 'total_centavos')::text from tm.reservar('p3', '31', 1) r) || tm.tenta(format('select public.fn_ticketeria_definir_meio(%L, %L, null)', tm.pedido('p3'), 'pix')),
+          '(6000)23514 meio_indisponivel', 'o custo maior que a parte do produtor: o meio não serve para o pedido');
+delete from public.ticketeria_custos_meio where fixo_centavos = 9000;
 
 -- ─── Quem vê e quem grava ───────────────────────────────────────────────────
 

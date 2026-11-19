@@ -10,11 +10,15 @@ import type { ContaDoRazao } from "@/lib/ticketeria/estados";
 
 export type Partida = { conta: ContaDoRazao; valor_centavos: number };
 
-/** As partidas do pagamento de um pedido (as de valor zero ficam de fora). */
-export function partidasDoPagamento(pedido: { total_centavos: number; produtor_centavos: number; taxa_centavos: number }): Partida[] {
+/**
+ * As partidas do pagamento de um pedido (as de valor zero ficam de fora). O provedor guarda o custo do meio dele: chega líquido
+ * `total − custo`, e o custo sai da parte do produtor.
+ */
+export function partidasDoPagamento(pedido: { total_centavos: number; produtor_centavos: number; taxa_centavos: number; custo_meio_centavos?: number }): Partida[] {
+  const custo = pedido.custo_meio_centavos ?? 0;
   const partidas: Partida[] = [
-    { conta: "psp_a_receber", valor_centavos: pedido.total_centavos },
-    { conta: "produtor", valor_centavos: -pedido.produtor_centavos },
+    { conta: "psp_a_receber", valor_centavos: pedido.total_centavos - custo },
+    { conta: "produtor", valor_centavos: -(pedido.produtor_centavos - custo) },
     { conta: "plataforma", valor_centavos: -pedido.taxa_centavos },
   ];
   return partidas.filter(partida => partida.valor_centavos !== 0);

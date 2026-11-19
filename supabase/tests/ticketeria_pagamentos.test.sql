@@ -209,16 +209,16 @@ select is(array[
 
 select is(tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 10600)', tp.pedido('p2'), 'mentira', 'ref-p2')), '23514 meio_nao_escolhido', 'sem o meio de pagamento escolhido, não se confirma');
 select public.fn_ticketeria_definir_meio(tp.pedido('p2'), 'pix', null);
-select is(tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 10599)', tp.pedido('p2'), 'mentira', 'ref-p2')), '23514 valor_divergente', 'o valor tem de ser o total mais o custo do meio (10.600 + R$ 1,99 do Pix)');
-select is(array[public.fn_ticketeria_confirmar_pagamento(tp.pedido('p2'), 'mentira', 'ref-p2', 10799), public.fn_ticketeria_confirmar_pagamento(tp.pedido('p2'), 'mentira', 'ref-p2', 10799)],
+select is(tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 10599)', tp.pedido('p2'), 'mentira', 'ref-p2')), '23514 valor_divergente', 'o valor tem de ser o total do pedido (R$ 106,00)');
+select is(array[public.fn_ticketeria_confirmar_pagamento(tp.pedido('p2'), 'mentira', 'ref-p2', 10600), public.fn_ticketeria_confirmar_pagamento(tp.pedido('p2'), 'mentira', 'ref-p2', 10600)],
           array['pago', 'ja_pago'], 'confirmar duas vezes paga uma vez só');
 set constraints all immediate;
 select is((select string_agg(p.conta || '=' || p.valor_centavos, ' ' order by p.conta) from public.ticketeria_partidas p join public.ticketeria_transacoes t on t.id = p.transacao_id where t.pedido_id = tp.pedido('p2'))
           || ' n=' || (select count(*) from public.ticketeria_transacoes where pedido_id = tp.pedido('p2')),
-          'plataforma=-600 produtor=-10000 psp_a_receber=10600 n=1', 'o razão: o provedor recebeu o total; é do produtor o preço e do Jards a taxa; uma transação só');
+          'plataforma=-600 produtor=-9801 psp_a_receber=10401 n=1', 'o razão: o provedor recebeu o total e guardou o custo do Pix (R$ 1,99); é do produtor o preço menos o custo e do Jards a taxa; uma transação só');
 select is((select row(situacao, provedor, provedor_ref, pago_em is not null)::text from public.ticketeria_pedidos where id = tp.pedido('p2')), '(pago,mentira,ref-p2,t)', 'o pedido fica pago, com o provedor e a referência');
 select is(array[
-            tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 19249)', tp.pedido('p1'), 'mentira', 'ref-p1')),
+            tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 19050)', tp.pedido('p1'), 'mentira', 'ref-p1')),
             tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 1)', tp.id('99'), 'mentira', 'x')),
             tp.tenta(format('update public.ticketeria_partidas set valor_centavos = 1 where transacao_id = (select id from public.ticketeria_transacoes where pedido_id = %L limit 1)', tp.pedido('p2'))),
             tp.tenta(format('delete from public.ticketeria_transacoes where pedido_id = %L', tp.pedido('p2'))),
