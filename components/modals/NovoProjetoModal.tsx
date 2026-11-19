@@ -323,7 +323,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="folha-vidro-centro w-full flex flex-col"
+          className="folha-desce folha-vidro w-full flex flex-col max-h-[96dvh]"
           style={{ maxWidth: "37.5rem", maxHeight: "calc(100vh - 48px)" }}
           onClick={e => e.stopPropagation()}
         >

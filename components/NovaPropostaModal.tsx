@@ -95,8 +95,8 @@ export function NovaPropostaModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-vidro-centro w-full overflow-hidden" style={{ maxWidth: "25rem" }} onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex justify-center items-start veu" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-desce folha-vidro w-full overflow-hidden max-h-[96dvh]" style={{ maxWidth: "25rem" }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">

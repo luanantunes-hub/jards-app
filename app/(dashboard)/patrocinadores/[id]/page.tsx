@@ -965,11 +965,11 @@ export default function PatrocinadorPage() {
           />
         )}
         <div
-          className="folha-vidro-direita fixed top-0 right-0 h-full w-80 z-50 flex flex-col"
+          className="folha-vidro fixed inset-x-0 top-0 z-50 mx-auto flex max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-y-auto"
           style={{
-            transform: showSugerirForm ? "translateX(0)" : "translateX(100%)",
-            transition: "transform 0.22s cubic-bezier(0.4,0,0.2,1)",
-            borderLeft: "1px solid rgba(13,13,13,.08)",
+            transform: showSugerirForm ? "none" : "translateY(-110%)",
+            visibility: showSugerirForm ? "visible" : "hidden",
+            transition: "transform 0.26s cubic-bezier(.32,.72,0,1), visibility 0.26s",
           }}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>

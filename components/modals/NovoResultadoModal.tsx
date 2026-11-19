@@ -117,14 +117,14 @@ export function NovoResultadoModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 veu"
+      className="fixed inset-0 z-50 flex justify-center veu items-start"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="folha-vidro-centro w-full flex flex-col overflow-hidden"
+        className="folha-desce folha-vidro w-full flex flex-col overflow-hidden max-h-[96dvh]"
         style={{ maxWidth: "26.25rem", maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}
       >

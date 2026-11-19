@@ -148,9 +148,9 @@ function DocForm({
   const corStyle = COR_MAP[cor] ?? COR_MAP.azul;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center veu">
+    <div className="fixed inset-0 z-[60] flex justify-center veu items-start">
       <div role="dialog" aria-modal="true" aria-labelledby={titleId}
-        className="folha-vidro-centro w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col"
+        className="folha-desce folha-vidro w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col"
         style={{ borderColor: "rgba(13,13,13,.12)" }}>
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -336,9 +336,9 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center veu">
+      <div className="fixed inset-0 z-50 flex justify-center veu items-start">
         <div role="dialog" aria-modal="true" aria-label="Documentos"
-          className="folha-vidro-centro w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col"
+          className="folha-desce folha-vidro w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col"
           style={{ borderColor: "rgba(13,13,13,.10)" }}>
 
           {/* Header */}

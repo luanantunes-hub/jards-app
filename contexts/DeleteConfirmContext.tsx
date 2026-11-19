@@ -121,7 +121,7 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
 
       {opts && (
         <div
-          className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-colors duration-200 motion-reduce:transition-none ${visible ? "bg-black/40" : "bg-black/0"}`}
+          className={`fixed inset-0 z-[200] flex justify-center transition-colors duration-200 motion-reduce:transition-none ${visible ? "bg-black/40" : "bg-black/0"} items-start`}
           onClick={handleClose}
           onKeyDown={handleKeyDown}
         >
@@ -131,7 +131,7 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={opts.description === "" ? undefined : descriptionId}
-            className={`folha-vidro-centro w-full max-w-[22.5rem] overflow-hidden transition duration-200 ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none ${visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-3 scale-[.97] opacity-0"}`}
+            className={`folha-desce folha-vidro w-full max-w-[22.5rem] overflow-hidden transition-opacity duration-200 motion-reduce:transition-none ${visible ? "opacity-100" : "opacity-0"} max-h-[96dvh]`}
             onClick={e => e.stopPropagation()}
           >
             {showIllustration && (

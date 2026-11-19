@@ -64,6 +64,17 @@
   border-top-left-radius: var(--raio-folha);
   border-bottom-left-radius: var(--raio-folha);
 }
+/* Entrada da folha que desce do topo (a da Nova atividade): vem de cima, sem estado nem JavaScript. */
+@keyframes folha-desce {
+  from { transform: translateY(-100%); }
+  to { transform: none; }
+}
+@utility folha-desce {
+  animation: folha-desce 260ms cubic-bezier(.32, .72, 0, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .folha-desce { animation: none; }
+}
 @utility folha-rodape {
   background-color: rgba(250, 250, 249, .9);
   border-top-color: rgba(13, 13, 13, .07);

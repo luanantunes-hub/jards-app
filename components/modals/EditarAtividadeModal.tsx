@@ -329,19 +329,15 @@ export function EditarAtividadeModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex"
+      className="fixed inset-0 z-50 flex items-start justify-center veu"
       onClick={onClose}
     >
-      {/* Backdrop */}
-      <div className="flex-1 veu" />
-
-      {/* Drawer */}
+      {/* Folha que desce do topo */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="folha-vidro-direita h-full w-[40rem] max-w-[92vw] overflow-hidden flex flex-col"
-        style={{ borderLeft: "1px solid rgba(13,13,13,.08)" }}
+        className="folha-desce folha-vidro max-h-[96dvh] w-full max-w-[47.5rem] overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
