@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ErroDaCompra, documentoValido, iniciarCompra, lerCorpoDaCompra, situacaoParaOComprador, type PortasDaCompra } from "../lib/ticketeria/pagamento/compra";
 import type { Cobranca, PedidoParaCobrar, ProvedorDePagamento } from "../lib/ticketeria/pagamento/provedor";
+import { VERSAO_DOS_TERMOS_DE_COMPRA } from "../lib/ticketeria/termos-de-compra";
 
 const SESSAO = "0d760000-0000-4000-8000-000000000081";
 const INGRESSO = "0d760000-0000-4000-8000-000000000031";
-const bom = { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita  Teste", email: "Rita@Teste.com", documento: "529.982.247-25" };
+const bom = { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita  Teste", email: "Rita@Teste.com", documento: "529.982.247-25", termos: VERSAO_DOS_TERMOS_DE_COMPRA };
 
 test("CPF e CNPJ: só com os dígitos verificadores certos", () => {
   assert.equal(documentoValido("529.982.247-25"), true);
@@ -21,13 +22,13 @@ test("CPF e CNPJ: só com os dígitos verificadores certos", () => {
 test("o corpo da compra: lido, aparado e conferido", () => {
   const r = lerCorpoDaCompra(bom);
   assert.ok(r.ok);
-  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725" });
+  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA });
   const ruim = (mudanca: object) => lerCorpoDaCompra({ ...bom, ...mudanca });
   for (const [mudanca, problema] of [
     [{ sessao_id: "x" }, "sessão"], [{ itens: [] }, "ingressos"], [{ itens: "x" }, "ingressos"],
     [{ itens: [{ ingresso_id: INGRESSO, quantidade: 0 }] }, "ingressos"], [{ itens: [{ ingresso_id: INGRESSO, quantidade: 1.5 }] }, "ingressos"], [{ itens: [{ ingresso_id: INGRESSO, quantidade: 21 }] }, "ingressos"],
     [{ itens: [{ ingresso_id: INGRESSO, quantidade: 1 }, { ingresso_id: INGRESSO.toUpperCase(), quantidade: 1 }] }, "ingressos"],
-    [{ nome: "R" }, "nome"], [{ email: "sem-arroba" }, "e-mail"], [{ documento: "123" }, "CPF ou CNPJ"],
+    [{ nome: "R" }, "nome"], [{ email: "sem-arroba" }, "e-mail"], [{ documento: "123" }, "CPF ou CNPJ"], [{ termos: "" }, "aceite dos Termos de compra"], [{ termos: "2020-01-01" }, "aceite dos Termos de compra"], [{ termos: undefined }, "aceite dos Termos de compra"],
   ] as [object, string][]) {
     const l = ruim(mudanca);
     assert.equal(l.ok, false);
@@ -38,7 +39,7 @@ test("o corpo da compra: lido, aparado e conferido", () => {
 });
 
 function montar(sobre: Partial<PortasDaCompra> = {}, reserva: Partial<{ situacao: "aguardando_pagamento" | "pago"; taxa: number; total: number }> = {}) {
-  const chamadas: { reservar: unknown[]; meio: string[]; cobrancas: { chave: string; pedido: PedidoParaCobrar }[]; erros: unknown[] } = { reservar: [], meio: [], cobrancas: [], erros: [] };
+  const chamadas: { reservar: unknown[]; meio: string[]; aceites: [string, string][]; cobrancas: { chave: string; pedido: PedidoParaCobrar }[]; erros: unknown[] } = { reservar: [], meio: [], aceites: [], cobrancas: [], erros: [] };
   const total = reserva.total ?? 7000;
   const taxa = reserva.taxa ?? 175;
   const portas: PortasDaCompra = {
@@ -47,6 +48,7 @@ function montar(sobre: Partial<PortasDaCompra> = {}, reserva: Partial<{ situacao
       chamadas.reservar.push([corpo, minutos]);
       return { pedido_id: "0d760000-0000-4000-8000-0000000000e1", codigo: "ABCD2345", situacao: reserva.situacao ?? "aguardando_pagamento", reservado_ate: "2026-11-19T12:15:00.000Z", total_centavos: total, taxa_centavos: taxa, produtor_centavos: total - taxa };
     },
+    async registrarAceite(pedido, versao) { chamadas.aceites.push([pedido, versao]); },
     async definirMeioPix(pedido) { chamadas.meio.push(pedido); },
     provedor(chave) {
       const p: ProvedorDePagamento = {
@@ -73,6 +75,7 @@ test("compra com Pix: reserva 15 minutos, escolhe o Pix, abre a cobrança NA SUB
   assert.deepEqual(r, { situacao: "aguardando_pagamento", pedido_id: "0d760000-0000-4000-8000-0000000000e1", codigo: "ABCD2345", total_centavos: 7000, reservado_ate: "2026-11-19T12:15:00.000Z", pix_copia_e_cola: "00020126-PIX" });
   assert.equal((chamadas.reservar[0] as [unknown, number])[1], 15);
   assert.deepEqual(chamadas.meio, ["0d760000-0000-4000-8000-0000000000e1"]);
+  assert.deepEqual(chamadas.aceites, [["0d760000-0000-4000-8000-0000000000e1", VERSAO_DOS_TERMOS_DE_COMPRA]], "o pedido guarda a versão dos termos aceita");
   assert.equal(chamadas.cobrancas.length, 1);
   assert.equal(chamadas.cobrancas[0].chave, "chave-da-subconta-0123456789", "a cobrança nasce com a chave da subconta");
   const c = chamadas.cobrancas[0].pedido;
@@ -144,4 +147,15 @@ test("a situação para o comprador: reserva vencida sem pagamento é expirada",
   assert.equal(situacaoParaOComprador("aguardando_pagamento", "2026-11-19T12:25:00.000Z", agora), "aguardando_pagamento");
   assert.equal(situacaoParaOComprador("pago", "2026-11-19T12:15:00.000Z", agora), "pago", "pago vale mesmo com a reserva vencida");
   assert.equal(situacaoParaOComprador("cancelado", "2026-11-19T12:25:00.000Z", agora), "cancelada");
+});
+
+test("o aceite é gravado também no ingresso gratuito, e se não der para gravar a compra falha antes de qualquer cobrança", async () => {
+  const gratis = montar({}, { situacao: "pago", total: 0, taxa: 0 });
+  const l = lerCorpoDaCompra(bom);
+  if (!l.ok) throw new Error("corpo");
+  await iniciarCompra(l.corpo, gratis.portas);
+  assert.equal(gratis.chamadas.aceites.length, 1);
+  const { portas, chamadas } = montar({ async registrarAceite() { throw new Error("banco fora do ar"); } });
+  await assert.rejects(iniciarCompra(l.corpo, portas), /banco fora do ar/);
+  assert.deepEqual([chamadas.meio.length, chamadas.cobrancas.length], [0, 0], "sem aceite gravado, não há Pix");
 });

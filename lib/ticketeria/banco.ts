@@ -652,6 +652,8 @@ export type BancoDaTicketeria = {
           updated_at: string;
           ingressos_enviados_em: string | null;
           reembolsado_em: string | null;
+          termos_versao: string | null;
+          termos_aceitos_em: string | null;
         };
         Insert: {
           id?: string;
@@ -678,6 +680,8 @@ export type BancoDaTicketeria = {
           updated_at?: string;
           ingressos_enviados_em?: string | null;
           reembolsado_em?: string | null;
+          termos_versao?: string | null;
+          termos_aceitos_em?: string | null;
         };
         Update: {
           id?: string;
@@ -704,6 +708,8 @@ export type BancoDaTicketeria = {
           updated_at?: string;
           ingressos_enviados_em?: string | null;
           reembolsado_em?: string | null;
+          termos_versao?: string | null;
+          termos_aceitos_em?: string | null;
         };
         Relationships: [
           {
@@ -1352,6 +1358,10 @@ export type BancoDaTicketeria = {
       fn_ticketeria_reembolso_reabrir: {
         Args: { p_reembolso: string; p_loja: string };
         Returns: Json;
+      };
+      fn_ticketeria_registrar_aceite: {
+        Args: { p_pedido: string; p_versao: string };
+        Returns: undefined;
       };
       fn_ticketeria_emitir_ingressos: {
         Args: { p_pedido: string };

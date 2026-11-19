@@ -7,6 +7,7 @@
 
 import { mensagemDoErroDaReserva, type PedidoReservado } from "@/lib/ticketeria/pagamento/reserva";
 import type { ProvedorDePagamento } from "@/lib/ticketeria/pagamento/provedor";
+import { VERSAO_DOS_TERMOS_DE_COMPRA } from "@/lib/ticketeria/termos-de-compra";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const MAX_ITENS_POR_COMPRA = 10;
@@ -14,7 +15,8 @@ export const MAX_QUANTIDADE_POR_ITEM = 20;
 export const MINUTOS_DE_RESERVA = 15;
 
 export type ItemDaCompra = { ingresso_id: string; quantidade: number };
-export type CorpoDaCompra = { sessao_id: string; itens: ItemDaCompra[]; nome: string; email: string; documento: string };
+/** `termos` é a versão dos Termos de compra que o comprador aceitou: precisa ser a atual (lib/ticketeria/termos-de-compra.ts). */
+export type CorpoDaCompra = { sessao_id: string; itens: ItemDaCompra[]; nome: string; email: string; documento: string; termos: string };
 
 /** CPF (11) ou CNPJ (14) com os dígitos verificadores certos; só os números. */
 export function documentoValido(bruto: string): boolean {
@@ -60,8 +62,9 @@ export function lerCorpoDaCompra(entrada: unknown): LeituraDaCompra {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200) problemas.push("e-mail");
   const documento = texto(e.documento).replace(/\D/g, "");
   if (!documentoValido(documento)) problemas.push("CPF ou CNPJ");
+  if (texto(e.termos) !== VERSAO_DOS_TERMOS_DE_COMPRA) problemas.push("aceite dos Termos de compra");
   if (problemas.length > 0) return { ok: false, problemas };
-  return { ok: true, corpo: { sessao_id: sessao.toLowerCase(), itens, nome, email, documento } };
+  return { ok: true, corpo: { sessao_id: sessao.toLowerCase(), itens, nome, email, documento, termos: VERSAO_DOS_TERMOS_DE_COMPRA } };
 }
 
 /** O que o comprador precisa entender quando a compra não segue. */
@@ -77,6 +80,8 @@ export type PortasDaCompra = {
   contaDaSessao(sessao: string): Promise<{ chave: string; aprovada: boolean } | null>;
   /** fn_ticketeria_reservar. Os erros do banco saem como ErroDaCompra("reserva_recusada") com a frase para o comprador. */
   reservar(corpo: CorpoDaCompra, minutos: number): Promise<PedidoReservado>;
+  /** fn_ticketeria_registrar_aceite: o pedido guarda a versão dos Termos aceita e a hora. Falhar aqui falha a compra (sem aceite gravado, não há cobrança). */
+  registrarAceite(pedido: string, versao: string): Promise<void>;
   /** fn_ticketeria_definir_meio (Pix). */
   definirMeioPix(pedido: string): Promise<void>;
   /** O provedor que abre a cobrança na subconta (com a chave dela). */
@@ -102,6 +107,7 @@ export async function iniciarCompra(corpo: CorpoDaCompra, portas: PortasDaCompra
     throw new ErroDaCompra("vendas_indisponiveis", "As vendas deste evento estão pausadas. Tente mais tarde.");
   }
   const pedido = await portas.reservar(corpo, MINUTOS_DE_RESERVA);
+  await portas.registrarAceite(pedido.pedido_id, corpo.termos);
   // Gratuito: o banco já o marca como pago, sem cobrança.
   if (pedido.situacao === "pago") {
     try { await portas.aposPagamento?.(pedido.pedido_id); } catch (erro) { portas.registrarErro?.(erro); }

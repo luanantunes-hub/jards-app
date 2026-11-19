@@ -128,6 +128,10 @@ export function portasDaCompraDoSupabase(admin: SupabaseClient<Database>, config
       if (!pedido) throw new Error("resposta inesperada do banco ao reservar");
       return pedido;
     },
+    async registrarAceite(pedido, versao) {
+      const { error } = await ticketeria.rpc("fn_ticketeria_registrar_aceite", { p_pedido: pedido, p_versao: versao });
+      if (error) throw new Error(error.message);
+    },
     async definirMeioPix(pedido) {
       const { error } = await ticketeria.rpc("fn_ticketeria_definir_meio", { p_pedido: pedido, p_meio: "pix", p_parcelas: null });
       if (error) throw new Error(error.message);

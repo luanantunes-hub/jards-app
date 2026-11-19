@@ -107,9 +107,9 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
 
 export type ResumoDoPedido = { linhas: { nome: string; quantidade: number; total_centavos: number }[]; total_centavos: number };
 
-export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, onMudar, onVoltar, onGerarPix }: {
+export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, aceito = false, onAceitar, onMudar, onVoltar, onGerarPix }: {
   site: { titulo: string; cor?: string }; evento: EventoParaComprar; resumo: ResumoDoPedido; valores: { nome: string; email: string; documento: string };
-  erro?: string | null; trabalhando?: boolean; onMudar?: (campo: "nome" | "email" | "documento", valor: string) => void; onVoltar?: () => void; onGerarPix?: () => void;
+  erro?: string | null; trabalhando?: boolean; aceito?: boolean; onAceitar?: (aceito: boolean) => void; onMudar?: (campo: "nome" | "email" | "documento", valor: string) => void; onVoltar?: () => void; onGerarPix?: () => void;
 }) {
   return (
     <Moldura titulo={site.titulo} cor={site.cor} passo={{ atual: 2, total: 3 }}
@@ -130,7 +130,11 @@ export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, on
         <div><label className={ROTULO} htmlFor="c-email">E-mail</label><input id="c-email" type="email" inputMode="email" className={CAMPO} value={valores.email} onChange={e => onMudar?.("email", e.target.value)} autoComplete="email" maxLength={200} placeholder="seus ingressos chegam aqui" disabled={trabalhando} /></div>
         <div><label className={ROTULO} htmlFor="c-doc">CPF ou CNPJ</label><input id="c-doc" inputMode="numeric" className={CAMPO} value={valores.documento} onChange={e => onMudar?.("documento", e.target.value)} placeholder="000.000.000-00" disabled={trabalhando} /><p className="mt-1.5 text-[0.75rem] text-black/50">Exigido para gerar o Pix. Não fica guardado.</p></div>
       </form>
-      <p className="mt-5 text-[0.75rem] leading-relaxed text-black/50">Pagamento por Pix. Os lugares ficam reservados por 15 minutos depois que você gera o código.</p>
+      <label className="mt-5 flex cursor-pointer items-start gap-3 rounded border border-black/10 px-4 py-3.5 text-[0.875rem] leading-snug">
+        <input type="checkbox" checked={aceito} onChange={e => onAceitar?.(e.target.checked)} disabled={trabalhando} className="mt-0.5 h-5 w-5 shrink-0 accent-[#282525]" />
+        <span>Li e concordo com os <a href="/termos-de-compra" target="_blank" rel="noopener noreferrer" className="font-medium underline underline-offset-2">Termos de compra</a>.</span>
+      </label>
+      <p className="mt-4 text-[0.75rem] leading-relaxed text-black/50">Pagamento por Pix. Os lugares ficam reservados por 15 minutos depois que você gera o código.</p>
     </Moldura>
   );
 }
@@ -237,5 +241,39 @@ export function TelaAviso({ site, titulo, texto, acao }: { site: { titulo: strin
       <p className="mt-2 text-[0.9375rem] leading-relaxed text-black/65">{texto}</p>
       {acao && <button type="button" className={`${BOTAO} mt-6`} onClick={acao.onClick}>{acao.rotulo}</button>}
     </Moldura>
+  );
+}
+
+// ─── Os Termos de compra (a página pública) ─────────────────────────────────
+
+export function TelaTermosDeCompra({ secoes, atualizadoEm, email }: { secoes: { id: string; titulo: string; paragrafos: string[] }[]; atualizadoEm: string; email: string }) {
+  return (
+    <div className="min-h-screen bg-white text-[#282525]">
+      <header className="border-b border-black/10">
+        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-4 px-4 sm:px-6">
+          <span className="text-[0.9375rem] font-semibold tracking-[-.01em]">Jards</span>
+          <span className="text-[0.75rem] text-black/45">Atualizado em {atualizadoEm}</span>
+        </div>
+      </header>
+      <main className="mx-auto max-w-3xl px-4 pb-20 pt-10 sm:px-6">
+        <p className="text-[0.6875rem] font-semibold uppercase tracking-[.12em] text-black/45">Compra de ingressos</p>
+        <h1 className="mt-2 text-[2rem] font-bold leading-[1.1] tracking-[-.03em] sm:text-[2.5rem]">Termos de compra</h1>
+        <p className="mt-3 text-[1rem] leading-relaxed text-black/60">O que vale quando você compra um ingresso pela plataforma Jards. Leia antes de gerar o Pix.</p>
+        <nav aria-label="Seções" className="mt-8 rounded border border-black/10 px-4 py-3.5">
+          <ol className="space-y-1 text-[0.875rem]">
+            {secoes.map((s, i) => <li key={s.id}><a href={`#${s.id}`} className="text-black/60 underline-offset-2 hover:text-[#282525] hover:underline">{i + 1}. {s.titulo}</a></li>)}
+          </ol>
+        </nav>
+        <div className="mt-10 space-y-10">
+          {secoes.map((s, i) => (
+            <section key={s.id} id={s.id} aria-labelledby={`${s.id}-t`}>
+              <h2 id={`${s.id}-t`} className="text-[1.25rem] font-semibold tracking-[-.015em]">{i + 1}. {s.titulo}</h2>
+              <div className="mt-3 space-y-3 text-[0.9375rem] leading-7 text-black/70">{s.paragrafos.map((p, j) => <p key={j}>{p.replaceAll("{email}", email)}</p>)}</div>
+            </section>
+          ))}
+        </div>
+        <p className="mt-12 border-t border-black/10 pt-6 text-[0.8125rem] text-black/45">Veja também a <a href="/privacidade" className="underline underline-offset-2">Política de Privacidade</a>.</p>
+      </main>
+    </div>
   );
 }
