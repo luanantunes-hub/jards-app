@@ -122,7 +122,7 @@ export function ConvitePrestacao({ organizationId, podeAtivar, onClose, onAtivad
           data-principal
           onClick={ativar}
           disabled={ativando || !organizationId}
-          className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {ativando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" aria-hidden />}
           Começar o teste grátis

@@ -271,7 +271,7 @@ function DocForm({
           <button
             onClick={handleSave}
             disabled={saving || !titulo.trim()}
-            className="w-full py-2.5 rounded text-sm font-medium text-white bg-[#2E8932] hover:bg-[#26752A] transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full py-2.5 rounded text-sm font-medium text-white acao-salvar transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : null}
             Salvar

@@ -156,7 +156,7 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
             {error && <p className="mt-2 text-[0.625rem] font-medium text-[#C84242]">{error}</p>}
             <div className="mt-3 flex items-center justify-end gap-2">
               <button type="button" onClick={() => { setCreating(false); setError(null); }} className="h-8 px-2 text-[0.6875rem] font-medium text-black/35 hover:text-black/60">Cancelar</button>
-              <button type="button" disabled={!newLabel.trim() || saving} onClick={() => void createOption()} className="h-8 rounded bg-[#2E8932] px-3 text-[0.6875rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-35">{saving ? "Salvando…" : "Salvar"}</button>
+              <button type="button" disabled={!newLabel.trim() || saving} onClick={() => void createOption()} className="h-8 rounded acao-salvar px-3 text-[0.6875rem] font-semibold text-white transition disabled:opacity-35">{saving ? "Salvando…" : "Salvar"}</button>
             </div>
           </div>
         )}

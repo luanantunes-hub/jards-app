@@ -193,7 +193,7 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
           </div>
           <div className="flex shrink-0 items-center justify-end gap-1.5">
             <button type="button" onClick={reset} className="inline-flex items-center gap-1.5 rounded border border-black/[.09] bg-white px-3 py-2 text-[0.625rem] font-medium text-black/45 hover:bg-black/[.035]"><RotateCcw size={11}/>Refazer</button>
-            <button type="button" onClick={onClose} className="rounded bg-[#2E8932] px-3.5 py-2 text-[0.625rem] font-semibold text-white hover:bg-[#26752A]">Concluir avaliação</button>
+            <button type="button" onClick={onClose} className="rounded acao-salvar px-3.5 py-2 text-[0.625rem] font-semibold text-white ">Concluir avaliação</button>
           </div>
         </div> : current ? <div className="flex items-end gap-2.5">
           <button type="button" onClick={reset} aria-label="Voltar ao início" className="mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded text-black/25 hover:bg-black/[.04] hover:text-black/50"><ArrowLeft size={13}/></button>
@@ -201,7 +201,7 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
             <p className="mb-2 text-[0.75rem] font-semibold leading-snug text-black/70">{current.title}</p>
             <div className="flex flex-wrap gap-1.5">{current.options.map(option => <button key={option.id} type="button" onClick={() => answer(option.id)} className="rounded border border-black/[.1] bg-white px-3 py-2 text-[0.625rem] font-medium text-black/55 transition hover:border-black/20 hover:bg-black/[.035] hover:text-black/75">{option.label}</button>)}</div>
           </div>
-        </div> : <div className="flex items-center justify-between gap-3"><p className="text-[0.75rem] text-black/40">A árvore não possui uma etapa inicial.</p><button type="button" onClick={onClose} className="rounded bg-[#2E8932] px-3.5 py-2 text-[0.625rem] font-semibold text-white hover:bg-[#26752A]">Fechar</button></div>}
+        </div> : <div className="flex items-center justify-between gap-3"><p className="text-[0.75rem] text-black/40">A árvore não possui uma etapa inicial.</p><button type="button" onClick={onClose} className="rounded acao-salvar px-3.5 py-2 text-[0.625rem] font-semibold text-white ">Fechar</button></div>}
       </div>
     </footer>
 

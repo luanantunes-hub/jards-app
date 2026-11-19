@@ -138,7 +138,7 @@ export function PrazoPrestacao({ prestacao, regime, podeEditar, onSalvar }: {
               type="button"
               disabled={salvando || !data || (precisaJustificar && justificativa.trim().length < 3)}
               onClick={() => void salvar({ prazo_final_override: data, prazo_final_justificativa: justificativa.trim() || null })}
-              className="rounded bg-[#2E8932] px-3 py-1.5 text-[0.6875rem] text-white transition hover:bg-[#26752A] disabled:opacity-50"
+              className="rounded acao-salvar px-3 py-1.5 text-[0.6875rem] text-white transition disabled:opacity-50"
             >
               {salvando ? "Salvando…" : "Salvar prazo"}
             </button>

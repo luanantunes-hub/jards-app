@@ -680,7 +680,7 @@ export function NovaAtividadeModal({
           <div className="ml-auto flex flex-shrink-0 items-center gap-2">
             <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
             <button type="button" onClick={handleSave} disabled={saving || !nome.trim()}
-              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60">
+              className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60">
               <Save size={12} /> {saving ? "Salvando…" : "Criar atividade"}
             </button>
           </div>

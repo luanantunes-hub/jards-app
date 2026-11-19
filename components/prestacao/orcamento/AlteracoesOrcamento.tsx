@@ -276,7 +276,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
                           disabled={travada}
                           title={travada ? "Corrija o rascunho antes" : undefined}
                           className={principal
-                            ? "flex h-8 items-center gap-1 rounded bg-[#2E8932] px-3 text-[0.6875rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:cursor-not-allowed disabled:opacity-40"
+                            ? "flex h-8 items-center gap-1 rounded acao-salvar px-3 text-[0.6875rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:cursor-not-allowed disabled:opacity-40"
                             : "flex h-8 items-center gap-1 rounded border bg-white px-2.5 text-[0.6875rem] text-black/60 transition hover:border-black/25 hover:text-black/85 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-40"}
                           style={principal ? undefined : { borderColor: "rgba(13,13,13,.14)" }}
                         >

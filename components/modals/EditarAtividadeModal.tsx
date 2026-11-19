@@ -583,7 +583,7 @@ export function EditarAtividadeModal({
             <button
               onClick={handleSave}
               disabled={saving || loadingAtividade || !nome.trim()}
-              className="rounded border border-[#2E8932] bg-[#2E8932] px-4 py-2 text-xs font-medium text-white transition hover:border-[#26752A] hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="rounded border border-[#2E8932] acao-salvar px-4 py-2 text-xs font-medium text-white transition hover:border-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saving ? "Salvando…" : "Salvar alterações"}
             </button>

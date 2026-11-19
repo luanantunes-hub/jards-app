@@ -333,7 +333,7 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
             />
             <div className="mt-3 flex items-center justify-end gap-2">
               <button type="button" onClick={() => { setAdding(false); setNewName(""); }} className="inline-flex h-8 items-center gap-1.5 rounded px-3 text-[0.625rem] font-semibold text-black/40 transition hover:bg-black/[.04] hover:text-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 active:scale-[.97]" aria-label="Cancelar"><X size={11} /> Cancelar</button>
-              <button type="button" disabled={!newName.trim() || savingId === "new"} onClick={() => void addCriterion()} className="inline-flex h-8 items-center gap-1.5 rounded bg-[#2E8932] px-3 text-[0.625rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E8932]/30 active:scale-[.97] disabled:opacity-40" aria-label="Salvar critério"><Check size={11} /> Salvar</button>
+              <button type="button" disabled={!newName.trim() || savingId === "new"} onClick={() => void addCriterion()} className="inline-flex h-8 items-center gap-1.5 rounded acao-salvar px-3 text-[0.625rem] font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E8932]/30 active:scale-[.97] disabled:opacity-40" aria-label="Salvar critério"><Check size={11} /> Salvar</button>
             </div>
           </div>
         )}

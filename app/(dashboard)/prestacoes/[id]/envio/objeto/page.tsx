@@ -32,7 +32,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const CABECALHO = "px-3 py-2 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] text-black/70 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:text-black/35 active:scale-[.98]";
-const SALVAR = "h-9 rounded bg-[#2E8932] px-4 text-[0.6875rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:opacity-50 active:scale-[.98]";
+const SALVAR = "h-9 rounded acao-salvar px-4 text-[0.6875rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:opacity-50 active:scale-[.98]";
 
 const CAMINHO: Record<FonteDoDado["aba"], string> = {
   visao_geral: "", objeto: "/objeto", atividades: "/atividades", distribuicao: "/distribuicao", bens: "/bens", divulgacao: "/divulgacao", orcamento: "/orcamento", envio: "/envio",

@@ -85,6 +85,37 @@
   .acao-principal:focus-visible { outline-color: Highlight; }
 }
 
+/* Ação de salvar (o botão verde dos rodapés de folha, modal e formulário): o mesmo volume discreto do
+   botão de criar, em verde. Degradê de cima para baixo em torno do #2E8932, linha de luz de 1px no topo,
+   linha de sombra na base e sombra curta tingida de verde. Hover clareia um tom, na hora; pressionar
+   afunda; desativado fica chapado. Sem animação e sem movimento. Troca o par `bg-[#2E8932]` +
+   `hover:bg-[#26752A]`. */
+.acao-salvar {
+  background-color: #2E8932;
+  background-image: linear-gradient(180deg, #399C3E 0%, #2E8932 55%, #26752A 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .22),
+    inset 0 -1px 0 rgba(0, 0, 0, .2),
+    0 1px 2px rgba(24, 80, 28, .28),
+    0 4px 12px -4px rgba(24, 80, 28, .42);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .22);
+}
+.acao-salvar:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .26),
+    inset 0 -1px 0 rgba(0, 0, 0, .2),
+    inset 0 0 0 999px rgba(255, 255, 255, .08),
+    0 1px 2px rgba(24, 80, 28, .28),
+    0 4px 12px -4px rgba(24, 80, 28, .42);
+}
+.acao-salvar:active {
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, .3),
+    inset 0 0 0 999px rgba(255, 255, 255, .04),
+    0 1px 1px rgba(24, 80, 28, .25);
+}
+.acao-salvar:disabled { box-shadow: none; text-shadow: none; }
+
 /* Brilho da folha de criar: quando a ação principal abre uma folha que desce do topo, uma luz
    violeta passa uma vez pela borda de cima dela, da esquerda para a direita, e some. É uma faixa
    fixa no topo da tela, na largura da folha, montada pelo PrimaryListAction no clique

@@ -200,7 +200,7 @@ function DeliveryForm({ accounts, contaId, contracts, projects, projetoId, membe
       <label className="sm:col-span-2"><Label>Orientações</Label><textarea name="observacoes" rows={3} placeholder="Critério de aceite, formato ou contexto" className={`${fieldClass} h-auto resize-none py-2.5`}/></label>
       {error && <p className="sm:col-span-2 text-[0.6875rem] text-[#D94E4E]">{error}</p>}
     </div>
-    <footer className="flex justify-end gap-3 border-t border-black/[.07] px-5 py-4"><button type="button" onClick={onClose} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button disabled={saving} className="rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></footer>
+    <footer className="flex justify-end gap-3 border-t border-black/[.07] px-5 py-4"><button type="button" onClick={onClose} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button disabled={saving} className="rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></footer>
   </form></div>;
 }
 

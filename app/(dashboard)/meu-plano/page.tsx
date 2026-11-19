@@ -254,7 +254,7 @@ function PrestacaoNoPlano({ destacar, retorno }: { destacar: boolean; retorno: "
               type="button"
               onClick={comecarTeste}
               disabled={ativando || !organizationId}
-              className="flex items-center gap-2 rounded bg-[#2E8932] px-5 py-3 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+              className="flex items-center gap-2 rounded acao-salvar px-5 py-3 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
             >
               {ativando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" aria-hidden />}
               Começar teste gratuito de {TESTE_GRATIS_DIAS} dias

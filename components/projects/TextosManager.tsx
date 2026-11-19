@@ -297,7 +297,7 @@ export function TextosManager({ projetoId }: { projetoId: string }) {
             </div>
             <div className="flex items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <button onClick={closeSheet} className="text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
-              <button onClick={() => void saveSheet()} disabled={!novaPergunta.trim() || creating} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-35">
+              <button onClick={() => void saveSheet()} disabled={!novaPergunta.trim() || creating} className="inline-flex items-center gap-1.5 rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition active:scale-[.98] disabled:opacity-35">
                 {creating && <Loader2 size={12} className="animate-spin" />} Salvar
               </button>
             </div>

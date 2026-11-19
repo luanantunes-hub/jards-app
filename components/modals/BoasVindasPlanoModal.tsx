@@ -84,7 +84,7 @@ export function BoasVindasPlanoModal({ plano, onClose }: Props) {
             ref={actionRef}
             type="button"
             onClick={onClose}
-            className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded bg-[#2E8932] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#26752A] focus:outline-none focus:ring-2 focus:ring-[#2E8932]/30 focus:ring-offset-2 active:scale-[.99] sm:w-fit"
+            className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded acao-salvar px-5 py-3 text-sm font-bold text-white transition focus:outline-none focus:ring-2 focus:ring-[#2E8932]/30 focus:ring-offset-2 active:scale-[.99] sm:w-fit"
           >
             Explorar patrocinadores
             <ArrowRight size={15} weight="bold" />
