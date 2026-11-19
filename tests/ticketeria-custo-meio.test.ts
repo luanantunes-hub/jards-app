@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { CUSTOS_PROVISORIOS_DO_ASAAS, custoDoMeio, mensagemDoErroDoMeio, parcelasOferecidas, liquidoDoProdutorPorMeio, regraDoMeio, valorDasParcelas, valoresDoPedido } from "../lib/ticketeria/pagamento/custo-meio";
 import { taxaDoIngresso, totaisDoPedido } from "../lib/ticketeria/pagamento/taxa";
-import { partidasDoPagamento, equilibrada, saldos } from "../lib/ticketeria/pagamento/razao";
+import { partidasDaDevolucao, partidasDoPagamento, equilibrada, saldos } from "../lib/ticketeria/pagamento/razao";
 
 const pix = CUSTOS_PROVISORIOS_DO_ASAAS[0], aVista = CUSTOS_PROVISORIOS_DO_ASAAS[1], parcelado = CUSTOS_PROVISORIOS_DO_ASAAS[2];
 
@@ -87,4 +87,40 @@ test("os erros do banco ao escolher o meio viram frases", () => {
   assert.match(mensagemDoErroDoMeio({ message: "parcelas_indisponiveis" }), /parcelas/);
   assert.match(mensagemDoErroDoMeio({ message: "reserva_expirada" }), /reserva acabou/);
   assert.match(mensagemDoErroDoMeio({ message: "outra coisa" }), /Tente de novo/);
+});
+
+test("a devolução total em até 7 dias: o comprador recebe o preço, o Jards devolve a comissão e absorve o custo do Pix que o Asaas não devolve; o produtor fica em zero", () => {
+  const pedido = { total_centavos: 5000, produtor_centavos: 4875, taxa_centavos: 125, custo_meio_centavos: 199 };
+  const pagamento = partidasDoPagamento(pedido);
+  const pix = partidasDaDevolucao(pedido, false);
+  assert.deepEqual(pix, [{ conta: "psp_a_receber", valor_centavos: -5000 }, { conta: "produtor", valor_centavos: 4676 }, { conta: "plataforma", valor_centavos: 324 }]);
+  assert.ok(equilibrada(pix));
+  // Depois do pagamento e da devolução: o produtor em zero; o Jards absorveu os R$ 1,99 (a comissão de R$ 1,25 voltou); o provedor ficou R$ 1,99 devendo.
+  assert.deepEqual(saldos([...pagamento, ...pix]), { psp_a_receber: -199, produtor: 0, plataforma: 199 });
+});
+
+test("a devolução total no cartão, quando o Asaas devolve a taxa de transação: ninguém assume custo", () => {
+  const pedido = { total_centavos: 5000, produtor_centavos: 4875, taxa_centavos: 125, custo_meio_centavos: 199 };
+  const cartao = partidasDaDevolucao(pedido, true);
+  assert.deepEqual(cartao, [{ conta: "psp_a_receber", valor_centavos: -4801 }, { conta: "produtor", valor_centavos: 4676 }, { conta: "plataforma", valor_centavos: 125 }]);
+  assert.ok(equilibrada(cartao));
+  assert.deepEqual(saldos([...partidasDoPagamento(pedido), ...cartao]), { psp_a_receber: 0, produtor: 0, plataforma: 0 });
+});
+
+test("a devolução fecha em zero em qualquer valor, meio e resposta do Asaas; o pedido gratuito não tem devolução", () => {
+  for (const total of [100, 5000, 6000, 12000, 99999]) {
+    const taxa = taxaDoIngresso(total, { percentual_bps: 250, fixo_centavos: 0, quem_paga: "produtor" });
+    for (const custo of [49, 199, 450]) {
+      if (custo > total - taxa) continue;
+      for (const devolveu of [false, true]) {
+        const pedido = { total_centavos: total, produtor_centavos: total - taxa, taxa_centavos: taxa, custo_meio_centavos: custo };
+        const soma = partidasDaDevolucao(pedido, devolveu).reduce((acc, p) => acc + p.valor_centavos, 0);
+        assert.equal(soma, 0, `${total} ${custo} ${devolveu}`);
+        const finais = saldos([...partidasDoPagamento(pedido), ...partidasDaDevolucao(pedido, devolveu)]);
+        assert.equal(finais.produtor, 0, "o produtor nunca perde nada na devolução");
+        assert.equal(finais.plataforma, devolveu ? 0 : custo, "o Jards absorve só o que o Asaas não devolveu");
+      }
+    }
+  }
+  assert.deepEqual(partidasDaDevolucao({ total_centavos: 0, produtor_centavos: 0, taxa_centavos: 0 }, false), []);
 });
