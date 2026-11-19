@@ -109,13 +109,13 @@ export function PropostaUploadModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-md bg-white rounded border elevacao-3"
+        className="folha-vidro-centro w-full max-w-md"
         style={{ borderColor: "rgba(13,13,13,.10)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <p id={titleId} className="text-[0.8125rem] font-bold text-black/80">Enviar proposta</p>
+          <p id={titleId} className="text-[0.8125rem] text-black/80 font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Enviar proposta</p>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/6 transition text-black/35 hover:text-black/60">
             <X size={14} />
           </button>

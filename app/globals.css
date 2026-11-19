@@ -30,6 +30,8 @@
   --folha-luz: inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 0 0 1px rgba(255, 255, 255, .7), inset 0 -1px 0 rgba(13, 13, 13, .04);
   --folha-sombra: 0 0 0 1px rgba(13, 13, 13, .10), 0 2px 4px rgba(13, 13, 13, .08), 0 24px 48px -8px rgba(13, 13, 13, .30), 0 70px 130px -24px rgba(13, 13, 13, .40);
   --folha-sombra-cima: 0 0 0 1px rgba(13, 13, 13, .10), 0 -2px 4px rgba(13, 13, 13, .08), 0 -24px 48px -8px rgba(13, 13, 13, .30), 0 -70px 130px -24px rgba(13, 13, 13, .40);
+  --folha-sombra-centro: 0 0 0 1px rgba(13, 13, 13, .10), 0 4px 8px rgba(13, 13, 13, .08), 0 30px 70px -12px rgba(13, 13, 13, .36);
+  --folha-sombra-direita: 0 0 0 1px rgba(13, 13, 13, .10), -2px 0 4px rgba(13, 13, 13, .08), -24px 0 48px -8px rgba(13, 13, 13, .30), -70px 0 130px -24px rgba(13, 13, 13, .40);
 }
 @utility folha-vidro {
   background-color: var(--folha-vidro);
@@ -46,6 +48,21 @@
   box-shadow: var(--folha-sombra-cima), var(--folha-luz);
   border-top-left-radius: var(--raio-folha);
   border-top-right-radius: var(--raio-folha);
+}
+@utility folha-vidro-centro {
+  background-color: var(--folha-vidro);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: var(--folha-sombra-centro), var(--folha-luz);
+  border-radius: var(--raio-folha);
+}
+@utility folha-vidro-direita {
+  background-color: var(--folha-vidro);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: var(--folha-sombra-direita), var(--folha-luz);
+  border-top-left-radius: var(--raio-folha);
+  border-bottom-left-radius: var(--raio-folha);
 }
 @utility folha-rodape {
   background-color: rgba(250, 250, 249, .9);

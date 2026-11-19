@@ -60,7 +60,7 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded w-full max-w-md p-6 border elevacao-3"
+        className="folha-vidro-centro w-full max-w-md p-6"
         style={{ borderColor: "rgba(13,13,13,.08)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -70,7 +70,7 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
               <Building2 size={16} className="text-[#7259B5]" />
             </div>
             <div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Criar cliente</h2>
+              <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Criar cliente</h2>
               <p className="text-[0.75rem] text-black/40">{empresaNome}</p>
             </div>
           </div>

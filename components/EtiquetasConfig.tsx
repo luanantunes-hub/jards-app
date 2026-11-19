@@ -315,7 +315,7 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
       {erro && <p role="alert" className="mt-2 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
       {etapaParaExcluir && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/45 p-4" onClick={() => !excluindo && setEtapaParaExcluir(null)}>
-          <div role="dialog" aria-modal="true" aria-labelledby="excluir-etapa-titulo" className="w-full max-w-md rounded bg-white p-6 shadow-2xl" onClick={event => event.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-labelledby="excluir-etapa-titulo" className="folha-vidro-centro w-full max-w-md p-6" onClick={event => event.stopPropagation()}>
             <h2 id="excluir-etapa-titulo" className="text-[1.0625rem] font-bold text-[#282525]">Excluir “{etapaParaExcluir.label}”?</h2>
             <p className="mt-2 text-[0.8125rem] leading-relaxed text-black/55">Os registros nesta etapa serão transferidos para a etapa escolhida antes da exclusão.</p>
             <p className="mt-2 text-[0.75rem] text-black/40">Essa mudança também pode alterar indicadores que dependem do status dos registros.</p>

@@ -150,13 +150,13 @@ function DocForm({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center veu">
       <div role="dialog" aria-modal="true" aria-labelledby={titleId}
-        className="bg-white rounded w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col border elevacao-3"
+        className="folha-vidro-centro w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col"
         style={{ borderColor: "rgba(13,13,13,.12)" }}>
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-2.5">
             <SelectedIcon size={16} className="text-black/40" />
-            <span id={titleId} className="text-[0.8125rem] font-bold text-[#282525]">
+            <span id={titleId} className="text-[0.8125rem] text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">
               {doc ? "Editar documento" : "Novo documento"}
             </span>
           </div>
@@ -338,7 +338,7 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center veu">
         <div role="dialog" aria-modal="true" aria-label="Documentos"
-          className="bg-white rounded w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col border elevacao-3"
+          className="folha-vidro-centro w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col"
           style={{ borderColor: "rgba(13,13,13,.10)" }}>
 
           {/* Header */}

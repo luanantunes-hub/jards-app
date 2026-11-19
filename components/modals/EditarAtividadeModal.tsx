@@ -340,13 +340,13 @@ export function EditarAtividadeModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white h-full w-[40rem] max-w-[92vw] overflow-hidden flex flex-col border-l elevacao-2-lado"
+        className="folha-vidro-direita h-full w-[40rem] max-w-[92vw] overflow-hidden flex flex-col"
         style={{ borderLeft: "1px solid rgba(13,13,13,.08)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 id={titleId} className="text-[0.875rem] font-bold text-[#282525]">Editar atividade</h2>
+          <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Editar atividade</h2>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={14} className="text-black/40" />
           </button>

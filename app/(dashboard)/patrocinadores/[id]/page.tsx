@@ -965,7 +965,7 @@ export default function PatrocinadorPage() {
           />
         )}
         <div
-          className="fixed top-0 right-0 h-full w-80 z-50 flex flex-col bg-white border-l elevacao-2-lado"
+          className="folha-vidro-direita fixed top-0 right-0 h-full w-80 z-50 flex flex-col"
           style={{
             transform: showSugerirForm ? "translateX(0)" : "translateX(100%)",
             transition: "transform 0.22s cubic-bezier(0.4,0,0.2,1)",

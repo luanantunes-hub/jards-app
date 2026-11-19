@@ -54,13 +54,13 @@ export function EditarObjetivoModal({ projetoId, valorAtual, onClose, onSaved }:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 veu" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full overflow-hidden rounded bg-white border elevacao-3" style={{ maxWidth: "26.25rem" }} onClick={e => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-vidro-centro w-full overflow-hidden" style={{ maxWidth: "26.25rem" }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-[#282525]">
               <Target size={15} />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Editar objetivo</h2>
+            <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Editar objetivo</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
             <X size={15} className="text-black/40" />

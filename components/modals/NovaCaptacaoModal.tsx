@@ -686,7 +686,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex w-full max-w-[47.5rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-vidro flex w-full max-w-[47.5rem] flex-col overflow-hidden"
         style={{ maxHeight: "100vh", boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }} onClick={e => e.stopPropagation()}>
 
         <header className="flex shrink-0 items-center justify-between border-b px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -694,7 +694,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-black/5">
               <Building2 size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="min-w-0 text-[0.9375rem] font-bold text-[#282525]">{editData ? "Editar negociação" : "Nova negociação"}</h2>
+            <h2 id={titleId} className="min-w-0 text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">{editData ? "Editar negociação" : "Nova negociação"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar"
             className="flex h-9 w-9 items-center justify-center rounded transition hover:bg-black/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
@@ -988,7 +988,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
           )}
         </main>
 
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           {erro ? <p role="alert" className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
           <div className="ml-auto flex flex-shrink-0 items-center gap-2">
             <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>

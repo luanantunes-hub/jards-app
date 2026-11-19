@@ -165,10 +165,10 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
 
   if (savedProponente) return <>
     <div className={`fixed inset-0 ${nested ? "z-[70]" : "z-50"} flex items-start justify-center veu px-3 sm:px-5`} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby="proponente-created-title" className="w-full max-w-[42.5rem] overflow-hidden rounded-b bg-white border-x border-b elevacao-2" onClick={event => event.stopPropagation()}>
-        <header className="flex items-center justify-between border-b border-black/[.08] px-6 py-4"><h2 id="proponente-created-title" className="text-[1rem] font-semibold text-[#282525]">Proponente criado</h2><button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded text-black/35 hover:bg-black/[.05]"><X size={15}/></button></header>
+      <div role="dialog" aria-modal="true" aria-labelledby="proponente-created-title" className="folha-vidro w-full max-w-[42.5rem] overflow-hidden" onClick={event => event.stopPropagation()}>
+        <header className="flex items-center justify-between border-b border-black/[.08] px-6 py-5 sm:px-8 sm:py-6"><h2 id="proponente-created-title" className="text-[1rem] font-semibold text-[#282525]">Proponente criado</h2><button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded text-black/35 hover:bg-black/[.05]"><X size={15}/></button></header>
         <div className="px-6 py-8 sm:px-8"><span className="flex h-10 w-10 items-center justify-center rounded bg-black/[.04] text-[#2E8932]"><Check size={18}/></span><p className="mt-4 text-[1.0625rem] font-semibold text-black/80">{savedProponente.nome}</p><p className="mt-1 text-[0.75rem] text-black/40">O cadastro está pronto. Escolha o próximo passo para completar o relacionamento.</p><div className="mt-6 grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => setShowContato(true)} className="flex items-center gap-3 rounded border border-black/[.1] px-4 py-4 text-left transition hover:bg-black/[.025]"><UserPlus size={16} className="text-black/40"/><span><strong className="block text-[0.75rem] font-semibold text-black/70">Adicionar contato</strong><small className="mt-0.5 block text-[0.625rem] text-black/35">Cadastre o ponto focal</small></span></button><button type="button" onClick={() => { onClose(); router.push(`/projetos?novo=1&proponente=${savedProponente.id}`); }} className="flex items-center gap-3 rounded border border-black/[.1] px-4 py-4 text-left transition hover:bg-black/[.025]"><FolderPlus size={16} className="text-black/40"/><span><strong className="block text-[0.75rem] font-semibold text-black/70">Criar primeiro projeto</strong><small className="mt-0.5 block text-[0.625rem] text-black/35">Inicie o portfólio</small></span></button></div></div>
-        <footer className="flex justify-end border-t border-black/[.08] px-6 py-4"><button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-medium text-black/40 hover:text-black/60">Concluir depois</button></footer>
+        <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex justify-end border-t border-black/[.08] px-6 py-4"><button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-medium text-black/40 hover:text-black/60">Concluir depois</button></footer>
       </div>
     </div>
   </>;
@@ -182,7 +182,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
         role="dialog"
         aria-modal="true"
         aria-labelledby="proponente-sheet-title"
-        className="flex max-h-[94dvh] w-full max-w-[65rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
+        className="folha-vidro flex max-h-[94dvh] w-full max-w-[65rem] flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -388,7 +388,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
         </div>
 
         {/* Footer */}
-        <footer className="flex flex-shrink-0 items-center justify-between border-t border-black/[.08] bg-white px-6 py-4 sm:px-8">
+        <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex flex-shrink-0 items-center justify-between border-t border-black/[.08] bg-white px-6 py-4 sm:px-8">
           {erro && <p role="alert" className="text-xs text-[#D94E4E] font-medium">{erro}</p>}
           {!erro && <div />}
           <div className="flex items-center gap-3">

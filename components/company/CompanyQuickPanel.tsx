@@ -144,7 +144,7 @@ export function CompanyQuickPanel({ company, onClose }: {
     <div className="fixed inset-0 z-50 flex justify-end veu" onMouseDown={onClose}>
       <aside
         aria-label={`Painel da empresa ${company.nome}`}
-        className="flex h-full w-full max-w-[36.25rem] flex-col bg-[#F7F7F5] border-l elevacao-2-lado"
+        className="flex h-full w-full max-w-[36.25rem] flex-col overflow-hidden rounded-l-[var(--raio-folha)] bg-[#F7F7F5] shadow-[var(--folha-sombra-direita)]"
         onMouseDown={event => event.stopPropagation()}
       >
         <header className="border-b border-black/[.07] bg-white px-5 pb-4 pt-5 sm:px-6">

@@ -124,13 +124,13 @@ export function NovoResultadoModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded w-full flex flex-col overflow-hidden border elevacao-3"
+        className="folha-vidro-centro w-full flex flex-col overflow-hidden"
         style={{ maxWidth: "26.25rem", maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 id={titleId} className="text-[0.875rem] font-semibold text-black/80">
+          <h2 id={titleId} className="text-black/80 font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">
             {editData ? "Editar captação" : "Registrar captação"}
           </h2>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.05] transition">

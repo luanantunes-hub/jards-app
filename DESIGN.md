@@ -162,9 +162,9 @@ Exceções:
 
 ## Modais, sheets e menus
 
-As folhas (`TopSheet`, que desce do topo, e `BottomSheet`, que sobe da base, e as folhas próprias que seguem o mesmo desenho) têm peso e acabamento de vidro:
+Folhas, pop-ups e painéis laterais do CRM e da captação têm o mesmo peso e acabamento de vidro: `TopSheet` (desce do topo), `BottomSheet` (sobe da base), as folhas próprias, o pop-up no centro (`folha-vidro-centro`) e o painel lateral direito (`folha-vidro-direita`). Em desenho novo, use essas classes em vez de `bg-white rounded border elevacao-*`. Prestação e Produção ainda seguem o desenho antigo.
 
-- cantos de 1,25rem (`--raio-folha`) no lado livre; é a exceção aos 4px do produto;
+- cantos de 1,25rem (`--raio-folha`) no lado livre (nos pop-ups, em volta toda); é a exceção aos 4px do produto;
 - superfície de vidro: quase branca, com o fundo desfocado por trás, um fio de luz por dentro e um fio de 1px no lugar da borda (`folha-vidro` e `folha-vidro-cima` em `app/globals.css`);
 - cabeçalho com a etiqueta opcional em letras pequenas (`etiqueta`), título grande em peso extra e o fechar num círculo de vidro; a linha sob o cabeçalho leva um fio de luz embaixo;
 - base das ações num cinza bem claro (`folha-rodape`), separada por uma linha e um fio de luz;
