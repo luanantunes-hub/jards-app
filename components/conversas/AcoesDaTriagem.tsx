@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { BriefcaseBusiness, Check, MoreHorizontal, Pencil, UserPlus, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, BriefcaseBusiness, Check, MoreHorizontal, Pencil, UserPlus, X } from "lucide-react";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
 import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
@@ -165,7 +166,12 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
       )}
 
       {contato
-        ? <p className="flex items-center gap-1.5 text-[0.75rem] font-medium" style={{ color: VERDE }}><Check size={12} aria-hidden="true" />Contato criado{contato.empresaNome ? ` em ${contato.empresaNome}` : " sem empresa"}</p>
+        ? <>
+            <p className="flex items-center gap-1.5 text-[0.75rem] font-medium" style={{ color: VERDE }}><Check size={12} aria-hidden="true" />Contato criado{contato.empresaNome ? ` em ${contato.empresaNome}` : " sem empresa"}</p>
+            <Link href={`/contatos/${contato.id}`} className="mt-1 inline-flex items-center gap-1 text-[0.6875rem] font-medium text-[#7259B5] hover:underline">
+              Ver negociações, empresa e histórico do contato<ArrowUpRight size={11} aria-hidden="true" />
+            </Link>
+          </>
         : <p className="text-[0.75rem] text-black/55">
             {remetente.sugestaoDeEmpresa
               ? <>Parece ser da <span className="font-medium text-[#282525]">{remetente.sugestaoDeEmpresa.nome}</span>{remetente.sugestaoDeEmpresa.motivo === "site" ? ", pelo site da empresa" : ", pelos outros contatos dela"}.</>
