@@ -837,6 +837,7 @@ export type BancoDaProducao = {
           organization_id: string;
           temporada_id: string;
           data_id: string | null;
+          lancamento_id: string | null;
           pasta: PastaDeArquivo;
           storage_path: string;
           nome: string;
@@ -854,6 +855,7 @@ export type BancoDaProducao = {
           organization_id: string;
           temporada_id: string;
           data_id?: string | null;
+          lancamento_id?: string | null;
           pasta: PastaDeArquivo;
           storage_path: string;
           nome: string;
@@ -869,6 +871,7 @@ export type BancoDaProducao = {
           organization_id?: string;
           temporada_id?: string;
           data_id?: string | null;
+          lancamento_id?: string | null;
           pasta?: PastaDeArquivo;
           storage_path?: string;
           nome?: string;
@@ -880,6 +883,13 @@ export type BancoDaProducao = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "producao_arquivos_lancamento_id_fkey";
+            columns: ["lancamento_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_lancamentos";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "producao_arquivos_data_id_fkey";
             columns: ["data_id"];
