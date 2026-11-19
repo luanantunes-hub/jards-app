@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { BriefcaseBusiness, Check, UserPlus } from "lucide-react";
+import { BriefcaseBusiness, Check, Pencil, UserPlus } from "lucide-react";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
+import { createClient } from "@/lib/supabase/client";
 import type { RemetenteDaTriagem } from "@/app/api/email/triagem/route";
 
 const VERDE = "#3DA86A";
@@ -13,13 +14,20 @@ const BOTAO = "flex h-8 items-center gap-1.5 rounded border border-black/12 bg-w
  * Os três passos para quem ainda não é contato, dentro da conversa aberta: criar o contato (com a empresa sugerida
  * pelo domínio), registrar a conversa para a equipe e abrir a negociação. Nenhum é obrigatório, e "Dispensar" apaga
  * as cópias guardadas. Até registrar, a conversa é só sua.
+ *
+ * Criar contato é um clique só: o nome e o e-mail já são conhecidos, e a empresa é a sugerida (ou nenhuma).
+ * "Editar antes de criar" fica como saída para quem quer ajustar algo primeiro — telefone, cargo, outra empresa —,
+ * abrindo o mesmo formulário completo que o resto do Jards usa. Depois de criado, o contato se corrige na própria
+ * ficha dele, como qualquer outro.
  */
 export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaTriagem; onMudou: () => void }) {
   const [tratando, setTratando] = useState<string | null>(null);
+  const [criando, setCriando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [novoContato, setNovoContato] = useState(false);
+  const [editandoContato, setEditandoContato] = useState(false);
   const [novaNegociacao, setNovaNegociacao] = useState(false);
   const contato = remetente.contato;
+  const ocupado = tratando !== null || criando;
 
   async function tratar(acao: "registrar" | "dispensar") {
     setTratando(acao);
@@ -40,15 +48,41 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
     }
   }
 
+  async function criarContatoRapido() {
+    setCriando(true);
+    setErro(null);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Entre de novo para criar o contato.");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("contatos")
+        .insert({
+          account_id: user.id,
+          organization_id: remetente.organizationId,
+          nome: remetente.nomeSugerido,
+          email: remetente.endereco,
+          empresa_crm_id: remetente.sugestaoDeEmpresa?.id ?? null,
+        });
+      if (error) throw new Error(error.message);
+      onMudou();
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Não foi possível criar o contato.");
+    } finally {
+      setCriando(false);
+    }
+  }
+
   return (
     <div className="mb-4 rounded border bg-[#FBFAFA] px-4 py-3.5" style={{ borderColor: "rgba(13,13,13,.09)" }}>
-      {novoContato && (
+      {editandoContato && (
         <NovoContatoModal
           initialNome={remetente.nomeSugerido}
           initialEmail={remetente.endereco}
           empresaPreId={remetente.sugestaoDeEmpresa?.id}
-          onClose={() => setNovoContato(false)}
-          onSaved={() => { setNovoContato(false); onMudou(); }}
+          onClose={() => setEditandoContato(false)}
+          onSaved={() => { setEditandoContato(false); onMudou(); }}
         />
       )}
       {novaNegociacao && contato?.empresaId && (
@@ -66,14 +100,23 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
       {erro && <p role="alert" className="mt-2 text-[0.75rem] text-[#B23B3B]">{erro}</p>}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {!contato && <button type="button" onClick={() => setNovoContato(true)} className={BOTAO}><UserPlus size={13} aria-hidden="true" />Criar contato</button>}
-        <button type="button" onClick={() => void tratar("registrar")} disabled={!contato || tratando !== null} title={contato ? undefined : "Crie o contato primeiro"} className={BOTAO}>
+        {!contato && (
+          <>
+            <button type="button" onClick={() => void criarContatoRapido()} disabled={ocupado} className={BOTAO}>
+              <UserPlus size={13} aria-hidden="true" />{criando ? "Criando…" : "Criar contato"}
+            </button>
+            <button type="button" onClick={() => setEditandoContato(true)} disabled={ocupado} className="flex h-8 items-center gap-1.5 rounded px-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">
+              <Pencil size={12} aria-hidden="true" />Editar antes de criar
+            </button>
+          </>
+        )}
+        <button type="button" onClick={() => void tratar("registrar")} disabled={!contato || ocupado} title={contato ? undefined : "Crie o contato primeiro"} className={BOTAO}>
           <Check size={13} aria-hidden="true" />{tratando === "registrar" ? "Registrando…" : "Registrar conversa"}
         </button>
-        <button type="button" onClick={() => setNovaNegociacao(true)} disabled={!contato?.empresaId || tratando !== null} title={contato?.empresaId ? undefined : "Crie o contato em uma empresa primeiro"} className={BOTAO}>
+        <button type="button" onClick={() => setNovaNegociacao(true)} disabled={!contato?.empresaId || ocupado} title={contato?.empresaId ? undefined : "Crie o contato em uma empresa primeiro"} className={BOTAO}>
           <BriefcaseBusiness size={13} aria-hidden="true" />Criar negociação
         </button>
-        <button type="button" onClick={() => void tratar("dispensar")} disabled={tratando !== null} className="h-8 rounded px-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">
+        <button type="button" onClick={() => void tratar("dispensar")} disabled={ocupado} className="h-8 rounded px-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">
           {tratando === "dispensar" ? "Dispensando…" : "Dispensar"}
         </button>
       </div>
