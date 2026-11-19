@@ -4,11 +4,11 @@
 // dela em lib/producao/banco.ts. Este arquivo faz o mesmo para a Ticketeria, no formato que o @supabase/supabase-js espera
 // de um `Database`: o cliente de cliente.ts faz o compilador acusar tabela, coluna e valor de lista fechada que não existem.
 //
-// De onde vêm os dados: supabase/migrations/20261118233242_ticketeria_lojas_site.sql (T1) e 20261119002840_ticketeria_eventos.sql (T2), conferidas contra o gerador do conector
+// De onde vêm os dados: supabase/migrations/20261118233242_ticketeria_lojas_site.sql (T1) 20261119002840_ticketeria_eventos.sql (T2) e 20261119011007_ticketeria_catalogo.sql (T3), conferidas contra o gerador do conector
 // (supabase gen types) em 18/11/2026, depois de aplicada: as mesmas colunas e anulabilidade. tests/ticketeria-banco-tipos.test.ts compara este arquivo com a migration.
 // Relationships não lista as chaves para auth.users (`criado_por`): o PostgREST só expõe o schema public.
 
-import type { ClassificacaoIndicativa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoSite } from "@/lib/ticketeria/estados";
+import type { CategoriaDoIngresso, ClassificacaoIndicativa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoSite } from "@/lib/ticketeria/estados";
 import type { Json } from "@/lib/supabase/types";
 
 export type BancoDaTicketeria = {
@@ -448,6 +448,133 @@ export type BancoDaTicketeria = {
           },
           {
             foreignKeyName: "ticketeria_sessoes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_ingressos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          evento_id: string;
+          setor_id: string;
+          nome: string;
+          categoria: CategoriaDoIngresso;
+          descricao: string | null;
+          limite_por_pedido: number;
+          publico: boolean;
+          ordem: number;
+          arquivado: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          evento_id: string;
+          setor_id: string;
+          nome: string;
+          categoria: CategoriaDoIngresso;
+          descricao?: string | null;
+          limite_por_pedido?: number;
+          publico?: boolean;
+          ordem?: number;
+          arquivado?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          evento_id?: string;
+          setor_id?: string;
+          nome?: string;
+          categoria?: CategoriaDoIngresso;
+          descricao?: string | null;
+          limite_por_pedido?: number;
+          publico?: boolean;
+          ordem?: number;
+          arquivado?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_ingressos_evento_id_fkey";
+            columns: ["evento_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_eventos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_ingressos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_ingressos_setor_id_fkey";
+            columns: ["setor_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_setores";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_lotes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          ingresso_id: string;
+          nome: string;
+          ordem: number;
+          preco_centavos: number;
+          quantidade: number;
+          vendas_inicio: string | null;
+          vendas_fim: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          ingresso_id: string;
+          nome: string;
+          ordem?: number;
+          preco_centavos: number;
+          quantidade: number;
+          vendas_inicio?: string | null;
+          vendas_fim?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          ingresso_id?: string;
+          nome?: string;
+          ordem?: number;
+          preco_centavos?: number;
+          quantidade?: number;
+          vendas_inicio?: string | null;
+          vendas_fim?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_lotes_ingresso_id_fkey";
+            columns: ["ingresso_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_ingressos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_lotes_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";

@@ -12,6 +12,7 @@ import type { ClassificacaoIndicativa, SituacaoDoEvento } from "@/lib/ticketeria
 import { ROTULO_DA_CLASSIFICACAO, ROTULO_DA_SITUACAO_DO_EVENTO, mensagemDoErroDoEvento, partesNoFuso, quandoDaSessao, situacaoDaSessao } from "@/lib/ticketeria/eventos";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { SecondaryListAction } from "@/components/list/ListPagePrimitives";
+import { CatalogoDoEvento } from "@/components/ticketeria/CatalogoDoEvento";
 import { Aviso, EventoSheet, LocalSheet, SessaoSheet, type EventoEditavel, type LocalDaSessao, type SessaoEditavel } from "@/components/ticketeria/FolhasDosEventos";
 
 type Evento = EventoEditavel & { situacao: SituacaoDoEvento };
@@ -135,7 +136,7 @@ export default function EventoPage() {
       </header>
       <DetailPageContent>
         {erro && <div className="mb-4"><Aviso texto={erro} /></div>}
-        {evento.situacao === "publicado" && <p className="mb-6 max-w-2xl text-[0.75rem] text-black/55">Publicado: a venda de ingressos entra quando o catálogo de ingressos estiver pronto. Por enquanto, o evento só fica marcado como pronto.</p>}
+        {evento.situacao === "publicado" && <p className="mb-6 max-w-2xl text-[0.75rem] text-black/55">Publicado: o catálogo de ingressos está montado abaixo; a venda e o pagamento entram nas próximas etapas.</p>}
         <section aria-labelledby="sessoes-do-evento">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 id="sessoes-do-evento" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Sessões</h2>
@@ -144,7 +145,7 @@ export default function EventoPage() {
           {linhas.length === 0 ? (
             <div className="rounded border bg-white px-5 py-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <p className="text-[0.8125rem] font-medium text-black/55">Nenhuma sessão ainda</p>
-              <p className="mx-auto mt-1 max-w-sm text-[0.75rem] text-black/45">Cada sessão é um dia e uma hora num local. Ponha a primeira para o evento poder ser vendido.</p>
+              <p className="mx-auto mt-1 max-w-sm text-[0.75rem] text-black/45">Cada sessão é um dia e uma hora num local. Os ingressos valem para as sessões no local do setor.</p>
             </div>
           ) : (
             <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -166,6 +167,7 @@ export default function EventoPage() {
             </ul>
           )}
         </section>
+        <CatalogoDoEvento organizationId={organizationId} eventoId={evento.id} locaisDasSessoes={[...new Set(sessoes.map(sessao => sessao.local_id))]} podeEditar={editavel} />
         {editavel && (
           <div className="mt-12">
             {evento.situacao === "rascunho"
