@@ -9,14 +9,15 @@
 --   82 (cancelada) e 83 (passada); evento 72 em rascunho com a sessão 84. Ingressos do 71: 31 Inteira (lotes 21: 2 lugares a R$ 50;
 --   22: 3 a R$ 80), 32 Cortesia (não pública), 33 Gratuito (lote 23: 10 a zero), 34 Meia (lote 24, janela que abre amanhã) e 35
 --   Inteira no setor 42 (outro local). a1 admin, a2 colaborador, a3 leitor.   B (b0): b1 admin, sem nada.
--- Rodar: supabase/tests/README.md, com as migrations da T2, da T3 e ticketeria_pagamentos na frente se não estiverem aplicadas.
+-- Rodar: supabase/tests/README.md, com as migrations da T2, da T3, ticketeria_pagamentos e ticketeria_custo_do_meio na frente se não estiverem aplicadas.
+-- (A migration do custo do meio grava a taxa padrão provisória e troca a confirmação: o teste apaga a taxa padrão para provar a regra sem nada gravado e define o meio de pagamento antes de pagar.)
 -- A seção "Apagar" usa DELETE (cada um desfeito): rode pela CLI (`supabase db query --linked -f bloco.sql`).
 
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(29);
+select plan(30);
 
 create schema tp;
 grant usage on schema tp to authenticated, anon;
@@ -74,6 +75,7 @@ begin
     (tp.id('23'), tp.id('a0'), tp.id('33'), 'Retirada', 0, 0, 10, null),
     (tp.id('24'), tp.id('a0'), tp.id('34'), '1º lote', 0, 2500, 10, now() + interval '1 day'),
     (tp.id('26'), tp.id('a0'), tp.id('35'), '1º lote', 0, 5000, 10, null);
+  delete from public.ticketeria_taxas;
 end
 $dados$;
 
@@ -180,6 +182,7 @@ select is((select string_agg(l.nome || 'x' || i.quantidade || '@' || i.preco_cen
           '1º lotex2@5000+300 2º lotex1@8000+450', 'o pedido se divide entre os lotes, em sequência, com o preço e a taxa de cada um');
 select is(tp.tenta($t$select public.fn_ticketeria_reservar('0d740000-0000-4000-8000-000000000081', '[{"ingresso_id": "0d740000-0000-4000-8000-000000000031", "quantidade": 3}]', 'Rita', 'rita@teste.invalid', 15)$t$),
           '23514 esgotado', 'sobram 2 no 2º lote: 3 não cabem');
+select public.fn_ticketeria_definir_meio(tp.pedido('p1'), 'pix', null);
 update public.ticketeria_pedidos set reservado_ate = now() - interval '1 minute' where id = tp.pedido('p1');
 select is((select row(r ->> 'total_centavos', r ->> 'taxa_centavos')::text from tp.reservar('p2', '81', '[{"ingresso_id": "0d740000-0000-4000-8000-000000000031", "quantidade": 2}]') r),
           '(10600,600)', 'a reserva vencida libera os lugares: o 1º lote volta a ter 2');
@@ -204,8 +207,10 @@ select is(array[
 
 -- ─── Confirmar ──────────────────────────────────────────────────────────────
 
-select is(tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 10599)', tp.pedido('p2'), 'mentira', 'ref-p2')), '23514 valor_divergente', 'o valor tem de ser o total do pedido');
-select is(array[public.fn_ticketeria_confirmar_pagamento(tp.pedido('p2'), 'mentira', 'ref-p2', 10600), public.fn_ticketeria_confirmar_pagamento(tp.pedido('p2'), 'mentira', 'ref-p2', 10600)],
+select is(tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 10600)', tp.pedido('p2'), 'mentira', 'ref-p2')), '23514 meio_nao_escolhido', 'sem o meio de pagamento escolhido, não se confirma');
+select public.fn_ticketeria_definir_meio(tp.pedido('p2'), 'pix', null);
+select is(tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 10599)', tp.pedido('p2'), 'mentira', 'ref-p2')), '23514 valor_divergente', 'o valor tem de ser o total mais o custo do meio (10.600 + R$ 1,99 do Pix)');
+select is(array[public.fn_ticketeria_confirmar_pagamento(tp.pedido('p2'), 'mentira', 'ref-p2', 10799), public.fn_ticketeria_confirmar_pagamento(tp.pedido('p2'), 'mentira', 'ref-p2', 10799)],
           array['pago', 'ja_pago'], 'confirmar duas vezes paga uma vez só');
 set constraints all immediate;
 select is((select string_agg(p.conta || '=' || p.valor_centavos, ' ' order by p.conta) from public.ticketeria_partidas p join public.ticketeria_transacoes t on t.id = p.transacao_id where t.pedido_id = tp.pedido('p2'))
@@ -213,7 +218,7 @@ select is((select string_agg(p.conta || '=' || p.valor_centavos, ' ' order by p.
           'plataforma=-600 produtor=-10000 psp_a_receber=10600 n=1', 'o razão: o provedor recebeu o total; é do produtor o preço e do Jards a taxa; uma transação só');
 select is((select row(situacao, provedor, provedor_ref, pago_em is not null)::text from public.ticketeria_pedidos where id = tp.pedido('p2')), '(pago,mentira,ref-p2,t)', 'o pedido fica pago, com o provedor e a referência');
 select is(array[
-            tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 19050)', tp.pedido('p1'), 'mentira', 'ref-p1')),
+            tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 19249)', tp.pedido('p1'), 'mentira', 'ref-p1')),
             tp.tenta(format('select public.fn_ticketeria_confirmar_pagamento(%L, %L, %L, 1)', tp.id('99'), 'mentira', 'x')),
             tp.tenta(format('update public.ticketeria_partidas set valor_centavos = 1 where transacao_id = (select id from public.ticketeria_transacoes where pedido_id = %L limit 1)', tp.pedido('p2'))),
             tp.tenta(format('delete from public.ticketeria_transacoes where pedido_id = %L', tp.pedido('p2'))),

@@ -4,11 +4,11 @@
 // dela em lib/producao/banco.ts. Este arquivo faz o mesmo para a Ticketeria, no formato que o @supabase/supabase-js espera
 // de um `Database`: o cliente de cliente.ts faz o compilador acusar tabela, coluna e valor de lista fechada que não existem.
 //
-// De onde vêm os dados: supabase/migrations/20261118233242_ticketeria_lojas_site.sql (T1), 20261119002840_ticketeria_eventos.sql (T2), 20261119011007_ticketeria_catalogo.sql (T3) e 20261119033509_ticketeria_pagamentos.sql (T4), conferidas contra o gerador do conector
+// De onde vêm os dados: supabase/migrations/20261118233242_ticketeria_lojas_site.sql (T1), 20261119002840_ticketeria_eventos.sql (T2), 20261119011007_ticketeria_catalogo.sql (T3), 20261119033509_ticketeria_pagamentos.sql (T4) e 20261119041904_ticketeria_custo_do_meio.sql (T5), conferidas contra o gerador do conector
 // (supabase gen types) em 18/11/2026, depois de aplicada: as mesmas colunas e anulabilidade. tests/ticketeria-banco-tipos.test.ts compara este arquivo com a migration.
 // Relationships não lista as chaves para auth.users (`criado_por`): o PostgREST só expõe o schema public.
 
-import type { CategoriaDoIngresso, ClassificacaoIndicativa, ContaDoRazao, QuemPagaATaxa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoPedido, SituacaoDoSite, TipoDeTransacao } from "@/lib/ticketeria/estados";
+import type { CategoriaDoIngresso, ClassificacaoIndicativa, ContaDoRazao, MeioDePagamento, QuemPagaATaxa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoPedido, SituacaoDoSite, TipoDeTransacao } from "@/lib/ticketeria/estados";
 import type { Json } from "@/lib/supabase/types";
 
 export type BancoDaTicketeria = {
@@ -19,6 +19,7 @@ export type BancoDaTicketeria = {
           id: string;
           organization_id: string;
           nome: string;
+          parcelas_max: number;
           criado_por: string | null;
           created_at: string;
           updated_at: string;
@@ -27,6 +28,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id: string;
           nome: string;
+          parcelas_max?: number;
           criado_por?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -35,6 +37,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id?: string;
           nome?: string;
+          parcelas_max?: number;
           criado_por?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -640,6 +643,9 @@ export type BancoDaTicketeria = {
           reservado_ate: string;
           provedor: string | null;
           provedor_ref: string | null;
+          meio: MeioDePagamento | null;
+          parcelas: number | null;
+          custo_meio_centavos: number;
           pago_em: string | null;
           created_at: string;
           updated_at: string;
@@ -660,6 +666,9 @@ export type BancoDaTicketeria = {
           reservado_ate: string;
           provedor?: string | null;
           provedor_ref?: string | null;
+          meio?: MeioDePagamento | null;
+          parcelas?: number | null;
+          custo_meio_centavos?: number;
           pago_em?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -680,6 +689,9 @@ export type BancoDaTicketeria = {
           reservado_ate?: string;
           provedor?: string | null;
           provedor_ref?: string | null;
+          meio?: MeioDePagamento | null;
+          parcelas?: number | null;
+          custo_meio_centavos?: number;
           pago_em?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -911,6 +923,45 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_custos_meio: {
+        Row: {
+          id: string;
+          provedor: string;
+          meio: MeioDePagamento;
+          parcelas_de: number;
+          parcelas_ate: number;
+          percentual_bps: number;
+          fixo_centavos: number;
+          vigente_desde: string;
+          criado_por: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          provedor?: string;
+          meio: MeioDePagamento;
+          parcelas_de: number;
+          parcelas_ate: number;
+          percentual_bps?: number;
+          fixo_centavos?: number;
+          vigente_desde?: string;
+          criado_por?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          provedor?: string;
+          meio?: MeioDePagamento;
+          parcelas_de?: number;
+          parcelas_ate?: number;
+          percentual_bps?: number;
+          fixo_centavos?: number;
+          vigente_desde?: string;
+          criado_por?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -928,6 +979,14 @@ export type BancoDaTicketeria = {
       fn_ticketeria_reservar: {
         Args: { p_sessao: string; p_itens: Json; p_nome: string; p_email: string; p_minutos: number };
         Returns: Json;
+      };
+      fn_ticketeria_definir_meio: {
+        Args: { p_pedido: string; p_meio: MeioDePagamento; p_parcelas: number | null };
+        Returns: Json;
+      };
+      fn_ticketeria_custo_do_meio: {
+        Args: { p_provedor: string; p_meio: MeioDePagamento; p_parcelas: number | null; p_liquido_centavos: number };
+        Returns: number;
       };
       fn_ticketeria_confirmar_pagamento: {
         Args: { p_pedido: string; p_provedor: string; p_ref: string; p_valor_centavos: number };
