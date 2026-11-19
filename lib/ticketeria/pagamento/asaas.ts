@@ -29,6 +29,8 @@ export type ConfiguracaoDoAsaas = {
   fetch?: typeof fetch;
   /** Tempo máximo de cada chamada, em milissegundos. */
   tempoMaximoMs?: number;
+  /** Quanto esperar antes de pedir o QR de novo, em milissegundos (a primeira vez de uma conta sem chave Pix). Para os testes: 0. */
+  esperaDoQrMs?: number;
 };
 
 /** O erro de uma chamada ao Asaas: o status e os códigos que ele devolveu (nunca a chave nem o corpo da resposta inteiro). */
@@ -59,6 +61,7 @@ export class ProvedorAsaas implements ProvedorDePagamento {
   private readonly url: string;
   private readonly http: typeof fetch;
   private readonly tempoMaximoMs: number;
+  private readonly esperaDoQrMs: number;
 
   constructor(private readonly config: ConfiguracaoDoAsaas) {
     if (config.chave.length < 20) throw new Error("a chave do Asaas parece curta demais");
@@ -68,6 +71,7 @@ export class ProvedorAsaas implements ProvedorDePagamento {
     this.url = (config.url ?? URL_DO_SANDBOX).replace(/\/+$/, "");
     this.http = config.fetch ?? fetch;
     this.tempoMaximoMs = config.tempoMaximoMs ?? 20000;
+    this.esperaDoQrMs = config.esperaDoQrMs ?? 2000;
   }
 
   private async chamar<T>(metodo: "GET" | "POST" | "DELETE", caminho: string, corpo?: unknown): Promise<T> {
@@ -105,8 +109,24 @@ export class ProvedorAsaas implements ProvedorDePagamento {
       description: `Ingressos, pedido ${pedido.codigo}`.slice(0, 500),
       ...(pedido.split && pedido.split.length > 0 ? { split: pedido.split.map(parte => ({ walletId: parte.carteira, fixedValue: reais(parte.valor_centavos) })) } : {}),
     });
-    const qr = await this.chamar<{ payload: string; expirationDate?: string }>("GET", `/payments/${encodeURIComponent(cobranca.id)}/pixQrCode`);
+    const qr = await this.qrDoPix(cobranca.id);
     return { ref: cobranca.id, pix_copia_e_cola: qr.payload, url: cobranca.invoiceUrl ?? null, expira_em: pedido.expira_em };
+  }
+
+  /**
+   * O QR do Pix. Achado no sandbox (19/11/2026): numa conta sem chave Pix, o primeiro pedido do QR volta 400 `invalid_action` enquanto o
+   * Asaas cria sozinho a chave aleatória, e o seguinte já funciona. Por isso tenta de novo, até 3 vezes, só nesse erro.
+   */
+  private async qrDoPix(cobrancaId: string): Promise<{ payload: string; expirationDate?: string }> {
+    for (let tentativa = 1; ; tentativa++) {
+      try {
+        return await this.chamar<{ payload: string; expirationDate?: string }>("GET", `/payments/${encodeURIComponent(cobrancaId)}/pixQrCode`);
+      } catch (erro) {
+        const primeiraVez = erro instanceof ErroDoAsaas && erro.status === 400 && erro.codigos.includes("invalid_action");
+        if (!primeiraVez || tentativa >= 3) throw erro;
+        await new Promise(resolve => setTimeout(resolve, this.esperaDoQrMs));
+      }
+    }
   }
 
   async estornar(ref: string, valorCentavos: number): Promise<{ ok: boolean; motivo?: string }> {
