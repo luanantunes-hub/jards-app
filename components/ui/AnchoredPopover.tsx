@@ -12,9 +12,14 @@ export function useAnchoredPopover() {
   function abrir(event: React.MouseEvent<HTMLElement>, larguraBase = 340) {
     const r = event.currentTarget.getBoundingClientRect();
     const width = larguraBase * escalaUi();
+    const margem = 8 * escalaUi();
+    // Prefere alinhar a borda direita com a do botão; se isso empurrar para fora pela esquerda (botão
+    // perto da borda esquerda da tela), alinha pela esquerda do botão. Nunca sai da tela dos dois lados.
+    const alinhadoADireita = r.right - width;
+    const esquerda = alinhadoADireita >= margem ? alinhadoADireita : r.left;
     setPos({
       top: r.bottom + 6,
-      left: Math.min(r.right - width, window.innerWidth - width - 8),
+      left: Math.max(margem, Math.min(esquerda, window.innerWidth - width - margem)),
       width,
     });
   }
