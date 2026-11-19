@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { agruparConversas, type EmailDeConversa } from "../lib/email/conversas";
-import { contagemDosFiltros, dataCurta, itemNoFiltro, montarLista, quandoDaReuniao, type EmailAgendado, type ReuniaoNaLista } from "../lib/conversas/lista";
+import { contagemDosFiltros, dataCurta, itemNoFiltro, montarLista, quandoDaReuniao, recortarReunioes, type EmailAgendado, type ReuniaoNaLista } from "../lib/conversas/lista";
 
 const AGORA = Date.parse("2026-11-19T12:00:00Z");
 
@@ -27,10 +27,10 @@ const conversas = agruparConversas([
   email("b", { direction: "outbound", to_emails: ["marina@aurora.com.br"], contato_id: "c1", visibility: "organization", sent_at: "2026-11-15T10:00:00Z" }),
 ], AGORA);
 
-test("a lista junta e-mails, reuniões e agendados, do mais recente ao mais antigo", () => {
-  const itens = montarLista(conversas, [reuniao()], [agendado]);
-  assert.deepEqual(itens.map((item) => item.tipo), ["agendado", "email", "reuniao", "email"]);
-  assert.deepEqual(itens.map((item) => item.chave), ["agendado:ag1", "email:u1|fio-a", "reuniao:r1", "email:u1|fio-b"]);
+test("a lista do e-mail junta as conversas e os agendados, do mais recente ao mais antigo", () => {
+  const itens = montarLista(conversas, [agendado]);
+  assert.deepEqual(itens.map((item) => item.tipo), ["agendado", "email", "email"]);
+  assert.deepEqual(itens.map((item) => item.chave), ["agendado:ag1", "email:u1|fio-a", "email:u1|fio-b"]);
 });
 
 test("a data da reunião é o fim, a hora marcada ou a criação, nessa ordem", () => {
@@ -40,10 +40,9 @@ test("a data da reunião é o fim, a hora marcada ou a criação, nessa ordem", 
 });
 
 test("cada filtro mostra o que promete e o agendado só aparece no dele", () => {
-  const itens = montarLista(conversas, [reuniao()], [agendado]);
+  const itens = montarLista(conversas, [agendado]);
   const chaves = (filtro: Parameters<typeof itemNoFiltro>[1]) => itens.filter((item) => itemNoFiltro(item, filtro)).map((item) => item.chave);
-  assert.deepEqual(chaves("tudo"), ["email:u1|fio-a", "reuniao:r1", "email:u1|fio-b"]);
-  assert.deepEqual(chaves("reunioes"), ["reuniao:r1"]);
+  assert.deepEqual(chaves("tudo"), ["email:u1|fio-a", "email:u1|fio-b"]);
   assert.deepEqual(chaves("agendados"), ["agendado:ag1"]);
   assert.deepEqual(chaves("sem-contato"), ["email:u1|fio-a"]);
   assert.deepEqual(chaves("so-eu"), ["email:u1|fio-a"]);
@@ -51,8 +50,8 @@ test("cada filtro mostra o que promete e o agendado só aparece no dele", () => 
 });
 
 test("a contagem de cada filtro", () => {
-  assert.deepEqual(contagemDosFiltros(montarLista(conversas, [reuniao()], [agendado])), {
-    tudo: 3, aguardando: 1, "sem-contato": 1, "so-eu": 1, reunioes: 1, agendados: 1,
+  assert.deepEqual(contagemDosFiltros(montarLista(conversas, [agendado])), {
+    tudo: 2, aguardando: 1, "sem-contato": 1, "so-eu": 1, agendados: 1,
   });
 });
 
@@ -71,5 +70,21 @@ test("primeiro contato de alguém não é \"Respondeu\": a etiqueta só aparece 
     email("y2", { thread_id: "fy" }),
   ], AGORA);
   assert.equal(comIda[0].situacao?.tipo, "respondeu");
+});
+
+test("o ambiente de reuniões separa as próximas das gravadas e ordena cada uma a seu modo", () => {
+  const marcadaPerto = reuniao({ id: "p1", status: "agendada", finalizada_em: null, agendada_para: "2026-11-20T10:00:00Z" });
+  const marcadaLonge = reuniao({ id: "p2", status: "agendada", finalizada_em: null, agendada_para: "2026-11-25T10:00:00Z" });
+  const jaPassou = reuniao({ id: "p3", status: "agendada", finalizada_em: null, agendada_para: "2026-11-10T10:00:00Z" });
+  const gravadaVelha = reuniao({ id: "g1", finalizada_em: "2026-11-05T10:00:00Z" });
+  const gravadaNova = reuniao({ id: "g2", finalizada_em: "2026-11-17T10:00:00Z" });
+  const todas = [gravadaVelha, marcadaLonge, jaPassou, gravadaNova, marcadaPerto];
+
+  const proximas = recortarReunioes(todas, "proximas", AGORA);
+  assert.deepEqual(proximas.visiveis.map((item) => item.reuniao.id), ["p1", "p2"], "a mais perto primeiro, e o que já passou fica fora");
+  const gravadas = recortarReunioes(todas, "gravadas", AGORA);
+  assert.deepEqual(gravadas.visiveis.map((item) => item.reuniao.id), ["g2", "g1"], "a mais recente primeiro");
+  assert.deepEqual(gravadas.contagem, { proximas: 2, gravadas: 2, todas: 5 });
+  assert.equal(recortarReunioes(todas, "todas", AGORA).visiveis.length, 5);
 });
 

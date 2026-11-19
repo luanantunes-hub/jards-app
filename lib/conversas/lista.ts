@@ -1,7 +1,7 @@
 /**
- * A lista única de Conversas: e-mails e reuniões lado a lado, do mais recente para o mais antigo.
- * As duas coisas são o mesmo no CRM — o registro do que foi conversado com o patrocinador — e as duas
- * apontam para empresa e negociação. Aqui ficam só as regras puras; a tela e a busca ficam nos componentes.
+ * Conversas tem dois ambientes: o e-mail (esta lista) e as reuniões (components/conversas/ListaDeReunioes).
+ * Aqui ficam as regras puras da lista de e-mail — as conversas em fio e os e-mails que ainda não saíram —
+ * e os tipos das reuniões, que a tabela do outro ambiente usa.
  */
 import type { Conversa } from "@/lib/email/conversas";
 
@@ -17,6 +17,8 @@ export type ReuniaoNaLista = {
   agendada_para: string | null;
   finalizada_em: string | null;
   created_at: string;
+  /** E-mails convidados, como foram enviados ao calendário. */
+  participantes?: string[] | null;
 };
 
 export type EmailAgendado = {
@@ -31,17 +33,15 @@ export type EmailAgendado = {
 
 export type ItemDaLista =
   | { tipo: "email"; chave: string; quando: number | null; conversa: Conversa }
-  | { tipo: "reuniao"; chave: string; quando: number | null; reuniao: ReuniaoNaLista }
   | { tipo: "agendado"; chave: string; quando: number | null; agendado: EmailAgendado };
 
-export type FiltroDasConversas = "tudo" | "aguardando" | "sem-contato" | "so-eu" | "reunioes" | "agendados";
+export type FiltroDasConversas = "tudo" | "aguardando" | "sem-contato" | "so-eu" | "agendados";
 
 export const FILTROS_DAS_CONVERSAS: ReadonlyArray<{ value: FiltroDasConversas; label: string }> = [
   { value: "tudo", label: "Tudo" },
   { value: "aguardando", label: "Aguardando resposta" },
   { value: "sem-contato", label: "Sem contato" },
   { value: "so-eu", label: "Só eu vejo" },
-  { value: "reunioes", label: "Reuniões" },
   { value: "agendados", label: "Agendados" },
 ];
 
@@ -56,15 +56,13 @@ export function quandoDaReuniao(reuniao: ReuniaoNaLista): number | null {
   return instante(reuniao.finalizada_em) ?? instante(reuniao.agendada_para) ?? instante(reuniao.created_at);
 }
 
-/** Junta e-mails, reuniões e agendados numa lista só, do mais recente para o mais antigo. */
+/** Junta as conversas e os e-mails agendados numa lista só, do mais recente para o mais antigo. */
 export function montarLista(
   conversas: readonly Conversa[],
-  reunioes: readonly ReuniaoNaLista[],
   agendados: readonly EmailAgendado[] = [],
 ): ItemDaLista[] {
   const itens: ItemDaLista[] = [
     ...conversas.map((conversa): ItemDaLista => ({ tipo: "email", chave: `email:${conversa.chave}`, quando: conversa.ultimaEm, conversa })),
-    ...reunioes.map((reuniao): ItemDaLista => ({ tipo: "reuniao", chave: `reuniao:${reuniao.id}`, quando: quandoDaReuniao(reuniao), reuniao })),
     ...agendados.map((agendado): ItemDaLista => ({ tipo: "agendado", chave: `agendado:${agendado.id}`, quando: instante(agendado.enviar_em), agendado })),
   ];
   return itens.sort((a, b) => {
@@ -83,8 +81,6 @@ export function itemNoFiltro(item: ItemDaLista, filtro: FiltroDasConversas): boo
   if (filtro === "agendados") return item.tipo === "agendado";
   if (item.tipo === "agendado") return false;
   switch (filtro) {
-    case "reunioes":
-      return item.tipo === "reuniao";
     case "aguardando":
       return item.tipo === "email" && item.conversa.situacao?.tipo === "aguardando";
     case "sem-contato":
@@ -97,7 +93,7 @@ export function itemNoFiltro(item: ItemDaLista, filtro: FiltroDasConversas): boo
 }
 
 export function contagemDosFiltros(itens: readonly ItemDaLista[]): Record<FiltroDasConversas, number> {
-  const contagem = { tudo: 0, aguardando: 0, "sem-contato": 0, "so-eu": 0, reunioes: 0, agendados: 0 } as Record<FiltroDasConversas, number>;
+  const contagem = { tudo: 0, aguardando: 0, "sem-contato": 0, "so-eu": 0, agendados: 0 } as Record<FiltroDasConversas, number>;
   for (const filtro of Object.keys(contagem) as FiltroDasConversas[]) {
     contagem[filtro] = itens.filter((item) => itemNoFiltro(item, filtro)).length;
   }
@@ -149,5 +145,37 @@ export function quemNaConversa(conversa: Conversa, nomesDosContatos: readonly st
 export function horaCurta(ms: number | null): string {
   if (ms === null) return "";
   return new Date(ms).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
+/** Os recortes do ambiente de reuniões. */
+export type RecorteDasReunioes = "proximas" | "gravadas" | "todas";
+
+export const RECORTES_DAS_REUNIOES: ReadonlyArray<{ value: RecorteDasReunioes; label: string }> = [
+  { value: "proximas", label: "Próximas" },
+  { value: "gravadas", label: "Gravadas" },
+  { value: "todas", label: "Todas" },
+];
+
+export type ReuniaoComQuando = { reuniao: ReuniaoNaLista; quando: number | null };
+
+/**
+ * As reuniões de um recorte, já ordenadas: as próximas da mais perto para a mais longe (é o que se faz a seguir),
+ * as outras da mais recente para a mais antiga. "Próximas" são as marcadas que ainda não aconteceram.
+ */
+export function recortarReunioes(
+  reunioes: readonly ReuniaoNaLista[],
+  recorte: RecorteDasReunioes,
+  agora: number = Date.now(),
+): { visiveis: ReuniaoComQuando[]; contagem: Record<RecorteDasReunioes, number> } {
+  const todas: ReuniaoComQuando[] = reunioes.map((reuniao) => ({ reuniao, quando: quandoDaReuniao(reuniao) }));
+  const proximas = todas.filter(({ reuniao, quando }) => reuniao.status === "agendada" && (quando ?? 0) >= agora);
+  const gravadas = todas.filter(({ reuniao }) => reuniao.status === "concluida");
+  const escolhidas = recorte === "proximas" ? proximas : recorte === "gravadas" ? gravadas : todas;
+  const visiveis = [...escolhidas].sort((a, b) =>
+    recorte === "proximas"
+      ? (a.quando ?? Number.POSITIVE_INFINITY) - (b.quando ?? Number.POSITIVE_INFINITY)
+      : (b.quando ?? Number.NEGATIVE_INFINITY) - (a.quando ?? Number.NEGATIVE_INFINITY),
+  );
+  return { visiveis, contagem: { proximas: proximas.length, gravadas: gravadas.length, todas: todas.length } };
 }
 
