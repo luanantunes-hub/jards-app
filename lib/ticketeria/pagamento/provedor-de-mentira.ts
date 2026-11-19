@@ -18,7 +18,7 @@ export class ProvedorDeMentira implements ProvedorDePagamento {
     if (segredo.length < 16) throw new Error("o segredo do provedor de mentira tem de ter ao menos 16 letras");
   }
 
-  async criarCobranca(pedido: { id: string; codigo: string; total_centavos: number; expira_em: string }): Promise<Cobranca> {
+  async criarCobranca(pedido: Parameters<ProvedorDePagamento["criarCobranca"]>[0]): Promise<Cobranca> {
     return { ref: `mentira_${pedido.id}`, pix_copia_e_cola: `PIX-DE-MENTIRA:${pedido.codigo}:${pedido.total_centavos}`, url: null, expira_em: pedido.expira_em };
   }
 
