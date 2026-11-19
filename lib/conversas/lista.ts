@@ -3,6 +3,7 @@
  * Aqui ficam as regras puras da lista de e-mail — as conversas em fio e os e-mails que ainda não saíram —
  * e os tipos das reuniões, que a tabela do outro ambiente usa.
  */
+import type { EstadoDoAvatar } from "@/lib/conversas/avatar";
 import type { Conversa } from "@/lib/email/conversas";
 
 export type StatusDaReuniao = "agendada" | "bot_entrando" | "gravando" | "processando" | "concluida" | "falhou";
@@ -19,6 +20,8 @@ export type ReuniaoNaLista = {
   created_at: string;
   /** E-mails convidados, como foram enviados ao calendário. */
   participantes?: string[] | null;
+  /** Quanto tempo o assistente gravou, em segundos (só nas reuniões já gravadas). */
+  duracao_bot_s?: number | null;
 };
 
 export type EmailAgendado = {
@@ -177,5 +180,60 @@ export function recortarReunioes(
       : (b.quando ?? Number.NEGATIVE_INFINITY) - (a.quando ?? Number.NEGATIVE_INFINITY),
   );
   return { visiveis, contagem: { proximas: proximas.length, gravadas: gravadas.length, todas: todas.length } };
+}
+
+function contem(texto: string | null | undefined, procurado: string): boolean {
+  return (texto ?? "").toLowerCase().includes(procurado);
+}
+
+/** A busca da lista de e-mail: olha quem, assunto, trecho e endereços. Busca vazia devolve tudo. */
+export function itemNaBusca(item: ItemDaLista, busca: string, nomesDosContatos: readonly string[] = []): boolean {
+  const procurado = busca.trim().toLowerCase();
+  if (!procurado) return true;
+  if (item.tipo === "agendado") {
+    return contem(item.agendado.assunto, procurado) || item.agendado.para.some((endereco) => contem(endereco, procurado));
+  }
+  const { conversa } = item;
+  if (contem(conversa.assunto, procurado) || nomesDosContatos.some((nome) => contem(nome, procurado))) return true;
+  return conversa.mensagens.some((mensagem) =>
+    contem(mensagem.from_name, procurado) ||
+    contem(mensagem.from_email, procurado) ||
+    contem(mensagem.snippet, procurado) ||
+    (mensagem.to_emails ?? []).some((endereco) => contem(endereco, procurado)));
+}
+
+/** A busca das reuniões: olha o nome e os convidados. */
+export function reuniaoNaBusca(reuniao: ReuniaoNaLista, busca: string, nomeDaEmpresa?: string): boolean {
+  const procurado = busca.trim().toLowerCase();
+  if (!procurado) return true;
+  return contem(reuniao.titulo, procurado)
+    || contem(nomeDaEmpresa, procurado)
+    || (reuniao.participantes ?? []).some((endereco) => contem(endereco, procurado));
+}
+
+/** "1h 30min" a partir de segundos; vazio quando não há duração gravada. */
+export function duracaoEmTexto(segundos: number | null | undefined): string {
+  if (!segundos || segundos <= 0) return "";
+  const minutos = Math.round(segundos / 60);
+  if (minutos < 60) return `${minutos}min`;
+  const horas = Math.floor(minutos / 60);
+  const resto = minutos % 60;
+  return resto ? `${horas}h ${resto}min` : `${horas}h`;
+}
+
+/**
+ * O que está acontecendo na conversa, para o desenho do avatar contar. A ordem é a do que pede atenção primeiro:
+ * quem ainda não é contato vem antes de quem espera resposta, que vem antes de quem já respondeu.
+ */
+export function estadoDoItem(item: ItemDaLista, nomesDosContatos: readonly string[] = []): EstadoDoAvatar | null {
+  if (item.tipo === "agendado") {
+    if (item.agendado.estado === "falhou") return "falhou";
+    return item.agendado.estado === "enviando" ? "a-caminho" : "agendado";
+  }
+  const { conversa } = item;
+  if (nomesDosContatos.length === 0 && conversa.contatoIds.length === 0) return "sem-contato";
+  if (conversa.situacao?.tipo === "aguardando") return "aguardando";
+  if (conversa.situacao?.tipo === "respondeu") return "respondeu";
+  return conversa.privada ? "so-eu-vejo" : null;
 }
 

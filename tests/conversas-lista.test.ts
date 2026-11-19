@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { agruparConversas, type EmailDeConversa } from "../lib/email/conversas";
-import { contagemDosFiltros, dataCurta, itemNoFiltro, montarLista, quandoDaReuniao, recortarReunioes, type EmailAgendado, type ReuniaoNaLista } from "../lib/conversas/lista";
+import { contagemDosFiltros, dataCurta, duracaoEmTexto, estadoDoItem, itemNaBusca, itemNoFiltro, montarLista, quandoDaReuniao, recortarReunioes, reuniaoNaBusca, type EmailAgendado, type ReuniaoNaLista } from "../lib/conversas/lista";
 
 const AGORA = Date.parse("2026-11-19T12:00:00Z");
 
@@ -88,3 +88,54 @@ test("o ambiente de reuniões separa as próximas das gravadas e ordena cada uma
   assert.equal(recortarReunioes(todas, "todas", AGORA).visiveis.length, 5);
 });
 
+
+test("a busca da lista olha quem, assunto, trecho e endereços", () => {
+  const itens = montarLista(conversas, [agendado]);
+  const acha = (busca: string) => itens.filter((item) => itemNaBusca(item, busca, item.tipo === "email" && item.conversa.contatoIds.includes("c1") ? ["Marina Duarte"] : [])).map((item) => item.chave);
+  assert.equal(acha("").length, 3, "busca vazia devolve tudo");
+  assert.deepEqual(acha("marina"), ["email:u1|fio-b"], "acha pelo nome do contato");
+  assert.deepEqual(acha("Novo Cliente"), ["email:u1|fio-a", "email:u1|fio-b"], "acha pelo nome de quem escreveu, nas duas conversas em que ele aparece");
+  assert.deepEqual(acha("aurora.com"), ["email:u1|fio-b"], "acha pelo endereço");
+  assert.deepEqual(acha("depois"), ["agendado:ag1"], "acha o agendado pelo assunto");
+  assert.deepEqual(acha("nada disso"), []);
+});
+
+test("a busca das reuniões olha nome, empresa e convidados", () => {
+  const r = reuniao({ titulo: "Alinhamento de cotas", participantes: ["marina@aurora.com.br"] });
+  assert.equal(reuniaoNaBusca(r, ""), true);
+  assert.equal(reuniaoNaBusca(r, "COTAS"), true);
+  assert.equal(reuniaoNaBusca(r, "marina"), true);
+  assert.equal(reuniaoNaBusca(r, "Aurora Energia", "Aurora Energia"), true);
+  assert.equal(reuniaoNaBusca(r, "matarazzo"), false);
+});
+
+test("duração em texto", () => {
+  assert.equal(duracaoEmTexto(90), "2min");
+  assert.equal(duracaoEmTexto(1800), "30min");
+  assert.equal(duracaoEmTexto(3600), "1h");
+  assert.equal(duracaoEmTexto(5400), "1h 30min");
+  assert.equal(duracaoEmTexto(null), "");
+  assert.equal(duracaoEmTexto(0), "");
+});
+
+test("o estado da conversa: o que pede atenção primeiro é o que o desenho conta", () => {
+  const semContato = montarLista(agruparConversas([email("x", { thread_id: "fx" })], AGORA))[0];
+  assert.equal(estadoDoItem(semContato), "sem-contato");
+
+  const aguardando = montarLista(agruparConversas([email("y", { thread_id: "fy", direction: "outbound", to_emails: ["m@x.com"], contato_id: "c1" })], AGORA))[0];
+  assert.equal(estadoDoItem(aguardando, ["Marina"]), "aguardando");
+
+  const respondeu = montarLista(agruparConversas([
+    email("z1", { thread_id: "fz", direction: "outbound", to_emails: ["m@x.com"], contato_id: "c1", sent_at: "2026-11-16T10:00:00Z" }),
+    email("z2", { thread_id: "fz", contato_id: "c1" }),
+  ], AGORA))[0];
+  assert.equal(estadoDoItem(respondeu, ["Marina"]), "respondeu");
+
+  const antiga = montarLista(agruparConversas([email("w", { thread_id: "fw", contato_id: "c1", visibility: "private", sent_at: "2026-01-01T10:00:00Z" })], AGORA))[0];
+  assert.equal(estadoDoItem(antiga, ["Marina"]), "so-eu-vejo", "sem situação, resta dizer que só ela vê");
+
+  const [agendadoPendente] = montarLista([], [agendado]);
+  assert.equal(estadoDoItem(agendadoPendente), "agendado");
+  assert.equal(estadoDoItem(montarLista([], [{ ...agendado, estado: "enviando" }])[0]), "a-caminho");
+  assert.equal(estadoDoItem(montarLista([], [{ ...agendado, estado: "falhou" }])[0]), "falhou");
+});

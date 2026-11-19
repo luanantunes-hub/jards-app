@@ -7,10 +7,10 @@ import { LinhaDaConversa } from "@/components/conversas/LinhaDaConversa";
 import { ListaDeReunioes } from "@/components/conversas/ListaDeReunioes";
 import { PainelDaConversa } from "@/components/conversas/PainelDaConversa";
 import { EscreverEmail, type ResultadoDoEnvio } from "@/components/email/EscreverEmail";
-import { ListContent, ListEmptyState, ListPageHeader, ListSummary, ListToolbar, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
+import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListToolbar, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { FilterButton } from "@/components/ui/FilterControls";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
-import { contagemDosFiltros, enderecoDoOutroLado, FILTROS_DAS_CONVERSAS, itemNoFiltro, montarLista, type EmailAgendado, type FiltroDasConversas, type ItemDaLista, type ReuniaoNaLista } from "@/lib/conversas/lista";
+import { contagemDosFiltros, enderecoDoOutroLado, FILTROS_DAS_CONVERSAS, itemNaBusca, itemNoFiltro, montarLista, type EmailAgendado, type FiltroDasConversas, type ItemDaLista, type ReuniaoNaLista } from "@/lib/conversas/lista";
 import { agruparConversas, COLUNAS_DO_EMAIL_DE_CONVERSA, type EmailDeConversa } from "@/lib/email/conversas";
 import { emPartes } from "@/lib/email/lotes";
 import { createClient } from "@/lib/supabase/client";
@@ -55,6 +55,7 @@ export default function ConversasPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<FiltroDasConversas>("tudo");
+  const [busca, setBusca] = useState("");
   const [chaveAberta, setChaveAberta] = useState<string | null>(null);
   const [escrevendo, setEscrevendo] = useState(false);
   const [marcandoReuniao, setMarcandoReuniao] = useState(false);
@@ -127,16 +128,23 @@ export default function ConversasPage() {
   const conversas = useMemo(() => agruparConversas(emails), [emails]);
   const itens = useMemo(() => montarLista(conversas, agendados), [conversas, agendados]);
   const contagem = useMemo(() => contagemDosFiltros(itens), [itens]);
-  const visiveis = useMemo(() => itens.filter((item) => itemNoFiltro(item, filtro)), [itens, filtro]);
+  const nomesPorChave = useMemo(() => {
+    const mapa: Record<string, string[]> = {};
+    for (const item of itens) {
+      mapa[item.chave] = item.tipo === "email"
+        ? item.conversa.contatoIds.map((id) => nomes[id]).filter((nome): nome is string => Boolean(nome))
+        : [];
+    }
+    return mapa;
+  }, [itens, nomes]);
+  const visiveis = useMemo(
+    () => itens.filter((item) => itemNoFiltro(item, filtro) && itemNaBusca(item, busca, nomesPorChave[item.chave])),
+    [itens, filtro, busca, nomesPorChave],
+  );
   // A conversa aberta sai de `visiveis`: trocar de filtro só a fecha quando ela não está mais na lista.
   const aberta = chaveAberta ? visiveis.find((item) => item.chave === chaveAberta) ?? null : null;
 
-  const nomesDoItem = useCallback(
-    (item: ItemDaLista) => (item.tipo === "email"
-      ? item.conversa.contatoIds.map((id) => nomes[id]).filter((nome): nome is string => Boolean(nome))
-      : []),
-    [nomes],
-  );
+  const nomesDoItem = useCallback((item: ItemDaLista) => nomesPorChave[item.chave] ?? [], [nomesPorChave]);
 
   // Conversa de quem ainda não é contato: a triagem diz o que já sabemos dessa pessoa (empresa sugerida, contato criado).
   const remetenteDaAberta = useMemo(() => {
@@ -201,7 +209,7 @@ export default function ConversasPage() {
       </nav>
 
       {ambiente === "email" && !caixaVazia && (
-        <ListToolbar>
+        <ListToolbar search={<ListSearch value={busca} onChange={setBusca} placeholder="Buscar pessoa, assunto ou e-mail" />}>
           {FILTROS_DAS_CONVERSAS.filter(({ value }) => value === "tudo" || value === filtro || contagem[value] > 0).map(({ value, label }) => (
             <FilterButton key={value} active={filtro === value} onClick={() => setFiltro(value)}>
               {label}
@@ -235,11 +243,11 @@ export default function ConversasPage() {
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 overflow-hidden">
-          <div className={`w-full shrink-0 overflow-y-auto border-r lg:block lg:w-[21rem] ${aberta ? "hidden" : "block"}`} style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <div className={`w-full shrink-0 overflow-y-auto border-r bg-[#FBFAFA] lg:block lg:w-[21rem] ${aberta ? "hidden" : "block"}`} style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {visiveis.length === 0 ? (
-              <p className="px-4 py-16 text-center text-[0.75rem] text-black/35">Nada neste filtro.</p>
+              <p className="px-4 py-16 text-center text-[0.75rem] text-black/35">{busca.trim() ? "Nada encontrado." : "Nada neste filtro."}</p>
             ) : (
-              <ul className="divide-y divide-black/[.05]">
+              <ul className="flex flex-col gap-2 p-3">
                 {visiveis.map((item) => (
                   <li key={item.chave}>
                     <LinhaDaConversa item={item} nomesDosContatos={nomesDoItem(item)} selecionada={item.chave === chaveAberta} onAbrir={() => setChaveAberta(item.chave)} />

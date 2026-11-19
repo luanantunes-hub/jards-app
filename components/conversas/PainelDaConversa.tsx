@@ -5,15 +5,18 @@ import { ArrowLeft } from "lucide-react";
 import { AcoesDaTriagem } from "@/components/conversas/AcoesDaTriagem";
 import { EtiquetaDeSituacao, EtiquetaSoEuVejo } from "@/components/email/EtiquetaDeConversa";
 import { AcoesDaConversa, BOTAO_DA_CONVERSA, FioDaConversa, type Pessoa } from "@/components/email/FioDaConversa";
-import { quemNaConversa, type ItemDaLista } from "@/lib/conversas/lista";
+import { AvatarDaPessoa } from "@/components/ui/AvatarDaPessoa";
+import { enderecoDoOutroLado, estadoDoItem, quemNaConversa, type ItemDaLista } from "@/lib/conversas/lista";
+import type { EstadoDoAvatar } from "@/lib/conversas/avatar";
 import type { RemetenteDaTriagem } from "@/app/api/email/triagem/route";
 
-function Cabecalho({ titulo, abaixo, voltar }: { titulo: string; abaixo: string; voltar: () => void }) {
+function Cabecalho({ titulo, abaixo, voltar, pessoa }: { titulo: string; abaixo: string; voltar: () => void; pessoa?: { nome: string; endereco: string | null; estado: EstadoDoAvatar | null } }) {
   return (
     <div className="mb-4 flex items-start gap-3">
       <button type="button" onClick={voltar} aria-label="Voltar para a lista" className="-ml-1 mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded text-black/40 transition hover:bg-black/[.05] hover:text-black/70 lg:hidden">
         <ArrowLeft size={15} aria-hidden="true" />
       </button>
+      {pessoa && <AvatarDaPessoa nome={pessoa.nome} endereco={pessoa.endereco} estado={pessoa.estado} comDesenho tamanho="maior" className="-mt-1.5" />}
       <div className="min-w-0">
         <h2 className="text-[1.0625rem] font-bold leading-snug text-[#282525] [text-wrap:balance]">{titulo}</h2>
         <p className="mt-0.5 text-[0.75rem] text-black/45">{abaixo}</p>
@@ -81,7 +84,12 @@ export function PainelDaConversa({ item, meuId, nomesDosContatos, remetenteDaTri
 
   return (
     <>
-      <Cabecalho titulo={conversa.assunto} abaixo={`${quemNaConversa(conversa, nomesDosContatos)} · ${total} ${total === 1 ? "mensagem" : "mensagens"}`} voltar={onVoltar} />
+      <Cabecalho
+        titulo={conversa.assunto}
+        abaixo={`${quemNaConversa(conversa, nomesDosContatos)} · ${total} ${total === 1 ? "mensagem" : "mensagens"}`}
+        voltar={onVoltar}
+        pessoa={{ nome: quemNaConversa(conversa, nomesDosContatos), endereco: enderecoDoOutroLado(conversa), estado: estadoDoItem(item, nomesDosContatos) }}
+      />
       {(conversa.situacao || conversa.privada) && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {conversa.situacao && <EtiquetaDeSituacao situacao={conversa.situacao} />}
