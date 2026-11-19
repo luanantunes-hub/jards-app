@@ -93,6 +93,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
       section: "Gerenciamento",
       items: [
         { label: "Visão geral",  href: "/dashboard",    icon: BarChart2    },
+        { label: "Conversas",    href: "/conversas",    icon: Mail         },
         { label: "Atividades",   href: "/atividades",   icon: CalendarDays },
         { label: "Projetos",     href: "/projetos",     icon: FolderOpen   },
       ],
@@ -119,7 +120,6 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
         { label: "Proponentes", href: "/proponentes",       icon: Landmark       },
         { label: "Captadores",  href: "/captadores",        icon: Handshake      },
         { label: "Contatos",    href: "/contatos",          icon: ContactRound   },
-        { label: "Conversas",   href: "/conversas",         icon: Mail           },
         { label: "Clientes",    href: "/contas-patrocinio", icon: UserRoundCheck },
       ],
     },

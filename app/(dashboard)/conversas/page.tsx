@@ -175,7 +175,7 @@ export default function ConversasPage() {
 
       <ListPageHeader
         secao="conversas"
-        eyebrow="Relacionamento"
+        eyebrow="Gerenciamento"
         title="Conversas"
         summary={!carregando && (ambiente === "email"
           ? !caixaVazia && <ListSummary strong={contagem.tudo}>{contagem.tudo === 1 ? "conversa" : "conversas"}</ListSummary>
