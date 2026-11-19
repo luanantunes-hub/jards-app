@@ -217,3 +217,45 @@ export async function buscarMensagensRecentesMicrosoft(
   }
   return achadas.sort((a, b) => (b.sentAt?.getTime() ?? 0) - (a.sentAt?.getTime() ?? 0));
 }
+
+type PedidoMicrosoft = { para: readonly string[]; cc: readonly string[]; assunto: string; texto: string };
+
+const destinatarios = (enderecos: readonly string[]) => enderecos.map((endereco) => ({ emailAddress: { address: endereco } }));
+
+async function falhaDoGraph(res: Response, padrao: string): Promise<never> {
+  const json = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
+  throw new Error(json.error?.message || `${padrao} (${res.status})`);
+}
+
+/** Envia pela caixa da pessoa e guarda uma cópia em Itens Enviados. O Graph responde 202 sem corpo. */
+export async function enviarPelaMicrosoft(accessToken: string, { para, cc, assunto, texto }: PedidoMicrosoft): Promise<void> {
+  const res = await fetch(`${GRAPH}/me/sendMail`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: {
+        subject: assunto,
+        body: { contentType: "Text", content: texto },
+        toRecipients: destinatarios(para),
+        ccRecipients: destinatarios(cc),
+      },
+      saveToSentItems: true,
+    }),
+  });
+  if (!res.ok) await falhaDoGraph(res, "Falha ao enviar pelo Outlook");
+}
+
+/** Responde a uma mensagem: o Outlook mantém a conversa e cita a original. Os destinatários podem ser ajustados. */
+export async function responderPelaMicrosoft(
+  accessToken: string,
+  mensagemId: string,
+  { para, cc, texto }: Pick<PedidoMicrosoft, "para" | "cc" | "texto">,
+): Promise<void> {
+  const res = await fetch(`${GRAPH}/me/messages/${encodeURIComponent(mensagemId)}/reply`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ message: { toRecipients: destinatarios(para), ccRecipients: destinatarios(cc) }, comment: texto }),
+  });
+  if (!res.ok) await falhaDoGraph(res, "Falha ao responder pelo Outlook");
+}
+

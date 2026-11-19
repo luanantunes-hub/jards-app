@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLink, Lock, Users } from "lucide-react";
+import { CornerUpLeft, ExternalLink, Lock, Users } from "lucide-react";
+import { EscreverEmail } from "@/components/email/EscreverEmail";
+import { assuntoDeResposta } from "@/lib/email/envio";
 import { createClient } from "@/lib/supabase/client";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
@@ -36,6 +38,7 @@ export function ConversaDeEmail({ conversa, meuId, contatos, membros, onClose, o
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [respondendo, setRespondendo] = useState(false);
 
   // A lista traz só o trecho de cada mensagem; o texto completo (até 2.000 caracteres) vem ao abrir a conversa.
   useEffect(() => {
@@ -87,13 +90,21 @@ export function ConversaDeEmail({ conversa, meuId, contatos, membros, onClose, o
     }
   }
 
+  const ultimaMinha = minhasMensagens[minhasMensagens.length - 1];
+  const respostaPara = ultimaMinha ? (ultimaMinha.direction === "outbound" ? ultimaMinha.to_emails ?? [] : ultimaMinha.from_email ? [ultimaMinha.from_email] : []) : [];
+
   return (
+    <>
     <BottomSheet
       titulo={conversa.assunto}
       subtitulo={[nomesDosContatos, `${total} ${total === 1 ? "mensagem" : "mensagens"}`].filter(Boolean).join(" · ")}
       onClose={onClose}
       footer={(close) => ehMinha && provedor ? (
         <>
+          <button type="button" onClick={() => setRespondendo(true)} className={BOTAO_SECUNDARIO}>
+            <CornerUpLeft size={12} aria-hidden="true" />
+            Responder
+          </button>
           {/* Sem contato não há onde registrar: a conversa vira da equipe pela triagem (Pessoas novas), depois de criar o contato. */}
           {conversa.contatoIds.length > 0 && (
             <button type="button" onClick={() => void mudarVisibilidade()} disabled={salvando} className={BOTAO_SECUNDARIO}>
@@ -138,5 +149,13 @@ export function ConversaDeEmail({ conversa, meuId, contatos, membros, onClose, o
         })}
       </div>
     </BottomSheet>
+    {respondendo && ultimaMinha && (
+      <EscreverEmail
+        inicio={{ para: respostaPara, assunto: assuntoDeResposta(conversa.assunto), responderAEmailId: ultimaMinha.id }}
+        onClose={() => setRespondendo(false)}
+        onEnviado={() => { setRespondendo(false); onMudou(); }}
+      />
+    )}
+    </>
   );
 }
