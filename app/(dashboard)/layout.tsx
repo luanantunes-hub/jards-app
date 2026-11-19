@@ -55,6 +55,7 @@ import {
   type LucideIcon,
   Mail,
   Receipt,
+  ScanLine,
   Wallet,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -197,6 +198,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
         { label: "Locais", href: "/ingressos/locais", icon: MapPin },
         { label: "Site", href: "/ingressos/site", icon: Globe },
         { label: "Vendas", href: "/ingressos/vendas", icon: Receipt },
+        { label: "Porta", href: "/ingressos/porta", icon: ScanLine },
         { label: "Recebimentos", href: "/ingressos/recebimentos", icon: Wallet },
       ],
     },
