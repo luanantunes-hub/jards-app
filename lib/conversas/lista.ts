@@ -222,8 +222,10 @@ export function duracaoEmTexto(segundos: number | null | undefined): string {
 }
 
 /**
- * O que está acontecendo na conversa, para o desenho do avatar contar. A ordem é a do que pede atenção primeiro:
- * quem ainda não é contato vem antes de quem espera resposta, que vem antes de quem já respondeu.
+ * O que está acontecendo na conversa, para o desenho do avatar contar. A etiqueta de texto do cartão segue a
+ * mesma ordem: o vaivém da conversa (aguardando/respondeu) é o que ela está fazendo agora, e vale mesmo sem
+ * contato — é por isso que "Sem contato" e "Aguardando resposta" aparecem juntos no mesmo cartão. Só quando não
+ * há vaivém nenhum (ninguém nunca respondeu) é que falta contato vira a informação principal.
  */
 export function estadoDoItem(item: ItemDaLista, nomesDosContatos: readonly string[] = []): EstadoDoAvatar | null {
   if (item.tipo === "agendado") {
@@ -231,9 +233,22 @@ export function estadoDoItem(item: ItemDaLista, nomesDosContatos: readonly strin
     return item.agendado.estado === "enviando" ? "a-caminho" : "agendado";
   }
   const { conversa } = item;
-  if (nomesDosContatos.length === 0 && conversa.contatoIds.length === 0) return "sem-contato";
   if (conversa.situacao?.tipo === "aguardando") return "aguardando";
   if (conversa.situacao?.tipo === "respondeu") return "respondeu";
+  if (nomesDosContatos.length === 0 && conversa.contatoIds.length === 0) return "sem-contato";
   return conversa.privada ? "so-eu-vejo" : null;
 }
+
+/**
+ * O tamanduá de cada status de reunião: sempre um desenho que conta a situação, nunca um ícone genérico.
+ * As gravadas, já assistíveis, ganham o binóculo; o que ainda vai acontecer ou está em curso tem o seu próprio.
+ */
+export const ESTADO_DA_REUNIAO: Record<ReuniaoNaLista["status"], string> = {
+  agendada: "agendado",
+  bot_entrando: "a-caminho",
+  gravando: "a-caminho",
+  processando: "trabalhando",
+  concluida: "gravada",
+  falhou: "falhou",
+};
 
