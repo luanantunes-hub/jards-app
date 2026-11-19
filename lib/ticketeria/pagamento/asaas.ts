@@ -166,7 +166,9 @@ export class ProvedorAsaas implements ProvedorDePagamento {
     // Cobrança sem o nosso pedido (criada à mão no painel do Asaas, por exemplo): não é nossa.
     if (typeof p.externalReference !== "string" || !UUID.test(p.externalReference)) return { ok: false, motivo: "evento_irrelevante" };
     if (typeof p.value !== "number" || !Number.isFinite(p.value) || p.value < 0) return { ok: false, motivo: "corpo_invalido" };
-    return { ok: true, aviso: { id_externo: a.id, tipo, pedido_id: p.externalReference.toLowerCase(), ref: p.id, valor_centavos: centavos(p.value) } };
+    // O valor líquido (`netValue`): o que o Asaas deixou depois das taxas dele. Sem ele (ou fora de um pagamento), o núcleo usa a estimativa da tabela.
+    const liquido = tipo === "pagamento_confirmado" && typeof p.netValue === "number" && Number.isFinite(p.netValue) && p.netValue >= 0 ? centavos(p.netValue) : null;
+    return { ok: true, aviso: { id_externo: a.id, tipo, pedido_id: p.externalReference.toLowerCase(), ref: p.id, valor_centavos: centavos(p.value), liquido_centavos: liquido } };
   }
 }
 

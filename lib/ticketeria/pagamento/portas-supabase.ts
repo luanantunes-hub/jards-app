@@ -5,7 +5,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import type { PortasDosAvisos } from "@/lib/ticketeria/pagamento/avisos";
 
 // As portas dos avisos do provedor no Supabase, com a chave de serviço (só o servidor grava em ticketeria_notificacoes_provedor e
-// executa fn_ticketeria_confirmar_pagamento). A rota que recebe o aviso chega com o provedor real (T5).
+// executa fn_ticketeria_confirmar_pagamento_real). A rota que recebe o aviso chega com o provedor real (T5).
 
 export function portasDoSupabase(admin: SupabaseClient<Database>): PortasDosAvisos {
   const ticketeria = clienteDaTicketeria(admin);
@@ -18,8 +18,8 @@ export function portasDoSupabase(admin: SupabaseClient<Database>): PortasDosAvis
       const { data } = await ticketeria.from("ticketeria_notificacoes_provedor").select("processada_em").eq("provedor", aviso.provedor).eq("id_externo", aviso.id_externo).maybeSingle();
       return data?.processada_em ? "ja_processado" : "novo";
     },
-    async confirmar(pedidoId, provedor, ref, valorCentavos) {
-      const { data, error } = await ticketeria.rpc("fn_ticketeria_confirmar_pagamento", { p_pedido: pedidoId, p_provedor: provedor, p_ref: ref, p_valor_centavos: valorCentavos });
+    async confirmar(pedidoId, provedor, ref, valorCentavos, liquidoCentavos) {
+      const { data, error } = await ticketeria.rpc("fn_ticketeria_confirmar_pagamento_real", { p_pedido: pedidoId, p_provedor: provedor, p_ref: ref, p_valor_centavos: valorCentavos, p_liquido_centavos: liquidoCentavos });
       if (error) throw new Error(error.message);
       return String(data);
     },

@@ -14,6 +14,8 @@ export type AvisoDoProvedor = {
   pedido_id: string;
   ref: string;
   valor_centavos: number;
+  /** O que sobrou depois das taxas do provedor (o valor líquido). Só no pagamento confirmado e só se o provedor o informa; o custo real do meio é valor − líquido. */
+  liquido_centavos?: number | null;
 };
 
 /** `evento_irrelevante`: o aviso é verdadeiro, mas não é de um pedido nosso ou não muda nada para nós (cobrança criada, vencida, visualizada...). */

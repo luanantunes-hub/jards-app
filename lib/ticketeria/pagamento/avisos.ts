@@ -11,8 +11,8 @@ export type PortasDosAvisos = {
    * não terminou (o banco caiu no meio) volta como 'novo', para o reenvio do provedor terminar o serviço.
    */
   registrar(aviso: { provedor: string; id_externo: string; tipo: string; pedido_id: string; payload: unknown }): Promise<"novo" | "ja_processado">;
-  /** fn_ticketeria_confirmar_pagamento: 'pago' ou 'ja_pago'; erro com a mensagem do banco. */
-  confirmar(pedidoId: string, provedor: string, ref: string, valorCentavos: number): Promise<string>;
+  /** fn_ticketeria_confirmar_pagamento_real: 'pago' ou 'ja_pago'; erro com a mensagem do banco. `liquidoCentavos` é o que o provedor deixou depois das taxas (null: vale a estimativa). */
+  confirmar(pedidoId: string, provedor: string, ref: string, valorCentavos: number, liquidoCentavos: number | null): Promise<string>;
   /** Anota o resultado e a hora do processamento. */
   concluir(provedor: string, idExterno: string, resultado: string): Promise<void>;
 };
@@ -23,7 +23,7 @@ export type ResultadoDoAviso =
   | { status: 200; resultado: "repetido" | "pago" | "ja_pago" | "ignorado" | "estornar"; pedido_id?: string; motivo?: string };
 
 /** Erros do banco que pedem o estorno do que o comprador pagou (o pedido não pode virar pago). */
-const PEDEM_ESTORNO = ["reserva_expirada_sem_lugar", "pedido_cancelado", "valor_divergente"];
+const PEDEM_ESTORNO = ["reserva_expirada_sem_lugar", "pedido_cancelado", "valor_divergente", "liquido_invalido"];
 
 export async function processarAviso(provedor: ProvedorDePagamento, portas: PortasDosAvisos, corpo: string, assinatura: string | null): Promise<ResultadoDoAviso> {
   const leitura = provedor.lerAviso(corpo, assinatura);
@@ -42,7 +42,7 @@ export async function processarAviso(provedor: ProvedorDePagamento, portas: Port
     return { status: 200, resultado: "ignorado", pedido_id: aviso.pedido_id };
   }
   try {
-    const situacao = await portas.confirmar(aviso.pedido_id, provedor.nome, aviso.ref, aviso.valor_centavos);
+    const situacao = await portas.confirmar(aviso.pedido_id, provedor.nome, aviso.ref, aviso.valor_centavos, aviso.liquido_centavos ?? null);
     const resultado = situacao === "ja_pago" ? "ja_pago" : "pago";
     await portas.concluir(provedor.nome, aviso.id_externo, resultado);
     return { status: 200, resultado, pedido_id: aviso.pedido_id };
