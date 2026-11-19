@@ -23,3 +23,21 @@ export const CLASSIFICACOES_INDICATIVAS: readonly ClassificacaoIndicativa[] = ["
 /** `ticketeria_ingressos.categoria`. Gratuito e cortesia custam zero; as outras, mais que zero (o banco confere). */
 export type CategoriaDoIngresso = "inteira" | "meia" | "social" | "gratuito" | "cortesia" | "outra";
 export const CATEGORIAS_DO_INGRESSO: readonly CategoriaDoIngresso[] = ["inteira", "meia", "social", "gratuito", "cortesia", "outra"];
+
+// O núcleo de pagamento (T4, supabase/migrations/*_ticketeria_pagamentos.sql).
+
+/** `ticketeria_taxas.quem_paga` e `ticketeria_pedidos.quem_paga_taxa`: o comprador (por cima do preço) ou o produtor (descontada). */
+export type QuemPagaATaxa = "comprador" | "produtor";
+export const QUEM_PAGA_A_TAXA: readonly QuemPagaATaxa[] = ["comprador", "produtor"];
+
+/** `ticketeria_pedidos.situacao`. A reserva vencida segue "aguardando_pagamento" com `reservado_ate` no passado. */
+export type SituacaoDoPedido = "aguardando_pagamento" | "pago" | "cancelado";
+export const SITUACOES_DO_PEDIDO: readonly SituacaoDoPedido[] = ["aguardando_pagamento", "pago", "cancelado"];
+
+/** `ticketeria_transacoes.tipo`. */
+export type TipoDeTransacao = "pagamento" | "estorno" | "repasse" | "ajuste";
+export const TIPOS_DE_TRANSACAO: readonly TipoDeTransacao[] = ["pagamento", "estorno", "repasse", "ajuste"];
+
+/** `ticketeria_partidas.conta`: o que o provedor recebeu (positivo), o que é do produtor e o que é do Jards (negativos). */
+export type ContaDoRazao = "psp_a_receber" | "produtor" | "plataforma";
+export const CONTAS_DO_RAZAO: readonly ContaDoRazao[] = ["psp_a_receber", "produtor", "plataforma"];

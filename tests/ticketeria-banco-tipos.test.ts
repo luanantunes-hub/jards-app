@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
-import { CATEGORIAS_DO_INGRESSO, CLASSIFICACOES_INDICATIVAS, SITUACOES_DO_DOMINIO, SITUACOES_DO_EVENTO, SITUACOES_DO_SITE } from "../lib/ticketeria/estados";
+import { CATEGORIAS_DO_INGRESSO, CLASSIFICACOES_INDICATIVAS, CONTAS_DO_RAZAO, QUEM_PAGA_A_TAXA, SITUACOES_DO_PEDIDO, TIPOS_DE_TRANSACAO, SITUACOES_DO_DOMINIO, SITUACOES_DO_EVENTO, SITUACOES_DO_SITE } from "../lib/ticketeria/estados";
 
 // lib/ticketeria/banco.ts é o tipo do banco só da Ticketeria, escrito à mão (como lib/producao/banco.ts). Este teste o compara,
 // sem banco, com as migrations da Ticketeria: as mesmas tabelas, as mesmas colunas, a mesma anulabilidade, as listas fechadas
@@ -11,7 +11,7 @@ type Coluna = { nome: string; anulavel: boolean };
 
 async function migrationsDaTicketeria(): Promise<{ nome: string; sql: string }[]> {
   const pasta = "supabase/migrations";
-  const nomes = (await readdir(pasta)).filter(nome => /_ticketeria_(lojas_site|eventos|catalogo)\.sql$/.test(nome)).sort();
+  const nomes = (await readdir(pasta)).filter(nome => /_ticketeria_(lojas_site|eventos|catalogo|pagamentos)\.sql$/.test(nome)).sort();
   return Promise.all(nomes.map(async nome => ({ nome, sql: await readFile(`${pasta}/${nome}`, "utf8") })));
 }
 
@@ -39,11 +39,11 @@ function tabelasDoTipo(ts: string): Map<string, Coluna[]> {
 
 test("lib/ticketeria/banco.ts tem as tabelas e as colunas da migration, com a mesma anulabilidade", async () => {
   const migrations = await migrationsDaTicketeria();
-  assert.equal(migrations.length, 3, "achou as migrations da T1, da T2 e da T3");
+  assert.equal(migrations.length, 4, "achou as migrations da T1, da T2, da T3 e da T4");
   const doSql = tabelasDoSql(migrations.map(m => m.sql).join("\n"));
   const doTipo = tabelasDoTipo(await readFile("lib/ticketeria/banco.ts", "utf8"));
   assert.deepEqual([...doTipo.keys()].sort(), [...doSql.keys()].sort(), "as mesmas tabelas");
-  assert.deepEqual([...doSql.keys()].sort(), ["ticketeria_eventos", "ticketeria_ingressos", "ticketeria_locais", "ticketeria_lojas", "ticketeria_lotes", "ticketeria_sessoes", "ticketeria_setores", "ticketeria_site_dominios", "ticketeria_site_paginas", "ticketeria_sites"]);
+  assert.deepEqual([...doSql.keys()].sort(), ["ticketeria_eventos", "ticketeria_ingressos", "ticketeria_locais", "ticketeria_lojas", "ticketeria_lotes", "ticketeria_notificacoes_provedor", "ticketeria_partidas", "ticketeria_pedido_itens", "ticketeria_pedidos", "ticketeria_sessoes", "ticketeria_setores", "ticketeria_site_dominios", "ticketeria_site_paginas", "ticketeria_sites", "ticketeria_taxas", "ticketeria_transacoes"]);
   for (const [tabela, colunas] of doSql) assert.deepEqual(doTipo.get(tabela), colunas, `colunas de ${tabela}`);
 });
 
@@ -59,6 +59,11 @@ test("as listas fechadas do banco são as de lib/ticketeria/estados.ts", async (
   assert.deepEqual(lista("ticketeria_eventos_situacao_check"), [...SITUACOES_DO_EVENTO]);
   assert.deepEqual(lista("ticketeria_eventos_classificacao_check", "classificacao"), [...CLASSIFICACOES_INDICATIVAS]);
   assert.deepEqual(lista("ticketeria_ingressos_categoria_check", "categoria"), [...CATEGORIAS_DO_INGRESSO]);
+  assert.deepEqual(lista("ticketeria_pedidos_situacao_check"), [...SITUACOES_DO_PEDIDO]);
+  assert.deepEqual(lista("ticketeria_taxas_quem_paga_check", "quem_paga"), [...QUEM_PAGA_A_TAXA]);
+  assert.deepEqual(lista("ticketeria_pedidos_quem_paga_check", "quem_paga_taxa"), [...QUEM_PAGA_A_TAXA]);
+  assert.deepEqual(lista("ticketeria_transacoes_tipo_check", "tipo"), [...TIPOS_DE_TRANSACAO]);
+  assert.deepEqual(lista("ticketeria_partidas_conta_check", "conta"), [...CONTAS_DO_RAZAO]);
 });
 
 test("as migrations da loja, do site e dos eventos não apagam nada e toda função revoga de public e anon", async () => {
