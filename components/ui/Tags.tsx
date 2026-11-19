@@ -77,8 +77,15 @@ export function TagsDaLinha({ tags, maximo = 2 }: { tags: string[] | null | unde
  * Campo para escolher tags: as escolhidas viram etiquetas; digitar mostra as do time e "Criar «nome»".
  * Enter ou vírgula acrescenta; Backspace com o campo vazio tira a última.
  */
-export function CampoDeTags({ valor, onChange, vocabulario }: { valor: string[]; onChange: (tags: string[]) => void; vocabulario: string[] }) {
-  const [texto, setTexto] = useState("");
+export function CampoDeTags({ valor, onChange, vocabulario, onDigitando }: {
+  valor: string[];
+  onChange: (tags: string[]) => void;
+  vocabulario: string[];
+  /** Avisa o que está digitado e ainda não virou etiqueta, para o botão de quem usa o campo já valer por ele. */
+  onDigitando?: (texto: string) => void;
+}) {
+  const [texto, setTextoLocal] = useState("");
+  const setTexto = (novo: string) => { setTextoLocal(novo); onDigitando?.(novo); };
   const [destaque, setDestaque] = useState(0);
   const listaId = useId();
   const entrada = useRef<HTMLInputElement>(null);

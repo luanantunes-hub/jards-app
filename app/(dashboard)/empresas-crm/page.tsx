@@ -144,7 +144,9 @@ export default function EmpresasCrmPage() {
   const [search, setSearch] = useState("");
   const [dSearch, setDSearch] = useState("");
   const [tipoFilter, setTipoFilter] = useState<string>("todos");
-  const [tagFilter, setTagFilter] = useState("todas");
+  // "Ver no CRM", no aviso da seleção em lote dos patrocinadores, chega com ?tag=. A lista só aparece depois de
+  // carregar no navegador, então ler o endereço aqui não descasa a hidratação.
+  const [tagFilter, setTagFilter] = useState(() => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("tag")) ?? "todas");
   const [showNovoProspect, setShowNovoProspect] = useState(false);
   const [showNovoCliente, setShowNovoCliente] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);

@@ -27,6 +27,11 @@ import { lerSelecaoDaUrl } from "@/lib/filtro-mesorregiao";
 import { BoasVindasPlanoModal } from "@/components/modals/BoasVindasPlanoModal";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { TituloComFrase } from "@/components/list/TituloComFrase";
+import { BarraDeSelecao } from "@/components/patrocinadores/BarraDeSelecao";
+import { CabecalhoDeSelecao, CelulaDeSelecao } from "@/components/patrocinadores/CaixasDeSelecao";
+import { useSelecaoDeEmpresas, type SelecaoDeEmpresas } from "@/components/patrocinadores/useSelecaoDeEmpresas";
+import { useOrganizationRole } from "@/contexts/OrganizationContext";
+import { MAX_SELECAO, podeAdicionarAoCrm, type EmpresaDaBase } from "@/lib/patrocinadores-selecao";
 
 type Lei = "esporte" | "ancine" | "saude";
 
@@ -43,7 +48,13 @@ type EmpresaLei = {
   } | null;
 };
 
-function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean }) {
+/** A empresa de uma linha das abas por lei, no formato que a seleção guarda (sem empresa, não há o que marcar). */
+function daLinhaDaLei(linha: EmpresaLei): EmpresaDaBase | null {
+  const e = linha.empresas;
+  return e ? { id: linha.empresa_id, nome: e.nome, setor: e.setor, site: e.site, cidade: e.cidade, estado: e.estado } : null;
+}
+
+function LeiTabContent({ lei, isSuperAdmin, selecao }: { lei: Lei; isSuperAdmin: boolean; selecao: SelecaoDeEmpresas | null }) {
   const router = useRouter();
   const supabase = createClient();
   const [linhas, setLinhas] = useState<EmpresaLei[]>([]);
@@ -103,6 +114,9 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const hasFilters = !!(search || estado || setor || incompletas || mesorregioes.length > 0);
+  const colunas = selecao ? 8 : 7;
+  const daPagina = linhas.map(daLinhaDaLei).filter((e): e is EmpresaDaBase => e !== null);
+  const marcadasNaPagina = selecao ? daPagina.filter((e) => selecao.tem(e.id)).length : 0;
 
   return (
     <div className="px-4 pb-8 md:px-8">
@@ -150,11 +164,17 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
         )}
       </div>
 
+      {selecao && (
+        <BarraDeSelecao selecao={selecao} marcadasNaPagina={marcadasNaPagina} totalNaPagina={daPagina.length} onAlternarPagina={() => selecao.alternarPagina(daPagina)} />
+      )}
       <div className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ background: "#F9F9F8" }}>
+              <tr className="h-10" style={{ background: "#F9F9F8" }}>
+                {selecao && (
+                  <CabecalhoDeSelecao marcadasNaPagina={marcadasNaPagina} totalNaPagina={daPagina.length} desabilitada={loading} onAlternar={() => selecao.alternarPagina(daPagina)} />
+                )}
                 {[
                   { label: "Logo", icon: <ImageIcon size={11} weight="bold" /> },
                   { label: "Empresa", icon: <Buildings size={11} weight="bold" /> },
@@ -177,18 +197,30 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
               {loading ? (
                 Array.from({ length: 10 }).map((_, i) => (
                   <tr key={i}>
-                    <td className="px-4 py-3" colSpan={7}><div className="h-6 bg-black/8 rounded animate-pulse" /></td>
+                    <td className="px-4 py-3" colSpan={colunas}><div className="h-6 bg-black/8 rounded animate-pulse" /></td>
                   </tr>
                 ))
               ) : linhas.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-20 text-center text-sm text-black/35">Nenhuma empresa encontrada.</td></tr>
+                <tr><td colSpan={colunas} className="px-4 py-20 text-center text-sm text-black/35">Nenhuma empresa encontrada.</td></tr>
               ) : (
-                linhas.map((l) => (
+                linhas.map((l) => {
+                  const marcavel = daLinhaDaLei(l);
+                  const marcada = selecao?.tem(l.empresa_id) ?? false;
+                  return (
                   <tr
                     key={l.empresa_id}
-                    className="hover:bg-black/[0.025] transition-colors cursor-pointer group"
+                    className={`transition-colors cursor-pointer group ${marcada ? "bg-black/[.04]" : "hover:bg-black/[0.025]"}`}
                     onClick={() => router.push(`/patrocinadores/${l.empresa_id}?lei=${lei}`)}
                   >
+                    {selecao && (
+                      <CelulaDeSelecao
+                        marcada={marcada}
+                        desabilitada={!marcavel || (selecao.noLimite && !marcada)}
+                        nome={l.empresas?.nome ?? "empresa"}
+                        titulo={selecao.noLimite && !marcada ? `Máximo de ${MAX_SELECAO} empresas por vez` : undefined}
+                        onAlternar={() => { if (marcavel) selecao.alternar(marcavel); }}
+                      />
+                    )}
                     <td className="px-4 py-3">
                       <CompanyLogo nome={l.empresas?.nome ?? ""} site={l.empresas?.site} logo_url={l.empresas?.logo_url} size={32} className="rounded border border-black/8" />
                     </td>
@@ -212,7 +244,8 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
                     <td className="px-4 py-3 text-black/50 text-[0.78125rem]">{l.empresas?.cidade ?? "—"}</td>
                     <td className="px-4 py-3"><span className="font-semibold text-[#282525] text-[0.8125rem] tabular-nums" title={l.valor ? formatarValorCompleto(l.valor) : undefined}>{l.valor ? formatarValorCurto(l.valor) : "—"}</span></td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -299,7 +332,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
   );
 }
 
-function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+function PatrocinadoresContent({ isSuperAdmin, selecao }: { isSuperAdmin: boolean; selecao: SelecaoDeEmpresas | null }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -444,6 +477,9 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
   const hasFilters = !!(search || estado || mesorregioes.length > 0 || setor || trimestre || incompletas);
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const colunasDaTabela = selecao ? 8 : 7;
+  const daPagina: EmpresaDaBase[] = empresas.map((e) => ({ id: e.id, nome: e.nome, setor: e.setor, site: e.site, cidade: e.cidade, estado: e.estado }));
+  const marcadasNaPagina = selecao ? daPagina.filter((e) => selecao.tem(e.id)).length : 0;
 
   const SortIcon = ({ col }: { col: SortCol }) =>
     sortCol === col ? (
@@ -529,11 +565,17 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       </div>
 
       {/* Table */}
+      {selecao && (
+        <BarraDeSelecao selecao={selecao} marcadasNaPagina={marcadasNaPagina} totalNaPagina={daPagina.length} onAlternarPagina={() => selecao.alternarPagina(daPagina)} />
+      )}
       <div className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ background: "#F9F9F8" }}>
+              <tr className="h-10" style={{ background: "#F9F9F8" }}>
+                {selecao && (
+                  <CabecalhoDeSelecao marcadasNaPagina={marcadasNaPagina} totalNaPagina={daPagina.length} desabilitada={loading} onAlternar={() => selecao.alternarPagina(daPagina)} />
+                )}
                 {columns.map(({ label, icon, col }) => (
                   <th
                     key={label}
@@ -553,6 +595,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
               {loading ? (
                 Array.from({ length: 10 }).map((_, i) => (
                   <tr key={i}>
+                    {selecao && <td className="w-10" />}
                     <td className="px-4 py-3"><div className="w-8 h-8 rounded bg-black/8 animate-pulse" /></td>
                     <td className="px-4 py-3"><div className="h-3.5 w-44 bg-black/8 rounded animate-pulse" /></td>
                     <td className="px-4 py-3"><div className="w-7 h-7 rounded-full bg-black/8 animate-pulse" /></td>
@@ -564,7 +607,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                 ))
               ) : empresas.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-20 text-center text-sm text-black/35">
+                  <td colSpan={colunasDaTabela} className="px-4 py-20 text-center text-sm text-black/35">
                     Nenhuma empresa encontrada com os filtros selecionados
                   </td>
                 </tr>
@@ -572,12 +615,24 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                 empresas.map((e, i) => {
                   const color = colorFrom(e.nome);
                   const initials = e.nome.slice(0, 2).toUpperCase();
+                  const marcada = selecao?.tem(e.id) ?? false;
                   return (
                     <tr
                       key={e.id}
-                      className="hover:bg-black/[0.025] transition-colors cursor-pointer group"
+                      className={`transition-colors cursor-pointer group ${marcada ? "bg-black/[.04]" : "hover:bg-black/[0.025]"}`}
                       onClick={() => abrirEmpresa(e)}
                     >
+                      {/* Seleção */}
+                      {selecao && (
+                        <CelulaDeSelecao
+                          marcada={marcada}
+                          desabilitada={selecao.noLimite && !marcada}
+                          nome={e.nome}
+                          titulo={selecao.noLimite && !marcada ? `Máximo de ${MAX_SELECAO} empresas por vez` : undefined}
+                          onAlternar={() => selecao.alternar(daPagina[i])}
+                        />
+                      )}
+
                       {/* Logo */}
                       <td className="px-4 py-3">
                         <CompanyLogo
@@ -668,6 +723,9 @@ function WelcomeModalGate() {
 export default function PatrocinadoresPage() {
   const [aba, setAba] = useState("cultura");
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  // A marcação mora aqui, e não em cada aba, para seguir quem troca de aba, de página ou de filtro.
+  const marcadas = useSelecaoDeEmpresas();
+  const selecao = podeAdicionarAoCrm(useOrganizationRole()) ? marcadas : null;
 
   useEffect(() => {
     let active = true;
@@ -710,12 +768,12 @@ export default function PatrocinadoresPage() {
           página de detalhe) foi migrado pra investimentos_por_lei (lei='cultura'). */}
       {aba === "cultura" && (
         <Suspense fallback={<div className="min-h-[22.5rem] animate-pulse bg-black/[.015]" />}>
-          <PatrocinadoresContent isSuperAdmin={isSuperAdmin} />
+          <PatrocinadoresContent isSuperAdmin={isSuperAdmin} selecao={selecao} />
         </Suspense>
       )}
-      {aba === "esporte" && <LeiTabContent lei="esporte" isSuperAdmin={isSuperAdmin} />}
-      {aba === "cinema" && <LeiTabContent lei="ancine" isSuperAdmin={isSuperAdmin} />}
-      {aba === "saude" && <LeiTabContent lei="saude" isSuperAdmin={isSuperAdmin} />}
+      {aba === "esporte" && <LeiTabContent lei="esporte" isSuperAdmin={isSuperAdmin} selecao={selecao} />}
+      {aba === "cinema" && <LeiTabContent lei="ancine" isSuperAdmin={isSuperAdmin} selecao={selecao} />}
+      {aba === "saude" && <LeiTabContent lei="saude" isSuperAdmin={isSuperAdmin} selecao={selecao} />}
       <Suspense fallback={null}>
         <WelcomeModalGate />
       </Suspense>
