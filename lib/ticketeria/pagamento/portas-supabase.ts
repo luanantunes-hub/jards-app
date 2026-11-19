@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import type { PortasDosAvisos } from "@/lib/ticketeria/pagamento/avisos";
+import type { PortasDoCadastro } from "@/lib/ticketeria/pagamento/cadastro-subconta";
 import type { DecisaoDeSaque, PedidoDeSaque } from "@/lib/ticketeria/pagamento/validacao-saque";
 
 // As portas dos avisos do provedor no Supabase, com a chave de serviço (só o servidor grava em ticketeria_notificacoes_provedor e
@@ -42,5 +43,22 @@ export function validarSaqueDoSupabase(admin: SupabaseClient<Database>): (pedido
     const resposta = data as { status?: unknown; motivo?: unknown } | null;
     if (!resposta || (resposta.status !== "APPROVED" && resposta.status !== "REFUSED")) throw new Error("resposta inesperada do banco");
     return { status: resposta.status, motivo: String(resposta.motivo ?? "") };
+  };
+}
+
+/** As portas do cadastro da subconta: a chave vai para o Vault pela função do banco (só com a chave de serviço). */
+export function portasDoCadastroDoSupabase(admin: SupabaseClient<Database>): PortasDoCadastro {
+  const ticketeria = clienteDaTicketeria(admin);
+  return {
+    async registrar(loja, conta) {
+      const { error } = await ticketeria.rpc("fn_ticketeria_registrar_conta_asaas", {
+        p_loja: loja, p_asaas_account_id: conta.asaas_account_id, p_wallet_id: conta.wallet_id, p_cpf_cnpj: conta.cpf_cnpj, p_chave: conta.chave, p_situacao: conta.situacao,
+      });
+      if (error) throw new Error(error.message);
+    },
+    async atualizarSituacao(loja, situacao) {
+      const { error } = await ticketeria.rpc("fn_ticketeria_situacao_da_conta_asaas", { p_loja: loja, p_situacao: situacao });
+      if (error) throw new Error(error.message);
+    },
   };
 }
