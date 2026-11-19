@@ -3,6 +3,7 @@
  * Aqui ficam as regras puras da lista de e-mail — as conversas em fio e os e-mails que ainda não saíram —
  * e os tipos das reuniões, que a tabela do outro ambiente usa.
  */
+import type { EstadoDoAvatar } from "@/lib/conversas/avatar";
 import type { Conversa } from "@/lib/email/conversas";
 
 export type StatusDaReuniao = "agendada" | "bot_entrando" | "gravando" | "processando" | "concluida" | "falhou";
@@ -218,5 +219,21 @@ export function duracaoEmTexto(segundos: number | null | undefined): string {
   const horas = Math.floor(minutos / 60);
   const resto = minutos % 60;
   return resto ? `${horas}h ${resto}min` : `${horas}h`;
+}
+
+/**
+ * O que está acontecendo na conversa, para o desenho do avatar contar. A ordem é a do que pede atenção primeiro:
+ * quem ainda não é contato vem antes de quem espera resposta, que vem antes de quem já respondeu.
+ */
+export function estadoDoItem(item: ItemDaLista, nomesDosContatos: readonly string[] = []): EstadoDoAvatar | null {
+  if (item.tipo === "agendado") {
+    if (item.agendado.estado === "falhou") return "falhou";
+    return item.agendado.estado === "enviando" ? "a-caminho" : "agendado";
+  }
+  const { conversa } = item;
+  if (nomesDosContatos.length === 0 && conversa.contatoIds.length === 0) return "sem-contato";
+  if (conversa.situacao?.tipo === "aguardando") return "aguardando";
+  if (conversa.situacao?.tipo === "respondeu") return "respondeu";
+  return conversa.privada ? "so-eu-vejo" : null;
 }
 

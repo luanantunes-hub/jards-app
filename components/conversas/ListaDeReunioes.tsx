@@ -1,9 +1,11 @@
 "use client";
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { CalendarPlus, Video } from "lucide-react";
 import { ListEmptyState, ListSearch, ListTableSurface, LIST_HEADER_CELL } from "@/components/list/ListPagePrimitives";
 import { AvatarDaPessoa } from "@/components/ui/AvatarDaPessoa";
+import { caminhoDoDesenho } from "@/lib/conversas/avatar";
 import { FilterButton } from "@/components/ui/FilterControls";
 import {
   dataCurta, duracaoEmTexto, recortarReunioes, RECORTES_DAS_REUNIOES, reuniaoNaBusca, ROTULO_DA_PLATAFORMA,
@@ -15,13 +17,19 @@ function quandoPorExtenso(ms: number | null): string {
   return new Date(ms).toLocaleString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-/** A miniatura da reunião: o ícone de vídeo com a duração gravada por cima, quando existe. */
+/**
+ * A miniatura da reunião. Na que já foi gravada, o tamanduá de binóculo — é o que se assiste depois;
+ * nas outras, o ícone de vídeo. A duração aparece ao lado quando o assistente gravou.
+ */
 function Miniatura({ reuniao }: { reuniao: ReuniaoNaLista }) {
   const duracao = duracaoEmTexto(reuniao.duracao_bot_s);
+  const gravada = reuniao.status === "concluida";
   return (
-    <span aria-hidden="true" className="flex h-9 w-14 shrink-0 items-center justify-center gap-1 rounded bg-[#7259B5]/[.08] text-[#7259B5]">
-      <Video size={13} />
-      {duracao && <span className="text-[0.5625rem] font-medium tabular-nums">{duracao}</span>}
+    <span aria-hidden="true" className={`flex h-9 w-14 shrink-0 items-center justify-center gap-0.5 rounded bg-[#7259B5]/[.10] ${gravada ? "" : "text-[#7259B5]"}`}>
+      {gravada
+        ? <Image src={caminhoDoDesenho("gravada")} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
+        : <Video size={13} />}
+      {duracao && <span className={`text-[0.5625rem] font-medium tabular-nums ${gravada ? "text-[#5B4698]" : ""}`}>{duracao}</span>}
     </span>
   );
 }

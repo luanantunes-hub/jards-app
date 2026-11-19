@@ -31,3 +31,27 @@ export function corDoAvatar(chave: string | null | undefined): string {
   for (let i = 0; i < texto.length; i += 1) soma = (soma * 31 + texto.charCodeAt(i)) % 100_000;
   return CORES_DO_AVATAR[soma % CORES_DO_AVATAR.length];
 }
+
+/**
+ * O tamanduá que representa a conversa. Quando ela tem um estado, o desenho conta esse estado; quando não tem,
+ * um dos desenhos neutros, escolhido pelo endereço — a mesma pessoa mostra sempre o mesmo.
+ * Os arquivos ficam em public/avatares e não têm fundo. Não são um pacote de ilustrações do dia (lib/pacotes-de-ilustracoes):
+ * ali os desenhos rodam por sorteio, aqui cada um tem um papel fixo.
+ */
+export type EstadoDoAvatar = "aguardando" | "respondeu" | "sem-contato" | "so-eu-vejo" | "agendado" | "a-caminho" | "falhou" | "gravada";
+
+const NEUTROS = ["aceno", "trabalhando", "celular", "coracao", "ideia"] as const;
+
+export function desenhoDoAvatar(estado: EstadoDoAvatar | null | undefined, chave?: string | null): string {
+  if (estado) return estado;
+  const texto = (chave ?? "").trim().toLowerCase();
+  if (!texto) return NEUTROS[0];
+  let soma = 0;
+  for (let i = 0; i < texto.length; i += 1) soma = (soma * 17 + texto.charCodeAt(i)) % 100_000;
+  return NEUTROS[soma % NEUTROS.length];
+}
+
+export function caminhoDoDesenho(desenho: string): string {
+  return `/avatares/${desenho}.png`;
+}
+

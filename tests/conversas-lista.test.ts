@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { agruparConversas, type EmailDeConversa } from "../lib/email/conversas";
-import { contagemDosFiltros, dataCurta, duracaoEmTexto, itemNaBusca, itemNoFiltro, montarLista, quandoDaReuniao, recortarReunioes, reuniaoNaBusca, type EmailAgendado, type ReuniaoNaLista } from "../lib/conversas/lista";
+import { contagemDosFiltros, dataCurta, duracaoEmTexto, estadoDoItem, itemNaBusca, itemNoFiltro, montarLista, quandoDaReuniao, recortarReunioes, reuniaoNaBusca, type EmailAgendado, type ReuniaoNaLista } from "../lib/conversas/lista";
 
 const AGORA = Date.parse("2026-11-19T12:00:00Z");
 
@@ -116,4 +116,26 @@ test("duração em texto", () => {
   assert.equal(duracaoEmTexto(5400), "1h 30min");
   assert.equal(duracaoEmTexto(null), "");
   assert.equal(duracaoEmTexto(0), "");
+});
+
+test("o estado da conversa: o que pede atenção primeiro é o que o desenho conta", () => {
+  const semContato = montarLista(agruparConversas([email("x", { thread_id: "fx" })], AGORA))[0];
+  assert.equal(estadoDoItem(semContato), "sem-contato");
+
+  const aguardando = montarLista(agruparConversas([email("y", { thread_id: "fy", direction: "outbound", to_emails: ["m@x.com"], contato_id: "c1" })], AGORA))[0];
+  assert.equal(estadoDoItem(aguardando, ["Marina"]), "aguardando");
+
+  const respondeu = montarLista(agruparConversas([
+    email("z1", { thread_id: "fz", direction: "outbound", to_emails: ["m@x.com"], contato_id: "c1", sent_at: "2026-11-16T10:00:00Z" }),
+    email("z2", { thread_id: "fz", contato_id: "c1" }),
+  ], AGORA))[0];
+  assert.equal(estadoDoItem(respondeu, ["Marina"]), "respondeu");
+
+  const antiga = montarLista(agruparConversas([email("w", { thread_id: "fw", contato_id: "c1", visibility: "private", sent_at: "2026-01-01T10:00:00Z" })], AGORA))[0];
+  assert.equal(estadoDoItem(antiga, ["Marina"]), "so-eu-vejo", "sem situação, resta dizer que só ela vê");
+
+  const [agendadoPendente] = montarLista([], [agendado]);
+  assert.equal(estadoDoItem(agendadoPendente), "agendado");
+  assert.equal(estadoDoItem(montarLista([], [{ ...agendado, estado: "enviando" }])[0]), "a-caminho");
+  assert.equal(estadoDoItem(montarLista([], [{ ...agendado, estado: "falhou" }])[0]), "falhou");
 });

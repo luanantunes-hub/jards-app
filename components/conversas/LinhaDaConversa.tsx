@@ -1,9 +1,8 @@
 "use client";
 
-import { Clock } from "lucide-react";
 import { EtiquetaDeSituacao, EtiquetaSoEuVejo } from "@/components/email/EtiquetaDeConversa";
 import { AvatarDaPessoa } from "@/components/ui/AvatarDaPessoa";
-import { dataCurta, enderecoDoOutroLado, horaCurta, quemNaConversa, type ItemDaLista } from "@/lib/conversas/lista";
+import { dataCurta, enderecoDoOutroLado, estadoDoItem, horaCurta, quemNaConversa, type ItemDaLista } from "@/lib/conversas/lista";
 
 /**
  * Uma conversa na lista, como cartão: quem escreveu em cima, com o rosto ao lado, e o assunto embaixo.
@@ -33,9 +32,7 @@ export function LinhaDaConversa({ item, nomesDosContatos, selecionada, onAbrir }
       }`}
     >
       <div className="flex items-start gap-2.5">
-        {ehEmail
-          ? <AvatarDaPessoa nome={quem} endereco={endereco} tamanho="pequeno" className="mt-0.5" />
-          : <span aria-hidden="true" className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/[.05] text-black/35"><Clock size={12} /></span>}
+        <AvatarDaPessoa nome={quem} endereco={endereco} estado={estadoDoItem(item, nomesDosContatos)} comDesenho tamanho="grande" className="-mt-0.5" />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <p className="min-w-0 truncate text-[0.8125rem] font-semibold text-[#282525]">{ehEmail ? quem : `Para ${quem}`}</p>
