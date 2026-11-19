@@ -1143,6 +1143,7 @@ export type BancoDaTicketeria = {
           preco_centavos: number;
           usado_em: string | null;
           cancelado_em: string | null;
+          usado_por: string | null;
           created_at: string;
         };
         Insert: {
@@ -1157,6 +1158,7 @@ export type BancoDaTicketeria = {
           preco_centavos: number;
           usado_em?: string | null;
           cancelado_em?: string | null;
+          usado_por?: string | null;
           created_at?: string;
         };
         Update: {
@@ -1171,6 +1173,7 @@ export type BancoDaTicketeria = {
           preco_centavos?: number;
           usado_em?: string | null;
           cancelado_em?: string | null;
+          usado_por?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -1336,6 +1339,14 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_reembolso_concluir: {
         Args: { p_reembolso: string; p_partidas: Json; p_estorno_ref: string };
+        Returns: Json;
+      };
+      fn_ticketeria_conferir_ingresso: {
+        Args: { p_loja: string; p_sessao: string; p_codigo: string; p_usuario: string | null };
+        Returns: Json;
+      };
+      fn_ticketeria_porta_resumo: {
+        Args: { p_loja: string; p_sessao: string };
         Returns: Json;
       };
       fn_ticketeria_emitir_ingressos: {
