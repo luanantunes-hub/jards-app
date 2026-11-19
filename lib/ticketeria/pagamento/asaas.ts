@@ -177,11 +177,21 @@ export class ProvedorAsaas implements ProvedorDePagamento {
  * move dinheiro de verdade, exige TRÊS coisas juntas: ASAAS_AMBIENTE=producao, ASAAS_URL (a base da API, com /v3, conferida no painel
  * do Asaas) e TICKETERIA_DINHEIRO_REAL=sim. O dono só liga isso depois do piloto de baixo valor e do parecer jurídico (D7 do plano).
  */
-export function provedorAsaas(ambiente: Record<string, string | undefined> = process.env, http?: typeof fetch): ProvedorAsaas | null {
+/**
+ * A base e a chave do Asaas, só quando configurado: ASAAS_API_KEY. Sem ASAAS_AMBIENTE=producao, é o sandbox. A produção exige TRÊS coisas
+ * juntas: ASAAS_AMBIENTE=producao, ASAAS_URL (a base da API, com /v3) e TICKETERIA_DINHEIRO_REAL=sim. Serve ao provedor e ao cadastro de subconta.
+ */
+export function ambienteDoAsaas(ambiente: Record<string, string | undefined> = process.env): { chave: string; url: string } | null {
   const chave = ambiente.ASAAS_API_KEY ?? "";
-  const token = ambiente.ASAAS_WEBHOOK_TOKEN ?? "";
-  if (chave === "" || token === "") return null;
+  if (chave === "") return null;
   const producao = ambiente.ASAAS_AMBIENTE === "producao";
   if (producao && (ambiente.TICKETERIA_DINHEIRO_REAL !== "sim" || !/^https:\/\/[^\s/]+\/v3\/?$/.test(ambiente.ASAAS_URL ?? ""))) return null;
-  return new ProvedorAsaas({ chave, tokenDoWebhook: token, url: producao ? ambiente.ASAAS_URL : URL_DO_SANDBOX, fetch: http });
+  return { chave, url: producao ? (ambiente.ASAAS_URL as string) : URL_DO_SANDBOX };
+}
+
+export function provedorAsaas(ambiente: Record<string, string | undefined> = process.env, http?: typeof fetch): ProvedorAsaas | null {
+  const base = ambienteDoAsaas(ambiente);
+  const token = ambiente.ASAAS_WEBHOOK_TOKEN ?? "";
+  if (!base || token === "") return null;
+  return new ProvedorAsaas({ chave: base.chave, tokenDoWebhook: token, url: base.url, fetch: http });
 }
