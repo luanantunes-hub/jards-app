@@ -16,8 +16,8 @@ import { emPartes } from "@/lib/email/lotes";
 import { createClient } from "@/lib/supabase/client";
 import type { RemetenteDaTriagem } from "@/app/api/email/triagem/route";
 
-/** As últimas mensagens da própria caixa que a tela agrupa em conversas. */
-const MENSAGENS_NA_CAIXA = 600;
+/** Quantos e-mails a tela busca de cada vez; "Carregar mais" busca os seguintes, mais antigos. */
+const MENSAGENS_POR_PAGINA = 300;
 
 /** Conversas tem dois ambientes: o e-mail, que é uma caixa de entrada, e as reuniões, que são uma agenda. */
 type Ambiente = "email" | "reunioes";
@@ -30,6 +30,20 @@ async function buscarJson<T>(url: string, vazio: T): Promise<T> {
   } catch {
     return vazio;
   }
+}
+
+/** O nome de cada contato, em lotes de 100 ids (o endereço de uma consulta tem limite). */
+async function nomesDosContatos(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  ids: readonly string[],
+): Promise<Record<string, string>> {
+  const porId: Record<string, string> = {};
+  for (const parte of emPartes(ids, 100)) {
+    const { data: contatos } = await supabase.from("contatos").select("id, nome").in("id", parte);
+    for (const contato of (contatos ?? []) as Array<{ id: string; nome: string | null }>) if (contato.nome) porId[contato.id] = contato.nome;
+  }
+  return porId;
 }
 
 /**
@@ -51,6 +65,8 @@ export default function ConversasPage() {
   const [conectado, setConectado] = useState(true);
 
   const [carregando, setCarregando] = useState(true);
+  const [temMaisEmails, setTemMaisEmails] = useState(false);
+  const [carregandoMaisEmails, setCarregandoMaisEmails] = useState(false);
   const [sincronizando, setSincronizando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -69,7 +85,7 @@ export default function ConversasPage() {
 
       const [{ data, error }, daTriagem, osAgendados, asReunioes] = await Promise.all([
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any).from("emails").select(COLUNAS_DO_EMAIL_DE_CONVERSA).eq("user_id", usuario).order("sent_at", { ascending: false }).limit(MENSAGENS_NA_CAIXA),
+        (supabase as any).from("emails").select(COLUNAS_DO_EMAIL_DE_CONVERSA).eq("user_id", usuario).order("sent_at", { ascending: false }).limit(MENSAGENS_POR_PAGINA),
         buscarJson<{ conectado?: boolean; remetentes?: RemetenteDaTriagem[] }>("/api/email/triagem", {}),
         buscarJson<{ agendados?: EmailAgendado[] }>("/api/email/agendados", {}),
         organizationId
@@ -80,19 +96,15 @@ export default function ConversasPage() {
 
       const lidos = (data ?? []) as EmailDeConversa[];
       setEmails(lidos);
+      // Veio uma página cheia: pode haver mais e-mails antigos ainda não buscados.
+      setTemMaisEmails(lidos.length === MENSAGENS_POR_PAGINA);
       setTriagem(daTriagem.remetentes ?? []);
       setConectado(daTriagem.conectado !== false);
       setAgendados(osAgendados.agendados ?? []);
       setReunioes(asReunioes.reunioes ?? []);
 
       const idsDeContatos = [...new Set(lidos.map((email) => email.contato_id).filter((id): id is string => Boolean(id)))];
-      const porId: Record<string, string> = {};
-      for (const parte of emPartes(idsDeContatos, 100)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: contatos } = await (supabase as any).from("contatos").select("id, nome").in("id", parte);
-        for (const contato of (contatos ?? []) as Array<{ id: string; nome: string | null }>) if (contato.nome) porId[contato.id] = contato.nome;
-      }
-      setNomes(porId);
+      setNomes(await nomesDosContatos(supabase, idsDeContatos));
 
       if (organizationId) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -114,6 +126,44 @@ export default function ConversasPage() {
     const fim = window.setTimeout(() => setAviso(null), 6000);
     return () => window.clearTimeout(fim);
   }, [aviso]);
+
+  /** Busca a próxima página de e-mails, mais antigos que o mais antigo já carregado, e junta à lista. */
+  const carregarMaisEmails = useCallback(async () => {
+    if (carregandoMaisEmails || !temMaisEmails || !meuId) return;
+    setCarregandoMaisEmails(true);
+    try {
+      const maisAntigo = emails.reduce<string | null>(
+        (minimo, email) => (email.sent_at && (!minimo || email.sent_at < minimo) ? email.sent_at : minimo),
+        null,
+      );
+      if (!maisAntigo) {
+        setTemMaisEmails(false);
+        return;
+      }
+      const { data, error } = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+        .from("emails")
+        .select(COLUNAS_DO_EMAIL_DE_CONVERSA)
+        .eq("user_id", meuId)
+        .lt("sent_at", maisAntigo)
+        .order("sent_at", { ascending: false })
+        .limit(MENSAGENS_POR_PAGINA);
+      if (error) throw new Error(error.message);
+
+      const novos = (data ?? []) as EmailDeConversa[];
+      setEmails((atual) => [...atual, ...novos]);
+      setTemMaisEmails(novos.length === MENSAGENS_POR_PAGINA);
+
+      const idsNovos = [...new Set(novos.map((email) => email.contato_id).filter((id): id is string => Boolean(id)))];
+      if (idsNovos.length > 0) {
+        const porId = await nomesDosContatos(supabase, idsNovos);
+        setNomes((atual) => ({ ...atual, ...porId }));
+      }
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Não foi possível carregar mais e-mails.");
+    } finally {
+      setCarregandoMaisEmails(false);
+    }
+  }, [carregandoMaisEmails, temMaisEmails, meuId, emails, supabase]);
 
   async function atualizar() {
     setSincronizando(true);
@@ -261,9 +311,22 @@ export default function ConversasPage() {
                 ))}
               </ul>
             )}
+            {temMaisEmails && (
+              <div className="px-3 pb-3">
+                <button
+                  type="button"
+                  onClick={() => void carregarMaisEmails()}
+                  disabled={carregandoMaisEmails}
+                  className="flex h-9 w-full items-center justify-center rounded border border-black/10 bg-white text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {carregandoMaisEmails ? "Carregando…" : "Carregar mais"}
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className={`min-w-0 flex-1 overflow-y-auto px-4 py-5 md:px-7 md:py-6 lg:block ${aberta ? "block" : "hidden"}`}>
+          {/* self-start: a leitura termina onde o próprio conteúdo termina, sem esticar vazia até o fim da lista ao lado. */}
+          <div className={`min-w-0 max-h-full flex-1 self-start overflow-y-auto px-4 py-5 md:px-7 md:py-6 lg:block ${aberta ? "block" : "hidden"}`}>
             {/* A leitura não acompanha a largura da tela: linha longa demais cansa a vista. */}
             <div className="max-w-3xl">
               {aberta ? (

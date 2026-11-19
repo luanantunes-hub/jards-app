@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CornerUpLeft, ExternalLink, Lock, Users } from "lucide-react";
 import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
 import { EscreverEmail } from "@/components/email/EscreverEmail";
+import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { assuntoDeResposta } from "@/lib/email/envio";
 import { NOME_DO_PROVEDOR, provedorDaMensagem, type Conversa, type EmailDeConversa } from "@/lib/email/conversas";
 import { emPartes } from "@/lib/email/lotes";
@@ -119,10 +120,11 @@ export function AcoesDaConversa({ conversa, meuId, onMudou, onErro }: { conversa
 
   return (
     <>
-      <button type="button" onClick={() => setRespondendo(true)} className={BOTAO_DA_CONVERSA}>
-        <CornerUpLeft size={12} aria-hidden="true" />
+      {/* Responder também envia um e-mail: o mesmo peso visual do botão Escrever e-mail do topo da página. */}
+      <PrimaryListAction onClick={() => setRespondendo(true)}>
+        <CornerUpLeft size={13} aria-hidden="true" />
         Responder
-      </button>
+      </PrimaryListAction>
       {conversa.contatoIds.length > 0 && (
         <button type="button" onClick={() => void mudarVisibilidade()} disabled={salvando} className={BOTAO_DA_CONVERSA}>
           {conversa.privada ? <Users size={12} aria-hidden="true" /> : <Lock size={12} aria-hidden="true" />}
