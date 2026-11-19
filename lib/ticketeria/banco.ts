@@ -1016,6 +1016,60 @@ export type BancoDaTicketeria = {
         };
         Relationships: [];
       };
+      ticketeria_trocas_de_conta: {
+        Row: {
+          id: string;
+          loja_id: string;
+          pedida_por: string;
+          banco_codigo: string;
+          agencia: string;
+          conta: string;
+          conta_digito: string | null;
+          codigo_hash: string;
+          codigo_expira_em: string;
+          tentativas: number;
+          confirmada_em: string | null;
+          efetiva_em: string | null;
+          cancelada_em: string | null;
+          aplicada_em: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          loja_id: string;
+          pedida_por: string;
+          banco_codigo: string;
+          agencia: string;
+          conta: string;
+          conta_digito?: string | null;
+          codigo_hash: string;
+          codigo_expira_em: string;
+          tentativas?: number;
+          confirmada_em?: string | null;
+          efetiva_em?: string | null;
+          cancelada_em?: string | null;
+          aplicada_em?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          loja_id?: string;
+          pedida_por?: string;
+          banco_codigo?: string;
+          agencia?: string;
+          conta?: string;
+          conta_digito?: string | null;
+          codigo_hash?: string;
+          codigo_expira_em?: string;
+          tentativas?: number;
+          confirmada_em?: string | null;
+          efetiva_em?: string | null;
+          cancelada_em?: string | null;
+          aplicada_em?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       ticketeria_validacoes_saque: {
         Row: {
           id: string;
@@ -1130,6 +1184,26 @@ export type BancoDaTicketeria = {
       fn_ticketeria_situacao_da_conta_asaas: {
         Args: { p_loja: string; p_situacao: string };
         Returns: string;
+      };
+      fn_ticketeria_aplicar_trocas_vencidas: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      fn_ticketeria_troca_pedir: {
+        Args: { p_loja: string; p_user: string; p_banco: string; p_agencia: string; p_conta: string; p_digito: string | null; p_codigo_hash: string; p_codigo_expira_em: string };
+        Returns: string;
+      };
+      fn_ticketeria_troca_confirmar: {
+        Args: { p_loja: string; p_user: string; p_codigo_hash: string };
+        Returns: Json;
+      };
+      fn_ticketeria_troca_cancelar: {
+        Args: { p_loja: string };
+        Returns: number;
+      };
+      fn_ticketeria_troca_estado: {
+        Args: { p_loja: string };
+        Returns: Json;
       };
       fn_ticketeria_validar_saque: {
         Args: { p_tipo: string; p_id_externo: string; p_destino: string; p_cpf_cnpj: string | null; p_valor_centavos: number; p_payload: Json; p_provedor?: string };
