@@ -21,12 +21,13 @@ type Valores = Record<string, Partial<Record<Lei, number>>>;
 type Potencial = { valorEfetivo: number; potencial: number; potencialRealocado?: number };
 type Crescimento = { taxaAnual: number; confianca: "individual" | "parcial" | "setor" };
 
-// Exemplo do estado vazio: três clássicos brasileiros que já fecharam as portas (a Matarazzo é a mesma
-// da landing, com a marca dela), com valores inventados. Aparece apagado e sem clique, só para mostrar como fica a comparação.
+// Exemplo do estado vazio: três clássicos brasileiros que já fecharam as portas, com valores inventados e as
+// marcas de verdade (Matarazzo, a mesma da landing; Mappin e Varig, em domínio público na Wikimedia Commons).
+// Aparece apagado, ao fundo, atrás do cartão com o botão, só para mostrar como fica a comparação.
 const EXEMPLO_EMPRESAS: EmpresaOption[] = [
-  { id: "exemplo-mappin", nome: "Mappin", site: null, logo_url: null },
+  { id: "exemplo-mappin", nome: "Mappin", site: null, logo_url: "/assets/exemplo-mappin.svg" },
   { id: "exemplo-matarazzo", nome: "Indústrias Reunidas Fábricas Matarazzo", site: null, logo_url: "/assets/matarazzo.svg" },
-  { id: "exemplo-varig", nome: "Varig", site: null, logo_url: null },
+  { id: "exemplo-varig", nome: "Varig", site: null, logo_url: "/assets/exemplo-varig.svg" },
 ];
 const EXEMPLO_VALORES: Valores = {
   "exemplo-mappin": { cultura: 1_200_000, esporte: 350_000 },
@@ -442,17 +443,8 @@ function ComparativoContent() {
 
       <div className="mx-auto max-w-pagina px-4 py-8 sm:px-6 lg:px-10">
         {selecionadas.length === 0 ? (
-          <div className="space-y-6">
-            <div className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <ListEmptyState
-                icon={GitCompareArrows}
-                title="Busque e adicione empresas para comparar"
-                description="Enquanto isso, três clássicos posam de exemplo."
-                action={<PrimaryListAction onClick={() => buscaInputRef.current?.focus()}><Plus size={13} aria-hidden="true" /> Adicionar empresa</PrimaryListAction>}
-              />
-            </div>
+          <div className="relative">
             <div aria-hidden="true" inert className="pointer-events-none select-none opacity-40">
-              <p className="mb-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Exemplo · Mappin, Matarazzo e Varig não patrocinam mais ninguém</p>
               <ComparativoCartoes
                 selecionadas={EXEMPLO_EMPRESAS}
                 valores={EXEMPLO_VALORES}
@@ -461,6 +453,16 @@ function ComparativoContent() {
                 metricaExtra="nenhuma"
                 loading={false}
               />
+            </div>
+            <div className="absolute inset-0 flex items-start justify-center px-2 pt-10 sm:items-center sm:pt-0">
+              <div className="w-full max-w-md rounded border bg-white elevacao-2">
+                <ListEmptyState
+                  icon={GitCompareArrows}
+                  title="Busque e adicione empresas para comparar"
+                  description="Enquanto isso, três clássicos posam de exemplo."
+                  action={<PrimaryListAction onClick={() => buscaInputRef.current?.focus()}><Plus size={13} aria-hidden="true" /> Adicionar empresa</PrimaryListAction>}
+                />
+              </div>
             </div>
           </div>
         ) : (
