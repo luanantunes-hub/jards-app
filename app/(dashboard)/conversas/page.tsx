@@ -1,23 +1,26 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Mail, PenLine, RefreshCw, Video } from "lucide-react";
+import { CalendarPlus, Mail, PenLine, RefreshCw } from "lucide-react";
+import { AgendarReuniao } from "@/components/conversas/AgendarReuniao";
 import { LinhaDaConversa } from "@/components/conversas/LinhaDaConversa";
+import { ListaDeReunioes } from "@/components/conversas/ListaDeReunioes";
 import { PainelDaConversa } from "@/components/conversas/PainelDaConversa";
 import { EscreverEmail, type ResultadoDoEnvio } from "@/components/email/EscreverEmail";
-import { NovaReuniaoModal } from "@/components/modals/NovaReuniaoModal";
-import { ListEmptyState, ListPageHeader, ListSummary, ListToolbar, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
+import { ListContent, ListEmptyState, ListPageHeader, ListSummary, ListToolbar, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { FilterButton } from "@/components/ui/FilterControls";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { contagemDosFiltros, enderecoDoOutroLado, FILTROS_DAS_CONVERSAS, itemNoFiltro, montarLista, type EmailAgendado, type FiltroDasConversas, type ItemDaLista, type ReuniaoNaLista } from "@/lib/conversas/lista";
 import { agruparConversas, COLUNAS_DO_EMAIL_DE_CONVERSA, type EmailDeConversa } from "@/lib/email/conversas";
 import { emPartes } from "@/lib/email/lotes";
-import { horasEmTexto, type SituacaoDoLimite } from "@/lib/reunioes/custo";
 import { createClient } from "@/lib/supabase/client";
 import type { RemetenteDaTriagem } from "@/app/api/email/triagem/route";
 
 /** As últimas mensagens da própria caixa que a tela agrupa em conversas. */
 const MENSAGENS_NA_CAIXA = 600;
+
+/** Conversas tem dois ambientes: o e-mail, que é uma caixa de entrada, e as reuniões, que são uma agenda. */
+type Ambiente = "email" | "reunioes";
 
 async function buscarJson<T>(url: string, vazio: T): Promise<T> {
   try {
@@ -30,19 +33,20 @@ async function buscarJson<T>(url: string, vazio: T): Promise<T> {
 }
 
 /**
- * Conversas: e-mails e reuniões num lugar só, com a leitura ao lado da lista. É o registro do que foi conversado
- * com o patrocinador — por isso as duas coisas moram juntas. Cada pessoa vê a própria caixa; a conversa de quem
- * ainda não é contato só aparece para ela, até registrá-la no histórico da empresa.
+ * Conversas: o que foi conversado com o patrocinador, por e-mail ou em reunião. Cada pessoa vê a própria caixa;
+ * a conversa de quem ainda não é contato só aparece para ela, até registrá-la no histórico da empresa.
  */
 export default function ConversasPage() {
   const supabase = useMemo(() => createClient(), []);
   const organizationId = useOrganizationId();
 
+  const [ambiente, setAmbiente] = useState<Ambiente>("email");
   const [emails, setEmails] = useState<EmailDeConversa[]>([]);
   const [reunioes, setReunioes] = useState<ReuniaoNaLista[]>([]);
   const [agendados, setAgendados] = useState<EmailAgendado[]>([]);
   const [triagem, setTriagem] = useState<RemetenteDaTriagem[]>([]);
   const [nomes, setNomes] = useState<Record<string, string>>({});
+  const [empresas, setEmpresas] = useState<Record<string, string>>({});
   const [meuId, setMeuId] = useState<string | null>(null);
   const [conectado, setConectado] = useState(true);
 
@@ -53,8 +57,7 @@ export default function ConversasPage() {
   const [filtro, setFiltro] = useState<FiltroDasConversas>("tudo");
   const [chaveAberta, setChaveAberta] = useState<string | null>(null);
   const [escrevendo, setEscrevendo] = useState(false);
-  const [novaReuniao, setNovaReuniao] = useState(false);
-  const [usoDasReunioes, setUsoDasReunioes] = useState<SituacaoDoLimite | null>(null);
+  const [marcandoReuniao, setMarcandoReuniao] = useState(false);
 
   const carregar = useCallback(async () => {
     try {
@@ -68,7 +71,9 @@ export default function ConversasPage() {
         (supabase as any).from("emails").select(COLUNAS_DO_EMAIL_DE_CONVERSA).eq("user_id", usuario).order("sent_at", { ascending: false }).limit(MENSAGENS_NA_CAIXA),
         buscarJson<{ conectado?: boolean; remetentes?: RemetenteDaTriagem[] }>("/api/email/triagem", {}),
         buscarJson<{ agendados?: EmailAgendado[] }>("/api/email/agendados", {}),
-        organizationId ? buscarJson<{ reunioes?: ReuniaoNaLista[]; uso?: SituacaoDoLimite }>(`/api/reunioes?organization_id=${organizationId}`, {}) : Promise.resolve({} as { reunioes?: ReuniaoNaLista[]; uso?: SituacaoDoLimite }),
+        organizationId
+          ? buscarJson<{ reunioes?: ReuniaoNaLista[] }>(`/api/reunioes?organization_id=${organizationId}`, {})
+          : Promise.resolve({} as { reunioes?: ReuniaoNaLista[] }),
       ]);
       if (error) throw new Error(error.message);
 
@@ -78,7 +83,6 @@ export default function ConversasPage() {
       setConectado(daTriagem.conectado !== false);
       setAgendados(osAgendados.agendados ?? []);
       setReunioes(asReunioes.reunioes ?? []);
-      setUsoDasReunioes(asReunioes.uso ?? null);
 
       const idsDeContatos = [...new Set(lidos.map((email) => email.contato_id).filter((id): id is string => Boolean(id)))];
       const porId: Record<string, string> = {};
@@ -88,6 +92,12 @@ export default function ConversasPage() {
         for (const contato of (contatos ?? []) as Array<{ id: string; nome: string | null }>) if (contato.nome) porId[contato.id] = contato.nome;
       }
       setNomes(porId);
+
+      if (organizationId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: daOrganizacao } = await (supabase as any).from("empresas_crm").select("id, nome").eq("organization_id", organizationId).limit(1000);
+        setEmpresas(Object.fromEntries(((daOrganizacao ?? []) as Array<{ id: string; nome: string }>).map((empresa) => [empresa.id, empresa.nome])));
+      }
       setErro(null);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Não foi possível carregar suas conversas.");
@@ -115,7 +125,7 @@ export default function ConversasPage() {
   }
 
   const conversas = useMemo(() => agruparConversas(emails), [emails]);
-  const itens = useMemo(() => montarLista(conversas, reunioes, agendados), [conversas, reunioes, agendados]);
+  const itens = useMemo(() => montarLista(conversas, agendados), [conversas, agendados]);
   const contagem = useMemo(() => contagemDosFiltros(itens), [itens]);
   const visiveis = useMemo(() => itens.filter((item) => itemNoFiltro(item, filtro)), [itens, filtro]);
   // A conversa aberta sai de `visiveis`: trocar de filtro só a fecha quando ela não está mais na lista.
@@ -143,16 +153,15 @@ export default function ConversasPage() {
     void carregar();
   }
 
-  const vazio = !carregando && itens.length === 0;
+  const caixaVazia = !carregando && itens.length === 0;
 
   return (
     <>
       {escrevendo && <EscreverEmail onClose={() => setEscrevendo(false)} onEnviado={depoisDeEnviar} />}
-      {novaReuniao && organizationId && (
-        <NovaReuniaoModal
-          organizationId={organizationId}
-          onClose={() => setNovaReuniao(false)}
-          onCreated={() => { setNovaReuniao(false); setFiltro("reunioes"); void carregar(); }}
+      {marcandoReuniao && (
+        <AgendarReuniao
+          onClose={() => setMarcandoReuniao(false)}
+          onAgendada={(titulo) => { setAviso(`Reunião "${titulo}" marcada na sua agenda, com o convite enviado.`); setAmbiente("reunioes"); void carregar(); }}
         />
       )}
 
@@ -160,22 +169,38 @@ export default function ConversasPage() {
         secao="conversas"
         eyebrow="Relacionamento"
         title="Conversas"
-        summary={!carregando && !vazio && <ListSummary strong={contagem.tudo}>{contagem.tudo === 1 ? "conversa" : "conversas"}</ListSummary>}
-        actions={
+        summary={!carregando && (ambiente === "email"
+          ? !caixaVazia && <ListSummary strong={contagem.tudo}>{contagem.tudo === 1 ? "conversa" : "conversas"}</ListSummary>
+          : reunioes.length > 0 && <ListSummary strong={reunioes.length}>{reunioes.length === 1 ? "reunião" : "reuniões"}</ListSummary>)}
+        actions={ambiente === "email" ? (
           <>
             <SecondaryListAction onClick={() => void atualizar()} disabled={sincronizando}>
               <RefreshCw size={13} className={sincronizando ? "animate-spin" : undefined} aria-hidden="true" />
               {sincronizando ? "Atualizando…" : "Atualizar"}
             </SecondaryListAction>
-            <SecondaryListAction onClick={() => setNovaReuniao(true)} disabled={!organizationId || usoDasReunioes?.atingido === true}>
-              <Video size={13} aria-hidden="true" />Enviar assistente
-            </SecondaryListAction>
             <PrimaryListAction onClick={() => setEscrevendo(true)}><PenLine size={13} aria-hidden="true" />Escrever e-mail</PrimaryListAction>
           </>
-        }
+        ) : (
+          <PrimaryListAction onClick={() => setMarcandoReuniao(true)}><CalendarPlus size={13} aria-hidden="true" />Agendar reunião</PrimaryListAction>
+        )}
       />
 
-      {!vazio && (
+      {/* Os dois ambientes: o de e-mail é uma caixa de entrada, o de reuniões é uma agenda. */}
+      <nav aria-label="Ambiente" className="flex shrink-0 gap-5 border-b bg-white px-4 md:px-8" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        {([["email", "E-mail"], ["reunioes", "Reuniões"]] as const).map(([valor, rotulo]) => (
+          <button
+            key={valor}
+            type="button"
+            onClick={() => setAmbiente(valor)}
+            aria-current={ambiente === valor ? "page" : undefined}
+            className={`-mb-px border-b-2 py-2.5 text-[0.8125rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${ambiente === valor ? "border-b-[#1C0E33] font-semibold text-[#282525]" : "border-b-transparent font-medium text-black/40 hover:text-black/65"}`}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </nav>
+
+      {ambiente === "email" && !caixaVazia && (
         <ListToolbar>
           {FILTROS_DAS_CONVERSAS.filter(({ value }) => value === "tudo" || value === filtro || contagem[value] > 0).map(({ value, label }) => (
             <FilterButton key={value} active={filtro === value} onClick={() => setFiltro(value)}>
@@ -186,26 +211,23 @@ export default function ConversasPage() {
         </ListToolbar>
       )}
 
-      {usoDasReunioes && (usoDasReunioes.atingido || usoDasReunioes.perto) && (
-        <p role="status" className="shrink-0 border-b bg-white px-4 py-2.5 text-[0.75rem] tabular-nums md:px-8" style={{ borderColor: "rgba(13,13,13,.06)", color: usoDasReunioes.atingido ? "#B23B3B" : "#946611" }}>
-          {usoDasReunioes.atingido
-            ? `O limite de reuniões deste mês foi atingido: ${horasEmTexto(usoDasReunioes.usadasH)} de ${horasEmTexto(usoDasReunioes.limiteH)}. Fale com a equipe do Jards para ampliar.`
-            : `Reuniões deste mês: ${horasEmTexto(usoDasReunioes.usadasH)} de ${horasEmTexto(usoDasReunioes.limiteH)} — perto do limite.`}
-        </p>
-      )}
       {aviso && <p role="status" className="shrink-0 border-b bg-white px-4 py-2.5 text-[0.75rem] font-medium text-[#3C7A55] md:px-8" style={{ borderColor: "rgba(13,13,13,.06)" }}>{aviso}</p>}
       {erro && <p role="alert" className="shrink-0 border-b bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B] md:px-8" style={{ borderColor: "rgba(13,13,13,.06)" }}>{erro}</p>}
 
       {carregando ? (
         <p className="flex-1 py-16 text-center text-[0.75rem] text-black/35">Carregando…</p>
-      ) : vazio ? (
+      ) : ambiente === "reunioes" ? (
+        <ListContent>
+          <ListaDeReunioes reunioes={reunioes} nomesDasEmpresas={empresas} onAgendar={() => setMarcandoReuniao(true)} />
+        </ListContent>
+      ) : caixaVazia ? (
         <div className="flex-1 overflow-y-auto">
           <ListEmptyState
             icon={Mail}
             title={conectado ? "Nenhuma conversa por aqui ainda" : "Conecte seu e-mail"}
             description={conectado
               ? "Clique em Atualizar para buscar seus e-mails. Aparecem as conversas com seus contatos e com quem ainda não é contato."
-              : "Depois de conectar, suas conversas por e-mail aparecem aqui, junto com as reuniões gravadas."}
+              : "Depois de conectar, suas conversas por e-mail aparecem aqui."}
             action={conectado
               ? undefined
               : <Link href="/configuracoes?section=ferramentas" className="flex h-9 items-center rounded px-3 text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04]">Abrir Minhas ferramentas</Link>}
@@ -230,19 +252,19 @@ export default function ConversasPage() {
           <div className={`min-w-0 flex-1 overflow-y-auto px-4 py-5 md:px-7 md:py-6 lg:block ${aberta ? "block" : "hidden"}`}>
             {/* A leitura não acompanha a largura da tela: linha longa demais cansa a vista. */}
             <div className="max-w-3xl">
-            {aberta ? (
-              <PainelDaConversa
-                key={aberta.chave}
-                item={aberta}
-                meuId={meuId}
-                nomesDosContatos={nomesDoItem(aberta)}
-                remetenteDaTriagem={remetenteDaAberta}
-                onMudou={() => void carregar()}
-                onVoltar={() => setChaveAberta(null)}
-              />
-            ) : (
-              <p className="pt-20 text-center text-[0.75rem] text-black/30">Escolha uma conversa para ler.</p>
-            )}
+              {aberta ? (
+                <PainelDaConversa
+                  key={aberta.chave}
+                  item={aberta}
+                  meuId={meuId}
+                  nomesDosContatos={nomesDoItem(aberta)}
+                  remetenteDaTriagem={remetenteDaAberta}
+                  onMudou={() => void carregar()}
+                  onVoltar={() => setChaveAberta(null)}
+                />
+              ) : (
+                <p className="pt-20 text-center text-[0.75rem] text-black/30">Escolha uma conversa para ler.</p>
+              )}
             </div>
           </div>
         </div>

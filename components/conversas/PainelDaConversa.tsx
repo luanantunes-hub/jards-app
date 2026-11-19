@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { AcoesDaTriagem } from "@/components/conversas/AcoesDaTriagem";
 import { EtiquetaDeSituacao, EtiquetaSoEuVejo } from "@/components/email/EtiquetaDeConversa";
 import { AcoesDaConversa, BOTAO_DA_CONVERSA, FioDaConversa, type Pessoa } from "@/components/email/FioDaConversa";
-import { dataCurta, quemNaConversa, ROTULO_DA_PLATAFORMA, SITUACAO_DA_REUNIAO, type ItemDaLista } from "@/lib/conversas/lista";
+import { quemNaConversa, type ItemDaLista } from "@/lib/conversas/lista";
 import type { RemetenteDaTriagem } from "@/app/api/email/triagem/route";
 
 function Cabecalho({ titulo, abaixo, voltar }: { titulo: string; abaixo: string; voltar: () => void }) {
@@ -23,7 +22,7 @@ function Cabecalho({ titulo, abaixo, voltar }: { titulo: string; abaixo: string;
   );
 }
 
-/** A conversa aberta, ao lado da lista: o fio do e-mail, a reunião gravada ou o e-mail que ainda não saiu. */
+/** A conversa aberta, ao lado da lista: o fio do e-mail ou o e-mail que ainda não saiu. */
 export function PainelDaConversa({ item, meuId, nomesDosContatos, remetenteDaTriagem, onMudou, onVoltar }: {
   item: ItemDaLista;
   meuId: string | null;
@@ -53,28 +52,6 @@ export function PainelDaConversa({ item, meuId, nomesDosContatos, remetenteDaTri
   }
 
   const aviso = erro && <p role="alert" className="mb-4 rounded border border-[#D94E4E]/20 px-3 py-2 text-[0.75rem] text-[#D94E4E]">{erro}</p>;
-
-  if (item.tipo === "reuniao") {
-    const { reuniao } = item;
-    const situacao = SITUACAO_DA_REUNIAO[reuniao.status];
-    return (
-      <>
-        <Cabecalho titulo={reuniao.titulo} abaixo={`${ROTULO_DA_PLATAFORMA[reuniao.plataforma]} · ${dataCurta(item.quando)}`} voltar={onVoltar} />
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium" style={{ borderColor: `${situacao.cor}47`, color: situacao.cor }}>{situacao.rotulo}</span>
-        </div>
-        {reuniao.resumo_ia
-          ? <p className="whitespace-pre-line text-[0.8125rem] leading-relaxed text-black/70">{reuniao.resumo_ia}</p>
-          : <p className="text-[0.8125rem] text-black/40">{reuniao.status === "concluida" ? "Sem resumo para esta reunião." : "O resumo aparece quando a reunião termina de ser processada."}</p>}
-        <div className="mt-5">
-          <Link href={`/reunioes/${reuniao.id}`} className={BOTAO_DA_CONVERSA}>
-            <ExternalLink size={12} aria-hidden="true" />
-            Abrir a transcrição
-          </Link>
-        </div>
-      </>
-    );
-  }
 
   if (item.tipo === "agendado") {
     const { agendado } = item;

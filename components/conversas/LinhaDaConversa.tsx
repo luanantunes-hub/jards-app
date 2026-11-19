@@ -1,10 +1,10 @@
 "use client";
 
-import { Clock, Mail, Video } from "lucide-react";
+import { Clock, Mail } from "lucide-react";
 import { EtiquetaDeSituacao, EtiquetaSoEuVejo } from "@/components/email/EtiquetaDeConversa";
-import { dataCurta, horaCurta, quemNaConversa, ROTULO_DA_PLATAFORMA, SITUACAO_DA_REUNIAO, type ItemDaLista } from "@/lib/conversas/lista";
+import { dataCurta, horaCurta, quemNaConversa, type ItemDaLista } from "@/lib/conversas/lista";
 
-const ICONE = { email: Mail, reuniao: Video, agendado: Clock } as const;
+const ICONE = { email: Mail, agendado: Clock } as const;
 
 /** Uma linha da lista de Conversas: quem vem primeiro, o assunto embaixo. Vale para e-mail, reunião e agendado. */
 export function LinhaDaConversa({ item, nomesDosContatos, selecionada, onAbrir }: {
@@ -15,14 +15,10 @@ export function LinhaDaConversa({ item, nomesDosContatos, selecionada, onAbrir }
   onAbrir: () => void;
 }) {
   const Icone = ICONE[item.tipo];
-  // Em cima vem com quem é a conversa; embaixo, o assunto. Numa reunião, o nome dela é o que identifica.
-  const quem = item.tipo === "email"
-    ? quemNaConversa(item.conversa, nomesDosContatos)
-    : item.tipo === "reuniao"
-      ? item.reuniao.titulo
-      : `Para ${item.agendado.para.join(", ")}`;
-  const titulo = item.tipo === "email" ? item.conversa.assunto : item.tipo === "reuniao" ? ROTULO_DA_PLATAFORMA[item.reuniao.plataforma] : item.agendado.assunto;
-  const trecho = item.tipo === "email" ? item.conversa.ultima.snippet?.trim() : item.tipo === "reuniao" ? item.reuniao.resumo_ia?.trim() : null;
+  // Em cima vem com quem é a conversa; embaixo, o assunto.
+  const quem = item.tipo === "email" ? quemNaConversa(item.conversa, nomesDosContatos) : `Para ${item.agendado.para.join(", ")}`;
+  const titulo = item.tipo === "email" ? item.conversa.assunto : item.agendado.assunto;
+  const trecho = item.tipo === "email" ? item.conversa.ultima.snippet?.trim() : null;
 
   return (
     <button
@@ -46,11 +42,6 @@ export function LinhaDaConversa({ item, nomesDosContatos, selecionada, onAbrir }
           {nomesDosContatos.length === 0 && <EtiquetaSoEuVejo rotulo="Sem contato" />}
           {item.conversa.privada && nomesDosContatos.length > 0 && <EtiquetaSoEuVejo />}
         </div>
-      )}
-      {item.tipo === "reuniao" && item.reuniao.status !== "concluida" && (
-        <span className="mt-2 inline-flex items-center rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium" style={{ borderColor: `${SITUACAO_DA_REUNIAO[item.reuniao.status].cor}47`, color: SITUACAO_DA_REUNIAO[item.reuniao.status].cor }}>
-          {SITUACAO_DA_REUNIAO[item.reuniao.status].rotulo}
-        </span>
       )}
       {item.tipo === "agendado" && (
         <p className="mt-1.5 text-[0.6875rem]" style={{ color: item.agendado.estado === "falhou" ? "#B23B3B" : "rgba(13,13,13,.4)" }}>

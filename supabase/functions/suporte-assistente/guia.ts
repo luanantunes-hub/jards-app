@@ -32,7 +32,7 @@ Relacionamento
 O sino no alto da tela mostra os avisos. Configurações e Sair ficam no fim do menu lateral.
 
 AINDA NÃO DISPONÍVEL
-- Conversas: a ideia é reunir num lugar só os e-mails trocados com os contatos (Gmail ou Outlook) e as reuniões gravadas do Meet e do Teams, com a opção de escrever, responder e agendar e-mails pelo Jards. Ainda está em preparação e não aparece no menu. Se perguntarem, diga que ainda não está disponível.
+- Conversas: a ideia é reunir num lugar só o que foi conversado com o patrocinador, em dois ambientes. No de e-mail, as conversas trocadas com os contatos (Gmail ou Outlook), com escrever, responder e agendar o envio. No de reuniões, marcar uma reunião pelo Jards, que cria o evento na agenda da pessoa com a sala do Meet ou do Teams e convida quem ela escolher. Ainda está em preparação e não aparece no menu. Se perguntarem, diga que ainda não está disponível.
 
 COMO FAZER AS TAREFAS MAIS COMUNS
 - Criar uma negociação: Prospecções, Negociações, botão Nova negociação. Escolha o patrocinador (ou crie na hora), o projeto, o valor e a etapa.
