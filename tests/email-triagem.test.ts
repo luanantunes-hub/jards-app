@@ -6,6 +6,7 @@ import {
   contraparteDaTriagem,
   dominioDoSite,
   enderecoAutomatico,
+  nomeDaEmpresaPeloDominio,
   nomeSugerido,
   pularNaTriagem,
   sugerirEmpresa,
@@ -91,6 +92,21 @@ test("sugere a empresa pelo site ou pelo domínio de um contato que já existe",
 
 test("domínio público nunca sugere empresa", () => {
   assert.equal(sugerirEmpresa("ana@gmail.com", empresas, [{ email: "paulo@gmail.com", empresa_crm_id: "e2" }]), null);
+});
+
+test("nome da empresa pelo domínio: tira com/br e junta hífen em palavras", () => {
+  assert.equal(nomeDaEmpresaPeloDominio("cianorte.com.br"), "Cianorte");
+  assert.equal(nomeDaEmpresaPeloDominio("aurora-energia.com.br"), "Aurora Energia");
+  assert.equal(nomeDaEmpresaPeloDominio("matarazzo.com"), "Matarazzo");
+  assert.equal(nomeDaEmpresaPeloDominio("mail.grupo_abc.com.br"), "Grupo Abc", "ignora o subdomínio, fica com o rótulo da organização");
+  assert.equal(nomeDaEmpresaPeloDominio("x.io"), "X");
+});
+
+test("nome da empresa pelo domínio: sem palpite para pessoal, vazio ou só número", () => {
+  assert.equal(nomeDaEmpresaPeloDominio("gmail.com"), null);
+  assert.equal(nomeDaEmpresaPeloDominio("123.com"), null);
+  assert.equal(nomeDaEmpresaPeloDominio(""), null);
+  assert.equal(nomeDaEmpresaPeloDominio(null), null);
 });
 
 test("agrupa por remetente, do mais recente ao mais antigo, e guarda o nome de quem escreveu", () => {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/calendar/require-user";
 import { listEmailConnections } from "@/lib/email/connections";
 import { podeConectarEmail } from "@/lib/email/liberacao";
-import { agruparPorRemetente, nomeSugerido, sugerirEmpresa, type RemetenteAgrupado, type SugestaoDeEmpresa } from "@/lib/email/triagem";
+import { agruparPorRemetente, dominioDoEmail, nomeDaEmpresaPeloDominio, nomeSugerido, sugerirEmpresa, type RemetenteAgrupado, type SugestaoDeEmpresa } from "@/lib/email/triagem";
 import { emailsDosRemetentes, lerTodas } from "@/lib/email/triagem-banco";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -15,6 +15,8 @@ export type RemetenteDaTriagem = RemetenteAgrupado & {
   /** O contato que já existe com esse e-mail (primeiro passo feito), ou null. */
   contato: { id: string; nome: string | null; empresaId: string | null; empresaNome: string | null } | null;
   sugestaoDeEmpresa: SugestaoDeEmpresa | null;
+  /** Sem empresa do CRM que já combine: um palpite de nome pelo domínio, para criar a empresa junto com o contato. */
+  nomeDaEmpresaPeloDominio: string | null;
 };
 
 const MAXIMO_DE_REMETENTES = 200;
@@ -70,6 +72,7 @@ export async function GET() {
       for (const grupo of grupos) {
         const contato = contatoPorEndereco.get(grupo.endereco) ?? null;
         const nome = grupo.nome ?? nomeGuardado.get(grupo.endereco) ?? null;
+        const sugestaoDeEmpresa = contato ? null : sugerirEmpresa(grupo.endereco, empresas, contatos);
         remetentes.push({
           ...grupo,
           nome,
@@ -78,7 +81,9 @@ export async function GET() {
           contato: contato
             ? { id: contato.id, nome: contato.nome, empresaId: contato.empresa_crm_id, empresaNome: contato.empresa_crm_id ? nomeDaEmpresa.get(contato.empresa_crm_id) ?? null : null }
             : null,
-          sugestaoDeEmpresa: contato ? null : sugerirEmpresa(grupo.endereco, empresas, contatos),
+          sugestaoDeEmpresa,
+          // Nenhuma empresa do CRM já combina: ainda assim o domínio pode virar uma empresa nova ao criar o contato.
+          nomeDaEmpresaPeloDominio: contato || sugestaoDeEmpresa ? null : nomeDaEmpresaPeloDominio(dominioDoEmail(grupo.endereco)),
         });
       }
     }
