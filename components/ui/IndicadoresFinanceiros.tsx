@@ -1,4 +1,5 @@
 import { CircleCheck, Handshake, Target, type LucideIcon } from "lucide-react";
+import { ESTILO_DE_GIZ } from "@/lib/giz";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 /**
@@ -18,7 +19,7 @@ export const ICONE_CAPTACAO = {
   falta: Target,
 } as const;
 
-/** Barra empilhada da meta: confirmado e, logo depois, o que está em negociação. */
+/** Barra empilhada da meta: confirmado e, logo depois, o que está em negociação. Os blocos têm grão de giz pastel. */
 export function BarraCaptacao({ confirmado, negociacao = 0, meta, className = "h-2" }: {
   confirmado: number;
   negociacao?: number;
@@ -30,8 +31,8 @@ export function BarraCaptacao({ confirmado, negociacao = 0, meta, className = "h
   const segmento = "h-full transition-[width] duration-200 motion-reduce:transition-none";
   return (
     <div className={`flex overflow-hidden rounded bg-black/[.06] ${className}`}>
-      <div className={`${segmento} ${MARCA_CAPTACAO.confirmado}`} style={{ width: `${pctConfirmado}%` }} />
-      <div className={`${segmento} ${MARCA_CAPTACAO.negociacao}`} style={{ width: `${pctNegociacao}%` }} />
+      <div className={`${segmento} ${MARCA_CAPTACAO.confirmado}`} style={{ width: `${pctConfirmado}%`, ...ESTILO_DE_GIZ }} />
+      <div className={`${segmento} ${MARCA_CAPTACAO.negociacao}`} style={{ width: `${pctNegociacao}%`, ...ESTILO_DE_GIZ }} />
     </div>
   );
 }

@@ -22,6 +22,7 @@ import { SegmentedControl } from "@/components/ui/FilterControls";
 import { escalaUi } from "@/lib/escala-ui";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { ICONE_CAPTACAO, MARCA_CAPTACAO } from "@/components/ui/IndicadoresFinanceiros";
+import { CANTOS_DE_GIZ, ESTILO_DE_GIZ } from "@/lib/giz";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -769,8 +770,8 @@ export default function DashboardPage() {
                     <span className="text-[0.6875rem] text-black/45 w-[8.25rem] flex-shrink-0 whitespace-nowrap">
                       {label}
                     </span>
-                    <div className="flex-1 h-[0.3125rem] rounded-full" style={{ background: "rgba(13,13,13,.05)" }}>
-                      <div className={`h-full rounded-full ${barra}`} style={{ width: `${pct}%` }} />
+                    <div className="flex-1 h-2 rounded-[3px]" style={{ background: "rgba(13,13,13,.05)" }}>
+                      <div className={`h-full ${barra}`} style={{ width: `${pct}%`, borderRadius: CANTOS_DE_GIZ, ...ESTILO_DE_GIZ }} />
                     </div>
                     <span
                       className="hidden sm:inline text-[0.6875rem] text-black/30 w-[2.625rem] text-right flex-shrink-0 tabular-nums"
@@ -793,8 +794,8 @@ export default function DashboardPage() {
                 <span className="text-[0.6875rem] font-medium text-black/60 w-[8.25rem] flex-shrink-0 whitespace-nowrap">
                   Aprovado
                 </span>
-                <div className="flex-1 h-[0.3125rem] rounded-full" style={{ background: "rgba(13,13,13,.06)" }}>
-                  <div className={`h-full rounded-full ${MARCA_CAPTACAO.confirmado}`} style={{ width: `${aprovadoBarPct}%` }} />
+                <div className="flex-1 h-2 rounded-[3px]" style={{ background: "rgba(13,13,13,.06)" }}>
+                  <div className={`h-full ${MARCA_CAPTACAO.confirmado}`} style={{ width: `${aprovadoBarPct}%`, borderRadius: CANTOS_DE_GIZ, ...ESTILO_DE_GIZ }} />
                 </div>
                 <span className="hidden sm:inline w-[2.625rem] flex-shrink-0" aria-hidden="true" />
                 <span className="text-[0.6875rem] text-black/25 w-5 text-right flex-shrink-0">{aprovadoCount}</span>

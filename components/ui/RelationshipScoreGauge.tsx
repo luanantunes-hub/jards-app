@@ -1,6 +1,8 @@
 "use client";
 
+import { useId } from "react";
 import { AlertTriangle } from "lucide-react";
+import { FiltroDeGiz } from "@/components/ui/FiltroDeGiz";
 
 type Props = {
   score: number | null;
@@ -92,14 +94,18 @@ export function RelationshipScoreGauge({ score, label = "Potencial de relacionam
   const needleLeft = { x: baseCenter.x + perpendicularX, y: baseCenter.y + perpendicularY };
   const needleRight = { x: baseCenter.x - perpendicularX, y: baseCenter.y - perpendicularY };
   const meta = scoreMeta(score, variant);
+  const filtroDeGiz = `giz-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
 
   return (
     <div className={compact ? "w-[10.5rem]" : "w-full max-w-[13.75rem]"}>
       <p className="mb-1 text-center text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p>
       <svg viewBox="0 0 160 78" className={compact ? "h-[4rem] w-full" : "h-[4.875rem] w-full"} role="img" aria-label={`${label}: ${score ?? "sem dados"}`}>
-        {SEGMENTS.map((segment, index) => (
-          <path key={index} d={arc(segment.from, segment.to)} fill="none" stroke={score !== null && value > index * 20 ? segment.color : "rgba(13,13,13,.075)"} strokeWidth="17" />
-        ))}
+        <defs><FiltroDeGiz id={filtroDeGiz} /></defs>
+        <g filter={`url(#${filtroDeGiz})`}>
+          {SEGMENTS.map((segment, index) => (
+            <path key={index} d={arc(segment.from, segment.to)} fill="none" stroke={score !== null && value > index * 20 ? segment.color : "rgba(13,13,13,.075)"} strokeWidth="17" />
+          ))}
+        </g>
         <path
           d={`M ${needleLeft.x} ${needleLeft.y} L ${needleTip.x} ${needleTip.y} L ${needleRight.x} ${needleRight.y} Z`}
           fill="white"
