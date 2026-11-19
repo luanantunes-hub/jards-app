@@ -84,6 +84,8 @@ export type PortasDaCompra = {
   /** A carteira do Jards no provedor, para onde vai a comissão. Nulo se não configurada. */
   carteiraDoJards: string | null;
   registrarErro?(erro: unknown): void;
+  /** Depois que o pedido já nasceu pago (gratuito): como mandar os ingressos por e-mail. Falha aqui não derruba a compra. */
+  aposPagamento?(pedido: string): Promise<void>;
 };
 
 export type CompraIniciada =
@@ -101,7 +103,10 @@ export async function iniciarCompra(corpo: CorpoDaCompra, portas: PortasDaCompra
   }
   const pedido = await portas.reservar(corpo, MINUTOS_DE_RESERVA);
   // Gratuito: o banco já o marca como pago, sem cobrança.
-  if (pedido.situacao === "pago") return { situacao: "pago", pedido_id: pedido.pedido_id, codigo: pedido.codigo, total_centavos: 0 };
+  if (pedido.situacao === "pago") {
+    try { await portas.aposPagamento?.(pedido.pedido_id); } catch (erro) { portas.registrarErro?.(erro); }
+    return { situacao: "pago", pedido_id: pedido.pedido_id, codigo: pedido.codigo, total_centavos: 0 };
+  }
 
   try {
     await portas.definirMeioPix(pedido.pedido_id);

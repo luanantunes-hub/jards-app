@@ -12,6 +12,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ProvedorAsaas, ambienteDoAsaas } from "@/lib/ticketeria/pagamento/asaas";
 import { ErroDaCompra, iniciarCompra, lerCorpoDaCompra } from "@/lib/ticketeria/pagamento/compra";
 import { portasDaCompraDoSupabase } from "@/lib/ticketeria/pagamento/portas-supabase";
+import { mandarIngressosDoPedido } from "@/lib/ticketeria/pagamento/envio-do-servidor";
 
 export const dynamic = "force-dynamic";
 const TAMANHO_MAXIMO = 8 * 1024;
@@ -27,12 +28,13 @@ export async function POST(req: NextRequest) {
   const leitura = lerCorpoDaCompra(bruto);
   if (!leitura.ok) return resposta({ error: "dados_invalidos", problemas: leitura.problemas }, 400);
   try {
-    const compra = await iniciarCompra(leitura.corpo, portasDaCompraDoSupabase(createAdminClient(), {
+    const portas = portasDaCompraDoSupabase(createAdminClient(), {
       // O token do webhook não é usado para abrir a cobrança; o construtor só exige um de tamanho válido.
       provedor: chave => new ProvedorAsaas({ chave, tokenDoWebhook: process.env.ASAAS_WEBHOOK_TOKEN || "nao-usado-ao-abrir-a-cobranca".padEnd(32, "x"), url: base.url }),
       carteiraDoJards: process.env.ASAAS_WALLET_JARDS || null,
       registrarErro: erro => console.error("[ticketeria] compra:", erro instanceof Error ? erro.message : erro),
-    }));
+    });
+    const compra = await iniciarCompra(leitura.corpo, { ...portas, aposPagamento: mandarIngressosDoPedido });
     return resposta(compra, 201);
   } catch (erro) {
     if (erro instanceof ErroDaCompra) return resposta({ error: erro.codigo, mensagem: erro.mensagem }, erro.codigo === "reserva_recusada" ? 409 : erro.codigo === "vendas_indisponiveis" ? 503 : 502);

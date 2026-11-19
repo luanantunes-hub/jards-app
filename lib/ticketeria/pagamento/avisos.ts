@@ -15,6 +15,8 @@ export type PortasDosAvisos = {
   confirmar(pedidoId: string, provedor: string, ref: string, valorCentavos: number, liquidoCentavos: number | null): Promise<string>;
   /** Anota o resultado e a hora do processamento. */
   concluir(provedor: string, idExterno: string, resultado: string): Promise<void>;
+  /** Depois que o pedido ficou pago (ou já estava): o que vem a seguir, como mandar os ingressos por e-mail. Falha aqui NÃO desfaz nem reprova o aviso. */
+  aposPagamento?(pedidoId: string): Promise<void>;
 };
 
 export type ResultadoDoAviso =
@@ -45,6 +47,8 @@ export async function processarAviso(provedor: ProvedorDePagamento, portas: Port
     const situacao = await portas.confirmar(aviso.pedido_id, provedor.nome, aviso.ref, aviso.valor_centavos, aviso.liquido_centavos ?? null);
     const resultado = situacao === "ja_pago" ? "ja_pago" : "pago";
     await portas.concluir(provedor.nome, aviso.id_externo, resultado);
+    // O pagamento está gravado: o e-mail dos ingressos é uma segunda etapa e não pode derrubar o aviso (o envio guarda a vaga e se refaz sozinho).
+    try { await portas.aposPagamento?.(aviso.pedido_id); } catch { /* o próprio envio registra o erro */ }
     return { status: 200, resultado, pedido_id: aviso.pedido_id };
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : String(erro);

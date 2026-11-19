@@ -4,6 +4,7 @@ import type { Database, Json } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import type { PortasDosAvisos } from "@/lib/ticketeria/pagamento/avisos";
 import type { PortasDoCadastro } from "@/lib/ticketeria/pagamento/cadastro-subconta";
+import type { IngressosDoPedido, PortasDoEnvio } from "@/lib/ticketeria/pagamento/ingressos";
 import { ErroDaCompra, type CorpoDaCompra, type PortasDaCompra } from "@/lib/ticketeria/pagamento/compra";
 import { lerPedidoReservado, mensagemDoErroDaReserva } from "@/lib/ticketeria/pagamento/reserva";
 import type { ProvedorDePagamento } from "@/lib/ticketeria/pagamento/provedor";
@@ -133,5 +134,32 @@ export function portasDaCompraDoSupabase(admin: SupabaseClient<Database>, config
     provedor: config.provedor,
     carteiraDoJards: config.carteiraDoJards,
     registrarErro: config.registrarErro,
+  };
+}
+
+/** As portas do envio dos ingressos: as funções do banco (só com a chave de serviço) e o e-mail transacional. */
+export function portasDoEnvioDoSupabase(admin: SupabaseClient<Database>, config: { enviarEmail: PortasDoEnvio["enviarEmail"]; enderecoDaPagina: (pedido: string) => string }): PortasDoEnvio {
+  const ticketeria = clienteDaTicketeria(admin);
+  return {
+    async reivindicar(pedido) {
+      const { data, error } = await ticketeria.rpc("fn_ticketeria_reivindicar_envio", { p_pedido: pedido });
+      if (error) throw new Error(error.message);
+      return data === true;
+    },
+    async liberar(pedido) {
+      const { error } = await ticketeria.rpc("fn_ticketeria_liberar_envio", { p_pedido: pedido });
+      if (error) throw new Error(error.message);
+    },
+    async ler(pedido) {
+      const { data, error } = await ticketeria.rpc("fn_ticketeria_ingressos_do_pedido", { p_pedido: pedido });
+      if (error) throw new Error(error.message);
+      return (data as IngressosDoPedido | null) ?? null;
+    },
+    async destinatario(pedido) {
+      const { data } = await ticketeria.from("ticketeria_pedidos").select("comprador_email").eq("id", pedido).maybeSingle();
+      return data?.comprador_email ?? null;
+    },
+    enviarEmail: config.enviarEmail,
+    enderecoDaPagina: config.enderecoDaPagina,
   };
 }
