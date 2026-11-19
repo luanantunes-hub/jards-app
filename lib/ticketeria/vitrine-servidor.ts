@@ -1,0 +1,63 @@
+import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/types";
+import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
+import { corDoTema } from "@/lib/ticketeria/site";
+import { ROTULO_DA_CLASSIFICACAO } from "@/lib/ticketeria/eventos";
+import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
+import { estadoDaVenda, faixasDoIngresso, type IngressoDaVitrine, type VitrineDaSessao } from "@/lib/ticketeria/vitrine";
+
+type Admin = SupabaseClient<Database>;
+
+/** O título e a cor do site da loja (o cabeçalho das telas de compra); sem site, o nome da loja e o grafite. */
+export async function siteDaLoja(admin: Admin, lojaId: string): Promise<{ titulo: string; cor: string }> {
+  const t = clienteDaTicketeria(admin);
+  const [{ data: site }, { data: loja }] = await Promise.all([
+    t.from("ticketeria_sites").select("titulo, nome, cor").eq("loja_id", lojaId).maybeSingle(),
+    t.from("ticketeria_lojas").select("nome").eq("id", lojaId).maybeSingle(),
+  ]);
+  return { titulo: site?.titulo || site?.nome || loja?.nome || "Ingressos", cor: corDoTema(site?.cor) };
+}
+
+/** A vitrine de uma sessão para quem compra (sem login: o servidor lê com a chave de serviço e só devolve o que se pode mostrar). Nula se a sessão não existe. */
+export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: number = Date.now()): Promise<VitrineDaSessao | null> {
+  const t = clienteDaTicketeria(admin);
+  const { data: sessao } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").eq("id", sessaoId).maybeSingle();
+  if (!sessao) return null;
+  const [{ data: evento }, { data: local }] = await Promise.all([
+    t.from("ticketeria_eventos").select("id, loja_id, titulo, descricao, classificacao, situacao").eq("id", sessao.evento_id).maybeSingle(),
+    t.from("ticketeria_locais").select("nome, cidade, uf, fuso").eq("id", sessao.local_id).maybeSingle(),
+  ]);
+  if (!evento || !local) return null;
+  const [site, { data: conta }] = await Promise.all([siteDaLoja(admin, evento.loja_id), t.from("ticketeria_contas_asaas").select("situacao").eq("loja_id", evento.loja_id).maybeSingle()]);
+  const estado = estadoDaVenda({ eventoPublicado: evento.situacao === "publicado", canceladaEm: sessao.cancelada_em, inicio: sessao.inicio, contaAprovada: conta?.situacao === "aprovada" }, agora);
+  const quando = diaEHoraDoEvento(sessao.inicio, local.fuso);
+  const vitrine: VitrineDaSessao = {
+    estado, sessao_id: sessao.id, site,
+    evento: {
+      titulo: evento.titulo, descricao: evento.descricao, classificacao: evento.classificacao ? ROTULO_DA_CLASSIFICACAO[evento.classificacao] ?? null : null,
+      quando: quando.charAt(0).toUpperCase() + quando.slice(1), local: [local.nome, [local.cidade, local.uf].filter(Boolean).join("/")].filter(Boolean).join(", "),
+    },
+    ingressos: [],
+  };
+  if (estado !== "aberta") return vitrine;
+
+  const { data: setores } = await t.from("ticketeria_setores").select("id").eq("local_id", sessao.local_id);
+  const { data: ingressos } = await t.from("ticketeria_ingressos").select("id, nome, descricao, limite_por_pedido, setor_id, ordem, created_at")
+    .eq("evento_id", evento.id).eq("publico", true).eq("arquivado", false).in("setor_id", (setores ?? []).map(s => s.id)).order("ordem").order("created_at");
+  const ids = (ingressos ?? []).map(i => i.id);
+  const { data: lotes } = ids.length > 0
+    ? await t.from("ticketeria_lotes").select("id, ingresso_id, ordem, preco_centavos, quantidade, vendas_inicio, vendas_fim").in("ingresso_id", ids)
+    : { data: [] };
+  const ocupados = new Map<string, number>(await Promise.all((lotes ?? []).map(async l => {
+    const { data } = await t.rpc("fn_ticketeria_ocupados", { p_sessao: sessao.id, p_lote: l.id, p_fora: null });
+    return [l.id, Number(data ?? 0)] as const;
+  })));
+  for (const i of ingressos ?? []) {
+    if (!(lotes ?? []).some(l => l.ingresso_id === i.id)) continue; // sem nenhum lote, o ingresso ainda não tem o que vender
+    const faixas = faixasDoIngresso((lotes ?? []).filter(l => l.ingresso_id === i.id).map(l => ({ ...l, ocupados: ocupados.get(l.id) ?? 0 })), agora);
+    const doIngresso: IngressoDaVitrine = { id: i.id, nome: i.nome, descricao: i.descricao, limite: i.limite_por_pedido, faixas };
+    vitrine.ingressos.push(doIngresso);
+  }
+  return vitrine;
+}

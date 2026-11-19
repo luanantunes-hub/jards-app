@@ -1253,6 +1253,10 @@ export type BancoDaTicketeria = {
         Args: { p_loja: string };
         Returns: Json;
       };
+      fn_ticketeria_ocupados: {
+        Args: { p_sessao: string; p_lote: string; p_fora?: string | null };
+        Returns: number;
+      };
       fn_ticketeria_emitir_ingressos: {
         Args: { p_pedido: string };
         Returns: number;
