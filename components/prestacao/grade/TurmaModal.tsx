@@ -126,7 +126,7 @@ export function TurmaModal({ prestacaoId, turma, locais, modalidades, ordem, onC
                   aria-pressed={ativo}
                   aria-label={d.nome}
                   className={`h-10 min-w-11 rounded border px-2.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${ativo ? "bg-[#1C0E33] text-white" : "bg-white text-black/55 hover:bg-black/[.04] hover:text-black/80"}`}
-                  style={{ borderColor: ativo ? "#282525" : "rgba(13,13,13,.12)" }}
+                  style={{ borderColor: ativo ? "#1C0E33" : "rgba(13,13,13,.12)" }}
                 >
                   {d.curto}
                 </button>
