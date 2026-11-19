@@ -5,6 +5,7 @@ import { Search, X, Lock, Unlock, MoreHorizontal, Building2, BriefcaseBusiness, 
 import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { ListEmptyState, PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { TituloComFrase } from "@/components/list/TituloComFrase";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
 import { usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { colorFrom } from "@/lib/colorFrom";
@@ -352,9 +353,7 @@ function ComparativoContent() {
     <div className="min-h-full bg-white">
       <div className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-7 pt-8 sm:px-6 lg:px-10 lg:pb-9">
-          <h1 className="max-w-2xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">
-            Comparativo de investimento
-          </h1>
+          <TituloComFrase secao="comparativo" titulo="Comparativo de investimento" />
 
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <div ref={buscaBoxRef} className="relative min-w-[13.75rem] max-w-[20rem] flex-1">

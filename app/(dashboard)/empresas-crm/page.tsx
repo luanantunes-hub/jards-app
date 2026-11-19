@@ -350,22 +350,10 @@ export default function EmpresasCrmPage() {
         summary={!loading && <ListSummary strong={filtered.length}>{filtered.length === 1 ? "empresa" : "empresas"}</ListSummary>}
         actions={
           <div className="flex items-center gap-2">
-            {tipoFilter === "cliente_ativo" ? (
-              <button
-                onClick={() => setShowNovoCliente(true)}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-[#282525] rounded hover:bg-black/5 transition"
-              >
-                <Plus size={13} /> Novo cliente
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowNovoProspect(true)}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-[#282525] rounded hover:bg-black/5 transition"
-              >
-                <Plus size={13} /> Novo prospect
-              </button>
-            )}
             <EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/>
+            {tipoFilter === "cliente_ativo"
+              ? <PrimaryListAction onClick={() => setShowNovoCliente(true)}><Plus size={13} aria-hidden="true" /> Novo cliente</PrimaryListAction>
+              : <PrimaryListAction onClick={() => setShowNovoProspect(true)}><Plus size={13} aria-hidden="true" /> Novo prospect</PrimaryListAction>}
           </div>
         }
       />

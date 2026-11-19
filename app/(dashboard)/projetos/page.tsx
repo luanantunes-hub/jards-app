@@ -233,12 +233,7 @@ export default function ProjetosPage() {
             </div>
             <p className="text-[0.9375rem] font-semibold text-black/40 mb-1">Nenhum projeto ainda</p>
             <p className="text-sm text-black/25 mb-5">Crie projetos para organizar suas negociações e inscrições</p>
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border border-black/12 text-[#282525] rounded hover:bg-black/5 transition"
-            >
-              <Plus size={13} /> Criar primeiro projeto
-            </button>
+            <PrimaryListAction onClick={() => setShowModal(true)}><Plus size={13} aria-hidden="true" /> Criar primeiro projeto</PrimaryListAction>
           </div>
         ) : filteredProjetos.length === 0 && !loading ? (
           <div className="flex flex-col items-center justify-center py-32 text-center">

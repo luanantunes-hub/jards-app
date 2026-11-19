@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { Check, Pencil, Plus } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -139,9 +140,7 @@ export function OcorrenciasDaData({ organizationId, data, podeEditar }: { organi
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 id="ocorrencias" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Ocorrências{resumo.abertas > 0 ? ` · ${resumo.abertas} em aberto` : ""}</h2>
         {podeEditar && (
-          <button type="button" onClick={() => setFolha({ ocorrencia: null })} className="flex h-9 items-center gap-1.5 rounded border border-black/12 bg-white px-3.5 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98]">
-            <Plus size={13} aria-hidden="true" /> Nova ocorrência
-          </button>
+          <PrimaryListAction onClick={() => setFolha({ ocorrencia: null })}><Plus size={13} aria-hidden="true" /> Nova ocorrência</PrimaryListAction>
         )}
       </div>
       {erro && <p role="alert" className="mb-3 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
