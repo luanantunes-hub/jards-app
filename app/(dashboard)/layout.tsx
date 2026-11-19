@@ -54,6 +54,7 @@ import {
   FileCheck,
   type LucideIcon,
   Mail,
+  Wallet,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -194,6 +195,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
         { label: "Eventos", href: "/ingressos", icon: Ticket },
         { label: "Locais", href: "/ingressos/locais", icon: MapPin },
         { label: "Site", href: "/ingressos/site", icon: Globe },
+        { label: "Recebimentos", href: "/ingressos/recebimentos", icon: Wallet },
       ],
     },
   ],

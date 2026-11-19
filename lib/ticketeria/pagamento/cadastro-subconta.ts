@@ -1,7 +1,10 @@
 // O cadastro da subconta de uma loja: cria no Asaas, GUARDA A CHAVE NA HORA (ela aparece uma vez), cria a chave Pix e confere a situação.
 // As portas do banco são injetadas: a lógica é testada sem rede e sem banco (tests/ticketeria-cadastro-subconta.test.ts).
 
-import type { DadosDoProdutor, SituacaoDaSubconta, SubcontasAsaas } from "@/lib/ticketeria/pagamento/asaas-subconta";
+import type { SituacaoDaSubconta, SubcontasAsaas } from "@/lib/ticketeria/pagamento/asaas-subconta";
+import type { ContaBancaria, DadosDoProdutor } from "@/lib/ticketeria/pagamento/dados-do-produtor";
+
+export { problemasDaContaBancaria, type ContaBancaria } from "@/lib/ticketeria/pagamento/dados-do-produtor";
 
 export type PortasDoCadastro = {
   /** fn_ticketeria_registrar_conta_asaas: guarda a chave no Vault e grava a subconta da loja. */
@@ -11,20 +14,6 @@ export type PortasDoCadastro = {
   /** fn_ticketeria_definir_conta_destino: a única conta bancária para a qual o Jards aprova saque desta subconta. */
   definirContaDestino(loja: string, conta: ContaBancaria): Promise<void>;
 };
-
-/** A conta bancária do produtor, para onde (e só para onde) o Jards aprova saque: banco (3 números), agência, conta e dígito. */
-export type ContaBancaria = { banco: string; agencia: string; conta: string; digito?: string | null };
-
-/** Confere a conta bancária antes de gravar. Devolve as frases dos problemas (vazio: pode seguir). */
-export function problemasDaContaBancaria(c: ContaBancaria): string[] {
-  const erros: string[] = [];
-  const numeros = (t: string) => (t ?? "").replace(/\D/g, "");
-  if (numeros(c.banco).length !== 3) erros.push("banco com 3 números");
-  if (numeros(c.agencia).length < 1 || numeros(c.agencia).length > 6) erros.push("agência de 1 a 6 números");
-  if (numeros(c.conta).length < 1 || numeros(c.conta).length > 15) erros.push("conta de 1 a 15 números");
-  if (c.digito != null && c.digito !== "" && !/^[0-9A-Za-z]{1,2}$/.test(c.digito.trim())) erros.push("dígito de 1 ou 2 caracteres");
-  return erros;
-}
 
 /** O cadastro quebrou DEPOIS de o Asaas criar a subconta e não deu para guardar a chave: a subconta existe no Asaas e precisa de resgate à mão. */
 export class SubcontaSemChaveGuardada extends Error {
