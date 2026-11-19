@@ -10,13 +10,13 @@ type Props = {
   titleOverride?: string;
 };
 
-/** Escala em teal (relacionamento); roxo fica para navegação e seleção. */
-const SEGMENTS = [
-  { from: 180, to: 148, color: "rgba(26,139,122,.35)" },
-  { from: 144, to: 112, color: "rgba(26,139,122,.50)" },
-  { from: 108, to: 76,  color: "rgba(26,139,122,.65)" },
-  { from: 72,  to: 40,  color: "rgba(26,139,122,.80)" },
-  { from: 36,  to: 4,   color: "#1A8B7A" },
+/** Escala em folha, o verde alegre da identidade (#3DA86A); roxo fica para navegação e seleção. */
+export const SEGMENTS = [
+  { from: 180, to: 148, color: "rgba(61,168,106,.35)" },
+  { from: 144, to: 112, color: "rgba(61,168,106,.50)" },
+  { from: 108, to: 76,  color: "rgba(61,168,106,.65)" },
+  { from: 72,  to: 40,  color: "rgba(61,168,106,.80)" },
+  { from: 36,  to: 4,   color: "#3DA86A" },
 ];
 
 function point(angle: number, radius: number) {

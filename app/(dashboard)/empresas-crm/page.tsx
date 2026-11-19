@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { SEGMENTS as GAUGE_SEGMENTS_DO_DETALHE } from "@/components/ui/RelationshipScoreGauge";
 import { useRouter } from "next/navigation";
 import { Building2, Trash2, List, Grid2X2, TrendingUp, UsersRound, Plus, Search, Shield, UserCheck, CalendarClock, CircleHelp } from "lucide-react";
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
@@ -89,14 +90,8 @@ function fmtDate(d: string | null): string {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
-/** Mesma escala teal do RelationshipScoreGauge, que mostra este dado no detalhe da empresa. */
-const GAUGE_SEGMENTS = [
-  { from: 180, to: 148, color: "rgba(26,139,122,.35)" },
-  { from: 144, to: 112, color: "rgba(26,139,122,.50)" },
-  { from: 108, to: 76,  color: "rgba(26,139,122,.65)" },
-  { from: 72,  to: 40,  color: "rgba(26,139,122,.80)" },
-  { from: 36,  to: 4,   color: "#1A8B7A" },
-];
+/** A mesma escala do RelationshipScoreGauge, que mostra este dado no detalhe da empresa. */
+const GAUGE_SEGMENTS = GAUGE_SEGMENTS_DO_DETALHE;
 function gaugePoint(angle: number, radius: number) {
   const rad = (angle * Math.PI) / 180;
   return { x: 80 + radius * Math.cos(rad), y: 68 - radius * Math.sin(rad) };
