@@ -11,11 +11,10 @@ import { enderecoDoRemetente, enderecosDeReembolso, lerAssuntoDoReembolso, trata
 
 export type EmailRecebido = { email_id?: string; from?: string; to?: string[]; cc?: string[]; received_for?: string[]; subject?: string; created_at?: string };
 
-/** null quando o e-mail não é um pedido de reembolso (a rota segue como "ignorado"); senão, a resposta do webhook. */
-export async function tratarEventoDeReembolso(d: EmailRecebido): Promise<{ status: number; corpo: object } | null> {
-  if (!d.email_id || !lerAssuntoDoReembolso(d.subject ?? "")) return null;
-  const destinatarios = [...(d.to ?? []), ...(d.cc ?? []), ...(d.received_for ?? [])].map(enderecoDoRemetente);
-  if (!enderecosDeReembolso().some(e => destinatarios.includes(e))) return null;
+type EmailDeReembolso = { email_id: string; remetente: string; assunto: string; recebido_em: string };
+
+/** Roda a lógica do reembolso com as portas reais (banco, Asaas pela chave da subconta e e-mail). */
+async function executar(email: EmailDeReembolso): Promise<{ status: number; corpo: object }> {
   const base = ambienteDoAsaas();
   // Sem Asaas não há pedido pago para estornar; 503 faz o Resend tentar de novo mais tarde.
   if (!base) return { status: 503, corpo: { error: "asaas_nao_configurado" } };
@@ -36,10 +35,26 @@ export async function tratarEventoDeReembolso(d: EmailRecebido): Promise<{ statu
         if (!r.ok) erro(new Error(`resposta do reembolso não enviada: ${r.error}`));
       },
     });
-    const r = await tratarEmailDeReembolso({ email_id: d.email_id, remetente: d.from ?? "", assunto: d.subject ?? "", recebido_em: d.created_at ?? new Date().toISOString() }, portas);
+    const r = await tratarEmailDeReembolso(email, portas);
     return { status: 200, corpo: { reembolso: r.resultado } };
   } catch (e) {
     erro(e);
     return { status: 500, corpo: { error: "falha_no_reembolso" } };
   }
+}
+
+/** null quando o e-mail não é um pedido de reembolso (a rota segue como "ignorado"); senão, a resposta do webhook. */
+export async function tratarEventoDeReembolso(d: EmailRecebido): Promise<{ status: number; corpo: object } | null> {
+  if (!d.email_id || !lerAssuntoDoReembolso(d.subject ?? "")) return null;
+  const destinatarios = [...(d.to ?? []), ...(d.cc ?? []), ...(d.received_for ?? [])].map(enderecoDoRemetente);
+  if (!enderecosDeReembolso().some(e => destinatarios.includes(e))) return null;
+  return executar({ email_id: d.email_id, remetente: d.from ?? "", assunto: d.subject ?? "", recebido_em: d.created_at ?? new Date().toISOString() });
+}
+
+/** Tenta de novo um pedido de reembolso que falhou: reabre o registro (só se é de um pedido da loja e está `falhou`) e roda a lógica com o e-mail original. O prazo de 7 dias segue contando da hora em que o e-mail chegou. */
+export async function tentarDeNovoOReembolso(reembolso: string, loja: string): Promise<{ status: number; corpo: object }> {
+  const { data, error } = await clienteDaTicketeria(createAdminClient()).rpc("fn_ticketeria_reembolso_reabrir", { p_reembolso: reembolso, p_loja: loja });
+  if (error) return error.message.includes("reembolso_nao_reabrivel") ? { status: 409, corpo: { error: "reembolso_nao_reabrivel" } } : { status: 500, corpo: { error: "falha_ao_reabrir" } };
+  const e = data as EmailDeReembolso;
+  return executar({ email_id: e.email_id, remetente: e.remetente, assunto: e.assunto, recebido_em: e.recebido_em });
 }
