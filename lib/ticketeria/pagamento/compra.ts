@@ -5,7 +5,7 @@
 // O CPF ou CNPJ do comprador é repassado ao Asaas e NÃO é guardado (D17: o Asaas exige, o Jards não precisa guardar).
 // Quem paga é o comprador, e paga só o preço (D14): o custo do meio e a comissão saem do valor do produtor.
 
-import { lerPedidoReservado, mensagemDoErroDaReserva, type PedidoReservado } from "@/lib/ticketeria/pagamento/reserva";
+import { mensagemDoErroDaReserva, type PedidoReservado } from "@/lib/ticketeria/pagamento/reserva";
 import type { ProvedorDePagamento } from "@/lib/ticketeria/pagamento/provedor";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
