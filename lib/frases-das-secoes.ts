@@ -1,3 +1,4 @@
+import { PACOTE_ATIVO, type PacoteDeIlustracoes } from "@/lib/pacotes-de-ilustracoes";
 // Frase do topo de cada seção, na voz do Jards (como a saudação do painel). "{, nome}" vira ", Ana"
 // ou some; "{org}" só entra quando a organização tem nome próprio (senão a frase é descartada).
 // A escolha é fixa por pessoa, dia e seção (escolherFrase em lib/saudacao.ts).
@@ -25,15 +26,16 @@ export const FRASES_DAS_SECOES = {
 
 export type SecaoComFrase = keyof typeof FRASES_DAS_SECOES;
 
-const TOTAL_DE_ILUSTRACOES = 24; // public/ilustracoes/tamandua/01.png … 24.png
 const ORDEM_DAS_SECOES: (SecaoComFrase | "painel")[] = ["painel", ...(Object.keys(FRASES_DAS_SECOES) as SecaoComFrase[])];
 
 /**
- * Qual das 24 ilustrações do tamanduá a seção mostra hoje (1 a 24). Muda todo dia e, no mesmo dia, nenhuma
- * seção repete a de outra: o passo 5 não tem divisor comum com 24, então as posições não colidem.
+ * Qual dos desenhos do pacote a seção mostra hoje (de 1 ao total do pacote). O sorteio é sempre dentro de um
+ * pacote (lib/pacotes-de-ilustracoes.ts). Muda todo dia e, no mesmo dia, as seções não repetem a de outra
+ * enquanto houver desenho sobrando: o passo 5 não tem divisor comum com 16, então as 16 primeiras posições não
+ * colidem. Com mais seções que desenhos, só as últimas repetem uma das primeiras, e elas nunca aparecem juntas.
  */
-export function ilustracaoDoDia(secao: SecaoComFrase | "painel", agora: Date): number {
+export function ilustracaoDoDia(secao: SecaoComFrase | "painel", agora: Date, pacote: PacoteDeIlustracoes = PACOTE_ATIVO): number {
   const dia = Math.floor(Date.UTC(agora.getFullYear(), agora.getMonth(), agora.getDate()) / 86_400_000);
   const posicao = Math.max(0, ORDEM_DAS_SECOES.indexOf(secao));
-  return ((dia * 7 + posicao * 5) % TOTAL_DE_ILUSTRACOES) + 1;
+  return ((dia * 7 + posicao * 5) % pacote.total) + 1;
 }
