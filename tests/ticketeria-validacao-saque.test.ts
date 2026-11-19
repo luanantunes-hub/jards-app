@@ -34,6 +34,8 @@ test("o que não se entende não vira pedido: o chamador responde erro e o Asaas
   }
   const cpfRuim = lerPedidoDeSaque(saque({}, { cpfCnpj: "123" })) as { pedido: { cpf_cnpj: string | null } };
   assert.equal(cpfRuim.pedido.cpf_cnpj, null, "documento que não tem 11 nem 14 números é ignorado");
+  const mascarado = lerPedidoDeSaque(saque({}, { cpfCnpj: "***.715.637-**", bank: { code: "001" }, agency: "0001", account: "123456", accountDigit: "7" })) as { pedido: { cpf_cnpj: string | null; destino: string } };
+  assert.deepEqual([mascarado.pedido.cpf_cnpj, mascarado.pedido.destino], [null, "conta_bancaria"], "o CPF mascarado do Asaas não vira documento: quem identifica o produtor é a conta de destino, no banco");
 });
 
 function rodar(extra: Partial<Parameters<typeof tratarPedidoDeSaque>[0]> = {}, decisao: DecisaoDeSaque = { status: "APPROVED", motivo: "dentro_do_saldo_liberavel" }) {

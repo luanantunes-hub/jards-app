@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ErroDoAsaas, URL_DO_SANDBOX, ambienteDoAsaas } from "../lib/ticketeria/pagamento/asaas";
 import { SubcontasAsaas, problemasDosDados, situacaoDoStatus, type DadosDoProdutor } from "../lib/ticketeria/pagamento/asaas-subconta";
-import { SubcontaSemChaveGuardada, cadastrarSubconta, type PortasDoCadastro } from "../lib/ticketeria/pagamento/cadastro-subconta";
+import { SubcontaSemChaveGuardada, cadastrarSubconta, problemasDaContaBancaria, type PortasDoCadastro } from "../lib/ticketeria/pagamento/cadastro-subconta";
 
 // O cadastro da subconta, provado com respostas falsas (os campos seguem a documentação e o que o sandbox devolveu em 19/11/2026).
 
@@ -64,12 +64,14 @@ test("a situação cadastral do Asaas vira a do Jards: só aprovada com tudo apr
 function portas(falhasNoRegistro = 0) {
   const gravado: { loja: string; chave: string; situacao: string; cpf_cnpj: string }[] = [];
   const situacoes: string[] = [];
+  const destinos: string[] = [];
   let tentativas = 0;
   const p: PortasDoCadastro = {
     async registrar(loja, conta) { tentativas++; if (tentativas <= falhasNoRegistro) throw new Error(`banco fora: ${conta.chave}`); gravado.push({ loja, chave: conta.chave, situacao: conta.situacao, cpf_cnpj: conta.cpf_cnpj }); },
     async atualizarSituacao(_loja, situacao) { situacoes.push(situacao); },
+    async definirContaDestino(loja, conta) { destinos.push(`${loja}|${conta.banco}|${conta.agencia}|${conta.conta}|${conta.digito ?? ""}`); },
   };
-  return { p, gravado, situacoes, tentativas: () => tentativas };
+  return { p, gravado, situacoes, destinos, tentativas: () => tentativas };
 }
 
 test("o cadastro: cria, guarda a chave na hora, cria a chave Pix e atualiza a situação aprovada", async () => {
@@ -79,7 +81,7 @@ test("o cadastro: cria, guarda a chave na hora, cria a chave Pix e atualiza a si
   });
   const { p, gravado, situacoes } = portas();
   const r = await cadastrarSubconta({ loja: LOJA, dados: empresa, asaas: new SubcontasAsaas({ chaveDaConta: CHAVE_DA_CONTA, fetch: http }), portas: p });
-  assert.deepEqual(r, { asaas_account_id: "conta-uuid", wallet_id: "carteira-uuid", situacao: "aprovada", chave_pix: "criada" });
+  assert.deepEqual(r, { asaas_account_id: "conta-uuid", wallet_id: "carteira-uuid", situacao: "aprovada", chave_pix: "criada", conta_destino: "pendente" });
   assert.deepEqual(gravado, [{ loja: LOJA, chave: CHAVE_DA_SUBCONTA, situacao: "pendente", cpf_cnpj: "12345678000195" }], "a chave vai para o banco com o CNPJ só em números");
   assert.deepEqual(situacoes, ["aprovada"]);
   assert.deepEqual(chamadas.map(c => `${c.metodo} ${c.caminho} ${c.chave === CHAVE_DA_SUBCONTA ? "sub" : "conta"}`), ["POST /accounts conta", "POST /pix/addressKeys sub", "GET /myAccount/status sub"], "a chave Pix e a situação usam a chave da subconta");
@@ -89,7 +91,7 @@ test("o cadastro segue mesmo se a chave Pix ou a conferência falharem: a conta 
   const { http } = asaasFalso({ "POST /accounts": { corpo: criada } });
   const { p, gravado, situacoes } = portas();
   const r = await cadastrarSubconta({ loja: LOJA, dados: pessoa, asaas: new SubcontasAsaas({ chaveDaConta: CHAVE_DA_CONTA, fetch: http }), portas: p });
-  assert.deepEqual([r.situacao, r.chave_pix, gravado.length, situacoes.length], ["pendente", "pendente", 1, 0]);
+  assert.deepEqual([r.situacao, r.chave_pix, r.conta_destino, gravado.length, situacoes.length], ["pendente", "pendente", "pendente", 1, 0]);
 });
 
 test("a chave é guardada com uma nova tentativa; se o banco falha duas vezes, o erro avisa do resgate e NUNCA leva a chave", async () => {
@@ -109,4 +111,19 @@ test("o Asaas só liga configurado, e a produção exige as três travas", () =>
   assert.equal(ambienteDoAsaas({ ASAAS_API_KEY: CHAVE_DA_CONTA, ASAAS_AMBIENTE: "producao" }), null);
   assert.equal(ambienteDoAsaas({ ASAAS_API_KEY: CHAVE_DA_CONTA, ASAAS_AMBIENTE: "producao", TICKETERIA_DINHEIRO_REAL: "sim" }), null, "sem a URL conferida");
   assert.deepEqual(ambienteDoAsaas({ ASAAS_API_KEY: CHAVE_DA_CONTA, ASAAS_AMBIENTE: "producao", TICKETERIA_DINHEIRO_REAL: "sim", ASAAS_URL: "https://api.asaas.com/v3" }), { chave: CHAVE_DA_CONTA, url: "https://api.asaas.com/v3" });
+});
+
+test("a conta bancária de destino: conferida antes e gravada depois do cadastro; se falhar, o cadastro segue com a conta pendente", async () => {
+  assert.deepEqual(problemasDaContaBancaria({ banco: "001", agencia: "0001", conta: "123456", digito: "7" }), []);
+  assert.deepEqual(problemasDaContaBancaria({ banco: "1", agencia: "", conta: "x", digito: "abc" }), ["banco com 3 números", "agência de 1 a 6 números", "conta de 1 a 15 números", "dígito de 1 ou 2 caracteres"]);
+  const { http } = asaasFalso({ "POST /accounts": { corpo: criada } });
+  const ok = portas();
+  const r = await cadastrarSubconta({ loja: LOJA, dados: empresa, asaas: new SubcontasAsaas({ chaveDaConta: CHAVE_DA_CONTA, fetch: http }), portas: ok.p, contaBancaria: { banco: "001", agencia: "0001", conta: "123456", digito: "7" } });
+  assert.equal(r.conta_destino, "definida");
+  assert.deepEqual(ok.destinos, [`${LOJA}|001|0001|123456|7`]);
+  const { http: http2 } = asaasFalso({ "POST /accounts": { corpo: criada } });
+  const falha = portas();
+  falha.p.definirContaDestino = async () => { throw new Error("banco fora"); };
+  const r2 = await cadastrarSubconta({ loja: LOJA, dados: empresa, asaas: new SubcontasAsaas({ chaveDaConta: CHAVE_DA_CONTA, fetch: http2 }), portas: falha.p, contaBancaria: { banco: "001", agencia: "0001", conta: "123456" } });
+  assert.deepEqual([r2.conta_destino, falha.gravado.length], ["pendente", 1]);
 });
