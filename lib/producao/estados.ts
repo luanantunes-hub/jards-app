@@ -167,16 +167,6 @@ export const SITUACOES_DO_ACERTO: readonly SituacaoDoAcerto[] = ["aguardando", "
 export type SituacaoDoItemDoAcerto = "pendente" | "respondido" | "aprovado" | "recusado";
 export const SITUACOES_DO_ITEM_DO_ACERTO: readonly SituacaoDoItemDoAcerto[] = ["pendente", "respondido", "aprovado", "recusado"];
 
-// O site público do espaço (PD12.1 e PD12.1b): o banco confere as listas num CHECK (supabase/migrations/*_producao_sites.sql).
-
-/** `producao_sites.situacao`. */
-export type SituacaoDoSite = "rascunho" | "publicado";
-export const SITUACOES_DO_SITE: readonly SituacaoDoSite[] = ["rascunho", "publicado"];
-
-/** `producao_site_dominios.situacao`: aguardando o DNS, conferindo, ativo ou com erro. */
-export type SituacaoDoDominio = "aguardando" | "verificando" | "ativo" | "erro";
-export const SITUACOES_DO_DOMINIO: readonly SituacaoDoDominio[] = ["aguardando", "verificando", "ativo", "erro"];
-
 /** `producao_manutencoes.tipo`. */
 export type TipoDeManutencao = "preventiva" | "corretiva";
 export const TIPOS_DE_MANUTENCAO: readonly TipoDeManutencao[] = ["preventiva", "corretiva"];
@@ -247,18 +237,6 @@ export const GRAVIDADES_DA_OCORRENCIA: readonly GravidadeDaOcorrencia[] = ["baix
 export type SituacaoDoVoluntario = "inscrito" | "aprovado" | "recusado";
 export const SITUACOES_DO_VOLUNTARIO: readonly SituacaoDoVoluntario[] = ["inscrito", "aprovado", "recusado"];
 
-// Os convidados de uma sessão (PD7.2): o banco confere a lista num CHECK (supabase/migrations/*_producao_convidados.sql).
-
-/** `producao_convidados.situacao`. */
-export type SituacaoDoConvidado = "pedido" | "confirmado" | "recusado";
-export const SITUACOES_DO_CONVIDADO: readonly SituacaoDoConvidado[] = ["pedido", "confirmado", "recusado"];
-
-// A leitura na porta (PD7.3): o banco confere a lista num CHECK (supabase/migrations/*_producao_credenciais.sql).
-
-/** `producao_porta_leituras.resultado`. */
-export type ResultadoDaLeitura = "permitido" | "ja_entrou" | "negado";
-export const RESULTADOS_DA_LEITURA: readonly ResultadoDaLeitura[] = ["permitido", "ja_entrou", "negado"];
-
 // A acessibilidade por sessão (PD7.6): o banco confere as listas num CHECK (supabase/migrations/*_producao_acessibilidade.sql).
 
 /** `producao_acessibilidade.tipo`. */
@@ -285,12 +263,6 @@ export const SITUACOES_DA_TURMA: readonly SituacaoDaTurma[] = ["aberta", "em_and
 export type SituacaoDaMatricula = "inscrito" | "confirmado" | "desistente";
 export const SITUACOES_DA_MATRICULA: readonly SituacaoDaMatricula[] = ["inscrito", "confirmado", "desistente"];
 
-// O mapa da plateia (PD7.7): o banco confere a lista num CHECK (supabase/migrations/*_producao_plateia.sql).
-
-/** `producao_setor_cotas.categoria`. */
-export type CategoriaDaCota = "venda" | "patrocinador" | "gratuidade" | "acessibilidade" | "imprensa" | "bloqueio";
-export const CATEGORIAS_DA_COTA: readonly CategoriaDaCota[] = ["venda", "patrocinador", "gratuidade", "acessibilidade", "imprensa", "bloqueio"];
-
 // A planta expográfica (PD8.5): o banco confere as listas num CHECK (supabase/migrations/*_producao_expografia.sql).
 
 /** `producao_expografia.posicao`. */
@@ -300,30 +272,6 @@ export const POSICOES_NA_EXPOSICAO: readonly PosicaoNaExposicao[] = ["parede", "
 /** `producao_expografia.luz`. */
 export type LuzDaObra = "sem_luz" | "difusa" | "pontual" | "natural" | "baixa";
 export const LUZES_DA_OBRA: readonly LuzDaObra[] = ["sem_luz", "difusa", "pontual", "natural", "baixa"];
-
-// O borderô da sessão (PD7.4): o banco confere as listas num CHECK (supabase/migrations/*_producao_bordero.sql).
-
-/** `producao_borderos.situacao`. */
-export type SituacaoDoBordero = "rascunho" | "conferido" | "fechado";
-export const SITUACOES_DO_BORDERO: readonly SituacaoDoBordero[] = ["rascunho", "conferido", "fechado"];
-
-/** `producao_bordero_deducoes.forma`. */
-export type FormaDaDeducao = "percentual" | "fixo";
-export const FORMAS_DA_DEDUCAO: readonly FormaDaDeducao[] = ["percentual", "fixo"];
-
-// O acerto de contas do borderô (PD7.9): o banco confere as listas num CHECK (supabase/migrations/*_producao_bordero_acertos.sql).
-
-/** `producao_bordero_acertos.papel`. */
-export type PapelNoAcerto = "companhia" | "casa" | "patrocinador" | "outra";
-export const PAPEIS_NO_ACERTO: readonly PapelNoAcerto[] = ["companhia", "casa", "patrocinador", "outra"];
-
-/** `producao_bordero_acertos.forma`. */
-export type FormaDoAcerto = "percentual" | "fixo" | "resto";
-export const FORMAS_DO_ACERTO: readonly FormaDoAcerto[] = ["percentual", "fixo", "resto"];
-
-/** `producao_bordero_acertos.situacao`. */
-export type SituacaoDoAcertoDoBordero = "proposto" | "aprovado";
-export const SITUACOES_DO_ACERTO_DO_BORDERO: readonly SituacaoDoAcertoDoBordero[] = ["proposto", "aprovado"];
 
 // O orçamento vivo da temporada (PD5.1): o banco confere as listas num CHECK (supabase/migrations/*_producao_orcamento.sql).
 

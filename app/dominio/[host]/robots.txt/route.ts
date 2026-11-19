@@ -1,8 +1,8 @@
 // O robots.txt do site no domínio da pessoa: libera tudo e aponta o sitemap quando o site está no ar; fecha para os buscadores quando não.
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { paginasPublicadasDoDominio } from "@/lib/producao/site-publico";
-import { hostDoPedido, robotsDoSite } from "@/lib/producao/site";
+import { paginasPublicadasDoDominio } from "@/lib/ticketeria/site-publico";
+import { hostDoPedido, robotsDoSite } from "@/lib/ticketeria/site";
 
 export const dynamic = "force-dynamic";
 

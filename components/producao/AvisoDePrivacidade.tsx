@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-/** O fecho das páginas públicas da produção (voluntário, visita, pedido de convidados e presença): o que acontece com o que a pessoa escreveu e onde ler a política. */
+/** O fecho das páginas públicas da produção (voluntário, visita e presença): o que acontece com o que a pessoa escreveu e onde ler a política. */
 export function AvisoDePrivacidade() {
   return (
     <p className="mt-6 text-center text-[0.6875rem] leading-5 text-black/45">

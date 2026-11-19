@@ -3,7 +3,7 @@
 // O comprometido do orçamento (PD5.1) vem daqui: um acordo a pagar, assinado, soma o seu valor firme (o maior entre o valor fixo e a garantia) na linha do
 // orçamento a que está ligado. O percentual da bilheteria e o bônus por público são variáveis: só se sabem depois da sessão (borderô), e ficam de fora do firme.
 
-import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais } from "@/lib/producao/dinheiro";
 import { montarPlanilha, reaisNaPlanilha } from "@/lib/producao/planilha";
 import { SITUACOES_DO_ACORDO, type SentidoDoAcordo, type SituacaoDoAcordo, type TipoDeAcordo } from "@/lib/producao/estados";
 

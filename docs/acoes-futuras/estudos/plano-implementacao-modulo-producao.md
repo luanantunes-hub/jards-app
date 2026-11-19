@@ -4,6 +4,8 @@
 > As fases 0 e 1 estão detalhadas PR a PR. As fases seguintes aparecem como lista de entregas e serão detalhadas no início de cada uma, com o que a fase anterior ensinar e o que os pilotos pedirem.
 > O formato e as convenções seguem o [plano da prestação de contas](./plano-implementacao-prestacao-de-contas.md).
 
+> **18/11/2026:** a plateia, os convidados e cortesias, a porta, o borderô e o site saíram da Produção (decisão do dono com a T1 da Ticketeria; o site mudou-se para a Ticketeria). As entregas PD7.2, PD7.3, PD7.4, PD7.7, PD7.9 e PD12 abaixo ficam como registro do que foi feito; ver [producao-contexto.md](./producao-contexto.md) e [plano-modulo-ticketeria.md](./plano-modulo-ticketeria.md).
+
 ## 0. Como ler
 
 - Cada entrega tem um código (`PD0.3` = fase 0, entrega 3) e vira **um PR** pequeno, que entra sozinho sem quebrar o que já existe. O prefixo `PD` evita confusão com as entregas da prestação (`P0.3`). As entregas da liberação comercial usam `PDL`.

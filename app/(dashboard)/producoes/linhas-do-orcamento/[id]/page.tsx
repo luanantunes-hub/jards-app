@@ -9,14 +9,14 @@ import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { papelNaProducao } from "@/lib/producao/permissoes";
 import type { SituacaoDoOrcamento, SituacaoDoPedido } from "@/lib/producao/estados";
-import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais } from "@/lib/producao/dinheiro";
 import { calcularOrcamento, ROTULO_DA_CATEGORIA_DO_ORCAMENTO, ROTULO_DA_SITUACAO_DO_ORCAMENTO, type LinhaDoOrcamento } from "@/lib/producao/orcamento";
 import { comprometidoDoAcordoEmCentavos, ROTULO_DA_SITUACAO_DO_ACORDO } from "@/lib/producao/acordos";
 import { ROTULO_DA_SITUACAO_DO_PEDIDO } from "@/lib/producao/pedidos";
 import type { VariavelDoOrcamento } from "@/lib/producao/formula";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { LinhaSheet, type AcordoDoOrcamento } from "@/components/producao/OrcamentoDaTemporada";
-import { BOTAO_PEQUENO } from "@/components/producao/estilosDoBordero";
+import { BOTAO_PEQUENO } from "@/components/producao/estilos";
 
 type Orcamento = { id: string; nome: string; situacao: SituacaoDoOrcamento; temporada_id: string };
 type PedidoDaLinha = { id: string; descricao: string; favorecido: string | null; valor: number; situacao: SituacaoDoPedido };

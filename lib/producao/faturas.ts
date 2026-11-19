@@ -1,7 +1,7 @@
 // As faturas ao contratante (plano do módulo, PD5.5, primeiro corte): o que a companhia cobra, as retenções, as parcelas e o que falta receber. Sem tela e sem banco;
 // tudo em centavos inteiros. O app não cobra ninguém: registra e acompanha.
 
-import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais } from "@/lib/producao/dinheiro";
 import { dividirIgualmente } from "@/lib/producao/lancamentos";
 import { montarPlanilha, reaisNaPlanilha } from "@/lib/producao/planilha";
 import { SITUACOES_DA_FATURA, type SituacaoDaFatura } from "@/lib/producao/estados";

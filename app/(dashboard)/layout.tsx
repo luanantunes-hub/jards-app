@@ -6,6 +6,7 @@ import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { PastDueBanner } from "@/components/PastDueBanner";
 import { EmailAutoSync } from "@/components/email/EmailAutoSync";
 import {
+  Accessibility,
   BarChart2,
   CalendarCheck,
   CalendarClock,
@@ -151,15 +152,13 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
       items: [
         { label: "Pauta", href: "/producoes/pauta", icon: CalendarCheck },
         { label: "Programação", href: "/producoes/programacao", icon: CalendarClock },
-        { label: "Sites", href: "/producoes/sites", icon: Globe },
       ],
     },
     {
-      section: "Dia da sessão",
-      icone: Ticket,
+      section: "Público",
+      icone: UsersRound,
       items: [
-        // Plateia, convidados, acessibilidade, porta e borderô são abas de uma tela só (AbasDaSessao); o menu abre a primeira.
-        { label: "Sessão", href: "/producoes/plateia", icon: Ticket },
+        { label: "Acessibilidade", href: "/producoes/acessibilidade", icon: Accessibility },
         { label: "Visitação", href: "/producoes/visitacao", icon: School },
         { label: "Formação", href: "/producoes/formacao", icon: GraduationCap },
         { label: "Expografia", href: "/producoes/expografia", icon: Frame },
@@ -192,6 +191,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
       section: "Ticketeria",
       items: [
         { label: "Ingressos", href: "/ingressos", icon: Ticket },
+        { label: "Site", href: "/ingressos/site", icon: Globe },
       ],
     },
   ],

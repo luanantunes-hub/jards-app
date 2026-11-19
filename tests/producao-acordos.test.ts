@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { lerValorEmReais } from "../lib/producao/bordero";
+import { lerValorEmReais } from "../lib/producao/dinheiro";
 import {
   acordoTravado, comprometidoDoAcordoEmCentavos, lerAcordo, mensagemDoErroDeAcordo, proximaSituacaoDoAcordo, resumoDasCondicoes, situacaoAnteriorDoAcordo, textoDoAcordo,
   valorFirmeDoAcordoEmCentavos, type AcordoDaTemporada,

@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { INICIO_DO_MODULO } from "@/lib/modulos";
 import { entradaDoAcesso, lerAcessoAosModulos } from "@/lib/modulos-acesso";
-import { ehHostDoApp, hostDoPedido } from "@/lib/producao/site";
+import { ehHostDoApp, hostDoPedido } from "@/lib/ticketeria/site";
 
 const WINDOW_MS = 60_000;
 
@@ -29,8 +29,6 @@ const API_LIMITS: [string, number][] = [
   ["/api/presenca", 30],
   // Inscrição de voluntários pelo link (sem login): por IP.
   ["/api/voluntario", 10],
-  // Pedido de convidados pelo link (sem login): por IP.
-  ["/api/convidar", 20],
   // Agendamento de visitas pelo link (sem login): por IP.
   ["/api/visita", 10],
   // Programação pública de um espaço (sem login, aberta a outros sites): por IP.
@@ -85,7 +83,7 @@ function getIp(request: NextRequest): string {
 }
 
 /**
- * O pedido chegou por um domínio que não é do Jards: é o site de uma pessoa (PD12.1b). Reescreve para a rota interna
+ * O pedido chegou por um domínio que não é do Jards: é o site de uma pessoa (o site da loja na Ticketeria). Reescreve para a rota interna
  * /dominio/[host]/... (que só mostra o que está publicado) e não deixa passar o app, a API nem o painel por esse endereço.
  */
 function rotearSiteDaPessoa(request: NextRequest, host: string): NextResponse {
@@ -175,8 +173,6 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/acerto/") ||
         pathname.startsWith("/presenca/") ||
         pathname.startsWith("/voluntario/") ||
-        pathname.startsWith("/credencial/") ||
-        pathname.startsWith("/convidar/") ||
         pathname.startsWith("/visita/") ||
         pathname.startsWith("/programacao/") ||
         pathname.startsWith("/hospedagem/") ||
@@ -245,10 +241,6 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/presenca/") ||
     // Inscrição de voluntários pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/voluntario/") ||
-    // Credencial do convidado pelo link, com o QR (sem login): o código do link, conferido no servidor, é a autorização.
-    pathname.startsWith("/credencial/") ||
-    // Pedido de convidados pelo link (sem login): o código do link, conferido no servidor, é a autorização.
-    pathname.startsWith("/convidar/") ||
     // Agendamento de visitas pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/visita/") ||
     // Programação pública de um espaço e a versão para embutir (sem login): o código do link, conferido no servidor, é a autorização.

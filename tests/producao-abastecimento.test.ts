@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { lerAbastecimento, resumoDosAbastecimentos } from "../lib/producao/abastecimento";
-import { lerValorEmReais } from "../lib/producao/bordero";
+import { lerValorEmReais } from "../lib/producao/dinheiro";
 
 const base = { litros: "45,3", combustivel: "diesel_s10", posto: "  Posto Estrela ", valor: "280,50" };
 

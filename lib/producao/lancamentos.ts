@@ -4,7 +4,7 @@
 // O PAGO do orçamento (PD5.1) vem daqui: a soma da divisão de cada linha vale no lugar do pago digitado. O lançamento não é uma ordem de pagamento: o app só registra
 // o que já foi pago, fora dele.
 
-import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais } from "@/lib/producao/dinheiro";
 import { montarPlanilha, reaisNaPlanilha } from "@/lib/producao/planilha";
 
 export type LancamentoDaTemporada = {

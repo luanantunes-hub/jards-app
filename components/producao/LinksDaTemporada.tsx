@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Check, Copy, Link2 } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
-import { BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilos";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { ROTULO_DA_TABELA, type TipoDeTabela } from "@/lib/producao/tabelas-publicas";

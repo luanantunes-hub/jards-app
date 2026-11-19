@@ -28,15 +28,10 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/producoes/espacos", "Espaços da produção"],
   ["/producoes/pauta", "Pauta dos espaços"],
   ["/producoes/programacao", "Programação dos espaços"],
-  ["/producoes/plateia", "Plateia das sessões"],
   ["/producoes/expografia", "Expografia das salas"],
-  ["/producoes/convidados", "Convidados das sessões"],
-  ["/producoes/porta", "Porta das sessões"],
-  ["/producoes/bordero", "Borderô das sessões"],
   ["/producoes/acessibilidade", "Acessibilidade das sessões"],
   ["/producoes/visitacao", "Visitação e grupos"],
   ["/producoes/formacao", "Formação"],
-  ["/producoes/sites", "Sites da produção"],
   ["/producoes/mapa", "Mapa da turnê"],
   ["/producoes/linha-do-tempo", "Linha do tempo da produção"],
   ["/producoes/inventario", "Inventário da produção"],
@@ -52,6 +47,7 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/producoes/adiantamentos", "Adiantamento"],
   ["/producoes/linhas-do-orcamento", "Linha do orçamento"],
   ["/producoes", "Produção"],
+  ["/ingressos/site", "Site da loja"],
   ["/ingressos", "Ingressos"],
   ["/configuracoes/mcp", "Claude e ChatGPT (MCP)"],
   ["/configuracoes", "Configurações"],
@@ -73,11 +69,6 @@ const SECAO_DO_MENU: Record<string, string> = {
   "/producoes/acordos": "/producoes/temporadas",
   "/producoes/adiantamentos": "/producoes/temporadas",
   "/producoes/linhas-do-orcamento": "/producoes/temporadas",
-  // As telas da sessão são abas de uma só (AbasDaSessao): o menu acende "Sessão", que mora no endereço da plateia.
-  "/producoes/convidados": "/producoes/plateia",
-  "/producoes/acessibilidade": "/producoes/plateia",
-  "/producoes/porta": "/producoes/plateia",
-  "/producoes/bordero": "/producoes/plateia",
 };
 
 export function correspondeRota(path: string, prefixo: string): boolean {

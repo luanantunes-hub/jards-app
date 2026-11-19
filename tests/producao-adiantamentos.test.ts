@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { lerValorEmReais } from "../lib/producao/bordero";
+import { lerValorEmReais } from "../lib/producao/dinheiro";
 import {
   contaDoAdiantamento, diasDoPeriodo, lerAdiantamento, lerDiaria, lerGasto, mensagemDoErroDeAdiantamento, planilhaDasDiarias, planilhaDosAdiantamentos, textoDaPrestacao,
   textoDoReciboDaDiaria, totaisDasDiarias, totalDaDiariaEmCentavos, totalEmAberto, type AdiantamentoDaTemporada, type DiariaDaTemporada, type GastoDoAdiantamento,

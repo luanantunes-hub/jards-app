@@ -5,13 +5,13 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { APAGAR, BOTAO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { APAGAR, BOTAO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { SENTIDOS_DO_ACORDO, TIPOS_DE_ACORDO, type SentidoDoAcordo, type TipoDeAcordo } from "@/lib/producao/estados";
 import { diaEMes } from "@/lib/producao/agenda";
-import { lerValorEmReais } from "@/lib/producao/bordero";
+import { lerValorEmReais } from "@/lib/producao/dinheiro";
 import {
   acordoTravado, lerAcordo, mensagemDoErroDeAcordo, resumoDasCondicoes, ROTULO_DA_SITUACAO_DO_ACORDO, ROTULO_DO_SENTIDO_DO_ACORDO, ROTULO_DO_TIPO_DE_ACORDO,
   type AcordoDaTemporada,

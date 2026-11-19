@@ -1,8 +1,8 @@
 // O sitemap.xml do site no domínio da pessoa: as páginas publicadas, com a data da última publicação.
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { paginasPublicadasDoDominio } from "@/lib/producao/site-publico";
-import { hostDoPedido, sitemapDoSite } from "@/lib/producao/site";
+import { paginasPublicadasDoDominio } from "@/lib/ticketeria/site-publico";
+import { hostDoPedido, sitemapDoSite } from "@/lib/ticketeria/site";
 
 export const dynamic = "force-dynamic";
 

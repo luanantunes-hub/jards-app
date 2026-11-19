@@ -3,9 +3,8 @@
 import { Ticket } from "lucide-react";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface } from "@/components/list/ListPagePrimitives";
 
-// Página inicial da ticketeria (T0 do plano): o módulo está registrado e escondido,
-// sem funcionalidade ainda. A loja do produtor e os eventos chegam nas fases T1 e T2
-// (docs/acoes-futuras/estudos/plano-modulo-ticketeria.md).
+// Página inicial da ticketeria: o módulo está escondido dos clientes. O site da loja já existe
+// (/ingressos/site, T1); os eventos chegam na fase T2 (docs/acoes-futuras/estudos/plano-modulo-ticketeria.md).
 export default function IngressosPage() {
   return (
     <>
@@ -15,7 +14,7 @@ export default function IngressosPage() {
           <ListEmptyState
             icon={Ticket}
             title="Nenhum evento ainda"
-            description="O primeiro passo será cadastrar a loja do produtor e o primeiro evento. Essas telas ainda estão sendo construídas: por enquanto, o módulo está só preparado."
+            description="Os eventos e a venda ainda estão sendo construídos. Enquanto isso, monte o site da sua loja em Site, no menu."
           />
         </ListTableSurface>
       </ListContent>

@@ -186,8 +186,27 @@ export function lerMigrations(arquivos: readonly ArquivoSql[]): BancoNasMigratio
         continue;
       }
 
+      // Apagar uma tabela (T1 da Ticketeria: a plateia, os convidados, a porta, o borderô e o site saíram da produção) tira a
+      // tabela do desenho; só vale sem `cascade`, que levaria junto o que o teste não vê. As chaves que apontavam para ela saem
+      // com as tabelas filhas, que a mesma migration apaga antes (o banco recusaria o drop se não).
+      const apagaTabela = /^drop table (?:if exists )?public\.(producao_\w+)(\s+\w+)?$/.exec(comando);
+      if (apagaTabela) {
+        if (apagaTabela[2]) throw new Error(`a migration ${arquivo.nome} apaga ${apagaTabela[1]} com ${apagaTabela[2].trim()}: o teste só lê o drop simples`);
+        e.tabelas.delete(apagaTabela[1]);
+        e.unicas.delete(apagaTabela[1]);
+        for (const tabela of e.tabelas.values()) {
+          if (tabela.chaves.some(chave => chave.tabelaDestino === apagaTabela[1])) throw new Error(`a migration ${arquivo.nome} apaga ${apagaTabela[1]}, mas ${tabela.nome} ainda aponta para ela`);
+        }
+        continue;
+      }
+      const apagaFuncao = /^drop function (?:if exists )?public\.((?:auth|fn)_producao_\w+)\(/.exec(comando);
+      if (apagaFuncao) {
+        funcoes.delete(apagaFuncao[1]);
+        executaveis.delete(apagaFuncao[1]);
+        continue;
+      }
       if (/^drop (?:table|function) (?:if exists )?public\.(?:producao_|auth_producao_|fn_producao_)/.test(comando)) {
-        throw new Error(`a migration ${arquivo.nome} apaga um objeto da produção: tire-o de lib/producao/banco.ts e ensine o teste`);
+        throw new Error(`a migration ${arquivo.nome} apaga um objeto da produção de um jeito que o teste não lê: ensine o teste`);
       }
       if (/^create (?:or replace )?(?:materialized )?view public\.producao_|^create type public\.producao_/.test(comando)) {
         throw new Error(`a migration ${arquivo.nome} cria uma view ou um tipo da produção: escreva-o em lib/producao/banco.ts (Views, Enums) e ensine o teste`);

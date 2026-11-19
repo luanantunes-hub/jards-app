@@ -10,16 +10,12 @@ const valor = (regra: Regra, chave: string) => regra.headers.find(cabecalho => c
 
 test("tudo, menos /embed/, nega o iframe; /embed/ deixa qualquer site embutir e não manda X-Frame-Options", async () => {
   const regras = (await config.headers!()) as Regra[];
-  assert.equal(regras.length, 3);
-  const [geral, porta, embutir] = regras;
+  assert.equal(regras.length, 2);
+  const [geral, embutir] = regras;
   assert.match(geral.source, /embed/, "a regra geral exclui /embed/");
   assert.equal(valor(geral, "X-Frame-Options"), "DENY");
   assert.match(valor(geral, "Content-Security-Policy") ?? "", /frame-ancestors 'none'/);
-  // A porta (PD7.3) é a única que libera a câmera (para ler o QR) e também nega o iframe.
-  assert.equal(porta.source, "/producoes/porta");
-  assert.match(valor(porta, "Permissions-Policy") ?? "", /camera=\(self\)/);
-  assert.equal(valor(porta, "X-Frame-Options"), "DENY");
-  assert.match(valor(geral, "Permissions-Policy") ?? "", /camera=\(\)/, "no resto do site a câmera segue bloqueada");
+  assert.match(valor(geral, "Permissions-Policy") ?? "", /camera=\(\)/, "nenhuma página usa a câmera");
   assert.equal(embutir.source, "/embed/:path*");
   assert.equal(valor(embutir, "X-Frame-Options"), undefined);
   assert.match(valor(embutir, "Content-Security-Policy") ?? "", /frame-ancestors \*/);
@@ -30,12 +26,10 @@ test("tudo, menos /embed/, nega o iframe; /embed/ deixa qualquer site embutir e 
 });
 
 test("a regra geral não casa com /embed/ e casa com o resto, inclusive a raiz", () => {
-  const expressao = new RegExp("^" + "/((?!embed/|producoes/porta$).*)" + "$");
+  const expressao = new RegExp("^" + "/((?!embed/).*)" + "$");
   assert.equal(expressao.test("/embed/programacao/abc"), false);
   assert.equal(expressao.test("/producoes/espacos"), true);
   assert.equal(expressao.test("/"), true);
   assert.equal(expressao.test("/programacao/abc"), true);
   assert.equal(expressao.test("/embedded-coisa"), true, "só o prefixo /embed/ é exceção");
-  assert.equal(expressao.test("/producoes/porta"), false, "a porta tem regra própria");
-  assert.equal(expressao.test("/producoes/porta-dos-fundos"), true, "só a página da porta é exceção");
 });

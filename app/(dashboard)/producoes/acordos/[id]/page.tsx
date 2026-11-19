@@ -10,7 +10,7 @@ import { clienteDaProducao } from "@/lib/producao/cliente";
 import { papelNaProducao } from "@/lib/producao/permissoes";
 import type { SituacaoDoAcordo } from "@/lib/producao/estados";
 import { diaEMes } from "@/lib/producao/agenda";
-import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais } from "@/lib/producao/dinheiro";
 import {
   acordoTravado, comprometidoDoAcordoEmCentavos, mensagemDoErroDeAcordo, proximaSituacaoDoAcordo, ROTULO_DA_SITUACAO_DO_ACORDO, ROTULO_DO_SENTIDO_DO_ACORDO,
   ROTULO_DO_TIPO_DE_ACORDO, situacaoAnteriorDoAcordo, textoDoAcordo, valorFirmeDoAcordoEmCentavos, type AcordoDaTemporada,
@@ -18,7 +18,7 @@ import {
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { AcordoSheet, type DataDaTemporada } from "@/components/producao/AcordosDaTemporada";
 import { DocumentosDoAcordo } from "@/components/producao/DocumentosDoAcordo";
-import { BOTAO, BOTAO_PEQUENO, Erro } from "@/components/producao/estilosDoBordero";
+import { BOTAO, BOTAO_PEQUENO, Erro } from "@/components/producao/estilos";
 
 type FaturaLigada = { id: string; descricao: string; contratante: string; situacao: string };
 type LinhaLigada = { id: string; descricao: string; categoria: string };
