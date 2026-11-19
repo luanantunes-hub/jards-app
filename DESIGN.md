@@ -155,7 +155,7 @@ Exceções:
 - status concluído em contexto temporal pode aparecer como label em caixa alta sem borda;
 - status editável usa `StatusDropdown` ou `StatusBadge` interativo;
 - prioridade alta usa ícone e texto vermelhos;
-- controles de identidade visual usam quadrados totalmente preenchidos pela cor, não círculos internos.
+- a identidade visual (ícone de projeto, proponente e captador) é escolhida no `IconePicker`, sem bordas: ícones em cinza; clicar num ícone abre, grudado nele, o mesmo ícone nas cinco cores, e a escolha é feita ali.
 
 ## Modais, sheets e menus
 
@@ -194,7 +194,10 @@ Use os primitivos de `components/ui/DetailPagePrimitives.tsx` para manter:
 ## Identidade de entidades
 
 - empresas usam `CompanyLogo` com fallback para inicial;
-- projetos usam `ProjectIdentity`: em cartões e cabeçalhos, quadrado com gradiente claro na cor e volume, símbolo em branco; em linhas de tabela, só o ícone na cor, sem fundo (`semFundo`);
+- projetos, proponentes e captadores usam `ProjectIdentity`: o ícone aparece solto, só o traço na cor, como no Notion — sem quadrado, degradê, volume ou sombra. Em linhas de tabela, `semFundo` só deixa o traço um pouco menor;
+- cores de identidade: cinco, alegres e que conversam com o roxo do Jards — lavanda `#7C5CD6`, coral `#E8665A`, mel `#DFA024`, folha `#3DA86A` e céu `#3B8BE0` (`PROJECT_ICON_COLORS`). Cores gravadas da paleta antiga são mostradas pela mais parecida (`corDaIdentidade`), sem mudar o banco;
+- as chaves dos ícones ficam gravadas no banco: nunca renomear, só acrescentar;
+- exceção ao "nunca tom sobre tom": nas pastas de projeto, o verso leva o tom claro da cor do ícone e a folha da frente fica quase branca, com o ícone na cor e o texto em tinta
 - projetos, proponentes e captadores podem escolher ícone, logo e cor;
 - imagens precisam de texto alternativo útil;
 - cores não podem ser o único meio de transmitir estado.

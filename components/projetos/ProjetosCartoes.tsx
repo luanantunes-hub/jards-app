@@ -1,7 +1,7 @@
 "use client";
 import { useState, type CSSProperties } from "react";
 import { Calendar, TrendingUp, Zap, FileText, Check, MoreHorizontal, ExternalLink, Trash2, UserX } from "lucide-react";
-import { ProjectIdentity, type IdentityType } from "@/components/ui/ProjectIdentity";
+import { ProjectIdentity, corDaIdentidade, type IdentityType } from "@/components/ui/ProjectIdentity";
 import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
 import { BarraCaptacao } from "@/components/ui/IndicadoresFinanceiros";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
@@ -46,15 +46,15 @@ function iniciais(nome: string) {
 }
 
 /**
- * Tons da pasta a partir da cor do projeto: o verso (aba e fundo) um pouco mais
- * escuro que a folha da frente. Sem cor escolhida, cinza neutro. O texto fica
- * sempre em tinta, nunca na cor da pasta.
+ * Tons da pasta a partir da cor do ícone do projeto: o verso (aba e fundo) no
+ * tom claro da cor e a folha da frente quase branca, onde ficam o ícone na cor
+ * e o texto em tinta. Com logo, emoji ou sem ícone, cinza neutro.
  */
 function tonsDaPasta(cor: string | null): CSSProperties {
   if (!cor) return { "--pasta-verso": "#E4E3DF", "--pasta-frente": "#F5F5F3" } as CSSProperties;
   return {
-    "--pasta-verso": `color-mix(in srgb, ${cor} 23%, #fff)`,
-    "--pasta-frente": `color-mix(in srgb, ${cor} 7%, #fff)`,
+    "--pasta-verso": `color-mix(in srgb, ${cor} 24%, #fff)`,
+    "--pasta-frente": `color-mix(in srgb, ${cor} 4%, #fff)`,
   } as CSSProperties;
 }
 
@@ -72,7 +72,7 @@ function Pasta({ projeto, faseLabel, onOpen, onMenu }: {
   const captado = projeto.valor_captado > 0;
 
   return (
-    <article className="group relative h-full" style={tonsDaPasta(projeto.identidade_cor)}>
+    <article className="group relative h-full" style={tonsDaPasta(projeto.identidade_tipo === "icone" ? corDaIdentidade(projeto.identidade_cor) : null)}>
       {/* a pasta inteira abre o projeto; o conteúdo deixa o clique passar */}
       <button type="button" onClick={onOpen} aria-label={`Abrir ${projeto.nome}`} className="peer absolute inset-0 z-0 cursor-pointer rounded outline-none" />
 
