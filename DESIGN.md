@@ -93,7 +93,7 @@ Use verde em rodapés de modal, sheets e operações que persistem dados, com a 
 className="rounded acao-salvar px-4 py-2.5 text-white"
 ```
 
-Ela dá ao botão o mesmo volume discreto do botão de criar, em verde: degradê de cima para baixo em torno do `#2E8932`, linha de luz de 1px no topo, sombra curta tingida de verde, hover que clareia um tom, afundar ao pressionar e chapado quando desativado. Sem animação. Não repita `bg-[#2E8932]` com `hover:bg-[#26752A]` à mão na parte logada; o teste `tests/salvar-com-volume.test.ts` barra.
+Ela dá ao botão o mesmo volume discreto do botão de criar, em verde: verde liso `#2E8932` (sem degradê), linha de luz de 1px no topo, sombra curta tingida de verde, afundar ao pressionar e chapado quando desativado. Sem efeito no hover e sem animação. Não repita `bg-[#2E8932]` com `hover:bg-[#26752A]` à mão na parte logada; o teste `tests/salvar-com-volume.test.ts` barra.
 
 ### Seleção e navegação
 
