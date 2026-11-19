@@ -17,7 +17,8 @@
 --   - sessão nova (ou que troca de local) não vai para local arquivado (local_arquivado);
 --   - o evento cancelado não volta nem muda de situação (evento_cancelado), e sessão nova não entra nele;
 --   - evento publicado ou cancelado não se apaga (evento_publicado): cancela-se; a sessão de evento publicado também não se
---     apaga (sessao_de_evento_publicado): cancela-se; local com sessão não se apaga (a chave é RESTRICT): arquiva-se.
+--     apaga (sessao_de_evento_publicado): cancela-se; local com sessão não se apaga (a chave é NO ACTION,
+--     conferida no fim do comando, para o apagamento da organização inteira passar): arquiva-se.
 --
 -- Acesso: auth_ticketeria_pode (T1): lê quem usa a ticketeria na organização; escreve quem edita. Sem histórico nesta fase.
 -- Expansão: quatro tabelas novas e vazias e as funções de gatilho. Aditiva e reaplicável; sem DROP.
@@ -96,7 +97,7 @@ create table if not exists public.ticketeria_sessoes (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
   evento_id uuid not null references public.ticketeria_eventos (id) on delete cascade,
-  local_id uuid not null references public.ticketeria_locais (id) on delete restrict,
+  local_id uuid not null references public.ticketeria_locais (id) on delete no action,
   inicio timestamptz not null,
   fim timestamptz,
   abertura_portas timestamptz,
@@ -217,7 +218,7 @@ end;
 $$;
 
 -- Apagar: o evento só em rascunho; a sessão só de evento em rascunho. O resto se cancela. Quando quem apaga é a cascata
--- (a organização, a loja ou o evento saindo), o pai já não existe na mesma transação e a guarda deixa passar.
+-- (a organização, a loja ou o evento saindo), o pai já não existe no mesmo comando e a guarda deixa passar.
 create or replace function public.fn_ticketeria_evento_apagar_guarda()
 returns trigger
 language plpgsql
@@ -225,7 +226,9 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
-  if old.situacao <> 'rascunho' and exists (select 1 from public.ticketeria_lojas l where l.id = old.loja_id) then
+  if old.situacao <> 'rascunho'
+     and exists (select 1 from public.ticketeria_lojas l where l.id = old.loja_id)
+     and exists (select 1 from public.organizations o where o.id = old.organization_id) then
     raise exception 'evento_publicado' using errcode = 'check_violation';
   end if;
   return old;
@@ -239,7 +242,8 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
-  if exists (select 1 from public.ticketeria_eventos e where e.id = old.evento_id and e.situacao <> 'rascunho') then
+  if exists (select 1 from public.ticketeria_eventos e where e.id = old.evento_id and e.situacao <> 'rascunho')
+     and exists (select 1 from public.organizations o where o.id = old.organization_id) then
     raise exception 'sessao_de_evento_publicado' using errcode = 'check_violation';
   end if;
   return old;
