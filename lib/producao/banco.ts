@@ -76,7 +76,8 @@ import type {
   EscopoDoDocumento,
   TipoDeDocumento,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, TipoDeTabela, CamaDoQuarto, SituacaoDoVoluntario, SituacaoDoAdiantamento, SituacaoDoPedido, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PosicaoNaExposicao, LuzDaObra, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, TipoDeTabela, CamaDoQuarto, SituacaoDoVoluntario, SituacaoDoAdiantamento, SituacaoDoPedido, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PosicaoNaExposicao, LuzDaObra, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite, TipoDeComunicacao,
+} from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -246,6 +247,60 @@ export type BancoDaProducao = {
             isOneToOne: false;
             referencedRelation: "organization_members";
             referencedColumns: ["organization_id", "user_id"];
+          },
+        ];
+      };
+      producao_comunicacao: {
+        Row: {
+          id: string;
+          organization_id: string;
+          data_id: string;
+          tipo: TipoDeComunicacao;
+          titulo: string;
+          texto: string | null;
+          url: string | null;
+          ordem: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          data_id: string;
+          tipo?: TipoDeComunicacao;
+          titulo: string;
+          texto?: string | null;
+          url?: string | null;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          data_id?: string;
+          tipo?: TipoDeComunicacao;
+          titulo?: string;
+          texto?: string | null;
+          url?: string | null;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_comunicacao_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_comunicacao_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
           },
         ];
       };

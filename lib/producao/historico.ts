@@ -24,7 +24,7 @@ const COISA: Record<string, string> = {
   producao_acessibilidade: "um recurso de acessibilidade", producao_visitas_horarios: "um horário de visita", producao_visitas_agendamentos: "um agendamento de visita",
   producao_turmas: "uma turma", producao_turma_aulas: "uma aula", producao_matriculas: "uma matrícula",
   producao_acertos: "um acerto técnico", producao_modelos_acerto: "um modelo de acerto",
-  producao_arquivos: "um arquivo", producao_documentos: "um documento", producao_ocorrencias: "uma ocorrência",
+  producao_arquivos: "um arquivo", producao_documentos: "um documento", producao_ocorrencias: "uma ocorrência", producao_comunicacao: "um item de comunicação",
 };
 
 const CAMPO: Record<string, string> = {

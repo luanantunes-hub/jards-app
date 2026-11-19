@@ -225,6 +225,10 @@ export const SITUACOES_DA_CONFERENCIA: readonly SituacaoDaConferencia[] = ["pend
 
 /** `producao_ocorrencias.tipo`. */
 export type TipoDeOcorrencia = "seguranca" | "saude" | "tecnica" | "publico" | "atraso" | "equipamento" | "outro";
+/** Os tipos de item do kit de imprensa de uma data (PD9.5), como o banco os aceita. */
+export type TipoDeComunicacao = "release" | "arte" | "foto" | "clipping" | "outro";
+export const TIPOS_DE_COMUNICACAO: readonly TipoDeComunicacao[] = ["release", "arte", "foto", "clipping", "outro"];
+
 export const TIPOS_DE_OCORRENCIA: readonly TipoDeOcorrencia[] = ["seguranca", "saude", "tecnica", "publico", "atraso", "equipamento", "outro"];
 
 /** `producao_ocorrencias.gravidade`. */
