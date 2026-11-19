@@ -1,12 +1,13 @@
 "use client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, X, Lock, Unlock, MoreHorizontal, Building2, BriefcaseBusiness, FilePenLine, ArrowUpRight, ArrowRight, GitCompareArrows, Plus } from "lucide-react";
+import { X, Lock, Unlock, MoreHorizontal, Building2, BriefcaseBusiness, FilePenLine, ArrowUpRight, ArrowRight, GitCompareArrows, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { ListEmptyState, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { TituloComFrase } from "@/components/list/TituloComFrase";
-import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
+import { BarrasDeValor } from "@/components/comparativo/BarrasDeValor";
+import { BuscarEmpresa } from "@/components/comparativo/BuscarEmpresa";
 import { usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { colorFrom } from "@/lib/colorFrom";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
@@ -210,6 +211,8 @@ function ComparativoContent() {
   const [selecionadas, setSelecionadas] = useState<EmpresaOption[]>([]);
   const [hidratado, setHidratado] = useState(false);
   const [busca, setBusca] = useState("");
+  const [buscaAberta, setBuscaAberta] = useState(false);
+  const [buscandoEmpresas, setBuscandoEmpresas] = useState(false);
   const [resultados, setResultados] = useState<EmpresaOption[]>([]);
   const [valores, setValores] = useState<Valores>({});
   const [crescimentos, setCrescimentos] = useState<Record<string, Partial<Record<Lei, Crescimento>>>>({});
@@ -218,9 +221,6 @@ function ComparativoContent() {
   const [viewMode, setViewMode] = usePersistedViewMode<ViewMode>("jards:comparativo:view", VIEW_MODES, "tabela");
   const [metricaExtra, setMetricaExtra] = usePersistedViewMode<MetricaExtra>("jards:comparativo:metrica", METRICA_EXTRA_MODES, "nenhuma");
 
-  const buscaBoxRef = useRef<HTMLDivElement>(null);
-  const buscaInputRef = useRef<HTMLInputElement>(null);
-  const buscaMenuPos = usePortalPosition(buscaBoxRef, resultados.length > 0);
 
   // Hidrata a seleção a partir da URL (?empresas=id1,id2) uma única vez.
   useEffect(() => {
@@ -248,7 +248,8 @@ function ComparativoContent() {
 
   // Busca de empresas por nome.
   useEffect(() => {
-    if (busca.trim().length < 2) { setResultados([]); return; }
+    if (busca.trim().length < 2) { setResultados([]); setBuscandoEmpresas(false); return; }
+    setBuscandoEmpresas(true);
     const timer = setTimeout(async () => {
       const { data } = await supabase
         .from("empresas")
@@ -257,6 +258,7 @@ function ComparativoContent() {
         .limit(8);
       const jaSelecionadas = new Set(selecionadas.map((e) => e.id));
       setResultados(((data ?? []) as EmpresaOption[]).filter((e) => !jaSelecionadas.has(e.id)));
+      setBuscandoEmpresas(false);
     }, 300);
     return () => clearTimeout(timer);
   }, [busca, selecionadas, supabase]);
@@ -316,6 +318,7 @@ function ComparativoContent() {
     setSelecionadas((prev) => (prev.length >= MAX_EMPRESAS || prev.some((e) => e.id === empresa.id) ? prev : [...prev, empresa]));
     setBusca("");
     setResultados([]);
+    setBuscaAberta(false);
   }
 
   function remover(id: string) {
@@ -332,18 +335,14 @@ function ComparativoContent() {
     return selecionadas.map((e) => {
       const valor = valores[e.id]?.[key] ?? 0;
       const { valorEfetivo, potencial, potencialRealocado } = potenciais[e.id]?.[key] ?? { valorEfetivo: 0, potencial: 0 };
-      const pct = Math.round((valor / max) * 100);
       return (
         <div key={e.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex w-full shrink-0 items-center gap-3 sm:w-[22%]">
             <CompanyLogo nome={e.nome} site={e.site} logo_url={e.logo_url} size={30} className="rounded border border-black/8" />
             <span className="truncate text-[0.875rem] font-medium text-black/70">{e.nome}</span>
           </div>
-          <div className="h-2.5 flex-1 rounded-full bg-black/[.05]">
-            <div
-              className="h-2.5 rounded-full transition-all duration-300"
-              style={{ width: `${pct}%`, background: colorFrom(e.nome) }}
-            />
+          <div className="min-w-0 flex-1">
+            <BarrasDeValor valor={valor} max={max} cor={colorFrom(e.nome)} total={32} altura="h-5" />
           </div>
           <div className="w-full shrink-0 text-right sm:w-[24%]">
             <div
@@ -368,73 +367,48 @@ function ComparativoContent() {
     <div className="min-h-full bg-white">
       <div className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-7 pt-8 sm:px-6 lg:px-10 lg:pb-9">
-          <TituloComFrase secao="comparativo" titulo="Comparativo de investimento" />
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <TituloComFrase secao="comparativo" titulo="Comparativo de investimento" />
+            {selecionadas.length > 0 && <PrimaryListAction onClick={() => setBuscaAberta(true)} disabled={selecionadas.length >= MAX_EMPRESAS}><Plus size={13} aria-hidden="true" /> Adicionar empresa</PrimaryListAction>}
+          </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-4">
-            <div ref={buscaBoxRef} className="relative min-w-[13.75rem] max-w-[20rem] flex-1">
-              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/30" />
-              <input
-                ref={buscaInputRef}
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder={selecionadas.length >= MAX_EMPRESAS ? `Máximo de ${MAX_EMPRESAS} empresas` : "Buscar empresa para comparar…"}
-                disabled={selecionadas.length >= MAX_EMPRESAS}
-                className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-[#282525] placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition disabled:opacity-50"
-                style={{ borderColor: "rgba(13,13,13,.12)" }}
-              />
-              <PortalMenu position={buscaMenuPos}>
-                {resultados.map((e) => (
-                  <button
-                    key={e.id}
-                    type="button"
-                    onClick={() => adicionar(e)}
-                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[0.8125rem] hover:bg-black/[.03] transition"
-                  >
-                    <CompanyLogo nome={e.nome} site={e.site} logo_url={e.logo_url} size={22} />
-                    {e.nome}
-                  </button>
-                ))}
-              </PortalMenu>
-            </div>
-
-            {selecionadas.length > 0 && (
-              <div className="ml-auto flex items-center overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.12)" }}>
+          {selecionadas.length > 0 && (
+            <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="mb-2.5 text-[0.625rem] font-bold uppercase tracking-[.08em] text-black/35">Empresas em comparação</p>
+                <div className="flex flex-wrap items-center gap-5">
+                  {selecionadas.map((e) => (
+                    <div key={e.id} className="group relative flex items-center gap-2.5">
+                      <CompanyLogo nome={e.nome} site={e.site} logo_url={e.logo_url} size={32} className="rounded border border-black/8" />
+                      <span className="max-w-[8.75rem] truncate text-[0.8125rem] font-medium text-black/75">{e.nome}</span>
+                      <button
+                        type="button"
+                        onClick={() => remover(e.id)}
+                        aria-label={`Remover ${e.nome} do comparativo`}
+                        className="flex h-5 w-5 items-center justify-center rounded-full text-black/25 opacity-0 transition hover:bg-black/[.06] hover:text-black/60 group-hover:opacity-100"
+                      >
+                        <X size={11} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center">
                 {VIEW_OPTIONS.map(({ value, label }, i) => (
                   <button
                     key={value}
                     type="button"
                     onClick={() => setViewMode(value)}
-                    className="px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
+                    className={`relative border px-3.5 py-1.5 text-[0.75rem] font-semibold transition ${i === 0 ? "rounded-l" : "-ml-px rounded-r"}`}
                     style={{
-                      background: viewMode === value ? "#1C0E33" : "#fff",
-                      color: viewMode === value ? "#fff" : "rgba(13,13,13,.45)",
-                      borderRight: i === 0 ? "1px solid rgba(13,13,13,.12)" : undefined,
+                      background: "#fff",
+                      color: viewMode === value ? "#684DB0" : "rgba(13,13,13,.45)",
+                      borderColor: viewMode === value ? "#684DB0" : "rgba(13,13,13,.12)",
+                      zIndex: viewMode === value ? 10 : undefined,
                     }}
                   >
                     {label}
                   </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {selecionadas.length > 0 && (
-            <div className="mt-5">
-              <p className="mb-2.5 text-[0.625rem] font-bold uppercase tracking-[.08em] text-black/35">Empresas em comparação</p>
-              <div className="flex flex-wrap items-center gap-5">
-                {selecionadas.map((e) => (
-                  <div key={e.id} className="group relative flex items-center gap-2.5">
-                    <CompanyLogo nome={e.nome} site={e.site} logo_url={e.logo_url} size={32} className="rounded border border-black/8" />
-                    <span className="max-w-[8.75rem] truncate text-[0.8125rem] font-medium text-black/75">{e.nome}</span>
-                    <button
-                      type="button"
-                      onClick={() => remover(e.id)}
-                      aria-label={`Remover ${e.nome} do comparativo`}
-                      className="flex h-5 w-5 items-center justify-center rounded-full text-black/25 opacity-0 transition hover:bg-black/[.06] hover:text-black/60 group-hover:opacity-100"
-                    >
-                      <X size={11} />
-                    </button>
-                  </div>
                 ))}
               </div>
             </div>
@@ -461,7 +435,7 @@ function ComparativoContent() {
                   icon={GitCompareArrows}
                   title="Busque e adicione empresas para comparar"
                   description="Enquanto isso, três clássicos posam de exemplo."
-                  action={<PrimaryListAction onClick={() => buscaInputRef.current?.focus()}><Plus size={13} aria-hidden="true" /> Adicionar empresa</PrimaryListAction>}
+                  action={<PrimaryListAction onClick={() => setBuscaAberta(true)}><Plus size={13} aria-hidden="true" /> Adicionar empresa</PrimaryListAction>}
                 />
               </div>
             </div>
@@ -475,9 +449,9 @@ function ComparativoContent() {
                   onClick={() => setMetricaExtra(metricaExtra === "crescimento" ? "nenhuma" : "crescimento")}
                   className="flex items-center gap-1.5 rounded-l border px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                   style={{
-                    background: metricaExtra === "crescimento" ? "#1C0E33" : "#fff",
-                    color: metricaExtra === "crescimento" ? "#fff" : "rgba(13,13,13,.45)",
-                    borderColor: metricaExtra === "crescimento" ? "#1C0E33" : "rgba(13,13,13,.12)",
+                    background: "#fff",
+                    color: metricaExtra === "crescimento" ? "#684DB0" : "rgba(13,13,13,.45)",
+                    borderColor: metricaExtra === "crescimento" ? "#684DB0" : "rgba(13,13,13,.12)",
                     zIndex: metricaExtra === "crescimento" ? 10 : undefined,
                     position: "relative",
                   }}
@@ -498,9 +472,9 @@ function ComparativoContent() {
                   onClick={() => setMetricaExtra(metricaExtra === "potencial" ? "nenhuma" : "potencial")}
                   className="flex items-center gap-1.5 rounded-r border px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                   style={{
-                    background: metricaExtra === "potencial" ? "#1C0E33" : "#fff",
-                    color: metricaExtra === "potencial" ? "#fff" : "rgba(13,13,13,.45)",
-                    borderColor: metricaExtra === "potencial" ? "#1C0E33" : "rgba(13,13,13,.12)",
+                    background: "#fff",
+                    color: metricaExtra === "potencial" ? "#684DB0" : "rgba(13,13,13,.45)",
+                    borderColor: metricaExtra === "potencial" ? "#684DB0" : "rgba(13,13,13,.12)",
                     zIndex: metricaExtra === "potencial" ? 10 : undefined,
                     position: "relative",
                   }}
@@ -554,6 +528,17 @@ function ComparativoContent() {
           </div>
         )}
       </div>
+
+      {buscaAberta && (
+        <BuscarEmpresa
+          busca={busca}
+          onBusca={setBusca}
+          resultados={resultados}
+          buscando={buscandoEmpresas}
+          onAdicionar={adicionar}
+          onClose={() => { setBuscaAberta(false); setBusca(""); setResultados([]); }}
+        />
+      )}
 
       {limiteAtingido && (
         <AcessoContatosModal
@@ -613,12 +598,7 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
                   {loading ? "…" : formatarValorCurto(valor)}
                 </span>
               </div>
-              <div className="h-1.5 w-full rounded-full bg-black/[.05]">
-                <div
-                  className="h-1.5 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.round((valor / max) * 100)}%`, background: cor }}
-                />
-              </div>
+              <BarrasDeValor valor={valor} max={max} cor={cor} total={20} altura="h-3.5" />
               {!loading && metricaExtra !== "nenhuma" && (
                 <div className="mt-1.5 flex justify-end">
                   {metricaExtra === "crescimento" && <CrescimentoTag crescimento={crescimentos[e.id]?.[key]} valor={valor} />}
