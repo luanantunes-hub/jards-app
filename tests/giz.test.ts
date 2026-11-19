@@ -13,9 +13,9 @@ test("o grão de giz é um ruído fractal usado como máscara, com cantos leveme
   assert.equal(CANTOS_DE_GIZ, "2px 3px 2px 3px");
 });
 
-test("barras de comparação e barra em blocos usam o giz", () => {
+test("só as barras de comparação usam o giz; a barra de progresso em blocos é lisa", () => {
   assert.match(ler("components/comparativo/BarrasDeValor.tsx"), /ESTILO_DE_GIZ/);
-  assert.match(ler("components/ui/BarraEmBlocos.tsx"), /ESTILO_DE_GIZ/);
+  assert.doesNotMatch(ler("components/ui/BarraEmBlocos.tsx"), /ESTILO_DE_GIZ|CANTOS_DE_GIZ/, "a barra de progresso é em blocos lisos, sem grão");
   assert.doesNotMatch(ler("components/ui/RelationshipScoreGauge.tsx"), /FiltroDeGiz|filter=/, "o medidor de meio círculo não leva giz");
 });
 

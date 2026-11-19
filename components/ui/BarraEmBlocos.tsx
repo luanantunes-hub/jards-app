@@ -1,5 +1,4 @@
 import { blocosPorSegmento } from "@/lib/barras-de-valor";
-import { CANTOS_DE_GIZ, ESTILO_DE_GIZ } from "@/lib/giz";
 
 export type SegmentoDeBarra = {
   /** Quanto da barra o segmento ocupa, de 0 a 100. */
@@ -9,9 +8,9 @@ export type SegmentoDeBarra = {
 };
 
 /**
- * Barra de progresso em blocos, no lugar da barra contínua: uma fileira de blocos com vão, em giz
- * pastel (grão de lib/giz.ts). Cada segmento pinta os seus blocos em sequência; os que sobram ficam num
- * cinza claro. A altura mínima de 8px deixa o grão e o vão aparecerem mesmo em barras finas.
+ * Barra de progresso em blocos, no lugar da barra contínua: uma fileira de blocos com vão, em cor lisa
+ * (as cores do Jards, como `MARCA_CAPTACAO`). Cada segmento pinta os seus blocos em sequência; os que
+ * sobram ficam num cinza claro. A altura mínima de 8px deixa o vão aparecer mesmo em barras finas.
  */
 export function BarraEmBlocos({ segmentos, total = 20, className = "h-2.5", rotulo, valorAtual }: {
   segmentos: SegmentoDeBarra[];
@@ -30,8 +29,7 @@ export function BarraEmBlocos({ segmentos, total = 20, className = "h-2.5", rotu
       {Array.from({ length: total }, (_, indice) => (
         <span
           key={indice}
-          className={`min-w-0 flex-1 transition-colors duration-200 motion-reduce:transition-none ${classes[indice] ?? "bg-black/[.07]"}`}
-          style={{ borderRadius: CANTOS_DE_GIZ, ...ESTILO_DE_GIZ }}
+          className={`min-w-0 flex-1 rounded-[2px] transition-colors duration-200 motion-reduce:transition-none ${classes[indice] ?? "bg-black/[.07]"}`}
         />
       ))}
     </div>
