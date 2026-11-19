@@ -1,12 +1,14 @@
-// O custo do meio de pagamento, pago pelo COMPRADOR (decisão do dono, 19/11/2026), e a escolha de como pagar. A MESMA conta de
-// fn_ticketeria_custo_do_meio (supabase/migrations/*_ticketeria_custo_do_meio.sql): o banco é quem grava o pedido; esta cópia serve à
-// tela (mostrar o preço, a taxa do Jards e o custo SEPARADOS antes de pagar) e os testes conferem os mesmos casos nos dois.
+// O custo do meio de pagamento, pago pelo PRODUTOR (decisão do dono, 19/11/2026): o comprador paga exatamente o preço do ingresso, e do
+// preço saem a taxa do Jards (2,5%) e o custo do meio; o produtor recebe o que sobra. A MESMA conta de fn_ticketeria_custo_do_meio
+// (supabase/migrations/*_ticketeria_produtor_paga_as_taxas.sql): o banco é quem grava o pedido; esta cópia serve às telas (a do
+// produtor mostra quanto ele recebe líquido, por ingresso e por meio de pagamento, para ele decidir o preço) e os testes conferem os
+// mesmos casos nos dois.
 //
-// Os custos (do contrato com o provedor) moram na tabela `ticketeria_custos_meio`, não no código: mudam com contrato e promoção.
-// No cartão o custo é percentual SOBRE O TOTAL PAGO, então o total sai "por dentro": total pago = (líquido + fixo) / (1 - percentual),
-// arredondado para cima, para o líquido (o preço do produtor mais a taxa do Jards) nunca ficar abaixo do devido.
+// Os custos (do contrato com o provedor) moram na tabela `ticketeria_custos_meio`, não no código: mudam com contrato e promoção. No
+// cartão o custo é percentual SOBRE O TOTAL PAGO (que agora é o preço), arredondado para cima, mais o fixo.
 
 import type { MeioDePagamento } from "@/lib/ticketeria/estados";
+import { taxaDoIngresso, totaisDoPedido, type RegraDaTaxa } from "@/lib/ticketeria/pagamento/taxa";
 
 /** Uma faixa de custo: o meio, de quantas a quantas parcelas, a porcentagem em pontos-base (299 = 2,99%) e o fixo em centavos. */
 export type RegraDeCusto = { meio: MeioDePagamento; parcelas_de: number; parcelas_ate: number; percentual_bps: number; fixo_centavos: number };
@@ -24,19 +26,45 @@ export function regraDoMeio(regras: readonly RegraDeCusto[], meio: MeioDePagamen
   return regras.find(regra => regra.meio === meio && n >= regra.parcelas_de && n <= regra.parcelas_ate) ?? null;
 }
 
-/** O custo, em centavos, de cobrar `liquidoCentavos` pelo meio escolhido. */
-export function custoDoMeio(liquidoCentavos: number, regra: RegraDeCusto): number {
-  const totalPago = Math.ceil(((liquidoCentavos + regra.fixo_centavos) * 10000) / (10000 - regra.percentual_bps));
-  return totalPago - liquidoCentavos;
+/** O custo, em centavos, de cobrar `totalPagoCentavos` pelo meio escolhido: o percentual sobre o total (para cima) mais o fixo. */
+export function custoDoMeio(totalPagoCentavos: number, regra: RegraDeCusto): number {
+  return Math.floor((totalPagoCentavos * regra.percentual_bps + 9999) / 10000) + regra.fixo_centavos;
 }
 
-export type ValoresParaPagar = { preco_centavos: number; taxa_jards_centavos: number; custo_meio_centavos: number; a_pagar_centavos: number };
+export type ValoresDoPedido = { a_pagar_centavos: number; taxa_jards_centavos: number; custo_meio_centavos: number; produtor_recebe_centavos: number };
 
-/** O que a tela mostra antes de pagar: o que é do produtor, a taxa do Jards e o custo do meio, separados, e o total. */
-export function valoresParaPagar(pedido: { produtor_centavos: number; taxa_centavos: number }, regra: RegraDeCusto): ValoresParaPagar {
-  const liquido = pedido.produtor_centavos + pedido.taxa_centavos;
-  const custo = custoDoMeio(liquido, regra);
-  return { preco_centavos: pedido.produtor_centavos, taxa_jards_centavos: pedido.taxa_centavos, custo_meio_centavos: custo, a_pagar_centavos: liquido + custo };
+/**
+ * Os valores de um pedido no meio escolhido: o comprador paga o total do pedido (o preço, nada somado); do preço saem a taxa do Jards
+ * e o custo do meio, e o produtor recebe o resto. `null` quando o custo come toda a parte do produtor (ingresso baratíssimo): o meio
+ * não serve para este pedido (o banco recusa do mesmo jeito: `meio_indisponivel`).
+ */
+export function valoresDoPedido(pedido: { total_centavos: number; produtor_centavos: number; taxa_centavos: number }, regra: RegraDeCusto): ValoresDoPedido | null {
+  const custo = custoDoMeio(pedido.total_centavos, regra);
+  if (custo > pedido.produtor_centavos) return null;
+  return { a_pagar_centavos: pedido.total_centavos, taxa_jards_centavos: pedido.taxa_centavos, custo_meio_centavos: custo, produtor_recebe_centavos: pedido.produtor_centavos - custo };
+}
+
+export type LiquidoPorMeio = { meio: MeioDePagamento; parcelas: number | null; custo_meio_centavos: number; produtor_recebe_centavos: number };
+
+/**
+ * A tela do produtor: quanto ele recebe líquido por UM ingresso de `precoCentavos`, no Pix e no cartão (à vista e em cada parcelamento
+ * que a loja oferece), para ele saber o preço que quer cobrar. Ingresso de preço zero (cortesia, gratuito) não cobra nada.
+ */
+export function liquidoDoProdutorPorMeio(precoCentavos: number, regraDaTaxa: RegraDaTaxa, regrasDeCusto: readonly RegraDeCusto[], parcelasMaxDaLoja: number): { taxa_jards_centavos: number; meios: LiquidoPorMeio[] } {
+  const taxa = taxaDoIngresso(precoCentavos, regraDaTaxa);
+  if (precoCentavos <= 0) return { taxa_jards_centavos: 0, meios: [] };
+  const totais = totaisDoPedido([{ preco_centavos: precoCentavos, quantidade: 1 }], regraDaTaxa);
+  const meios: LiquidoPorMeio[] = [];
+  const candidatos: { meio: MeioDePagamento; parcelas: number | null }[] = [
+    { meio: "pix", parcelas: null },
+    ...parcelasOferecidas(regrasDeCusto, parcelasMaxDaLoja).map(n => ({ meio: "cartao" as const, parcelas: n })),
+  ];
+  for (const { meio, parcelas } of candidatos) {
+    const regra = regraDoMeio(regrasDeCusto, meio, parcelas);
+    const valores = regra ? valoresDoPedido(totais, regra) : null;
+    if (valores) meios.push({ meio, parcelas, custo_meio_centavos: valores.custo_meio_centavos, produtor_recebe_centavos: valores.produtor_recebe_centavos });
+  }
+  return { taxa_jards_centavos: taxa, meios };
 }
 
 /** As parcelas que o comprador pode escolher no cartão: de 1 até o máximo da loja (o produtor escolhe), só as que têm custo cadastrado. */
@@ -46,7 +74,7 @@ export function parcelasOferecidas(regras: readonly RegraDeCusto[], parcelasMaxD
   return oferecidas;
 }
 
-/** O valor de cada parcela (a última leva o resto dos centavos). */
+/** O valor de cada parcela do que o comprador paga (a última leva o resto dos centavos). */
 export function valorDasParcelas(aPagarCentavos: number, parcelas: number): { valor_centavos: number; ultima_centavos: number } {
   const valor = Math.floor(aPagarCentavos / parcelas);
   return { valor_centavos: valor, ultima_centavos: aPagarCentavos - valor * (parcelas - 1) };
