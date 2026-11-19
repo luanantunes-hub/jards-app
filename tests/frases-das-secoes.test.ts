@@ -29,15 +29,29 @@ test("frases das seções: frase com {org} só quando a organização tem nome p
   assert.equal(escolherFrase(modelos, { agora, organizacao: "Minha organização" }), null);
 });
 
-test("ilustração do dia: de 1 a 16, usa todas no mesmo dia (só as seções que passam de 16 repetem) e muda no dia seguinte", async () => {
+test("ilustração do dia: de 1 ao total do pacote, usa todas no mesmo dia (só as seções que passam do total repetem) e muda no dia seguinte", async () => {
   const { ilustracaoDoDia } = await import("../lib/frases-das-secoes");
+  const total = PACOTE_ATIVO.total;
   const secoes = ["painel", ...Object.keys(FRASES_DAS_SECOES)] as Parameters<typeof ilustracaoDoDia>[0][];
   const hoje = secoes.map(s => ilustracaoDoDia(s, agora));
-  assert.equal(new Set(hoje).size, Math.min(secoes.length, 16), "todas as 16 aparecem, sem repetir enquanto houver desenho sobrando");
-  assert.ok(hoje.slice(0, 16).every((n, i) => hoje.indexOf(n) === i), "as 16 primeiras seções não repetem");
-  assert.ok(hoje.every(n => n >= 1 && n <= 16));
+  assert.equal(new Set(hoje).size, Math.min(secoes.length, total), "todas as do pacote aparecem, sem repetir enquanto houver desenho sobrando");
+  assert.ok(hoje.slice(0, total).every((n, i) => hoje.indexOf(n) === i), "as primeiras seções, até o total do pacote, não repetem");
+  assert.ok(hoje.every(n => n >= 1 && n <= total));
   assert.equal(ilustracaoDoDia("atividades", new Date(2026, 10, 18, 23, 0)), ilustracaoDoDia("atividades", agora), "mesmo dia, mesma ilustração");
   assert.notEqual(ilustracaoDoDia("atividades", new Date(2026, 10, 19, 10, 0)), ilustracaoDoDia("atividades", agora));
+});
+
+test("o passo do sorteio nunca tem divisor comum com o total do pacote, e o sorteio percorre qualquer tamanho sem repetir", async () => {
+  const { ilustracaoDoDia, passoCoprimo } = await import("../lib/frases-das-secoes");
+  assert.equal(passoCoprimo(16, 5), 5);
+  assert.equal(passoCoprimo(15, 5), 7, "5 divide 15, então sobe até um passo que serve");
+  assert.equal(passoCoprimo(14, 7), 9);
+  const secoes = ["painel", ...Object.keys(FRASES_DAS_SECOES)] as Parameters<typeof ilustracaoDoDia>[0][];
+  for (const total of [5, 7, 10, 12, 14, 15, 16, 18, 20, 24]) {
+    const pacote = { id: "teste", nome: "teste", total };
+    const hoje = secoes.map(s => ilustracaoDoDia(s, agora, pacote));
+    assert.equal(new Set(hoje).size, Math.min(secoes.length, total), `pacote de ${total}: todas aparecem sem repetir enquanto houver desenho`);
+  }
 });
 
 test("cada pacote de ilustrações tem a sua pasta, com os arquivos numerados de 01 ao total, sem buraco e sem sobra", async () => {
@@ -50,12 +64,12 @@ test("cada pacote de ilustrações tem a sua pasta, com os arquivos numerados de
   assert.deepEqual(pastas(new URL("../public/ilustracoes", import.meta.url)).sort(), PACOTES_DE_ILUSTRACOES.map((pacote) => pacote.id).sort(), "toda pasta de ilustração é um pacote registrado");
 });
 
-test("pacotes: o Tamanduá no dia a dia é o ativo, com 16 desenhos, e o endereço de cada um segue a pasta do pacote", () => {
+test("pacotes: o Tamanduá no dia a dia é o ativo, com 15 desenhos, e o endereço de cada um segue a pasta do pacote", () => {
   assert.equal(PACOTE_ATIVO.id, "dia-a-dia");
   assert.equal(PACOTE_ATIVO.nome, "Tamanduá no dia a dia");
-  assert.equal(PACOTE_ATIVO.total, 16);
+  assert.equal(PACOTE_ATIVO.total, 15);
   assert.equal(caminhoDaIlustracao(PACOTE_ATIVO, 3), "/ilustracoes/dia-a-dia/03.png");
-  assert.equal(caminhoDaIlustracao(PACOTE_ATIVO, 16), "/ilustracoes/dia-a-dia/16.png");
+  assert.equal(caminhoDaIlustracao(PACOTE_ATIVO, 15), "/ilustracoes/dia-a-dia/15.png");
   assert.equal(new Set(PACOTES_DE_ILUSTRACOES.map((pacote) => pacote.id)).size, PACOTES_DE_ILUSTRACOES.length, "ids únicos");
 });
 

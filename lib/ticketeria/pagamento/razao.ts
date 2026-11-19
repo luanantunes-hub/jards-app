@@ -25,14 +25,15 @@ export function partidasDoPagamento(pedido: { total_centavos: number; produtor_c
 }
 
 /**
- * As partidas da devolução TOTAL de um pedido pago, em até 7 dias (arrependimento, D5; T7). É o inverso do pagamento: o comprador
- * recebe o preço inteiro, o Jards devolve a comissão dele (a taxa) e a parte do produtor volta a zero. O que o Asaas **não devolve** do
- * custo do meio (no Pix, sempre; no cartão com estorno total, o Asaas devolve a taxa de transação) é **absorvido pelo Jards**, nunca
- * pelo produtor (decisão do dono, 19/11/2026, após ler a documentação do Asaas, ainda a confirmar no sandbox e com o comercial). Por isso
- * a conta depende de um dado por meio de pagamento: "o Asaas devolveu o custo? sim/não". Estorno parcial e taxa de antecipação do cartão
- * não passam por aqui: quem arca com eles é pergunta aberta no plano.
+ * As partidas da devolução TOTAL de um pedido pago (D5; T7), o inverso do pagamento: o comprador recebe o preço inteiro e a parte do
+ * produtor volta. Em arrependimento (até 7 dias) o Jards devolve a comissão dele (a taxa). O que o Asaas **não devolve** do custo do
+ * meio (a "taxa residual": no Pix, sempre; no cartão com estorno total, o Asaas devolve a taxa de transação) **fica com o produtor, em
+ * qualquer caso**, saindo do saldo dele: o Jards não cobre nada disso (decisão do dono, 19/11/2026, após ler a documentação do Asaas,
+ * ainda a confirmar no sandbox e com o comercial). Por isso a conta depende de um dado por meio de pagamento: "o Asaas devolveu o
+ * custo? sim/não". Estorno parcial e taxa de antecipação do cartão não passam por aqui: quem arca com eles é pergunta aberta no plano.
  *
- * Fecha em zero: psp = −(total − custo + custo não devolvido); produtor = +(parte do produtor − custo); plataforma = +(taxa + custo não devolvido).
+ * Fecha em zero: psp = −(total − custo + custo não devolvido); produtor = +(parte do produtor − custo + custo não devolvido);
+ * plataforma = +taxa. Depois do pagamento e da devolução, o produtor deve exatamente o custo não devolvido; o Jards fica em zero.
  */
 export function partidasDaDevolucao(
   pedido: { total_centavos: number; produtor_centavos: number; taxa_centavos: number; custo_meio_centavos?: number },
@@ -42,8 +43,8 @@ export function partidasDaDevolucao(
   const naoDevolvido = asaasDevolveuOCusto ? 0 : custo;
   const partidas: Partida[] = [
     { conta: "psp_a_receber", valor_centavos: -(pedido.total_centavos - custo + naoDevolvido) },
-    { conta: "produtor", valor_centavos: pedido.produtor_centavos - custo },
-    { conta: "plataforma", valor_centavos: pedido.taxa_centavos + naoDevolvido },
+    { conta: "produtor", valor_centavos: pedido.produtor_centavos - custo + naoDevolvido },
+    { conta: "plataforma", valor_centavos: pedido.taxa_centavos },
   ];
   return partidas.filter(partida => partida.valor_centavos !== 0);
 }

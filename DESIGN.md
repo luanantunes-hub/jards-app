@@ -199,7 +199,7 @@ Use os primitivos de `components/ui/DetailPagePrimitives.tsx` para manter:
 
 As ilustrações que ficam na frente da frase de cada seção (e do painel) vêm em **pacotes**. Um pacote é um conjunto de desenhos que sempre anda junto: mora em `public/ilustracoes/<id>/`, com arquivos numerados de `01.png` ao total, e o sorteio do dia escolhe sempre dentro de um pacote, sem misturar dois.
 
-- pacote atual: **Tamanduá no dia a dia** (`dia-a-dia`), 16 desenhos só com o tamanduá;
+- pacote atual: **Tamanduá no dia a dia** (`dia-a-dia`), 15 desenhos só com o tamanduá;
 - o registro fica em `lib/pacotes-de-ilustracoes.ts`; o pacote que aparece é o `PACOTE_ATIVO`;
 - pacote novo: pasta com os desenhos numerados sem buraco, uma entrada no registro e, para ele aparecer, trocar o `PACOTE_ATIVO`. O teste confere pasta, total e que toda pasta é um pacote registrado.
 
