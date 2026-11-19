@@ -144,7 +144,7 @@ O Jards **não opera serviço financeiro**: é software de ticketeria e esta é 
 - **Bloqueio imediato:** chargeback aberto, evento adiado ou cancelado, conta negativa.
 - **Teto global no piloto:** soma do liberado em aberto até R$ 20.000.
 - A tela mostra a taxa e o valor que o produtor recebe **antes** de ele confirmar.
-- Simulação (200 produtores, 10 eventos, perda de 100% do liberado quando há incidente, produtor ruim sempre pega o máximo): resultado positivo no perfil normal (R$ 92 mil) e no perfil com 20% de ruins (R$ 36 mil), nenhuma rodada negativa. Ver `sim2.py` na pasta de rascunho da sessão; reproduzir antes de decidir.
+- Simulação (200 produtores, 10 eventos, perda de 100% do liberado quando há incidente, produtor ruim sempre pega o máximo): resultado positivo no perfil normal (R$ 92 mil) e no perfil com 20% de ruins (R$ 36 mil), nenhuma rodada negativa. Reproduzir com `python3 -I docs/acoes-futuras/estudos/simulacao-liberacao-repasse.py` antes de decidir (as probabilidades de incidente são palpites).
 
 ### 9.4 Cancelamento do evento pelo produtor
 
