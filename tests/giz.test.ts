@@ -37,3 +37,11 @@ test("os medidores de arco usam o verde folha da identidade, e a lista de Empres
   assert.match(lista, /SEGMENTS as GAUGE_SEGMENTS_DO_DETALHE/);
   assert.doesNotMatch(lista, /rgba\(26,139,122/, "sem escala própria no verde antigo");
 });
+
+test("os dados de captação e o gráfico de Atividades estão no verde folha; o verde de salvar não mudou", () => {
+  const marca = ler("components/ui/IndicadoresFinanceiros.tsx");
+  assert.match(marca, /confirmado: "bg-\[#3DA86A\]"/);
+  assert.match(marca, /negociacao: "bg-\[#3DA86A\]\/35"/);
+  assert.match(ler("app/(dashboard)/atividades/page.tsx"), /const VERDE = "#3DA86A"/);
+  assert.match(ler("DESIGN.md"), /\| Verde \| `#2E8932` \| salvar, confirmar e sucesso \|/);
+});

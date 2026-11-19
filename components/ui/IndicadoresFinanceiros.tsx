@@ -7,8 +7,8 @@ import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
  * conversa, cinza o que falta. Rótulos, ícones e valores ficam neutros.
  */
 export const MARCA_CAPTACAO = {
-  confirmado: "bg-[#2E8932]",
-  negociacao: "bg-[#2E8932]/35",
+  confirmado: "bg-[#3DA86A]",
+  negociacao: "bg-[#3DA86A]/35",
   falta: "bg-black/[.06]",
 } as const;
 

@@ -50,7 +50,7 @@ Princípios:
 - rótulo neutro: `0.625rem`, peso 500, caixa alta, tracking `.08em`, `text-black/45`; nunca colorido nem em negrito;
 - valor em tinta (`#282525`), semibold, algarismos tabulares; valor zerado fica apagado (`text-black/30`);
 - cor só no gráfico (barra, segmento), nunca no rótulo nem no valor. Sem pontos ou quadrados coloridos como marcador: quando o rótulo precisa de apoio visual, usa ícone cinza (`text-black/40`, 12px); só um estado de alerta (em risco, expirado, atrasado) pode colorir o ícone;
-- captação: verde é confirmado, verde a 35% é em negociação, cinza é o que falta. Roxo é navegação, não é cor de dado;
+- captação: verde folha (`#3DA86A`, o mesmo dos medidores de meio círculo e do gráfico de Atividades) é confirmado, folha a 35% é em negociação, cinza é o que falta. O verde `#2E8932` fica para salvar e confirmar ações, não para dados. Roxo é navegação, não é cor de dado;
 - exceção: um desfecho escrito em palavra ("Meta atingida") pode levar a cor no texto;
 - valores de resumo, totais, kanban e cartões usam `formatarValorCurto` (`R$ 400.000`, `R$ 1,5 mi`, `R$ 13 bi`), com `formatarValorCompleto` no `title`; campos, propostas, exportações e prestação de contas mostram o valor exato;
 - componentes: `Indicador` e `BarraCaptacao` em `components/ui/IndicadoresFinanceiros.tsx`.

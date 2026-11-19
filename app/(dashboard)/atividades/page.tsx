@@ -813,7 +813,7 @@ function ChipSemHorario({ atividade, arrastando, onAbrir, onPegar }: { atividade
 
 // O mês como linha do tempo: números no topo, uma estação por semana (tipos, ritmo dos dias e destaques)
 // e, embaixo, a régua com os dias do mês. Clicar num dia abre a grade de horários dele.
-const VERDE = "#2E8932";
+const VERDE = "#3DA86A"; // folha, o verde alegre dos dados (o #2E8932 fica para salvar e confirmar)
 const INICIAIS_DO_DIA = ["D", "S", "T", "Q", "Q", "S", "S"];
 const MESES_CURTOS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 // Detalhes da landing page: Geist Mono nos rótulos técnicos, cartões em papel e conexões tracejadas em roxo.
@@ -1079,7 +1079,7 @@ function PainelDoMes({ itens, ano, mes, hoje, onAbrirDia, onAbrirSemana, onEdit,
                               <button key={d} type="button" onClick={() => onAbrirDia(dataDoIso(d))} title={`${Number(d.slice(8))}/${d.slice(5, 7)}: ${total} ${total === 1 ? "atividade" : "atividades"}`} className="group flex h-full min-w-0 flex-1 flex-col justify-end rounded-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/40">
                                 {total > 0 ? (
                                   <span className="flex w-full flex-col-reverse overflow-hidden rounded-t-[3px] transition-opacity group-hover:opacity-80" style={{ height: `${Math.max(total / maxSemana * 100, 12)}%` }}>
-                                    <span style={{ height: `${feitas}%`, background: atual ? "#4CB860" : VERDE }} />
+                                    <span style={{ height: `${feitas}%`, background: atual ? "#2E8A57" : VERDE }} />
                                     <span className={`flex-1 ${atual ? "bg-[#C7B6EE]/35" : "bg-black/[.16]"}`} style={{ marginBottom: info!.concluidas && info!.concluidas < total ? 2 : 0 }} />
                                   </span>
                                 ) : <span className={`h-[2px] w-full rounded-[1px] ${atual ? "bg-white/15" : "bg-black/[.07]"}`} />}
