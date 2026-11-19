@@ -26,7 +26,7 @@ const LIMITE_DE_SESSOES = 80;
 
 /**
  * Escolhe o espaço e a sessão (as de hoje em diante) e entrega a sessão escolhida a quem usa. Serve às páginas que trabalham por
- * sessão (plateia, convidados, acessibilidade, porta e borderô), e lembra a escolha de uma para a outra.
+ * sessão (hoje, a acessibilidade), e lembra a escolha de uma para a outra.
  */
 export function SeletorDeSessao({ children }: { children: (sessao: { id: string; rotulo: string; organizationId: string }) => ReactNode }) {
   const organizationId = useOrganizationId();

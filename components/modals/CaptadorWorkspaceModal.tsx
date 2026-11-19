@@ -19,7 +19,7 @@ function TooltipBotao({ texto, children }: { texto: string; children: React.Reac
   return (
     <div className="group/tip relative">
       {children}
-      <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 w-max max-w-[10.625rem] -translate-x-1/2 rounded bg-[#282525] px-2 py-1.5 text-center text-[0.625rem] font-medium leading-snug text-white opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100">
+      <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 w-max max-w-[10.625rem] -translate-x-1/2 rounded bg-[#1C0E33] px-2 py-1.5 text-center text-[0.625rem] font-medium leading-snug text-white opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100">
         {texto}
       </div>
     </div>
@@ -175,7 +175,7 @@ export function CaptadorWorkspaceModal({
                   <div className="grid gap-2 sm:grid-cols-2">
                     {MODO_OPCOES.map(opcao => <TooltipBotao key={opcao.value} texto={opcao.descricao}>
                       <button type="button" onClick={() => setModo(opcao.value)} aria-pressed={modo === opcao.value}
-                        className={`w-full rounded border px-2.5 py-2 text-left text-[0.6875rem] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${modo === opcao.value ? "border-[#171717] bg-[#171717] text-white" : "border-black/[.14] bg-white text-black/60 hover:border-black/30"}`}>
+                        className={`w-full rounded border px-2.5 py-2 text-left text-[0.6875rem] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${modo === opcao.value ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/[.14] bg-white text-black/60 hover:border-black/30"}`}>
                         {opcao.label}
                       </button>
                     </TooltipBotao>)}

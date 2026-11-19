@@ -2,7 +2,7 @@
 // aprova. Sem tela e sem banco; tudo em centavos inteiros. A situação só muda pela função `fn_producao_pedido_mudar`, que o banco confere; aqui a tela só decide
 // quais passos oferecer a quem.
 
-import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais } from "@/lib/producao/dinheiro";
 import { montarPlanilha, reaisNaPlanilha } from "@/lib/producao/planilha";
 import type { SituacaoDoPedido } from "@/lib/producao/estados";
 

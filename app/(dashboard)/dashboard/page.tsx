@@ -12,6 +12,7 @@ import type { PotencialFechamento, StatusCaptacao, TipoAtividade } from "@/lib/s
 import { DashboardCustomizer } from "@/components/dashboard/DashboardCustomizer";
 import { SaudacaoPainel } from "@/components/dashboard/SaudacaoPainel";
 import { QuemMeDeveResposta } from "@/components/dashboard/QuemMeDeveResposta";
+import { IlustracaoDaSecao } from "@/components/list/TituloComFrase";
 import { PrimeirosPassos } from "@/components/onboarding/PrimeirosPassos";
 import { useDashboardPreferences } from "@/components/dashboard/useDashboardPreferences";
 import type { DashboardModuleId } from "@/components/dashboard/dashboardModules";
@@ -665,9 +666,12 @@ export default function DashboardPage() {
 
       {/* Header */}
       <div className="mb-7 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Gerenciamento</p>
-          <SaudacaoPainel />
+        <div className="flex items-center gap-4">
+          <IlustracaoDaSecao arquivo="painel" />
+          <div className="min-w-0">
+            <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Visão geral</p>
+            <SaudacaoPainel />
+          </div>
         </div>
         <DashboardCustomizer open={customizerOpen} onOpenChange={setCustomizerOpen} preferences={dashboardPreferences.preferences} onToggle={dashboardPreferences.toggle} onMove={dashboardPreferences.move} onReset={dashboardPreferences.reset} />
       </div>

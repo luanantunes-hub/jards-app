@@ -13,7 +13,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(19);
+select plan(21);
 
 create schema ex;
 grant usage on schema ex to authenticated, anon;
@@ -173,6 +173,21 @@ select is((select string_agg(distinct campo, ',' order by campo) from public.pro
 select ex.como('a3');
 select ok((select count(*) from public.producao_historico where entidade = 'producao_expografia' and entidade_id = ex.id('d1')) > 0, 'quem lê a obra na sala lê o histórico dela');
 select ex.volta();
+
+reset role;
+
+-- O lugar da obra na planta (PD8.5, segundo corte): os dois juntos ou nenhum, e dentro do limite.
+select is(array(select ex.tenta(c) from unnest(array[
+            format('update public.producao_expografia set x_m = 2.5 where id = %L', ex.id('d1')),
+            format('update public.producao_expografia set x_m = 2.5, y_m = 1.5 where id = %L', ex.id('d1')),
+            format('update public.producao_expografia set x_m = 1001, y_m = 1 where id = %L', ex.id('d1'))]) as c),
+          array['23514 producao_expografia_lugar_check', 'aceito', '23514 producao_expografia_lugar_check'],
+          'o lugar da obra: x e y juntos ou nenhum, e dentro de 1.000 metros');
+
+-- `ex.tenta` desfaz o que executa: para conferir a leitura, o comando vai solto.
+update public.producao_expografia set x_m = 2.5, y_m = 1.5 where id = ex.id('d1');
+
+select is((select array[x_m, y_m] from public.producao_expografia where id = ex.id('d1')), array[2.5, 1.5], 'o lugar gravado é o que se lê');
 
 select * from finish();
 rollback;

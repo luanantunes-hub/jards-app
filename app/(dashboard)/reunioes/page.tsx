@@ -60,7 +60,7 @@ export default function ReunioesPage() {
           type="button"
           onClick={() => setModalAberto(true)}
           disabled={!organizationId || uso?.atingido === true}
-          className="flex items-center gap-2 rounded bg-[#0D0D0D] px-4 py-2.5 text-sm text-white transition hover:opacity-90 disabled:opacity-40"
+          className="flex items-center gap-2 rounded bg-[#1C0E33] px-4 py-2.5 text-sm text-white transition hover:opacity-90 disabled:opacity-40"
         >
           <Plus size={14} weight="bold" />
           Enviar assistente

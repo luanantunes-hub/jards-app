@@ -5,12 +5,12 @@ import Link from "next/link";
 import { Download, Plus, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { APAGAR, BOTAO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { APAGAR, BOTAO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import type { CategoriaDoOrcamento } from "@/lib/producao/estados";
-import { emCentavos, formatarReais, lerValorEmReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais, lerValorEmReais } from "@/lib/producao/dinheiro";
 import { ROTULO_DA_CATEGORIA_DO_ORCAMENTO } from "@/lib/producao/orcamento";
 import {
   lerPedido, mensagemDoErroDePedido, pedidoApagavel, pedidoEditavel, pendenciaEditavel, pendenciaVencida, planilhaDosPedidos,

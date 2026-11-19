@@ -307,15 +307,15 @@ test("a lista traz um contrato por módulo pago e quantas pessoas usam cada um, 
   assert.deepEqual(corpo.organizacoes, [
     {
       id: ORG, nome: "Casa Azul", created_at: "2026-09-07T00:00:00Z", modulos_ativos: ["captacao", "prestacao", "producao"], membros: 3,
-      modulos: { prestacao: { contrato: prestacao, com_acesso: 2 }, producao: { contrato: producao, com_acesso: 1 } },
+      modulos: { prestacao: { contrato: prestacao, com_acesso: 2 }, producao: { contrato: producao, com_acesso: 1 }, ticketeria: { contrato: null, com_acesso: 0 } },
     },
     {
       id: OUTRA_ORG, nome: "Teatro do Rio", created_at: "2026-09-08T00:00:00Z", modulos_ativos: [], membros: 1,
-      modulos: { prestacao: { contrato: null, com_acesso: 0 }, producao: { contrato: null, com_acesso: 0 } },
+      modulos: { prestacao: { contrato: null, com_acesso: 0 }, producao: { contrato: null, com_acesso: 0 }, ticketeria: { contrato: null, com_acesso: 0 } },
     },
   ]);
   const [lerContratos] = consultasDe(consultas, "organization_modulos", "select");
-  assert.deepEqual(lerContratos.filtros, [["in", "modulo", ["prestacao", "producao"]]], "só os módulos com contrato");
+  assert.deepEqual(lerContratos.filtros, [["in", "modulo", ["prestacao", "producao", "ticketeria"]]], "só os módulos com contrato");
 });
 
 test("o detalhe de uma organização lista os membros com o acesso de cada um", async () => {

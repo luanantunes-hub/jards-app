@@ -77,7 +77,7 @@ function MensagemBubble({ autor, texto, data, destaque = false, rotulo }: {
   const inicial = autor.trim().charAt(0).toUpperCase() || "?";
   return (
     <div className="flex gap-2.5">
-      <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold text-white ${destaque ? "bg-[#171717]" : "bg-black/25"}`}>{inicial}</div>
+      <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold text-white ${destaque ? "bg-[#1C0E33]" : "bg-black/25"}`}>{inicial}</div>
       <div className="min-w-0 flex-1 rounded border bg-white px-3.5 py-2.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <p className="whitespace-pre-wrap text-[0.8125rem] leading-relaxed text-black/80">{texto}</p>
         <p className="mt-1.5 text-[0.6875rem] text-black/40">{rotulo ?? autor} · <DataMensagem data={data} /></p>

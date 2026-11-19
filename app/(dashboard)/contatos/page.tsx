@@ -349,7 +349,7 @@ export default function ContatosPage() {
           onSaved={refetch}
         />
       )}
-      <ListPageHeader eyebrow="Rede de relacionamento" title="Contatos" summary={!loading&&<ListSummary strong={filtered.length}>{filtered.length===1?'contato':'contatos'}</ListSummary>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo contato</PrimaryListAction></>}/>
+      <ListPageHeader secao="contatos" eyebrow="Rede de relacionamento" title="Contatos" summary={!loading&&<ListSummary strong={filtered.length}>{filtered.length===1?'contato':'contatos'}</ListSummary>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo contato</PrimaryListAction></>}/>
 
       {/* Filters */}
       <ListToolbar search={<ListSearch value={search} onChange={setSearch} placeholder="Buscar nome, empresa ou cargo"/>}>

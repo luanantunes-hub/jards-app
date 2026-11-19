@@ -44,7 +44,7 @@ test("ação: o aviso repetido não faz nada de novo", () => {
 });
 
 test("reunião do Vexa: o id numérico vira texto e sem id é erro", () => {
-  assert.deepEqual(lerReuniaoDoVexa({ id: 42, platform: "teams", native_meeting_id: "397421056486982", status: "requested" }), { id: "42", plataforma: "teams", nativeMeetingId: "397421056486982", status: "requested" });
+  assert.deepEqual(lerReuniaoDoVexa({ id: 42, platform: "teams", native_meeting_id: "397421056486982", status: "requested" }), { id: "42", plataforma: "teams", nativeMeetingId: "397421056486982", status: "requested", motivo: null });
   assert.throws(() => lerReuniaoDoVexa({ status: "requested" }), /número da reunião/);
   assert.throws(() => lerReuniaoDoVexa(null), /número da reunião/);
 });

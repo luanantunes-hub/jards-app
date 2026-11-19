@@ -10,7 +10,7 @@ export type VexaPlataforma = "google_meet" | "teams";
 export const URL_PADRAO_DO_VEXA = "https://api.cloud.vexa.ai";
 
 /** A reunião como o Vexa a conhece: `id` é o número da reunião no Vexa, que o Jards guarda em `reunioes.vexa_bot_id`. */
-export type ReuniaoDoVexa = { id: string; plataforma: string | null; nativeMeetingId: string | null; status: string | null };
+export type ReuniaoDoVexa = { id: string; plataforma: string | null; nativeMeetingId: string | null; status: string | null; motivo: string | null };
 
 /** Um trecho de fala já pronto para gravar em `reuniao_transcricoes`. */
 export type TrechoDeFala = { falante: string | null; texto: string; inicio_ms: number; fim_ms: number | null; confianca: number | null };
@@ -38,7 +38,10 @@ export function lerReuniaoDoVexa(corpo: unknown): ReuniaoDoVexa {
   const objeto = (corpo && typeof corpo === "object" ? corpo : {}) as Record<string, unknown>;
   const id = typeof objeto.id === "number" || typeof objeto.id === "string" ? String(objeto.id) : null;
   if (!id) throw new Error("O Vexa não devolveu o número da reunião");
-  return { id, plataforma: texto(objeto.platform), nativeMeetingId: texto(objeto.native_meeting_id), status: texto(objeto.status) };
+  // o motivo de uma falha ou do fim aparece no próprio objeto ou dentro de `data`, conforme a versão do Vexa
+  const dados = (objeto.data && typeof objeto.data === "object" ? objeto.data : {}) as Record<string, unknown>;
+  const motivo = texto(objeto.failure_stage) ?? texto(objeto.completion_reason) ?? texto(dados.failure_stage) ?? texto(dados.completion_reason) ?? texto(dados.error) ?? texto(objeto.error);
+  return { id, plataforma: texto(objeto.platform), nativeMeetingId: texto(objeto.native_meeting_id), status: texto(objeto.status), motivo };
 }
 
 /**

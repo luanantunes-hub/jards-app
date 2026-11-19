@@ -17,14 +17,14 @@ const COISA: Record<string, string> = {
   producao_obras: "uma obra", producao_temporadas: "uma temporada", producao_notas: "uma nota", producao_modelos_dia: "um modelo de dia",
   producao_espacos: "um espaço", producao_salas: "uma sala", producao_pautas: "uma pauta", producao_sessoes: "uma sessão da programação",
   producao_itens: "um item do inventário", producao_plantas: "uma planta", producao_riders: "um rider", producao_equipamentos: "um equipamento",
-  producao_licencas: "uma licença", producao_setores: "um setor da plateia", producao_setor_cotas: "uma cota de plateia", producao_expografia: "uma obra na exposição", producao_borderos: "um borderô",
+  producao_licencas: "uma licença", producao_expografia: "uma obra na exposição",
   producao_pessoas: "uma pessoa da equipe", producao_vinculos: "um vínculo da equipe", producao_turnos: "um turno", producao_funcoes: "uma permissão",
   producao_voluntarios: "um voluntário", producao_veiculos: "um veículo", producao_deslocamentos: "um deslocamento", producao_hospedagens: "uma hospedagem",
-  producao_convites: "um convite de presença", producao_convidados: "um convidado", producao_credencial_tipos: "um tipo de credencial",
+  producao_convites: "um convite de presença",
   producao_acessibilidade: "um recurso de acessibilidade", producao_visitas_horarios: "um horário de visita", producao_visitas_agendamentos: "um agendamento de visita",
   producao_turmas: "uma turma", producao_turma_aulas: "uma aula", producao_matriculas: "uma matrícula",
-  producao_acertos: "um acerto técnico", producao_modelos_acerto: "um modelo de acerto", producao_sites: "um site", producao_site_paginas: "uma página de site",
-  producao_arquivos: "um arquivo", producao_documentos: "um documento", producao_ocorrencias: "uma ocorrência",
+  producao_acertos: "um acerto técnico", producao_modelos_acerto: "um modelo de acerto",
+  producao_arquivos: "um arquivo", producao_documentos: "um documento", producao_ocorrencias: "uma ocorrência", producao_comunicacao: "um item de comunicação",
 };
 
 const CAMPO: Record<string, string> = {

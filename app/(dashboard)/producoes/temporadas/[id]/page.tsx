@@ -13,7 +13,7 @@ import { diaDaSemana, diaEMes, mudancaDeSituacao, opcaoVencida, ROTULO_DA_SITUAC
 import { ROTULO_DO_FORMATO, tipoDeProducao, type FormatoTemporada, type TipoProducao } from "@/lib/producao/vocabulario";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton, DetailTabs } from "@/components/ui/DetailPagePrimitives";
 import { SubAbas } from "@/components/producao/SubAbas";
-import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { Select } from "@/components/ui/Select";
 import { NovaDataSheet } from "@/components/producao/NovaDataSheet";
 import { EquipeDaTemporada } from "@/components/producao/EquipeDaTemporada";
@@ -158,7 +158,7 @@ export default function TemporadaPage() {
             </div>
             {podeEditar && (
               <div className="flex items-center gap-2">
-                <PrimaryListAction onClick={() => setFolha("copiar")}><Copy size={13} aria-hidden="true" /> Copiar</PrimaryListAction>
+                <SecondaryListAction onClick={() => setFolha("copiar")}><Copy size={13} aria-hidden="true" /> Copiar</SecondaryListAction>
                 <PrimaryListAction onClick={() => setFolha("data")}><Plus size={13} aria-hidden="true" /> Nova data</PrimaryListAction>
               </div>
             )}

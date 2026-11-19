@@ -19,6 +19,7 @@ export const MODULO_LABEL: Record<ModuloId, string> = {
   captacao: "Captação",
   prestacao: "Prestação de contas",
   producao: "Produção",
+  ticketeria: "Ticketeria",
 };
 
 /** Captador e proponente são externos: usam só a captação e não ocupam vaga. */
@@ -30,7 +31,7 @@ export const PAPEIS_EXTERNOS: readonly string[] = ["captador", "proponente"];
  * produção, decisão 3). É um registro por módulo para que um módulo novo
  * obrigue a decidir aqui: sem a linha, o typecheck acusa.
  */
-const EXTERNO_PODE: Record<ModuloId, boolean> = { captacao: true, prestacao: false, producao: false };
+const EXTERNO_PODE: Record<ModuloId, boolean> = { captacao: true, prestacao: false, producao: false, ticketeria: false };
 
 /** O papel pode usar o módulo? Os papéis da equipe usam todos; os externos, só a captação. */
 export function papelPodeUsarModulo(papel: string, modulo: ModuloId): boolean {
@@ -64,6 +65,7 @@ export const ORIGEM_DAS_VAGAS: Record<ModuloId, "plano" | "contrato"> = {
   captacao: "plano",
   prestacao: "contrato",
   producao: "contrato",
+  ticketeria: "contrato",
 };
 
 /** Módulos com contrato próprio, os pagos além da captação. */
@@ -74,6 +76,7 @@ export const CODIGO_SEM_VAGA: Record<ModuloId, string> = {
   captacao: "NO_SEATS",
   prestacao: "NO_SEATS_PRESTACAO",
   producao: "NO_SEATS_PRODUCAO",
+  ticketeria: "NO_SEATS_TICKETERIA",
 };
 
 /**
@@ -245,12 +248,14 @@ const SO_DO_MODULO: Record<ModuloId, string> = {
   captacao: "da captação",
   prestacao: "da prestação",
   producao: "da produção",
+  ticketeria: "da ticketeria",
 };
 
 const ENTRA_DIRETO_EM: Record<ModuloId, string> = {
   captacao: "na captação",
   prestacao: "nas prestações de contas",
   producao: "na produção",
+  ticketeria: "na ticketeria",
 };
 
 /** Aviso do convite a quem fica sem a captação; null quando a pessoa tem a captação ou não há módulo. */

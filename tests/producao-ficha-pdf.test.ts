@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { PDFDocument } from "pdf-lib";
-import { documentoDaFicha } from "../lib/producao/ficha-pdf";
+import { documentoDaFicha, logoParaOPdf } from "../lib/producao/ficha-pdf";
 import { montarPdf } from "../lib/producao/pdf-texto";
 
 const espaco = { nome: "Teatro Municipal", tipo: "Teatro", uf: "SP", endereco: "Rua das Flores, 100", capacidade: 450 };
@@ -37,4 +37,17 @@ test("os equipamentos em uso entram no PDF, com a quantidade e a sala", () => {
   const documento = documentoDaFicha(espaco, null, [], [{ nome: "Refletor LED", quantidade: 24, sala: "Sala Principal" }, { nome: "Mesa de som", quantidade: 1, sala: null }]);
   assert.deepEqual(documento.secoes.at(-1), { titulo: "Equipamentos da casa (em uso)", linhas: ["24 × Refletor LED (Sala Principal)", "Mesa de som"] });
   assert.equal(documentoDaFicha(espaco, null, []).secoes.length, 1, "sem equipamentos não há seção");
+});
+
+test("o logo da ficha entra no documento e o PDF sai mesmo com imagem quebrada", async () => {
+  assert.equal(documentoDaFicha(espaco, { logo_url: "https://casa.com.br/logo.png" }, []).logoUrl, "https://casa.com.br/logo.png");
+  assert.equal(documentoDaFicha(espaco, null, []).logoUrl, undefined);
+  const bytes = await montarPdf(documentoDaFicha(espaco, null, []), { bytes: new Uint8Array([1, 2, 3]), tipo: "png" });
+  assert.ok(bytes.byteLength > 500, "o PDF sai sem o logo quando a imagem não presta");
+});
+
+test("o logo só é baixado quando o endereço é de PNG ou JPEG", async () => {
+  assert.equal(await logoParaOPdf(null), undefined);
+  assert.equal(await logoParaOPdf("https://casa.com.br/logo.webp"), undefined);
+  assert.equal(await logoParaOPdf("https://casa.com.br/sem-extensao"), undefined);
 });

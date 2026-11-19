@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Dropdown } from "@/components/ui/Dropdown";
-import { BOTAO_PEQUENO, Erro } from "@/components/producao/estilosDoBordero";
+import { BOTAO_PEQUENO, Erro } from "@/components/producao/estilos";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { ROTULO_DO_TIPO_DE_DOCUMENTO, situacaoDaValidade, textoDaValidade, type DocumentoDaPasta } from "@/lib/producao/documentos";

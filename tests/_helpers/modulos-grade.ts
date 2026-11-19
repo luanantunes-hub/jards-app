@@ -12,11 +12,13 @@ export const COLUNAS_ATIVOS: readonly unknown[] = [
   ["captacao", "prestacao"],
   ["captacao", "producao"],
   ["captacao", "prestacao", "producao"],
+  ["captacao", "ticketeria"],
+  ["captacao", "prestacao", "producao", "ticketeria"],
   ["prestacao"],
 ];
 
 /** O que `organizations.modulos_leitura` pode trazer (contrato que acabou, só para consultar). */
-export const COLUNAS_LEITURA: readonly unknown[] = [null, [], ["prestacao"], ["producao"]];
+export const COLUNAS_LEITURA: readonly unknown[] = [null, [], ["prestacao"], ["producao"], ["ticketeria"]];
 
 /** O que `organization_members.modulos_acesso` pode trazer. */
 export const COLUNAS_ACESSO: readonly unknown[] = [
@@ -29,6 +31,10 @@ export const COLUNAS_ACESSO: readonly unknown[] = [
   ["captacao", "producao"],
   ["prestacao", "producao"],
   ["captacao", "prestacao", "producao"],
+  ["ticketeria"],
+  ["captacao", "ticketeria"],
+  ["producao", "ticketeria"],
+  ["captacao", "prestacao", "producao", "ticketeria"],
 ];
 
 /** Uma linha de `organization_members` com a organização embutida, como o PostgREST devolve. */
@@ -37,7 +43,7 @@ export type LinhaDeVinculo = {
   organizations: { modulos_ativos: unknown; modulos_leitura: unknown } | null;
 };
 
-/** Todos os vínculos possíveis com uma organização (252). */
+/** Todos os vínculos possíveis com uma organização (9 × 5 × 13 = 585). */
 export function linhasDeVinculo(): LinhaDeVinculo[] {
   const linhas: LinhaDeVinculo[] = [];
   for (const ativos of COLUNAS_ATIVOS) {

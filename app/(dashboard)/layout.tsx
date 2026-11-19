@@ -6,6 +6,7 @@ import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { PastDueBanner } from "@/components/PastDueBanner";
 import { EmailAutoSync } from "@/components/email/EmailAutoSync";
 import {
+  Accessibility,
   BarChart2,
   CalendarCheck,
   CalendarClock,
@@ -76,6 +77,7 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
   { id: "captacao",  label: "Captação",  descricao: "Patrocinadores, editais e negociações",       icone: HandCoins      },
   { id: "prestacao", label: "Prestação", descricao: "Prestação de contas e relatórios do projeto", icone: ClipboardCheck },
   { id: "producao",  label: "Produção",  descricao: "Agenda, equipe, logística e o dia",            icone: Drama          },
+  { id: "ticketeria", label: "Ticketeria", descricao: "Ingressos, vendas e a porta do evento",    icone: Ticket         },
 ];
 
 // Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
@@ -150,15 +152,13 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
       items: [
         { label: "Pauta", href: "/producoes/pauta", icon: CalendarCheck },
         { label: "Programação", href: "/producoes/programacao", icon: CalendarClock },
-        { label: "Sites", href: "/producoes/sites", icon: Globe },
       ],
     },
     {
-      section: "Dia da sessão",
-      icone: Ticket,
+      section: "Público",
+      icone: UsersRound,
       items: [
-        // Plateia, convidados, acessibilidade, porta e borderô são abas de uma tela só (AbasDaSessao); o menu abre a primeira.
-        { label: "Sessão", href: "/producoes/plateia", icon: Ticket },
+        { label: "Acessibilidade", href: "/producoes/acessibilidade", icon: Accessibility },
         { label: "Visitação", href: "/producoes/visitacao", icon: School },
         { label: "Formação", href: "/producoes/formacao", icon: GraduationCap },
         { label: "Expografia", href: "/producoes/expografia", icon: Frame },
@@ -181,6 +181,18 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
       items: [
         { label: "Mapa da turnê", href: "/producoes/mapa", icon: MapPin },
         { label: "Linha do tempo", href: "/producoes/linha-do-tempo", icon: History },
+      ],
+    },
+  ],
+  // Escondida dos clientes (MODULOS_EM_CONSTRUCAO em lib/modulos.ts): só o super admin e quem já tem o módulo a veem.
+  // A rota é /ingressos: jards.com.br/ticketeria é a página pública do produto.
+  ticketeria: [
+    {
+      section: "Ticketeria",
+      items: [
+        { label: "Eventos", href: "/ingressos", icon: Ticket },
+        { label: "Locais", href: "/ingressos/locais", icon: MapPin },
+        { label: "Site", href: "/ingressos/site", icon: Globe },
       ],
     },
   ],
@@ -520,7 +532,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       aria-label={!isExpanded ? label : undefined}
                       aria-current={active ? "page" : undefined}
                       className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                        active ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                        active ? "bg-[#1C0E33] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
                       }`}
                       style={{
                         gap: isExpanded ? 10 : 0,
@@ -719,7 +731,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 title={!isExpanded ? "Meu workspace" : undefined}
                 aria-current={correspondeRota(path, "/workspace-captador") ? "page" : undefined}
                 className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                  correspondeRota(path, "/workspace-captador") ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                  correspondeRota(path, "/workspace-captador") ? "bg-[#1C0E33] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
                 }`}
                 style={{
                   gap: isExpanded ? 10 : 0,
@@ -752,7 +764,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           title={!isExpanded ? grupo.section : undefined}
                           aria-label={!isExpanded ? grupo.section : undefined}
                           className={`flex w-full items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                            comAtivo && !isExpanded ? "bg-[#1a1a1a] text-white" : comAtivo ? "text-[#282525] hover:bg-black/[0.05]" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                            comAtivo && !isExpanded ? "bg-[#1C0E33] text-white" : comAtivo ? "text-[#282525] hover:bg-black/[0.05]" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
                           }`}
                           style={{ gap: isExpanded ? 10 : 0, padding: isExpanded ? "8px 10px" : "8px 0", justifyContent: isExpanded ? "flex-start" : "center" }}
                         >
@@ -773,7 +785,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                       prefetch={false}
                                       aria-current={ativo ? "page" : undefined}
                                       className={`block truncate rounded py-2 pl-[2.25rem] pr-2.5 text-[0.8125rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                                        ativo ? "bg-[#1a1a1a] text-white" : "text-black/55 hover:text-[#282525] hover:bg-black/[0.05]"
+                                        ativo ? "bg-[#1C0E33] text-white" : "text-black/55 hover:text-[#282525] hover:bg-black/[0.05]"
                                       }`}
                                     >
                                       {label}

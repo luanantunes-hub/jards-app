@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FolderOpen, Trash2, List, Columns3, CalendarDays, UserRound, UserX, Calendar, TrendingUp, Zap, FileText, Check } from "lucide-react";
+import { Plus, FolderOpen, Trash2, List, LayoutGrid, UserX, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -13,12 +13,13 @@ import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/Entity
 import { SegmentedControl, FilterButton } from "@/components/ui/FilterControls";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { MARCA_CAPTACAO } from "@/components/ui/IndicadoresFinanceiros";
+import { ProjetosCartoes, FASES_PROJETO, fmtAtualizacao } from "@/components/projetos/ProjetosCartoes";
 
-type ViewMode = "lista" | "portfolio";
-const VIEW_MODES = ["lista", "portfolio"] as const;
+type ViewMode = "lista" | "cartoes";
+const VIEW_MODES = ["lista", "cartoes"] as const;
 const VIEW_OPTIONS = [
   { value: "lista", label: "Lista", icon: List },
-  { value: "portfolio", label: "Portfólio", icon: Columns3 },
+  { value: "cartoes", label: "Cartões", icon: LayoutGrid },
 ] as const;
 
 const PROJETOS_COLUMNS = [
@@ -58,14 +59,6 @@ function fmtValor(v: number | null): string {
   return v ? formatarValorCurto(v) : "—";
 }
 
-function fmtAtualizacao(value: string): string {
-  const days = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 86400000));
-  if (days === 0) return "Hoje";
-  if (days === 1) return "Ontem";
-  if (days < 30) return `${days} dias atrás`;
-  return new Date(value).toLocaleDateString("pt-BR");
-}
-
 function FinancialProgress({ captured, target }: { captured: number; target: number | null }) {
   if (!target || target <= 0) return <span className="text-black/20 text-xs">—</span>;
 
@@ -93,72 +86,6 @@ function FinancialProgress({ captured, target }: { captured: number; target: num
           className={`h-full rounded transition-[width] duration-200 ease-out motion-reduce:transition-none ${MARCA_CAPTACAO.confirmado}`}
           style={{ width: `${progress}%` }}
         />
-      </div>
-    </div>
-  );
-}
-
-const PORTFOLIO_PHASES = [
-  { key: "planejamento", label: "Planejamento", color: "#6B7280", Icon: Calendar },
-  { key: "captacao", label: "Captação", color: "#7259B5", Icon: TrendingUp },
-  { key: "execucao", label: "Execução", color: "#1A8B7A", Icon: Zap },
-  { key: "prestacao", label: "Prestação", color: "#B07A14", Icon: FileText },
-  { key: "concluido", label: "Concluído", color: "#2E8932", Icon: Check },
-] as const;
-
-function ProjectsPortfolioView({ projetos, onOpen }: { projetos: ProjetoRow[]; onOpen: (id: string) => void }) {
-  return (
-    <div className="overflow-x-auto pb-2">
-      <div className="grid min-w-[73.75rem] grid-cols-5 gap-3">
-        {PORTFOLIO_PHASES.map(phase => {
-          const items = projetos.filter(project => project.fase_codigo === phase.key);
-          const value = items.reduce((sum, project) => sum + Number(project.valor_alvo ?? 0), 0);
-          return (
-            <section key={phase.key} className="flex min-h-[32.5rem] flex-col rounded border border-black/[.08] bg-[#F7F7F5]">
-              <header className="border-b border-black/[.07] px-3.5 py-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <phase.Icon size={14} strokeWidth={2.2} className="shrink-0" style={{ color: phase.color }} aria-hidden="true" />
-                    <h2 className="truncate text-[0.75rem] font-semibold text-black/75">{phase.label}</h2>
-                  </div>
-                  <span className="text-[0.625rem] font-semibold tabular-nums text-black/30">{items.length}</span>
-                </div>
-                <p className="mt-1 text-[0.625rem] tabular-nums text-black/35" title={value > 0 ? formatarValorCompleto(value) : undefined}>{value > 0 ? formatarValorCurto(value) : "Sem objetivo financeiro"}</p>
-              </header>
-              <div className="space-y-2 p-2.5">
-                {items.length === 0 ? (
-                  <div className="rounded border border-dashed border-black/10 px-3 py-8 text-center text-[0.6875rem] text-black/25">Nenhum projeto nesta fase</div>
-                ) : items.map(project => {
-                  const progress = project.valor_alvo ? Math.min(100, Math.round((project.valor_captado / project.valor_alvo) * 100)) : 0;
-                  return (
-                    <button
-                      key={project.id}
-                      type="button"
-                      onClick={() => onOpen(project.id)}
-                      className="w-full rounded border border-black/[.08] bg-white p-3 text-left transition hover:border-black/20 hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <ProjectIdentity nome={project.nome} tipo={project.identidade_tipo} valor={project.identidade_valor} logoUrl={project.identidade_logo_url} cor={project.identidade_cor} size="sm" />
-                        <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 text-[0.75rem] font-semibold leading-[1.35] text-[#282525]">{project.nome}</p>
-                          <p className="mt-1 truncate text-[0.625rem] text-black/35">{project.proponente_nome ?? "Sem proponente"}</p>
-                        </div>
-                      </div>
-                      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-black/[.06] pt-2.5">
-                        <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Captado</p><p className={`mt-0.5 truncate text-[0.6875rem] font-semibold tabular-nums ${project.valor_captado ? "text-[#282525]" : "text-black/30"}`} title={project.valor_captado ? formatarValorCompleto(project.valor_captado) : undefined}>{fmtValor(project.valor_captado)}</p></div>
-                        <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Progresso</p><p className={`mt-0.5 text-[0.6875rem] font-semibold tabular-nums ${progress ? "text-[#282525]" : "text-black/30"}`}>{progress}%</p></div>
-                      </div>
-                      <div className="mt-2.5 space-y-1.5 text-[0.625rem] text-black/40">
-                        <div className="flex items-center gap-1.5"><CalendarDays size={11}/><span>{project.proximo_prazo ? new Date(`${project.proximo_prazo}T00:00:00`).toLocaleDateString("pt-BR") : "Sem prazo próximo"}</span></div>
-                        <div className="flex items-center gap-1.5"><UserRound size={11}/><span className="truncate">{project.ponto_focal ?? "Sem ponto focal"}</span></div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
       </div>
     </div>
   );
@@ -276,7 +203,7 @@ export default function ProjetosPage() {
         />
       )}
 
-      <ListPageHeader eyebrow="Portfólio" title="Projetos" summary={!loading&&<><ListSummary strong={filteredProjetos.length}>projetos</ListSummary>{totalValor>0&&<ListSummary strong={<span title={formatarValorCompleto(totalValor)}>{formatarValorCurto(totalValor)}</span>}>em objetivos</ListSummary>}</>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo projeto</PrimaryListAction></>}/>
+      <ListPageHeader secao="projetos" eyebrow="Portfólio" title="Projetos" summary={!loading&&<><ListSummary strong={filteredProjetos.length}>projetos</ListSummary>{totalValor>0&&<ListSummary strong={<span title={formatarValorCompleto(totalValor)}>{formatarValorCurto(totalValor)}</span>}>em objetivos</ListSummary>}</>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo projeto</PrimaryListAction></>}/>
 
       {projetos.length > 0 && (
         <ListToolbar search={<ListSearch value={search} onChange={setSearch} placeholder="Buscar projeto ou proponente"/>}>
@@ -286,7 +213,7 @@ export default function ProjetosPage() {
             ariaLabel="Filtrar projetos por fase"
             options={[
               { value: "todas", label: "Todas" },
-              ...PORTFOLIO_PHASES.map(phase => ({ value: phase.key, label: phase.label })),
+              ...FASES_PROJETO.map(phase => ({ value: phase.key, label: phase.label })),
             ] as const}
           />
           {archivedCount > 0 && (
@@ -327,8 +254,13 @@ export default function ProjetosPage() {
               Limpar filtros
             </button>
           </div>
-        ) : viewMode === "portfolio" ? (
-          <ProjectsPortfolioView projetos={filteredProjetos} onOpen={id => router.push(`/projetos/${id}`)} />
+        ) : viewMode === "cartoes" ? (
+          <ProjetosCartoes
+            projetos={filteredProjetos}
+            carregando={loading}
+            onOpen={id => router.push(`/projetos/${id}`)}
+            onDelete={handleDelete}
+          />
         ) : (
           <ListTableSurface className="rounded-r-none border-r-0">
               <ManagedTable storageKey="projetos" definitions={PROJETOS_COLUMNS} className="w-full text-sm">
@@ -392,14 +324,7 @@ export default function ProjetosPage() {
                         {/* Fase salva no banco */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           {(() => {
-                            const FASE_META: Record<string, { label: string; color: string; Icon: any }> = {
-                              planejamento: { label: "Planejamento", color: "rgba(13,13,13,.40)", Icon: Calendar },
-                              captacao:     { label: "Captação",     color: "#7259B5", Icon: TrendingUp },
-                              execucao:     { label: "Execução",     color: "#2D72B0", Icon: Zap },
-                              prestacao:    { label: "Prestação",    color: "#B07A14", Icon: FileText },
-                              concluido:    { label: "Concluído",    color: "#2E8932", Icon: Check },
-                            };
-                            const fm = FASE_META[p.fase_codigo] ?? FASE_META.planejamento;
+                            const fm = FASES_PROJETO.find(fase => fase.key === p.fase_codigo) ?? FASES_PROJETO[0];
                             return (
                               <span className="inline-flex items-center gap-1 rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={{ borderColor: fm.color + "47", color: fm.color }}>
                                 <fm.Icon size={10} />{fm.label}

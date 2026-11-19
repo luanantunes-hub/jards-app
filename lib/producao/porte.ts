@@ -6,9 +6,9 @@
 // Regras:
 // - o essencial (o dia e a equipe) aparece sempre;
 // - os sinais da data valem para qualquer tipo: quem viaja vê viagem e
-//   hospedagem, quem tem cota vê convidados, quem tem outra parte vê o acerto;
+//   hospedagem, quem tem outra parte vê o acerto;
 // - o catálogo do tipo acrescenta os painéis próprios dele (palco, obras,
-//   visitação, público, borderô); ele sugere, não limita;
+//   visitação, público); ele sugere, não limita;
 // - painel com conteúdo, ou ligado à mão, nunca some, nem quando o tipo muda;
 // - o dinheiro (e a receita do borderô) só aparece com permissão.
 
@@ -18,8 +18,6 @@ export type ContextoDaData = {
   tipo: TipoProducao;
   /** Alguém da equipe se desloca para esta data. */
   alguemViaja: boolean;
-  /** A data tem cota de convidados ou cortesias. */
-  temCotaDeConvidados: boolean;
   /** A pessoa que olha pode ver cachês e o dinheiro da produção. */
   podeVerDinheiro: boolean;
   /**
@@ -35,16 +33,15 @@ export type ContextoDaData = {
 
 /** Ordem fixa dos painéis na página da data. */
 export const ORDEM_DOS_PAINEIS: readonly PainelId[] = [
-  "dia", "equipe", "viagem", "hospedagem", "acerto", "palco", "obras", "visitacao", "convidados", "publico", "dinheiro", "bordero",
+  "dia", "equipe", "viagem", "hospedagem", "acerto", "palco", "obras", "visitacao", "publico", "dinheiro",
 ];
 
-const DE_DINHEIRO: readonly PainelId[] = ["dinheiro", "bordero"];
+const DE_DINHEIRO: readonly PainelId[] = ["dinheiro"];
 
 /** Painéis da data, na ordem fixa. */
 export function paineisDaData(contexto: ContextoDaData): PainelId[] {
   const ligados = new Set<PainelId>(["dia", "equipe"]);
   if (contexto.alguemViaja) { ligados.add("viagem"); ligados.add("hospedagem"); }
-  if (contexto.temCotaDeConvidados) ligados.add("convidados");
   if (contexto.temOutraParte) ligados.add("acerto");
   if (contexto.podeVerDinheiro) ligados.add("dinheiro");
   for (const painel of tipoDeProducao(contexto.tipo).paineis) ligados.add(painel);

@@ -17,15 +17,16 @@ Princípios:
 
 | Token | Cor | Uso |
 |---|---|---|
-| Tinta (grafite quente) | `#282525` | texto e ações principais |
+| Tinta (grafite quente) | `#282525` | texto; preenchimento escuro só fora do app (landing, páginas públicas, autenticação) |
 | Roxo Jards | `#684DB0` / `#7259B5` | navegação, seleção e identidade |
+| Roxo noite | `#1C0E33` | hero da landing e todo preenchimento escuro dentro do app: botões, item ativo, dicas, selos (hover `#2D1A53`) |
 | Coral Jards | `#D94A4A` | marca, atenção e prioridade alta |
 | Verde | `#2E8932` | salvar, confirmar e sucesso |
 | Azul | `#2D72B0` | informação e estados auxiliares |
 | Âmbar | `#B07A14` | atenção moderada e prioridade média |
 | Teal | `#1A8B7A` | relacionamento e sinais positivos |
 
-- o preto do Jards é o grafite quente `#282525`, na landing, nas páginas públicas e no app; não usar `#000` nem `#0D0D0D` sólidos. Cinzas e bordas continuam em preto com baixa opacidade;
+- o texto do Jards é o grafite quente `#282525`. Dentro do app (a parte logada, incluindo o admin), todo preenchimento escuro é o roxo noite `#1C0E33`, com hover `#2D1A53`: botões, item ativo do menu, abas e chips selecionados, interruptor ligado, dicas, selos de contagem e avatares. Na landing, nas páginas públicas, na autenticação e na tela de palco, o preenchimento escuro segue em grafite. Gráficos ficam em grafite (roxo não é cor de dado). Não usar `#000`, `#0D0D0D`, `#171717` nem `#1a1a1a` sólidos. Cinzas e bordas continuam em preto com baixa opacidade;
 - fundos são brancos ou neutros levemente tingidos;
 - **nunca tom sobre tom**: texto ou ícone colorido não fica sobre fundo claro da mesma cor (roxo sobre lilás, verde sobre verde-claro). A cor fica no texto, no ícone ou numa borda fina, sobre branco ou cinza neutro (`bg-black/[.04]`); quando precisa de peso, usa preenchimento sólido com texto branco;
 - passar o mouse, item selecionado, dia de hoje e linha arrastada usam cinza neutro, nunca a cor da marca diluída;
@@ -69,11 +70,20 @@ Princípios:
 
 ### Ação principal de página
 
-Use preto para criar ou iniciar o objeto principal da página:
+Criar ou iniciar o objeto principal da página ("Novo projeto", "Nova data") usa `PrimaryListAction`, de `components/list/ListPagePrimitives.tsx`: roxo noite `#1C0E33`, o mesmo do hero da landing, com texto branco e `h-9`.
+
+- volume discreto: degradê de cima para baixo em torno do roxo noite (`#28164B` → `#1C0E33` → `#160A2A`), uma linha de luz de 1px no topo, uma de sombra na base e uma sombra curta tingida de roxo noite, que descola o botão da página. Sem borda;
+- o brilho violeta não fica no botão. Quando o clique abre uma folha que desce do topo, uma luz passa uma vez pela borda de cima dela, da esquerda para a direita, e some: começa aos 160ms, junto com o fim da descida, e usa a mesma curva da folha. É uma faixa fixa no topo da tela, na largura da folha, montada pelo `PrimaryListAction` (`.brilho-da-folha` em `app/globals.css`, escolha da folha em `lib/brilho-da-folha.ts`). Folha que sobe de baixo, modal no meio da tela ou clique que não abre folha: sem brilho. Não aparece com `prefers-reduced-motion`;
+- o botão fica parado: sem animação ao carregar a página e sem movimento no hover, que só clareia um tom, na hora. Ao pressionar, afunda (sombra por dentro);
+- sem contorno em volta. O foco do teclado clareia como o hover e abre um brilho embaixo do botão; o contorno só aparece no modo de alto contraste do sistema;
+- uma ação principal por contexto. Quando há duas lado a lado, a principal é roxo noite e a outra é `SecondaryListAction`: botão branco com borda leve e hover cinza;
+- os outros botões escuros do app (modais, assistentes, páginas de detalhe) são roxo noite liso:
 
 ```tsx
-className="rounded bg-[#282525] px-4 py-2.5 text-white hover:bg-[#3A3535]"
+className="rounded bg-[#1C0E33] px-4 py-2.5 text-white hover:bg-[#2D1A53]"
 ```
+
+- na autenticação e nos links públicos, a ação principal segue em tinta: `bg-[#282525]` com hover `bg-[#3A3535]`.
 
 ### Salvar ou confirmar
 
@@ -147,7 +157,7 @@ Exceções:
 - status concluído em contexto temporal pode aparecer como label em caixa alta sem borda;
 - status editável usa `StatusDropdown` ou `StatusBadge` interativo;
 - prioridade alta usa ícone e texto vermelhos;
-- controles de identidade visual usam quadrados totalmente preenchidos pela cor, não círculos internos.
+- a identidade visual (ícone de projeto, proponente e captador) é escolhida no `IconePicker`, sem bordas: ícones em cinza; clicar num ícone abre, grudado nele, o mesmo ícone nas cinco cores, e a escolha é feita ali.
 
 ## Modais, sheets e menus
 
@@ -186,7 +196,10 @@ Use os primitivos de `components/ui/DetailPagePrimitives.tsx` para manter:
 ## Identidade de entidades
 
 - empresas usam `CompanyLogo` com fallback para inicial;
-- projetos usam `ProjectIdentity`: em cartões e cabeçalhos, quadrado com gradiente claro na cor e volume, símbolo em branco; em linhas de tabela, só o ícone na cor, sem fundo (`semFundo`);
+- projetos, proponentes e captadores usam `ProjectIdentity`: o ícone aparece solto, só o traço na cor, como no Notion — sem quadrado, degradê, volume ou sombra. Em linhas de tabela, `semFundo` só deixa o traço um pouco menor;
+- cores de identidade: cinco, alegres e que conversam com o roxo do Jards — lavanda `#7C5CD6`, coral `#E8665A`, mel `#DFA024`, folha `#3DA86A` e céu `#3B8BE0` (`PROJECT_ICON_COLORS`). Cores gravadas da paleta antiga são mostradas pela mais parecida (`corDaIdentidade`), sem mudar o banco;
+- as chaves dos ícones ficam gravadas no banco: nunca renomear, só acrescentar;
+- exceção ao "nunca tom sobre tom": nas pastas de projeto, o verso leva o tom claro da cor do ícone e a folha da frente fica quase branca, com o ícone na cor e o texto em tinta
 - projetos, proponentes e captadores podem escolher ícone, logo e cor;
 - imagens precisam de texto alternativo útil;
 - cores não podem ser o único meio de transmitir estado.
@@ -196,6 +209,7 @@ Use os primitivos de `components/ui/DetailPagePrimitives.tsx` para manter:
 - transições comuns: 160–240ms;
 - animar `transform` e `opacity`, evitando propriedades de layout;
 - respeitar `prefers-reduced-motion`;
+- exceção deliberada: a folha aberta pelo botão de criar ganha uma luz que passa uma vez pela borda de cima e some, para ligar o clique à folha; não aparece com `prefers-reduced-motion`;
 - movimento deve indicar conexão, continuidade ou mudança de estado;
 - foco por teclado é obrigatório;
 - ícones sem label visível precisam de `aria-label` ou `title`;

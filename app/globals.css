@@ -40,6 +40,93 @@
   .veu { transition: none; }
 }
 
+/* Ação principal (botões de criar): o roxo noite do hero da landing (#1C0E33), parado.
+   Volume discreto: degradê de cima para baixo em torno do roxo noite, uma linha de luz de 1px no
+   topo, uma de sombra na base e uma sombra curta tingida de roxo noite, que descola o botão da
+   página. Sem movimento no hover: só um tom mais claro, na hora; ao pressionar, afunda. O brilho
+   violeta não fica no botão: acontece na folha que ele abre (`.brilho-da-folha`, logo abaixo).
+   Sem contorno em volta: o foco do teclado clareia como o hover e abre um brilho embaixo do
+   botão; o contorno só aparece no modo de alto contraste do sistema. */
+.acao-principal {
+  background-color: #1C0E33;
+  background-image: linear-gradient(180deg, #28164B 0%, #1C0E33 55%, #160A2A 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .14),
+    inset 0 -1px 0 rgba(0, 0, 0, .3),
+    0 1px 2px rgba(28, 14, 51, .28),
+    0 4px 12px -4px rgba(28, 14, 51, .45);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .3);
+}
+.acao-principal:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .14),
+    inset 0 -1px 0 rgba(0, 0, 0, .3),
+    inset 0 0 0 999px rgba(142, 99, 245, .1),
+    0 1px 2px rgba(28, 14, 51, .28),
+    0 4px 12px -4px rgba(28, 14, 51, .45);
+}
+.acao-principal:active {
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, .4),
+    inset 0 0 0 999px rgba(142, 99, 245, .06),
+    0 1px 1px rgba(28, 14, 51, .25);
+}
+.acao-principal:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .18),
+    inset 0 -1px 0 rgba(0, 0, 0, .3),
+    inset 0 0 0 999px rgba(142, 99, 245, .12),
+    0 6px 20px -4px rgba(142, 99, 245, .65);
+}
+.acao-principal:disabled { box-shadow: none; text-shadow: none; }
+@media (forced-colors: active) {
+  .acao-principal:focus-visible { outline-color: Highlight; }
+}
+
+/* Brilho da folha de criar: quando a ação principal abre uma folha que desce do topo, uma luz
+   violeta passa uma vez pela borda de cima dela, da esquerda para a direita, e some. É uma faixa
+   fixa no topo da tela, na largura da folha, montada pelo PrimaryListAction no clique
+   (lib/brilho-da-folha.ts). Começa aos 160ms, quando a folha termina de descer, e usa a mesma
+   curva dela. Só `transform` e `opacity`; não aparece com prefers-reduced-motion. */
+.brilho-da-folha {
+  position: fixed;
+  top: 0;
+  z-index: 60;
+  height: 24px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.brilho-da-folha::before,
+.brilho-da-folha::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 40%;
+  opacity: 0;
+  animation: brilho-da-folha-passa 900ms cubic-bezier(.32, .72, 0, 1) 160ms both;
+}
+.brilho-da-folha::before {
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(142, 99, 245, 0), rgba(142, 99, 245, .95), rgba(142, 99, 245, 0));
+}
+.brilho-da-folha::after {
+  top: -14px;
+  height: 32px;
+  background: radial-gradient(closest-side, rgba(142, 99, 245, .32), rgba(142, 99, 245, 0));
+}
+@keyframes brilho-da-folha-passa {
+  0% { opacity: 0; transform: translateX(-100%); }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(250%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brilho-da-folha { display: none; }
+}
+
 :root {
   --cream:          #FFFFFF;
   --ink:            #282525;
@@ -553,3 +640,9 @@ table thead th > span > span {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(13,13,13,.18); border-radius: 3px; }
+
+/* Popups pequenos (cores do ícone): surgem do ponto de onde foram abertos. */
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(-2px) scale(.97); }
+  to { opacity: 1; transform: none; }
+}

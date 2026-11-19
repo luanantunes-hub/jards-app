@@ -9,11 +9,11 @@ export type AreaDaLinhaDoTempo = { id: string; nome: string; entidades: readonly
  */
 export const AREAS_DA_LINHA_DO_TEMPO: readonly AreaDaLinhaDoTempo[] = [
   { id: "agenda", nome: "Agenda e temporadas", entidades: ["producao_obras", "producao_temporadas", "producao_datas", "producao_blocos", "producao_tarefas", "producao_notas", "producao_modelos_dia", "producao_cartoes_dia"] },
-  { id: "espacos", nome: "Espaços e técnica", entidades: ["producao_espacos", "producao_salas", "producao_pautas", "producao_sessoes", "producao_itens", "producao_plantas", "producao_riders", "producao_equipamentos", "producao_licencas", "producao_setores", "producao_setor_cotas", "producao_expografia"] },
+  { id: "espacos", nome: "Espaços e técnica", entidades: ["producao_espacos", "producao_salas", "producao_pautas", "producao_sessoes", "producao_itens", "producao_plantas", "producao_riders", "producao_equipamentos", "producao_licencas", "producao_expografia"] },
   { id: "equipe", nome: "Equipe", entidades: ["producao_pessoas", "producao_vinculos", "producao_escalas", "producao_turnos", "producao_funcoes", "producao_voluntarios"] },
   { id: "logistica", nome: "Logística", entidades: ["producao_veiculos", "producao_deslocamentos", "producao_hospedagens", "producao_convites"] },
-  { id: "publico", nome: "Convidados e público", entidades: ["producao_convidados", "producao_credencial_tipos", "producao_acessibilidade", "producao_visitas_horarios", "producao_visitas_agendamentos", "producao_borderos", "producao_turmas", "producao_turma_aulas", "producao_matriculas"] },
-  { id: "acertos", nome: "Acertos, sites e arquivos", entidades: ["producao_acertos", "producao_modelos_acerto", "producao_sites", "producao_site_paginas", "producao_arquivos", "producao_documentos", "producao_ocorrencias"] },
+  { id: "publico", nome: "Público", entidades: ["producao_acessibilidade", "producao_visitas_horarios", "producao_visitas_agendamentos", "producao_turmas", "producao_turma_aulas", "producao_matriculas"] },
+  { id: "acertos", nome: "Acertos e arquivos", entidades: ["producao_acertos", "producao_modelos_acerto", "producao_arquivos", "producao_documentos", "producao_ocorrencias", "producao_comunicacao"] },
 ];
 
 /** As entidades de uma área; área vazia ou desconhecida = todas (sem filtro). */
@@ -71,5 +71,15 @@ export function pessoasDoFiltro(membros: readonly MembroDaLinhaDoTempo[]): { id:
   return membros
     .filter((membro): membro is { user_id: string; full_name: string } => Boolean(membro.full_name?.trim()))
     .map(membro => ({ id: membro.user_id, nome: membro.full_name.trim() }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
+
+export type PaiDaLinhaDoTempo = { id: string; nome: string };
+
+/** Os espaços ou as temporadas do filtro: só os que têm nome, em ordem alfabética. */
+export function paisDoFiltro(registros: readonly { id: string; nome: string | null }[]): PaiDaLinhaDoTempo[] {
+  return registros
+    .filter((registro): registro is PaiDaLinhaDoTempo => Boolean(registro.nome?.trim()))
+    .map(registro => ({ id: registro.id, nome: registro.nome.trim() }))
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 }

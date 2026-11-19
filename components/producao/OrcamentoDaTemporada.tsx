@@ -7,12 +7,12 @@ import { Copy, Download, Ellipsis, Plus, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
-import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { CATEGORIAS_DO_ORCAMENTO, type CategoriaDoOrcamento, type SituacaoDoOrcamento } from "@/lib/producao/estados";
-import { formatarReais, lerValorEmReais } from "@/lib/producao/bordero";
+import { formatarReais, lerValorEmReais } from "@/lib/producao/dinheiro";
 import {
   calcularOrcamento, compararCenarios, lerLinhaDoOrcamento, mensagemDoErroDeOrcamento, planilhaDoOrcamento, ROTULO_DA_CATEGORIA_DO_ORCAMENTO, ROTULO_DA_SITUACAO_DO_ORCAMENTO, textoDoOrcamento,
   type LinhaDoOrcamento,
@@ -33,7 +33,7 @@ const reaisOuTraco = (centavos: number | null) => (centavos === null ? "—" : s
 /** Dentro da tabela os valores vão sem o "R$": a legenda acima avisa que está tudo em reais, e as colunas cabem sem rolagem lateral. */
 const semMoeda = (texto: string) => texto.replace(/^R\$[\s\u00a0]*/, "");
 const ITEM_DO_MENU = "flex w-full items-center gap-2 rounded px-2.5 py-2 text-left text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] disabled:opacity-50";
-const BOTAO_PRINCIPAL = "flex h-9 items-center gap-1.5 whitespace-nowrap rounded bg-[#282525] px-3.5 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
+const BOTAO_PRINCIPAL = "flex h-9 items-center gap-1.5 whitespace-nowrap rounded bg-[#1C0E33] px-3.5 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
 
 function NovoOrcamentoSheet({ organizationId, temporadaId, nomeSugerido, onClose, onCriou }: { organizationId: string; temporadaId: string; nomeSugerido: string; onClose: () => void; onCriou: (id: string) => void }) {
   const [nome, setNome] = useState(nomeSugerido);

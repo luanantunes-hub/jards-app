@@ -13,7 +13,7 @@ export function SubAbas({ ariaLabel, itens, ativo, onChange }: { ariaLabel: stri
             aria-current={marcado ? "page" : undefined}
             onClick={() => onChange(item.id)}
             className={`h-9 shrink-0 rounded border px-3.5 text-[0.75rem] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] ${
-              marcado ? "border-[#282525] bg-[#282525] text-white" : "border-black/12 bg-white text-black/60 hover:bg-black/[.04]"
+              marcado ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/12 bg-white text-black/60 hover:bg-black/[.04]"
             }`}
           >
             {item.rotulo}

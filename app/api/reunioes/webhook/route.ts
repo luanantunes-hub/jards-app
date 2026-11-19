@@ -5,7 +5,7 @@
 // não tem nenhuma. Aviso de reunião que não é do Jards (a conta do Vexa pode ter outras) responde 200 e é ignorado, para o Vexa não ficar reenviando.
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { buscarTranscricao } from "@/lib/reunioes/vexa";
+import { concluirReuniao } from "@/lib/reunioes/concluir";
 import { assinaturaValida, decidirAcao, lerAviso, type SituacaoDaReuniao } from "@/lib/reunioes/vexa-webhook";
 import { registrarUsoDaReuniao } from "@/lib/reunioes/uso";
 
@@ -53,19 +53,8 @@ export async function POST(req: NextRequest) {
   }
 
   // concluir: busca a transcrição no Vexa e grava (uma vez só)
-  await admin.from("reunioes").update({ status: "processando", ...(iniciadaEm && !reuniao.iniciada_em ? { iniciada_em: iniciadaEm } : {}) }).eq("id", reuniao.id);
-  try {
-    const trechos = await buscarTranscricao(aviso.vexaId);
-    const { count } = await admin.from("reuniao_transcricoes").select("id", { count: "exact", head: true }).eq("reuniao_id", reuniao.id);
-    if ((count ?? 0) === 0 && trechos.length > 0) {
-      await admin.from("reuniao_transcricoes").insert(trechos.map(t => ({ reuniao_id: reuniao.id, falante: t.falante, texto: t.texto, inicio_ms: t.inicio_ms, fim_ms: t.fim_ms, confianca: t.confianca })));
-    }
-    await admin.from("reunioes").update({ status: "concluida", finalizada_em: fim.toISOString() }).eq("id", reuniao.id);
-    await registrarUsoDaReuniao(admin, reuniao.id, iniciadaEm, fim);
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    // Falha ao buscar a transcrição: a reunião fica "processando" e a resposta é 502, para o Vexa reenviar o aviso (ele tenta de novo depois de 1, 5 e 30 minutos).
-    await admin.from("reunioes").update({ erro: error instanceof Error ? error.message : "Não foi possível buscar a transcrição" }).eq("id", reuniao.id);
-    return NextResponse.json({ error: "Não foi possível buscar a transcrição agora" }, { status: 502 });
-  }
+  const fechou = await concluirReuniao(admin, { id: reuniao.id, iniciada_em: reuniao.iniciada_em }, aviso.vexaId, aviso.comecouEm, aviso.terminouEm);
+  // Falha ao buscar a transcrição: a reunião fica "processando" e a resposta é 502, para o Vexa reenviar o aviso (ele tenta de novo depois de 1, 5 e 30 minutos).
+  if (!fechou) return NextResponse.json({ error: "Não foi possível buscar a transcrição agora" }, { status: 502 });
+  return NextResponse.json({ ok: true });
 }
