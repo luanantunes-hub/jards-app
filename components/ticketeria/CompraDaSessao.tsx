@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TelaAviso, TelaDados, TelaEscolherIngressos, TelaPagarPix } from "@/components/ticketeria/CompraView";
 import { lerCorpoDaCompra } from "@/lib/ticketeria/pagamento/compra";
+import { VERSAO_DOS_TERMOS_DE_COMPRA } from "@/lib/ticketeria/termos-de-compra";
 import { mascararDocumento } from "@/lib/ticketeria/recebimentos";
 import { totalNasFaixas, type VitrineDaSessao } from "@/lib/ticketeria/vitrine";
 
@@ -36,6 +37,7 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
   const [passo, setPasso] = useState<Passo>("escolher");
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
   const [valores, setValores] = useState({ nome: "", email: "", documento: "" });
+  const [aceito, setAceito] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [trabalhando, setTrabalhando] = useState(false);
   const [pedido, setPedido] = useState<PedidoComPix | null>(null);
@@ -74,7 +76,8 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
 
   const gerarPix = useCallback(async () => {
     setErro(null);
-    const leitura = lerCorpoDaCompra({ sessao_id: sessao, itens: Object.entries(quantidades).filter(([, q]) => q > 0).map(([ingresso_id, quantidade]) => ({ ingresso_id, quantidade })), ...valores });
+    if (!aceito) { setErro("Aceite os Termos de compra para continuar."); return; }
+    const leitura = lerCorpoDaCompra({ sessao_id: sessao, itens: Object.entries(quantidades).filter(([, q]) => q > 0).map(([ingresso_id, quantidade]) => ({ ingresso_id, quantidade })), ...valores, termos: VERSAO_DOS_TERMOS_DE_COMPRA });
     if (!leitura.ok) { setErro(`Confira: ${leitura.problemas.join(", ")}.`); return; }
     setTrabalhando(true);
     try {
@@ -92,7 +95,7 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     } finally {
       setTrabalhando(false);
     }
-  }, [sessao, quantidades, valores, router]);
+  }, [sessao, quantidades, valores, aceito, router]);
 
   const copiar = useCallback(async () => {
     if (!pedido) return;
@@ -106,7 +109,7 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     return <TelaPagarPix site={site} evento={evento} pedido={{ codigo: pedido.codigo, total_centavos: pedido.total_centavos, pix_copia_e_cola: pedido.pix_copia_e_cola, reservado_ate: horaDe(pedido.reservado_ate), restante: faltam(pedido.reservado_ate, agora) }} onCopiar={() => void copiar()} copiado={copiado} />;
   }
   if (passo === "dados") {
-    return <TelaDados site={site} evento={evento} resumo={{ linhas, total_centavos: total }} valores={valores} erro={erro} trabalhando={trabalhando}
+    return <TelaDados site={site} evento={evento} resumo={{ linhas, total_centavos: total }} valores={valores} erro={erro} trabalhando={trabalhando} aceito={aceito} onAceitar={setAceito}
       onMudar={(campo, valor) => setValores(v => ({ ...v, [campo]: campo === "documento" ? mascararDocumento(valor) : valor }))}
       onVoltar={() => { setErro(null); setPasso("escolher"); }} onGerarPix={() => void gerarPix()} />;
   }

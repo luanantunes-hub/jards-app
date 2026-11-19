@@ -3,6 +3,7 @@ import test from "node:test";
 import { diaEHoraDoEvento, emailDosIngressos, enviarIngressosDoPedido, type IngressosDoPedido, type PortasDoEnvio } from "../lib/ticketeria/pagamento/ingressos";
 import { processarAviso, type PortasDosAvisos } from "../lib/ticketeria/pagamento/avisos";
 import { ProvedorDeMentira } from "../lib/ticketeria/pagamento/provedor-de-mentira";
+import { VERSAO_DOS_TERMOS_DE_COMPRA } from "../lib/ticketeria/termos-de-compra";
 import { ErroDaCompra, iniciarCompra, lerCorpoDaCompra, type PortasDaCompra } from "../lib/ticketeria/pagamento/compra";
 
 const PEDIDO = "0d760000-0000-4000-8000-0000000000e1";
@@ -114,13 +115,14 @@ test("o ingresso gratuito manda os ingressos na hora da compra, e falha no envio
   const base: PortasDaCompra = {
     async contaDaSessao() { return { chave: "chave-da-subconta-0123456789", aprovada: true }; },
     async reservar() { return { pedido_id: PEDIDO, codigo: "ABCD2345", situacao: "pago", reservado_ate: "2026-11-19T12:15:00.000Z", total_centavos: 0, taxa_centavos: 0, produtor_centavos: 0 }; },
+    async registrarAceite() {},
     async definirMeioPix() { throw new Error("não deveria"); },
     provedor() { throw new Error("não deveria"); },
     carteiraDoJards: "carteira",
     registrarErro: e => erros.push(e),
     async aposPagamento(pedido) { chamadas.push(pedido); },
   };
-  const l = lerCorpoDaCompra({ sessao_id: "0d760000-0000-4000-8000-000000000081", itens: [{ ingresso_id: "0d760000-0000-4000-8000-000000000033", quantidade: 1 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725" });
+  const l = lerCorpoDaCompra({ sessao_id: "0d760000-0000-4000-8000-000000000081", itens: [{ ingresso_id: "0d760000-0000-4000-8000-000000000033", quantidade: 1 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA });
   if (!l.ok) throw new Error("corpo");
   assert.equal((await iniciarCompra(l.corpo, base)).situacao, "pago");
   assert.deepEqual(chamadas, [PEDIDO]);

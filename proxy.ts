@@ -196,6 +196,7 @@ export async function proxy(request: NextRequest) {
         pathname === "/robots.txt" ||
         pathname === "/sitemap.xml" ||
         pathname === "/termos" ||
+        pathname === "/termos-de-compra" ||
         pathname === "/privacidade" ||
         pathname === "/incentivadores" ||
         pathname === "/crm" ||
@@ -278,6 +279,7 @@ export async function proxy(request: NextRequest) {
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" ||
     pathname === "/termos" ||
+    pathname === "/termos-de-compra" ||
     pathname === "/privacidade" ||
     pathname === "/incentivadores" ||
     pathname === "/crm" ||
