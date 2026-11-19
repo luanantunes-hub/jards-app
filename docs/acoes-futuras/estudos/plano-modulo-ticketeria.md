@@ -33,6 +33,7 @@
 | D8 | Interface pelo `DESIGN.md`; telas só vão para a main com o ok do dono; backend segue o fluxo automático e **para em decisões de dinheiro** | memória do projeto |
 | **D9** | **Evento próprio**: a Ticketeria tem locais, eventos, sessões e setores seus; independente da Produção | **18/11** |
 | **D10** | **Um só site, da Ticketeria**; a Produção fica sem nenhuma forma de ticketeria (site, porta, plateia, borderô e convidados saem dela) | **18/11** |
+| **D11** | **Trava de saque de 7 dias**: o produtor não saca o que vendeu nos últimos 7 dias (janela do arrependimento, CDC art. 49). Só isso: nada de reter até o evento. Feita pela *validação de saque por webhook* do Asaas (o Asaas pergunta ao Jards, em cerca de 5 s, a cada saque da subconta; o Jards responde APROVADO ou RECUSADO). O dinheiro fica na conta do produtor, o Jards não guarda saldo (D3). Protege o Jards, que é garantidor de subconta negativa pelos Termos do Asaas | **19/11** |
 
 Em aberto: o **PSP** (decisões 16 e 17), a venda em **dinheiro na porta**, quem paga o custo do meio de pagamento, o valor da taxa, o fiscal e o preço do módulo.
 
@@ -118,3 +119,4 @@ T0 a T4 não dependem de nenhuma decisão em aberto. É mais trabalho que a opç
 | `producao_pedidos` confunde com pedido de ingresso | Prefixo `ticketeria_` e glossário no `vocabulario.ts` |
 | Dado do comprador | Dados mínimos, guarda de 12 meses, pedido de exclusão previsto no texto de privacidade |
 | Dinheiro real cedo demais | Nada antes do piloto e do parecer jurídico (D7) |
+| Produtor saca o Pix e depois há arrependimento em massa ou cancelamento; a conta dele fica negativa e o Asaas cobra o Jards (garantidor, pelos Termos públicos) | D11: trava de saque de 7 dias pelo webhook de validação; contrato com direito de regresso e desconto nas vendas seguintes; teto de vendas por produtor no piloto. **A confirmar com o Asaas:** como ativa, se vale para subcontas, se segura também o estorno por Pix, e se a garantia tem teto. **A confirmar com o advogado:** se segurar o saque assim parece controlar dinheiro de terceiro |
