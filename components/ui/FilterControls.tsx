@@ -6,7 +6,8 @@ import type { ElementType, ReactNode } from "react";
 // Manter altura, bordas e estados ativos centralizados neste arquivo para preservar a consistência global.
 export type SegmentOption<T extends string> = {
   value: T;
-  label?: string;
+  /** Texto do segmento; aceita um nó (ex.: nome + contagem) além de string pura. */
+  label?: ReactNode;
   icon?: ElementType;
   ariaLabel?: string;
 };
@@ -37,13 +38,15 @@ export function SegmentedControl<T extends string>({
     >
       {options.map(({ value: optionValue, label, icon: Icon, ariaLabel: optionAriaLabel }, index) => {
         const selected = value === optionValue;
+        // Com label em texto puro, ele já serve de aria-label; com um nó (ex.: nome + contagem), precisa vir explícito.
+        const rotuloTexto = typeof label === "string" ? label : undefined;
         return (
           <button
             key={optionValue}
             type="button"
             aria-pressed={selected}
-            aria-label={optionAriaLabel ?? label}
-            title={iconOnly ? optionAriaLabel ?? label : undefined}
+            aria-label={optionAriaLabel ?? rotuloTexto}
+            title={iconOnly ? (optionAriaLabel ?? rotuloTexto) : undefined}
             onClick={() => onChange(optionValue)}
             className={`relative flex shrink-0 items-center justify-center gap-1.5 rounded-none border bg-white text-xs font-medium transition-colors first:ml-0 first:rounded-l last:rounded-r ${
               index > 0 ? "-ml-px" : ""

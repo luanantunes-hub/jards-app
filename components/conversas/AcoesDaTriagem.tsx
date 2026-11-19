@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { BriefcaseBusiness, Check, Pencil, UserPlus } from "lucide-react";
+import { BriefcaseBusiness, Check, MoreHorizontal, Pencil, UserPlus, X } from "lucide-react";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
+import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
 import { dominioDoEmail } from "@/lib/email/triagem";
 import { createClient } from "@/lib/supabase/client";
 import type { RemetenteDaTriagem } from "@/app/api/email/triagem/route";
 
 const VERDE = "#3DA86A";
 const BOTAO = "flex h-8 items-center gap-1.5 rounded border border-black/12 bg-white px-3 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white";
+const ITEM_DO_MENU = "flex h-9 w-full items-center gap-2 rounded px-2 text-left text-[0.8125rem] text-[#282525] outline-none transition hover:bg-black/[.04] focus-visible:bg-black/[.04] disabled:cursor-not-allowed disabled:text-black/30 disabled:hover:bg-transparent";
 
 /**
  * A empresa do contato: reaproveita uma já cadastrada com o mesmo nome (evita duplicar) ou cria uma nova, já com o
@@ -39,15 +41,18 @@ async function obterOuCriarEmpresa(
   return criada.id as string;
 }
 
+type ItemDoMenu = { label: string; icone: typeof Pencil; onClick: () => void; disabled?: boolean; titulo?: string };
+
 /**
  * Os três passos para quem ainda não é contato, dentro da conversa aberta: criar o contato (com a empresa sugerida
  * pelo domínio, ou uma nova empresa com o nome que o domínio sugere), registrar a conversa para a equipe e abrir a
  * negociação. Nenhum é obrigatório, e "Dispensar" apaga as cópias guardadas. Até registrar, a conversa é só sua.
  *
- * Criar contato é um clique só: o nome e o e-mail já são conhecidos, a empresa é a sugerida, e sem nenhuma que já
- * combine, a empresa nasce junto, com o nome que o domínio sugere. "Editar antes de criar" fica como saída para
- * quem quer ajustar algo primeiro — telefone, cargo, outra empresa —, abrindo o mesmo formulário completo que o
- * resto do Jards usa. Depois de criado, o contato (e a empresa) se corrigem na própria ficha, como qualquer outro.
+ * Só a ação seguinte mais provável fica à vista — "Criar contato" antes dele existir, "Registrar conversa" depois —,
+ * e o resto ("Editar antes de criar", "Criar negociação", "Dispensar") mora nos três pontos ao lado, para o card não
+ * virar uma fileira de botões. Criar contato é um clique só: o nome e o e-mail já são conhecidos, a empresa é a
+ * sugerida, e sem nenhuma que já combine, a empresa nasce junto, com o nome que o domínio sugere. Depois de criado,
+ * o contato (e a empresa) se corrigem na própria ficha, como qualquer outro.
  */
 export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaTriagem; onMudou: () => void }) {
   const [tratando, setTratando] = useState<string | null>(null);
@@ -55,6 +60,7 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
   const [erro, setErro] = useState<string | null>(null);
   const [editandoContato, setEditandoContato] = useState(false);
   const [novaNegociacao, setNovaNegociacao] = useState(false);
+  const { pos, abrir, fechar } = useAnchoredPopover();
   const contato = remetente.contato;
   const ocupado = tratando !== null || criando;
 
@@ -111,6 +117,25 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
     }
   }
 
+  function noMenu(acao: () => void) {
+    fechar();
+    acao();
+  }
+
+  // O que fica nos três pontos: o resto dos passos, sempre na mesma ordem, cada um com a sua condição de ficar desabilitado.
+  const itensDoMenu: ItemDoMenu[] = [
+    ...(!contato ? [{ label: "Editar antes de criar", icone: Pencil, onClick: () => noMenu(() => setEditandoContato(true)) }] : []),
+    {
+      label: "Registrar conversa", icone: Check, onClick: () => noMenu(() => void tratar("registrar")),
+      disabled: !contato || ocupado, titulo: contato ? undefined : "Crie o contato primeiro",
+    },
+    {
+      label: "Criar negociação", icone: BriefcaseBusiness, onClick: () => noMenu(() => setNovaNegociacao(true)),
+      disabled: !contato?.empresaId || ocupado, titulo: contato?.empresaId ? undefined : "Crie o contato em uma empresa primeiro",
+    },
+    { label: tratando === "dispensar" ? "Dispensando…" : "Dispensar", icone: X, onClick: () => noMenu(() => void tratar("dispensar")), disabled: ocupado },
+  ];
+
   return (
     <div className="mb-4 rounded border bg-[#FBFAFA] px-4 py-3.5" style={{ borderColor: "rgba(13,13,13,.09)" }}>
       {editandoContato && (
@@ -138,27 +163,39 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
 
       {erro && <p role="alert" className="mt-2 text-[0.75rem] text-[#B23B3B]">{erro}</p>}
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {!contato && (
-          <>
-            <button type="button" onClick={() => void criarContatoRapido()} disabled={ocupado} className={BOTAO}>
-              <UserPlus size={13} aria-hidden="true" />{criando ? "Criando…" : "Criar contato"}
-            </button>
-            <button type="button" onClick={() => setEditandoContato(true)} disabled={ocupado} className="flex h-8 items-center gap-1.5 rounded px-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">
-              <Pencil size={12} aria-hidden="true" />Editar antes de criar
-            </button>
-          </>
+      <div className="mt-3 flex items-center gap-2">
+        {contato ? (
+          <button type="button" onClick={() => void tratar("registrar")} disabled={ocupado} className={BOTAO}>
+            <Check size={13} aria-hidden="true" />{tratando === "registrar" ? "Registrando…" : "Registrar conversa"}
+          </button>
+        ) : (
+          <button type="button" onClick={() => void criarContatoRapido()} disabled={ocupado} className={BOTAO}>
+            <UserPlus size={13} aria-hidden="true" />{criando ? "Criando…" : "Criar contato"}
+          </button>
         )}
-        <button type="button" onClick={() => void tratar("registrar")} disabled={!contato || ocupado} title={contato ? undefined : "Crie o contato primeiro"} className={BOTAO}>
-          <Check size={13} aria-hidden="true" />{tratando === "registrar" ? "Registrando…" : "Registrar conversa"}
-        </button>
-        <button type="button" onClick={() => setNovaNegociacao(true)} disabled={!contato?.empresaId || ocupado} title={contato?.empresaId ? undefined : "Crie o contato em uma empresa primeiro"} className={BOTAO}>
-          <BriefcaseBusiness size={13} aria-hidden="true" />Criar negociação
-        </button>
-        <button type="button" onClick={() => void tratar("dispensar")} disabled={ocupado} className="h-8 rounded px-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">
-          {tratando === "dispensar" ? "Dispensando…" : "Dispensar"}
+        <button
+          type="button"
+          onClick={(event) => abrir(event, 220)}
+          disabled={ocupado}
+          aria-label="Mais ações"
+          aria-haspopup="menu"
+          title="Mais ações"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-black/12 bg-white text-black/45 transition hover:bg-black/[.04] hover:text-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
+        >
+          <MoreHorizontal size={15} aria-hidden="true" />
         </button>
       </div>
+
+      <AnchoredPopover pos={pos} onClose={fechar}>
+        <div className="-m-2 flex flex-col" role="menu" aria-label="Mais ações">
+          {itensDoMenu.map(({ label, icone: Icone, onClick, disabled, titulo }) => (
+            <button key={label} type="button" role="menuitem" onClick={onClick} disabled={disabled} title={titulo} className={ITEM_DO_MENU}>
+              <Icone size={13} className="shrink-0 text-black/40" aria-hidden="true" />
+              <span className="truncate">{label}</span>
+            </button>
+          ))}
+        </div>
+      </AnchoredPopover>
     </div>
   );
 }
