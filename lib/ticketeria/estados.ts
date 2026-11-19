@@ -17,3 +17,9 @@ export const SITUACOES_DO_EVENTO: readonly SituacaoDoEvento[] = ["rascunho", "pu
 /** `ticketeria_eventos.classificacao`: a classificação indicativa. */
 export type ClassificacaoIndicativa = "livre" | "10" | "12" | "14" | "16" | "18";
 export const CLASSIFICACOES_INDICATIVAS: readonly ClassificacaoIndicativa[] = ["livre", "10", "12", "14", "16", "18"];
+
+// O catálogo (T3, supabase/migrations/*_ticketeria_catalogo.sql).
+
+/** `ticketeria_ingressos.categoria`. Gratuito e cortesia custam zero; as outras, mais que zero (o banco confere). */
+export type CategoriaDoIngresso = "inteira" | "meia" | "social" | "gratuito" | "cortesia" | "outra";
+export const CATEGORIAS_DO_INGRESSO: readonly CategoriaDoIngresso[] = ["inteira", "meia", "social", "gratuito", "cortesia", "outra"];
