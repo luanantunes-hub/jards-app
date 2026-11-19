@@ -44,7 +44,7 @@ test("em repouso tem volume discreto: degradê em torno do roxo noite, luz de 1p
   assert.match(base, /background-image:\s*linear-gradient\(180deg,\s*#28164B 0%,\s*#1C0E33 55%,\s*#160A2A 100%\)/i);
   assert.match(base, /box-shadow:[^;]*inset 0 1px 0 rgba\(255, 255, 255, \.14\)/, "luz no topo");
   assert.match(base, /box-shadow:[^;]*inset 0 -1px 0 rgba\(0, 0, 0, \.3\)/, "sombra na base");
-  assert.match(base, /box-shadow:[^;]*0 4px 12px -4px rgba\(28, 14, 51, \.45\)/, "sombra de elevação em roxo noite");
+  assert.match(base, /box-shadow:[^;]*0 4px 12px -4px rgba\(13, 13, 13, \.45\)/, "sombra de elevação neutra, sem roxo");
   assert.match(base, /text-shadow:/);
   assert.doesNotMatch(base, /border(-color)?:/, "sem borda");
 });

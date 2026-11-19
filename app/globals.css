@@ -2,16 +2,16 @@
 @import "tailwindcss";
 
 /* Elevação: janelas por cima da tela (menus, folhas, pop-ups).
-   Borda cinza bem clara + sombra em duas camadas, com o roxo noite da marca diluído.
+   Borda cinza bem clara + sombra em duas camadas, em preto neutro, sem nenhuma cor da marca.
    1 = menus, listas suspensas e dicas · 2 = folhas e painéis laterais · 3 = pop-ups no centro.
    A largura da borda fica na classe da peça (border, border-x border-b...), para deixar aberto o lado colado à tela. */
 :root {
   --elevacao-borda: rgba(13, 13, 13, .075);
-  --elevacao-sombra-1: 0 1px 2px rgba(28, 14, 51, .06), 0 6px 16px rgba(28, 14, 51, .08);
-  --elevacao-sombra-2: 0 2px 6px rgba(28, 14, 51, .06), 0 16px 40px rgba(28, 14, 51, .10);
-  --elevacao-sombra-2-cima: 0 -2px 6px rgba(28, 14, 51, .05), 0 -16px 40px rgba(28, 14, 51, .09);
-  --elevacao-sombra-2-lado: -2px 0 6px rgba(28, 14, 51, .05), -16px 0 40px rgba(28, 14, 51, .09);
-  --elevacao-sombra-3: 0 2px 8px rgba(28, 14, 51, .06), 0 24px 64px rgba(28, 14, 51, .14);
+  --elevacao-sombra-1: 0 1px 2px rgba(13, 13, 13, .06), 0 6px 16px rgba(13, 13, 13, .08);
+  --elevacao-sombra-2: 0 2px 6px rgba(13, 13, 13, .06), 0 16px 40px rgba(13, 13, 13, .10);
+  --elevacao-sombra-2-cima: 0 -2px 6px rgba(13, 13, 13, .05), 0 -16px 40px rgba(13, 13, 13, .09);
+  --elevacao-sombra-2-lado: -2px 0 6px rgba(13, 13, 13, .05), -16px 0 40px rgba(13, 13, 13, .09);
+  --elevacao-sombra-3: 0 2px 8px rgba(13, 13, 13, .06), 0 24px 64px rgba(13, 13, 13, .14);
 }
 @utility elevacao-1 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-1); }
 @utility elevacao-2 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-2); }
@@ -76,7 +76,7 @@
 
 /* Ação principal (botões de criar): o roxo noite do hero da landing (#1C0E33), parado.
    Volume discreto: degradê de cima para baixo em torno do roxo noite, uma linha de luz de 1px no
-   topo, uma de sombra na base e uma sombra curta tingida de roxo noite, que descola o botão da
+   topo, uma de sombra na base e uma sombra curta neutra, que descola o botão da
    página. Sem movimento no hover: só um tom mais claro, na hora; ao pressionar, afunda.
    Sem contorno em volta: o foco do teclado clareia como o hover e abre um brilho embaixo do
    botão; o contorno só aparece no modo de alto contraste do sistema. */
@@ -86,8 +86,8 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .14),
     inset 0 -1px 0 rgba(0, 0, 0, .3),
-    0 1px 2px rgba(28, 14, 51, .28),
-    0 4px 12px -4px rgba(28, 14, 51, .45);
+    0 1px 2px rgba(13, 13, 13, .28),
+    0 4px 12px -4px rgba(13, 13, 13, .45);
   text-shadow: 0 1px 0 rgba(0, 0, 0, .3);
 }
 .acao-principal:hover {
@@ -95,14 +95,14 @@
     inset 0 1px 0 rgba(255, 255, 255, .14),
     inset 0 -1px 0 rgba(0, 0, 0, .3),
     inset 0 0 0 999px rgba(142, 99, 245, .1),
-    0 1px 2px rgba(28, 14, 51, .28),
-    0 4px 12px -4px rgba(28, 14, 51, .45);
+    0 1px 2px rgba(13, 13, 13, .28),
+    0 4px 12px -4px rgba(13, 13, 13, .45);
 }
 .acao-principal:active {
   box-shadow:
     inset 0 1px 3px rgba(0, 0, 0, .4),
     inset 0 0 0 999px rgba(142, 99, 245, .06),
-    0 1px 1px rgba(28, 14, 51, .25);
+    0 1px 1px rgba(13, 13, 13, .25);
 }
 .acao-principal:focus-visible {
   outline: 2px solid transparent;

@@ -588,7 +588,7 @@ function MeuPlanoInner() {
                 style={{
                   background: dark ? "#1C0E33" : "#fff",
                   borderColor: dark ? "#1C0E33" : isAtual ? "rgba(13,13,13,.32)" : "rgba(13,13,13,.08)",
-                  boxShadow: dark ? "0 18px 40px -18px rgba(28,14,51,.45)" : undefined,
+                  boxShadow: dark ? "0 18px 40px -18px rgba(13,13,13,.45)" : undefined,
                 }}
               >
                 <div className="flex min-h-[1.375rem] items-center justify-between gap-3">

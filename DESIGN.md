@@ -72,7 +72,7 @@ Princípios:
 
 Criar ou iniciar o objeto principal da página ("Novo projeto", "Nova data") usa `PrimaryListAction`, de `components/list/ListPagePrimitives.tsx`: roxo noite `#1C0E33`, o mesmo do hero da landing, com texto branco e `h-9`.
 
-- volume discreto: degradê de cima para baixo em torno do roxo noite (`#28164B` → `#1C0E33` → `#160A2A`), uma linha de luz de 1px no topo, uma de sombra na base e uma sombra curta tingida de roxo noite, que descola o botão da página. Sem borda;
+- volume discreto: degradê de cima para baixo em torno do roxo noite (`#28164B` → `#1C0E33` → `#160A2A`), uma linha de luz de 1px no topo, uma de sombra na base e uma sombra curta neutra, que descola o botão da página. Sem borda;
 - o botão fica parado: sem animação ao carregar a página e sem movimento no hover, que só clareia um tom, na hora. Ao pressionar, afunda (sombra por dentro);
 - sem contorno em volta. O foco do teclado clareia como o hover e abre um brilho embaixo do botão; o contorno só aparece no modo de alto contraste do sistema;
 - uma ação principal por contexto. Quando há duas lado a lado, a principal é roxo noite e a outra é `SecondaryListAction`: botão branco com borda leve e hover cinza;
