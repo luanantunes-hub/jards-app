@@ -82,10 +82,9 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
 ];
 
 // Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
-// "Reuniões" depende do servidor do Vexa (docs/reunioes-deploy-vexa.md), que ainda não está
-// no ar; sem ele, toda reunião criada termina como "falhou". Tire a rota daqui quando ligar.
-// "E-mails" (triagem de quem ainda não é contato) acompanha o beta fechado do e-mail: tire a rota daqui quando abrir.
-const ROTAS_SO_SUPER_ADMIN = ["/reunioes", "/emails"];
+// "Conversas" (e-mails e reuniões) acompanha o beta fechado do e-mail; as reuniões ainda dependem do servidor
+// do Vexa (docs/reunioes-deploy-vexa.md), que não está no ar. Tire a rota daqui quando abrir.
+const ROTAS_SO_SUPER_ADMIN = ["/conversas"];
 
 // `icone`: o grupo aparece no menu como uma seção que abre e fecha para baixo (como no Apollo), com este ícone no título e as telas dele logo abaixo.
 const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementType; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
@@ -95,7 +94,6 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
       items: [
         { label: "Visão geral",  href: "/dashboard",    icon: BarChart2    },
         { label: "Atividades",   href: "/atividades",   icon: CalendarDays },
-        { label: "Reuniões",     href: "/reunioes",     icon: Video        },
         { label: "Projetos",     href: "/projetos",     icon: FolderOpen   },
       ],
     },
@@ -121,7 +119,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
         { label: "Proponentes", href: "/proponentes",       icon: Landmark       },
         { label: "Captadores",  href: "/captadores",        icon: Handshake      },
         { label: "Contatos",    href: "/contatos",          icon: ContactRound   },
-        { label: "E-mails",     href: "/emails",            icon: Mail           },
+        { label: "Conversas",   href: "/conversas",         icon: Mail           },
         { label: "Clientes",    href: "/contas-patrocinio", icon: UserRoundCheck },
       ],
     },
