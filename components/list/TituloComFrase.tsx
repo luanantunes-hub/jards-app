@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useOrganizationName } from "@/contexts/OrganizationContext";
 import { escolherFrase } from "@/lib/saudacao";
 import { FRASES_DAS_SECOES, ilustracaoDoDia, type SecaoComFrase } from "@/lib/frases-das-secoes";
+import { PACOTE_ATIVO, caminhoDaIlustracao } from "@/lib/pacotes-de-ilustracoes";
 
 // A voz das frases (painel e seções): Gloock, serifa de alto contraste com peso de manchete.
 // Tem um único peso (400), já pesado: a classe usa font-normal para o navegador não engrossar de mentira.
@@ -60,7 +61,7 @@ export function TituloComFrase({ secao, titulo }: { secao: SecaoComFrase; titulo
   );
 }
 
-/** O tamanduá do dia (public/ilustracoes/tamandua, fundo transparente). Decorativa: sem texto alternativo. */
+/** A ilustração do dia, do pacote ativo (lib/pacotes-de-ilustracoes.ts, fundo transparente). Decorativa: sem texto alternativo. */
 export function IlustracaoDaSecao({ arquivo }: { arquivo: SecaoComFrase | "painel" }) {
   // A data é a do navegador; escolher depois de montar evita diferença entre servidor e navegador.
   const [numero, setNumero] = useState<number | null>(null);
@@ -72,7 +73,7 @@ export function IlustracaoDaSecao({ arquivo }: { arquivo: SecaoComFrase | "paine
   if (numero === null) return <span aria-hidden="true" className={tamanho} />;
   return (
     <Image
-      src={`/ilustracoes/tamandua/${String(numero).padStart(2, "0")}.png`}
+      src={caminhoDaIlustracao(PACOTE_ATIVO, numero)}
       alt=""
       aria-hidden="true"
       width={160}
