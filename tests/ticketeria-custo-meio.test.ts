@@ -1,41 +1,69 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CUSTOS_PROVISORIOS_DO_ASAAS, custoDoMeio, mensagemDoErroDoMeio, parcelasOferecidas, regraDoMeio, valorDasParcelas, valoresParaPagar } from "../lib/ticketeria/pagamento/custo-meio";
+import { CUSTOS_PROVISORIOS_DO_ASAAS, custoDoMeio, mensagemDoErroDoMeio, parcelasOferecidas, liquidoDoProdutorPorMeio, regraDoMeio, valorDasParcelas, valoresDoPedido } from "../lib/ticketeria/pagamento/custo-meio";
 import { taxaDoIngresso, totaisDoPedido } from "../lib/ticketeria/pagamento/taxa";
+import { partidasDoPagamento, equilibrada, saldos } from "../lib/ticketeria/pagamento/razao";
 
 const pix = CUSTOS_PROVISORIOS_DO_ASAAS[0], aVista = CUSTOS_PROVISORIOS_DO_ASAAS[1], parcelado = CUSTOS_PROVISORIOS_DO_ASAAS[2];
 
-// Os mesmos casos de supabase/tests/ticketeria_custo_meio.test.sql ("o custo por dentro"): o banco e o código fazem a mesma conta.
-test("o custo do meio por dentro: os mesmos casos do teste de banco", () => {
-  assert.deepEqual([custoDoMeio(6135, pix), custoDoMeio(6135, aVista), custoDoMeio(6135, parcelado), custoDoMeio(100, pix), custoDoMeio(100, aVista), custoDoMeio(0, aVista)], [199, 240, 273, 199, 54, 51]);
+// Os mesmos casos de supabase/tests/ticketeria_custo_meio.test.sql: o banco e o código fazem a mesma conta.
+test("o custo do meio sobre o total pago: os mesmos casos do teste de banco", () => {
+  assert.deepEqual([custoDoMeio(6150, pix), custoDoMeio(6150, aVista), custoDoMeio(6150, parcelado), custoDoMeio(100, pix), custoDoMeio(100, aVista), custoDoMeio(0, aVista)], [199, 233, 264, 199, 52, 49]);
+  assert.equal(custoDoMeio(5000, aVista), 199, "2,99% de R$ 50 = R$ 1,495 sobe para R$ 1,50, mais R$ 0,49");
 });
 
-test("o produtor recebe o preço cheio: descontado o custo do cartão, sobra pelo menos o líquido", () => {
+test("o custo arredonda para cima e o provedor nunca cobra mais do que o descontado (o Jards não perde um centavo)", () => {
   for (const regra of [pix, aVista, parcelado]) {
-    for (const liquido of [1, 100, 6135, 12270, 99999]) {
-      const totalPago = liquido + custoDoMeio(liquido, regra);
-      const custoReal = (totalPago * regra.percentual_bps) / 10000 + regra.fixo_centavos; // o que o provedor desconta do total pago
-      assert.ok(totalPago - custoReal >= liquido - 1e-9, `${regra.meio} ${regra.parcelas_de}-${regra.parcelas_ate} sobre ${liquido}`);
-      assert.ok(totalPago - custoReal < liquido + 1, "e não sobra muito mais que isso (no máximo um centavo)");
+    for (const total of [1, 100, 5000, 6150, 12300, 99999]) {
+      const exato = (total * regra.percentual_bps) / 10000 + regra.fixo_centavos;
+      const custo = custoDoMeio(total, regra);
+      assert.ok(custo >= exato - 1e-9 && custo < exato + 1, `${regra.meio} ${regra.parcelas_de}-${regra.parcelas_ate} sobre ${total}`);
     }
   }
 });
 
-test("a tela mostra os três valores separados: o preço, a taxa fixa do Jards e o custo do meio", () => {
-  // Um ingresso de R$ 60 com a taxa fixa provisória de R$ 1,35, paga pelo comprador.
-  const totais = totaisDoPedido([{ preco_centavos: 6000, quantidade: 1 }], { percentual_bps: 0, fixo_centavos: 135, quem_paga: "comprador" });
-  assert.deepEqual(totais, { total_centavos: 6135, taxa_centavos: 135, produtor_centavos: 6000 });
-  assert.deepEqual(valoresParaPagar(totais, pix), { preco_centavos: 6000, taxa_jards_centavos: 135, custo_meio_centavos: 199, a_pagar_centavos: 6334 });
-  assert.deepEqual(valoresParaPagar(totais, aVista), { preco_centavos: 6000, taxa_jards_centavos: 135, custo_meio_centavos: 240, a_pagar_centavos: 6375 });
-  assert.deepEqual(valoresParaPagar(totais, parcelado), { preco_centavos: 6000, taxa_jards_centavos: 135, custo_meio_centavos: 273, a_pagar_centavos: 6408 });
+test("o comprador paga só o preço; as taxas saem da parte do produtor (ingresso de R$ 50 no Pix: R$ 1,25 do Jards, R$ 1,99 do Asaas, R$ 46,76 do produtor)", () => {
+  const regra = { percentual_bps: 250, fixo_centavos: 0, quem_paga: "produtor" as const };
+  const cinquenta = totaisDoPedido([{ preco_centavos: 5000, quantidade: 1 }], regra);
+  assert.deepEqual(cinquenta, { total_centavos: 5000, taxa_centavos: 125, produtor_centavos: 4875 });
+  assert.deepEqual(valoresDoPedido(cinquenta, pix), { a_pagar_centavos: 5000, taxa_jards_centavos: 125, custo_meio_centavos: 199, produtor_recebe_centavos: 4676 });
+  const sessenta = totaisDoPedido([{ preco_centavos: 6000, quantidade: 1 }], regra);
+  assert.deepEqual(valoresDoPedido(sessenta, aVista), { a_pagar_centavos: 6000, taxa_jards_centavos: 150, custo_meio_centavos: 229, produtor_recebe_centavos: 5621 });
+  assert.deepEqual(valoresDoPedido(sessenta, parcelado), { a_pagar_centavos: 6000, taxa_jards_centavos: 150, custo_meio_centavos: 259, produtor_recebe_centavos: 5591 });
 });
 
-test("a taxa fixa é por ingresso pago: dois ingressos pagam duas vezes, e cortesia e gratuito não pagam", () => {
-  const regra = { percentual_bps: 0, fixo_centavos: 135, quem_paga: "comprador" as const };
-  assert.equal(taxaDoIngresso(6000, regra), 135);
-  assert.equal(totaisDoPedido([{ preco_centavos: 6000, quantidade: 2 }], regra).total_centavos, 12270);
+test("o custo que come toda a parte do produtor (ingresso baratíssimo) deixa o meio indisponível", () => {
+  const regra = { percentual_bps: 250, fixo_centavos: 0, quem_paga: "produtor" as const };
+  assert.equal(valoresDoPedido(totaisDoPedido([{ preco_centavos: 200, quantidade: 1 }], regra), pix), null, "R$ 2,00 não paga o Pix de R$ 1,99 mais a taxa");
+  assert.notEqual(valoresDoPedido(totaisDoPedido([{ preco_centavos: 300, quantidade: 1 }], regra), pix), null);
+});
+
+test("a tela do produtor: quanto ele recebe líquido por ingresso, no Pix e em cada parcelamento que a loja oferece", () => {
+  const regra = { percentual_bps: 250, fixo_centavos: 0, quem_paga: "produtor" as const };
+  const soAVista = liquidoDoProdutorPorMeio(5000, regra, CUSTOS_PROVISORIOS_DO_ASAAS, 1);
+  assert.equal(soAVista.taxa_jards_centavos, 125);
+  assert.deepEqual(soAVista.meios, [
+    { meio: "pix", parcelas: null, custo_meio_centavos: 199, produtor_recebe_centavos: 4676 },
+    { meio: "cartao", parcelas: 1, custo_meio_centavos: 199, produtor_recebe_centavos: 4676 },
+  ]);
+  const ate3 = liquidoDoProdutorPorMeio(5000, regra, CUSTOS_PROVISORIOS_DO_ASAAS, 3);
+  assert.deepEqual(ate3.meios.map(m => [m.meio, m.parcelas]), [["pix", null], ["cartao", 1], ["cartao", 2], ["cartao", 3]]);
+  assert.deepEqual(liquidoDoProdutorPorMeio(0, regra, CUSTOS_PROVISORIOS_DO_ASAAS, 6), { taxa_jards_centavos: 0, meios: [] }, "cortesia e gratuito: nada cobrado");
+});
+
+test("a taxa é de 2,5% por ingresso pago: dois ingressos pagam duas vezes, o centavo arredonda, e cortesia e gratuito não pagam", () => {
+  const regra = { percentual_bps: 250, fixo_centavos: 0, quem_paga: "produtor" as const };
+  assert.equal(taxaDoIngresso(6000, regra), 150);
+  assert.equal(taxaDoIngresso(1990, regra), 50, "R$ 0,4975 sobe para R$ 0,50");
+  assert.equal(totaisDoPedido([{ preco_centavos: 6000, quantidade: 2 }], regra).total_centavos, 12000, "o comprador paga só o preço");
   assert.equal(taxaDoIngresso(0, regra), 0);
   assert.deepEqual(totaisDoPedido([{ preco_centavos: 0, quantidade: 4 }], regra), { total_centavos: 0, taxa_centavos: 0, produtor_centavos: 0 });
+});
+
+test("o razão do pagamento: o provedor guarda o custo dele, e a soma segue zero", () => {
+  const partidas = partidasDoPagamento({ total_centavos: 5000, produtor_centavos: 4875, taxa_centavos: 125, custo_meio_centavos: 199 });
+  assert.deepEqual(saldos(partidas), { psp_a_receber: 4801, produtor: -4676, plataforma: -125 });
+  assert.ok(equilibrada(partidas));
 });
 
 test("a regra do meio por parcelas, e as parcelas que a loja oferece (o produtor escolhe)", () => {
@@ -50,9 +78,9 @@ test("a regra do meio por parcelas, e as parcelas que a loja oferece (o produtor
 });
 
 test("o valor de cada parcela: a última leva o resto dos centavos", () => {
-  assert.deepEqual(valorDasParcelas(6408, 3), { valor_centavos: 2136, ultima_centavos: 2136 });
-  assert.deepEqual(valorDasParcelas(6409, 3), { valor_centavos: 2136, ultima_centavos: 2137 });
-  assert.deepEqual(valorDasParcelas(6375, 1), { valor_centavos: 6375, ultima_centavos: 6375 });
+  assert.deepEqual(valorDasParcelas(6000, 3), { valor_centavos: 2000, ultima_centavos: 2000 });
+  assert.deepEqual(valorDasParcelas(6001, 3), { valor_centavos: 2000, ultima_centavos: 2001 });
+  assert.deepEqual(valorDasParcelas(6000, 1), { valor_centavos: 6000, ultima_centavos: 6000 });
 });
 
 test("os erros do banco ao escolher o meio viram frases", () => {
