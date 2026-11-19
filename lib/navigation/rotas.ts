@@ -48,6 +48,8 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/producoes/linhas-do-orcamento", "Linha do orçamento"],
   ["/producoes", "Produção"],
   ["/ingressos/site", "Site da loja"],
+  ["/ingressos/locais", "Locais"],
+  ["/ingressos/eventos", "Evento"],
   ["/ingressos", "Ingressos"],
   ["/configuracoes/mcp", "Claude e ChatGPT (MCP)"],
   ["/configuracoes", "Configurações"],
@@ -69,6 +71,8 @@ const SECAO_DO_MENU: Record<string, string> = {
   "/producoes/acordos": "/producoes/temporadas",
   "/producoes/adiantamentos": "/producoes/temporadas",
   "/producoes/linhas-do-orcamento": "/producoes/temporadas",
+  // A página de um evento nasce da lista de eventos: o menu acende Eventos.
+  "/ingressos/eventos": "/ingressos",
 };
 
 export function correspondeRota(path: string, prefixo: string): boolean {

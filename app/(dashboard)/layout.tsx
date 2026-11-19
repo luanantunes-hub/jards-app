@@ -190,7 +190,8 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
     {
       section: "Ticketeria",
       items: [
-        { label: "Ingressos", href: "/ingressos", icon: Ticket },
+        { label: "Eventos", href: "/ingressos", icon: Ticket },
+        { label: "Locais", href: "/ingressos/locais", icon: MapPin },
         { label: "Site", href: "/ingressos/site", icon: Globe },
       ],
     },
