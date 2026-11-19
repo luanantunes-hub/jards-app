@@ -9,6 +9,7 @@ import { TopSheet } from "@/components/ui/TopSheet";
 import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
 import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { CompararComAPrestacaoSheet } from "@/components/producao/CompararComAPrestacaoSheet";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { CATEGORIAS_DO_ORCAMENTO, type CategoriaDoOrcamento, type SituacaoDoOrcamento } from "@/lib/producao/estados";
@@ -349,6 +350,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
   const [folhaNovo, setFolhaNovo] = useState(false);
   const [folhaLinha, setFolhaLinha] = useState<{ linha: null } | null>(null);
   const [folhaVariavel, setFolhaVariavel] = useState<{ variavel: VariavelDoOrcamento | null } | null>(null);
+  const [comparar, setComparar] = useState(false);
 
   useEffect(() => {
     let ativo = true;
@@ -544,6 +546,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
         <div role="menu" aria-label="Ações do orçamento" className="-m-2.5 flex flex-col gap-px">
           <button type="button" role="menuitem" className={ITEM_DO_MENU} onClick={() => { menuDeAcoes.fechar(); void copiar(); }}><Copy size={13} aria-hidden="true" className="text-black/40" /> Copiar como texto</button>
           {linhas.length > 0 && <button type="button" role="menuitem" className={ITEM_DO_MENU} onClick={() => { menuDeAcoes.fechar(); baixar(); }}><Download size={13} aria-hidden="true" className="text-black/40" /> Baixar planilha</button>}
+          <button type="button" role="menuitem" className={ITEM_DO_MENU} onClick={() => { menuDeAcoes.fechar(); setComparar(true); }}>Comparar com a prestação</button>
           {podeEditar && (
             <>
               <div className="my-1 h-px bg-black/[.08]" role="separator" />
@@ -649,6 +652,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
       {orcamentos.length > 1 && <CenariosLadoALado orcamentos={orcamentos} linhasPorOrcamento={todasAsLinhas} />}
 
       {folhaNovo && <NovoOrcamentoSheet organizationId={organizationId} temporadaId={temporadaId} nomeSugerido={orcamentos.length === 0 ? "Orçamento" : `Cenário ${orcamentos.length + 1}`} onClose={() => setFolhaNovo(false)} onCriou={id => { setEscolhido(id); recarregar(); }} />}
+      {comparar && <CompararComAPrestacaoSheet organizationId={organizationId} contas={contas} onClose={() => setComparar(false)} />}
       {folhaVariavel && orcamento && <VariavelSheet organizationId={organizationId} orcamentoId={orcamento.id} variavel={folhaVariavel.variavel} existentes={variaveis} linhas={linhas} onClose={() => setFolhaVariavel(null)} onSalvou={recarregar} />}
       {folhaLinha && orcamento && <LinhaSheet organizationId={organizationId} orcamentoId={orcamento.id} situacao={orcamento.situacao} linha={folhaLinha.linha} variaveis={variaveis} acordos={acordos} pagoDosLancamentos={null} onClose={() => setFolhaLinha(null)} onSalvou={recarregar} />}
     </section>
