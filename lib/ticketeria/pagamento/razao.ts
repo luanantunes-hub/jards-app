@@ -24,6 +24,30 @@ export function partidasDoPagamento(pedido: { total_centavos: number; produtor_c
   return partidas.filter(partida => partida.valor_centavos !== 0);
 }
 
+/**
+ * As partidas da devolução TOTAL de um pedido pago, em até 7 dias (arrependimento, D5; T7). É o inverso do pagamento: o comprador
+ * recebe o preço inteiro, o Jards devolve a comissão dele (a taxa) e a parte do produtor volta a zero. O que o Asaas **não devolve** do
+ * custo do meio (no Pix, sempre; no cartão com estorno total, o Asaas devolve a taxa de transação) é **absorvido pelo Jards**, nunca
+ * pelo produtor (decisão do dono, 19/11/2026, após ler a documentação do Asaas, ainda a confirmar no sandbox e com o comercial). Por isso
+ * a conta depende de um dado por meio de pagamento: "o Asaas devolveu o custo? sim/não". Estorno parcial e taxa de antecipação do cartão
+ * não passam por aqui: quem arca com eles é pergunta aberta no plano.
+ *
+ * Fecha em zero: psp = −(total − custo + custo não devolvido); produtor = +(parte do produtor − custo); plataforma = +(taxa + custo não devolvido).
+ */
+export function partidasDaDevolucao(
+  pedido: { total_centavos: number; produtor_centavos: number; taxa_centavos: number; custo_meio_centavos?: number },
+  asaasDevolveuOCusto: boolean,
+): Partida[] {
+  const custo = pedido.custo_meio_centavos ?? 0;
+  const naoDevolvido = asaasDevolveuOCusto ? 0 : custo;
+  const partidas: Partida[] = [
+    { conta: "psp_a_receber", valor_centavos: -(pedido.total_centavos - custo + naoDevolvido) },
+    { conta: "produtor", valor_centavos: pedido.produtor_centavos - custo },
+    { conta: "plataforma", valor_centavos: pedido.taxa_centavos + naoDevolvido },
+  ];
+  return partidas.filter(partida => partida.valor_centavos !== 0);
+}
+
 /** A transação fecha: duas ou mais partidas, nenhuma zerada, somando zero. */
 export function equilibrada(partidas: readonly Partida[]): boolean {
   return partidas.length >= 2 && partidas.every(partida => partida.valor_centavos !== 0) && partidas.reduce((soma, partida) => soma + partida.valor_centavos, 0) === 0;
