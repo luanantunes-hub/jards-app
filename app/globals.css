@@ -12,6 +12,9 @@
   --elevacao-sombra-2-cima: 0 -2px 6px rgba(28, 14, 51, .05), 0 -16px 40px rgba(28, 14, 51, .09);
   --elevacao-sombra-2-lado: -2px 0 6px rgba(28, 14, 51, .05), -16px 0 40px rgba(28, 14, 51, .09);
   --elevacao-sombra-3: 0 2px 8px rgba(28, 14, 51, .06), 0 24px 64px rgba(28, 14, 51, .14);
+  /* Folhas (TopSheet e BottomSheet): mais fundas que as demais, com um fio de 1px no lugar da borda. Dão peso e descolam a folha da tela. */
+  --elevacao-sombra-folha: 0 0 0 1px rgba(28, 14, 51, .18), 0 2px 4px rgba(28, 14, 51, .12), 0 24px 48px -8px rgba(28, 14, 51, .38), 0 70px 130px -24px rgba(28, 14, 51, .50);
+  --elevacao-sombra-folha-cima: 0 0 0 1px rgba(28, 14, 51, .18), 0 -2px 4px rgba(28, 14, 51, .12), 0 -24px 48px -8px rgba(28, 14, 51, .38), 0 -70px 130px -24px rgba(28, 14, 51, .50);
 }
 @utility elevacao-1 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-1); }
 @utility elevacao-2 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-2); }
@@ -19,6 +22,8 @@
 @utility elevacao-2-lado { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-2-lado); }
 @utility elevacao-3 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-3); }
 @utility elevacao-sombra-1 { box-shadow: var(--elevacao-sombra-1); }
+@utility elevacao-folha { box-shadow: var(--elevacao-sombra-folha); }
+@utility elevacao-folha-cima { box-shadow: var(--elevacao-sombra-folha-cima); }
 
 /* Véu: o fundo atrás de folhas, painéis e pop-ups. Escurece e desfoca a tela de leve.
    Use `veu` no fundo; nas folhas que entram com animação, some junto: `veu ${visivel ? "" : "veu-oculto"}`. */
