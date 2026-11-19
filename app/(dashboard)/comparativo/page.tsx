@@ -401,8 +401,9 @@ function ComparativoContent() {
                     onClick={() => setViewMode(value)}
                     className="px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                     style={{
-                      background: viewMode === value ? "#684DB0" : "#fff",
-                      color: viewMode === value ? "#fff" : "rgba(13,13,13,.45)",
+                      background: "#fff",
+                      color: viewMode === value ? "#684DB0" : "rgba(13,13,13,.45)",
+                      boxShadow: viewMode === value ? "inset 0 0 0 1px #684DB0" : undefined,
                       borderRight: i === 0 ? "1px solid rgba(13,13,13,.12)" : undefined,
                     }}
                   >
@@ -448,8 +449,8 @@ function ComparativoContent() {
                   onClick={() => setMetricaExtra(metricaExtra === "crescimento" ? "nenhuma" : "crescimento")}
                   className="flex items-center gap-1.5 rounded-l border px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                   style={{
-                    background: metricaExtra === "crescimento" ? "#684DB0" : "#fff",
-                    color: metricaExtra === "crescimento" ? "#fff" : "rgba(13,13,13,.45)",
+                    background: "#fff",
+                    color: metricaExtra === "crescimento" ? "#684DB0" : "rgba(13,13,13,.45)",
                     borderColor: metricaExtra === "crescimento" ? "#684DB0" : "rgba(13,13,13,.12)",
                     zIndex: metricaExtra === "crescimento" ? 10 : undefined,
                     position: "relative",
@@ -471,8 +472,8 @@ function ComparativoContent() {
                   onClick={() => setMetricaExtra(metricaExtra === "potencial" ? "nenhuma" : "potencial")}
                   className="flex items-center gap-1.5 rounded-r border px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                   style={{
-                    background: metricaExtra === "potencial" ? "#684DB0" : "#fff",
-                    color: metricaExtra === "potencial" ? "#fff" : "rgba(13,13,13,.45)",
+                    background: "#fff",
+                    color: metricaExtra === "potencial" ? "#684DB0" : "rgba(13,13,13,.45)",
                     borderColor: metricaExtra === "potencial" ? "#684DB0" : "rgba(13,13,13,.12)",
                     zIndex: metricaExtra === "potencial" ? 10 : undefined,
                     position: "relative",
