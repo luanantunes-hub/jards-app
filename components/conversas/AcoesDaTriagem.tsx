@@ -162,7 +162,7 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
         />
       )}
       {novaNegociacao && contato?.empresaId && (
-        <NovaCaptacaoModal empresaPreId={contato.empresaId} onClose={() => setNovaNegociacao(false)} onSaved={() => { setNovaNegociacao(false); onMudou(); }} />
+        <NovaCaptacaoModal empresaPreId={contato.empresaId} contatoPreId={contato.id} onClose={() => setNovaNegociacao(false)} onSaved={() => { setNovaNegociacao(false); onMudou(); }} />
       )}
 
       {contato
