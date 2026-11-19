@@ -4,7 +4,10 @@ import type { EmailProvider } from "@/lib/email/config";
 import { getValidEmailAccessToken, listEmailConnections } from "@/lib/email/connections";
 import { buscarMensagensDeContatos } from "@/lib/email/google";
 import { enderecosParaBusca, filtroDesde } from "@/lib/email/historico";
+import { interacaoDoEmail } from "@/lib/email/interacoes";
+import { emLotes, emPartes } from "@/lib/email/lotes";
 import { buscarMensagensDeContatosMicrosoft } from "@/lib/email/microsoft";
+import { decisorDeVisibilidade, type EmailExistente } from "@/lib/email/visibilidade";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // A primeira sincronização traz o histórico de cada contato e pode levar alguns segundos.
@@ -15,17 +18,6 @@ const INTERVALO_MINIMO_MS = 15 * 60_000;
 
 function normalizeEmail(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase();
-}
-
-function interactionSummary(body: string | null, snippet: string | null): string | null {
-  const source = body || snippet;
-  if (!source) return null;
-  const compact = source
-    .replace(/\r/g, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/[ \t]{2,}/g, " ")
-    .trim();
-  return compact ? compact.slice(0, 1200) : null;
 }
 
 type Resultado = { synced?: number; scanned?: number; ignored?: number; skipped?: boolean; error?: string };
@@ -168,6 +160,23 @@ async function sincronizarUma(userId: string, provider: EmailProvider, force: bo
       activeCaptacoes.set(captacao.empresa_crm_id, current);
     });
 
+    // "Só eu vejo" vale para a conversa inteira e sobrevive à sincronização: mensagem nova de uma conversa
+    // privada nasce privada, e a que já existe não volta a ser da equipe só por ter sido lida de novo.
+    const fios = [...new Set(matched.map(({ message }) => message.threadId).filter(Boolean))];
+    const existentes = (
+      await emLotes(emPartes(fios, 30), 3, async (grupo) => {
+        const { data, error: existentesError } = await (supabase as any)
+          .from("emails")
+          .select("message_id, thread_id, visibility")
+          .eq("user_id", userId)
+          .eq("organization_id", organizationId)
+          .in("thread_id", grupo);
+        if (existentesError) throw new Error(existentesError.message);
+        return (data ?? []) as EmailExistente[];
+      })
+    ).flat();
+    const decidirVisibilidade = decisorDeVisibilidade(existentes);
+
     const rows = matched.map(({ message: m, contact }) => {
       const companyCaptacoes = contact.empresa_crm_id
         ? activeCaptacoes.get(contact.empresa_crm_id) ?? []
@@ -192,38 +201,28 @@ async function sincronizarUma(userId: string, provider: EmailProvider, force: bo
         contato_id: contact.id,
         empresa_crm_id: contact.empresa_crm_id,
         captacao_id: captacaoId,
-        visibility: "organization",
+        visibility: decidirVisibilidade({ id: m.id, threadId: m.threadId }),
       };
     });
 
     const { data: savedEmails, error } = await (supabase as any)
       .from("emails")
       .upsert(rows, { onConflict: "user_id,message_id" })
-      .select("id, message_id, contato_id, empresa_crm_id, captacao_id, direction, subject, snippet, body_text, sent_at");
+      .select("id, message_id, contato_id, empresa_crm_id, captacao_id, direction, subject, snippet, body_text, sent_at, visibility");
 
     if (error) throw new Error(error.message);
 
-    const interactions = (savedEmails ?? []).map((email: any) => ({
-      organization_id: organizationId,
-      account_id: userId,
-      empresa_crm_id: email.empresa_crm_id,
-      contato_id: email.contato_id,
-      captacao_id: email.captacao_id,
-      email_id: email.id,
-      tipo: "email",
-      canal: "email",
-      tipo_interacao: "mensagem",
-      direcao: email.direction === "inbound" ? "entrada" : "saida",
-      assunto: email.subject?.trim() || "E-mail sem assunto",
-      resumo: interactionSummary(email.body_text, email.snippet),
-      ocorreu_em: email.sent_at ?? new Date().toISOString(),
-      created_by: userId,
-    }));
+    // A interação aparece para a organização inteira: só os e-mails visíveis à equipe a recebem.
+    const interactions = (savedEmails ?? [])
+      .filter((email: { visibility: string }) => email.visibility === "organization")
+      .map((email: Parameters<typeof interacaoDoEmail>[0]) => interacaoDoEmail(email, organizationId, userId));
 
-    const { error: interactionError } = await (supabase as any)
-      .from("crm_interacoes")
-      .upsert(interactions, { onConflict: "email_id" });
-    if (interactionError) throw new Error(interactionError.message);
+    if (interactions.length > 0) {
+      const { error: interactionError } = await (supabase as any)
+        .from("crm_interacoes")
+        .upsert(interactions, { onConflict: "email_id" });
+      if (interactionError) throw new Error(interactionError.message);
+    }
 
     await marcarSincronizada();
 
