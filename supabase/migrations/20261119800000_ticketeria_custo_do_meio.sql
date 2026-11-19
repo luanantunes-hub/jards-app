@@ -214,6 +214,8 @@ begin
 end;
 $$;
 
+revoke execute on function public.fn_ticketeria_confirmar_pagamento(uuid, text, text, bigint) from public, anon, authenticated;
+grant execute on function public.fn_ticketeria_confirmar_pagamento(uuid, text, text, bigint) to service_role;
 revoke execute on function public.fn_ticketeria_custo_do_meio(text, text, integer, bigint) from public, anon, authenticated;
 revoke execute on function public.fn_ticketeria_definir_meio(uuid, text, integer) from public, anon, authenticated;
 grant execute on function public.fn_ticketeria_custo_do_meio(text, text, integer, bigint) to service_role;

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
-import { CATEGORIAS_DO_INGRESSO, CLASSIFICACOES_INDICATIVAS, CONTAS_DO_RAZAO, QUEM_PAGA_A_TAXA, SITUACOES_DO_PEDIDO, TIPOS_DE_TRANSACAO, SITUACOES_DO_DOMINIO, SITUACOES_DO_EVENTO, SITUACOES_DO_SITE } from "../lib/ticketeria/estados";
+import { CATEGORIAS_DO_INGRESSO, CLASSIFICACOES_INDICATIVAS, CONTAS_DO_RAZAO, MEIOS_DE_PAGAMENTO, QUEM_PAGA_A_TAXA, SITUACOES_DO_PEDIDO, TIPOS_DE_TRANSACAO, SITUACOES_DO_DOMINIO, SITUACOES_DO_EVENTO, SITUACOES_DO_SITE } from "../lib/ticketeria/estados";
 
 // lib/ticketeria/banco.ts é o tipo do banco só da Ticketeria, escrito à mão (como lib/producao/banco.ts). Este teste o compara,
 // sem banco, com as migrations da Ticketeria: as mesmas tabelas, as mesmas colunas, a mesma anulabilidade, as listas fechadas
@@ -11,7 +11,7 @@ type Coluna = { nome: string; anulavel: boolean };
 
 async function migrationsDaTicketeria(): Promise<{ nome: string; sql: string }[]> {
   const pasta = "supabase/migrations";
-  const nomes = (await readdir(pasta)).filter(nome => /_ticketeria_(lojas_site|eventos|catalogo|pagamentos)\.sql$/.test(nome)).sort();
+  const nomes = (await readdir(pasta)).filter(nome => /_ticketeria_(lojas_site|eventos|catalogo|pagamentos|custo_do_meio)\.sql$/.test(nome)).sort();
   return Promise.all(nomes.map(async nome => ({ nome, sql: await readFile(`${pasta}/${nome}`, "utf8") })));
 }
 
@@ -21,6 +21,12 @@ function tabelasDoSql(sql: string): Map<string, Coluna[]> {
     const colunas = achado[2].split("\n").map(linha => linha.trim()).filter(linha => linha !== "" && !linha.startsWith("constraint "))
       .map(linha => ({ nome: linha.split(" ")[0], anulavel: !/\bnot null\b/.test(linha) && !/\bprimary key\b/.test(linha) }));
     tabelas.set(achado[1], colunas);
+  }
+  // As colunas que migrations posteriores acrescentam (`alter table ... add column if not exists`), na ordem das migrations.
+  for (const achado of sql.matchAll(/^alter table public\.(ticketeria_\w+) add column if not exists (\w+) ([^;\n]*);/gm)) {
+    const colunas = tabelas.get(achado[1]);
+    assert.ok(colunas, `alter table de ${achado[1]}, que nenhuma migration criou`);
+    if (!colunas.some(coluna => coluna.nome === achado[2])) colunas.push({ nome: achado[2], anulavel: !/\bnot null\b/.test(achado[3]) });
   }
   return tabelas;
 }
@@ -39,12 +45,13 @@ function tabelasDoTipo(ts: string): Map<string, Coluna[]> {
 
 test("lib/ticketeria/banco.ts tem as tabelas e as colunas da migration, com a mesma anulabilidade", async () => {
   const migrations = await migrationsDaTicketeria();
-  assert.equal(migrations.length, 4, "achou as migrations da T1, da T2, da T3 e da T4");
+  assert.equal(migrations.length, 5, "achou as migrations da T1 a T5");
   const doSql = tabelasDoSql(migrations.map(m => m.sql).join("\n"));
   const doTipo = tabelasDoTipo(await readFile("lib/ticketeria/banco.ts", "utf8"));
   assert.deepEqual([...doTipo.keys()].sort(), [...doSql.keys()].sort(), "as mesmas tabelas");
-  assert.deepEqual([...doSql.keys()].sort(), ["ticketeria_eventos", "ticketeria_ingressos", "ticketeria_locais", "ticketeria_lojas", "ticketeria_lotes", "ticketeria_notificacoes_provedor", "ticketeria_partidas", "ticketeria_pedido_itens", "ticketeria_pedidos", "ticketeria_sessoes", "ticketeria_setores", "ticketeria_site_dominios", "ticketeria_site_paginas", "ticketeria_sites", "ticketeria_taxas", "ticketeria_transacoes"]);
-  for (const [tabela, colunas] of doSql) assert.deepEqual(doTipo.get(tabela), colunas, `colunas de ${tabela}`);
+  assert.deepEqual([...doSql.keys()].sort(), ["ticketeria_custos_meio", "ticketeria_eventos", "ticketeria_ingressos", "ticketeria_locais", "ticketeria_lojas", "ticketeria_lotes", "ticketeria_notificacoes_provedor", "ticketeria_partidas", "ticketeria_pedido_itens", "ticketeria_pedidos", "ticketeria_sessoes", "ticketeria_setores", "ticketeria_site_dominios", "ticketeria_site_paginas", "ticketeria_sites", "ticketeria_taxas", "ticketeria_transacoes"]);
+  const porNome = (colunas: Coluna[] | undefined) => [...(colunas ?? [])].sort((x, y) => x.nome.localeCompare(y.nome));
+  for (const [tabela, colunas] of doSql) assert.deepEqual(porNome(doTipo.get(tabela)), porNome(colunas), `colunas de ${tabela}`);
 });
 
 test("as listas fechadas do banco são as de lib/ticketeria/estados.ts", async () => {
@@ -64,6 +71,8 @@ test("as listas fechadas do banco são as de lib/ticketeria/estados.ts", async (
   assert.deepEqual(lista("ticketeria_pedidos_quem_paga_check", "quem_paga_taxa"), [...QUEM_PAGA_A_TAXA]);
   assert.deepEqual(lista("ticketeria_transacoes_tipo_check", "tipo"), [...TIPOS_DE_TRANSACAO]);
   assert.deepEqual(lista("ticketeria_partidas_conta_check", "conta"), [...CONTAS_DO_RAZAO]);
+  assert.deepEqual(lista("ticketeria_custos_meio_meio_check", "meio"), [...MEIOS_DE_PAGAMENTO]);
+  assert.deepEqual(lista("ticketeria_pedidos_meio_check", "meio"), [...MEIOS_DE_PAGAMENTO]);
 });
 
 test("as migrations da loja, do site e dos eventos não apagam nada e toda função revoga de public e anon", async () => {
@@ -71,7 +80,7 @@ test("as migrations da loja, do site e dos eventos não apagam nada e toda funç
   const semComentarios = migration.sql.replace(/--.*$/gm, "");
   assert.doesNotMatch(semComentarios, /\bdrop\s+(table|function|policy|trigger|column|constraint)\b/i, "sem DROP");
   const funcoes = [...semComentarios.matchAll(/create or replace function public\.(\w+)\(([^)]*)\)/g)].map(m => m[1]);
-  assert.ok(funcoes.length >= 6, `${migration.nome}: leu as funções`);
+  assert.ok(funcoes.length >= 3, `${migration.nome}: leu as funções`);
   for (const funcao of funcoes) assert.match(semComentarios, new RegExp(`revoke execute on function public\\.${funcao}\\([^)]*\\) from public, anon`), `${funcao} revoga de public e anon`);
   assert.doesNotMatch(semComentarios, /grant [^;]*delete[^;]* on public\.ticketeria_lojas\b/, "a loja não se apaga pelo navegador");
   if (migration.nome.endsWith("_ticketeria_lojas_site.sql")) assert.match(semComentarios, /grant select on public\.ticketeria_site_dominios to authenticated;/, "o navegador só lê os domínios");

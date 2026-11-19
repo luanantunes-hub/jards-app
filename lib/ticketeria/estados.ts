@@ -41,3 +41,12 @@ export const TIPOS_DE_TRANSACAO: readonly TipoDeTransacao[] = ["pagamento", "est
 /** `ticketeria_partidas.conta`: o que o provedor recebeu (positivo), o que é do produtor e o que é do Jards (negativos). */
 export type ContaDoRazao = "psp_a_receber" | "produtor" | "plataforma";
 export const CONTAS_DO_RAZAO: readonly ContaDoRazao[] = ["psp_a_receber", "produtor", "plataforma"];
+
+// O custo do meio de pagamento (T5, parte 2, supabase/migrations/*_ticketeria_custo_do_meio.sql).
+
+/** `ticketeria_pedidos.meio` e `ticketeria_custos_meio.meio`. */
+export type MeioDePagamento = "pix" | "cartao";
+export const MEIOS_DE_PAGAMENTO: readonly MeioDePagamento[] = ["pix", "cartao"];
+
+/** `ticketeria_lojas.parcelas_max`: até quantas parcelas o produtor oferece no cartão (1 = só à vista). As faixas de custo cadastradas vão até 6. */
+export const PARCELAS_MAXIMAS = 6;
