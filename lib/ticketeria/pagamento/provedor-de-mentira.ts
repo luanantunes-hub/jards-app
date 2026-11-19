@@ -7,7 +7,7 @@ import type { AvisoDoProvedor, Cobranca, LeituraDoAviso, ProvedorDePagamento } f
 
 const assinar = (corpo: string, segredo: string) => createHmac("sha256", segredo).update(corpo).digest("hex");
 
-const TIPOS = new Set<AvisoDoProvedor["tipo"]>(["pagamento_confirmado", "pagamento_recusado", "estorno_confirmado"]);
+const TIPOS = new Set<AvisoDoProvedor["tipo"]>(["pagamento_confirmado", "pagamento_recusado", "estorno_confirmado", "chargeback_recebido"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export class ProvedorDeMentira implements ProvedorDePagamento {
@@ -22,7 +22,7 @@ export class ProvedorDeMentira implements ProvedorDePagamento {
     return { ref: `mentira_${pedido.id}`, pix_copia_e_cola: `PIX-DE-MENTIRA:${pedido.codigo}:${pedido.total_centavos}`, url: null, expira_em: pedido.expira_em };
   }
 
-  async estornar(ref: string, valorCentavos: number): Promise<{ ok: boolean }> {
+  async estornar(ref: string, valorCentavos: number): Promise<{ ok: boolean; motivo?: string }> {
     this.estornos.push({ ref, valor: valorCentavos });
     return { ok: true };
   }

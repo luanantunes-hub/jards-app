@@ -27,7 +27,12 @@ const PEDEM_ESTORNO = ["reserva_expirada_sem_lugar", "pedido_cancelado", "valor_
 
 export async function processarAviso(provedor: ProvedorDePagamento, portas: PortasDosAvisos, corpo: string, assinatura: string | null): Promise<ResultadoDoAviso> {
   const leitura = provedor.lerAviso(corpo, assinatura);
-  if (!leitura.ok) return leitura.motivo === "assinatura_invalida" ? { status: 401, resultado: "assinatura_invalida" } : { status: 400, resultado: "corpo_invalido" };
+  if (!leitura.ok) {
+    if (leitura.motivo === "assinatura_invalida") return { status: 401, resultado: "assinatura_invalida" };
+    // Aviso verdadeiro que não é de um pedido nosso ou não muda nada: responde 200 (senão o provedor o reenvia sem fim) e não grava.
+    if (leitura.motivo === "evento_irrelevante") return { status: 200, resultado: "ignorado" };
+    return { status: 400, resultado: "corpo_invalido" };
+  }
   const { aviso } = leitura;
   const registro = await portas.registrar({ provedor: provedor.nome, id_externo: aviso.id_externo, tipo: aviso.tipo, pedido_id: aviso.pedido_id, payload: JSON.parse(corpo) });
   if (registro === "ja_processado") return { status: 200, resultado: "repetido", pedido_id: aviso.pedido_id };

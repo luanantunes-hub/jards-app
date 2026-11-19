@@ -46,7 +46,7 @@ const PEDIDO = "0d740000-0000-4000-8000-000000000001";
 
 test("o provedor de mentira: a cobrança, a assinatura do aviso e o que ele recusa", async () => {
   const provedor = new ProvedorDeMentira(SEGREDO);
-  const cobranca = await provedor.criarCobranca({ id: PEDIDO, codigo: "ABCD2345", total_centavos: 10600, expira_em: "2026-12-01T00:00:00Z", comprador_email: "a@b.com" });
+  const cobranca = await provedor.criarCobranca({ id: PEDIDO, codigo: "ABCD2345", total_centavos: 10600, expira_em: "2026-12-01T00:00:00Z", comprador_nome: "Rita", comprador_email: "a@b.com" });
   assert.equal(cobranca.ref, `mentira_${PEDIDO}`);
   assert.match(cobranca.pix_copia_e_cola ?? "", /ABCD2345:10600/);
   const { corpo, assinatura } = provedor.simularAviso({ id_externo: "evt-1", tipo: "pagamento_confirmado", pedido_id: PEDIDO, ref: cobranca.ref, valor_centavos: 10600 });
