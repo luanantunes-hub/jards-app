@@ -106,14 +106,14 @@ export function CaptadorWorkspaceModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[calc(100dvh-20px)] w-full max-w-[35rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
+        className="folha-vidro flex max-h-[calc(100dvh-20px)] w-full max-w-[35rem] flex-col overflow-hidden"
         onClick={event => event.stopPropagation()}
       >
-        <header className="flex shrink-0 items-center justify-between border-b border-black/[.08] px-5 py-4">
+        <header className="flex shrink-0 items-center justify-between border-b border-black/[.08] px-6 py-5 sm:px-7 sm:py-6">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05]"><Briefcase size={16} className="text-black/50" /></div>
             <div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">{isNovo ? "Criar workspace" : "Configurar workspace"}</h2>
+              <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">{isNovo ? "Criar workspace" : "Configurar workspace"}</h2>
               <p className="mt-0.5 text-[0.625rem] text-black/35">Escolha como novas oportunidades entram no trabalho conjunto</p>
             </div>
           </div>
@@ -184,7 +184,7 @@ export function CaptadorWorkspaceModal({
                 </div>}
               </div>
             </main>
-            <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-black/[.08] px-5 py-3.5">
+            <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex shrink-0 items-center justify-between gap-4 border-t border-black/[.08] px-5 py-3.5">
               {erro ? <p role="alert" className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
               <div className="ml-auto flex shrink-0 items-center gap-2">
                 <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>

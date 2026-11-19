@@ -248,14 +248,14 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 veu" onClick={close}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[90vh] w-full max-w-[35rem] flex-col overflow-hidden rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-vidro-centro flex max-h-[90vh] w-full max-w-[35rem] flex-col overflow-hidden" onClick={event => event.stopPropagation()}>
         <div className="flex shrink-0 items-center justify-between border-b px-6 pb-4 pt-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.04]">
               <Users size={16} className="text-[#7259B5]" />
             </div>
             <div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Equipe e usuários extras</h2>
+              <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Equipe e usuários extras</h2>
               <p className="text-[0.6875rem] text-black/40">Compre a capacidade e depois envie os convites.</p>
             </div>
           </div>

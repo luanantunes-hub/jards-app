@@ -156,9 +156,9 @@ export function PropostaOperacionalModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center veu p-4" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-vidro-centro flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden" onClick={event => event.stopPropagation()}>
         <div className="flex shrink-0 items-center justify-between border-b border-black/[.07] px-6 py-4">
-          <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><FileCheck2 size={16} /></span><div><h2 id={titleId} className="text-[0.875rem] font-semibold text-black/80">{proposta ? "Proposta completa" : "Nova proposta"}</h2></div></div>
+          <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><FileCheck2 size={16} /></span><div><h2 id={titleId} className="text-black/80 font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">{proposta ? "Proposta completa" : "Nova proposta"}</h2></div></div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="rounded p-2 text-black/30 hover:bg-black/[.05]"><X size={14} /></button>
         </div>
 

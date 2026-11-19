@@ -203,7 +203,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="bg-white rounded w-full overflow-hidden flex flex-col border elevacao-3"
+          className="folha-vidro-centro w-full overflow-hidden flex flex-col"
           style={{ maxWidth: "35rem", maxHeight: "90vh" }}
           onClick={e => e.stopPropagation()}
         >
@@ -213,7 +213,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
               <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-[#282525]">
                 {isEdit ? <Pencil size={15} /> : <UserPlus size={16} />}
               </div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">
+              <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">
                 {isEdit ? "Editar agência" : step === "form" ? "Adicionar agência" : "Agência cadastrada"}
               </h2>
             </div>

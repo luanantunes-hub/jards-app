@@ -323,17 +323,17 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="bg-white rounded w-full flex flex-col border elevacao-3"
+          className="folha-vidro-centro w-full flex flex-col"
           style={{ maxWidth: "37.5rem", maxHeight: "calc(100vh - 48px)" }}
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
-          <header className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <header className="flex items-center justify-between px-6 py-5 sm:px-8 sm:py-6 border-b flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="flex items-center gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-[#282525]">
                 <FolderOpen size={16} />
               </span>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">{editData ? "Editar projeto" : "Novo projeto"}</h2>
+              <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">{editData ? "Editar projeto" : "Novo projeto"}</h2>
             </div>
             <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.06] transition">
               <X size={15} className="text-black/40" />
@@ -552,7 +552,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
           </main>
 
           {/* Footer */}
-          <footer className="flex flex-shrink-0 items-center justify-between border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex flex-shrink-0 items-center justify-between border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {erro ? <p role="alert" className="mr-4 min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
             <div className="ml-auto flex flex-shrink-0 items-center gap-2">
               <button onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">

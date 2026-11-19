@@ -187,7 +187,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded w-full overflow-hidden flex flex-col border elevacao-3"
+        className="folha-vidro-centro w-full overflow-hidden flex flex-col"
         style={{ maxWidth: "32.5rem", maxHeight: "90vh" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -197,7 +197,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
             <div className="w-9 h-9 rounded flex items-center justify-center" style={{ background: "rgba(13,13,13,.04)" }}>
               <ArrowRightLeft size={16} style={{ color: "#7259B5" }} />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Solicitar transferência</h2>
+            <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Solicitar transferência</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/5 transition">
             <X size={15} className="text-black/40" />
