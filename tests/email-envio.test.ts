@@ -86,7 +86,7 @@ function decodificar(bruta: string) {
 
 test("mensagem do Gmail: cabeçalhos, assunto com acento e corpo em UTF-8", () => {
   const { cabecalhos, corpo } = decodificar(montarMensagemDoGmail({
-    de: "luan@platibanda.com", para: ["ana@x.com", "b@y.com"], cc: ["c@z.com"], assunto: "Proposta: Rota do Som — ação", texto: "Olá!\nSegue a proposta.",
+    de: "luan@platibanda.com", para: ["ana@x.com", "b@y.com"], cc: ["c@z.com"], cco: [], assunto: "Proposta: Rota do Som — ação", texto: "Olá!\nSegue a proposta.",
   }));
   assert.ok(cabecalhos.includes("From: luan@platibanda.com"));
   assert.ok(cabecalhos.includes("To: ana@x.com, b@y.com"));
@@ -99,12 +99,20 @@ test("mensagem do Gmail: cabeçalhos, assunto com acento e corpo em UTF-8", () =
 
 test("mensagem do Gmail: resposta leva In-Reply-To e References; quebra de linha em cabeçalho não passa", () => {
   const { cabecalhos } = decodificar(montarMensagemDoGmail({
-    de: "luan@platibanda.com", para: ["ana@x.com"], cc: [], assunto: "Re: Oi\r\nBcc: espiao@x.com", texto: "ok", respondendoA: "<abc@mail.x.com>",
+    de: "luan@platibanda.com", para: ["ana@x.com"], cc: [], cco: [], assunto: "Re: Oi\r\nBcc: espiao@x.com", texto: "ok", respondendoA: "<abc@mail.x.com>",
   }));
   assert.ok(cabecalhos.includes("In-Reply-To: <abc@mail.x.com>"));
   assert.ok(cabecalhos.includes("References: <abc@mail.x.com>"));
   assert.ok(!cabecalhos.some((linha) => linha.startsWith("Bcc:")), "o assunto não injeta cabeçalho");
   assert.ok(!cabecalhos.some((linha) => linha.startsWith("Cc:")), "sem Cc, sem a linha");
+});
+
+test("mensagem do Gmail: Cco vira cabeçalho Bcc, sem quebra de linha escapar para outro cabeçalho", () => {
+  const { cabecalhos } = decodificar(montarMensagemDoGmail({
+    de: "luan@platibanda.com", para: ["ana@x.com"], cc: [], cco: ["oculto@x.com", "chefe@x.com\r\nX-Injetado: 1"], assunto: "Oi", texto: "ok",
+  }));
+  assert.ok(cabecalhos.includes("Bcc: oculto@x.com, chefe@x.com X-Injetado: 1"));
+  assert.ok(!cabecalhos.some((linha) => linha.startsWith("X-Injetado:")), "quebra de linha no endereço não cria cabeçalho novo");
 });
 
 test("depois de uma falha, tenta de novo em 5 minutos, até 3 vezes", () => {

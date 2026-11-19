@@ -12,7 +12,7 @@ const DIA_MS = 86_400_000;
 
 /** As colunas da tabela `emails` que formam uma `EmailDeConversa`. O texto completo (`body_text`) fica de fora: só a folha da conversa o lê. */
 export const COLUNAS_DO_EMAIL_DE_CONVERSA =
-  "id,message_id,thread_id,subject,snippet,from_email,from_name,to_emails,sent_at,direction,visibility,user_id,contato_id,empresa_crm_id,captacao_id";
+  "id,message_id,thread_id,subject,snippet,from_email,from_name,to_emails,cc_emails,sent_at,direction,visibility,user_id,contato_id,empresa_crm_id,captacao_id";
 
 export type EmailDeConversa = {
   id: string;
@@ -23,6 +23,7 @@ export type EmailDeConversa = {
   from_email: string | null;
   from_name: string | null;
   to_emails: string[] | null;
+  cc_emails: string[] | null;
   sent_at: string | null;
   direction: string | null;
   visibility: string;
@@ -159,6 +160,35 @@ export function aguardandoResposta(conversas: readonly Conversa[], minimoDeDias 
       if (diasA !== diasB) return diasB - diasA;
       return (a.ultimaEm ?? 0) - (b.ultimaEm ?? 0);
     });
+}
+
+function enderecosUnicosSemMim(enderecos: readonly (string | null | undefined)[], meuEmail: string | null): string[] {
+  const minha = (meuEmail ?? "").trim().toLowerCase();
+  const vistos = new Set<string>();
+  const resultado: string[] = [];
+  for (const endereco of enderecos) {
+    const limpo = (endereco ?? "").trim();
+    const chave = limpo.toLowerCase();
+    if (!limpo || chave === minha || vistos.has(chave)) continue;
+    vistos.add(chave);
+    resultado.push(limpo);
+  }
+  return resultado;
+}
+
+/**
+ * Quem entra em "Responder a todos" a partir da última mensagem: quando a equipe escreveu por último, os mesmos
+ * destinatários de antes; quando foi o outro lado, ele mais quem também recebeu. `meuEmail` sai da lista nos dois
+ * casos — ninguém precisa de uma cópia para o próprio endereço.
+ */
+export function destinatariosDeRespostaTodos(
+  ultima: Pick<EmailDeConversa, "direction" | "from_email" | "to_emails" | "cc_emails">,
+  meuEmail: string | null,
+): { para: string[]; cc: string[] } {
+  const para = ultima.direction === "outbound"
+    ? enderecosUnicosSemMim(ultima.to_emails ?? [], meuEmail)
+    : enderecosUnicosSemMim([ultima.from_email, ...(ultima.to_emails ?? [])], meuEmail);
+  return { para, cc: enderecosUnicosSemMim(ultima.cc_emails ?? [], meuEmail) };
 }
 
 /**

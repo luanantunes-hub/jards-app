@@ -18,6 +18,7 @@ export const MAXIMO_DE_AGENDADOS_POR_PESSOA = 100;
 export type PedidoDeEnvio = {
   para: string[];
   cc: string[];
+  cco: string[];
   assunto: string;
   texto: string;
   /** Agendar para esta hora (ISO). Sem isso, envia agora. */
@@ -50,7 +51,9 @@ export function validarPedidoDeEnvio(corpo: unknown, agora: Date = new Date()): 
   if (para.length === 0) return { ok: false, erro: "Informe para quem enviar." };
   const cc = listaDeEnderecos(dados.cc);
   if (cc === null) return { ok: false, erro: "Confira os e-mails em Cc: algum não é um endereço válido." };
-  if (para.length + cc.length > MAXIMO_DE_DESTINATARIOS) return { ok: false, erro: `No máximo ${MAXIMO_DE_DESTINATARIOS} destinatários por e-mail.` };
+  const cco = listaDeEnderecos(dados.cco);
+  if (cco === null) return { ok: false, erro: "Confira os e-mails em Cco: algum não é um endereço válido." };
+  if (para.length + cc.length + cco.length > MAXIMO_DE_DESTINATARIOS) return { ok: false, erro: `No máximo ${MAXIMO_DE_DESTINATARIOS} destinatários por e-mail.` };
 
   const assunto = typeof dados.assunto === "string" ? dados.assunto.replace(/\s*[\r\n]+\s*/g, " ").trim() : "";
   if (!assunto) return { ok: false, erro: "Informe o assunto." };
@@ -76,7 +79,7 @@ export function validarPedidoDeEnvio(corpo: unknown, agora: Date = new Date()): 
     responderAEmailId = dados.responderAEmailId;
   }
 
-  return { ok: true, pedido: { para, cc, assunto, texto, enviarEm, responderAEmailId } };
+  return { ok: true, pedido: { para, cc, cco, assunto, texto, enviarEm, responderAEmailId } };
 }
 
 /** "Re: assunto", sem empilhar "Re: Re:". */
@@ -113,18 +116,23 @@ export type EntradaDoMime = {
   de: string;
   para: readonly string[];
   cc: readonly string[];
+  cco: readonly string[];
   assunto: string;
   texto: string;
   /** Message-ID (RFC) da mensagem respondida: o Gmail só encadeia a resposta no fio com esses cabeçalhos. */
   respondendoA?: string | null;
 };
 
-/** A mensagem no formato que o Gmail aceita (RFC 2822), em base64 "url safe". */
-export function montarMensagemDoGmail({ de, para, cc, assunto, texto, respondendoA }: EntradaDoMime): string {
+/**
+ * A mensagem no formato que o Gmail aceita (RFC 2822), em base64 "url safe". O cabeçalho "Bcc" vai no que é
+ * enviado: o próprio Gmail o remove da cópia que os outros destinatários recebem, mas ainda entrega a quem está nele.
+ */
+export function montarMensagemDoGmail({ de, para, cc, cco, assunto, texto, respondendoA }: EntradaDoMime): string {
   const cabecalhos = [
     `From: ${semQuebras(de)}`,
     `To: ${para.map(semQuebras).join(", ")}`,
     ...(cc.length > 0 ? [`Cc: ${cc.map(semQuebras).join(", ")}`] : []),
+    ...(cco.length > 0 ? [`Bcc: ${cco.map(semQuebras).join(", ")}`] : []),
     `Subject: ${cabecalhoCodificado(assunto)}`,
     ...(respondendoA ? [`In-Reply-To: ${semQuebras(respondendoA)}`, `References: ${semQuebras(respondendoA)}`] : []),
     "MIME-Version: 1.0",

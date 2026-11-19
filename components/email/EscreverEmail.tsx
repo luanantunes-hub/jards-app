@@ -8,7 +8,7 @@ const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-
 const AREA = "min-h-[11rem] w-full resize-y rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] leading-relaxed text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
 
-export type InicioDoEmail = { para?: string[]; assunto?: string; responderAEmailId?: string };
+export type InicioDoEmail = { para?: string[]; cc?: string[]; assunto?: string; responderAEmailId?: string };
 export type ResultadoDoEnvio = { agendado: boolean; enviarEm: string | null };
 
 /** "ana@x.com, bia@y.com" ou separado por espaço, ponto e vírgula ou quebra de linha. */
@@ -29,8 +29,10 @@ function proximaHoraLocal(minutos: number): string {
  */
 export function EscreverEmail({ inicio, onClose, onEnviado }: { inicio?: InicioDoEmail; onClose: () => void; onEnviado: (resultado: ResultadoDoEnvio) => void }) {
   const [para, setPara] = useState((inicio?.para ?? []).join(", "));
-  const [cc, setCc] = useState("");
-  const [mostrarCc, setMostrarCc] = useState(false);
+  const [cc, setCc] = useState((inicio?.cc ?? []).join(", "));
+  const [mostrarCc, setMostrarCc] = useState((inicio?.cc ?? []).length > 0);
+  const [cco, setCco] = useState("");
+  const [mostrarCco, setMostrarCco] = useState(false);
   const [assunto, setAssunto] = useState(inicio?.assunto ?? "");
   const [texto, setTexto] = useState("");
   const [modo, setModo] = useState<"agora" | "agendar">("agora");
@@ -50,6 +52,7 @@ export function EscreverEmail({ inicio, onClose, onEnviado }: { inicio?: InicioD
         body: JSON.stringify({
           para: enderecosDoCampo(para),
           cc: enderecosDoCampo(cc),
+          cco: enderecosDoCampo(cco),
           assunto,
           texto,
           responderAEmailId: inicio?.responderAEmailId,
@@ -91,9 +94,12 @@ export function EscreverEmail({ inicio, onClose, onEnviado }: { inicio?: InicioD
           </p>
         )}
         <div>
-          <div className="mb-1.5 flex items-baseline justify-between">
+          <div className="mb-1.5 flex items-baseline justify-between gap-3">
             <label className="text-[0.6875rem] font-medium text-black/55" htmlFor="email-para">Para</label>
-            {!mostrarCc && <button type="button" onClick={() => setMostrarCc(true)} className="text-[0.6875rem] font-medium text-black/40 hover:text-black/60">Cc</button>}
+            <div className="flex items-center gap-3">
+              {!mostrarCc && <button type="button" onClick={() => setMostrarCc(true)} className="text-[0.6875rem] font-medium text-black/40 hover:text-black/60">Cc</button>}
+              {!mostrarCco && <button type="button" onClick={() => setMostrarCco(true)} className="text-[0.6875rem] font-medium text-black/40 hover:text-black/60">Cco</button>}
+            </div>
           </div>
           <input id="email-para" autoFocus={!inicio?.para?.length} className={CAMPO} value={para} onChange={event => setPara(event.target.value)} placeholder="nome@empresa.com.br" disabled={enviando} />
         </div>
@@ -101,6 +107,12 @@ export function EscreverEmail({ inicio, onClose, onEnviado }: { inicio?: InicioD
           <div>
             <label className={ROTULO} htmlFor="email-cc">Cc</label>
             <input id="email-cc" className={CAMPO} value={cc} onChange={event => setCc(event.target.value)} disabled={enviando} />
+          </div>
+        )}
+        {mostrarCco && (
+          <div>
+            <label className={ROTULO} htmlFor="email-cco">Cco</label>
+            <input id="email-cco" className={CAMPO} value={cco} onChange={event => setCco(event.target.value)} disabled={enviando} />
           </div>
         )}
         <div>

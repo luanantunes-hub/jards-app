@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
           provider,
           para: pedido.para,
           cc: pedido.cc,
+          cco: pedido.cco,
           assunto: pedido.assunto,
           texto: pedido.texto,
           responder_a_email_id: pedido.responderAEmailId,

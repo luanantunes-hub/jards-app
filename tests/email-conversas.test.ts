@@ -4,6 +4,7 @@ import {
   agruparConversas,
   aguardandoResposta,
   assuntoSemPrefixo,
+  destinatariosDeRespostaTodos,
   JANELA_AGUARDANDO_DIAS,
   provedorDaMensagem,
   rotuloAguardando,
@@ -27,6 +28,7 @@ function email(campos: Partial<EmailDeConversa> = {}): EmailDeConversa {
     from_email: "luan@exemplo.com.br",
     from_name: "Luan",
     to_emails: ["marina@aurora.com.br"],
+    cc_emails: null,
     sent_at: ha(1),
     direction: "outbound",
     visibility: "organization",
@@ -156,4 +158,35 @@ test("a mensagem é do Gmail quando o código é hexadecimal curto, e do Outlook
   assert.equal(provedorDaMensagem("18c2f3a4b5d6e7f8"), "google");
   assert.equal(provedorDaMensagem("AAMkAGI2THVSAAA="), "microsoft");
   assert.equal(provedorDaMensagem("AAMkADU3NjQyZDkyLWE4MmEtNGQzNi1iNTM0LTEzYjU5MzFhYjQ5NwBGAAAAAAA"), "microsoft");
+});
+
+test("responder a todos: eu escrevi por último, então é para quem eu já tinha escrito", () => {
+  const ultima = email({ direction: "outbound", to_emails: ["marina@aurora.com.br", "bia@aurora.com.br"], cc_emails: ["financeiro@aurora.com.br"] });
+  assert.deepEqual(destinatariosDeRespostaTodos(ultima, "luan@exemplo.com.br"), {
+    para: ["marina@aurora.com.br", "bia@aurora.com.br"],
+    cc: ["financeiro@aurora.com.br"],
+  });
+});
+
+test("responder a todos: o outro lado escreveu por último, então é ele mais quem também recebeu, sem mim", () => {
+  const ultima = email({
+    direction: "inbound",
+    from_email: "marina@aurora.com.br",
+    to_emails: ["luan@exemplo.com.br", "bia@aurora.com.br"],
+    cc_emails: ["financeiro@aurora.com.br"],
+  });
+  assert.deepEqual(destinatariosDeRespostaTodos(ultima, "luan@exemplo.com.br"), {
+    para: ["marina@aurora.com.br", "bia@aurora.com.br"],
+    cc: ["financeiro@aurora.com.br"],
+  });
+});
+
+test("responder a todos: sem saber meu e-mail, não filtra ninguém; endereços repetidos (em caixas diferentes) saem só uma vez", () => {
+  const ultima = email({
+    direction: "inbound",
+    from_email: "Marina@Aurora.com.br",
+    to_emails: ["luan@exemplo.com.br", "marina@aurora.com.br"],
+    cc_emails: [],
+  });
+  assert.deepEqual(destinatariosDeRespostaTodos(ultima, null).para, ["Marina@Aurora.com.br", "luan@exemplo.com.br"]);
 });
