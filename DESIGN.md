@@ -162,7 +162,7 @@ Exceções:
 
 ## Modais, sheets e menus
 
-Folhas, pop-ups e painéis laterais do CRM e da captação têm o mesmo peso e acabamento de vidro: `TopSheet` (desce do topo), `BottomSheet` (sobe da base), as folhas próprias, o pop-up no centro (`folha-vidro-centro`) e o painel lateral direito (`folha-vidro-direita`). Em desenho novo, use essas classes em vez de `bg-white rounded border elevacao-*`. Prestação e Produção ainda seguem o desenho antigo.
+No CRM e na captação, tudo que abre por cima da tela é uma **folha que desce do topo**, no desenho da Nova atividade: pop-ups de cadastro e edição, confirmações, painéis que antes vinham da direita (editar atividade, registros, personalizar painel, painel da empresa). Não há mais pop-up no centro nem painel lateral nesses módulos. A receita é o fundo com `veu` alinhado ao topo (`fixed inset-0 flex items-start justify-center veu`) e a folha com `folha-desce folha-vidro max-h-[96dvh] w-full max-w-[...]`; `folha-desce` faz a entrada vinda de cima (260ms, sem JavaScript, respeita `prefers-reduced-motion`). `TopSheet` é a versão pronta para folhas simples, `BottomSheet` (sobe da base) fica só para o celular. As classes `folha-vidro-centro` e `folha-vidro-direita` seguem em `globals.css` para desenhos que precisem delas, mas o CRM não as usa. Prestação e Produção ainda seguem o desenho antigo.
 
 - cantos de 1,25rem (`--raio-folha`) no lado livre (nos pop-ups, em volta toda); é a exceção aos 4px do produto;
 - superfície de vidro: quase branca, com o fundo desfocado por trás, um fio de luz por dentro e um fio de 1px no lugar da borda (`folha-vidro` e `folha-vidro-cima` em `app/globals.css`);

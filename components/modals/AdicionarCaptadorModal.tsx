@@ -196,14 +196,14 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 veu"
+        className="fixed inset-0 z-50 flex justify-center veu items-start"
         onClick={handleClose}
       >
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="folha-vidro-centro w-full overflow-hidden flex flex-col"
+          className="folha-desce folha-vidro w-full overflow-hidden flex flex-col max-h-[96dvh]"
           style={{ maxWidth: "35rem", maxHeight: "90vh" }}
           onClick={e => e.stopPropagation()}
         >

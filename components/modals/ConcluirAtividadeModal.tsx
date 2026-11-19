@@ -53,8 +53,8 @@ export function ConcluirAtividadeModal({ atividade, onClose, onCompleted }: {
     onCompleted({ feita: true, data_realizada: data?.data_realizada ?? new Date().toISOString() });
   }
 
-  return <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 veu" onClick={onClose}>
-    <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-vidro-centro w-full max-w-lg" onClick={e=>e.stopPropagation()}>
+  return <div className="fixed inset-0 z-[70] flex justify-center veu items-start" onClick={onClose}>
+    <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-desce folha-vidro w-full max-w-lg max-h-[96dvh]" onClick={e=>e.stopPropagation()}>
       <header className="flex items-center justify-between border-b px-6 py-5 sm:px-8 sm:py-6" style={{borderColor:"rgba(13,13,13,.08)"}}><div><p id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Concluir atividade</p><p className="mt-0.5 text-[0.6875rem] text-black/40">{atividade.nome}</p></div><button type="button" onClick={onClose} aria-label="Fechar" className="text-black/30 hover:text-black/55"><X size={15}/></button></header>
       <div className="space-y-5 p-6">
         <div><p className="mb-2 text-[0.75rem] font-semibold text-[#282525]">Houve contato com a empresa?</p><div className="flex gap-2"><button onClick={()=>setHouveContato(true)} disabled={!podeRegistrar} className="rounded border bg-white px-3 py-2 text-[0.75rem] font-medium disabled:opacity-35" style={{color:houveContato?"#7259B5":"rgba(13,13,13,.45)",borderColor:houveContato?"#7259B560":"rgba(13,13,13,.12)"}}>Sim, registrar interação</button><button onClick={()=>setHouveContato(false)} className="rounded border bg-white px-3 py-2 text-[0.75rem] font-medium" style={{color:!houveContato?"#7259B5":"rgba(13,13,13,.45)",borderColor:!houveContato?"#7259B560":"rgba(13,13,13,.12)"}}>Não, apenas concluir</button></div>{!podeRegistrar && <p className="mt-2 text-[0.625rem] text-black/35">Vincule a atividade a uma empresa ou negociação para registrar o contato.</p>}</div>

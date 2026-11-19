@@ -102,14 +102,14 @@ export function PropostaUploadModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 veu"
+      className="fixed inset-0 z-50 flex justify-center veu items-start"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="folha-vidro-centro w-full max-w-md"
+        className="folha-desce folha-vidro w-full max-w-md max-h-[96dvh]"
         style={{ borderColor: "rgba(13,13,13,.10)" }}
         onClick={e => e.stopPropagation()}
       >

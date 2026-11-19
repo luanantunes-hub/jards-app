@@ -104,12 +104,12 @@ export function SugerirContribuicaoModal({
 
   if (saved) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center veu" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex justify-center veu items-start" onClick={onClose}>
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="folha-vidro-centro w-full max-w-md p-8 text-center"
+          className="folha-desce folha-vidro w-full max-w-md p-8 text-center max-h-[96dvh]"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="w-12 h-12 rounded-full bg-black/[.04] flex items-center justify-center mx-auto mb-4">
@@ -125,12 +125,12 @@ export function SugerirContribuicaoModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center veu" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex justify-center veu items-start" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="folha-vidro-centro w-full max-w-lg p-6"
+        className="folha-desce folha-vidro w-full max-w-lg p-6 max-h-[96dvh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

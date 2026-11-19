@@ -29,8 +29,8 @@ export function BuscarEmpresa({ busca, onBusca, resultados, buscando, onAdiciona
     : buscando ? "Buscando…" : resultados.length === 0 ? "Nenhuma empresa encontrada." : null;
 
   return (
-    <div className="veu fixed inset-0 z-50 flex items-start justify-center px-4 pt-[18vh] sm:items-center sm:pt-0" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-label="Adicionar empresa ao comparativo" className="folha-vidro-centro w-full max-w-lg overflow-hidden" onClick={(evento) => evento.stopPropagation()}>
+    <div className="veu fixed inset-0 z-50 flex items-start justify-center" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label="Adicionar empresa ao comparativo" className="folha-desce folha-vidro w-full max-w-lg overflow-hidden max-h-[96dvh]" onClick={(evento) => evento.stopPropagation()}>
         <div className="relative border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <Search size={15} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-black/30" aria-hidden="true" />
           <input

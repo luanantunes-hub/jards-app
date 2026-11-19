@@ -44,12 +44,12 @@ export function ModalIlustrado({ passos, acoesFinais, onClose }: {
   if (!passo) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center veu sm:items-center sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex justify-center veu items-start" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={tituloId}
-        className="folha-vidro-cima sm:folha-vidro-centro relative flex max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-hidden"
+        className="folha-desce folha-vidro relative flex max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => {
           if (e.key === "ArrowRight") irPara(indice + 1);
