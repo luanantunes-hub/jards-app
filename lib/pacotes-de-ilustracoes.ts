@@ -16,8 +16,8 @@ export type PacoteDeIlustracoes = {
 };
 
 export const PACOTES_DE_ILUSTRACOES = [
-  // O tamanduá tomando café, andando de skate, atendendo o telefone e comendo hambúrguer: 16 desenhos.
-  { id: "dia-a-dia", nome: "Tamanduá no dia a dia", total: 16 },
+  // O tamanduá tomando café, andando de skate, atendendo o telefone e comendo hambúrguer: 15 desenhos.
+  { id: "dia-a-dia", nome: "Tamanduá no dia a dia", total: 15 },
 ] as const satisfies readonly PacoteDeIlustracoes[];
 
 /** O pacote que aparece na frente das frases hoje. */

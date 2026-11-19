@@ -26,16 +26,28 @@ export const FRASES_DAS_SECOES = {
 
 export type SecaoComFrase = keyof typeof FRASES_DAS_SECOES;
 
+function mdc(a: number, b: number): number {
+  return b === 0 ? a : mdc(b, a % b);
+}
+
+/** O menor passo, a partir de `preferido`, sem divisor comum com `total`: assim, andar de passo em passo percorre o pacote inteiro. */
+export function passoCoprimo(total: number, preferido: number): number {
+  let passo = preferido;
+  while (mdc(passo, total) !== 1) passo++;
+  return passo;
+}
+
 const ORDEM_DAS_SECOES: (SecaoComFrase | "painel")[] = ["painel", ...(Object.keys(FRASES_DAS_SECOES) as SecaoComFrase[])];
 
 /**
  * Qual dos desenhos do pacote a seção mostra hoje (de 1 ao total do pacote). O sorteio é sempre dentro de um
  * pacote (lib/pacotes-de-ilustracoes.ts). Muda todo dia e, no mesmo dia, as seções não repetem a de outra
- * enquanto houver desenho sobrando: o passo 5 não tem divisor comum com 16, então as 16 primeiras posições não
- * colidem. Com mais seções que desenhos, só as últimas repetem uma das primeiras, e elas nunca aparecem juntas.
+ * enquanto houver desenho sobrando: o passo entre seções não tem divisor comum com o total do pacote (ver
+ * `passoCoprimo`), então as primeiras posições, até o total, não colidem. Com mais seções que desenhos, só as
+ * últimas repetem uma das primeiras, e elas nunca aparecem juntas na tela.
  */
 export function ilustracaoDoDia(secao: SecaoComFrase | "painel", agora: Date, pacote: PacoteDeIlustracoes = PACOTE_ATIVO): number {
   const dia = Math.floor(Date.UTC(agora.getFullYear(), agora.getMonth(), agora.getDate()) / 86_400_000);
   const posicao = Math.max(0, ORDEM_DAS_SECOES.indexOf(secao));
-  return ((dia * 7 + posicao * 5) % pacote.total) + 1;
+  return ((dia * passoCoprimo(pacote.total, 7) + posicao * passoCoprimo(pacote.total, 5)) % pacote.total) + 1;
 }
