@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { SegmentedControl } from "@/components/ui/FilterControls";
-import { TopSheet } from "@/components/ui/TopSheet";
+import { CornerSheet } from "@/components/ui/CornerSheet";
 
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const AREA = "min-h-[11rem] w-full resize-y rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] leading-relaxed text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
@@ -74,7 +74,7 @@ export function EscreverEmail({ inicio, onClose, onEnviado }: { inicio?: InicioD
   }
 
   return (
-    <TopSheet
+    <CornerSheet
       titulo={inicio?.responderAEmailId ? "Responder e-mail" : "Escrever e-mail"}
       onClose={onClose}
       footer={fechar => (
@@ -131,6 +131,6 @@ export function EscreverEmail({ inicio, onClose, onEnviado }: { inicio?: InicioD
           )}
         </div>
       </div>
-    </TopSheet>
+    </CornerSheet>
   );
 }
