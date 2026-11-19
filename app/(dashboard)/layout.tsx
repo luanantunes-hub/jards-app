@@ -53,6 +53,7 @@ import {
   ChevronDown,
   FileCheck,
   type LucideIcon,
+  Mail,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -83,7 +84,8 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
 // Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
 // "Reuniões" depende do servidor do Vexa (docs/reunioes-deploy-vexa.md), que ainda não está
 // no ar; sem ele, toda reunião criada termina como "falhou". Tire a rota daqui quando ligar.
-const ROTAS_SO_SUPER_ADMIN = ["/reunioes"];
+// "E-mails" (triagem de quem ainda não é contato) acompanha o beta fechado do e-mail: tire a rota daqui quando abrir.
+const ROTAS_SO_SUPER_ADMIN = ["/reunioes", "/emails"];
 
 // `icone`: o grupo aparece no menu como uma seção que abre e fecha para baixo (como no Apollo), com este ícone no título e as telas dele logo abaixo.
 const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementType; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
@@ -119,6 +121,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
         { label: "Proponentes", href: "/proponentes",       icon: Landmark       },
         { label: "Captadores",  href: "/captadores",        icon: Handshake      },
         { label: "Contatos",    href: "/contatos",          icon: ContactRound   },
+        { label: "E-mails",     href: "/emails",            icon: Mail           },
         { label: "Clientes",    href: "/contas-patrocinio", icon: UserRoundCheck },
       ],
     },

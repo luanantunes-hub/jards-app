@@ -7,7 +7,7 @@ import type { MensagemDeEmail } from "./mensagem";
 
 export const GRAPH = "https://graph.microsoft.com/v1.0";
 
-const CAMPOS = "id,conversationId,internetMessageId,subject,bodyPreview,from,toRecipients,ccRecipients,receivedDateTime,sentDateTime,isDraft";
+const CAMPOS = "id,conversationId,internetMessageId,subject,bodyPreview,from,toRecipients,ccRecipients,receivedDateTime,sentDateTime,isDraft,inferenceClassification";
 
 type EnderecoGraph = { emailAddress?: { name?: string | null; address?: string | null } | null } | null;
 
@@ -23,6 +23,8 @@ export type MensagemGraph = {
   receivedDateTime?: string | null;
   sentDateTime?: string | null;
   isDraft?: boolean;
+  /** "focused" ou "other" (Caixa de entrada Prioritária do Outlook). Contas sem a separação não trazem o campo. */
+  inferenceClassification?: string | null;
 };
 
 /** As pastas lidas: caixa de entrada, enviados e arquivo. Lixo e excluídos ficam de fora. */

@@ -71,7 +71,7 @@ export function bancoFalso(resolver: Resolvedor) {
         return Promise.resolve(resolver_(consulta)).then(resolve, rejeitar);
       },
     };
-    for (const operador of ["eq", "neq", "in", "ilike", "is", "not", "gte", "lt", "or", "contains"]) {
+    for (const operador of ["eq", "neq", "in", "ilike", "is", "not", "gte", "lt", "or", "contains", "overlaps"]) {
       cadeia[operador] = (coluna: string, valor?: unknown, extra?: unknown) => {
         consulta.filtros.push([operador, coluna, extra === undefined ? valor : [valor, extra]]);
         return cadeia;
