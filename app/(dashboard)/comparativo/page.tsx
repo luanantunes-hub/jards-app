@@ -318,7 +318,7 @@ function ComparativoContent() {
     setSelecionadas((prev) => (prev.length >= MAX_EMPRESAS || prev.some((e) => e.id === empresa.id) ? prev : [...prev, empresa]));
     setBusca("");
     setResultados([]);
-    if (selecionadas.length + 1 >= MAX_EMPRESAS) setBuscaAberta(false);
+    setBuscaAberta(false);
   }
 
   function remover(id: string) {
@@ -369,7 +369,7 @@ function ComparativoContent() {
         <div className="mx-auto max-w-pagina px-4 pb-7 pt-8 sm:px-6 lg:px-10 lg:pb-9">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <TituloComFrase secao="comparativo" titulo="Comparativo de investimento" />
-            <PrimaryListAction onClick={() => setBuscaAberta(true)} disabled={selecionadas.length >= MAX_EMPRESAS}><Plus size={13} aria-hidden="true" /> Adicionar empresa</PrimaryListAction>
+            {selecionadas.length > 0 && <PrimaryListAction onClick={() => setBuscaAberta(true)} disabled={selecionadas.length >= MAX_EMPRESAS}><Plus size={13} aria-hidden="true" /> Adicionar empresa</PrimaryListAction>}
           </div>
 
           {selecionadas.length > 0 && (
@@ -434,6 +434,7 @@ function ComparativoContent() {
                   icon={GitCompareArrows}
                   title="Busque e adicione empresas para comparar"
                   description="Enquanto isso, três clássicos posam de exemplo."
+                  action={<PrimaryListAction onClick={() => setBuscaAberta(true)}><Plus size={13} aria-hidden="true" /> Adicionar empresa</PrimaryListAction>}
                 />
               </div>
             </div>
@@ -533,8 +534,6 @@ function ComparativoContent() {
           onBusca={setBusca}
           resultados={resultados}
           buscando={buscandoEmpresas}
-          escolhidas={selecionadas.length}
-          maximo={MAX_EMPRESAS}
           onAdicionar={adicionar}
           onClose={() => { setBuscaAberta(false); setBusca(""); setResultados([]); }}
         />

@@ -8,16 +8,14 @@ import { useModalDismiss } from "@/hooks/useModalDismiss";
 export type EmpresaDaBusca = { id: string; nome: string; site: string | null; logo_url: string | null };
 
 /**
- * Busca de empresa no meio da tela, aberta pelo botão "Adicionar empresa". Fica aberta depois de
- * cada empresa adicionada, para juntar várias de uma vez; Esc, clicar fora ou "Fechar" fecham.
+ * Busca de empresa no meio da tela, aberta pelo botão "Adicionar empresa". Fecha assim que a pessoa
+ * escolhe uma empresa (para outra, ela clica no botão de novo); Esc, clicar fora ou "Fechar" também fecham.
  */
-export function BuscarEmpresa({ busca, onBusca, resultados, buscando, escolhidas, maximo, onAdicionar, onClose }: {
+export function BuscarEmpresa({ busca, onBusca, resultados, buscando, onAdicionar, onClose }: {
   busca: string;
   onBusca: (texto: string) => void;
   resultados: EmpresaDaBusca[];
   buscando: boolean;
-  escolhidas: number;
-  maximo: number;
   onAdicionar: (empresa: EmpresaDaBusca) => void;
   onClose: () => void;
 }) {
@@ -57,8 +55,7 @@ export function BuscarEmpresa({ busca, onBusca, resultados, buscando, escolhidas
             ))
           )}
         </div>
-        <div className="flex items-center justify-between border-t px-4 py-2.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <span className="text-[0.6875rem] tabular-nums text-black/40">{escolhidas} de {maximo} empresas</span>
+        <div className="flex items-center justify-end border-t px-4 py-2.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button type="button" onClick={onClose} className="text-[0.75rem] text-black/35 transition hover:text-black/55">Fechar</button>
         </div>
       </div>
