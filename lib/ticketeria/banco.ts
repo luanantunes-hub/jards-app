@@ -650,6 +650,7 @@ export type BancoDaTicketeria = {
           pago_em: string | null;
           created_at: string;
           updated_at: string;
+          ingressos_enviados_em: string | null;
         };
         Insert: {
           id?: string;
@@ -674,6 +675,7 @@ export type BancoDaTicketeria = {
           pago_em?: string | null;
           created_at?: string;
           updated_at?: string;
+          ingressos_enviados_em?: string | null;
         };
         Update: {
           id?: string;
@@ -698,6 +700,7 @@ export type BancoDaTicketeria = {
           pago_em?: string | null;
           created_at?: string;
           updated_at?: string;
+          ingressos_enviados_em?: string | null;
         };
         Relationships: [
           {
@@ -1070,6 +1073,51 @@ export type BancoDaTicketeria = {
         };
         Relationships: [];
       };
+      ticketeria_ingressos_emitidos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          pedido_id: string;
+          item_id: string;
+          ingresso_id: string;
+          sessao_id: string;
+          codigo: string;
+          nome: string;
+          preco_centavos: number;
+          usado_em: string | null;
+          cancelado_em: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          pedido_id: string;
+          item_id: string;
+          ingresso_id: string;
+          sessao_id: string;
+          codigo: string;
+          nome: string;
+          preco_centavos: number;
+          usado_em?: string | null;
+          cancelado_em?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          pedido_id?: string;
+          item_id?: string;
+          ingresso_id?: string;
+          sessao_id?: string;
+          codigo?: string;
+          nome?: string;
+          preco_centavos?: number;
+          usado_em?: string | null;
+          cancelado_em?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       ticketeria_validacoes_saque: {
         Row: {
           id: string;
@@ -1203,6 +1251,22 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_troca_estado: {
         Args: { p_loja: string };
+        Returns: Json;
+      };
+      fn_ticketeria_emitir_ingressos: {
+        Args: { p_pedido: string };
+        Returns: number;
+      };
+      fn_ticketeria_reivindicar_envio: {
+        Args: { p_pedido: string };
+        Returns: boolean;
+      };
+      fn_ticketeria_liberar_envio: {
+        Args: { p_pedido: string };
+        Returns: undefined;
+      };
+      fn_ticketeria_ingressos_do_pedido: {
+        Args: { p_pedido: string };
         Returns: Json;
       };
       fn_ticketeria_validar_saque: {
