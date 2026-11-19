@@ -12,9 +12,6 @@
   --elevacao-sombra-2-cima: 0 -2px 6px rgba(28, 14, 51, .05), 0 -16px 40px rgba(28, 14, 51, .09);
   --elevacao-sombra-2-lado: -2px 0 6px rgba(28, 14, 51, .05), -16px 0 40px rgba(28, 14, 51, .09);
   --elevacao-sombra-3: 0 2px 8px rgba(28, 14, 51, .06), 0 24px 64px rgba(28, 14, 51, .14);
-  /* Folhas (TopSheet e BottomSheet): mais fundas que as demais, com um fio de 1px no lugar da borda. Dão peso e descolam a folha da tela. */
-  --elevacao-sombra-folha: 0 0 0 1px rgba(28, 14, 51, .18), 0 2px 4px rgba(28, 14, 51, .12), 0 24px 48px -8px rgba(28, 14, 51, .38), 0 70px 130px -24px rgba(28, 14, 51, .50);
-  --elevacao-sombra-folha-cima: 0 0 0 1px rgba(28, 14, 51, .18), 0 -2px 4px rgba(28, 14, 51, .12), 0 -24px 48px -8px rgba(28, 14, 51, .38), 0 -70px 130px -24px rgba(28, 14, 51, .50);
 }
 @utility elevacao-1 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-1); }
 @utility elevacao-2 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-2); }
@@ -22,8 +19,40 @@
 @utility elevacao-2-lado { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-2-lado); }
 @utility elevacao-3 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-3); }
 @utility elevacao-sombra-1 { box-shadow: var(--elevacao-sombra-1); }
-@utility elevacao-folha { box-shadow: var(--elevacao-sombra-folha); }
-@utility elevacao-folha-cima { box-shadow: var(--elevacao-sombra-folha-cima); }
+
+/* Folhas (TopSheet, BottomSheet e as folhas próprias): cantos bem arredondados, superfície de vidro
+   (quase branca, com o fundo desfocado por trás), fio de luz por dentro e sombra funda e neutra,
+   sem nenhuma cor da marca. `folha-vidro` é a que desce do topo; `folha-vidro-cima`, a que sobe da base.
+   `folha-rodape` é a faixa das ações: um cinza bem claro, com um fio de luz embaixo da linha de divisão. */
+:root {
+  --raio-folha: 1.25rem;
+  --folha-vidro: rgba(255, 255, 255, .96);
+  --folha-luz: inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 0 0 1px rgba(255, 255, 255, .7), inset 0 -1px 0 rgba(13, 13, 13, .04);
+  --folha-sombra: 0 0 0 1px rgba(13, 13, 13, .10), 0 2px 4px rgba(13, 13, 13, .08), 0 24px 48px -8px rgba(13, 13, 13, .30), 0 70px 130px -24px rgba(13, 13, 13, .40);
+  --folha-sombra-cima: 0 0 0 1px rgba(13, 13, 13, .10), 0 -2px 4px rgba(13, 13, 13, .08), 0 -24px 48px -8px rgba(13, 13, 13, .30), 0 -70px 130px -24px rgba(13, 13, 13, .40);
+}
+@utility folha-vidro {
+  background-color: var(--folha-vidro);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: var(--folha-sombra), var(--folha-luz);
+  border-bottom-left-radius: var(--raio-folha);
+  border-bottom-right-radius: var(--raio-folha);
+}
+@utility folha-vidro-cima {
+  background-color: var(--folha-vidro);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: var(--folha-sombra-cima), var(--folha-luz);
+  border-top-left-radius: var(--raio-folha);
+  border-top-right-radius: var(--raio-folha);
+}
+@utility folha-rodape {
+  background-color: rgba(250, 250, 249, .9);
+  border-top-color: rgba(13, 13, 13, .07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95);
+}
+
 
 /* Véu: o fundo atrás de folhas, painéis e pop-ups. Escurece e desfoca a tela de leve.
    Use `veu` no fundo; nas folhas que entram com animação, some junto: `veu ${visivel ? "" : "veu-oculto"}`. */
@@ -48,8 +77,7 @@
 /* Ação principal (botões de criar): o roxo noite do hero da landing (#1C0E33), parado.
    Volume discreto: degradê de cima para baixo em torno do roxo noite, uma linha de luz de 1px no
    topo, uma de sombra na base e uma sombra curta tingida de roxo noite, que descola o botão da
-   página. Sem movimento no hover: só um tom mais claro, na hora; ao pressionar, afunda. O brilho
-   violeta não fica no botão: acontece na folha que ele abre (`.brilho-da-folha`, logo abaixo).
+   página. Sem movimento no hover: só um tom mais claro, na hora; ao pressionar, afunda.
    Sem contorno em volta: o foco do teclado clareia como o hover e abre um brilho embaixo do
    botão; o contorno só aparece no modo de alto contraste do sistema. */
 .acao-principal {
@@ -114,48 +142,6 @@
     0 1px 1px rgba(24, 80, 28, .25);
 }
 .acao-salvar:disabled { background-color: #2E8932; box-shadow: none; text-shadow: none; }
-
-/* Brilho da folha de criar: quando a ação principal abre uma folha que desce do topo, uma luz
-   violeta passa uma vez pela borda de cima dela, da esquerda para a direita, e some. É uma faixa
-   fixa no topo da tela, na largura da folha, montada pelo PrimaryListAction no clique
-   (lib/brilho-da-folha.ts). Começa aos 160ms, quando a folha termina de descer, e usa a mesma
-   curva dela. Só `transform` e `opacity`; não aparece com prefers-reduced-motion. */
-.brilho-da-folha {
-  position: fixed;
-  top: 0;
-  z-index: 60;
-  height: 24px;
-  overflow: hidden;
-  pointer-events: none;
-}
-.brilho-da-folha::before,
-.brilho-da-folha::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  width: 40%;
-  opacity: 0;
-  animation: brilho-da-folha-passa 900ms cubic-bezier(.32, .72, 0, 1) 160ms both;
-}
-.brilho-da-folha::before {
-  top: 0;
-  height: 2px;
-  background: linear-gradient(90deg, rgba(142, 99, 245, 0), rgba(142, 99, 245, .95), rgba(142, 99, 245, 0));
-}
-.brilho-da-folha::after {
-  top: -14px;
-  height: 32px;
-  background: radial-gradient(closest-side, rgba(142, 99, 245, .32), rgba(142, 99, 245, 0));
-}
-@keyframes brilho-da-folha-passa {
-  0% { opacity: 0; transform: translateX(-100%); }
-  20% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { opacity: 0; transform: translateX(250%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .brilho-da-folha { display: none; }
-}
 
 :root {
   --cream:          #FFFFFF;

@@ -58,7 +58,7 @@ Princípios:
 ## Forma e espaçamento
 
 - raio padrão do produto: `rounded` (4px);
-- raios maiores ficam restritos a experiências de marca, autenticação e ilustrações;
+- raios maiores ficam restritos a experiências de marca, autenticação, ilustrações e às folhas (veja "Modais, sheets e menus");
 - alturas usuais de controle: 36–44px;
 - áreas clicáveis devem ter pelo menos 40px quando isoladas;
 - separação entre seções usa espaço, regra fina ou mudança sutil de superfície;
@@ -73,7 +73,6 @@ Princípios:
 Criar ou iniciar o objeto principal da página ("Novo projeto", "Nova data") usa `PrimaryListAction`, de `components/list/ListPagePrimitives.tsx`: roxo noite `#1C0E33`, o mesmo do hero da landing, com texto branco e `h-9`.
 
 - volume discreto: degradê de cima para baixo em torno do roxo noite (`#28164B` → `#1C0E33` → `#160A2A`), uma linha de luz de 1px no topo, uma de sombra na base e uma sombra curta tingida de roxo noite, que descola o botão da página. Sem borda;
-- o brilho violeta não fica no botão. Quando o clique abre uma folha que desce do topo, uma luz passa uma vez pela borda de cima dela, da esquerda para a direita, e some: começa aos 160ms, junto com o fim da descida, e usa a mesma curva da folha. É uma faixa fixa no topo da tela, na largura da folha, montada pelo `PrimaryListAction` (`.brilho-da-folha` em `app/globals.css`, escolha da folha em `lib/brilho-da-folha.ts`). Folha que sobe de baixo, modal no meio da tela ou clique que não abre folha: sem brilho. Não aparece com `prefers-reduced-motion`;
 - o botão fica parado: sem animação ao carregar a página e sem movimento no hover, que só clareia um tom, na hora. Ao pressionar, afunda (sombra por dentro);
 - sem contorno em volta. O foco do teclado clareia como o hover e abre um brilho embaixo do botão; o contorno só aparece no modo de alto contraste do sistema;
 - uma ação principal por contexto. Quando há duas lado a lado, a principal é roxo noite e a outra é `SecondaryListAction`: botão branco com borda leve e hover cinza;
@@ -163,6 +162,17 @@ Exceções:
 
 ## Modais, sheets e menus
 
+As folhas (`TopSheet`, que desce do topo, e `BottomSheet`, que sobe da base, e as folhas próprias que seguem o mesmo desenho) têm peso e acabamento de vidro:
+
+- cantos de 1,25rem (`--raio-folha`) no lado livre; é a exceção aos 4px do produto;
+- superfície de vidro: quase branca, com o fundo desfocado por trás, um fio de luz por dentro e um fio de 1px no lugar da borda (`folha-vidro` e `folha-vidro-cima` em `app/globals.css`);
+- cabeçalho com a etiqueta opcional em letras pequenas (`etiqueta`), título grande em peso extra e o fechar num círculo de vidro; a linha sob o cabeçalho leva um fio de luz embaixo;
+- base das ações num cinza bem claro (`folha-rodape`), separada por uma linha e um fio de luz;
+- sombra funda, escura e neutra: nenhuma cor da marca atrás, na ponta ou na frente da folha (sem sombra roxa, sem lâmina colorida, sem brilho passando);
+- uma alça sobre o véu, na ponta livre, avisa que a folha recolhe.
+
+Regras de todos os modais e folhas:
+
 - cabeçalho fixo com título e fechamento;
 - conteúdo pode rolar, mas o rodapé de ações permanece visível;
 - botão de salvar fica à direita e usa verde;
@@ -219,7 +229,6 @@ As ilustrações que ficam na frente da frase de cada seção (e do painel) vêm
 - transições comuns: 160–240ms;
 - animar `transform` e `opacity`, evitando propriedades de layout;
 - respeitar `prefers-reduced-motion`;
-- exceção deliberada: a folha aberta pelo botão de criar ganha uma luz que passa uma vez pela borda de cima e some, para ligar o clique à folha; não aparece com `prefers-reduced-motion`;
 - movimento deve indicar conexão, continuidade ou mudança de estado;
 - foco por teclado é obrigatório;
 - ícones sem label visível precisam de `aria-label` ou `title`;

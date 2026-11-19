@@ -90,7 +90,7 @@ export function TiposPatrocinioSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="absolute inset-x-0 top-0 mx-auto flex max-h-[96dvh] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
+        className="absolute inset-x-0 top-0 mx-auto flex max-h-[96dvh] flex-col overflow-hidden folha-vidro"
         style={{
           width: "32.5rem",
           maxWidth: "92vw",
@@ -215,7 +215,7 @@ export function TiposPatrocinioSheet({
 
         {/* Footer */}
         {erro && <p role="alert" className="shrink-0 px-6 pb-3 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
-        <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+        <div className="folha-rodape flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4">
           <button onClick={close} className="text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">
             Cancelar
           </button>

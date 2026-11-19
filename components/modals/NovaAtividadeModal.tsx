@@ -476,12 +476,8 @@ export function NovaAtividadeModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[96dvh] w-full max-w-[47.5rem] flex-col overflow-hidden rounded-b bg-white transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none border-x border-b elevacao-2"
+        className="flex max-h-[96dvh] w-full max-w-[47.5rem] flex-col overflow-hidden folha-vidro transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none"
         style={{
-          boxShadow: "0 8px 32px rgba(0,0,0,.12)",
-          borderBottom: "1px solid rgba(13,13,13,.08)",
-          borderLeft: "1px solid rgba(13,13,13,.06)",
-          borderRight: "1px solid rgba(13,13,13,.06)",
           transform: visible ? "none" : "translateY(-100%)",
         }}
         onClick={e => e.stopPropagation()}
@@ -675,7 +671,7 @@ export function NovaAtividadeModal({
           </div>
         </main>
 
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <footer className="folha-rodape flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6">
           {erro ? <p role="alert" className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
           <div className="ml-auto flex flex-shrink-0 items-center gap-2">
             <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>

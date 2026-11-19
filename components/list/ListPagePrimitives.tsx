@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import type { ReactNode } from "react";
 import { AlertCircle, Search, type LucideIcon } from "lucide-react";
 import { TituloComFrase } from "@/components/list/TituloComFrase";
-import { DURACAO_DO_BRILHO_MS, QUADROS_PARA_ACHAR_A_FOLHA, folhaQueDesceuDoTopo } from "@/lib/brilho-da-folha";
 import type { SecaoComFrase } from "@/lib/frases-das-secoes";
 
 /** Cabeçalho de coluna de tabela conforme DESIGN.md: 10px, peso 500, caixa alta, tracking .08em. */
@@ -55,47 +53,14 @@ const ACAO_DE_LISTA = "flex h-9 items-center gap-1.5 rounded border text-[0.75re
 
 type AcaoDeLista = { children: ReactNode; onClick: () => void; disabled?: boolean };
 
-type BrilhoNaFolha = { chave: number; esquerda: number; largura: number };
-
 /**
  * Ação principal da página ou da seção: criar ou iniciar o objeto principal. Roxo noite do hero da
  * landing (#1C0E33) com volume discreto (degradê, luz de 1px no topo, sombra curta), texto branco e
  * sem contorno em volta. O botão fica parado: no hover só clareia um tom, ao pressionar afunda.
- * Quando o clique abre uma folha que desce do topo, uma luz violeta passa uma vez pela borda de
- * cima dela e some (`.brilho-da-folha`). O visual está em app/globals.css. Uma por contexto:
- * quando há duas lado a lado, a outra é `SecondaryListAction`.
+ * O visual está em app/globals.css. Uma por contexto: quando há duas lado a lado, a outra é `SecondaryListAction`.
  */
 export function PrimaryListAction({ children, onClick, disabled = false }: AcaoDeLista) {
-  const [brilho, setBrilho] = useState<BrilhoNaFolha | null>(null);
-
-  useEffect(() => {
-    if (!brilho) return;
-    const fim = window.setTimeout(() => setBrilho(null), DURACAO_DO_BRILHO_MS);
-    return () => window.clearTimeout(fim);
-  }, [brilho]);
-
-  function clicar() {
-    const antes = new Set(document.querySelectorAll('[role="dialog"]'));
-    onClick();
-    // A folha monta depois do clique: procura por alguns quadros a que nasceu no topo.
-    const procurar = (restam: number) => requestAnimationFrame(() => {
-      const folha = folhaQueDesceuDoTopo(antes, document.querySelectorAll('[role="dialog"]'), (caixa) => caixa.getBoundingClientRect().top);
-      if (folha) {
-        const { left, width } = folha.getBoundingClientRect();
-        setBrilho({ chave: Date.now(), esquerda: left, largura: width });
-      } else if (restam > 0) {
-        procurar(restam - 1);
-      }
-    });
-    procurar(QUADROS_PARA_ACHAR_A_FOLHA);
-  }
-
-  return (
-    <>
-      <button type="button" onClick={clicar} disabled={disabled} className={`${ACAO_DE_LISTA} acao-principal border-transparent px-4 text-white transition-transform duration-150`}>{children}</button>
-      {brilho && createPortal(<span key={brilho.chave} aria-hidden="true" className="brilho-da-folha" style={{ left: brilho.esquerda, width: brilho.largura }} />, document.body)}
-    </>
-  );
+  return <button type="button" onClick={onClick} disabled={disabled} className={`${ACAO_DE_LISTA} acao-principal border-transparent px-4 text-white transition-transform duration-150`}>{children}</button>;
 }
 
 /** Ação de apoio ao lado da principal (copiar, exportar…): branca, com borda leve e hover cinza. */
