@@ -23,7 +23,8 @@ type Crescimento = { taxaAnual: number; confianca: "individual" | "parcial" | "s
 
 // Exemplo do estado vazio: três clássicos brasileiros que já fecharam as portas, com valores inventados e as
 // marcas de verdade (Matarazzo, a mesma da landing; Mappin e Varig, em domínio público na Wikimedia Commons).
-// Aparece apagado, ao fundo, atrás do cartão com o botão, só para mostrar como fica a comparação.
+// Aparece ao fundo, atrás do cartão com o botão, só para mostrar como fica a comparação: em cinza grafite
+// pastel (sem cor, contraste reduzido, meio apagado) e o cartão por cima é levemente translúcido.
 const EXEMPLO_EMPRESAS: EmpresaOption[] = [
   { id: "exemplo-mappin", nome: "Mappin", site: null, logo_url: "/assets/exemplo-mappin.svg" },
   { id: "exemplo-matarazzo", nome: "Indústrias Reunidas Fábricas Matarazzo", site: null, logo_url: "/assets/matarazzo.svg" },
@@ -444,7 +445,7 @@ function ComparativoContent() {
       <div className="mx-auto max-w-pagina px-4 py-8 sm:px-6 lg:px-10">
         {selecionadas.length === 0 ? (
           <div className="relative">
-            <div aria-hidden="true" inert className="pointer-events-none select-none opacity-40">
+            <div aria-hidden="true" inert className="pointer-events-none select-none opacity-50 grayscale contrast-[.8]">
               <ComparativoCartoes
                 selecionadas={EXEMPLO_EMPRESAS}
                 valores={EXEMPLO_VALORES}
@@ -455,7 +456,7 @@ function ComparativoContent() {
               />
             </div>
             <div className="absolute inset-0 flex items-start justify-center px-2 pt-10 sm:items-center sm:pt-0">
-              <div className="w-full max-w-md rounded border bg-white elevacao-2">
+              <div className="w-full max-w-md rounded border bg-white/90 backdrop-blur-[2px] elevacao-2">
                 <ListEmptyState
                   icon={GitCompareArrows}
                   title="Busque e adicione empresas para comparar"
