@@ -86,13 +86,12 @@
 }
 
 /* Ação de salvar (o botão verde dos rodapés de folha, modal e formulário): o mesmo volume discreto do
-   botão de criar, em verde. Degradê de cima para baixo em torno do #2E8932, linha de luz de 1px no topo,
-   linha de sombra na base e sombra curta tingida de verde. Sem efeito no hover: o botão fica igual com
+   botão de criar, em verde liso (#2E8932, sem degradê): linha de luz de 1px no topo, linha de sombra na
+   base e sombra curta tingida de verde. Sem efeito no hover: o botão fica igual com
    ou sem o mouse em cima. Pressionar afunda; desativado fica chapado. Sem animação e sem movimento.
    Troca o par `bg-[#2E8932]` + `hover:bg-[#26752A]`. */
 .acao-salvar {
   background-color: #2E8932;
-  background-image: linear-gradient(180deg, #399C3E 0%, #2E8932 55%, #26752A 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .22),
     inset 0 -1px 0 rgba(0, 0, 0, .2),
