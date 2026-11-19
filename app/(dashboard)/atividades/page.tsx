@@ -744,7 +744,7 @@ function BlocoNaGrade({ posicionado, inicioDaFaixa, detalhado, arrastando, onAbr
         width: `calc(${100 / colunas}% - 4px)`,
         ...CARTAO_LANDING,
         borderColor: arrastando ? "#684DB0" : "rgba(40,37,37,.10)",
-        boxShadow: arrastando ? "0 16px 34px -12px rgba(28,14,51,.45), 0 0 0 1px #684DB0" : "0 1px 2px rgba(40,37,37,.04)",
+        boxShadow: arrastando ? "0 16px 34px -12px rgba(13,13,13,.45), 0 0 0 1px #684DB0" : "0 1px 2px rgba(40,37,37,.04)",
         touchAction: "manipulation",
       }}
     >
@@ -799,7 +799,7 @@ function ChipSemHorario({ atividade, arrastando, onAbrir, onPegar }: { atividade
       onPointerDown={podeArrastar ? onPegar : undefined}
       title={`${atividade.nome}${podeArrastar ? " · arraste para um horário ou outro dia" : ""}`}
       className={`flex min-w-0 items-center gap-1.5 rounded border px-1 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/30 ${arrastando ? "cursor-grabbing" : `transition duration-200 hover:-translate-y-px hover:shadow-[0_6px_16px_rgba(40,37,37,.08)] motion-reduce:transition-none ${podeArrastar ? "cursor-grab" : ""}`}`}
-      style={{ ...CARTAO_LANDING, borderColor: arrastando ? "#684DB0" : "rgba(40,37,37,.09)", boxShadow: arrastando ? "0 10px 24px -10px rgba(28,14,51,.45), 0 0 0 1px #684DB0" : undefined }}
+      style={{ ...CARTAO_LANDING, borderColor: arrastando ? "#684DB0" : "rgba(40,37,37,.09)", boxShadow: arrastando ? "0 10px 24px -10px rgba(13,13,13,.45), 0 0 0 1px #684DB0" : undefined }}
     >
       <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-[3px] bg-white shadow-[0_0_0_1px_rgba(40,37,37,.08)]" style={{ color: atividade.feita ? "rgba(13,13,13,.30)" : config.color }}>
         <Icon size={10} aria-hidden="true" />
@@ -1062,7 +1062,7 @@ function PainelDoMes({ itens, ano, mes, hoje, onAbrirDia, onAbrirSemana, onEdit,
                       <div
                         className={`relative rounded border p-3.5 transition duration-200 hover:-translate-y-0.5 motion-reduce:transition-none ${atual ? "text-white" : "hover:shadow-[0_10px_28px_rgba(40,37,37,.08)]"}`}
                         style={atual
-                          ? { background: "#1C0E33", borderColor: "rgba(199,182,238,.22)", boxShadow: "0 16px 34px -12px rgba(28,14,51,.55)" }
+                          ? { background: "#1C0E33", borderColor: "rgba(199,182,238,.22)", boxShadow: "0 16px 34px -12px rgba(13,13,13,.55)" }
                           : { ...CARTAO_LANDING, borderColor: "rgba(40,37,37,.08)", boxShadow: "0 1px 2px rgba(40,37,37,.025)" }}
                       >
                         <span className="absolute -left-5 top-6 h-px w-5" style={{ background: ligacao }} />

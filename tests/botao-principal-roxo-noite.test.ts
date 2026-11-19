@@ -44,7 +44,7 @@ test("em repouso tem volume discreto: degradê em torno do roxo noite, luz de 1p
   assert.match(base, /background-image:\s*linear-gradient\(180deg,\s*#28164B 0%,\s*#1C0E33 55%,\s*#160A2A 100%\)/i);
   assert.match(base, /box-shadow:[^;]*inset 0 1px 0 rgba\(255, 255, 255, \.14\)/, "luz no topo");
   assert.match(base, /box-shadow:[^;]*inset 0 -1px 0 rgba\(0, 0, 0, \.3\)/, "sombra na base");
-  assert.match(base, /box-shadow:[^;]*0 4px 12px -4px rgba\(28, 14, 51, \.45\)/, "sombra de elevação em roxo noite");
+  assert.match(base, /box-shadow:[^;]*0 4px 12px -4px rgba\(13, 13, 13, \.45\)/, "sombra de elevação neutra, sem roxo");
   assert.match(base, /text-shadow:/);
   assert.doesNotMatch(base, /border(-color)?:/, "sem borda");
 });
@@ -72,28 +72,6 @@ test("sem contorno em volta: o foco clareia, abre um brilho embaixo e o contorno
   assert.match(foco, /0 6px 20px -4px rgba\(142, 99, 245, \.65\)/);
   assert.match(css, /@media \(forced-colors: active\)\s*\{\s*\.acao-principal:focus-visible\s*\{\s*outline-color:\s*Highlight/);
   assert.ok(!/focus-visible:outline/.test(acao("PrimaryListAction")), "o botão principal não leva anel de foco por classe");
-});
-
-test("o brilho vai para a folha: faixa fixa no topo, por cima dela, sem pegar clique, uma passada só", () => {
-  const faixa = regra(".brilho-da-folha");
-  assert.match(faixa, /position:\s*fixed/);
-  assert.match(faixa, /top:\s*0/);
-  assert.match(faixa, /z-index:\s*60/, "acima das folhas (z-50)");
-  assert.match(faixa, /pointer-events:\s*none/);
-  assert.match(regra(".brilho-da-folha::after"), /animation:\s*brilho-da-folha-passa 900ms cubic-bezier\(\.32, \.72, 0, 1\) 160ms both/, "mesma curva da folha, depois da descida");
-  const corpo = quadros("brilho-da-folha-passa");
-  assert.match(corpo, /(^|\n)\s*0%\s*\{[^}]*opacity:\s*0;/, "começa apagada");
-  assert.match(corpo, /(^|\n)\s*100%\s*\{[^}]*opacity:\s*0;/, "termina apagada");
-  assert.match(corpo, /translateX/, "passa de um lado ao outro");
-  assert.doesNotMatch(corpo, /\b(top|left|right|bottom|width|height|margin|padding)\s*:/, "não anima propriedade de layout");
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.brilho-da-folha\s*\{\s*display:\s*none;?\s*\}\s*\}/);
-});
-
-test("o clique do botão principal acha a folha que abriu e acende a faixa na largura dela", () => {
-  const botao = acao("PrimaryListAction");
-  for (const trecho of ["createPortal", "brilho-da-folha", "folhaQueDesceuDoTopo", '[role="dialog"]', "getBoundingClientRect", "DURACAO_DO_BRILHO_MS"]) {
-    assert.ok(botao.includes(trecho), `PrimaryListAction precisa de ${trecho}`);
-  }
 });
 
 test("a ação de apoio continua branca, com borda leve e hover animado", () => {

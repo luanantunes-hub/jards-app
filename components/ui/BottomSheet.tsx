@@ -73,22 +73,20 @@ export function BottomSheet({ titulo, etiqueta, subtitulo, onClose, children, fo
         onClick={event => event.stopPropagation()}
         className={`absolute inset-x-0 bottom-0 mx-auto w-full outline-none transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none md:max-w-[35rem] ${visivel ? "translate-y-0" : "translate-y-full"}`}
       >
-        <div className="flex max-h-[92dvh] flex-col overflow-hidden rounded-t bg-white elevacao-folha-cima">
-          {/* borda de peso: a ponta da folha tem a espessura de uma lâmina, em roxo noite */}
-          <div aria-hidden="true" className="h-1.5 shrink-0 bg-[#1C0E33] shadow-[inset_0_-1px_0_rgba(255,255,255,.22)]" />
+        <div className="flex max-h-[92dvh] flex-col overflow-hidden folha-vidro-cima">
           <div className="flex shrink-0 items-start justify-between gap-4 px-5 pb-5 pt-6 md:px-8 md:pt-7">
             <div className="min-w-0">
               {etiqueta && <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/35">{etiqueta}</p>}
               <h3 id={tituloId} className={`font-display text-[1.375rem] font-extrabold leading-[1.08] tracking-[-.045em] text-[#282525] [text-wrap:balance] md:text-[1.75rem] ${etiqueta ? "mt-1.5" : ""}`}>{titulo}</h3>
               {subtitulo && <p className="mt-1 truncate text-[0.8125rem] text-black/45">{subtitulo}</p>}
             </div>
-            <button type="button" onClick={close} aria-label="Fechar" className="flex h-9 w-9 shrink-0 items-center justify-center rounded border border-black/[.09] bg-white shadow-[0_1px_2px_rgba(13,13,13,.05)] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+            <button type="button" onClick={close} aria-label="Fechar" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white bg-white/70 shadow-[inset_0_1px_0_#fff,0_0_0_1px_rgba(13,13,13,.07),0_1px_2px_rgba(13,13,13,.08)] backdrop-blur transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
               <X size={15} className="text-black/50" aria-hidden="true" />
             </button>
           </div>
-          <div className="mx-5 h-px shrink-0 bg-black/[.09] md:mx-8" aria-hidden="true" />
+          <div className="mx-5 shrink-0 border-t border-black/[.08] shadow-[0_1px_0_rgba(255,255,255,.95)] md:mx-8" aria-hidden="true" />
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-8 md:py-7">{children}</div>
-          <div className="flex shrink-0 items-center justify-end gap-3 border-t bg-[#F7F7F5] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-8 md:py-5" style={{ borderColor: "rgba(40,37,37,.08)" }}>
+          <div className="folha-rodape flex shrink-0 items-center justify-end gap-3 border-t px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-8 md:py-5">
             {footer(close)}
           </div>
         </div>
