@@ -68,3 +68,12 @@ test("falha fechada: sem token configurado, token errado, corpo ruim ou grande d
   assert.equal(erros.length, 1);
   assert.ok(!JSON.stringify(quebrado).includes("segredo"), "a mensagem do erro não vaza na resposta");
 });
+
+test("token recusado: só o tamanho do que chegou vai para o registro, nunca o token", async () => {
+  const tamanhos: number[] = [];
+  for (const assinatura of [null, "", "**********", TOKEN + "x"]) await rodar({ assinatura, registrarTokenRecusado: n => tamanhos.push(n) }).promessa;
+  assert.deepEqual(tamanhos, [0, 0, 10, TOKEN.length + 1]);
+  const certo: number[] = [];
+  await rodar({ registrarTokenRecusado: n => certo.push(n) }).promessa;
+  assert.deepEqual(certo, [], "token certo: nada é registrado");
+});

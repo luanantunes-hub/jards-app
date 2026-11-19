@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
     assinatura: req.headers.get("asaas-access-token"),
     corpo: await req.text(),
     validar: validarSaqueDoSupabase(createAdminClient()),
+    registrarTokenRecusado: tamanho => console.warn(`[ticketeria] validação de saque: token recusado (chegaram ${tamanho} caracteres; o esperado tem ${(process.env.ASAAS_VALIDACAO_SAQUE_TOKEN ?? "").length})`),
     registrarErro: erro => console.error("[ticketeria] validação de saque não decidida:", erro instanceof Error ? erro.message : erro),
   });
   return NextResponse.json(corpo, { status, headers: { "cache-control": "no-store" } });
