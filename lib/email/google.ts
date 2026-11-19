@@ -306,3 +306,16 @@ export async function buscarMensagensRecentesGmail(
     .filter((mensagem): mensagem is GmailMessage => mensagem !== null)
     .sort((a, b) => (b.sentAt?.getTime() ?? 0) - (a.sentAt?.getTime() ?? 0));
 }
+
+/** Envia uma mensagem já montada (base64 url safe) pela caixa da pessoa. Com `threadId`, a resposta entra no mesmo fio. */
+export async function enviarPeloGmail(accessToken: string, raw: string, threadId?: string | null): Promise<void> {
+  const res = await fetch(`${GMAIL_API}/messages/send`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify(threadId ? { raw, threadId } : { raw }),
+  });
+  if (res.ok) return;
+  const json = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
+  throw new Error(json.error?.message || `Falha ao enviar pelo Gmail (${res.status})`);
+}
+
