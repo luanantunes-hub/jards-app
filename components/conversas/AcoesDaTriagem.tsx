@@ -44,15 +44,14 @@ async function obterOuCriarEmpresa(
 type ItemDoMenu = { label: string; icone: typeof Pencil; onClick: () => void; disabled?: boolean; titulo?: string };
 
 /**
- * Os três passos para quem ainda não é contato, dentro da conversa aberta: criar o contato (com a empresa sugerida
- * pelo domínio, ou uma nova empresa com o nome que o domínio sugere), registrar a conversa para a equipe e abrir a
- * negociação. Nenhum é obrigatório, e "Dispensar" apaga as cópias guardadas. Até registrar, a conversa é só sua.
+ * Para quem ainda não é contato, dentro da conversa aberta: "Criar contato" é um clique só, e já faz os dois passos —
+ * cria o contato (com a empresa sugerida pelo domínio, ou uma nova com o nome que ele sugere) e registra a conversa
+ * para a equipe, exatamente como "Registrar conversa" já fazia para quem já era contato. Sem ligar a um contato, a
+ * conversa fica só na sua caixa. "Dispensar" apaga as cópias ainda não ligadas a ninguém.
  *
- * Só a ação seguinte mais provável fica à vista — "Criar contato" antes dele existir, "Registrar conversa" depois —,
- * e o resto ("Editar antes de criar", "Criar negociação", "Dispensar") mora nos três pontos ao lado, para o card não
- * virar uma fileira de botões. Criar contato é um clique só: o nome e o e-mail já são conhecidos, a empresa é a
- * sugerida, e sem nenhuma que já combine, a empresa nasce junto, com o nome que o domínio sugere. Depois de criado,
- * o contato (e a empresa) se corrigem na própria ficha, como qualquer outro.
+ * Só a ação seguinte mais provável fica à vista — "Criar contato" antes dele existir, "Registrar conversa" depois,
+ * para quando o remetente já era um contato e só faltou ligar os e-mails —, e o resto ("Editar antes de criar",
+ * "Criar negociação", "Dispensar") mora nos três pontos ao lado, para o card não virar uma fileira de botões.
  */
 export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaTriagem; onMudou: () => void }) {
   const [tratando, setTratando] = useState<string | null>(null);
@@ -83,6 +82,19 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
     }
   }
 
+  /** Liga os e-mails já guardados ao contato recém-criado e os mostra para a equipe: o mesmo passo de "Registrar conversa". */
+  async function registrar() {
+    const resposta = await fetch("/api/email/triagem/registrar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ organizationId: remetente.organizationId, endereco: remetente.endereco }),
+    });
+    if (!resposta.ok) {
+      const json = (await resposta.json().catch(() => ({}))) as { error?: string };
+      throw new Error(json.error || "Contato criado, mas não deu para registrar a conversa.");
+    }
+  }
+
   async function criarContatoRapido() {
     setCriando(true);
     setErro(null);
@@ -109,6 +121,7 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
           empresa_crm_id: empresaCrmId,
         });
       if (error) throw new Error(error.message);
+      await registrar();
       onMudou();
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Não foi possível criar o contato.");

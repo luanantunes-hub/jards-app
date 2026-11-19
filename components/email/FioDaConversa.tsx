@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CornerUpLeft, ExternalLink, Lock, Users } from "lucide-react";
+import { CornerUpLeft, ExternalLink } from "lucide-react";
 import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
 import { EscreverEmail } from "@/components/email/EscreverEmail";
 import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
@@ -83,12 +83,8 @@ export function FioDaConversa({ conversa, meuId, membros }: { conversa: Conversa
   );
 }
 
-/**
- * Responder, mudar quem vê e abrir no provedor. Só aparecem na caixa de quem está com o Jards aberto.
- * "Só eu vejo" some quando a conversa não tem contato: aí não há empresa onde registrar (isso se faz na triagem).
- */
-export function AcoesDaConversa({ conversa, meuId, onMudou, onErro }: { conversa: Conversa; meuId: string | null; onMudou: () => void; onErro: (mensagem: string | null) => void }) {
-  const [salvando, setSalvando] = useState(false);
+/** Responder e abrir no provedor. Só aparecem na caixa de quem está com o Jards aberto. */
+export function AcoesDaConversa({ conversa, meuId, onMudou }: { conversa: Conversa; meuId: string | null; onMudou: () => void }) {
   const [respondendo, setRespondendo] = useState(false);
 
   const minhasMensagens = meuId ? conversa.mensagens.filter((mensagem) => mensagem.user_id === meuId) : [];
@@ -97,27 +93,6 @@ export function AcoesDaConversa({ conversa, meuId, onMudou, onErro }: { conversa
   const provedor = provedorDaMensagem(ultimaMinha.message_id);
   const respostaPara = ultimaMinha.direction === "outbound" ? ultimaMinha.to_emails ?? [] : ultimaMinha.from_email ? [ultimaMinha.from_email] : [];
 
-  async function mudarVisibilidade() {
-    setSalvando(true);
-    onErro(null);
-    try {
-      const resposta = await fetch("/api/email/visibilidade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailIds: minhasMensagens.map((mensagem) => mensagem.id), visibilidade: conversa.privada ? "organization" : "private" }),
-      });
-      if (!resposta.ok) {
-        const corpo = (await resposta.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(corpo?.error ?? "Não foi possível mudar quem vê esta conversa.");
-      }
-      onMudou();
-    } catch (falha) {
-      onErro(falha instanceof Error ? falha.message : "Não foi possível mudar quem vê esta conversa.");
-    } finally {
-      setSalvando(false);
-    }
-  }
-
   return (
     <>
       {/* Responder também envia um e-mail: o mesmo peso visual do botão Escrever e-mail do topo da página. */}
@@ -125,12 +100,6 @@ export function AcoesDaConversa({ conversa, meuId, onMudou, onErro }: { conversa
         <CornerUpLeft size={13} aria-hidden="true" />
         Responder
       </PrimaryListAction>
-      {conversa.contatoIds.length > 0 && (
-        <button type="button" onClick={() => void mudarVisibilidade()} disabled={salvando} className={BOTAO_DA_CONVERSA}>
-          {conversa.privada ? <Users size={12} aria-hidden="true" /> : <Lock size={12} aria-hidden="true" />}
-          {salvando ? "Salvando…" : conversa.privada ? "Mostrar à equipe" : "Só eu vejo"}
-        </button>
-      )}
       <a href={`/api/email/abrir?id=${ultimaMinha.id}`} target="_blank" rel="noopener noreferrer" className={BOTAO_DA_CONVERSA}>
         <ExternalLink size={12} aria-hidden="true" />
         Abrir no {NOME_DO_PROVEDOR[provedor]}
