@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
-import { SITUACOES_DO_DOMINIO, SITUACOES_DO_SITE } from "../lib/ticketeria/estados";
+import { CLASSIFICACOES_INDICATIVAS, SITUACOES_DO_DOMINIO, SITUACOES_DO_EVENTO, SITUACOES_DO_SITE } from "../lib/ticketeria/estados";
 
 // lib/ticketeria/banco.ts é o tipo do banco só da Ticketeria, escrito à mão (como lib/producao/banco.ts). Este teste o compara,
 // sem banco, com as migrations da Ticketeria: as mesmas tabelas, as mesmas colunas, a mesma anulabilidade, as listas fechadas
@@ -11,7 +11,7 @@ type Coluna = { nome: string; anulavel: boolean };
 
 async function migrationsDaTicketeria(): Promise<{ nome: string; sql: string }[]> {
   const pasta = "supabase/migrations";
-  const nomes = (await readdir(pasta)).filter(nome => /_ticketeria_lojas_site\.sql$/.test(nome)).sort();
+  const nomes = (await readdir(pasta)).filter(nome => /_ticketeria_(lojas_site|eventos)\.sql$/.test(nome)).sort();
   return Promise.all(nomes.map(async nome => ({ nome, sql: await readFile(`${pasta}/${nome}`, "utf8") })));
 }
 
@@ -38,35 +38,38 @@ function tabelasDoTipo(ts: string): Map<string, Coluna[]> {
 }
 
 test("lib/ticketeria/banco.ts tem as tabelas e as colunas da migration, com a mesma anulabilidade", async () => {
-  const [migration] = await migrationsDaTicketeria();
-  assert.ok(migration, "achou a migration da T1");
-  const doSql = tabelasDoSql(migration.sql);
+  const migrations = await migrationsDaTicketeria();
+  assert.equal(migrations.length, 2, "achou as migrations da T1 e da T2");
+  const doSql = tabelasDoSql(migrations.map(m => m.sql).join("\n"));
   const doTipo = tabelasDoTipo(await readFile("lib/ticketeria/banco.ts", "utf8"));
   assert.deepEqual([...doTipo.keys()].sort(), [...doSql.keys()].sort(), "as mesmas tabelas");
-  assert.deepEqual([...doSql.keys()].sort(), ["ticketeria_lojas", "ticketeria_site_dominios", "ticketeria_site_paginas", "ticketeria_sites"]);
+  assert.deepEqual([...doSql.keys()].sort(), ["ticketeria_eventos", "ticketeria_locais", "ticketeria_lojas", "ticketeria_sessoes", "ticketeria_setores", "ticketeria_site_dominios", "ticketeria_site_paginas", "ticketeria_sites"]);
   for (const [tabela, colunas] of doSql) assert.deepEqual(doTipo.get(tabela), colunas, `colunas de ${tabela}`);
 });
 
 test("as listas fechadas do banco são as de lib/ticketeria/estados.ts", async () => {
-  const [migration] = await migrationsDaTicketeria();
-  const lista = (restricao: string) => {
-    const m = new RegExp(`constraint ${restricao} check \\(situacao in \\(([^)]*)\\)\\)`).exec(migration.sql);
+  const sql = (await migrationsDaTicketeria()).map(m => m.sql).join("\n");
+  const lista = (restricao: string, coluna = "situacao") => {
+    const m = new RegExp(`constraint ${restricao} check \\((?:${coluna} is null or )?${coluna} in \\(([^)]*)\\)\\)`).exec(sql);
     assert.ok(m, restricao);
     return [...m[1].matchAll(/'([^']*)'/g)].map(x => x[1]);
   };
   assert.deepEqual(lista("ticketeria_sites_situacao_check"), [...SITUACOES_DO_SITE]);
   assert.deepEqual(lista("ticketeria_site_dominios_situacao_check"), [...SITUACOES_DO_DOMINIO]);
+  assert.deepEqual(lista("ticketeria_eventos_situacao_check"), [...SITUACOES_DO_EVENTO]);
+  assert.deepEqual(lista("ticketeria_eventos_classificacao_check", "classificacao"), [...CLASSIFICACOES_INDICATIVAS]);
 });
 
-test("a migration da loja e do site não apaga nada e toda função revoga de public e anon", async () => {
-  const [migration] = await migrationsDaTicketeria();
+test("as migrations da loja, do site e dos eventos não apagam nada e toda função revoga de public e anon", async () => {
+  for (const migration of await migrationsDaTicketeria()) {
   const semComentarios = migration.sql.replace(/--.*$/gm, "");
   assert.doesNotMatch(semComentarios, /\bdrop\s+(table|function|policy|trigger|column|constraint)\b/i, "sem DROP");
   const funcoes = [...semComentarios.matchAll(/create or replace function public\.(\w+)\(([^)]*)\)/g)].map(m => m[1]);
-  assert.ok(funcoes.length >= 6, "leu as funções");
+  assert.ok(funcoes.length >= 6, `${migration.nome}: leu as funções`);
   for (const funcao of funcoes) assert.match(semComentarios, new RegExp(`revoke execute on function public\\.${funcao}\\([^)]*\\) from public, anon`), `${funcao} revoga de public e anon`);
-  assert.match(semComentarios, /grant select on public\.ticketeria_site_dominios to authenticated;/, "o navegador só lê os domínios");
   assert.doesNotMatch(semComentarios, /grant [^;]*delete[^;]* on public\.ticketeria_lojas\b/, "a loja não se apaga pelo navegador");
+  if (migration.nome.endsWith("_ticketeria_lojas_site.sql")) assert.match(semComentarios, /grant select on public\.ticketeria_site_dominios to authenticated;/, "o navegador só lê os domínios");
+  }
 });
 
 test("a migration que tira os ingressos da Produção apaga só o que é de site, plateia, convidados, porta e borderô", async () => {
