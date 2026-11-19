@@ -6,6 +6,7 @@ import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { NotaDoLancamento } from "@/components/producao/NotaDoLancamento";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { emCentavos, formatarReais, lerValorEmReais } from "@/lib/producao/dinheiro";
@@ -195,6 +196,8 @@ function LancamentoSheet({ organizationId, temporadaId, lancamento, divisoesAtua
             <p className="mt-1 text-[0.625rem] text-black/45">Só pedidos aprovados. O pedido vira pago quando os lançamentos ligados a ele somam o valor pedido.</p>
           </div>
         )}
+        {lancamento && <NotaDoLancamento organizationId={organizationId} temporadaId={temporadaId} lancamentoId={lancamento.id} podeEditar />}
+
         <div>
           <label className={ROTULO} htmlFor="lan-observacao">Observação</label>
           <textarea id="lan-observacao" rows={2} className={`${CAMPO} h-auto min-h-[3.5rem] py-2`} value={observacao} maxLength={300} onChange={event => setObservacao(event.target.value)} disabled={salvando} />
