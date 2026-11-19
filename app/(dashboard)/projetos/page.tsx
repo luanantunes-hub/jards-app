@@ -16,11 +16,12 @@ import { MARCA_CAPTACAO } from "@/components/ui/IndicadoresFinanceiros";
 import { BarraEmBlocos } from "@/components/ui/BarraEmBlocos";
 import { ProjetosCartoes, FASES_PROJETO, fmtAtualizacao } from "@/components/projetos/ProjetosCartoes";
 
-type ViewMode = "lista" | "cartoes";
-const VIEW_MODES = ["lista", "cartoes"] as const;
+// Portfólio (as pastas) é a visão padrão; quem trocar para a lista fica com ela nas próximas visitas.
+type ViewMode = "portfolio" | "lista";
+const VIEW_MODES = ["portfolio", "lista"] as const;
 const VIEW_OPTIONS = [
+  { value: "portfolio", label: "Portfólio", icon: LayoutGrid },
   { value: "lista", label: "Lista", icon: List },
-  { value: "cartoes", label: "Cartões", icon: LayoutGrid },
 ] as const;
 
 const PROJETOS_COLUMNS = [
@@ -40,6 +41,8 @@ type ProjetoRow = {
   identidade_valor: string | null;
   identidade_logo_url: string | null;
   identidade_cor: string | null;
+  capa_url: string | null;
+  capa_position_y: number | null;
   account_id: string;
   created_at: string;
   updated_at: string;
@@ -88,7 +91,7 @@ export default function ProjetosPage() {
   const [loading, setLoading]   = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [proponentePreId, setProponentePreId] = useState<string | undefined>();
-  const [viewMode, setViewMode] = usePersistedViewMode<ViewMode>("jards:projetos:view", VIEW_MODES, "lista");
+  const [viewMode, setViewMode] = usePersistedViewMode<ViewMode>("jards:projetos:visao", VIEW_MODES, "portfolio");
   const [search, setSearch] = useState("");
   const [faseFilter, setFaseFilter] = useState<"todas" | ProjetoRow["fase_codigo"]>("todas");
   const [showArquivados, setShowArquivados] = useState(false);
@@ -108,7 +111,7 @@ export default function ProjetosPage() {
     setLoading(true);
     const { data: rawData, error } = await supabase
       .from("projetos_crm")
-      .select("id, account_id, nome, descricao, valor_alvo, proponente_id, proponente_nome, proponente_cidade, proponente_estado, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor, fase, ponto_focal_id, mecanismo, data_inicio, data_fim, cidade, estado, abrangencia, areas_culturais, valor_garantido, tags, visibilidade, status_operacional, created_at, updated_at")
+      .select("id, account_id, nome, descricao, valor_alvo, proponente_id, proponente_nome, proponente_cidade, proponente_estado, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor, capa_url, capa_position_y, fase, ponto_focal_id, mecanismo, data_inicio, data_fim, cidade, estado, abrangencia, areas_culturais, valor_garantido, tags, visibilidade, status_operacional, created_at, updated_at")
       .order("created_at", { ascending: false });
 
     if (error || !rawData) { setLoading(false); return; }
@@ -238,7 +241,7 @@ export default function ProjetosPage() {
               Limpar filtros
             </button>
           </div>
-        ) : viewMode === "cartoes" ? (
+        ) : viewMode === "portfolio" ? (
           <ProjetosCartoes
             projetos={filteredProjetos}
             carregando={loading}

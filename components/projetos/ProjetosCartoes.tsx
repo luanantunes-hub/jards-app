@@ -25,6 +25,9 @@ export type ProjetoCartao = {
   identidade_valor: string | null;
   identidade_logo_url: string | null;
   identidade_cor: string | null;
+  /** Capa do projeto (imagem); aparece guardada dentro da pasta, atrás da folha da frente. */
+  capa_url?: string | null;
+  capa_position_y?: number | null;
   valor_alvo: number | null;
   valor_captado: number;
   fase_codigo: FaseProjeto;
@@ -83,8 +86,15 @@ function Pasta({ projeto, faseLabel, onOpen, onMenu }: {
       <span aria-hidden className="pointer-events-none absolute h-1 w-1" style={{ left: LARGURA_ABA, top: `calc(${ALTURA_ABA} - 4px)`, background: "radial-gradient(circle at 100% 0, transparent 4px, var(--pasta-verso) 4.5px)" }} />
 
       <div className="relative flex flex-1 flex-col rounded rounded-tl-none bg-[var(--pasta-verso)] pt-[0.375rem]">
+        {/* capa: foto guardada dentro da pasta, aparecendo por cima da folha da frente; sobe um pouco ao passar o mouse */}
+        {projeto.capa_url && (
+          <div aria-hidden className="relative mx-1.5 h-[6.75rem] overflow-hidden rounded-t transition-transform duration-200 ease-out group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
+            {/* eslint-disable-next-line @next/next/no-img-element -- a capa é guardada como imagem embutida (data URL) */}
+            <img src={projeto.capa_url} alt="" className="h-full w-full object-cover" style={{ objectPosition: `center ${projeto.capa_position_y ?? 50}%` }} />
+          </div>
+        )}
         {/* folha da frente: sobe um pouco ao passar o mouse, como papel saindo da pasta */}
-        <div className="relative flex flex-1 flex-col rounded bg-[var(--pasta-frente)] px-4 pb-3.5 pt-3.5 shadow-[0_1px_2px_rgba(13,13,13,.05)] transition-transform duration-200 ease-out group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
+        <div className={`relative flex flex-1 flex-col rounded bg-[var(--pasta-frente)] ${projeto.capa_url ? "-mt-3" : ""} px-4 pb-3.5 pt-3.5 shadow-[0_1px_2px_rgba(13,13,13,.05)] transition-transform duration-200 ease-out group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0`}>
           <div className="flex items-start justify-between gap-3">
             <ProjectIdentity nome={projeto.nome} tipo={projeto.identidade_tipo} valor={projeto.identidade_valor} logoUrl={projeto.identidade_logo_url} cor={projeto.identidade_cor} size="sm" />
             <button
