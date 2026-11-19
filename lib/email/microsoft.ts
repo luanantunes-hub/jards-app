@@ -10,6 +10,7 @@ import { casaComContato, GRAPH, mensagemDoGraph, urlDaPasta, type MensagemGraph,
 import { emLotes } from "./lotes";
 import type { BuscaDeEmails, MensagemDeEmail } from "./mensagem";
 import { generateNonce, generatePkce, saveEmailOAuthSession } from "./oauth";
+import { corpoEmHtml, type FonteDeEmail } from "./envio";
 
 function urlDoToken(): string {
   return `https://login.microsoftonline.com/${microsoftEmailTenant()}/oauth2/v2.0/token`;
@@ -218,7 +219,7 @@ export async function buscarMensagensRecentesMicrosoft(
   return achadas.sort((a, b) => (b.sentAt?.getTime() ?? 0) - (a.sentAt?.getTime() ?? 0));
 }
 
-type PedidoMicrosoft = { para: readonly string[]; cc: readonly string[]; cco: readonly string[]; assunto: string; texto: string };
+type PedidoMicrosoft = { para: readonly string[]; cc: readonly string[]; cco: readonly string[]; assunto: string; texto: string; fonte: FonteDeEmail };
 
 const destinatarios = (enderecos: readonly string[]) => enderecos.map((endereco) => ({ emailAddress: { address: endereco } }));
 
@@ -228,14 +229,14 @@ async function falhaDoGraph(res: Response, padrao: string): Promise<never> {
 }
 
 /** Envia pela caixa da pessoa e guarda uma cópia em Itens Enviados. O Graph responde 202 sem corpo. */
-export async function enviarPelaMicrosoft(accessToken: string, { para, cc, cco, assunto, texto }: PedidoMicrosoft): Promise<void> {
+export async function enviarPelaMicrosoft(accessToken: string, { para, cc, cco, assunto, texto, fonte }: PedidoMicrosoft): Promise<void> {
   const res = await fetch(`${GRAPH}/me/sendMail`, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       message: {
         subject: assunto,
-        body: { contentType: "Text", content: texto },
+        body: { contentType: "HTML", content: corpoEmHtml(texto, fonte) },
         toRecipients: destinatarios(para),
         ccRecipients: destinatarios(cc),
         bccRecipients: destinatarios(cco),
@@ -250,12 +251,14 @@ export async function enviarPelaMicrosoft(accessToken: string, { para, cc, cco, 
 export async function responderPelaMicrosoft(
   accessToken: string,
   mensagemId: string,
-  { para, cc, cco, texto }: Pick<PedidoMicrosoft, "para" | "cc" | "cco" | "texto">,
+  { para, cc, cco, texto, fonte }: Pick<PedidoMicrosoft, "para" | "cc" | "cco" | "texto" | "fonte">,
 ): Promise<void> {
   const res = await fetch(`${GRAPH}/me/messages/${encodeURIComponent(mensagemId)}/reply`, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ message: { toRecipients: destinatarios(para), ccRecipients: destinatarios(cc), bccRecipients: destinatarios(cco) }, comment: texto }),
+    body: JSON.stringify({
+      message: { toRecipients: destinatarios(para), ccRecipients: destinatarios(cc), bccRecipients: destinatarios(cco), body: { contentType: "HTML", content: corpoEmHtml(texto, fonte) } },
+    }),
   });
   if (!res.ok) await falhaDoGraph(res, "Falha ao responder pelo Outlook");
 }

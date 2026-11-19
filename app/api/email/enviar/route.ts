@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
           cco: pedido.cco,
           assunto: pedido.assunto,
           texto: pedido.texto,
+          fonte: pedido.fonte,
           responder_a_email_id: pedido.responderAEmailId,
           enviar_em: pedido.enviarEm.toISOString(),
         })

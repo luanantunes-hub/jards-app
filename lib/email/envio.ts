@@ -15,12 +15,23 @@ export const ANTECEDENCIA_MAXIMA_MS = 90 * 24 * 60 * 60_000;
 /** Quantos e-mails agendados e ainda pendentes cada pessoa pode ter. */
 export const MAXIMO_DE_AGENDADOS_POR_PESSOA = 100;
 
+/** Fontes do corpo do e-mail: pares conhecidos em qualquer sistema, para o texto chegar igual a quem lê. */
+export const FONTES_DE_EMAIL = {
+  padrao: { rotulo: "Padrão", familia: "Arial, Helvetica, sans-serif" },
+  georgia: { rotulo: "Georgia", familia: "Georgia, 'Times New Roman', serif" },
+  verdana: { rotulo: "Verdana", familia: "Verdana, Geneva, sans-serif" },
+  aptos: { rotulo: "Aptos", familia: "Aptos, Calibri, sans-serif" },
+} as const;
+export type FonteDeEmail = keyof typeof FONTES_DE_EMAIL;
+const FONTE_PADRAO: FonteDeEmail = "padrao";
+
 export type PedidoDeEnvio = {
   para: string[];
   cc: string[];
   cco: string[];
   assunto: string;
   texto: string;
+  fonte: FonteDeEmail;
   /** Agendar para esta hora (ISO). Sem isso, envia agora. */
   enviarEm: Date | null;
   /** Responder a este e-mail (id do e-mail no Jards): mantém a conversa no mesmo fio. */
@@ -63,6 +74,8 @@ export function validarPedidoDeEnvio(corpo: unknown, agora: Date = new Date()): 
   if (!texto) return { ok: false, erro: "Escreva a mensagem." };
   if (texto.length > MAXIMO_DO_TEXTO) return { ok: false, erro: `A mensagem passa de ${MAXIMO_DO_TEXTO} caracteres.` };
 
+  const fonte: FonteDeEmail = typeof dados.fonte === "string" && dados.fonte in FONTES_DE_EMAIL ? (dados.fonte as FonteDeEmail) : FONTE_PADRAO;
+
   let enviarEm: Date | null = null;
   if (dados.enviarEm !== undefined && dados.enviarEm !== null && dados.enviarEm !== "") {
     const quando = typeof dados.enviarEm === "string" ? new Date(dados.enviarEm) : null;
@@ -79,7 +92,7 @@ export function validarPedidoDeEnvio(corpo: unknown, agora: Date = new Date()): 
     responderAEmailId = dados.responderAEmailId;
   }
 
-  return { ok: true, pedido: { para, cc, cco, assunto, texto, enviarEm, responderAEmailId } };
+  return { ok: true, pedido: { para, cc, cco, assunto, texto, fonte, enviarEm, responderAEmailId } };
 }
 
 /** "Re: assunto", sem empilhar "Re: Re:". */
@@ -112,6 +125,27 @@ function cabecalhoCodificado(valor: string): string {
   return `=?UTF-8?B?${Buffer.from(limpo, "utf8").toString("base64")}?=`;
 }
 
+function escapeHtml(valor: string): string {
+  return valor.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+/**
+ * O texto que a pessoa escreveu, na fonte escolhida: linha em branco separa parágrafos, uma quebra sozinha vira
+ * `<br>`. É o que o Gmail e o Outlook mostram; quem lê num leitor sem HTML recebe o texto puro do outro lado do e-mail.
+ */
+export function corpoEmHtml(texto: string, fonte: FonteDeEmail): string {
+  const paragrafos = texto
+    .split(/\n{2,}/)
+    .map((paragrafo) => escapeHtml(paragrafo).replace(/\n/g, "<br>"))
+    .join("</p><p>");
+  return `<div style="font-family:${FONTES_DE_EMAIL[fonte].familia};font-size:14px;line-height:1.6;color:#282525"><p>${paragrafos}</p></div>`;
+}
+
+function parteDoMime(boundary: string, contentType: string, conteudo: string): string {
+  const corpo = Buffer.from(conteudo, "utf8").toString("base64").replace(/(.{76})/g, "$1\r\n");
+  return [`--${boundary}`, `Content-Type: ${contentType}`, "Content-Transfer-Encoding: base64", "", corpo].join("\r\n");
+}
+
 export type EntradaDoMime = {
   de: string;
   para: readonly string[];
@@ -119,15 +153,19 @@ export type EntradaDoMime = {
   cco: readonly string[];
   assunto: string;
   texto: string;
+  fonte: FonteDeEmail;
   /** Message-ID (RFC) da mensagem respondida: o Gmail só encadeia a resposta no fio com esses cabeçalhos. */
   respondendoA?: string | null;
 };
 
 /**
- * A mensagem no formato que o Gmail aceita (RFC 2822), em base64 "url safe". O cabeçalho "Bcc" vai no que é
- * enviado: o próprio Gmail o remove da cópia que os outros destinatários recebem, mas ainda entrega a quem está nele.
+ * A mensagem no formato que o Gmail aceita (RFC 2822), em base64 "url safe". "multipart/alternative" leva o texto
+ * puro e a versão em HTML (com a fonte escolhida) juntos: cada leitor de e-mail mostra a que sabe exibir. O
+ * cabeçalho "Bcc" vai no que é enviado: o próprio Gmail o remove da cópia que os outros destinatários recebem, mas
+ * ainda entrega a quem está nele.
  */
-export function montarMensagemDoGmail({ de, para, cc, cco, assunto, texto, respondendoA }: EntradaDoMime): string {
+export function montarMensagemDoGmail({ de, para, cc, cco, assunto, texto, fonte, respondendoA }: EntradaDoMime): string {
+  const boundary = `jards_${Buffer.from(`${de}${assunto}${texto.length}`).toString("hex").slice(0, 20)}`;
   const cabecalhos = [
     `From: ${semQuebras(de)}`,
     `To: ${para.map(semQuebras).join(", ")}`,
@@ -136,10 +174,13 @@ export function montarMensagemDoGmail({ de, para, cc, cco, assunto, texto, respo
     `Subject: ${cabecalhoCodificado(assunto)}`,
     ...(respondendoA ? [`In-Reply-To: ${semQuebras(respondendoA)}`, `References: ${semQuebras(respondendoA)}`] : []),
     "MIME-Version: 1.0",
-    'Content-Type: text/plain; charset="UTF-8"',
-    "Content-Transfer-Encoding: base64",
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
   ];
-  const corpo = Buffer.from(texto.replace(/\r?\n/g, "\r\n"), "utf8").toString("base64").replace(/(.{76})/g, "$1\r\n");
+  const corpo = [
+    parteDoMime(boundary, 'text/plain; charset="UTF-8"', texto.replace(/\r?\n/g, "\r\n")),
+    parteDoMime(boundary, 'text/html; charset="UTF-8"', corpoEmHtml(texto, fonte)),
+    `--${boundary}--`,
+  ].join("\r\n");
   return Buffer.from(`${cabecalhos.join("\r\n")}\r\n\r\n${corpo}`, "utf8").toString("base64url");
 }
 

@@ -2,7 +2,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { SegmentedControl } from "@/components/ui/FilterControls";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { CornerSheet } from "@/components/ui/CornerSheet";
+import { FONTES_DE_EMAIL, type FonteDeEmail } from "@/lib/email/envio";
+
+const OPCOES_DE_FONTE = Object.entries(FONTES_DE_EMAIL).map(([value, { rotulo }]) => ({ value, label: rotulo }));
 
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const AREA = "min-h-[11rem] w-full resize-y rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] leading-relaxed text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
@@ -35,6 +39,7 @@ export function EscreverEmail({ inicio, onClose, onEnviado }: { inicio?: InicioD
   const [mostrarCco, setMostrarCco] = useState(false);
   const [assunto, setAssunto] = useState(inicio?.assunto ?? "");
   const [texto, setTexto] = useState("");
+  const [fonte, setFonte] = useState<FonteDeEmail>("padrao");
   const [modo, setModo] = useState<"agora" | "agendar">("agora");
   const [quando, setQuando] = useState(() => proximaHoraLocal(60));
   const [enviando, setEnviando] = useState(false);
@@ -55,6 +60,7 @@ export function EscreverEmail({ inicio, onClose, onEnviado }: { inicio?: InicioD
           cco: enderecosDoCampo(cco),
           assunto,
           texto,
+          fonte,
           responderAEmailId: inicio?.responderAEmailId,
           ...(modo === "agendar" ? { enviarEm: new Date(quando).toISOString() } : {}),
         }),
@@ -120,8 +126,19 @@ export function EscreverEmail({ inicio, onClose, onEnviado }: { inicio?: InicioD
           <input id="email-assunto" className={CAMPO} value={assunto} onChange={event => setAssunto(event.target.value)} disabled={enviando} />
         </div>
         <div>
-          <label className={ROTULO} htmlFor="email-texto">Mensagem</label>
-          <textarea id="email-texto" autoFocus={Boolean(inicio?.para?.length)} className={AREA} value={texto} onChange={event => setTexto(event.target.value)} disabled={enviando} />
+          <div className="mb-1.5 flex items-center justify-between gap-3">
+            <label className="text-[0.6875rem] font-medium text-black/55" htmlFor="email-texto">Mensagem</label>
+            <Dropdown value={fonte} onChange={value => setFonte(value as FonteDeEmail)} options={OPCOES_DE_FONTE} ariaLabel="Fonte do e-mail" className="w-32" disabled={enviando} />
+          </div>
+          <textarea
+            id="email-texto"
+            autoFocus={Boolean(inicio?.para?.length)}
+            className={AREA}
+            style={{ fontFamily: FONTES_DE_EMAIL[fonte].familia }}
+            value={texto}
+            onChange={event => setTexto(event.target.value)}
+            disabled={enviando}
+          />
         </div>
         <div>
           <span className={ROTULO}>Quando</span>
