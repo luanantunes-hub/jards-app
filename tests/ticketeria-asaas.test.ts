@@ -89,7 +89,7 @@ function aviso(evento: string, extra: Record<string, unknown> = {}, pagamento: R
 
 test("o aviso do Asaas: pagamento, estorno e chargeback viram avisos do núcleo, com o valor em centavos", () => {
   const asaas = criar(asaasFalso({}).http);
-  assert.deepEqual(asaas.lerAviso(aviso("PAYMENT_RECEIVED"), TOKEN), { ok: true, aviso: { id_externo: "evt_1", tipo: "pagamento_confirmado", pedido_id: PEDIDO, ref: "pay_1", valor_centavos: 10600 } });
+  assert.deepEqual(asaas.lerAviso(aviso("PAYMENT_RECEIVED"), TOKEN), { ok: true, aviso: { id_externo: "evt_1", tipo: "pagamento_confirmado", pedido_id: PEDIDO, ref: "pay_1", valor_centavos: 10600, liquido_centavos: 10401 } });
   assert.equal((asaas.lerAviso(aviso("PAYMENT_CONFIRMED"), TOKEN) as { aviso: { tipo: string } }).aviso.tipo, "pagamento_confirmado");
   assert.equal((asaas.lerAviso(aviso("PAYMENT_REFUNDED"), TOKEN) as { aviso: { tipo: string } }).aviso.tipo, "estorno_confirmado");
   assert.equal((asaas.lerAviso(aviso("PAYMENT_CHARGEBACK_REQUESTED"), TOKEN) as { aviso: { tipo: string } }).aviso.tipo, "chargeback_recebido");
@@ -118,13 +118,13 @@ test("o aviso de pagamento do Asaas confirma o pedido uma vez; o irrelevante res
   const vistos = new Set<string>();
   const portas: PortasDosAvisos = {
     async registrar(a) { if (vistos.has(a.id_externo)) return "ja_processado"; vistos.add(a.id_externo); return "novo"; },
-    async confirmar(pedidoId, provedor, ref, valor) { confirmados.push(`${pedidoId}|${provedor}|${ref}|${valor}`); return "pago"; },
+    async confirmar(pedidoId, provedor, ref, valor, liquido) { confirmados.push(`${pedidoId}|${provedor}|${ref}|${valor}|${liquido}`); return "pago"; },
     async concluir() {},
   };
   const corpo = aviso("PAYMENT_RECEIVED");
   assert.deepEqual(await processarAviso(asaas, portas, corpo, TOKEN), { status: 200, resultado: "pago", pedido_id: PEDIDO });
   assert.deepEqual(await processarAviso(asaas, portas, corpo, TOKEN), { status: 200, resultado: "repetido", pedido_id: PEDIDO }, "at least once: o reenvio não confirma de novo");
-  assert.deepEqual(confirmados, [`${PEDIDO}|asaas|pay_1|10600`]);
+  assert.deepEqual(confirmados, [`${PEDIDO}|asaas|pay_1|10600|10401`], "o líquido real do Asaas vai junto");
   assert.deepEqual(await processarAviso(asaas, portas, aviso("PAYMENT_OVERDUE", { id: "evt_2" }), TOKEN), { status: 200, resultado: "ignorado" });
   assert.deepEqual(await processarAviso(asaas, portas, corpo, "errado"), { status: 401, resultado: "assinatura_invalida" });
   assert.equal(vistos.size, 1, "o irrelevante não foi gravado");
@@ -170,4 +170,15 @@ test("o QR do Pix não insiste em outros erros nem mais de 3 vezes", async () =>
   });
   await assert.rejects(new ProvedorAsaas({ chave: CHAVE, tokenDoWebhook: TOKEN, fetch: sempre.http, esperaDoQrMs: 0 }).criarCobranca(pedido), /invalid_action/);
   assert.equal(sempre.chamadas.filter(c => c.url.endsWith("/pixQrCode")).length, 3);
+});
+
+test("o aviso do Asaas traz o valor líquido real (o custo é o valor menos o líquido); sem ele, ou fora do pagamento, vale a estimativa", () => {
+  const asaas = criar(asaasFalso({}).http);
+  const liquido = (corpo: string) => (asaas.lerAviso(corpo, TOKEN) as { aviso: { liquido_centavos?: number | null } }).aviso.liquido_centavos;
+  assert.equal(liquido(aviso("PAYMENT_RECEIVED", {}, { value: 50, netValue: 49.01 })), 4901, "R$ 50,00 com R$ 0,99 de taxa");
+  assert.equal(liquido(aviso("PAYMENT_CONFIRMED", {}, { value: 50, netValue: 50 })), 5000, "cobrança grátis da promoção: custo zero");
+  assert.equal(liquido(aviso("PAYMENT_RECEIVED", {}, { netValue: undefined })), null, "sem netValue");
+  assert.equal(liquido(aviso("PAYMENT_RECEIVED", {}, { netValue: "104.01" })), null, "netValue que não é número");
+  assert.equal(liquido(aviso("PAYMENT_RECEIVED", {}, { netValue: -1 })), null, "netValue negativo");
+  assert.equal(liquido(aviso("PAYMENT_REFUNDED")), null, "estorno não traz líquido para o razão do pagamento");
 });

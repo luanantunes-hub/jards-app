@@ -646,6 +646,7 @@ export type BancoDaTicketeria = {
           meio: MeioDePagamento | null;
           parcelas: number | null;
           custo_meio_centavos: number;
+          custo_meio_real_centavos: number | null;
           pago_em: string | null;
           created_at: string;
           updated_at: string;
@@ -669,6 +670,7 @@ export type BancoDaTicketeria = {
           meio?: MeioDePagamento | null;
           parcelas?: number | null;
           custo_meio_centavos?: number;
+          custo_meio_real_centavos?: number | null;
           pago_em?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -692,6 +694,7 @@ export type BancoDaTicketeria = {
           meio?: MeioDePagamento | null;
           parcelas?: number | null;
           custo_meio_centavos?: number;
+          custo_meio_real_centavos?: number | null;
           pago_em?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -990,6 +993,10 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_confirmar_pagamento: {
         Args: { p_pedido: string; p_provedor: string; p_ref: string; p_valor_centavos: number };
+        Returns: string;
+      };
+      fn_ticketeria_confirmar_pagamento_real: {
+        Args: { p_pedido: string; p_provedor: string; p_ref: string; p_valor_centavos: number; p_liquido_centavos: number | null };
         Returns: string;
       };
     };

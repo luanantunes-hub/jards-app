@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(32);
+select plan(38);
 
 create schema tm;
 grant usage on schema tm to authenticated, anon;
@@ -181,6 +181,30 @@ insert into public.ticketeria_custos_meio (provedor, meio, parcelas_de, parcelas
 select is((select row(r ->> 'total_centavos')::text from tm.reservar('p3', '31', 1) r) || tm.tenta(format('select public.fn_ticketeria_definir_meio(%L, %L, null)', tm.pedido('p3'), 'pix')),
           '(6000)23514 meio_indisponivel', 'o custo maior que a parte do produtor: o meio não serve para o pedido');
 delete from public.ticketeria_custos_meio where fixo_centavos = 9000;
+
+-- ─── O custo REAL do pagamento (o líquido que o Asaas informa) ──────────────
+
+select tm.reservar('p4', '31', 1);
+select public.fn_ticketeria_definir_meio(tm.pedido('p4'), 'pix', null);
+select is(public.fn_ticketeria_confirmar_pagamento_real(tm.pedido('p4'), 'asaas', 'ref-4', 6000, 5901), 'pago', 'com o líquido real (R$ 59,01 de R$ 60: taxa de R$ 0,99 da promoção), o pagamento confirma');
+set constraints all immediate;
+select is((select string_agg(p.conta || '=' || p.valor_centavos, ' ' order by p.conta) from public.ticketeria_partidas p join public.ticketeria_transacoes t on t.id = p.transacao_id where t.pedido_id = tm.pedido('p4')),
+          'plataforma=-150 produtor=-5751 psp_a_receber=5901', 'o razão usa o custo REAL (R$ 0,99), e não a estimativa (R$ 1,99): do produtor R$ 57,51');
+select is((select row(custo_meio_centavos, custo_meio_real_centavos)::text from public.ticketeria_pedidos where id = tm.pedido('p4')), '(199,99)', 'o pedido guarda a estimativa e o custo real lado a lado');
+select tm.reservar('p5', '31', 1);
+select public.fn_ticketeria_definir_meio(tm.pedido('p5'), 'pix', null);
+select public.fn_ticketeria_confirmar_pagamento_real(tm.pedido('p5'), 'asaas', 'ref-5', 6000, 6000);
+select is((select string_agg(p.conta || '=' || p.valor_centavos, ' ' order by p.conta) from public.ticketeria_partidas p join public.ticketeria_transacoes t on t.id = p.transacao_id where t.pedido_id = tm.pedido('p5'))
+          || ' real=' || (select custo_meio_real_centavos from public.ticketeria_pedidos where id = tm.pedido('p5')),
+          'plataforma=-150 produtor=-5850 psp_a_receber=6000 real=0', 'cobrança grátis da promoção: custo real zero, e o produtor recebe a parte inteira');
+select tm.reservar('p6', '31', 1);
+select public.fn_ticketeria_definir_meio(tm.pedido('p6'), 'pix', null);
+select is(array[
+            tm.tenta(format('select public.fn_ticketeria_confirmar_pagamento_real(%L, %L, %L, 6000, 6001)', tm.pedido('p6'), 'asaas', 'ref-6')),
+            tm.tenta(format('select public.fn_ticketeria_confirmar_pagamento_real(%L, %L, %L, 6000, 100)', tm.pedido('p6'), 'asaas', 'ref-6')),
+            tm.tenta(format('select public.fn_ticketeria_confirmar_pagamento_real(%L, %L, %L, 5999, 5900)', tm.pedido('p6'), 'asaas', 'ref-6'))],
+          array['23514 liquido_invalido', '23514 liquido_invalido', '23514 valor_divergente'], 'líquido maior que o valor ou custo maior que a parte do produtor: inválido; o valor pago continua conferido');
+select ok(not has_function_privilege('authenticated', 'public.fn_ticketeria_confirmar_pagamento_real(uuid, text, text, bigint, bigint)', 'execute') and has_function_privilege('service_role', 'public.fn_ticketeria_confirmar_pagamento_real(uuid, text, text, bigint, bigint)', 'execute'), 'a confirmação com o líquido: só pelo servidor');
 
 -- ─── Quem vê e quem grava ───────────────────────────────────────────────────
 
