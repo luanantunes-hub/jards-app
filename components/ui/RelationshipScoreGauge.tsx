@@ -1,8 +1,6 @@
 "use client";
 
-import { useId } from "react";
 import { AlertTriangle } from "lucide-react";
-import { FiltroDeGiz } from "@/components/ui/FiltroDeGiz";
 
 type Props = {
   score: number | null;
@@ -12,13 +10,13 @@ type Props = {
   titleOverride?: string;
 };
 
-/** Escala em teal (relacionamento); roxo fica para navegação e seleção. */
+/** Escala em folha, o verde alegre da identidade (#3DA86A); roxo fica para navegação e seleção. */
 const SEGMENTS = [
-  { from: 180, to: 148, color: "rgba(26,139,122,.35)" },
-  { from: 144, to: 112, color: "rgba(26,139,122,.50)" },
-  { from: 108, to: 76,  color: "rgba(26,139,122,.65)" },
-  { from: 72,  to: 40,  color: "rgba(26,139,122,.80)" },
-  { from: 36,  to: 4,   color: "#1A8B7A" },
+  { from: 180, to: 148, color: "rgba(61,168,106,.35)" },
+  { from: 144, to: 112, color: "rgba(61,168,106,.50)" },
+  { from: 108, to: 76,  color: "rgba(61,168,106,.65)" },
+  { from: 72,  to: 40,  color: "rgba(61,168,106,.80)" },
+  { from: 36,  to: 4,   color: "#3DA86A" },
 ];
 
 function point(angle: number, radius: number) {
@@ -94,18 +92,14 @@ export function RelationshipScoreGauge({ score, label = "Potencial de relacionam
   const needleLeft = { x: baseCenter.x + perpendicularX, y: baseCenter.y + perpendicularY };
   const needleRight = { x: baseCenter.x - perpendicularX, y: baseCenter.y - perpendicularY };
   const meta = scoreMeta(score, variant);
-  const filtroDeGiz = `giz-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
 
   return (
     <div className={compact ? "w-[10.5rem]" : "w-full max-w-[13.75rem]"}>
       <p className="mb-1 text-center text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p>
       <svg viewBox="0 0 160 78" className={compact ? "h-[4rem] w-full" : "h-[4.875rem] w-full"} role="img" aria-label={`${label}: ${score ?? "sem dados"}`}>
-        <defs><FiltroDeGiz id={filtroDeGiz} /></defs>
-        <g filter={`url(#${filtroDeGiz})`}>
-          {SEGMENTS.map((segment, index) => (
-            <path key={index} d={arc(segment.from, segment.to)} fill="none" stroke={score !== null && value > index * 20 ? segment.color : "rgba(13,13,13,.075)"} strokeWidth="17" />
-          ))}
-        </g>
+        {SEGMENTS.map((segment, index) => (
+          <path key={index} d={arc(segment.from, segment.to)} fill="none" stroke={score !== null && value > index * 20 ? segment.color : "rgba(13,13,13,.075)"} strokeWidth="17" />
+        ))}
         <path
           d={`M ${needleLeft.x} ${needleLeft.y} L ${needleTip.x} ${needleTip.y} L ${needleRight.x} ${needleRight.y} Z`}
           fill="white"

@@ -1,5 +1,5 @@
 import { CircleCheck, Handshake, Target, type LucideIcon } from "lucide-react";
-import { ESTILO_DE_GIZ } from "@/lib/giz";
+import { BarraEmBlocos } from "@/components/ui/BarraEmBlocos";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 /**
@@ -19,8 +19,8 @@ export const ICONE_CAPTACAO = {
   falta: Target,
 } as const;
 
-/** Barra empilhada da meta: confirmado e, logo depois, o que está em negociação. Os blocos têm grão de giz pastel. */
-export function BarraCaptacao({ confirmado, negociacao = 0, meta, className = "h-2" }: {
+/** Barra empilhada da meta, em blocos de giz pastel: confirmado e, logo depois, o que está em negociação. */
+export function BarraCaptacao({ confirmado, negociacao = 0, meta, className = "h-2.5" }: {
   confirmado: number;
   negociacao?: number;
   meta: number | null | undefined;
@@ -28,12 +28,14 @@ export function BarraCaptacao({ confirmado, negociacao = 0, meta, className = "h
 }) {
   const pctConfirmado = meta && meta > 0 ? Math.min(100, (Math.max(0, confirmado) / meta) * 100) : 0;
   const pctNegociacao = meta && meta > 0 ? Math.min(100 - pctConfirmado, (Math.max(0, negociacao) / meta) * 100) : 0;
-  const segmento = "h-full transition-[width] duration-200 motion-reduce:transition-none";
   return (
-    <div className={`flex overflow-hidden rounded bg-black/[.06] ${className}`}>
-      <div className={`${segmento} ${MARCA_CAPTACAO.confirmado}`} style={{ width: `${pctConfirmado}%`, ...ESTILO_DE_GIZ }} />
-      <div className={`${segmento} ${MARCA_CAPTACAO.negociacao}`} style={{ width: `${pctNegociacao}%`, ...ESTILO_DE_GIZ }} />
-    </div>
+    <BarraEmBlocos
+      className={className}
+      segmentos={[
+        { percentual: pctConfirmado, className: MARCA_CAPTACAO.confirmado },
+        { percentual: pctNegociacao, className: MARCA_CAPTACAO.negociacao },
+      ]}
+    />
   );
 }
 

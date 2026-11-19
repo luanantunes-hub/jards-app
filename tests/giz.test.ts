@@ -13,19 +13,16 @@ test("o grão de giz é um ruído fractal usado como máscara, com cantos leveme
   assert.equal(CANTOS_DE_GIZ, "2px 3px 2px 3px");
 });
 
-test("o filtro SVG usa o mesmo ruído e o mesmo ganho do grão HTML", () => {
-  const filtro = ler("components/ui/FiltroDeGiz.tsx");
-  assert.match(filtro, /baseFrequency="0\.8"/);
-  assert.match(filtro, /0 0 0 3\.2 -0\.6/);
-  assert.match(filtro, /operator="in"/);
+test("barras de comparação e barra em blocos usam o giz", () => {
+  assert.match(ler("components/comparativo/BarrasDeValor.tsx"), /ESTILO_DE_GIZ/);
+  assert.match(ler("components/ui/BarraEmBlocos.tsx"), /ESTILO_DE_GIZ/);
+  assert.doesNotMatch(ler("components/ui/RelationshipScoreGauge.tsx"), /FiltroDeGiz|filter=/, "o medidor de meio círculo não leva giz");
 });
 
-test("barras de comparação, barra de captação, funil do painel e medidor de meio círculo usam o giz", () => {
-  assert.match(ler("components/comparativo/BarrasDeValor.tsx"), /ESTILO_DE_GIZ/);
-  assert.match(ler("components/ui/IndicadoresFinanceiros.tsx"), /ESTILO_DE_GIZ/);
+test("a barra de progresso virou blocos: barra de captação, lista de Projetos e funil do painel", () => {
+  assert.match(ler("components/ui/IndicadoresFinanceiros.tsx"), /<BarraEmBlocos/);
+  assert.match(ler("app/(dashboard)/projetos/page.tsx"), /<BarraEmBlocos/);
   const painel = ler("app/(dashboard)/dashboard/page.tsx");
-  assert.equal((painel.match(/ESTILO_DE_GIZ/g) ?? []).length, 3, "import + as duas barras do funil");
-  const medidor = ler("components/ui/RelationshipScoreGauge.tsx");
-  assert.match(medidor, /<FiltroDeGiz id=\{filtroDeGiz\}/);
-  assert.match(medidor, /<g filter=\{`url\(#\$\{filtroDeGiz\}\)`\}>/);
+  assert.equal((painel.match(/<BarraEmBlocos/g) ?? []).length, 2, "as barras do funil e a de Aprovado");
+  assert.doesNotMatch(painel, /h-\[0\.3125rem\] rounded-full/, "a barra contínua fina saiu do painel");
 });

@@ -13,6 +13,7 @@ import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/Entity
 import { SegmentedControl, FilterButton } from "@/components/ui/FilterControls";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { MARCA_CAPTACAO } from "@/components/ui/IndicadoresFinanceiros";
+import { BarraEmBlocos } from "@/components/ui/BarraEmBlocos";
 import { ProjetosCartoes, FASES_PROJETO, fmtAtualizacao } from "@/components/projetos/ProjetosCartoes";
 
 type ViewMode = "lista" | "cartoes";
@@ -74,19 +75,7 @@ function FinancialProgress({ captured, target }: { captured: number; target: num
         </span>
         {completed && <span className="inline-flex items-center gap-1 text-[0.625rem] font-medium text-black/55"><Check size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />Meta</span>}
       </div>
-      <div
-        className="h-1.5 overflow-hidden rounded bg-black/[.075] ring-1 ring-inset ring-black/[.025]"
-        role="progressbar"
-        aria-label="Progresso financeiro"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={progress}
-      >
-        <div
-          className={`h-full rounded transition-[width] duration-200 ease-out motion-reduce:transition-none ${MARCA_CAPTACAO.confirmado}`}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      <BarraEmBlocos segmentos={[{ percentual: progress, className: MARCA_CAPTACAO.confirmado }]} rotulo="Progresso financeiro" valorAtual={progress} />
     </div>
   );
 }
