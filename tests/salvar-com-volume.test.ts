@@ -34,11 +34,15 @@ test("a classe de salvar tem volume discreto: verde liso, luz no topo e sombra c
   assert.doesNotMatch(base, /gradient/, "sem degradê");
   assert.match(base, /inset 0 1px 0 rgba\(255, 255, 255, \.22\)/, "luz no topo");
   assert.match(base, /0 4px 12px -4px rgba\(24, 80, 28, \.42\)/, "sombra de elevação em verde");
-  assert.doesNotMatch(base, /animation|transition|translate/, "sem animação nem movimento");
+  assert.doesNotMatch(base, /animation|translate/, "sem animação nem movimento");
 });
 
-test("sem efeito no hover; pressionar afunda e desativado fica chapado", () => {
-  assert.doesNotMatch(css, /\.acao-salvar:hover/, "o botão fica igual com ou sem o mouse em cima");
+test("hover amigo: só clareia o verde, sem sombra nem movimento; pressionar afunda e desativado fica chapado", () => {
+  const hover = regra(".acao-salvar:hover");
+  assert.match(hover, /background-color:\s*#34953A/i);
+  assert.doesNotMatch(hover, /box-shadow|translate|transform|scale/, "só a cor muda");
+  assert.match(regra(".acao-salvar"), /transition:\s*background-color \.18s ease/, "de leve e sem pressa");
+  assert.match(regra(".acao-salvar:disabled"), /background-color:\s*#2E8932/, "desativado não clareia");
   assert.match(regra(".acao-salvar:active"), /inset 0 1px 3px rgba\(0, 0, 0, \.3\)/);
   assert.match(regra(".acao-salvar:disabled"), /box-shadow:\s*none/);
 });
