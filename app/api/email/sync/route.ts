@@ -7,6 +7,7 @@ import { enderecosParaBusca, filtroDesde } from "@/lib/email/historico";
 import { interacaoDoEmail } from "@/lib/email/interacoes";
 import { emLotes, emPartes } from "@/lib/email/lotes";
 import { buscarMensagensDeContatosMicrosoft } from "@/lib/email/microsoft";
+import { sincronizarDesconhecidos } from "@/lib/email/sincronizar-desconhecidos";
 import { decisorDeVisibilidade, type EmailExistente } from "@/lib/email/visibilidade";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -20,7 +21,7 @@ function normalizeEmail(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase();
 }
 
-type Resultado = { synced?: number; scanned?: number; ignored?: number; skipped?: boolean; error?: string };
+type Resultado = { synced?: number; scanned?: number; ignored?: number; triagem?: number; skipped?: boolean; error?: string };
 
 /** Sincroniza uma conexão (Gmail ou Microsoft). Devolve o status HTTP e o corpo da resposta. */
 async function sincronizarUma(userId: string, provider: EmailProvider, force: boolean): Promise<{ status: number; corpo: Resultado }> {
@@ -246,6 +247,38 @@ async function sincronizarUma(userId: string, provider: EmailProvider, force: bo
   }
 }
 
+/** A triagem de remetentes desconhecidos de uma conexão. Erros viram aviso no cartão de e-mail, sem derrubar o resto. */
+async function sincronizarTriagem(userId: string, provider: EmailProvider): Promise<number> {
+  const supabase = createAdminClient();
+  try {
+    const { data: conn } = await (supabase as any)
+      .from("email_connections")
+      .select("provider_account_email, organization_id")
+      .eq("user_id", userId)
+      .eq("provider", provider)
+      .maybeSingle();
+    if (!conn?.organization_id || !conn.provider_account_email) return 0;
+    const accessToken = await getValidEmailAccessToken(userId, provider);
+    const { guardados } = await sincronizarDesconhecidos({
+      banco: supabase as any,
+      userId,
+      organizationId: conn.organization_id,
+      provider,
+      accessToken,
+      emailDaConta: conn.provider_account_email,
+    });
+    return guardados;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Erro ao separar os e-mails de quem não é contato";
+    await (supabase as any)
+      .from("email_connections")
+      .update({ last_error: `Triagem: ${message}`.slice(0, 500) })
+      .eq("user_id", userId)
+      .eq("provider", provider);
+    return 0;
+  }
+}
+
 /**
  * Sincroniza as conexões de e-mail da pessoa. Sem `provider`, todas (Gmail e Microsoft); com ele, só aquela.
  * O intervalo mínimo de 15 minutos vale por conexão, a menos que venha `force`.
@@ -272,6 +305,8 @@ export async function POST(req: NextRequest) {
   let todasPuladas = true;
   for (const alvo of alvos) {
     const { status: statusDaConexao, corpo } = await sincronizarUma(user.id, alvo, body.force === true);
+    // E-mails de quem ainda não é contato vão para a triagem. Uma falha aqui não derruba a sincronização de contatos.
+    if (statusDaConexao < 400 && !corpo.skipped) corpo.triagem = await sincronizarTriagem(user.id, alvo);
     if (statusDaConexao >= 400) {
       status = statusDaConexao;
       if (corpo.error) erros.push(corpo.error);
@@ -280,6 +315,7 @@ export async function POST(req: NextRequest) {
     total.synced = (total.synced ?? 0) + (corpo.synced ?? 0);
     total.scanned = (total.scanned ?? 0) + (corpo.scanned ?? 0);
     total.ignored = (total.ignored ?? 0) + (corpo.ignored ?? 0);
+    total.triagem = (total.triagem ?? 0) + (corpo.triagem ?? 0);
   }
   if (erros.length > 0) return NextResponse.json({ ...total, error: erros.join(" · ") }, { status });
   return NextResponse.json(todasPuladas ? { synced: 0, skipped: true } : total);

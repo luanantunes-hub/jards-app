@@ -194,3 +194,25 @@ export async function buscarMensagensDeContatosMicrosoft(
   });
   return { mensagens: escolhidas, encontradas: achadas.length, truncada };
 }
+
+/**
+ * Mensagens recentes de qualquer pessoa (caixa de entrada e enviados), para a triagem de quem ainda não é contato.
+ * Lê só o cabeçalho e o trecho, uma página por pasta, e nunca o corpo. Na caixa de entrada, o que o Outlook separou
+ * como "Outros" (boletins e promoções) fica de fora. O filtro de quem entra na triagem é de quem chama.
+ */
+export async function buscarMensagensRecentesMicrosoft(
+  accessToken: string,
+  emailDaConta: string,
+  desde: Date,
+): Promise<MensagemDeEmail[]> {
+  const achadas: MensagemDeEmail[] = [];
+  for (const pasta of ["inbox", "sentitems"] as PastaDoGraph[]) {
+    const lidas = await lerPaginas(accessToken, urlDaPasta(pasta, desde), 1);
+    for (const bruta of lidas.mensagens) {
+      if (pasta === "inbox" && bruta.inferenceClassification === "other") continue;
+      const mensagem = mensagemDoGraph(bruta, emailDaConta, pasta);
+      if (mensagem) achadas.push(mensagem);
+    }
+  }
+  return achadas.sort((a, b) => (b.sentAt?.getTime() ?? 0) - (a.sentAt?.getTime() ?? 0));
+}

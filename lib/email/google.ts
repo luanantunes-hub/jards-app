@@ -6,7 +6,7 @@ import {
   googleEmailRedirectUri,
 } from "./config";
 import { generateNonce, generatePkce, saveEmailOAuthSession } from "./oauth";
-import { consultasDeContatos } from "./historico";
+import { consultasDeContatos, filtroDesde } from "./historico";
 import { emLotes } from "./lotes";
 import { enderecosDoCabecalho, type BuscaDeEmails, type MensagemDeEmail } from "./mensagem";
 
@@ -210,8 +210,12 @@ async function listarIds(accessToken: string, consulta: string, limite: number):
   return ids;
 }
 
-async function lerMensagem(accessToken: string, id: string, userEmail: string): Promise<GmailMessage | null> {
-  const res = await fetch(`${GMAIL_API}/messages/${id}?format=full`, {
+async function lerMensagem(accessToken: string, id: string, userEmail: string, soCabecalho = false): Promise<GmailMessage | null> {
+  // Na triagem de desconhecidos só o cabeçalho e o trecho: o corpo da mensagem não é lido.
+  const formato = soCabecalho
+    ? "format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=Message-ID"
+    : "format=full";
+  const res = await fetch(`${GMAIL_API}/messages/${id}?${formato}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) return null;
@@ -282,4 +286,23 @@ export async function buscarMensagensDeContatos(
     .filter((mensagem): mensagem is GmailMessage => mensagem !== null)
     .sort((a, b) => (b.sentAt?.getTime() ?? 0) - (a.sentAt?.getTime() ?? 0));
   return { mensagens, encontradas: ids.size, truncada };
+}
+
+/**
+ * Mensagens recentes de qualquer pessoa (caixa de entrada e enviados), para a triagem de quem ainda não é contato.
+ * Fora ficam as abas Promoções, Social, Atualizações e Fóruns do Gmail. Lê só o cabeçalho e o trecho, nunca o corpo.
+ * O filtro de quem entra na triagem é de quem chama.
+ */
+export async function buscarMensagensRecentesGmail(
+  accessToken: string,
+  userEmail: string,
+  desde: Date,
+  limite = 150,
+): Promise<GmailMessage[]> {
+  const consulta = `(in:inbox OR in:sent) -category:promotions -category:social -category:updates -category:forums ${filtroDesde(desde)}`;
+  const ids = await listarIds(accessToken, consulta, limite);
+  const lidas = await emLotes(ids, 8, (id) => lerMensagem(accessToken, id, userEmail, true));
+  return lidas
+    .filter((mensagem): mensagem is GmailMessage => mensagem !== null)
+    .sort((a, b) => (b.sentAt?.getTime() ?? 0) - (a.sentAt?.getTime() ?? 0));
 }
