@@ -20,16 +20,16 @@ type Valores = Record<string, Partial<Record<Lei, number>>>;
 type Potencial = { valorEfetivo: number; potencial: number; potencialRealocado?: number };
 type Crescimento = { taxaAnual: number; confianca: "individual" | "parcial" | "setor" };
 
-// Exemplo do estado vazio: três clássicos do comércio e da aviação brasileira que já fecharam as
-// portas, com valores inventados. Aparece apagado e sem clique, só para mostrar como fica a comparação.
+// Exemplo do estado vazio: três clássicos brasileiros que já fecharam as portas (a Matarazzo é a mesma
+// da landing, com a marca dela), com valores inventados. Aparece apagado e sem clique, só para mostrar como fica a comparação.
 const EXEMPLO_EMPRESAS: EmpresaOption[] = [
   { id: "exemplo-mappin", nome: "Mappin", site: null, logo_url: null },
-  { id: "exemplo-mesbla", nome: "Mesbla", site: null, logo_url: null },
+  { id: "exemplo-matarazzo", nome: "Indústrias Reunidas Fábricas Matarazzo", site: null, logo_url: "/assets/matarazzo.svg" },
   { id: "exemplo-varig", nome: "Varig", site: null, logo_url: null },
 ];
 const EXEMPLO_VALORES: Valores = {
   "exemplo-mappin": { cultura: 1_200_000, esporte: 350_000 },
-  "exemplo-mesbla": { cultura: 780_000, saude: 240_000 },
+  "exemplo-matarazzo": { cultura: 1_800_000, saude: 240_000 },
   "exemplo-varig": { cultura: 2_400_000, ancine: 600_000 },
 };
 
@@ -453,7 +453,7 @@ function ComparativoContent() {
               />
             </div>
             <div aria-hidden="true" inert className="pointer-events-none select-none opacity-40">
-              <p className="mb-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Exemplo · Mappin, Mesbla e Varig não patrocinam mais ninguém</p>
+              <p className="mb-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Exemplo · Mappin, Matarazzo e Varig não patrocinam mais ninguém</p>
               <ComparativoCartoes
                 selecionadas={EXEMPLO_EMPRESAS}
                 valores={EXEMPLO_VALORES}
