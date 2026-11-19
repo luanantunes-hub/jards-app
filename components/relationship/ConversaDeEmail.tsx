@@ -94,10 +94,13 @@ export function ConversaDeEmail({ conversa, meuId, contatos, membros, onClose, o
       onClose={onClose}
       footer={(close) => ehMinha && provedor ? (
         <>
-          <button type="button" onClick={() => void mudarVisibilidade()} disabled={salvando} className={BOTAO_SECUNDARIO}>
-            {conversa.privada ? <Users size={12} aria-hidden="true" /> : <Lock size={12} aria-hidden="true" />}
-            {salvando ? "Salvando…" : conversa.privada ? "Mostrar à equipe" : "Só eu vejo"}
-          </button>
+          {/* Sem contato não há onde registrar: a conversa vira da equipe pela triagem (Pessoas novas), depois de criar o contato. */}
+          {conversa.contatoIds.length > 0 && (
+            <button type="button" onClick={() => void mudarVisibilidade()} disabled={salvando} className={BOTAO_SECUNDARIO}>
+              {conversa.privada ? <Users size={12} aria-hidden="true" /> : <Lock size={12} aria-hidden="true" />}
+              {salvando ? "Salvando…" : conversa.privada ? "Mostrar à equipe" : "Só eu vejo"}
+            </button>
+          )}
           <a href={`/api/email/abrir?id=${minhasMensagens[minhasMensagens.length - 1].id}`} target="_blank" rel="noopener noreferrer" className={BOTAO_SECUNDARIO}>
             <ExternalLink size={12} aria-hidden="true" />
             Abrir no {NOME_DO_PROVEDOR[provedor]}
