@@ -2,7 +2,10 @@
 import { useState, useEffect } from "react";
 import { SEGMENTS as GAUGE_SEGMENTS_DO_DETALHE } from "@/components/ui/RelationshipScoreGauge";
 import { useRouter } from "next/navigation";
-import { Building2, Trash2, List, Grid2X2, TrendingUp, UsersRound, Plus, Search, Shield, UserCheck, CalendarClock, CircleHelp } from "lucide-react";
+import { Building2, Trash2, List, Grid2X2, TrendingUp, UsersRound, Plus, Search, Shield, UserCheck, CalendarClock, CircleHelp, Tag } from "lucide-react";
+import { TagsDaLinha } from "@/components/ui/Tags";
+import { temAlgumaTag } from "@/lib/tags";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
 import { NovoClienteModal } from "@/components/modals/NovoClienteModal";
 import { createClient } from "@/lib/supabase/client";
@@ -67,6 +70,7 @@ const EMPRESAS_COLUMNS = [
   { id: "empresa",          label: "Empresa",            width: "minmax(13.75rem,1.5fr)", hideable: false },
   { id: "localizacao",      label: "Localização",        width: "minmax(5.625rem,.7fr)",   hideable: true },
   { id: "setor",            label: "Setor",              width: "minmax(5.625rem,.7fr)",   hideable: true },
+  { id: "tags",             label: "Tags",               width: "minmax(7.5rem,.8fr)",     hideable: true },
   { id: "tipo",             label: "Tipo",               width: "6.875rem",               hideable: false },
   { id: "negociacoes",      label: "Negociações",        width: "9.6875rem",               hideable: true },
   { id: "valor_convertido", label: "Convertido",         width: "7.5rem",               hideable: true },
@@ -188,6 +192,7 @@ export default function EmpresasCrmPage() {
   const [search, setSearch] = useState("");
   const [dSearch, setDSearch] = useState("");
   const [tipoFilter, setTipoFilter] = useState<string>("todos");
+  const [tagFilter, setTagFilter] = useState("todas");
   const [showNovoProspect, setShowNovoProspect] = useState(false);
   const [showNovoCliente, setShowNovoCliente] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -326,6 +331,7 @@ export default function EmpresasCrmPage() {
   const filtered = empresas.filter((e) => {
     if (tipoFilter !== "todos" && e.tipo !== tipoFilter) return false;
     if (!responsavel.casa(e.donos)) return false;
+    if (tagFilter !== "todas" && !temAlgumaTag(e.tags, [tagFilter])) return false;
     if (!dSearch.trim()) return true;
     const s = dSearch.toLowerCase();
     return (
@@ -336,6 +342,8 @@ export default function EmpresasCrmPage() {
   });
 
   const COL_COUNT = EMPRESAS_COLUMNS.length;
+  // tags que aparecem nas empresas carregadas, para o filtro
+  const tagsDasEmpresas = [...new Set(empresas.flatMap(e => e.tags ?? []))].sort((a, b) => a.localeCompare(b, "pt-BR"));
 
   return (
     <div className="flex h-full flex-col">
@@ -366,6 +374,16 @@ export default function EmpresasCrmPage() {
           ] as const}
         />
         <FiltroResponsavel membros={responsavel.membros} meuId={responsavel.meuId} value={responsavel.filtro} onChange={responsavel.setFiltro} />
+        {tagsDasEmpresas.length > 0 && (
+          <CustomDropdown
+            value={tagFilter}
+            onChange={setTagFilter}
+            options={[{ value: "todas", label: "Todas as tags" }, ...tagsDasEmpresas.map(tag => ({ value: tag, label: tag }))]}
+            icon={<Tag size={13} />}
+            compact
+            emphasized={false}
+          />
+        )}
       </ListToolbar>
 
       <ListContent className="md:pr-0">{viewMode === "matriz" ? (
@@ -378,6 +396,7 @@ export default function EmpresasCrmPage() {
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Empresa</th>
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Localização</th>
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Setor</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Tags</th>
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Tipo</th>
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Negociações</th>
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Convertido</th>
@@ -440,6 +459,11 @@ export default function EmpresasCrmPage() {
                     {/* Setor */}
                     <td className="px-5 py-3.5 text-black/50 text-[0.78125rem]">
                       {e.setor || "—"}
+                    </td>
+
+                    {/* Tags */}
+                    <td className="px-5 py-3.5">
+                      <TagsDaLinha tags={e.tags} />
                     </td>
 
                     {/* Tipo */}

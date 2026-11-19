@@ -38,6 +38,7 @@ import { RelationshipWorkspace } from "@/components/relationship/RelationshipWor
 import { RelationshipScoreGauge } from "@/components/ui/RelationshipScoreGauge";
 import { NegotiationsTable, type CaptacaoRow } from "@/components/company/NegotiationsTable";
 import { InscricoesTable, type EditalRow } from "@/components/company/InscricoesTable";
+import { TagsDoRegistro } from "@/components/ui/Tags";
 import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
 import type { EmpresaCrm } from "@/lib/supabase/types";
@@ -155,6 +156,7 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
               <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{empresa.nome}</h1>
               {empresa.domain_key && <a href={empresa.domain_key.startsWith("http") ? empresa.domain_key : `https://${empresa.domain_key}`} target="_blank" rel="noopener noreferrer" className="text-black/25 hover:text-[#7259B5] transition" title={empresa.domain_key}><Globe size={16}/></a>}
             </div>
+            <div className="mt-2.5"><TagsDoRegistro tabela="empresas_crm" id={empresa.id} tags={empresa.tags} onSalvo={tags => setEmpresa(atual => atual ? { ...atual, tags } : atual)}/></div>
           </div>
         </div>
         <div className="flex shrink-0 flex-col gap-3 lg:items-end">

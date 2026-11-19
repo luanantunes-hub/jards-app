@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Plus, Mail, Phone, X, ArrowUpDown, Trash2,
   List, UsersRound, ShieldCheck, Radio, Wrench, CalendarX2, ContactRound, Search,
-  Smile, Meh, Frown,
+  Smile, Meh, Frown, Tag,
 } from "lucide-react";
 
 function LinkedinIcon({ size = 13 }: { size?: number }) {
@@ -25,6 +25,8 @@ import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { TagsDaLinha } from "@/components/ui/Tags";
+import { temAlgumaTag } from "@/lib/tags";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 
 type ViewMode = "lista" | "stakeholders";
@@ -38,6 +40,7 @@ const CONTATOS_COLUMNS = [
   { id: "nome", label: "Nome", width: "13.125rem", grow: true, hideable: false },
   { id: "empresa", label: "Empresa", width: "12.8125rem" },
   { id: "cargo", label: "Cargo", width: "13.125rem" },
+  { id: "tags", label: "Tags", width: "11.25rem" },
   { id: "papel", label: "Papel", width: "10.9375rem" },
   { id: "relacionamento", label: "Relacionamento", width: "13.75rem" },
   { id: "interacao", label: "Última interação", width: "10.9375rem" },
@@ -64,6 +67,7 @@ type ContatoRow = {
   empresa_pub: { nome: string; site: string | null; logo_url: string | null } | null;
   empresa_crm: { nome: string; site: string | null; domain_key: string | null } | null;
   empresa_crm_id: string | null;
+  tags?: string[];
   papel_decisao: "decision_maker" | "champion" | "influencer" | "gatekeeper" | null;
   influencia: number | null;
   sentimento: "positivo" | "neutro" | "negativo" | "desconhecido" | null;
@@ -161,7 +165,7 @@ function fmtDate(d: string | null): string {
 function SkeletonRow() {
   return (
     <tr style={{ borderBottom: "1px solid rgba(13,13,13,.045)" }}>
-      {[210, 205, 210, 175, 220, 175, 155, 135, 165, 165, 85].map((w, i) => (
+      {[210, 205, 210, 160, 175, 220, 175, 155, 135, 165, 165, 85].map((w, i) => (
         <td key={i} className="px-6 py-4">
           <div className="h-3.5 max-w-full rounded bg-black/8 animate-pulse" style={{ width: `${w / 16}rem` }} />
         </td>
@@ -250,6 +254,7 @@ export default function ContatosPage() {
   const [origem, setOrigem] = useState<OrigemContato | "todos">("todos");
   const [sort, setSort] = useState<SortOpt>("nome_asc");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("todos");
+  const [tagFilter, setTagFilter] = useState("todas");
   const [withoutInteraction, setWithoutInteraction] = useState(false);
   const [viewMode, setViewMode] = usePersistedViewMode<ViewMode>("jards:contatos:view", VIEW_MODES, "lista");
 
@@ -272,7 +277,7 @@ export default function ContatosPage() {
           responsavel:responsaveis!responsavel_id(nome, cargo),
           empresa_pub:empresas!empresa_id(nome, site, logo_url),
           empresa_crm:empresas_crm!empresa_crm_id(nome, site, domain_key),
-          empresa_crm_id
+          empresa_crm_id, tags
         `)
         .order("score", { ascending: false });
 
@@ -292,6 +297,7 @@ export default function ContatosPage() {
       if (origem !== "todos" && c.origem !== origem) return false;
       if (roleFilter !== "todos" && c.papel_decisao !== roleFilter) return false;
       if (withoutInteraction && c.ultima_interacao) return false;
+      if (tagFilter !== "todas" && !temAlgumaTag(c.tags, [tagFilter])) return false;
       if (!dSearch.trim()) return true;
       const s = dSearch.toLowerCase();
       const nome    = (c.nome ?? c.responsavel?.nome ?? "").toLowerCase();
@@ -313,7 +319,9 @@ export default function ContatosPage() {
       return db.localeCompare(da);
     });
 
-  const hasFilters = search || origem !== "todos" || roleFilter !== "todos" || withoutInteraction;
+  const hasFilters = search || origem !== "todos" || roleFilter !== "todos" || withoutInteraction || tagFilter !== "todas";
+  // tags que aparecem nos contatos carregados, para o filtro
+  const tagsDosContatos = [...new Set(contatos.flatMap(c => c.tags ?? []))].sort((a, b) => a.localeCompare(b, "pt-BR"));
 
   function handleDelete(id: string, nome: string) {
     confirmDelete({
@@ -335,7 +343,7 @@ export default function ContatosPage() {
         responsavel:responsaveis!responsavel_id(nome, cargo),
         empresa_pub:empresas!empresa_id(nome, site, logo_url),
         empresa_crm:empresas_crm!empresa_crm_id(nome, site, domain_key),
-        empresa_crm_id
+        empresa_crm_id, tags
       `)
       .order("score", { ascending: false });
     if (data) setContatos(data as unknown as ContatoRow[]);
@@ -394,12 +402,23 @@ export default function ContatosPage() {
           emphasized={false}
         />
 
+        {tagsDosContatos.length > 0 && (
+          <CustomDropdown
+            value={tagFilter}
+            onChange={setTagFilter}
+            options={[{ value: "todas", label: "Todas as tags" }, ...tagsDosContatos.map(tag => ({ value: tag, label: tag }))]}
+            icon={<Tag size={13} />}
+            compact
+            emphasized={false}
+          />
+        )}
+
         <FilterButton active={withoutInteraction} onClick={() => setWithoutInteraction(value => !value)}>
           <CalendarX2 size={13} /> Sem interação
         </FilterButton>
 
         {hasFilters && (
-          <FilterButton onClick={() => { setSearch(""); setOrigem("todos"); setRoleFilter("todos"); setWithoutInteraction(false); }}>
+          <FilterButton onClick={() => { setSearch(""); setOrigem("todos"); setRoleFilter("todos"); setWithoutInteraction(false); setTagFilter("todas"); }}>
             <X size={12} /> Limpar
           </FilterButton>
         )}
@@ -412,7 +431,7 @@ export default function ContatosPage() {
           <ManagedTable storageKey="contatos-v2" definitions={CONTATOS_COLUMNS} className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(13,13,13,.07)", background: "#F9F9F8" }}>
-                {["Nome", "Empresa", "Cargo", "Papel", "Relacionamento", "Última interação", "Contato", "Origem", "Adicionado em", "Atualizado em", ""].map((h) => (
+                {["Nome", "Empresa", "Cargo", "Tags", "Papel", "Relacionamento", "Última interação", "Contato", "Origem", "Adicionado em", "Atualizado em", ""].map((h) => (
                   <th
                     key={h}
                     className="px-6 py-3 text-left text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap"
@@ -430,11 +449,11 @@ export default function ContatosPage() {
                 Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} />)
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={11}>
+                  <td colSpan={12}>
                     {contatos.length === 0 ? (
                       <ListEmptyState icon={ContactRound} title="Nenhum contato cadastrado" description="Cadastre as pessoas com quem você negocia para acompanhar influência, interações e próximos passos." action={<PrimaryListAction onClick={() => setShowModal(true)}><Plus size={13} aria-hidden="true" /> Novo contato</PrimaryListAction>} />
                     ) : (
-                      <ListEmptyState icon={Search} title="Nenhum contato corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setOrigem("todos"); setRoleFilter("todos"); setWithoutInteraction(false); }} />
+                      <ListEmptyState icon={Search} title="Nenhum contato corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setOrigem("todos"); setRoleFilter("todos"); setWithoutInteraction(false); setTagFilter("todas"); }} />
                     )}
                   </td>
                 </tr>
@@ -485,6 +504,11 @@ export default function ContatosPage() {
                       {/* Cargo */}
                       <td className="px-6 py-3.5 text-black/50 text-[0.78125rem] max-w-[11.25rem]">
                         <span className="break-words">{cargo}</span>
+                      </td>
+
+                      {/* Tags */}
+                      <td className="px-6 py-3.5 max-w-[11.25rem]">
+                        <TagsDaLinha tags={c.tags} />
                       </td>
 
                       {/* Papel na decisão */}

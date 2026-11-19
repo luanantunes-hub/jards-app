@@ -461,6 +461,8 @@ export interface Notificacao {
 export interface EmpresaCrm {
   id: string;
   account_id: string;
+  /** Tags livres do time (o vocabulário é da organização, compartilhado com contatos e projetos). */
+  tags?: string[];
   organization_id: string | null;
   empresa_pub_id: string | null;   // FK → empresas (opcional)
   nome: string;
