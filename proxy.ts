@@ -176,6 +176,7 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/visita/") ||
         pathname.startsWith("/programacao/") ||
         pathname.startsWith("/hospedagem/") ||
+        pathname.startsWith("/patrocinador/") ||
         pathname.startsWith("/palco/") ||
         pathname.startsWith("/ficha/") ||
         pathname.startsWith("/tabela/") ||
@@ -247,6 +248,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/programacao/") ||
     // Lista de quartos para o hotel, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/hospedagem/") ||
+    // Portal do patrocinador, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/patrocinador/") ||
     // Tela de palco pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/palco/") ||
     // Ficha técnica do espaço, pelo link (sem login): o código do link, conferido no servidor, é a autorização.

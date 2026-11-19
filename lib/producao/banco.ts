@@ -4436,6 +4436,57 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_marca_links: {
+        Row: {
+          id: string;
+          organization_id: string;
+          marca_id: string;
+          token_hash: string;
+          expira_em: string;
+          revogado_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          marca_id: string;
+          token_hash: string;
+          expira_em: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          marca_id?: string;
+          token_hash?: string;
+          expira_em?: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_marca_links_marca_id_fkey";
+            columns: ["marca_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_marcas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_marca_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_marcas: {
         Row: {
           id: string;
@@ -5271,6 +5322,10 @@ export type BancoDaProducao = {
       };
       fn_producao_hospedagem_criar_link: {
         Args: { p_hospedagem: string; p_dias: number };
+        Returns: string;
+      };
+      fn_producao_marca_criar_link: {
+        Args: { p_marca: string; p_dias: number };
         Returns: string;
       };
       fn_producao_palco_criar_link: {
