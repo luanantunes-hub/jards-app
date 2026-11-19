@@ -99,7 +99,8 @@ export async function refreshMicrosoftEmailToken(refreshToken: string): Promise<
     client_secret: microsoftEmailClientSecret(),
     grant_type: "refresh_token",
     refresh_token: refreshToken,
-    scope: MICROSOFT_EMAIL_SCOPES.join(" "),
+    // Sem `scope`: a Microsoft devolve exatamente o que a pessoa já autorizou. Pedir de novo a lista inteira
+    // quebraria a renovação das conexões feitas antes de um escopo novo entrar na lista.
   });
   const res = await fetch(urlDoToken(), {
     method: "POST",

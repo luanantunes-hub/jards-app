@@ -28,10 +28,16 @@ export function googleEmailConfigured(): boolean {
   return Boolean(googleEmailClientId() && googleEmailClientSecret() && tokenSecret());
 }
 
+/**
+ * `gmail.readonly` lê a caixa; `gmail.send` envia o que a pessoa escreveu no Jards (etapa de escrever e agendar).
+ * O envio já é pedido na conexão para a pessoa autorizar tudo de uma vez e não reconectar depois. A conexão só
+ * exige a leitura (ver o retorno do Google): quem desmarcar o envio continua lendo.
+ */
 export const GMAIL_SCOPES = [
   "openid",
   "email",
   "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/gmail.send",
 ];
 
 /** O app do Azure pode ser o mesmo da agenda (MICROSOFT_CLIENT_ID): basta somar a permissão Mail.Read e o endereço de retorno do e-mail. */
@@ -56,4 +62,5 @@ export function microsoftEmailConfigured(): boolean {
   return Boolean(microsoftEmailClientId() && microsoftEmailClientSecret() && tokenSecret());
 }
 
-export const MICROSOFT_EMAIL_SCOPES = ["openid", "email", "offline_access", "User.Read", "Mail.Read"];
+/** `Mail.Read` lê a caixa; `Mail.Send` envia o que a pessoa escreveu no Jards. Pedidos juntos para não reconectar depois. */
+export const MICROSOFT_EMAIL_SCOPES = ["openid", "email", "offline_access", "User.Read", "Mail.Read", "Mail.Send"];
