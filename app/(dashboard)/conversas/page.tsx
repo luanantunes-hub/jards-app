@@ -8,7 +8,7 @@ import { ListaDeReunioes } from "@/components/conversas/ListaDeReunioes";
 import { PainelDaConversa } from "@/components/conversas/PainelDaConversa";
 import { EscreverEmail, type ResultadoDoEnvio } from "@/components/email/EscreverEmail";
 import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListToolbar, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
-import { FilterButton } from "@/components/ui/FilterControls";
+import { SegmentedControl } from "@/components/ui/FilterControls";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { contagemDosFiltros, enderecoDoOutroLado, FILTROS_DAS_CONVERSAS, itemNaBusca, itemNoFiltro, montarLista, type EmailAgendado, type FiltroDasConversas, type ItemDaLista, type ReuniaoNaLista } from "@/lib/conversas/lista";
 import { agruparConversas, COLUNAS_DO_EMAIL_DE_CONVERSA, type EmailDeConversa } from "@/lib/email/conversas";
@@ -210,12 +210,18 @@ export default function ConversasPage() {
 
       {ambiente === "email" && !caixaVazia && (
         <ListToolbar search={<ListSearch value={busca} onChange={setBusca} placeholder="Buscar pessoa, assunto ou e-mail" />}>
-          {FILTROS_DAS_CONVERSAS.filter(({ value }) => value === "tudo" || value === filtro || contagem[value] > 0).map(({ value, label }) => (
-            <FilterButton key={value} active={filtro === value} onClick={() => setFiltro(value)}>
-              {label}
-              {value !== "tudo" && <span className="tabular-nums text-black/30">{contagem[value]}</span>}
-            </FilterButton>
-          ))}
+          <SegmentedControl<FiltroDasConversas>
+            ariaLabel="Filtrar conversas"
+            value={filtro}
+            onChange={setFiltro}
+            options={FILTROS_DAS_CONVERSAS
+              .filter(({ value }) => value === "tudo" || value === filtro || contagem[value] > 0)
+              .map(({ value, label }) => ({
+                value,
+                ariaLabel: value === "tudo" ? label : `${label}, ${contagem[value]}`,
+                label: value === "tudo" ? label : <>{label}<span className="tabular-nums text-black/30">{contagem[value]}</span></>,
+              }))}
+          />
         </ListToolbar>
       )}
 

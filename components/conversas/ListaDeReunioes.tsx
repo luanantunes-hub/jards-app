@@ -6,7 +6,7 @@ import { CalendarPlus, Video } from "lucide-react";
 import { ListEmptyState, ListSearch, ListTableSurface, LIST_HEADER_CELL } from "@/components/list/ListPagePrimitives";
 import { AvatarDaPessoa } from "@/components/ui/AvatarDaPessoa";
 import { caminhoDoDesenho } from "@/lib/conversas/avatar";
-import { FilterButton } from "@/components/ui/FilterControls";
+import { SegmentedControl } from "@/components/ui/FilterControls";
 import {
   dataCurta, duracaoEmTexto, ESTADO_DA_REUNIAO, recortarReunioes, RECORTES_DAS_REUNIOES, reuniaoNaBusca, ROTULO_DA_PLATAFORMA,
   SITUACAO_DA_REUNIAO, type RecorteDasReunioes, type ReuniaoNaLista,
@@ -32,8 +32,8 @@ function Miniatura({ reuniao }: { reuniao: ReuniaoNaLista }) {
 }
 
 /**
- * As reuniões da organização, como uma agenda: as que ainda vão acontecer à direita, a lista completa no meio
- * e os recortes à esquerda. Clicar abre a página da reunião, onde fica a transcrição.
+ * As reuniões da organização, como uma agenda: os recortes numa barra só, no topo, a lista completa e, ao lado,
+ * as que ainda vão acontecer. Clicar abre a página da reunião, onde fica a transcrição.
  */
 export function ListaDeReunioes({ reunioes, nomesDasEmpresas, onAgendar }: {
   reunioes: readonly ReuniaoNaLista[];
@@ -63,17 +63,20 @@ export function ListaDeReunioes({ reunioes, nomesDasEmpresas, onAgendar }: {
   }
 
   return (
-    <div className="flex flex-col gap-5 xl:flex-row">
-      {/* Os recortes ficam à esquerda, como numa agenda: a lista ao lado muda conforme o que se escolhe. */}
-      <nav aria-label="Recorte das reuniões" className="flex shrink-0 flex-wrap gap-2 xl:w-44 xl:flex-col">
-        {RECORTES_DAS_REUNIOES.map(({ value, label }) => (
-          <FilterButton key={value} active={recorte === value} onClick={() => setRecorte(value)} className="xl:w-full xl:justify-between">
-            {label}<span className="tabular-nums text-black/30">{contagem[value]}</span>
-          </FilterButton>
-        ))}
-      </nav>
+    <div className="flex flex-col gap-4">
+      <SegmentedControl<RecorteDasReunioes>
+        ariaLabel="Recorte das reuniões"
+        value={recorte}
+        onChange={setRecorte}
+        options={RECORTES_DAS_REUNIOES.map(({ value, label }) => ({
+          value,
+          ariaLabel: `${label}, ${contagem[value]}`,
+          label: <>{label}<span className="tabular-nums text-black/30">{contagem[value]}</span></>,
+        }))}
+      />
 
-      <div className="min-w-0 flex-1">
+      <div className="flex flex-col gap-5 xl:flex-row">
+        <div className="min-w-0 flex-1">
         <div className="mb-3 flex items-center justify-between gap-3">
           <p className="text-[0.75rem] text-black/40"><span className="font-semibold tabular-nums text-[#282525]">{achadas.length}</span> {achadas.length === 1 ? "reunião" : "reuniões"}</p>
           <ListSearch value={busca} onChange={setBusca} placeholder="Buscar reunião, empresa ou convidado" />
@@ -150,6 +153,7 @@ export function ListaDeReunioes({ reunioes, nomesDasEmpresas, onAgendar }: {
           </ul>
         )}
       </aside>
+      </div>
     </div>
   );
 }
