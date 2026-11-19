@@ -37,8 +37,8 @@ test("a classe de salvar tem volume discreto: degradê em torno do verde, luz no
   assert.doesNotMatch(base, /animation|transition|translate/, "sem animação nem movimento");
 });
 
-test("hover clareia, pressionar afunda e desativado fica chapado", () => {
-  assert.match(regra(".acao-salvar:hover"), /inset 0 0 0 999px rgba\(255, 255, 255, \.08\)/);
+test("sem efeito no hover; pressionar afunda e desativado fica chapado", () => {
+  assert.doesNotMatch(css, /\.acao-salvar:hover/, "o botão fica igual com ou sem o mouse em cima");
   assert.match(regra(".acao-salvar:active"), /inset 0 1px 3px rgba\(0, 0, 0, \.3\)/);
   assert.match(regra(".acao-salvar:disabled"), /box-shadow:\s*none/);
 });
