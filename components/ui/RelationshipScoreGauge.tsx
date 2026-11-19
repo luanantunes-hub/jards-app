@@ -11,7 +11,7 @@ type Props = {
 };
 
 /** Escala em folha, o verde alegre da identidade (#3DA86A); roxo fica para navegação e seleção. */
-const SEGMENTS = [
+export const SEGMENTS = [
   { from: 180, to: 148, color: "rgba(61,168,106,.35)" },
   { from: 144, to: 112, color: "rgba(61,168,106,.50)" },
   { from: 108, to: 76,  color: "rgba(61,168,106,.65)" },

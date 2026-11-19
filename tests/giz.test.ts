@@ -26,3 +26,14 @@ test("a barra de progresso virou blocos: barra de captação, lista de Projetos 
   assert.equal((painel.match(/<BarraEmBlocos/g) ?? []).length, 2, "as barras do funil e a de Aprovado");
   assert.doesNotMatch(painel, /h-\[0\.3125rem\] rounded-full/, "a barra contínua fina saiu do painel");
 });
+
+test("os medidores de arco usam o verde folha da identidade, e a lista de Empresas reaproveita a escala do medidor", () => {
+  const medidor = ler("components/ui/RelationshipScoreGauge.tsx");
+  assert.match(medidor, /export const SEGMENTS/);
+  assert.match(medidor, /#3DA86A/);
+  assert.doesNotMatch(medidor, /26,139,122|#1A8B7A/i);
+  assert.match(ler("components/ui/SegmentedScoreArc.tsx"), /color = "#3DA86A"/);
+  const lista = ler("app/(dashboard)/empresas-crm/page.tsx");
+  assert.match(lista, /SEGMENTS as GAUGE_SEGMENTS_DO_DETALHE/);
+  assert.doesNotMatch(lista, /rgba\(26,139,122/, "sem escala própria no verde antigo");
+});
