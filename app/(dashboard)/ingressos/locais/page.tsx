@@ -71,7 +71,7 @@ export default function LocaisPage() {
             {visiveis.map(local => {
               const deles = setores.filter(setor => setor.local_id === local.id);
               const capacidade = capacidadeDoLocal(deles);
-              const fuso = local.fuso !== "America/Sao_Paulo" ? FUSOS_DO_BRASIL.find(item => item.id === local.fuso)?.rotulo.split(" (")[0] : null;
+              const fuso = local.fuso !== "America/Sao_Paulo" ? FUSOS_DO_BRASIL.find(item => item.id === local.fuso)?.curto : null;
               return (
                 <li key={local.id} className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">

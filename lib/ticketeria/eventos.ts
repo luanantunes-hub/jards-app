@@ -17,11 +17,11 @@ export const ROTULO_DA_CLASSIFICACAO: Record<ClassificacaoIndicativa, string> = 
 export const UFS = ["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO"] as const;
 
 /** Os fusos do Brasil, com o nome que a pessoa reconhece. */
-export const FUSOS_DO_BRASIL: readonly { id: string; rotulo: string }[] = [
-  { id: "America/Sao_Paulo", rotulo: "Horário de Brasília" },
-  { id: "America/Manaus", rotulo: "Amazonas, Mato Grosso, Rondônia e Roraima (1 hora a menos)" },
-  { id: "America/Rio_Branco", rotulo: "Acre (2 horas a menos)" },
-  { id: "America/Noronha", rotulo: "Fernando de Noronha (1 hora a mais)" },
+export const FUSOS_DO_BRASIL: readonly { id: string; rotulo: string; curto: string }[] = [
+  { id: "America/Sao_Paulo", rotulo: "Horário de Brasília", curto: "horário de Brasília" },
+  { id: "America/Manaus", rotulo: "Amazonas, Mato Grosso, Rondônia e Roraima (1 hora a menos)", curto: "horário do Amazonas" },
+  { id: "America/Rio_Branco", rotulo: "Acre (2 horas a menos)", curto: "horário do Acre" },
+  { id: "America/Noronha", rotulo: "Fernando de Noronha (1 hora a mais)", curto: "horário de Noronha" },
 ];
 
 const texto = (valor: string | null | undefined) => (valor ?? "").trim();

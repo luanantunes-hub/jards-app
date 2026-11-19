@@ -158,7 +158,7 @@ export default function EventoPage() {
                   {editavel && (
                     <span className="flex items-center gap-1">
                       {situacao !== "cancelada" && <button type="button" onClick={() => setFolha({ tipo: "sessao", sessao })} className="h-8 rounded px-2.5 text-[0.6875rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Editar</button>}
-                      {evento.situacao === "publicado" && <button type="button" onClick={() => void cancelarSessao(sessao, situacao !== "cancelada")} className="h-8 rounded px-2.5 text-[0.6875rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">{situacao === "cancelada" ? "Desfazer cancelamento" : "Cancelar"}</button>}
+                      {evento.situacao === "publicado" && situacao !== "realizada" && <button type="button" onClick={() => void cancelarSessao(sessao, situacao !== "cancelada")} className="h-8 rounded px-2.5 text-[0.6875rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">{situacao === "cancelada" ? "Desfazer cancelamento" : "Cancelar"}</button>}
                     </span>
                   )}
                 </li>
