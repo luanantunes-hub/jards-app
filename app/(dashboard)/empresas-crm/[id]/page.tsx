@@ -74,7 +74,7 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
   const [atribuicao, setAtribuicao] = useState<AtribuicaoRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [pageTab, setPageTab] = useState<PageTab>("overview");
-  const [timelineSources, setTimelineSources] = useState(["atividades", "notas", "historico_captações", "inscricoes"]);
+  const [timelineSources, setTimelineSources] = useState(["atividades", "notas", "historico_captações", "inscricoes", "interacoes"]);
   const [showOpenAccount, setShowOpenAccount] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showEditLocalizacao, setShowEditLocalizacao] = useState(false);
@@ -236,7 +236,7 @@ function CommercialOverview({empresa,companyId,contacts,negotiations,projects,no
         <PerfilComercialSection empresa={empresa} atribuicao={atribuicao} onAtribuicaoSaved={onDataChanged} onEditLocalizacao={onEditLocalizacao}/>
 
         <section className="overflow-hidden rounded border bg-white" style={{borderColor:"rgba(13,13,13,.08)"}}>
-          <header className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between" style={{borderColor:"rgba(13,13,13,.07)"}}><div><p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/35">Histórico comercial</p><h2 className="mt-1 text-[0.9375rem] font-semibold text-black/75">Movimento da empresa</h2></div><div className="flex flex-wrap gap-1">{[{value:"atividades",label:"Atividades"},{value:"notas",label:"Notas"},{value:"historico_captações",label:"Mudanças"},{value:"inscricoes",label:"Inscrições"}].map(option => <button key={option.value} onClick={() => setTimelineSources(previous => previous.includes(option.value) ? previous.filter(item => item !== option.value) : [...previous, option.value])} className="rounded border bg-white px-2.5 py-1.5 text-[0.6875rem] font-medium transition hover:bg-black/[.04]" style={{color:timelineSources.includes(option.value)?'#7259B5':'rgba(13,13,13,.4)',borderColor:timelineSources.includes(option.value)?'#7259B540':'transparent'}}>{option.label}</button>)}</div></header>
+          <header className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between" style={{borderColor:"rgba(13,13,13,.07)"}}><div><p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/35">Histórico comercial</p><h2 className="mt-1 text-[0.9375rem] font-semibold text-black/75">Movimento da empresa</h2></div><div className="flex flex-wrap gap-1">{[{value:"atividades",label:"Atividades"},{value:"notas",label:"Notas"},{value:"historico_captações",label:"Mudanças"},{value:"inscricoes",label:"Inscrições"},{value:"interacoes",label:"Interações"}].map(option => <button key={option.value} onClick={() => setTimelineSources(previous => previous.includes(option.value) ? previous.filter(item => item !== option.value) : [...previous, option.value])} className="rounded border bg-white px-2.5 py-1.5 text-[0.6875rem] font-medium transition hover:bg-black/[.04]" style={{color:timelineSources.includes(option.value)?'#7259B5':'rgba(13,13,13,.4)',borderColor:timelineSources.includes(option.value)?'#7259B540':'transparent'}}>{option.label}</button>)}</div></header>
           <div className="p-5"><CompanyTimeline empresaCrmId={companyId} sources={timelineSources} showHeader={false} embedded/></div>
         </section>
       </div>
