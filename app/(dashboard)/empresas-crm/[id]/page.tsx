@@ -149,12 +149,15 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
       <Link href="/empresas-crm" className="mb-7 inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/40 transition hover:text-black/65"><ArrowLeft size={14}/>Empresas</Link>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <CompanyLogo nome={empresa.nome} site={empresa.domain_key} size={56} className="rounded"/>
+          <CompanyLogo nome={empresa.nome} domain={empresa.domain_key} site={empresa.site} size={56} className="rounded"/>
           <div className="min-w-0">
             {empresa.setor && <p className="mb-1.5 text-[0.75rem] text-black/45">{empresa.setor}</p>}
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{empresa.nome}</h1>
-              {empresa.domain_key && <a href={empresa.domain_key.startsWith("http") ? empresa.domain_key : `https://${empresa.domain_key}`} target="_blank" rel="noopener noreferrer" className="text-black/25 hover:text-[#7259B5] transition" title={empresa.domain_key}><Globe size={16}/></a>}
+              {(empresa.domain_key || empresa.site) && (() => {
+                const site = empresa.domain_key || empresa.site!;
+                return <a href={site.startsWith("http") ? site : `https://${site}`} target="_blank" rel="noopener noreferrer" className="text-black/25 hover:text-[#7259B5] transition" title={site}><Globe size={16}/></a>;
+              })()}
             </div>
             <div className="mt-2.5"><TagsDoRegistro tabela="empresas_crm" id={empresa.id} tags={empresa.tags} onSalvo={tags => setEmpresa(atual => atual ? { ...atual, tags } : atual)}/></div>
           </div>
