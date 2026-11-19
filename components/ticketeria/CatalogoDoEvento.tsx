@@ -266,7 +266,7 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
                         <span className="min-w-0 flex-1 basis-48">
                           <span className={`block text-[0.8125rem] font-medium ${ingresso.arquivado ? "text-black/40 line-through" : "text-[#282525]"}`}>{ingresso.nome}</span>
                           <span className="flex items-center gap-1.5 text-[0.6875rem] text-black/45">
-                            {ROTULO_DA_CATEGORIA[ingresso.categoria]} · até {ingresso.limite_por_pedido} por pedido
+                            {[ingresso.nome === ROTULO_DA_CATEGORIA[ingresso.categoria] ? null : ROTULO_DA_CATEGORIA[ingresso.categoria], `até ${ingresso.limite_por_pedido} por pedido`].filter(Boolean).join(" · ")}
                             {!ingresso.publico && <><EyeOff size={12} aria-hidden="true" className="text-black/40" /> não aparece ao público</>}
                           </span>
                         </span>
