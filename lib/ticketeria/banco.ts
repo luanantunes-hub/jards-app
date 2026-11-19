@@ -4,7 +4,7 @@
 // dela em lib/producao/banco.ts. Este arquivo faz o mesmo para a Ticketeria, no formato que o @supabase/supabase-js espera
 // de um `Database`: o cliente de cliente.ts faz o compilador acusar tabela, coluna e valor de lista fechada que não existem.
 //
-// De onde vêm os dados: supabase/migrations/20261118233242_ticketeria_lojas_site.sql (T1), 20261119002840_ticketeria_eventos.sql (T2), 20261119011007_ticketeria_catalogo.sql (T3), 20261119033509_ticketeria_pagamentos.sql (T4) e 20261119041904_ticketeria_custo_do_meio.sql (T5), conferidas contra o gerador do conector
+// De onde vêm os dados: supabase/migrations/20261118233242_ticketeria_lojas_site.sql (T1), 20261119002840_ticketeria_eventos.sql (T2), 20261119011007_ticketeria_catalogo.sql (T3), 20261119033509_ticketeria_pagamentos.sql (T4) 20261119041904_ticketeria_custo_do_meio.sql (T5), 20261119190000_ticketeria_custo_real_do_pagamento.sql e 20261119210000_ticketeria_validacao_de_saque.sql (o cadeado do repasse), conferidas contra o gerador do conector
 // (supabase gen types) em 18/11/2026, depois de aplicada: as mesmas colunas e anulabilidade. tests/ticketeria-banco-tipos.test.ts compara este arquivo com a migration.
 // Relationships não lista as chaves para auth.users (`criado_por`): o PostgREST só expõe o schema public.
 
@@ -965,6 +965,111 @@ export type BancoDaTicketeria = {
         };
         Relationships: [];
       };
+      ticketeria_contas_asaas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          asaas_account_id: string;
+          wallet_id: string;
+          cpf_cnpj: string;
+          situacao: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          asaas_account_id: string;
+          wallet_id: string;
+          cpf_cnpj: string;
+          situacao?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          asaas_account_id?: string;
+          wallet_id?: string;
+          cpf_cnpj?: string;
+          situacao?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ticketeria_validacoes_saque: {
+        Row: {
+          id: string;
+          provedor: string;
+          tipo: string;
+          id_externo: string;
+          cpf_cnpj: string | null;
+          valor_centavos: number;
+          decisao: string;
+          motivo: string;
+          payload: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          provedor?: string;
+          tipo: string;
+          id_externo: string;
+          cpf_cnpj?: string | null;
+          valor_centavos: number;
+          decisao: string;
+          motivo: string;
+          payload: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          provedor?: string;
+          tipo?: string;
+          id_externo?: string;
+          cpf_cnpj?: string | null;
+          valor_centavos?: number;
+          decisao?: string;
+          motivo?: string;
+          payload?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ticketeria_transferencias_autorizadas: {
+        Row: {
+          id: string;
+          tipo: string;
+          valor_centavos: number;
+          motivo: string;
+          expira_em: string;
+          usada_em: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tipo: string;
+          valor_centavos: number;
+          motivo: string;
+          expira_em?: string;
+          usada_em?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          tipo?: string;
+          valor_centavos?: number;
+          motivo?: string;
+          expira_em?: string;
+          usada_em?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -994,6 +1099,14 @@ export type BancoDaTicketeria = {
       fn_ticketeria_confirmar_pagamento: {
         Args: { p_pedido: string; p_provedor: string; p_ref: string; p_valor_centavos: number };
         Returns: string;
+      };
+      fn_ticketeria_validar_saque: {
+        Args: { p_tipo: string; p_id_externo: string; p_destino: string; p_cpf_cnpj: string | null; p_valor_centavos: number; p_payload: Json; p_provedor?: string };
+        Returns: Json;
+      };
+      fn_ticketeria_saldo_liberavel: {
+        Args: { p_cpf_cnpj: string; p_agora?: string };
+        Returns: number;
       };
       fn_ticketeria_confirmar_pagamento_real: {
         Args: { p_pedido: string; p_provedor: string; p_ref: string; p_valor_centavos: number; p_liquido_centavos: number | null };
