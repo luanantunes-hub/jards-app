@@ -448,10 +448,8 @@ export default function ContasPatrocinioPage() {
     <div className="flex h-full flex-col">
       <ListPageHeader secao="clientes" eyebrow="Gestão da carteira" title="Clientes" summary={!loading&&<><ListSummary strong={stats.ativas}>ativas</ListSummary><ListSummary strong={stats.renovacao}>renovações próximas</ListSummary><ListSummary strong={stats.emRisco} icone={AlertTriangle} alerta={stats.emRisco > 0 ? "vermelho" : undefined}>em atenção</ListSummary></>} actions={
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowNovoCliente(true)} className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-[#282525] rounded hover:bg-black/5 transition">
-            <Plus size={13} /> Novo cliente
-          </button>
           <EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/>
+          <PrimaryListAction onClick={() => setShowNovoCliente(true)}><Plus size={13} aria-hidden="true" /> Novo cliente</PrimaryListAction>
         </div>
       }/>
 
