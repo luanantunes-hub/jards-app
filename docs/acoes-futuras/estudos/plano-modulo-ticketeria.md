@@ -120,3 +120,44 @@ T0 a T4 não dependem de nenhuma decisão em aberto. É mais trabalho que a opç
 | Dado do comprador | Dados mínimos, guarda de 12 meses, pedido de exclusão previsto no texto de privacidade |
 | Dinheiro real cedo demais | Nada antes do piloto e do parecer jurídico (D7) |
 | Produtor saca o Pix e depois há arrependimento em massa ou cancelamento; a conta dele fica negativa e o Asaas cobra o Jards (garantidor, pelos Termos públicos) | D11: trava de saque de 7 dias pelo webhook de validação; contrato com direito de regresso e desconto nas vendas seguintes; teto de vendas por produtor no piloto. **A confirmar com o Asaas:** como ativa, se vale para subcontas, se segura também o estorno por Pix, e se a garantia tem teto. **A confirmar com o advogado:** se segurar o saque assim parece controlar dinheiro de terceiro |
+
+## 9. Liberação do repasse antes do evento e taxa de risco (EM ESTUDO, não decidido; 19/11/2026)
+
+**Nada disto está construído nem vai para produção antes do parecer jurídico e das respostas do Asaas (D7).** O dono pediu registrar a ideia, com a regra de vocabulário abaixo.
+
+### 9.1 Ideia
+
+O repasse do produtor fica retido até depois do evento (padrão do mercado: a Sympla repassa no 3º dia útil depois do evento; a Eventbrite segura o repasse enquanto processa reembolsos). O produtor pode pedir a **liberação antecipada de parte do repasse** e o Jards cobra uma **taxa de risco** por isso. A taxa existe porque o Jards assume o risco: pelos Termos do Asaas, a conta principal é garantidora de subconta negativa. A retenção seria feita pela *validação de saque por webhook* do Asaas (o Asaas pergunta ao Jards, a cada saque da subconta, e o Jards responde APROVADO ou RECUSADO). O dinheiro **nunca sai da conta do produtor**; o Jards não guarda saldo (D3) e **nunca usa dinheiro próprio** para pagar o produtor (D4).
+
+Substitui a D11 (só 7 dias) **se** for aprovada; até lá a D11 vale.
+
+### 9.2 Vocabulário (regra do dono)
+
+O Jards **não opera serviço financeiro**: é software de ticketeria e esta é mais uma função dele. Na tela, nos Termos, em e-mails e em código de produto, usar **"liberação antecipada do repasse"** e **"taxa de risco"**; a sobra vai para a **"reserva do Jards"**. **Não usar**: antecipação, adiantamento, desconto de recebível, empréstimo, crédito, juros, fundo, proteção ou seguro. (Estes termos só aparecem nas perguntas ao advogado, em 9.5, para serem descartados.)
+
+### 9.3 Fórmula para testar (muito conservadora; os números de risco são palpites até haver dados)
+
+- **Elegível (V):** vendas pagas há mais de 7 dias, sem estorno, de eventos que acontecem em até 30 dias.
+- **Chance de problema:** `π = (1 + I) / (20 + N)`; N = eventos realizados, I = eventos com incidente (evento cancelado ou adiado com estorno em massa, chargeback do produtor ou conta negativa). Produtor novo: 5%.
+- **Parte liberada (f):** no máximo **30% de V** (os 70% restantes cobrem estornos) e no máximo `R$ 50 ÷ π` (produtor novo: R$ 1.000), com teto de R$ 10.000.
+- **Taxa de risco sobre o valor liberado:** `máx( π + 1 ponto ; (π ÷ 5%) × (3% + 3 × f²) )`. Produtor novo: liberar 10% custa 6%; 20% custa 15%; 30% custa 30%. Com 20 eventos limpos: 3,5%, 7,5% e 15%. Com 1 incidente: 11,4%, 28,6% e 57,1%.
+- **Bloqueio imediato:** chargeback aberto, evento adiado ou cancelado, conta negativa.
+- **Teto global no piloto:** soma do liberado em aberto até R$ 20.000.
+- A tela mostra a taxa e o valor que o produtor recebe **antes** de ele confirmar.
+- Simulação (200 produtores, 10 eventos, perda de 100% do liberado quando há incidente, produtor ruim sempre pega o máximo): resultado positivo no perfil normal (R$ 92 mil) e no perfil com 20% de ruins (R$ 36 mil), nenhuma rodada negativa. Ver `sim2.py` na pasta de rascunho da sessão; reproduzir antes de decidir.
+
+### 9.4 Cancelamento do evento pelo produtor
+
+Quem cancela devolve o valor do ingresso (do saldo do produtor). **O Jards devolve a própria taxa e o custo do meio de pagamento** (as plataformas que retêm a taxa enfrentam multa do Procon e reclamação; o Procon-MG multou a Sympla em mais de R$ 210 mil). A política de reembolso é do Jards, o produtor não decide sobre ela. A plataforma responde em conjunto com o produtor perante o comprador (decisão do TJDF), mesmo sendo software: mostrar no checkout o nome e o CNPJ do produtor como vendedor ajuda, mas não elimina.
+
+### 9.5 Conta no Asaas
+
+Recomendado: **A. subconta por produtor** (conta principal do Jards em CNPJ; subconta criada por API, em nome do produtor, com cadastro verificado pelo Asaas; o dinheiro vai da subconta para o banco dele). Alternativa **B. conta do próprio produtor** com a chave entregue ao Jards: sem a garantia do Jards, mas com mais atrito e chaves de terceiros. Falta validar no sandbox em qual conta a cobrança nasce (subconta com split para o Jards, ou conta principal com split para o produtor).
+
+### 9.6 Perguntas
+
+**Ao Asaas** (também em `~/Downloads/perguntas-asaas-trava-de-saque.md`): garantia por escrito e se tem teto; como ativar a validação de saque; se vale para subcontas; se segura estorno por Pix; se o produtor assina contrato próprio na subconta; se o estorno devolve a taxa do split.
+
+**Ao advogado:** (1) A taxa de risco, como desenhada (percentual sobre o valor liberado, sem depender de prazo, sobre dinheiro do próprio produtor, sem dinheiro do Jards), é preço de serviço ou pode ser reclassificada como desconto de recebível, empréstimo ou crédito? (2) O limite de juros da Lei de Usura (12% ao ano para quem não é instituição financeira) pode ser aplicado? (3) A reserva própria do Jards, sem direito de nenhum produtor, afasta a proteção mutualista (Lei Complementar 213/2025, Susep)? (4) Precisa de autorização do Banco Central ou da Susep? (5) Como escrever os Termos e a tela. (6) Tributação da taxa de risco. (7) Segurar o saque assim parece controlar dinheiro de terceiro? (8) O Jards responde junto com o produtor pelo reembolso de evento cancelado, mesmo como software?
+
+Se o parecer disser que se parece com serviço financeiro, **não se libera**: o padrão passa a ser reter até o evento, sem taxa, e o produtor que quiser dinheiro antes usa a antecipação do próprio Asaas (instituição autorizada), no cartão.
