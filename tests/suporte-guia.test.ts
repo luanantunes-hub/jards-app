@@ -18,7 +18,7 @@ test("o guia traz os preços e planos que a página de preços publica", async (
 
 test("o guia cita só telas e botões que existem no menu e nas páginas do app", async () => {
   const layout = await ler("app/(dashboard)/layout.tsx");
-  for (const item of ["Visão geral", "Atividades", "Reuniões", "Projetos", "Patrocinadores", "Comparativo", "Editais", "Empresas", "Negociações", "Inscrições", "Proponentes", "Captadores", "Contatos", "Clientes"]) {
+  for (const item of ["Visão geral", "Atividades", "Projetos", "Patrocinadores", "Comparativo", "Editais", "Empresas", "Negociações", "Inscrições", "Proponentes", "Captadores", "Contatos", "Clientes"]) {
     assert.ok(layout.includes(`label: "${item}"`), `o menu não tem "${item}"`);
     assert.ok(GUIA_DO_JARDS.includes(item), `o guia não fala de "${item}"`);
   }
@@ -30,16 +30,16 @@ test("o guia cita só telas e botões que existem no menu e nas páginas do app"
   assert.ok(configuracoes.includes("Saldo de créditos"));
 });
 
-test("Reuniões: o guia diz que ainda não existe enquanto o menu a esconde dos clientes, e deixa de dizer quando ela abrir", async () => {
+test("Conversas: o guia diz que ainda não existe enquanto o menu a esconde dos clientes, e deixa de dizer quando ela abrir", async () => {
   const layout = await ler("app/(dashboard)/layout.tsx");
-  const escondida = /ROTAS_SO_SUPER_ADMIN\s*=\s*\[[^\]]*"\/reunioes"/.test(layout);
-  const guiaDizQueNaoExiste = /Reuniões[^\n]*ainda está em preparação/i.test(GUIA_DO_JARDS);
+  const escondida = /ROTAS_SO_SUPER_ADMIN\s*=\s*\[[^\]]*"\/conversas"/.test(layout);
+  const guiaDizQueNaoExiste = /Conversas[^\n]*ainda está em preparação/i.test(GUIA_DO_JARDS);
   assert.equal(
     guiaDizQueNaoExiste,
     escondida,
     escondida
-      ? "Reuniões está escondida dos clientes, mas o guia não diz que ainda não está disponível"
-      : "Reuniões abriu para os clientes: passe o trecho dela em guia.ts para o menu e tire o aviso de \"ainda está em preparação\"",
+      ? "Conversas está escondida dos clientes, mas o guia não diz que ainda não está disponível"
+      : "Conversas abriu para os clientes: passe o trecho dela em guia.ts para o menu e tire o aviso de \"ainda está em preparação\"",
   );
 });
 

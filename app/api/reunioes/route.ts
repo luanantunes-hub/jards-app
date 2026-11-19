@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await admin
     .from("reunioes")
-    .select("id,titulo,plataforma,status,captacao_id,empresa_crm_id,agendada_para,iniciada_em,finalizada_em,created_at")
+    .select("id,titulo,plataforma,status,resumo_ia,captacao_id,empresa_crm_id,agendada_para,iniciada_em,finalizada_em,created_at")
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
