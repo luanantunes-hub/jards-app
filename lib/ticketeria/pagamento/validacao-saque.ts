@@ -90,12 +90,17 @@ export async function tratarPedidoDeSaque(entrada: {
   corpo: string;
   validar: (pedido: PedidoDeSaque, payload: unknown) => Promise<DecisaoDeSaque>;
   registrarErro?: (erro: unknown) => void;
+  /** Quando o token não bate: só o TAMANHO do que chegou (0 = o Asaas não mandou token), para achar o desencontro sem expor segredo. */
+  registrarTokenRecusado?: (tamanhoRecebido: number) => void;
 }): Promise<RespostaDaValidacao> {
   const esperado = entrada.tokenEsperado;
   if (!esperado || esperado.length < 32) return { status: 503, corpo: { error: "validacao_nao_configurada" } };
   const recebido = Buffer.from(entrada.assinatura ?? "");
   const certo = Buffer.from(esperado);
-  if (recebido.length !== certo.length || !timingSafeEqual(recebido, certo)) return { status: 401, corpo: { error: "token_invalido" } };
+  if (recebido.length !== certo.length || !timingSafeEqual(recebido, certo)) {
+    entrada.registrarTokenRecusado?.(recebido.length);
+    return { status: 401, corpo: { error: "token_invalido" } };
+  }
   if (new TextEncoder().encode(entrada.corpo).length > TAMANHO_MAXIMO_DO_PEDIDO_DE_SAQUE) return { status: 413, corpo: { error: "corpo_grande_demais" } };
   const leitura = lerPedidoDeSaque(entrada.corpo);
   if (!leitura.ok) return { status: 400, corpo: { error: "pedido_ilegivel" } };
