@@ -4,6 +4,9 @@ import type { Database, Json } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import type { PortasDosAvisos } from "@/lib/ticketeria/pagamento/avisos";
 import type { PortasDoCadastro } from "@/lib/ticketeria/pagamento/cadastro-subconta";
+import { ErroDaCompra, type CorpoDaCompra, type PortasDaCompra } from "@/lib/ticketeria/pagamento/compra";
+import { lerPedidoReservado, mensagemDoErroDaReserva } from "@/lib/ticketeria/pagamento/reserva";
+import type { ProvedorDePagamento } from "@/lib/ticketeria/pagamento/provedor";
 import { ErroDaTroca, type EstadoDaTroca, type PortasDaTroca, type ResultadoDaConfirmacao } from "@/lib/ticketeria/pagamento/troca-de-conta";
 import type { DecisaoDeSaque, PedidoDeSaque } from "@/lib/ticketeria/pagamento/validacao-saque";
 
@@ -99,4 +102,36 @@ export async function estadoDaTroca(admin: SupabaseClient<Database>, loja: strin
   const { data, error } = await clienteDaTicketeria(admin).rpc("fn_ticketeria_troca_estado", { p_loja: loja });
   if (error) throw new Error(error.message);
   return (data as EstadoDaTroca | null) ?? null;
+}
+
+/** As portas da compra: o banco com a chave de serviço (a página de compra não tem login) e o provedor que abre a cobrança na subconta. */
+export function portasDaCompraDoSupabase(admin: SupabaseClient<Database>, config: { provedor: (chaveDaSubconta: string) => ProvedorDePagamento; carteiraDoJards: string | null; registrarErro?: (erro: unknown) => void }): PortasDaCompra {
+  const ticketeria = clienteDaTicketeria(admin);
+  return {
+    async contaDaSessao(sessao) {
+      const { data: s } = await ticketeria.from("ticketeria_sessoes").select("evento_id").eq("id", sessao).maybeSingle();
+      if (!s) return null;
+      const { data: e } = await ticketeria.from("ticketeria_eventos").select("loja_id").eq("id", s.evento_id).maybeSingle();
+      if (!e) return null;
+      const { data: conta } = await ticketeria.from("ticketeria_contas_asaas").select("situacao").eq("loja_id", e.loja_id).maybeSingle();
+      if (!conta) return null;
+      const { data: chave } = await ticketeria.rpc("fn_ticketeria_chave_da_conta_asaas", { p_loja: e.loja_id });
+      if (!chave) return null;
+      return { chave, aprovada: conta.situacao === "aprovada" };
+    },
+    async reservar(corpo: CorpoDaCompra, minutos) {
+      const { data, error } = await ticketeria.rpc("fn_ticketeria_reservar", { p_sessao: corpo.sessao_id, p_itens: corpo.itens as unknown as Json, p_nome: corpo.nome, p_email: corpo.email, p_minutos: minutos });
+      if (error) throw new ErroDaCompra("reserva_recusada", mensagemDoErroDaReserva(error));
+      const pedido = lerPedidoReservado(data);
+      if (!pedido) throw new Error("resposta inesperada do banco ao reservar");
+      return pedido;
+    },
+    async definirMeioPix(pedido) {
+      const { error } = await ticketeria.rpc("fn_ticketeria_definir_meio", { p_pedido: pedido, p_meio: "pix", p_parcelas: null });
+      if (error) throw new Error(error.message);
+    },
+    provedor: config.provedor,
+    carteiraDoJards: config.carteiraDoJards,
+    registrarErro: config.registrarErro,
+  };
 }

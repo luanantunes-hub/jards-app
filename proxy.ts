@@ -19,6 +19,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/ticketeria/avisos", 600],
   // Validação de saque do Asaas (sem login, token próprio): um pedido por saque, rápido.
   ["/api/ticketeria/validacao-saque", 300],
+  // Compra de ingressos (sem login): por IP. Cada compra abre uma reserva e uma cobrança, então o teto é baixo; a consulta do Pix pago é mais frequente.
+  ["/api/ticketeria/compra", 60],
   ["/api/mcp/keys", 10],
   ["/api/mcp/oauth/token", 60],
   ["/api/mcp/oauth/register", 30],
