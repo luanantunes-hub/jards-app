@@ -89,17 +89,17 @@ test("os erros do banco ao escolher o meio viram frases", () => {
   assert.match(mensagemDoErroDoMeio({ message: "outra coisa" }), /Tente de novo/);
 });
 
-test("a devolução total em até 7 dias: o comprador recebe o preço, o Jards devolve a comissão e absorve o custo do Pix que o Asaas não devolve; o produtor fica em zero", () => {
+test("a devolução total: o comprador recebe o preço, o Jards devolve a comissão, e o custo do Pix que o Asaas não devolve fica com o produtor", () => {
   const pedido = { total_centavos: 5000, produtor_centavos: 4875, taxa_centavos: 125, custo_meio_centavos: 199 };
   const pagamento = partidasDoPagamento(pedido);
   const pix = partidasDaDevolucao(pedido, false);
-  assert.deepEqual(pix, [{ conta: "psp_a_receber", valor_centavos: -5000 }, { conta: "produtor", valor_centavos: 4676 }, { conta: "plataforma", valor_centavos: 324 }]);
+  assert.deepEqual(pix, [{ conta: "psp_a_receber", valor_centavos: -5000 }, { conta: "produtor", valor_centavos: 4875 }, { conta: "plataforma", valor_centavos: 125 }]);
   assert.ok(equilibrada(pix));
-  // Depois do pagamento e da devolução: o produtor em zero; o Jards absorveu os R$ 1,99 (a comissão de R$ 1,25 voltou); o provedor ficou R$ 1,99 devendo.
-  assert.deepEqual(saldos([...pagamento, ...pix]), { psp_a_receber: -199, produtor: 0, plataforma: 199 });
+  // Depois do pagamento e da devolução: o Jards em zero (a comissão de R$ 1,25 voltou e ele não cobre nada); o produtor deve os R$ 1,99 da taxa residual.
+  assert.deepEqual(saldos([...pagamento, ...pix]), { psp_a_receber: -199, produtor: 199, plataforma: 0 });
 });
 
-test("a devolução total no cartão, quando o Asaas devolve a taxa de transação: ninguém assume custo", () => {
+test("a devolução total no cartão, quando o Asaas devolve a taxa de transação: ninguém perde", () => {
   const pedido = { total_centavos: 5000, produtor_centavos: 4875, taxa_centavos: 125, custo_meio_centavos: 199 };
   const cartao = partidasDaDevolucao(pedido, true);
   assert.deepEqual(cartao, [{ conta: "psp_a_receber", valor_centavos: -4801 }, { conta: "produtor", valor_centavos: 4676 }, { conta: "plataforma", valor_centavos: 125 }]);
@@ -107,7 +107,7 @@ test("a devolução total no cartão, quando o Asaas devolve a taxa de transaç�
   assert.deepEqual(saldos([...partidasDoPagamento(pedido), ...cartao]), { psp_a_receber: 0, produtor: 0, plataforma: 0 });
 });
 
-test("a devolução fecha em zero em qualquer valor, meio e resposta do Asaas; o pedido gratuito não tem devolução", () => {
+test("a devolução fecha em zero em qualquer valor, meio e resposta do Asaas; o Jards nunca cobre o custo; o pedido gratuito não tem devolução", () => {
   for (const total of [100, 5000, 6000, 12000, 99999]) {
     const taxa = taxaDoIngresso(total, { percentual_bps: 250, fixo_centavos: 0, quem_paga: "produtor" });
     for (const custo of [49, 199, 450]) {
@@ -117,8 +117,8 @@ test("a devolução fecha em zero em qualquer valor, meio e resposta do Asaas; o
         const soma = partidasDaDevolucao(pedido, devolveu).reduce((acc, p) => acc + p.valor_centavos, 0);
         assert.equal(soma, 0, `${total} ${custo} ${devolveu}`);
         const finais = saldos([...partidasDoPagamento(pedido), ...partidasDaDevolucao(pedido, devolveu)]);
-        assert.equal(finais.produtor, 0, "o produtor nunca perde nada na devolução");
-        assert.equal(finais.plataforma, devolveu ? 0 : custo, "o Jards absorve só o que o Asaas não devolveu");
+        assert.equal(finais.plataforma, 0, "o Jards fica em zero: devolveu a comissão e não cobre custo nenhum");
+        assert.equal(finais.produtor, devolveu ? 0 : custo, "o produtor arca só com o que o Asaas não devolveu");
       }
     }
   }
