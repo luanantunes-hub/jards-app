@@ -140,6 +140,28 @@ export class ProvedorAsaas implements ProvedorDePagamento {
     }
   }
 
+  /**
+   * O estorno do Pix INTEIRO de um pedido, com a comissão do Jards saindo da carteira do Jards (D5 do plano): o Asaas aceita `splitRefunds` com o id do split da cobrança
+   * (provado no sandbox em 19/11/2026: R$ 50,00 estornados, R$ 1,25 debitados da carteira do Jards e R$ 48,75 da subconta). Sem o split da comissão achado na cobrança,
+   * NÃO estorna (a comissão ficaria com o Jards, contra a regra): devolve `ok: false` e o pedido vai para a fila. A chave é a da SUBCONTA, onde a cobrança nasceu.
+   */
+  async estornarPixComComissao(ref: string, totalCentavos: number, comissaoCentavos: number, carteiraDoJards: string | null): Promise<{ ok: boolean; motivo?: string; ref?: string }> {
+    try {
+      const corpo: { value: number; description: string; splitRefunds?: { id: string; value: number }[] } = { value: reais(totalCentavos), description: "Reembolso do pedido" };
+      if (comissaoCentavos > 0) {
+        const cobranca = await this.chamar<{ split?: { id?: string; walletId?: string }[] }>("GET", `/payments/${encodeURIComponent(ref)}`);
+        const parte = (cobranca.split ?? []).find(s => typeof s.id === "string" && (carteiraDoJards === null || s.walletId === carteiraDoJards));
+        if (!parte?.id) return { ok: false, motivo: "split_da_comissao_nao_encontrado" };
+        corpo.splitRefunds = [{ id: parte.id, value: reais(comissaoCentavos) }];
+      }
+      await this.chamar("POST", `/payments/${encodeURIComponent(ref)}/refund`, corpo);
+      return { ok: true, ref };
+    } catch (erro) {
+      if (erro instanceof ErroDoAsaas && erro.status >= 400 && erro.status < 500) return { ok: false, motivo: erro.codigos.join(", ") || `http_${erro.status}` };
+      throw erro;
+    }
+  }
+
   async cancelarCobranca(ref: string): Promise<{ ok: boolean }> {
     try {
       await this.chamar("DELETE", `/payments/${encodeURIComponent(ref)}`);

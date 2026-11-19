@@ -651,6 +651,7 @@ export type BancoDaTicketeria = {
           created_at: string;
           updated_at: string;
           ingressos_enviados_em: string | null;
+          reembolsado_em: string | null;
         };
         Insert: {
           id?: string;
@@ -676,6 +677,7 @@ export type BancoDaTicketeria = {
           created_at?: string;
           updated_at?: string;
           ingressos_enviados_em?: string | null;
+          reembolsado_em?: string | null;
         };
         Update: {
           id?: string;
@@ -701,6 +703,7 @@ export type BancoDaTicketeria = {
           created_at?: string;
           updated_at?: string;
           ingressos_enviados_em?: string | null;
+          reembolsado_em?: string | null;
         };
         Relationships: [
           {
@@ -1019,6 +1022,60 @@ export type BancoDaTicketeria = {
         };
         Relationships: [];
       };
+      ticketeria_reembolsos: {
+        Row: {
+          id: string;
+          email_id: string;
+          remetente: string;
+          assunto: string;
+          codigo_lido: string | null;
+          recebido_em: string;
+          pedido_id: string | null;
+          organization_id: string | null;
+          situacao: string;
+          motivo: string | null;
+          valor_centavos: number | null;
+          pago_em: string | null;
+          estorno_ref: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          email_id: string;
+          remetente: string;
+          assunto: string;
+          codigo_lido?: string | null;
+          recebido_em: string;
+          pedido_id?: string | null;
+          organization_id?: string | null;
+          situacao?: string;
+          motivo?: string | null;
+          valor_centavos?: number | null;
+          pago_em?: string | null;
+          estorno_ref?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email_id?: string;
+          remetente?: string;
+          assunto?: string;
+          codigo_lido?: string | null;
+          recebido_em?: string;
+          pedido_id?: string | null;
+          organization_id?: string | null;
+          situacao?: string;
+          motivo?: string | null;
+          valor_centavos?: number | null;
+          pago_em?: string | null;
+          estorno_ref?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       ticketeria_trocas_de_conta: {
         Row: {
           id: string;
@@ -1256,6 +1313,30 @@ export type BancoDaTicketeria = {
       fn_ticketeria_ocupados: {
         Args: { p_sessao: string; p_lote: string; p_fora?: string | null };
         Returns: number;
+      };
+      fn_ticketeria_reembolso_registrar: {
+        Args: { p_email_id: string; p_remetente: string; p_assunto: string; p_codigo: string | null; p_recebido_em: string };
+        Returns: Json;
+      };
+      fn_ticketeria_pedido_para_reembolso: {
+        Args: { p_codigo: string };
+        Returns: Json;
+      };
+      fn_ticketeria_reembolso_reivindicar: {
+        Args: { p_reembolso: string; p_pedido: string };
+        Returns: boolean;
+      };
+      fn_ticketeria_reembolso_marcar: {
+        Args: { p_reembolso: string; p_situacao: string; p_motivo: string; p_pedido?: string | null };
+        Returns: undefined;
+      };
+      fn_ticketeria_reembolso_autorizar_estorno: {
+        Args: { p_reembolso: string };
+        Returns: string;
+      };
+      fn_ticketeria_reembolso_concluir: {
+        Args: { p_reembolso: string; p_partidas: Json; p_estorno_ref: string };
+        Returns: Json;
       };
       fn_ticketeria_emitir_ingressos: {
         Args: { p_pedido: string };

@@ -5,6 +5,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import type { PortasDosAvisos } from "@/lib/ticketeria/pagamento/avisos";
 import type { PortasDoCadastro } from "@/lib/ticketeria/pagamento/cadastro-subconta";
 import type { IngressosDoPedido, PortasDoEnvio } from "@/lib/ticketeria/pagamento/ingressos";
+import type { PedidoParaReembolso, PortasDoReembolso } from "@/lib/ticketeria/pagamento/reembolso";
 import { ErroDaCompra, type CorpoDaCompra, type PortasDaCompra } from "@/lib/ticketeria/pagamento/compra";
 import { lerPedidoReservado, mensagemDoErroDaReserva } from "@/lib/ticketeria/pagamento/reserva";
 import type { ProvedorDePagamento } from "@/lib/ticketeria/pagamento/provedor";
@@ -161,5 +162,46 @@ export function portasDoEnvioDoSupabase(admin: SupabaseClient<Database>, config:
     },
     enviarEmail: config.enviarEmail,
     enderecoDaPagina: config.enderecoDaPagina,
+  };
+}
+
+/** As portas do reembolso por e-mail: as funções do banco (só com a chave de serviço); o estorno no Asaas e o e-mail vêm de quem monta (a rota). */
+export function portasDoReembolsoDoSupabase(admin: SupabaseClient<Database>, config: { estornar: PortasDoReembolso["estornar"]; responder: PortasDoReembolso["responder"]; registrarErro?: (erro: unknown) => void }): PortasDoReembolso {
+  const t = clienteDaTicketeria(admin);
+  return {
+    async registrar(e, codigo) {
+      const { data, error } = await t.rpc("fn_ticketeria_reembolso_registrar", { p_email_id: e.email_id, p_remetente: e.remetente, p_assunto: e.assunto, p_codigo: codigo, p_recebido_em: e.recebido_em });
+      if (error) throw new Error(error.message);
+      return data as { id: string; novo: boolean; situacao: string };
+    },
+    async buscarPedido(codigo) {
+      const { data, error } = await t.rpc("fn_ticketeria_pedido_para_reembolso", { p_codigo: codigo });
+      if (error) throw new Error(error.message);
+      return (data as PedidoParaReembolso | null) ?? null;
+    },
+    async reivindicar(id, pedido) {
+      const { data, error } = await t.rpc("fn_ticketeria_reembolso_reivindicar", { p_reembolso: id, p_pedido: pedido });
+      if (error) throw new Error(error.message);
+      return data === true;
+    },
+    async marcar(id, situacao, motivo, pedido) {
+      const { error } = await t.rpc("fn_ticketeria_reembolso_marcar", { p_reembolso: id, p_situacao: situacao, p_motivo: motivo, p_pedido: pedido ?? null });
+      if (error) throw new Error(error.message);
+    },
+    async autorizarEstorno(id) {
+      const { error } = await t.rpc("fn_ticketeria_reembolso_autorizar_estorno", { p_reembolso: id });
+      if (error) throw new Error(error.message);
+    },
+    async concluir(id, partidas, ref) {
+      const { error } = await t.rpc("fn_ticketeria_reembolso_concluir", { p_reembolso: id, p_partidas: partidas as unknown as Json, p_estorno_ref: ref ?? "" });
+      if (error) throw new Error(error.message);
+    },
+    async nomeDoOrganizador(loja) {
+      const { data } = await t.from("ticketeria_lojas").select("nome").eq("id", loja).maybeSingle();
+      return data?.nome ?? "a produtora do evento";
+    },
+    estornar: config.estornar,
+    responder: config.responder,
+    registrarErro: config.registrarErro,
   };
 }
