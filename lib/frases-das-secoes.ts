@@ -25,12 +25,14 @@ export const FRASES_DAS_SECOES = {
 
 export type SecaoComFrase = keyof typeof FRASES_DAS_SECOES;
 
-const TOTAL_DE_ILUSTRACOES = 24; // public/ilustracoes/tamandua/01.png … 24.png
+const TOTAL_DE_ILUSTRACOES = 16; // public/ilustracoes/tamandua/01.png … 16.png (só desenhos com o tamanduá)
 const ORDEM_DAS_SECOES: (SecaoComFrase | "painel")[] = ["painel", ...(Object.keys(FRASES_DAS_SECOES) as SecaoComFrase[])];
 
 /**
- * Qual das 24 ilustrações do tamanduá a seção mostra hoje (1 a 24). Muda todo dia e, no mesmo dia, nenhuma
- * seção repete a de outra: o passo 5 não tem divisor comum com 24, então as posições não colidem.
+ * Qual das 16 ilustrações do tamanduá a seção mostra hoje (1 a 16). Muda todo dia e, no mesmo dia, as seções
+ * não repetem a de outra enquanto houver desenho sobrando: o passo 5 não tem divisor comum com 16, então as
+ * 16 primeiras posições não colidem. Com mais seções que desenhos, só as últimas repetem uma das primeiras, e
+ * elas nunca aparecem juntas na tela.
  */
 export function ilustracaoDoDia(secao: SecaoComFrase | "painel", agora: Date): number {
   const dia = Math.floor(Date.UTC(agora.getFullYear(), agora.getMonth(), agora.getDate()) / 86_400_000);

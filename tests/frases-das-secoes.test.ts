@@ -28,12 +28,19 @@ test("frases das seções: frase com {org} só quando a organização tem nome p
   assert.equal(escolherFrase(modelos, { agora, organizacao: "Minha organização" }), null);
 });
 
-test("ilustração do dia: de 1 a 24, sem repetir entre seções no mesmo dia, e muda no dia seguinte", async () => {
+test("ilustração do dia: de 1 a 16, usa todas no mesmo dia (só as seções que passam de 16 repetem) e muda no dia seguinte", async () => {
   const { ilustracaoDoDia } = await import("../lib/frases-das-secoes");
   const secoes = ["painel", ...Object.keys(FRASES_DAS_SECOES)] as Parameters<typeof ilustracaoDoDia>[0][];
   const hoje = secoes.map(s => ilustracaoDoDia(s, agora));
-  assert.equal(new Set(hoje).size, secoes.length, "nenhuma repetida no mesmo dia");
-  assert.ok(hoje.every(n => n >= 1 && n <= 24));
+  assert.equal(new Set(hoje).size, Math.min(secoes.length, 16), "todas as 16 aparecem, sem repetir enquanto houver desenho sobrando");
+  assert.ok(hoje.slice(0, 16).every((n, i) => hoje.indexOf(n) === i), "as 16 primeiras seções não repetem");
+  assert.ok(hoje.every(n => n >= 1 && n <= 16));
   assert.equal(ilustracaoDoDia("atividades", new Date(2026, 10, 18, 23, 0)), ilustracaoDoDia("atividades", agora), "mesmo dia, mesma ilustração");
   assert.notEqual(ilustracaoDoDia("atividades", new Date(2026, 10, 19, 10, 0)), ilustracaoDoDia("atividades", agora));
+});
+
+test("as ilustrações de seção são 16 arquivos numerados de 01 a 16, sem buraco", async () => {
+  const { readdirSync } = await import("node:fs");
+  const arquivos = readdirSync(new URL("../public/ilustracoes/tamandua", import.meta.url)).sort();
+  assert.deepEqual(arquivos, Array.from({ length: 16 }, (_, i) => `${String(i + 1).padStart(2, "0")}.png`));
 });
