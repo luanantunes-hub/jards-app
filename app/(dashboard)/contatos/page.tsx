@@ -1,10 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   Plus, Mail, Phone, X, ArrowUpDown, Trash2,
-  List, UsersRound, ShieldCheck, Radio, Wrench, CalendarX2, ContactRound, Search,
+  List, ShieldCheck, CalendarX2, ContactRound, Search,
   Smile, Meh, Frown, Tag,
 } from "lucide-react";
 
@@ -25,15 +24,16 @@ import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
-import { TagsDaLinha } from "@/components/ui/Tags";
+import { FILTRO_SEM_TAG, TagsDaLinha, VisaoPorTags } from "@/components/ui/Tags";
 import { temAlgumaTag } from "@/lib/tags";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 
-type ViewMode = "lista" | "stakeholders";
-const VIEW_MODES = ["lista", "stakeholders"] as const;
+// Lista ou Tags (um cartão por tag; clicar abre a lista filtrada pela tag).
+type ViewMode = "lista" | "tags";
+const VIEW_MODES = ["lista", "tags"] as const;
 const VIEW_OPTIONS = [
   { value: "lista", label: "Lista", icon: List },
-  { value: "stakeholders", label: "Stakeholders", icon: UsersRound },
+  { value: "tags", label: "Tags", icon: Tag },
 ] as const;
 
 const CONTATOS_COLUMNS = [
@@ -181,65 +181,12 @@ const ROLE_LABEL: Record<NonNullable<ContatoRow["papel_decisao"]>, string> = {
   gatekeeper: "Gatekeeper",
 };
 
-const STAKEHOLDER_LANES = [
-  { key: "decisao", label: "Decisão", icon: ShieldCheck, roles: ["decision_maker"] },
-  { key: "influencia", label: "Influência", icon: Radio, roles: ["champion", "influencer"] },
-  { key: "operacao", label: "Operação", icon: Wrench, roles: ["gatekeeper"] },
-] as const;
-
 const SENTIMENTO_ICONE = { positivo: Smile, neutro: Meh, negativo: Frown } as const;
 
 function LevelMarks({ value, color = "rgba(13,13,13,.7)" }: { value: number | null; color?: string }) {
   return <span className="inline-flex gap-0.5" aria-label={value ? `${value} de 5` : "Não avaliado"}>{Array.from({ length: 5 }).map((_, index) => <span key={index} className="h-1 w-2 rounded-sm" style={{ background: value && index < value ? color : "rgba(13,13,13,.08)" }}/>)}</span>;
 }
 
-function StakeholdersView({ contatos }: { contatos: ContatoRow[] }) {
-  const groups = new Map<string, { name: string; domain?: string | null; site?: string | null; items: ContatoRow[] }>();
-  for (const contato of contatos) {
-    const name = contato.empresa_crm?.nome ?? contato.empresa_pub?.nome ?? "Sem empresa vinculada";
-    const key = contato.empresa_crm_id ?? contato.empresa_pub?.nome ?? "sem-empresa";
-    const current = groups.get(key) ?? { name, domain: contato.empresa_crm?.domain_key, site: contato.empresa_crm?.site ?? contato.empresa_pub?.site, items: [] };
-    current.items.push(contato);
-    groups.set(key, current);
-  }
-
-  return (
-    <div className="space-y-4">
-      {[...groups.entries()].map(([key, group]) => (
-        <section key={key} className="overflow-hidden rounded border border-black/[.08] bg-white">
-          <header className="flex items-center gap-3 border-b border-black/[.07] px-4 py-3.5">
-            <CompanyLogo nome={group.name} domain={group.domain} site={group.site} size={34} className="shrink-0 border border-black/[.06]"/>
-            <div className="min-w-0 flex-1"><h2 className="truncate text-[0.8125rem] font-bold text-[#282525]">{group.name}</h2><p className="mt-0.5 text-[0.625rem] text-black/35">{group.items.length} {group.items.length === 1 ? "contato" : "contatos"}</p></div>
-          </header>
-          <div className="grid grid-cols-1 bg-[#F7F7F5] lg:grid-cols-3">
-            {STAKEHOLDER_LANES.map((lane, laneIndex) => {
-              const laneItems = group.items.filter(item => lane.roles.includes(item.papel_decisao as never) || (lane.key === "operacao" && !item.papel_decisao));
-              const Icon = lane.icon;
-              return (
-                <div key={lane.key} className={`min-h-[11.875rem] p-3 ${laneIndex > 0 ? "border-t border-black/[.07] lg:border-l lg:border-t-0" : ""}`}>
-                  <div className="mb-2.5 flex items-center justify-between gap-2"><div className="flex items-center gap-1.5 text-[0.625rem] font-bold text-black/45"><Icon size={12}/>{lane.label}</div><span className="text-[0.59375rem] font-semibold tabular-nums text-black/25">{laneItems.length}</span></div>
-                  <div className="space-y-2">
-                    {laneItems.length === 0 ? <div className="rounded border border-dashed border-black/10 py-8 text-center text-[0.625rem] text-black/20">Nenhum contato</div> : laneItems.map(item => {
-                      const name = item.nome ?? item.responsavel?.nome ?? "Contato sem nome";
-                      const role = item.papel_decisao ? ROLE_LABEL[item.papel_decisao] : "Papel não definido";
-                      const SentimentoIcone = item.sentimento && item.sentimento !== "desconhecido" ? SENTIMENTO_ICONE[item.sentimento] : null;
-                      return (
-                        <article key={item.id} className="rounded border border-black/[.07] bg-white p-2.5 cursor-pointer hover:border-[#7259B5]/30 transition" onClick={() => { window.location.href = `/contatos/${item.id}`; }}>
-                          <div className="flex items-start gap-2"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-black/[.05] text-[0.625rem] font-bold text-black/35">{name.charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{name}</p>{SentimentoIcone && <span role="img" className="shrink-0" title={`Sentimento: ${item.sentimento}`} aria-label={`Sentimento: ${item.sentimento}`}><SentimentoIcone size={12} strokeWidth={1.75} aria-hidden="true" className={item.sentimento === "negativo" ? "text-[#D94A4A]" : "text-black/40"}/></span>}</div><p className="mt-0.5 truncate text-[0.59375rem] text-black/35">{item.cargo ?? item.responsavel?.cargo ?? role}</p></div>{item.email && <a href={`mailto:${item.email}`} className="rounded p-1 text-black/25 transition hover:bg-black/[.05] hover:text-[#282525]" aria-label={`Enviar e-mail para ${name}`}><Mail size={11}/></a>}</div>
-                          <div className="mt-2 flex items-center justify-between gap-2 border-t border-black/[.05] pt-2"><span className="truncate text-[0.5625rem] font-medium text-black/35">{role}</span><div className="flex items-center gap-1.5"><LevelMarks value={item.influencia}/><LevelMarks value={item.forca_relacao} color="#1A8B7A"/></div></div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ))}
-    </div>
-  );
-}
 
 export default function ContatosPage() {
   const supabase = createClient();
@@ -297,7 +244,8 @@ export default function ContatosPage() {
       if (origem !== "todos" && c.origem !== origem) return false;
       if (roleFilter !== "todos" && c.papel_decisao !== roleFilter) return false;
       if (withoutInteraction && c.ultima_interacao) return false;
-      if (tagFilter !== "todas" && !temAlgumaTag(c.tags, [tagFilter])) return false;
+      if (tagFilter === FILTRO_SEM_TAG) { if (c.tags?.length) return false; }
+      else if (tagFilter !== "todas" && !temAlgumaTag(c.tags, [tagFilter])) return false;
       if (!dSearch.trim()) return true;
       const s = dSearch.toLowerCase();
       const nome    = (c.nome ?? c.responsavel?.nome ?? "").toLowerCase();
@@ -357,7 +305,7 @@ export default function ContatosPage() {
           onSaved={refetch}
         />
       )}
-      <ListPageHeader secao="contatos" eyebrow="Rede de relacionamento" title="Contatos" summary={!loading&&<ListSummary strong={filtered.length}>{filtered.length===1?'contato':'contatos'}</ListSummary>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo contato</PrimaryListAction></>}/>
+      <ListPageHeader secao="contatos" eyebrow="Rede de relacionamento" title="Contatos" summary={!loading&&<ListSummary strong={filtered.length}>{filtered.length===1?'contato':'contatos'}</ListSummary>} actions={<><EntityViewSwitcher value={viewMode} onChange={modo => { if (modo === "tags") setTagFilter("todas"); setViewMode(modo); }} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo contato</PrimaryListAction></>}/>
 
       {/* Filters */}
       <ListToolbar search={<ListSearch value={search} onChange={setSearch} placeholder="Buscar nome, empresa ou cargo"/>}>
@@ -406,7 +354,7 @@ export default function ContatosPage() {
           <CustomDropdown
             value={tagFilter}
             onChange={setTagFilter}
-            options={[{ value: "todas", label: "Todas as tags" }, ...tagsDosContatos.map(tag => ({ value: tag, label: tag }))]}
+            options={[{ value: "todas", label: "Todas as tags" }, ...tagsDosContatos.map(tag => ({ value: tag, label: tag })), { value: FILTRO_SEM_TAG, label: "Sem tag" }]}
             icon={<Tag size={13} />}
             compact
             emphasized={false}
@@ -425,8 +373,16 @@ export default function ContatosPage() {
       </ListToolbar>
 
       {/* Etiqueta estrutural: Tabela CRM — diretório de contatos */}
-      <ListContent className="overflow-x-hidden">{viewMode === "stakeholders" ? (
-        loading ? <div className="grid gap-4 md:grid-cols-2">{Array.from({length:4}).map((_, index)=><div key={index} className="h-64 animate-pulse rounded bg-black/[.05]"/>)}</div> : filtered.length === 0 ? <div className="py-24 text-center text-sm text-black/35">Nenhum contato encontrado</div> : <StakeholdersView contatos={filtered}/>
+      <ListContent className="overflow-x-hidden">{viewMode === "tags" ? (
+        <VisaoPorTags
+          itens={filtered}
+          carregando={loading}
+          singular="contato"
+          plural="contatos"
+          nomeDe={c => c.nome ?? c.responsavel?.nome ?? "Sem nome"}
+          avatarDe={c => <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ECEAF0] text-[0.5625rem] font-semibold text-black/55">{(c.nome ?? c.responsavel?.nome ?? "?").charAt(0).toUpperCase()}</span>}
+          onAbrir={tag => { setTagFilter(tag); setViewMode("lista"); }}
+        />
       ) : <ListTableSurface className="-mr-4 min-w-0 rounded-r-none border-r-0 !overflow-hidden md:-mr-8">
           <ManagedTable storageKey="contatos-v2" definitions={CONTATOS_COLUMNS} className="w-full text-sm">
             <thead>

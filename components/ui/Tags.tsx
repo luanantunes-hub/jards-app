@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
-import { Plus, Tag, X } from "lucide-react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { ArrowUpRight, Plus, Tag, Tags as IconeTags, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
-import { MAX_TAGS, acrescentarTag, chaveDaTag, limparTag, sugerirTags } from "@/lib/tags";
+import { MAX_TAGS, acrescentarTag, agruparPorTag, chaveDaTag, corDaTag, limparTag, sugerirTags } from "@/lib/tags";
+
+/** Valor do filtro de tag que mostra só quem ainda não tem nenhuma. */
+export const FILTRO_SEM_TAG = "__sem_tag";
 
 // Tags livres de empresas e contatos (o vocabulário é da organização, compartilhado com os projetos).
 
@@ -36,11 +39,18 @@ export function useTagsDoTime(): [string[], (novas: string[]) => void] {
   return [tags, lembrar];
 }
 
-/** Etiqueta de tag: neutra, borda leve e ícone cinza (DESIGN.md, etiquetas informativas). */
-export function EtiquetaDeTag({ tag, onRemover }: { tag: string; onRemover?: () => void }) {
+/**
+ * Etiqueta de tag: fundo branco, borda fina e ponto de marcação na cor da tag (uma das cinco cores de identidade,
+ * sempre a mesma para a mesma tag), texto em tinta. Nunca tom sobre tom (DESIGN.md).
+ */
+export function EtiquetaDeTag({ tag, onRemover, grande = false }: { tag: string; onRemover?: () => void; grande?: boolean }) {
+  const cor = corDaTag(tag);
   return (
-    <span className="inline-flex max-w-full items-center gap-1 rounded border border-black/[.09] bg-white py-0.5 pl-1.5 pr-1.5 text-[0.6875rem] text-black/65">
-      <Tag size={10} aria-hidden="true" className="shrink-0 text-black/35" />
+    <span
+      className={`inline-flex max-w-full items-center gap-1.5 rounded border bg-white font-medium text-[#282525]/80 ${grande ? "py-1 pl-2 pr-2.5 text-[0.75rem]" : "py-0.5 pl-1.5 pr-2 text-[0.6875rem]"}`}
+      style={{ borderColor: `${cor}47` }}
+    >
+      <Tag size={grande ? 12 : 10} aria-hidden="true" className="shrink-0" style={{ color: cor }} />
       <span className="truncate">{tag}</span>
       {onRemover && (
         <button type="button" onClick={onRemover} aria-label={`Tirar a tag ${tag}`} className="-mr-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.06] hover:text-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30">
@@ -184,6 +194,79 @@ export function TagsDoRegistro({ tabela, id, tags, onSalvo }: {
           </div>
         </div>
       </AnchoredPopover>
+    </div>
+  );
+}
+
+/**
+ * Visão por tags (empresas ou contatos): um cartão por tag, da mais usada para a menos, com quantos têm a tag e
+ * uma prévia de quem são. Clicar abre a lista já filtrada por aquela tag. No fim, quem ainda não tem tag.
+ */
+export function VisaoPorTags<T extends { id: string; tags?: string[] | null }>({ itens, carregando, singular, plural, nomeDe, avatarDe, onAbrir }: {
+  itens: T[];
+  carregando: boolean;
+  singular: string;
+  plural: string;
+  nomeDe: (item: T) => string;
+  avatarDe: (item: T) => ReactNode;
+  onAbrir: (tag: string) => void;
+}) {
+  if (carregando) {
+    return (
+      <div className="grid grid-cols-1 gap-3 pb-8 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {Array.from({ length: 6 }, (_, i) => <div key={i} className="h-[10.5rem] animate-pulse rounded bg-black/[.05] motion-reduce:animate-none" />)}
+      </div>
+    );
+  }
+  const { grupos, semTag } = agruparPorTag(itens);
+  if (!grupos.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <IconeTags size={22} aria-hidden="true" className="mb-3 text-black/25" />
+        <p className="text-[0.875rem] font-medium text-[#282525]">Nenhuma tag ainda</p>
+        <p className="mt-1 max-w-[22rem] text-[0.75rem] text-black/45">Abra {singular === "empresa" ? "uma empresa" : "um contato"} e use “+ Tag” no topo. As tags aparecem aqui, cada uma com {plural === "empresas" ? "as suas empresas" : "os seus contatos"}.</p>
+      </div>
+    );
+  }
+  const maior = grupos[0].itens.length;
+  const cartao = (chave: string, titulo: ReactNode, lista: T[], cor: string | null) => {
+    const amostra = lista.slice(0, 5);
+    const nomes = lista.slice(0, 2).map(nomeDe).join(", ");
+    return (
+      <button
+        key={chave}
+        type="button"
+        onClick={() => onAbrir(chave)}
+        className={`group flex flex-col rounded border bg-white p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(40,37,37,.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${cor ? "border-black/[.08]" : "border-dashed border-black/15"}`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          {titulo}
+          <ArrowUpRight size={14} aria-hidden="true" className="mt-1 shrink-0 text-black/25 transition group-hover:text-black/60" />
+        </div>
+        <p className="mt-4 flex items-baseline gap-1.5">
+          <span className="text-[1.5rem] font-semibold leading-none tracking-[-.02em] tabular-nums text-[#282525]">{lista.length}</span>
+          <span className="text-[0.75rem] text-black/45">{lista.length === 1 ? singular : plural}</span>
+        </p>
+        {cor && (
+          <span aria-hidden="true" className="mt-3 h-1 overflow-hidden rounded-full bg-black/[.05]">
+            <span className="block h-full rounded-full" style={{ width: `${Math.max(6, (lista.length / maior) * 100)}%`, background: cor }} />
+          </span>
+        )}
+        <div className="mt-3 flex items-center gap-2.5 border-t border-black/[.06] pt-3">
+          <span className="flex shrink-0 -space-x-1.5">
+            {amostra.map(item => <span key={item.id} className="rounded-full ring-2 ring-white">{avatarDe(item)}</span>)}
+          </span>
+          <span className="min-w-0 truncate text-[0.6875rem] text-black/50" title={lista.map(nomeDe).join(", ")}>
+            {nomes}{lista.length > 2 ? ` e mais ${lista.length - 2}` : ""}
+          </span>
+        </div>
+      </button>
+    );
+  };
+  return (
+    <div className="grid grid-cols-1 gap-3 pb-8 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      {grupos.map(g => cartao(g.tag, <EtiquetaDeTag tag={g.tag} grande />, g.itens, corDaTag(g.tag)))}
+      {semTag.length > 0 && cartao(FILTRO_SEM_TAG, <span className="py-1 text-[0.75rem] font-medium text-black/45">Sem tag</span>, semTag, null)}
     </div>
   );
 }

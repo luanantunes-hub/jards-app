@@ -43,3 +43,35 @@ export function temAlgumaTag(tags: string[] | null | undefined, filtro: string[]
   const chaves = new Set((tags ?? []).map(chaveDaTag));
   return filtro.some(t => chaves.has(chaveDaTag(t)));
 }
+
+// As cinco cores de identidade do Jards (PROJECT_ICON_COLORS em components/ui/ProjectIdentity.tsx):
+// lavanda, coral, mel, folha e céu. Cada tag fica sempre com a mesma cor, em qualquer tela.
+export const CORES_DAS_TAGS = ["#7C5CD6", "#E8665A", "#DFA024", "#3DA86A", "#3B8BE0"] as const;
+
+export function corDaTag(tag: string): string {
+  const chave = chaveDaTag(tag);
+  let h = 0;
+  for (let i = 0; i < chave.length; i++) h = (h * 31 + chave.charCodeAt(i)) >>> 0;
+  return CORES_DAS_TAGS[h % CORES_DAS_TAGS.length];
+}
+
+/** Agrupa por tag (da mais usada para a menos) e separa quem não tem nenhuma. Um item com duas tags entra nos dois grupos. */
+export function agruparPorTag<T extends { tags?: string[] | null }>(itens: T[]): { grupos: { tag: string; itens: T[] }[]; semTag: T[] } {
+  const grupos = new Map<string, { tag: string; itens: T[] }>();
+  const semTag: T[] = [];
+  for (const item of itens) {
+    const tags = item.tags ?? [];
+    if (!tags.length) { semTag.push(item); continue; }
+    for (const tag of tags) {
+      const chave = chaveDaTag(tag);
+      if (!chave) continue;
+      const grupo = grupos.get(chave) ?? { tag, itens: [] };
+      if (!grupo.itens.includes(item)) grupo.itens.push(item);
+      grupos.set(chave, grupo);
+    }
+  }
+  return {
+    grupos: [...grupos.values()].sort((a, b) => b.itens.length - a.itens.length || a.tag.localeCompare(b.tag, "pt-BR")),
+    semTag,
+  };
+}

@@ -28,3 +28,17 @@ test("tags: filtro deixa passar quem tem alguma das tags", () => {
   assert.equal(temAlgumaTag(["Cultura"], ["Esporte"]), false);
   assert.equal(temAlgumaTag(null, []), true);
 });
+
+test("tags: cor fixa por tag, entre as cinco do Jards, sem depender de acento", async () => {
+  const { CORES_DAS_TAGS, corDaTag } = await import("../lib/tags");
+  assert.ok((CORES_DAS_TAGS as readonly string[]).includes(corDaTag("Cultura")));
+  assert.equal(corDaTag("Música"), corDaTag("musica"));
+});
+
+test("tags: agrupar por tag, da mais usada, com os sem tag à parte", async () => {
+  const { agruparPorTag } = await import("../lib/tags");
+  const a = { id: "a", tags: ["Cultura", "Anual"] }, b = { id: "b", tags: ["cultura"] }, c = { id: "c", tags: [] as string[] };
+  const { grupos, semTag } = agruparPorTag([a, b, c]);
+  assert.deepEqual(grupos.map(g => [g.tag, g.itens.map(i => i.id)]), [["Cultura", ["a", "b"]], ["Anual", ["a"]]]);
+  assert.deepEqual(semTag.map(i => i.id), ["c"]);
+});
