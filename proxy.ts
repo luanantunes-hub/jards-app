@@ -15,6 +15,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/patrocinadores", 10],
   ["/api/calendar", 30],
   ["/api/email", 30],
+  // Avisos de pagamento do provedor (sem login, token próprio): muitos em rajada quando um evento abre as vendas.
+  ["/api/ticketeria/avisos", 600],
   ["/api/mcp/keys", 10],
   ["/api/mcp/oauth/token", 60],
   ["/api/mcp/oauth/register", 30],
