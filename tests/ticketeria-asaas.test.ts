@@ -142,3 +142,32 @@ test("o Asaas só liga configurado, e a produção exige as três travas", () =>
   assert.throws(() => new ProvedorAsaas({ chave: "curta", tokenDoWebhook: TOKEN }));
   assert.throws(() => new ProvedorAsaas({ chave: CHAVE, tokenDoWebhook: "curto" }));
 });
+
+test("o QR do Pix de uma conta sem chave Pix falha na primeira vez (invalid_action) e funciona na seguinte: o adaptador tenta de novo", async () => {
+  const { http, chamadas } = asaasFalso({
+    "POST /customers": { corpo: { id: "cus_1" } },
+    "POST /payments": { corpo: { id: "pay_1", invoiceUrl: "https://sandbox.asaas.com/i/pay_1" } },
+    "GET /payments/pay_1/pixQrCode": [{ status: 400, corpo: { errors: [{ code: "invalid_action" }] } }, { corpo: { payload: "00020126PIXCOPIAECOLA" } }],
+  });
+  const provedor = new ProvedorAsaas({ chave: CHAVE, tokenDoWebhook: TOKEN, fetch: http, esperaDoQrMs: 0 });
+  const cobranca = await provedor.criarCobranca(pedido);
+  assert.equal(cobranca.pix_copia_e_cola, "00020126PIXCOPIAECOLA");
+  assert.equal(chamadas.filter(c => c.url.endsWith("/pixQrCode")).length, 2);
+});
+
+test("o QR do Pix não insiste em outros erros nem mais de 3 vezes", async () => {
+  const outro = asaasFalso({
+    "POST /customers": { corpo: { id: "cus_1" } },
+    "POST /payments": { corpo: { id: "pay_1" } },
+    "GET /payments/pay_1/pixQrCode": { status: 400, corpo: { errors: [{ code: "invalid_object" }] } },
+  });
+  await assert.rejects(new ProvedorAsaas({ chave: CHAVE, tokenDoWebhook: TOKEN, fetch: outro.http, esperaDoQrMs: 0 }).criarCobranca(pedido), /invalid_object/);
+  assert.equal(outro.chamadas.filter(c => c.url.endsWith("/pixQrCode")).length, 1, "outro erro: uma chamada só");
+  const sempre = asaasFalso({
+    "POST /customers": { corpo: { id: "cus_1" } },
+    "POST /payments": { corpo: { id: "pay_1" } },
+    "GET /payments/pay_1/pixQrCode": [1, 2, 3, 4].map(() => ({ status: 400, corpo: { errors: [{ code: "invalid_action" }] } })),
+  });
+  await assert.rejects(new ProvedorAsaas({ chave: CHAVE, tokenDoWebhook: TOKEN, fetch: sempre.http, esperaDoQrMs: 0 }).criarCobranca(pedido), /invalid_action/);
+  assert.equal(sempre.chamadas.filter(c => c.url.endsWith("/pixQrCode")).length, 3);
+});
