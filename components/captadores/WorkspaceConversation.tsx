@@ -196,7 +196,7 @@ export function PedidoConversa({ pedido, isGestor, onChange, onOpenAtribuicao }:
             className="w-full resize-none rounded border border-black/[.15] px-3 py-2.5 text-[0.8125rem] outline-none focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
           />
           <button type="button" onClick={() => void enviar()} disabled={saving || !texto.trim()}
-            className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-3.5 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">
+            className="inline-flex items-center gap-1.5 rounded acao-salvar px-3.5 py-2 text-[0.75rem] font-semibold text-white transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">
             <Send size={13} /> {saving ? "Enviando…" : "Enviar mensagem"}
           </button>
         </div>

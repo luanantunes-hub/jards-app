@@ -262,7 +262,7 @@ function CartaoDoAto({ d, ocupado, onDecidir, onCopia, regimes, sugeridos, propo
               className="h-9 rounded px-3 text-[0.75rem] text-black/55 transition hover:text-black/80 focus-visible:outline-2 focus-visible:outline-[#7259B5]">Cancelar</button>
             <button type="button" disabled={ocupado || escolhidos.length === 0}
               onClick={() => { setEscolhendo(false); onDecidir("conferido", nota, escolhidos); }}
-              className="h-9 rounded bg-[#2E8932] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50">
+              className="h-9 rounded acao-salvar px-4 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50">
               Confirmar e propor mudanças
             </button>
           </div>

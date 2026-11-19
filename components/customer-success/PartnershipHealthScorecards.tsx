@@ -262,7 +262,7 @@ export function PartnershipHealthScorecards({ contaId, organizationId, onScoreCh
             {error&&<p className="mt-3 rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[0.625rem] text-[#B23A3A]">{error}</p>}
           </div>
 
-          <footer className="flex items-center justify-end border-t border-black/[.07] px-5 py-4 sm:px-6"><button type="button" onClick={()=>{setEditingId(null);setCriterionFor(null);}} className="rounded bg-[#2E8932] px-4 py-2 text-[0.6875rem] font-semibold text-white transition hover:bg-[#26752A] active:translate-y-px">Concluir</button></footer>
+          <footer className="flex items-center justify-end border-t border-black/[.07] px-5 py-4 sm:px-6"><button type="button" onClick={()=>{setEditingId(null);setCriterionFor(null);}} className="rounded acao-salvar px-4 py-2 text-[0.6875rem] font-semibold text-white transition active:translate-y-px">Concluir</button></footer>
         </section>
       </div>;
     })()}

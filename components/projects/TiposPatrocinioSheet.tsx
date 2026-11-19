@@ -222,7 +222,7 @@ export function TiposPatrocinioSheet({
           <button
             onClick={() => void save()}
             disabled={saving}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Check size={12} /> {saving ? "Salvando…" : "Salvar"}
           </button>

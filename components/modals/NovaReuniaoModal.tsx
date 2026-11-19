@@ -117,7 +117,7 @@ export function NovaReuniaoModal({ onClose, onCreated, organizationId }: NovaReu
             type="button"
             onClick={enviar}
             disabled={loading}
-            className="rounded bg-[#2E8932] px-4 py-2.5 text-sm text-white transition hover:bg-[#26752A] disabled:opacity-50"
+            className="rounded acao-salvar px-4 py-2.5 text-sm text-white transition disabled:opacity-50"
           >
             {loading ? "Enviando…" : "Enviar assistente"}
           </button>

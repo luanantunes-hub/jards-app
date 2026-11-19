@@ -11,7 +11,7 @@ export const VERDE = "#2E8932";
 export const VERMELHO = "#B23B3B";
 export const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
 export const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
-export const BOTAO_VERDE = "h-10 rounded bg-[#2E8932] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50";
+export const BOTAO_VERDE = "h-10 rounded acao-salvar px-4 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50";
 export const BOTAO_TEXTO = "h-10 rounded px-3 text-[0.75rem] text-black/55 transition hover:text-black/80 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:opacity-40";
 
 export const dataBr = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");

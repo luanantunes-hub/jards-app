@@ -439,9 +439,9 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
         <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button onClick={close} className="px-4 py-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
           {mode === "invite" ? (
-            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || semVaga.length > 0 || semLeitura.length > 0} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Enviando…" : "Enviar convite"}</button>
+            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || semVaga.length > 0 || semLeitura.length > 0} className="rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-semibold text-white transition disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Enviando…" : "Enviar convite"}</button>
           ) : (
-            <button onClick={buySeats} disabled={saving || loading} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Processando…" : `Comprar ${quantity} usuário${quantity > 1 ? "s" : ""} extra${quantity > 1 ? "s" : ""}`}</button>
+            <button onClick={buySeats} disabled={saving || loading} className="rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-semibold text-white transition disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Processando…" : `Comprar ${quantity} usuário${quantity > 1 ? "s" : ""} extra${quantity > 1 ? "s" : ""}`}</button>
           )}
         </div>
       </div>

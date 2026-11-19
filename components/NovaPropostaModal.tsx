@@ -153,7 +153,7 @@ export function NovaPropostaModal({
           <button
             onClick={salvar}
             disabled={salvando || !valorInput.trim()}
-            className="w-full px-3 py-2 text-[0.6875rem] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 text-[0.6875rem] font-medium acao-salvar text-white rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {salvando ? "Salvando…" : "Salvar"}
           </button>

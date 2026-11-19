@@ -277,7 +277,7 @@ export default function OrcamentoPage() {
               type="button"
               onClick={tornarAtiva}
               disabled={ativando}
-              className="flex h-9 items-center gap-1.5 rounded bg-[#2E8932] px-3 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50"
+              className="flex h-9 items-center gap-1.5 rounded acao-salvar px-3 text-[0.75rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50"
             >
               <CheckCircle2 size={13} aria-hidden /> {ativando ? "Trocando…" : "Tornar ativa"}
             </button>

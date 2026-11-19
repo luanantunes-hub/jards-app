@@ -239,7 +239,7 @@ export function SugerirContribuicaoModal({
           <button
             onClick={handleSubmit}
             disabled={saving || (tipo === "sinalizacao" && !justificativa.trim())}
-            className="flex items-center gap-1.5 px-5 py-2 text-[0.8125rem] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-5 py-2 text-[0.8125rem] font-medium acao-salvar text-white rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? (
               <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -169,7 +169,7 @@ export function ComprovantesFornecedor({ fornecedor, podeEditar }: { fornecedor:
             <button type="button" onClick={() => setAnexando(false)} disabled={enviando} className="rounded px-2 py-2 text-[0.75rem] text-black/45 transition hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:text-black/25">
               Cancelar
             </button>
-            <button type="button" onClick={() => arquivoRef.current?.click()} disabled={enviando} className="h-9 rounded bg-[#2E8932] px-3 text-[0.75rem] text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-wait disabled:bg-[#2E8932]/60 motion-reduce:transform-none">
+            <button type="button" onClick={() => arquivoRef.current?.click()} disabled={enviando} className="h-9 rounded acao-salvar px-3 text-[0.75rem] text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-wait disabled:acao-salvar/60 motion-reduce:transform-none">
               {enviando ? "Enviando…" : "Escolher arquivo"}
             </button>
           </div>

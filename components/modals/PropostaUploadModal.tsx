@@ -212,7 +212,7 @@ export function PropostaUploadModal({
           <button
             onClick={handleSalvar}
             disabled={saving || !file}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
             {saving ? "Enviando…" : "Salvar proposta"}

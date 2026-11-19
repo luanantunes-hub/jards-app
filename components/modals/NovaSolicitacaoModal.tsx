@@ -284,7 +284,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
           <button
             onClick={handleSalvar}
             disabled={saving || !atribuicaoId || !destinatarioId || !motivo.trim()}
-            className="px-5 py-2 text-[0.75rem] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-5 py-2 text-[0.75rem] font-medium acao-salvar text-white rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? "Enviando…" : "Enviar solicitação"}
           </button>

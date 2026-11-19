@@ -529,7 +529,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                     <div className="flex justify-end">
                       <button type="button" onClick={addIncentivoLocal}
                         disabled={!incentivoNome.trim() || !incentivoEstado || (incentivoEscopo === "municipal" && !incentivoCidade.trim())}
-                        className="rounded bg-[#2E8932] px-3 py-1.5 text-[0.625rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-35">
+                        className="rounded acao-salvar px-3 py-1.5 text-[0.625rem] font-semibold text-white transition disabled:opacity-35">
                         Adicionar
                       </button>
                     </div>
@@ -559,7 +559,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                 Cancelar
               </button>
               <button onClick={handleSalvar} disabled={saving}
-                className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
+                className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
                 <Save size={12} /> {saving ? "Salvando…" : "Salvar projeto"}
               </button>
             </div>

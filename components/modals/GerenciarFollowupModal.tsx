@@ -91,7 +91,7 @@ export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-black/[.08] px-6 py-4">
           <button type="button" onClick={remove} disabled={saving} className="inline-flex items-center gap-1.5 text-[0.6875rem] font-medium text-[#D94E4E] hover:underline disabled:opacity-40"><Trash2 size={13} /> Excluir</button>
           {followup.status === "pendente" && (
-            <button type="button" onClick={() => void complete()} disabled={saving} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-semibold text-white hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">
+            <button type="button" onClick={() => void complete()} disabled={saving} className="inline-flex items-center gap-1.5 rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed">
               <Check size={14} /> {saving ? "Salvando…" : "Concluir sem interação"}
             </button>
           )}

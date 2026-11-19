@@ -210,7 +210,7 @@ function ItemDoChecklist({ linha, acoes }: { linha: LinhaDoChecklist; acoes: Aco
                 type="button"
                 disabled={acoes.ocupado}
                 onClick={salvarMotivo}
-                className="h-9 rounded bg-[#2E8932] px-4 text-[0.6875rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:opacity-60 active:scale-[.98]"
+                className="h-9 rounded acao-salvar px-4 text-[0.6875rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:opacity-60 active:scale-[.98]"
               >
                 Salvar
               </button>

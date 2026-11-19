@@ -398,7 +398,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
             <button
               onClick={handleSalvar}
               disabled={saving}
-              className="flex items-center gap-1.5 px-5 py-2.5 text-[0.75rem] font-bold bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-5 py-2.5 text-[0.75rem] font-bold acao-salvar text-white rounded transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
             </button>

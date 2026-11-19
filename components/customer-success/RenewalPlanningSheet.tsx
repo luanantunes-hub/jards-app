@@ -251,7 +251,7 @@ export function RenewalPlanningSheet({ open, contaId, organizationId, contracts,
 
         <footer className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-black/[.07] bg-white px-5 py-4 sm:px-6">
           <button type="button" onClick={onClose} className="px-2 py-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
-          <button type="button" onClick={save} disabled={saving || !contractId || !startDate} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-40"><Save size={12}/>{saving ? "Salvando…" : "Salvar"}</button>
+          <button type="button" onClick={save} disabled={saving || !contractId || !startDate} className="inline-flex items-center gap-1.5 rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-semibold text-white transition active:translate-y-px disabled:opacity-40"><Save size={12}/>{saving ? "Salvando…" : "Salvar"}</button>
         </footer>
       </div>
       <RenewalDecisionSheet open={decisionOpen} tree={decisionTree} value={evaluation} onChange={setEvaluation} onClose={() => setDecisionOpen(false)}/>

@@ -96,7 +96,7 @@ export function EditarObjetivoModal({ projetoId, valorAtual, onClose, onSaved }:
           <button
             onClick={handleSalvar}
             disabled={saving}
-            className="rounded bg-[#2E8932] px-5 py-2 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded acao-salvar px-5 py-2 text-[0.75rem] font-medium text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? "Salvando…" : "Salvar"}
           </button>

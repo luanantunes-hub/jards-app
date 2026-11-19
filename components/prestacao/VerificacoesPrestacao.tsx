@@ -102,7 +102,7 @@ function Item({ v, prestacaoId, permissoes, onDecidir, emEdicao, onEditar }: {
                   type="button"
                   onClick={salvar}
                   disabled={salvando}
-                  className="rounded bg-[#2E8932] px-3 py-1.5 text-[0.6875rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-wait disabled:opacity-60 motion-reduce:transform-none"
+                  className="rounded acao-salvar px-3 py-1.5 text-[0.6875rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-wait disabled:opacity-60 motion-reduce:transform-none"
                 >
                   {salvando ? "Salvando…" : "Salvar"}
                 </button>
