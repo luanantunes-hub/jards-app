@@ -46,7 +46,7 @@ function SegBtn({ label, on }: { label: string; on?: boolean }) {
       style={{
         padding: "0 14px", height: 34, display: "flex", alignItems: "center",
         fontSize: 12, fontWeight: 600, cursor: "default", whiteSpace: "nowrap",
-        background: on ? "#282525" : "#fff",
+        background: on ? "#1C0E33" : "#fff",
         color: on ? "#fff" : "rgba(13,13,13,.45)",
         borderRight: "1px solid rgba(13,13,13,.12)",
       }}
@@ -135,7 +135,7 @@ function Sidebar({ activeNavKey }: { activeNavKey: string | null }) {
             {g.items.map((it) => {
               const active = it.navKey === activeNavKey;
               return (
-                <div key={it.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 4, fontSize: 13, fontWeight: 500, marginBottom: 2, whiteSpace: "nowrap", background: active ? "#1a1a1a" : "transparent", color: active ? "#fff" : "rgba(13,13,13,.40)", cursor: "default" }}>
+                <div key={it.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 4, fontSize: 13, fontWeight: 500, marginBottom: 2, whiteSpace: "nowrap", background: active ? "#1C0E33" : "transparent", color: active ? "#fff" : "rgba(13,13,13,.40)", cursor: "default" }}>
                   <it.Icon size={15} />
                   {it.label}
                 </div>

@@ -21,6 +21,19 @@ type Valores = Record<string, Partial<Record<Lei, number>>>;
 type Potencial = { valorEfetivo: number; potencial: number; potencialRealocado?: number };
 type Crescimento = { taxaAnual: number; confianca: "individual" | "parcial" | "setor" };
 
+// Exemplo do estado vazio: três clássicos brasileiros que já fecharam as portas (a Matarazzo é a mesma
+// da landing, com a marca dela), com valores inventados. Aparece apagado e sem clique, só para mostrar como fica a comparação.
+const EXEMPLO_EMPRESAS: EmpresaOption[] = [
+  { id: "exemplo-mappin", nome: "Mappin", site: null, logo_url: null },
+  { id: "exemplo-matarazzo", nome: "Indústrias Reunidas Fábricas Matarazzo", site: null, logo_url: "/assets/matarazzo.svg" },
+  { id: "exemplo-varig", nome: "Varig", site: null, logo_url: null },
+];
+const EXEMPLO_VALORES: Valores = {
+  "exemplo-mappin": { cultura: 1_200_000, esporte: 350_000 },
+  "exemplo-matarazzo": { cultura: 1_800_000, saude: 240_000 },
+  "exemplo-varig": { cultura: 2_400_000, ancine: 600_000 },
+};
+
 const LEIS: { key: Lei; label: string }[] = [
   { key: "cultura", label: "Cultura" },
   { key: "ancine", label: "Ancine" },
@@ -391,7 +404,7 @@ function ComparativoContent() {
                     onClick={() => setViewMode(value)}
                     className="px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                     style={{
-                      background: viewMode === value ? "#282525" : "#fff",
+                      background: viewMode === value ? "#1C0E33" : "#fff",
                       color: viewMode === value ? "#fff" : "rgba(13,13,13,.45)",
                       borderRight: i === 0 ? "1px solid rgba(13,13,13,.12)" : undefined,
                     }}
@@ -429,12 +442,26 @@ function ComparativoContent() {
 
       <div className="mx-auto max-w-pagina px-4 py-8 sm:px-6 lg:px-10">
         {selecionadas.length === 0 ? (
-          <div className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <ListEmptyState
-              icon={GitCompareArrows}
-              title="Busque e adicione empresas para comparar"
-              action={<PrimaryListAction onClick={() => buscaInputRef.current?.focus()}><Plus size={13} aria-hidden="true" /> Adicionar empresa</PrimaryListAction>}
-            />
+          <div className="space-y-6">
+            <div className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+              <ListEmptyState
+                icon={GitCompareArrows}
+                title="Busque e adicione empresas para comparar"
+                description="Enquanto isso, três clássicos posam de exemplo."
+                action={<PrimaryListAction onClick={() => buscaInputRef.current?.focus()}><Plus size={13} aria-hidden="true" /> Adicionar empresa</PrimaryListAction>}
+              />
+            </div>
+            <div aria-hidden="true" inert className="pointer-events-none select-none opacity-40">
+              <p className="mb-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Exemplo · Mappin, Matarazzo e Varig não patrocinam mais ninguém</p>
+              <ComparativoCartoes
+                selecionadas={EXEMPLO_EMPRESAS}
+                valores={EXEMPLO_VALORES}
+                potenciais={Object.fromEntries(EXEMPLO_EMPRESAS.map((empresa) => [empresa.id, calcularPotencial(EXEMPLO_VALORES[empresa.id] ?? {})]))}
+                crescimentos={{}}
+                metricaExtra="nenhuma"
+                loading={false}
+              />
+            </div>
           </div>
         ) : (
           <div>
@@ -445,9 +472,9 @@ function ComparativoContent() {
                   onClick={() => setMetricaExtra(metricaExtra === "crescimento" ? "nenhuma" : "crescimento")}
                   className="flex items-center gap-1.5 rounded-l border px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                   style={{
-                    background: metricaExtra === "crescimento" ? "#282525" : "#fff",
+                    background: metricaExtra === "crescimento" ? "#1C0E33" : "#fff",
                     color: metricaExtra === "crescimento" ? "#fff" : "rgba(13,13,13,.45)",
-                    borderColor: metricaExtra === "crescimento" ? "#282525" : "rgba(13,13,13,.12)",
+                    borderColor: metricaExtra === "crescimento" ? "#1C0E33" : "rgba(13,13,13,.12)",
                     zIndex: metricaExtra === "crescimento" ? 10 : undefined,
                     position: "relative",
                   }}
@@ -468,9 +495,9 @@ function ComparativoContent() {
                   onClick={() => setMetricaExtra(metricaExtra === "potencial" ? "nenhuma" : "potencial")}
                   className="flex items-center gap-1.5 rounded-r border px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                   style={{
-                    background: metricaExtra === "potencial" ? "#282525" : "#fff",
+                    background: metricaExtra === "potencial" ? "#1C0E33" : "#fff",
                     color: metricaExtra === "potencial" ? "#fff" : "rgba(13,13,13,.45)",
-                    borderColor: metricaExtra === "potencial" ? "#282525" : "rgba(13,13,13,.12)",
+                    borderColor: metricaExtra === "potencial" ? "#1C0E33" : "rgba(13,13,13,.12)",
                     zIndex: metricaExtra === "potencial" ? 10 : undefined,
                     position: "relative",
                   }}

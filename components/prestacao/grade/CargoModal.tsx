@@ -133,7 +133,7 @@ export function CargoModal({ prestacaoId, cargo, itens, ordem, onClose, onSaved 
                   aria-checked={ativo}
                   onClick={() => setContratacao(ativo ? "" : f.valor)}
                   className={`min-h-10 rounded border px-2 py-1.5 text-left transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${ativo ? "bg-[#1C0E33] text-white" : "bg-white text-black/70 hover:bg-black/[.04]"}`}
-                  style={{ borderColor: ativo ? "#282525" : "rgba(13,13,13,.12)" }}
+                  style={{ borderColor: ativo ? "#1C0E33" : "rgba(13,13,13,.12)" }}
                 >
                   <span className="block text-[0.75rem] font-medium">{f.rotulo}</span>
                   <span className={`block text-[0.625rem] ${ativo ? "text-white/70" : "text-black/40"}`}>{f.descricao}</span>

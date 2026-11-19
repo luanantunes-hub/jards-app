@@ -586,9 +586,9 @@ function MeuPlanoInner() {
                 key={plan.key}
                 className="relative flex flex-col rounded border p-6 sm:p-7"
                 style={{
-                  background: dark ? "#282525" : "#fff",
-                  borderColor: dark ? "#282525" : isAtual ? "rgba(13,13,13,.32)" : "rgba(13,13,13,.08)",
-                  boxShadow: dark ? "0 18px 40px -18px rgba(40,37,37,.45)" : undefined,
+                  background: dark ? "#1C0E33" : "#fff",
+                  borderColor: dark ? "#1C0E33" : isAtual ? "rgba(13,13,13,.32)" : "rgba(13,13,13,.08)",
+                  boxShadow: dark ? "0 18px 40px -18px rgba(28,14,51,.45)" : undefined,
                 }}
               >
                 <div className="flex min-h-[1.375rem] items-center justify-between gap-3">
@@ -653,7 +653,7 @@ function MeuPlanoInner() {
                     className="w-full rounded py-3 text-[0.8125rem] font-semibold transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50 motion-reduce:transition-none"
                     style={dark
                       ? { background: stripeAtivo ? "#fff" : "rgba(255,255,255,.25)", color: "#282525" }
-                      : { background: stripeAtivo ? "#0D0D0D" : "rgba(13,13,13,.35)", color: "#fff" }}
+                      : { background: stripeAtivo ? "#1C0E33" : "rgba(28,14,51,.35)", color: "#fff" }}
                   >
                     {isLoading ? "Redirecionando…" : stripeAtivo ? `Assinar o ${plan.label}` : <span className="flex items-center justify-center gap-1"><Lock size={11} /> Stripe pendente</span>}
                   </button>
