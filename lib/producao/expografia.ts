@@ -2,12 +2,14 @@
 // montam e com que luz. Sem tela e sem banco.
 
 import type { LuzDaObra, PosicaoNaExposicao } from "@/lib/producao/estados";
+import { encaixar, manterDentro } from "@/lib/producao/planta";
 
 export const ROTULO_DA_POSICAO: Record<PosicaoNaExposicao, string> = { parede: "Na parede", piso: "No piso", teto: "Suspensa no teto", vitrine: "Em vitrine", outro: "Outro lugar" };
 export const ROTULO_DA_LUZ: Record<LuzDaObra, string> = { sem_luz: "Sem luz", difusa: "Luz difusa", pontual: "Luz pontual", natural: "Luz natural", baixa: "Baixa luminosidade" };
 
 export type ObraNaSala = {
   id: string; item_id: string; posicao: PosicaoNaExposicao; altura_instalacao_cm: number | null; ordem_montagem: number; luz: LuzDaObra; lux: number | null; notas: string | null; instalada_em: string | null;
+  x_m?: number | null; y_m?: number | null;
 };
 export type ObraDeArte = { id: string; nome: string; altura_cm: number | null; largura_cm: number | null; comprimento_cm: number | null };
 
@@ -70,4 +72,38 @@ export function mensagemDoErroDeExpografia(erro: { code?: string; message?: stri
   if (mensagem.includes("item_nao_e_obra_de_arte")) return "Esse item do inventário não é uma obra de arte.";
   if (mensagem.includes("unica_key") || erro.code === "23505") return "Essa obra já está nesta sala.";
   return "Não foi possível salvar. Tente de novo.";
+}
+
+// ─── O lugar da obra na planta da sala (PD8.5, segundo corte) ───────────────
+
+/** O menor lado que uma obra ocupa na planta, em metros: obra sem medida ainda precisa de um retângulo para pegar. */
+export const LADO_MINIMO_M = 0.4;
+
+/**
+ * O retângulo que a obra ocupa na planta, em metros, a partir das medidas do inventário (que estão em centímetros):
+ * a largura é a largura da obra e a profundidade é o comprimento dela (a altura não entra, porque a planta é vista
+ * de cima). Sem medida, um quadrado do lado mínimo.
+ */
+export function tamanhoNaPlanta(obra: Pick<ObraDeArte, "largura_cm" | "comprimento_cm">): { largura_m: number; profundidade_m: number } {
+  const lado = (centimetros: number | null | undefined) => Math.max(LADO_MINIMO_M, Math.round(((centimetros ?? 0) / 100) * 100) / 100);
+  return { largura_m: lado(obra.largura_cm), profundidade_m: lado(obra.comprimento_cm) };
+}
+
+/** Onde a obra cai quando é soltada: encaixada no passo da planta e dentro dela. */
+export function lugarDaObra(
+  ponto: { x: number; y: number },
+  tamanho: { largura_m: number; profundidade_m: number },
+  planta: { largura_m: number; profundidade_m: number },
+): { x_m: number; y_m: number } {
+  const encaixado = { ...tamanho, rotacao_graus: 0, x_m: encaixar(ponto.x), y_m: encaixar(ponto.y) };
+  return manterDentro(encaixado, planta);
+}
+
+/** As obras que já estão na planta e as que ainda não foram postas, na ordem de montagem. */
+export function obrasNaPlanta<T extends Pick<ObraNaSala, "ordem_montagem" | "id" | "x_m" | "y_m">>(lista: readonly T[]): { postas: T[]; fora: T[] } {
+  const ordenada = ordenarMontagem(lista);
+  return {
+    postas: ordenada.filter(obra => obra.x_m !== null && obra.x_m !== undefined),
+    fora: ordenada.filter(obra => obra.x_m === null || obra.x_m === undefined),
+  };
 }
