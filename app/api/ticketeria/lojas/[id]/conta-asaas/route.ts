@@ -1,6 +1,6 @@
 // /api/ticketeria/lojas/{id}/conta-asaas: a subconta da loja no Asaas (parte 2 do cadeado do repasse; sem tela ainda).
 //
-//   POST { dados do produtor }  cria a subconta no Asaas, guarda a chave no Vault, cria a chave Pix e devolve a situação
+//   POST { dados do produtor, conta_bancaria? }  cria a subconta no Asaas, guarda a chave no Vault, cria a chave Pix e devolve a situação
 //   GET                         confere a situação cadastral no Asaas e atualiza (pendente, aprovada, bloqueada)
 //
 // Quem pede precisa EDITAR a Ticketeria da organização da loja. A chave da subconta nunca sai daqui. Sem ASAAS_API_KEY (ou sem as três travas da
@@ -12,7 +12,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { ErroDoAsaas, ambienteDoAsaas } from "@/lib/ticketeria/pagamento/asaas";
 import { SubcontasAsaas, problemasDosDados, type DadosDoProdutor } from "@/lib/ticketeria/pagamento/asaas-subconta";
-import { SubcontaSemChaveGuardada, cadastrarSubconta } from "@/lib/ticketeria/pagamento/cadastro-subconta";
+import { SubcontaSemChaveGuardada, cadastrarSubconta, problemasDaContaBancaria, type ContaBancaria } from "@/lib/ticketeria/pagamento/cadastro-subconta";
 import { portasDoCadastroDoSupabase } from "@/lib/ticketeria/pagamento/portas-supabase";
 import { isRateLimited } from "@/lib/mcp/rateLimit";
 
@@ -40,16 +40,21 @@ export async function POST(req: NextRequest, rota: { params: Promise<{ id: strin
   const base = ambienteDoAsaas();
   if (!base) return resposta({ error: "asaas_nao_configurado" }, 503);
   let dados: DadosDoProdutor;
-  try { dados = (await req.json()) as DadosDoProdutor; } catch { return resposta({ error: "corpo_invalido" }, 400); }
-  const problemas = problemasDosDados(dados);
+  let contaBancaria: ContaBancaria | null = null;
+  try {
+    const corpo = (await req.json()) as DadosDoProdutor & { conta_bancaria?: ContaBancaria | null };
+    contaBancaria = corpo.conta_bancaria ?? null;
+    dados = corpo;
+  } catch { return resposta({ error: "corpo_invalido" }, 400); }
+  const problemas = [...problemasDosDados(dados), ...(contaBancaria ? problemasDaContaBancaria(contaBancaria) : [])];
   if (problemas.length > 0) return resposta({ error: "dados_invalidos", problemas }, 400);
   const { data: existente } = await a.ticketeria.from("ticketeria_contas_asaas").select("id").eq("loja_id", a.loja.id).maybeSingle();
   if (existente) return resposta({ error: "conta_ja_cadastrada" }, 409);
   try {
     const resultado = await cadastrarSubconta({
-      loja: a.loja.id, dados, asaas: new SubcontasAsaas({ chaveDaConta: base.chave, url: base.url }), portas: portasDoCadastroDoSupabase(createAdminClient()),
+      loja: a.loja.id, dados, asaas: new SubcontasAsaas({ chaveDaConta: base.chave, url: base.url }), portas: portasDoCadastroDoSupabase(createAdminClient()), contaBancaria,
     });
-    return resposta({ situacao: resultado.situacao, chave_pix: resultado.chave_pix });
+    return resposta({ situacao: resultado.situacao, chave_pix: resultado.chave_pix, conta_destino: resultado.conta_destino });
   } catch (erro) {
     if (erro instanceof SubcontaSemChaveGuardada) {
       console.error("[ticketeria] subconta criada no Asaas sem a chave guardada:", erro.message);

@@ -977,6 +977,10 @@ export type BancoDaTicketeria = {
           created_at: string;
           updated_at: string;
           chave_secret_id: string | null;
+          banco_codigo: string | null;
+          agencia: string | null;
+          conta: string | null;
+          conta_digito: string | null;
         };
         Insert: {
           id?: string;
@@ -989,6 +993,10 @@ export type BancoDaTicketeria = {
           created_at?: string;
           updated_at?: string;
           chave_secret_id?: string | null;
+          banco_codigo?: string | null;
+          agencia?: string | null;
+          conta?: string | null;
+          conta_digito?: string | null;
         };
         Update: {
           id?: string;
@@ -1001,6 +1009,10 @@ export type BancoDaTicketeria = {
           created_at?: string;
           updated_at?: string;
           chave_secret_id?: string | null;
+          banco_codigo?: string | null;
+          agencia?: string | null;
+          conta?: string | null;
+          conta_digito?: string | null;
         };
         Relationships: [];
       };
@@ -1105,6 +1117,10 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_registrar_conta_asaas: {
         Args: { p_loja: string; p_asaas_account_id: string; p_wallet_id: string; p_cpf_cnpj: string; p_chave: string; p_situacao?: string };
+        Returns: string;
+      };
+      fn_ticketeria_definir_conta_destino: {
+        Args: { p_loja: string; p_banco: string; p_agencia: string; p_conta: string; p_digito?: string | null };
         Returns: string;
       };
       fn_ticketeria_chave_da_conta_asaas: {

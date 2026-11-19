@@ -13,7 +13,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(28);
+select plan(32);
 
 create schema tv;
 grant usage on schema tv to authenticated, anon;
@@ -43,8 +43,8 @@ begin
   insert into public.ticketeria_ingressos (id, organization_id, evento_id, setor_id, nome, categoria) values (tv.id('31'), tv.id('a0'), tv.id('71'), tv.id('41'), 'Inteira', 'inteira');
   insert into public.ticketeria_lotes (id, organization_id, ingresso_id, nome, ordem, preco_centavos, quantidade) values (tv.id('21'), tv.id('a0'), tv.id('31'), '1º lote', 0, 6000, 10);
   -- A subconta da Loja A: o titular tem este CPF.
-  insert into public.ticketeria_contas_asaas (organization_id, loja_id, asaas_account_id, wallet_id, cpf_cnpj, situacao)
-  values (tv.id('a0'), tv.id('61'), 'conta-asaas-a', 'carteira-a', '12345678909', 'aprovada');
+  insert into public.ticketeria_contas_asaas (organization_id, loja_id, asaas_account_id, wallet_id, cpf_cnpj, situacao, banco_codigo, agencia, conta, conta_digito)
+  values (tv.id('a0'), tv.id('61'), 'conta-asaas-a', 'carteira-a', '12345678909', 'aprovada', '001', '0001', '123456', '7');
 end
 $dados$;
 
@@ -59,6 +59,12 @@ begin
 end;
 $$;
 create function tv.pedido(nome text) returns uuid language sql as $$ select (resposta ->> 'pedido_id')::uuid from tv.pedidos where pedidos.nome = pedido.nome $$;
+
+-- O aviso de saque do Asaas, no formato que vimos no teste de verdade: o CPF vem MASCARADO; o que vem inteiro é a conta de destino.
+create function tv.p(banco text, agencia text, conta text, digito text) returns jsonb language sql immutable as $$
+  select jsonb_build_object('type', 'TRANSFER', 'transfer', jsonb_build_object('type', 'BANK_ACCOUNT', 'bankAccount',
+    jsonb_build_object('bank', jsonb_build_object('code', banco), 'agency', agencia, 'account', conta, 'accountDigit', digito, 'cpfCnpj', '***.456.789-**')));
+$$;
 
 create function tv.tenta(comando text) returns text language plpgsql as $$
 declare nome text;
@@ -138,14 +144,14 @@ select is(public.fn_ticketeria_saldo_liberavel('99999999999'), 0::bigint, 'quem 
 
 -- ─── A decisão ──────────────────────────────────────────────────────────────
 
-select is(public.fn_ticketeria_validar_saque('TRANSFER', 't1', 'conta_bancaria', '123.456.789-09', 5000, '{"type":"TRANSFER"}'), '{"status": "APPROVED", "motivo": "dentro_do_saldo_liberavel"}'::jsonb, 'saque de R$ 50 para a conta do titular, dentro do liberável: aprova');
+select is(public.fn_ticketeria_validar_saque('TRANSFER', 't1', 'conta_bancaria', null, 5000, tv.p('001', '0001', '123456', '7')), '{"status": "APPROVED", "motivo": "dentro_do_saldo_liberavel"}'::jsonb, 'saque de R$ 50 para a conta do titular, dentro do liberável: aprova');
 select is(public.fn_ticketeria_saldo_liberavel('12345678909'), 751::bigint, 'o que já se aprovou sacar sai do saldo liberável');
-select is(array[public.fn_ticketeria_validar_saque('TRANSFER', 't1', 'conta_bancaria', '12345678909', 5000, '{}') ->> 'status', (select count(*)::text from public.ticketeria_validacoes_saque where id_externo = 't1')], array['APPROVED', '1'], 'o mesmo pedido do Asaas recebe a mesma resposta e não grava duas vezes');
-select is(public.fn_ticketeria_validar_saque('TRANSFER', 't2', 'conta_bancaria', '12345678909', 752, '{}') ->> 'motivo', 'retido_ate_depois_do_evento', 'um centavo acima do liberável: recusa, retido até depois do evento');
-select is(public.fn_ticketeria_validar_saque('TRANSFER', 't3', 'conta_bancaria', '12345678909', 751, '{}') ->> 'status', 'APPROVED', 'exatamente o que sobra: aprova');
-select is(public.fn_ticketeria_validar_saque('TRANSFER', 't4', 'conta_bancaria', '12345678909', 1, '{}') ->> 'status', 'REFUSED', 'depois de sacar tudo o liberável, nada mais sai');
-select is(public.fn_ticketeria_validar_saque('TRANSFER', 't5', 'conta_bancaria', '00000000000', 100, '{}') ->> 'motivo', 'destino_nao_e_de_produtor_cadastrado', 'saque para um CPF que não é de nenhuma subconta: recusa');
-select is(array[public.fn_ticketeria_validar_saque('TRANSFER', 't6', 'conta_bancaria', null, 100, '{}') ->> 'motivo', public.fn_ticketeria_validar_saque('TRANSFER', 't7', 'outro', '12345678909', 100, '{}') ->> 'motivo'],
+select is(array[public.fn_ticketeria_validar_saque('TRANSFER', 't1', 'conta_bancaria', null, 5000, tv.p('001', '0001', '123456', '7')) ->> 'status', (select count(*)::text from public.ticketeria_validacoes_saque where id_externo = 't1')], array['APPROVED', '1'], 'o mesmo pedido do Asaas recebe a mesma resposta e não grava duas vezes');
+select is(public.fn_ticketeria_validar_saque('TRANSFER', 't2', 'conta_bancaria', null, 752, tv.p('001', '0001', '123456', '7')) ->> 'motivo', 'retido_ate_depois_do_evento', 'um centavo acima do liberável: recusa, retido até depois do evento');
+select is(public.fn_ticketeria_validar_saque('TRANSFER', 't3', 'conta_bancaria', null, 751, tv.p('001', '0001', '123456', '7')) ->> 'status', 'APPROVED', 'exatamente o que sobra: aprova');
+select is(public.fn_ticketeria_validar_saque('TRANSFER', 't4', 'conta_bancaria', null, 1, tv.p('001', '0001', '123456', '7')) ->> 'status', 'REFUSED', 'depois de sacar tudo o liberável, nada mais sai');
+select is(public.fn_ticketeria_validar_saque('TRANSFER', 't5', 'conta_bancaria', null, 100, tv.p('001', '0001', '999999', '0')) ->> 'motivo', 'destino_nao_e_de_produtor_cadastrado', 'saque para um CPF que não é de nenhuma subconta: recusa');
+select is(array[public.fn_ticketeria_validar_saque('TRANSFER', 't6', 'conta_bancaria', null, 100, '{}') ->> 'motivo', public.fn_ticketeria_validar_saque('TRANSFER', 't7', 'outro', null, 100, tv.p('001', '0001', '123456', '7')) ->> 'motivo'],
           array['destino_nao_e_de_produtor_cadastrado', 'operacao_nao_permitida'], 'sem CPF no pedido ou para um destino desconhecido: recusa');
 select is(public.fn_ticketeria_validar_saque('TRANSFER', 't8', 'conta_asaas', null, 99, '{}') ->> 'motivo', 'transferencia_sem_ordem_registrada', 'transferência entre contas Asaas sem ordem do Jards: recusa');
 insert into public.ticketeria_transferencias_autorizadas (tipo, valor_centavos, motivo) values ('TRANSFER', 99, 'repor a taxa residual para um estorno'), ('PIX_REFUND', 6000, 'reembolso aceito pelo e-mail');
@@ -155,10 +161,24 @@ select is(array[public.fn_ticketeria_validar_saque('PIX_REFUND', 'r1', 'outro', 
           array['APPROVED', 'REFUSED', 'REFUSED'], 'estorno de Pix: aprova só com a ordem registrada, uma vez, e no valor da ordem');
 select is(array[public.fn_ticketeria_validar_saque('BILL', 'b1', 'outro', null, 1000, '{}') ->> 'motivo', public.fn_ticketeria_validar_saque('PIX_QR_CODE', 'q1', 'outro', null, 1000, '{}') ->> 'motivo', public.fn_ticketeria_validar_saque('MOBILE_PHONE_RECHARGE', 'm1', 'outro', null, 1000, '{}') ->> 'motivo', public.fn_ticketeria_validar_saque('PAYMENT_SPLIT', 's1', 'outro', null, 125, '{}') ->> 'motivo'],
           array['operacao_nao_permitida', 'operacao_nao_permitida', 'operacao_nao_permitida', 'operacao_nao_permitida'], 'pagar conta, QR Code, recarga de celular e qualquer outro tipo: recusa');
-select is(public.fn_ticketeria_validar_saque('TRANSFER', 'v1', 'conta_bancaria', '12345678909', 0, '{}') ->> 'motivo', 'valor_invalido', 'valor zero ou negativo: recusa');
+select is(public.fn_ticketeria_validar_saque('TRANSFER', 'v1', 'conta_bancaria', null, 0, tv.p('001', '0001', '123456', '7')) ->> 'motivo', 'valor_invalido', 'valor zero ou negativo: recusa');
 update public.ticketeria_contas_asaas set situacao = 'bloqueada';
-select is(public.fn_ticketeria_validar_saque('TRANSFER', 'bl1', 'conta_bancaria', '12345678909', 1, '{}') ->> 'motivo', 'destino_nao_e_de_produtor_cadastrado', 'subconta bloqueada: nada sai');
+select is(public.fn_ticketeria_validar_saque('TRANSFER', 'bl1', 'conta_bancaria', null, 1, tv.p('001', '0001', '123456', '7')) ->> 'motivo', 'destino_nao_e_de_produtor_cadastrado', 'subconta bloqueada: nada sai');
 update public.ticketeria_contas_asaas set situacao = 'aprovada';
+select is(array[
+            public.fn_ticketeria_validar_saque('TRANSFER', 'd1', 'conta_bancaria', null, 100, tv.p('001', '0001', '123457', '7')) ->> 'motivo',
+            public.fn_ticketeria_validar_saque('TRANSFER', 'd2', 'conta_bancaria', null, 100, tv.p('001', '0002', '123456', '7')) ->> 'motivo',
+            public.fn_ticketeria_validar_saque('TRANSFER', 'd3', 'conta_bancaria', null, 100, tv.p('237', '0001', '123456', '7')) ->> 'motivo',
+            public.fn_ticketeria_validar_saque('TRANSFER', 'd4', 'conta_bancaria', null, 100, tv.p('001', '0001', '123456', '8')) ->> 'motivo',
+            public.fn_ticketeria_validar_saque('TRANSFER', 'd5', 'conta_bancaria', '123.456.789-09', 100, '{"transfer": {"bankAccount": {"pixAddressKey": "chave@exemplo.com"}}}') ->> 'motivo'],
+          array['destino_nao_e_de_produtor_cadastrado', 'destino_nao_e_de_produtor_cadastrado', 'destino_nao_e_de_produtor_cadastrado', 'destino_nao_e_de_produtor_cadastrado', 'destino_nao_e_de_produtor_cadastrado'],
+          'banco, agência, conta ou dígito diferentes do cadastrado, ou chave Pix: recusa (o CPF, mesmo certo, não vale: só a conta de destino)');
+select is(public.fn_ticketeria_definir_conta_destino(tv.id('61'), '001', '0001', '123456', '7') is not null, true, 'o servidor define a conta de destino da subconta');
+select is(array[tv.tenta($t$select public.fn_ticketeria_definir_conta_destino('0d760000-0000-4000-8000-00000000006b', '001', '0001', '123456', '7')$t$), tv.tenta($t$select public.fn_ticketeria_definir_conta_destino('0d760000-0000-4000-8000-000000000061', '1', '0001', '123456', '7')$t$)],
+          array['23514 conta_inexistente', '23514 ticketeria_contas_asaas_destino_check'], 'loja sem subconta; banco que não tem 3 números');
+update public.ticketeria_contas_asaas set banco_codigo = null, agencia = null, conta = null, conta_digito = null;
+select is(public.fn_ticketeria_validar_saque('TRANSFER', 'sd1', 'conta_bancaria', null, 1, tv.p('001', '0001', '123456', '7')) ->> 'motivo', 'destino_nao_e_de_produtor_cadastrado', 'sem conta de destino definida, nenhum saque é aprovado');
+update public.ticketeria_contas_asaas set banco_codigo = '001', agencia = '0001', conta = '123456', conta_digito = '7';
 
 -- ─── O registro e quem pode o quê ───────────────────────────────────────────
 

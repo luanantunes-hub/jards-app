@@ -56,6 +56,10 @@ export function portasDoCadastroDoSupabase(admin: SupabaseClient<Database>): Por
       });
       if (error) throw new Error(error.message);
     },
+    async definirContaDestino(loja, conta) {
+      const { error } = await ticketeria.rpc("fn_ticketeria_definir_conta_destino", { p_loja: loja, p_banco: conta.banco, p_agencia: conta.agencia, p_conta: conta.conta, p_digito: conta.digito ?? null });
+      if (error) throw new Error(error.message);
+    },
     async atualizarSituacao(loja, situacao) {
       const { error } = await ticketeria.rpc("fn_ticketeria_situacao_da_conta_asaas", { p_loja: loja, p_situacao: situacao });
       if (error) throw new Error(error.message);

@@ -4,8 +4,9 @@
 //
 // Formato do aviso (documentação do Asaas, conferida em 19/11/2026): `{ "type": "TRANSFER" | "BILL" | "PIX_QR_CODE" | "MOBILE_PHONE_RECHARGE" |
 // "PIX_REFUND" | "PAYMENT_SPLIT", "<objeto>": { ... } }`, com o objeto `transfer`, `bill`, `pixQrCode`, `mobilePhoneRecharge`, `pixRefund` ou
-// `paymentSplit`. **Nenhum campo diz de qual subconta vem a operação**: só o destino (`transfer.bankAccount`, com o `cpfCnpj` de quem recebe).
-// Por isso o produtor é identificado pelo CPF/CNPJ do destino do saque. O valor vem em reais.
+// `paymentSplit`. **Nenhum campo diz de qual subconta vem a operação**: só o destino (`transfer.bankAccount`). E o CPF/CNPJ do destino vem
+// **mascarado** (`***.715.637-**`, visto no teste de verdade em 19/11/2026), então o produtor é identificado pela **conta bancária de destino**
+// (banco, agência, conta e dígito, que vêm inteiros), que o banco confere em fn_ticketeria_validar_saque lendo o próprio aviso. O valor vem em reais.
 
 import { timingSafeEqual } from "node:crypto";
 
@@ -15,7 +16,7 @@ export type PedidoDeSaque = {
   tipo: string;
   id_externo: string;
   destino: DestinoDoSaque;
-  /** CPF ou CNPJ de quem recebe, só os números (11 ou 14); null quando o aviso não traz. */
+  /** CPF ou CNPJ de quem recebe, só os números (11 ou 14); null quando o aviso não traz ou vem mascarado (o caso do saque). */
   cpf_cnpj: string | null;
   valor_centavos: number;
 };

@@ -11,7 +11,7 @@ type Coluna = { nome: string; anulavel: boolean };
 
 async function migrationsDaTicketeria(): Promise<{ nome: string; sql: string }[]> {
   const pasta = "supabase/migrations";
-  const nomes = (await readdir(pasta)).filter(nome => /_ticketeria_(lojas_site|eventos|catalogo|pagamentos|custo_do_meio|custo_real_do_pagamento|validacao_de_saque|chave_da_subconta)\.sql$/.test(nome)).sort();
+  const nomes = (await readdir(pasta)).filter(nome => /_ticketeria_(lojas_site|eventos|catalogo|pagamentos|custo_do_meio|custo_real_do_pagamento|validacao_de_saque|chave_da_subconta|saque_por_conta_bancaria)\.sql$/.test(nome)).sort();
   return Promise.all(nomes.map(async nome => ({ nome, sql: await readFile(`${pasta}/${nome}`, "utf8") })));
 }
 
@@ -45,7 +45,7 @@ function tabelasDoTipo(ts: string): Map<string, Coluna[]> {
 
 test("lib/ticketeria/banco.ts tem as tabelas e as colunas da migration, com a mesma anulabilidade", async () => {
   const migrations = await migrationsDaTicketeria();
-  assert.equal(migrations.length, 8, "achou as migrations da T1 a T5, a do custo real, a do cadeado e a da chave da subconta");
+  assert.equal(migrations.length, 9, "achou as migrations da T1 a T5, a do custo real, a do cadeado e a da chave da subconta");
   const doSql = tabelasDoSql(migrations.map(m => m.sql).join("\n"));
   const doTipo = tabelasDoTipo(await readFile("lib/ticketeria/banco.ts", "utf8"));
   assert.deepEqual([...doTipo.keys()].sort(), [...doSql.keys()].sort(), "as mesmas tabelas");
