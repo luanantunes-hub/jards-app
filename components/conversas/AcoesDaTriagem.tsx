@@ -4,6 +4,7 @@ import { useState } from "react";
 import { BriefcaseBusiness, Check, Pencil, UserPlus } from "lucide-react";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
+import { dominioDoEmail } from "@/lib/email/triagem";
 import { createClient } from "@/lib/supabase/client";
 import type { RemetenteDaTriagem } from "@/app/api/email/triagem/route";
 
@@ -11,14 +12,42 @@ const VERDE = "#3DA86A";
 const BOTAO = "flex h-8 items-center gap-1.5 rounded border border-black/12 bg-white px-3 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white";
 
 /**
+ * A empresa do contato: reaproveita uma já cadastrada com o mesmo nome (evita duplicar) ou cria uma nova, já com o
+ * domínio como site — assim a próxima pessoa desse domínio encontra essa empresa pelo site, sem precisar de palpite.
+ */
+async function obterOuCriarEmpresa(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  accountId: string,
+  organizationId: string,
+  nome: string,
+  dominio: string | null,
+): Promise<string> {
+  const { data: existente } = await supabase
+    .from("empresas_crm")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .ilike("nome", nome)
+    .maybeSingle();
+  if (existente) return existente.id as string;
+  const { data: criada, error } = await supabase
+    .from("empresas_crm")
+    .insert({ nome, site: dominio, organization_id: organizationId, account_id: accountId })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return criada.id as string;
+}
+
+/**
  * Os três passos para quem ainda não é contato, dentro da conversa aberta: criar o contato (com a empresa sugerida
- * pelo domínio), registrar a conversa para a equipe e abrir a negociação. Nenhum é obrigatório, e "Dispensar" apaga
- * as cópias guardadas. Até registrar, a conversa é só sua.
+ * pelo domínio, ou uma nova empresa com o nome que o domínio sugere), registrar a conversa para a equipe e abrir a
+ * negociação. Nenhum é obrigatório, e "Dispensar" apaga as cópias guardadas. Até registrar, a conversa é só sua.
  *
- * Criar contato é um clique só: o nome e o e-mail já são conhecidos, e a empresa é a sugerida (ou nenhuma).
- * "Editar antes de criar" fica como saída para quem quer ajustar algo primeiro — telefone, cargo, outra empresa —,
- * abrindo o mesmo formulário completo que o resto do Jards usa. Depois de criado, o contato se corrige na própria
- * ficha dele, como qualquer outro.
+ * Criar contato é um clique só: o nome e o e-mail já são conhecidos, a empresa é a sugerida, e sem nenhuma que já
+ * combine, a empresa nasce junto, com o nome que o domínio sugere. "Editar antes de criar" fica como saída para
+ * quem quer ajustar algo primeiro — telefone, cargo, outra empresa —, abrindo o mesmo formulário completo que o
+ * resto do Jards usa. Depois de criado, o contato (e a empresa) se corrigem na própria ficha, como qualquer outro.
  */
 export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaTriagem; onMudou: () => void }) {
   const [tratando, setTratando] = useState<string | null>(null);
@@ -55,6 +84,14 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Entre de novo para criar o contato.");
+
+      let empresaCrmId = remetente.sugestaoDeEmpresa?.id ?? null;
+      if (!empresaCrmId && remetente.nomeDaEmpresaPeloDominio) {
+        empresaCrmId = await obterOuCriarEmpresa(
+          supabase, user.id, remetente.organizationId, remetente.nomeDaEmpresaPeloDominio, dominioDoEmail(remetente.endereco),
+        );
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any)
         .from("contatos")
@@ -63,7 +100,7 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
           organization_id: remetente.organizationId,
           nome: remetente.nomeSugerido,
           email: remetente.endereco,
-          empresa_crm_id: remetente.sugestaoDeEmpresa?.id ?? null,
+          empresa_crm_id: empresaCrmId,
         });
       if (error) throw new Error(error.message);
       onMudou();
@@ -94,7 +131,9 @@ export function AcoesDaTriagem({ remetente, onMudou }: { remetente: RemetenteDaT
         : <p className="text-[0.75rem] text-black/55">
             {remetente.sugestaoDeEmpresa
               ? <>Parece ser da <span className="font-medium text-[#282525]">{remetente.sugestaoDeEmpresa.nome}</span>{remetente.sugestaoDeEmpresa.motivo === "site" ? ", pelo site da empresa" : ", pelos outros contatos dela"}.</>
-              : "Essa pessoa ainda não está nos seus contatos."}
+              : remetente.nomeDaEmpresaPeloDominio
+                ? <>Pelo domínio do e-mail, deve ser da <span className="font-medium text-[#282525]">{remetente.nomeDaEmpresaPeloDominio}</span>. Ao criar o contato, a empresa nasce junto.</>
+                : "Essa pessoa ainda não está nos seus contatos."}
           </p>}
 
       {erro && <p role="alert" className="mt-2 text-[0.75rem] text-[#B23B3B]">{erro}</p>}

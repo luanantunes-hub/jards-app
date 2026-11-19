@@ -125,6 +125,32 @@ export function sugerirEmpresa(
   return null;
 }
 
+/** Sufixos de domínio (TLD e o que vem antes dele) que não fazem parte do nome da empresa. */
+const SUFIXOS_DE_DOMINIO = new Set([
+  "com", "net", "org", "gov", "edu", "mil", "br", "app", "io", "co", "dev", "ai", "inc", "llc", "ltd", "corp",
+]);
+
+/**
+ * Um palpite de nome de empresa a partir do domínio do e-mail, para quando nenhuma empresa do CRM já combina com
+ * ele: "cianorte.com.br" vira "Cianorte", "aurora-energia.com.br" vira "Aurora Energia". Domínios públicos
+ * (gmail.com etc.) e domínios sem nenhuma letra (só números) não geram palpite. É só um ponto de partida: o nome
+ * pode ser ajustado depois, na própria ficha da empresa.
+ */
+export function nomeDaEmpresaPeloDominio(dominio: string | null | undefined): string | null {
+  const texto = (dominio ?? "").trim().toLowerCase();
+  if (!texto || DOMINIOS_PESSOAIS.has(texto)) return null;
+  const rotulos = texto.split(".").filter(Boolean);
+  while (rotulos.length > 1 && SUFIXOS_DE_DOMINIO.has(rotulos[rotulos.length - 1])) rotulos.pop();
+  const rotulo = rotulos[rotulos.length - 1];
+  if (!rotulo || !/[a-z]/i.test(rotulo)) return null;
+  const nome = rotulo
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((parte) => parte.charAt(0).toUpperCase() + parte.slice(1))
+    .join(" ");
+  return nome || null;
+}
+
 export type EmailDeTriagem = {
   id: string;
   from_email: string | null;
