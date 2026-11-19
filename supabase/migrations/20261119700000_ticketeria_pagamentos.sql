@@ -195,10 +195,17 @@ begin
 end;
 $$;
 
-create or replace constraint trigger ticketeria_partidas_equilibrio
-  after insert or update or delete on public.ticketeria_partidas
-  deferrable initially deferred
-  for each row execute function public.fn_ticketeria_razao_equilibrio();
+-- Gatilho de restrição (conferido no fim da transação) não tem "or replace": cria-se só se ainda não existir.
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname = 'ticketeria_partidas_equilibrio' and tgrelid = 'public.ticketeria_partidas'::regclass) then
+    create constraint trigger ticketeria_partidas_equilibrio
+      after insert or update or delete on public.ticketeria_partidas
+      deferrable initially deferred
+      for each row execute function public.fn_ticketeria_razao_equilibrio();
+  end if;
+end
+$$;
 create or replace trigger ticketeria_partidas_imutavel
   before update or delete on public.ticketeria_partidas
   for each row execute function public.fn_ticketeria_razao_imutavel();
