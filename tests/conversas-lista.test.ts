@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { agruparConversas, type EmailDeConversa } from "../lib/email/conversas";
-import { contagemDosFiltros, dataCurta, duracaoEmTexto, estadoDoItem, itemNaBusca, itemNoFiltro, montarLista, quandoDaReuniao, recortarReunioes, reuniaoNaBusca, type EmailAgendado, type ReuniaoNaLista } from "../lib/conversas/lista";
+import { contagemDosFiltros, dataCurta, duracaoEmTexto, ESTADO_DA_REUNIAO, estadoDoItem, itemNaBusca, itemNoFiltro, montarLista, quandoDaReuniao, recortarReunioes, reuniaoNaBusca, type EmailAgendado, type ReuniaoNaLista } from "../lib/conversas/lista";
 
 const AGORA = Date.parse("2026-11-19T12:00:00Z");
 
@@ -134,8 +134,28 @@ test("o estado da conversa: o que pede atenção primeiro é o que o desenho con
   const antiga = montarLista(agruparConversas([email("w", { thread_id: "fw", contato_id: "c1", visibility: "private", sent_at: "2026-01-01T10:00:00Z" })], AGORA))[0];
   assert.equal(estadoDoItem(antiga, ["Marina"]), "so-eu-vejo", "sem situação, resta dizer que só ela vê");
 
+  // Sem contato, mas com vaivém: o vaivém é o que está acontecendo agora, e ganha do "sem contato".
+  const semContatoRespondeu = montarLista(agruparConversas([
+    email("v1", { thread_id: "fv", direction: "outbound", to_emails: ["novo@x.com"], sent_at: "2026-11-16T10:00:00Z" }),
+    email("v2", { thread_id: "fv" }),
+  ], AGORA))[0];
+  assert.equal(estadoDoItem(semContatoRespondeu), "respondeu", "o cartão mostra as duas etiquetas juntas; o desenho acompanha o vaivém, não só a falta de contato");
+  const semContatoAguardando = montarLista(agruparConversas([email("u", { thread_id: "fu", direction: "outbound", to_emails: ["novo@x.com"] })], AGORA))[0];
+  assert.equal(estadoDoItem(semContatoAguardando), "aguardando");
+
   const [agendadoPendente] = montarLista([], [agendado]);
   assert.equal(estadoDoItem(agendadoPendente), "agendado");
   assert.equal(estadoDoItem(montarLista([], [{ ...agendado, estado: "enviando" }])[0]), "a-caminho");
   assert.equal(estadoDoItem(montarLista([], [{ ...agendado, estado: "falhou" }])[0]), "falhou");
+});
+
+test("toda reunião mostra um tamanduá que conta o status, nunca um ícone genérico", () => {
+  const status: ReuniaoNaLista["status"][] = ["agendada", "bot_entrando", "gravando", "processando", "concluida", "falhou"];
+  for (const s of status) {
+    const desenho = ESTADO_DA_REUNIAO[s];
+    assert.ok(desenho, `sem desenho para o status "${s}"`);
+  }
+  assert.equal(ESTADO_DA_REUNIAO.concluida, "gravada", "a reunião gravada mostra o binóculo");
+  assert.equal(ESTADO_DA_REUNIAO.falhou, "falhou");
+  assert.equal(ESTADO_DA_REUNIAO.agendada, "agendado");
 });

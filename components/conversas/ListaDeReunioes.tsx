@@ -8,7 +8,7 @@ import { AvatarDaPessoa } from "@/components/ui/AvatarDaPessoa";
 import { caminhoDoDesenho } from "@/lib/conversas/avatar";
 import { FilterButton } from "@/components/ui/FilterControls";
 import {
-  dataCurta, duracaoEmTexto, recortarReunioes, RECORTES_DAS_REUNIOES, reuniaoNaBusca, ROTULO_DA_PLATAFORMA,
+  dataCurta, duracaoEmTexto, ESTADO_DA_REUNIAO, recortarReunioes, RECORTES_DAS_REUNIOES, reuniaoNaBusca, ROTULO_DA_PLATAFORMA,
   SITUACAO_DA_REUNIAO, type RecorteDasReunioes, type ReuniaoNaLista,
 } from "@/lib/conversas/lista";
 
@@ -18,18 +18,15 @@ function quandoPorExtenso(ms: number | null): string {
 }
 
 /**
- * A miniatura da reunião. Na que já foi gravada, o tamanduá de binóculo — é o que se assiste depois;
- * nas outras, o ícone de vídeo. A duração aparece ao lado quando o assistente gravou.
+ * A miniatura da reunião: sempre um tamanduá que conta o status (agendado, a caminho, gravada…), nunca um ícone
+ * genérico. A duração aparece ao lado quando o assistente já gravou.
  */
 function Miniatura({ reuniao }: { reuniao: ReuniaoNaLista }) {
   const duracao = duracaoEmTexto(reuniao.duracao_bot_s);
-  const gravada = reuniao.status === "concluida";
   return (
-    <span aria-hidden="true" className={`flex h-9 w-14 shrink-0 items-center justify-center gap-0.5 rounded bg-[#7259B5]/[.10] ${gravada ? "" : "text-[#7259B5]"}`}>
-      {gravada
-        ? <Image src={caminhoDoDesenho("gravada")} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
-        : <Video size={13} />}
-      {duracao && <span className={`text-[0.5625rem] font-medium tabular-nums ${gravada ? "text-[#5B4698]" : ""}`}>{duracao}</span>}
+    <span aria-hidden="true" className="flex h-9 w-14 shrink-0 items-center justify-center gap-0.5 rounded bg-[#7259B5]/[.10]">
+      <Image src={caminhoDoDesenho(ESTADO_DA_REUNIAO[reuniao.status])} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
+      {duracao && <span className="text-[0.5625rem] font-medium tabular-nums text-[#5B4698]">{duracao}</span>}
     </span>
   );
 }
