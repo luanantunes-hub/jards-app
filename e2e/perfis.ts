@@ -89,5 +89,5 @@ export const ITENS_DO_MENU: Record<ModuloId, readonly string[]> = {
   ],
   prestacao: ["Prestações", "Fornecedores"],
   producao: ["Agenda"],
-  ticketeria: ["Ingressos"],
+  ticketeria: ["Eventos"],
 };
