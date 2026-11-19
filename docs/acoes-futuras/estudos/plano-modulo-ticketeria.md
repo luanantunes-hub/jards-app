@@ -157,7 +157,7 @@ O Jards **não opera serviço financeiro**: é software de ticketeria e esta é 
 
 ### 9.4 Cancelamento do evento pelo produtor
 
-Quem cancela devolve o valor do ingresso (do saldo do produtor). **o comprador recebe o preço inteiro, a taxa do Jards volta junto, e o custo do meio que o provedor não devolver está em aberto (D15)** (as plataformas que retêm a taxa enfrentam multa do Procon e reclamação; o Procon-MG multou a Sympla em mais de R$ 210 mil). A política de reembolso é do Jards, o produtor não decide sobre ela. A plataforma responde em conjunto com o produtor perante o comprador (decisão do TJDF), mesmo sendo software: mostrar no checkout o nome e o CNPJ do produtor como vendedor ajuda, mas não elimina.
+Quem cancela devolve o valor do ingresso (do saldo do produtor): **o comprador recebe o preço inteiro, a taxa do Jards volta junto, e o custo do meio que o provedor não devolver está em aberto (D15)** (as plataformas que retêm a taxa enfrentam multa do Procon e reclamação; o Procon-MG multou a Sympla em mais de R$ 210 mil). A política de reembolso é do Jards, o produtor não decide sobre ela. A plataforma responde em conjunto com o produtor perante o comprador (decisão do TJDF), mesmo sendo software: mostrar no checkout o nome e o CNPJ do produtor como vendedor ajuda, mas não elimina.
 
 ### 9.5 Conta no Asaas
 
