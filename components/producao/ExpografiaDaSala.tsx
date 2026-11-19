@@ -9,9 +9,10 @@ import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { LUZES_DA_OBRA, POSICOES_NA_EXPOSICAO, type LuzDaObra, type PosicaoNaExposicao } from "@/lib/producao/estados";
 import {
-  lerObraNaSala, medidasDaObra, mensagemDoErroDeExpografia, ordenarMontagem, pendenciasDaObra, progressoDaMontagem, ROTULO_DA_LUZ, ROTULO_DA_POSICAO,
+  lerObraNaSala, medidasDaObra, mensagemDoErroDeExpografia, obrasNaPlanta, ordenarMontagem, pendenciasDaObra, progressoDaMontagem, ROTULO_DA_LUZ, ROTULO_DA_POSICAO,
   type ObraDeArte, type ObraNaSala,
 } from "@/lib/producao/expografia";
+import { MapaDaExpografia, type PlantaDaSala } from "@/components/producao/MapaDaExpografia";
 
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
@@ -114,7 +115,7 @@ function ObraSheet({ organizationId, salaId, obras, obra, livres, onClose, onSal
   );
 }
 
-/** A planta expográfica de uma sala (PD8.5): as obras de arte, onde ficam, a altura, a luz e a ordem de montagem, com o andamento da montagem. */
+/** A planta expográfica de uma sala (PD8.5): as obras de arte no desenho da planta e na lista, onde ficam, a altura, a luz e a ordem de montagem, com o andamento da montagem. */
 export function ExpografiaDaSala({ organizationId, salaId, podeEditar }: { organizationId: string; salaId: string; podeEditar: boolean }) {
   const [obrasNaSala, setObrasNaSala] = useState<ObraNaSala[] | null>(null);
   const [inventario, setInventario] = useState<ObraDeArte[]>([]);
@@ -122,18 +123,22 @@ export function ExpografiaDaSala({ organizationId, salaId, podeEditar }: { organ
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
   const [trabalhando, setTrabalhando] = useState<string | null>(null);
+  const [planta, setPlanta] = useState<PlantaDaSala | null>(null);
 
   useEffect(() => {
     let ativo = true;
     void (async () => {
       const producao = clienteDaProducao(createClient());
-      const [exp, inv] = await Promise.all([
-        producao.from("producao_expografia").select("id, item_id, posicao, altura_instalacao_cm, ordem_montagem, luz, lux, notas, instalada_em").eq("sala_id", salaId),
+      const [exp, inv, planta2] = await Promise.all([
+        producao.from("producao_expografia").select("id, item_id, posicao, altura_instalacao_cm, ordem_montagem, luz, lux, notas, instalada_em, x_m, y_m").eq("sala_id", salaId),
         producao.from("producao_itens").select("id, nome, altura_cm, largura_cm, comprimento_cm").eq("organization_id", organizationId).eq("categoria", "obra_de_arte").eq("arquivado", false).order("nome"),
+        // A planta mais recente da sala: é nela que as obras são postas.
+        producao.from("producao_plantas").select("id, nome, largura_m, profundidade_m, fundo, fundo_opacidade").eq("sala_id", salaId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
       ]);
       if (!ativo) return;
       setObrasNaSala(exp.data ?? []);
       setInventario(inv.data ?? []);
+      setPlanta(planta2.data ?? null);
       setErro(exp.error || inv.error ? "Não foi possível carregar a exposição. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
@@ -143,6 +148,7 @@ export function ExpografiaDaSala({ organizationId, salaId, podeEditar }: { organ
   const porItem = useMemo(() => new Map(inventario.map(item => [item.id, item])), [inventario]);
   const ordenadas = useMemo(() => ordenarMontagem(obrasNaSala ?? []), [obrasNaSala]);
   const progresso = useMemo(() => progressoDaMontagem(obrasNaSala ?? []), [obrasNaSala]);
+  const naPlanta = useMemo(() => obrasNaPlanta(obrasNaSala ?? []), [obrasNaSala]);
   const livres = useMemo(() => inventario.filter(item => !(obrasNaSala ?? []).some(obra => obra.item_id === item.id)), [inventario, obrasNaSala]);
 
   async function alternarInstalada(obra: ObraNaSala) {
@@ -152,6 +158,13 @@ export function ExpografiaDaSala({ organizationId, salaId, podeEditar }: { organ
     setTrabalhando(null);
     if (error) { setErro(mensagemDoErroDeExpografia(error)); return; }
     recarregar();
+  }
+
+  /** Guarda o lugar da obra na planta (ou tira ela de lá), já mostrando na tela antes da resposta do banco. */
+  async function porNaPlanta(obraId: string, lugar: { x_m: number; y_m: number } | null) {
+    setObrasNaSala(lista => (lista ?? []).map(obra => (obra.id === obraId ? { ...obra, x_m: lugar?.x_m ?? null, y_m: lugar?.y_m ?? null } : obra)));
+    const { error } = await clienteDaProducao(createClient()).from("producao_expografia").update({ x_m: lugar?.x_m ?? null, y_m: lugar?.y_m ?? null }).eq("id", obraId);
+    if (error) { setErro(mensagemDoErroDeExpografia(error)); recarregar(); }
   }
 
   if (obrasNaSala === null) return <div className="h-24 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />;
@@ -165,6 +178,19 @@ export function ExpografiaDaSala({ organizationId, salaId, podeEditar }: { organ
         </p>
         {podeEditar && <button type="button" onClick={() => setFolha({ obra: null })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Colocar obra</button>}
       </div>
+      {planta && ordenadas.length > 0 && (
+        <MapaDaExpografia
+          planta={planta}
+          obras={ordenadas}
+          inventario={porItem}
+          podeEditar={podeEditar}
+          onMover={(obraId, lugar) => void porNaPlanta(obraId, lugar)}
+          onTirar={obraId => void porNaPlanta(obraId, null)}
+        />
+      )}
+      {!planta && ordenadas.length > 0 && naPlanta.postas.length === 0 && (
+        <p className="rounded border bg-white px-4 py-2.5 text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Esta sala ainda não tem planta: crie uma em Plantas para pôr as obras no lugar.</p>
+      )}
       {ordenadas.length === 0 ? (
         <div className="rounded border bg-white px-5 py-6 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <p className="text-[0.8125rem] font-medium text-black/55">A planta desta sala está vazia</p>

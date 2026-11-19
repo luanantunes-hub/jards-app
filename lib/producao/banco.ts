@@ -3417,6 +3417,8 @@ export type BancoDaProducao = {
           lux: number | null;
           notas: string | null;
           instalada_em: string | null;
+          x_m: number | null;
+          y_m: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -3432,6 +3434,8 @@ export type BancoDaProducao = {
           lux?: number | null;
           notas?: string | null;
           instalada_em?: string | null;
+          x_m?: number | null;
+          y_m?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -3447,6 +3451,8 @@ export type BancoDaProducao = {
           lux?: number | null;
           notas?: string | null;
           instalada_em?: string | null;
+          x_m?: number | null;
+          y_m?: number | null;
           created_at?: string;
           updated_at?: string;
         };
