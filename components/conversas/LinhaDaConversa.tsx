@@ -2,7 +2,7 @@
 
 import { Clock, Mail, Video } from "lucide-react";
 import { EtiquetaDeSituacao, EtiquetaSoEuVejo } from "@/components/email/EtiquetaDeConversa";
-import { dataCurta, quemNaConversa, ROTULO_DA_PLATAFORMA, SITUACAO_DA_REUNIAO, type ItemDaLista } from "@/lib/conversas/lista";
+import { dataCurta, horaCurta, quemNaConversa, ROTULO_DA_PLATAFORMA, SITUACAO_DA_REUNIAO, type ItemDaLista } from "@/lib/conversas/lista";
 
 const ICONE = { email: Mail, reuniao: Video, agendado: Clock } as const;
 
@@ -54,7 +54,7 @@ export function LinhaDaConversa({ item, nomesDosContatos, selecionada, onAbrir }
       )}
       {item.tipo === "agendado" && (
         <p className="mt-1.5 text-[0.6875rem]" style={{ color: item.agendado.estado === "falhou" ? "#B23B3B" : "rgba(13,13,13,.4)" }}>
-          {item.agendado.estado === "falhou" ? `Não saiu: ${item.agendado.erro ?? "erro ao enviar"}` : item.agendado.estado === "enviando" ? "Enviando agora…" : `Sai em ${dataCurta(item.quando)}`}
+          {item.agendado.estado === "falhou" ? `Não saiu: ${item.agendado.erro ?? "erro ao enviar"}` : item.agendado.estado === "enviando" ? "Enviando agora…" : `Sai às ${horaCurta(item.quando)}`}
         </p>
       )}
     </button>

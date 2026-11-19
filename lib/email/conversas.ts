@@ -78,16 +78,21 @@ function porData(a: EmailDeConversa, b: EmailDeConversa): number {
   return ia < ib ? -1 : 1;
 }
 
+/**
+ * `jaEscrevemos` diz se alguém da equipe já escreveu nesse fio: sem isso, uma mensagem recebida é o primeiro
+ * contato de alguém, e não uma resposta — a conversa fica sem etiqueta em vez de dizer "Respondeu".
+ */
 export function situacaoDaConversa(
   ultima: Pick<EmailDeConversa, "direction">,
   ultimaEm: number | null,
   agora: number,
+  jaEscrevemos = true,
 ): SituacaoDaConversa | null {
   if (ultimaEm === null) return null;
   const dias = Math.max(0, Math.floor((agora - ultimaEm) / DIA_MS));
   if (dias > JANELA_AGUARDANDO_DIAS) return null;
   if (ultima.direction === "outbound") return { tipo: "aguardando", dias };
-  if (ultima.direction === "inbound") return { tipo: "respondeu", dias };
+  if (ultima.direction === "inbound") return jaEscrevemos ? { tipo: "respondeu", dias } : null;
   return null;
 }
 
@@ -123,7 +128,7 @@ export function agruparConversas(emails: readonly EmailDeConversa[], agora: numb
       mensagens,
       ultima,
       ultimaEm,
-      situacao: situacaoDaConversa(ultima, ultimaEm, agora),
+      situacao: situacaoDaConversa(ultima, ultimaEm, agora, mensagens.some((mensagem) => mensagem.direction === "outbound")),
       privada: mensagens.every((mensagem) => mensagem.visibility === "private"),
       contatoIds: unicos(mensagens.map((mensagem) => mensagem.contato_id)),
       donoIds: unicos(mensagens.map((mensagem) => mensagem.user_id)),

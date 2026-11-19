@@ -9,7 +9,7 @@ import { NovaReuniaoModal } from "@/components/modals/NovaReuniaoModal";
 import { ListEmptyState, ListPageHeader, ListSummary, ListToolbar, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { FilterButton } from "@/components/ui/FilterControls";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
-import { contagemDosFiltros, enderecoDoOutroLado, FILTROS_DAS_CONVERSAS, itemNoFiltro, montarLista, type EmailAgendado, type FiltroDasConversas, type ReuniaoNaLista } from "@/lib/conversas/lista";
+import { contagemDosFiltros, enderecoDoOutroLado, FILTROS_DAS_CONVERSAS, itemNoFiltro, montarLista, type EmailAgendado, type FiltroDasConversas, type ItemDaLista, type ReuniaoNaLista } from "@/lib/conversas/lista";
 import { agruparConversas, COLUNAS_DO_EMAIL_DE_CONVERSA, type EmailDeConversa } from "@/lib/email/conversas";
 import { emPartes } from "@/lib/email/lotes";
 import { horasEmTexto, type SituacaoDoLimite } from "@/lib/reunioes/custo";
@@ -118,15 +118,14 @@ export default function ConversasPage() {
   const itens = useMemo(() => montarLista(conversas, reunioes, agendados), [conversas, reunioes, agendados]);
   const contagem = useMemo(() => contagemDosFiltros(itens), [itens]);
   const visiveis = useMemo(() => itens.filter((item) => itemNoFiltro(item, filtro)), [itens, filtro]);
-  const aberta = chaveAberta ? itens.find((item) => item.chave === chaveAberta) ?? null : null;
+  // A conversa aberta sai de `visiveis`: trocar de filtro só a fecha quando ela não está mais na lista.
+  const aberta = chaveAberta ? visiveis.find((item) => item.chave === chaveAberta) ?? null : null;
 
   const nomesDoItem = useCallback(
-    (chave: string) => {
-      const item = itens.find((outro) => outro.chave === chave);
-      if (!item || item.tipo !== "email") return [];
-      return item.conversa.contatoIds.map((id) => nomes[id]).filter((nome): nome is string => Boolean(nome));
-    },
-    [itens, nomes],
+    (item: ItemDaLista) => (item.tipo === "email"
+      ? item.conversa.contatoIds.map((id) => nomes[id]).filter((nome): nome is string => Boolean(nome))
+      : []),
+    [nomes],
   );
 
   // Conversa de quem ainda não é contato: a triagem diz o que já sabemos dessa pessoa (empresa sugerida, contato criado).
@@ -178,8 +177,8 @@ export default function ConversasPage() {
 
       {!vazio && (
         <ListToolbar>
-          {FILTROS_DAS_CONVERSAS.filter(({ value }) => value === "tudo" || contagem[value] > 0).map(({ value, label }) => (
-            <FilterButton key={value} active={filtro === value} onClick={() => { setFiltro(value); setChaveAberta(null); }}>
+          {FILTROS_DAS_CONVERSAS.filter(({ value }) => value === "tudo" || value === filtro || contagem[value] > 0).map(({ value, label }) => (
+            <FilterButton key={value} active={filtro === value} onClick={() => setFiltro(value)}>
               {label}
               {value !== "tudo" && <span className="tabular-nums text-black/30">{contagem[value]}</span>}
             </FilterButton>
@@ -221,7 +220,7 @@ export default function ConversasPage() {
               <ul className="divide-y divide-black/[.05]">
                 {visiveis.map((item) => (
                   <li key={item.chave}>
-                    <LinhaDaConversa item={item} nomesDosContatos={nomesDoItem(item.chave)} selecionada={item.chave === chaveAberta} onAbrir={() => setChaveAberta(item.chave)} />
+                    <LinhaDaConversa item={item} nomesDosContatos={nomesDoItem(item)} selecionada={item.chave === chaveAberta} onAbrir={() => setChaveAberta(item.chave)} />
                   </li>
                 ))}
               </ul>
@@ -236,7 +235,7 @@ export default function ConversasPage() {
                 key={aberta.chave}
                 item={aberta}
                 meuId={meuId}
-                nomesDosContatos={nomesDoItem(aberta.chave)}
+                nomesDosContatos={nomesDoItem(aberta)}
                 remetenteDaTriagem={remetenteDaAberta}
                 onMudou={() => void carregar()}
                 onVoltar={() => setChaveAberta(null)}

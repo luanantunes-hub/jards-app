@@ -62,3 +62,14 @@ test("data curta: sem o ano quando é deste ano", () => {
   assert.match(dataCurta(Date.parse("2025-11-14T10:00:00Z"), agora), /25$/);
   assert.equal(dataCurta(null, agora), "");
 });
+
+test("primeiro contato de alguém não é \"Respondeu\": a etiqueta só aparece quando a equipe já escreveu no fio", () => {
+  const soRecebida = agruparConversas([email("x", { thread_id: "fx" })], AGORA);
+  assert.equal(soRecebida[0].situacao, null);
+  const comIda = agruparConversas([
+    email("y1", { thread_id: "fy", direction: "outbound", to_emails: ["novo@cliente.com.br"], sent_at: "2026-11-16T10:00:00Z" }),
+    email("y2", { thread_id: "fy" }),
+  ], AGORA);
+  assert.equal(comIda[0].situacao?.tipo, "respondeu");
+});
+

@@ -145,3 +145,9 @@ export function quemNaConversa(conversa: Conversa, nomesDosContatos: readonly st
   return nome || enderecoDoOutroLado(conversa) || "Sem remetente";
 }
 
+/** "09:00": a hora do envio. Na lista, a data já aparece ao lado, então a linha mostra só a hora. */
+export function horaCurta(ms: number | null): string {
+  if (ms === null) return "";
+  return new Date(ms).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
