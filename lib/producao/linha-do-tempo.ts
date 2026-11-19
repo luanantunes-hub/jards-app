@@ -13,7 +13,7 @@ export const AREAS_DA_LINHA_DO_TEMPO: readonly AreaDaLinhaDoTempo[] = [
   { id: "equipe", nome: "Equipe", entidades: ["producao_pessoas", "producao_vinculos", "producao_escalas", "producao_turnos", "producao_funcoes", "producao_voluntarios"] },
   { id: "logistica", nome: "Logística", entidades: ["producao_veiculos", "producao_deslocamentos", "producao_hospedagens", "producao_convites"] },
   { id: "publico", nome: "Público", entidades: ["producao_acessibilidade", "producao_visitas_horarios", "producao_visitas_agendamentos", "producao_turmas", "producao_turma_aulas", "producao_matriculas"] },
-  { id: "acertos", nome: "Acertos e arquivos", entidades: ["producao_acertos", "producao_modelos_acerto", "producao_arquivos", "producao_documentos", "producao_ocorrencias"] },
+  { id: "acertos", nome: "Acertos e arquivos", entidades: ["producao_acertos", "producao_modelos_acerto", "producao_arquivos", "producao_documentos", "producao_ocorrencias", "producao_comunicacao"] },
 ];
 
 /** As entidades de uma área; área vazia ou desconhecida = todas (sem filtro). */

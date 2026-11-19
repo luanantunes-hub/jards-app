@@ -29,7 +29,7 @@ Ordem fixa. **Pega-se o primeiro lote aberto, faz-se, mescla-se com o teste verd
 | ~~**L1**~~ | ~~Planta da sala no PDF da ficha~~ | **FEITO em 19/11/2026**: o PDF da ficha e a página `/ficha/[código]` mostram a planta mais recente de cada sala, com os objetos no lugar e girados. Fechou o PD3.5 | — |
 | ~~**L2**~~ | ~~Linha do tempo por espaço e por temporada~~ | **FEITO em 19/11/2026**: `espaco_id` e `temporada_id` no histórico, achados por `fn_producao_pai` (sobe a árvore sem configuração por tabela), linhas antigas preenchidas e os dois filtros na página | — |
 | ~~**L3**~~ | ~~Desenho das obras na planta (PD8.5)~~ | **FEITO em 19/11/2026**: `x_m`/`y_m` na expografia e o mapa na página — arrastar pelo desenho ou escolher e tocar, com a ordem de montagem e o verde de instalada | — |
-| **L4** | Relatório de retorno ao patrocinador (PD9.3) e comunicação por data (PD9.5) | Dentro do app, sem link para fora: números da sessão patrocinada, contrapartidas cumpridas, kit de imprensa e artes por data | A produção abre o retorno de um patrocinador e copia o texto |
+| ~~**L4**~~ | ~~Retorno ao patrocinador e comunicação por data~~ | **FEITO em 19/11/2026**: o kit de imprensa por data (release, artes, fotos, clipping) com "Copiar kit" (PD9.5). O retorno da marca (PD9.3) já estava na main e só perdeu o público, que saiu com os ingressos | — |
 | **L5** | Portais do patrocinador (PD9.2) e do artista (PD9.4) | Link sem conta, como os outros links públicos. **Antes de construir, escrever o desenho em um parágrafo no PR** (expõe dado a terceiro) | O parceiro abre o portal e vê só o que é dele |
 | **L6** | Pontes com a prestação (PD10.2 e PD10.4) | A despesa da produção vira comprovante da prestação (cópia do arquivo, nunca referência) e os orçamentos aparecem lado a lado, dizendo de onde vem cada número. A PD10.1 é a migration da ponte | Uma despesa da produção chega à prestação e os três orçamentos se comparam |
 | **L7** | Conexão companhia–espaço (PD11.1) | Só o desenho e o vínculo: `producao_conexoes` com aceite dos dois lados. As partes compartilhadas (PD11.2 a PD11.4) vêm depois, uma por lote | As duas organizações aceitam o vínculo e cada lado vê só o seu |
@@ -39,6 +39,8 @@ Ordem fixa. **Pega-se o primeiro lote aberto, faz-se, mescla-se com o teste verd
 Fora da fila, só com decisão do dono: PD6.6 (leitura de passagem por IA — precisa publicar função no Supabase), PD6.13 (rotas e combustível — precisa contratar o serviço de mapas) e tudo que está em "Bloqueados" abaixo.
 
 ### Lotes fechados
+
+- **Comunicação por data** (PD9.5): kit de imprensa com texto para copiar, em 19/11. O credenciamento de imprensa saiu com os ingressos.
 
 - **Fichas e links** (PD3.5): ficha por link em 17/11; logo do espaço em 19/11 (#321); planta da sala no PDF e na página pública em 19/11. **Fechado.**
 - **Acerto técnico II** (PD4.1, PD4.2): modelos por tipo de produção (#275) e "Pedir todas à casa" (#268), em 18/11. Resta o que depende do dono: anexos na resposta, mais de uma pessoa respondendo, lembrete por e-mail, campo numérico de camarim, luz e catering.
