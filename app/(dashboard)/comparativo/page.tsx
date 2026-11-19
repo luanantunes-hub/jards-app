@@ -393,18 +393,18 @@ function ComparativoContent() {
                   ))}
                 </div>
               </div>
-              <div className="flex items-center overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.12)" }}>
+              <div className="flex items-center">
                 {VIEW_OPTIONS.map(({ value, label }, i) => (
                   <button
                     key={value}
                     type="button"
                     onClick={() => setViewMode(value)}
-                    className="px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
+                    className={`relative border px-3.5 py-1.5 text-[0.75rem] font-semibold transition ${i === 0 ? "rounded-l" : "-ml-px rounded-r"}`}
                     style={{
                       background: "#fff",
                       color: viewMode === value ? "#684DB0" : "rgba(13,13,13,.45)",
-                      boxShadow: viewMode === value ? "inset 0 0 0 1px #684DB0" : undefined,
-                      borderRight: i === 0 ? "1px solid rgba(13,13,13,.12)" : undefined,
+                      borderColor: viewMode === value ? "#684DB0" : "rgba(13,13,13,.12)",
+                      zIndex: viewMode === value ? 10 : undefined,
                     }}
                   >
                     {label}
