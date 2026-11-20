@@ -8,7 +8,7 @@ Escrito em 19/11/2026, depois de a parte de código estar na main. **O módulo e
 |---|---|---|
 | `ASAAS_VALIDACAO_SAQUE_TOKEN` | o token do cadeado do repasse (o Asaas manda no cabeçalho quando pergunta se um saque pode sair) | **já está** |
 | `ASAAS_API_KEY` | a chave da conta PRINCIPAL do Asaas (cadastra subcontas, recebe os avisos) | falta |
-| `ASAAS_WEBHOOK_TOKEN` | o token do aviso de pagamento (32 a 255 letras, sem espaço; o mesmo que você põe no webhook do painel) | falta |
+| `ASAAS_WEBHOOK_TOKEN` | o token do aviso de pagamento (32 a 255 letras, sem espaço e **sem mais de 4 caracteres iguais seguidos**: o Asaas recusa; o mesmo que você põe no webhook do painel) | falta |
 | `ASAAS_WALLET_JARDS` | o `walletId` da conta principal: para onde vai a comissão de 2,5% | falta (sem ela a compra responde "vendas pausadas") |
 | `ASAAS_AMBIENTE=producao`, `ASAAS_URL` (a base da API com `/v3`) e `TICKETERIA_DINHEIRO_REAL=sim` | as **três travas** do dinheiro real. Sem as três juntas o sistema fica no sandbox. **Só depois do piloto (seção 5).** | falta, de propósito |
 | `TICKETERIA_EMAIL_DE_REEMBOLSO` | o endereço que o comprador usa para pedir reembolso (aparece nos termos, no ingresso e no e-mail). Padrão: `luan.antunes@jards.com.br` | opcional |
@@ -21,9 +21,9 @@ Nunca cole chave no chat: `vercel env add NOME production` no terminal (a CLI j�
 ## 2. No painel do Asaas
 
 1. **Habilitar o Split** na conta principal (token por SMS). Feito no sandbox; falta repetir na conta de produção.
-2. **Validação de saque por webhook** (Integrações > Mecanismos de segurança): URL `https://jards.com.br/api/ticketeria/validacao-saque/asaas`, token igual a `ASAAS_VALIDACAO_SAQUE_TOKEN`. **Não marcar** "validar saques via interface" nem "autorização para splits". É o cadeado: sem ele o produtor saca antes do evento. Feito no sandbox; falta na produção.
+2. **Validação de saque por webhook** (Integrações > Mecanismos de segurança): URL `https://jards.com.br/api/ticketeria/validacao-saque/asaas`, token igual a `ASAAS_VALIDACAO_SAQUE_TOKEN`. **Não marcar** "validar saques via interface". A "autorização para splits" pode ficar ligada: o cadeado aprova a divisão para a carteira do Jards (`ASAAS_WALLET_JARDS`, a comissão, **obrigatória** para ela ser aprovada) e recusa divisão para qualquer outra carteira. É o cadeado: sem ele o produtor saca antes do evento. Feito no sandbox; falta na produção.
 3. **Webhook de aviso de pagamento** da conta principal: URL `https://jards.com.br/api/ticketeria/avisos/asaas`, token igual a `ASAAS_WEBHOOK_TOKEN`, eventos de pagamento recebido e confirmado, estorno e chargeback.
-4. **O aviso de pagamento de uma SUBCONTA** (as cobranças nascem nas subcontas): a documentação diz que cada subconta tem o próprio webhook. **Não sei ainda se o aviso da subconta chega ao webhook da conta principal**; o passo A (seção 4) responde. Se não chegar, o cadastro da subconta passa a criar o webhook dela (uma mudança pequena de código).
+4. **O aviso de pagamento de uma SUBCONTA** (as cobranças nascem nas subcontas): **vai para o webhook da própria subconta, não para o da principal** (provado no sandbox em 20/11/2026). O cadastro da subconta cria esse webhook sozinho (mesmo endereço e mesmo token do da principal; e-mail de `TICKETERIA_EMAIL_DE_ALERTA`) e o resultado do cadastro traz `webhook: criado | pendente`: `pendente` quer dizer que os pagamentos daquela subconta não chegam sozinhos e é preciso refazer.
 5. **Subcontas em produção:** o período de avaliação do Asaas permite 10 subcontas, de R$ 2.000 cada, por 60 dias, e a conta-pai precisa ser **CNPJ**. Confirmar com o comercial o prazo e os documentos da aprovação de cada subconta, e se a subconta recebe Pix antes de aprovada.
 
 ## 3. No e-mail (Resend)

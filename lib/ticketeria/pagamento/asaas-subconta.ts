@@ -21,6 +21,19 @@ export function situacaoDoStatus(status: { commercialInfo?: string; bankAccountI
   return status?.general === "APPROVED" && valores.every(v => v === "APPROVED") ? "aprovada" : "pendente";
 }
 
+/** Criar uma subconta leva uns 40 segundos no sandbox (visto em 20/11/2026): com menos que isso o Asaas cria a conta mas a resposta, com a chave que só aparece uma vez, se perde. */
+export const TEMPO_DA_CRIACAO_DA_SUBCONTA_MS = 120_000;
+
+/** Os avisos que a subconta manda ao Jards: pagamento, estorno, recusa e chargeback (os mesmos que `lerAviso` entende). */
+export const EVENTOS_DO_WEBHOOK_DA_SUBCONTA = ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED", "PAYMENT_REPROVED_BY_RISK_ANALYSIS", "PAYMENT_REFUNDED", "PAYMENT_PARTIALLY_REFUNDED", "PAYMENT_CHARGEBACK_REQUESTED"] as const;
+
+/** O Asaas só aceita token de webhook com 32 a 255 caracteres e sem mais de 4 iguais seguidos (visto no sandbox em 20/11/2026). */
+export function tokenDeWebhookAceito(token: string): boolean {
+  return token.length >= 32 && token.length <= 255 && !/(.)\1{4,}/.test(token);
+}
+
+export type WebhookDaSubconta = { url: string; authToken: string; email: string };
+
 export type SubcontaCriada = { asaas_account_id: string; wallet_id: string; chave: string };
 
 export class SubcontasAsaas {
@@ -33,12 +46,12 @@ export class SubcontasAsaas {
     this.http = config.fetch ?? fetch;
   }
 
-  private async chamar<T>(chave: string, metodo: "GET" | "POST", caminho: string, corpo?: unknown): Promise<T> {
+  private async chamar<T>(chave: string, metodo: "GET" | "POST", caminho: string, corpo?: unknown, tempoMs?: number): Promise<T> {
     const resposta = await this.http(`${this.url}${caminho}`, {
       method: metodo,
       headers: { access_token: chave, "content-type": "application/json", "user-agent": "Jards-Ticketeria/1.0" },
       body: corpo === undefined ? undefined : JSON.stringify(corpo),
-      signal: AbortSignal.timeout(this.config.tempoMaximoMs ?? 20000),
+      signal: AbortSignal.timeout(tempoMs ?? this.config.tempoMaximoMs ?? 20000),
     });
     const texto = await resposta.text();
     let dados: unknown = null;
@@ -62,7 +75,7 @@ export class SubcontasAsaas {
       incomeValue: Number((dados.renda_mensal_centavos / 100).toFixed(2)),
       ...(dados.complemento ? { complement: dados.complemento.trim() } : {}),
       ...(documento.length === 14 ? { companyType: dados.tipo_empresa } : { birthDate: dados.data_nascimento }),
-    });
+    }, this.config.tempoMaximoMs ?? TEMPO_DA_CRIACAO_DA_SUBCONTA_MS);
     if (!resposta.id || !resposta.walletId || !resposta.apiKey) throw new Error("o Asaas não devolveu a subconta completa (id, carteira e chave)");
     return { asaas_account_id: resposta.id, wallet_id: resposta.walletId, chave: resposta.apiKey };
   }
@@ -70,6 +83,17 @@ export class SubcontasAsaas {
   /** Cria a chave Pix aleatória da subconta (a subconta precisa dela para receber Pix). */
   async criarChavePix(chaveDaSubconta: string): Promise<void> {
     await this.chamar(chaveDaSubconta, "POST", "/pix/addressKeys", { type: "EVP" });
+  }
+
+  /**
+   * Liga o webhook da SUBCONTA ao Jards (`POST /v3/webhooks` com a chave dela). O aviso de pagamento de uma subconta vai para o webhook DELA, não para o da conta
+   * principal (visto no sandbox em 20/11/2026): sem isto o Jards não fica sabendo que o ingresso foi pago.
+   */
+  async criarWebhook(chaveDaSubconta: string, webhook: WebhookDaSubconta): Promise<void> {
+    if (!tokenDeWebhookAceito(webhook.authToken)) throw new Error("o token do webhook não é aceito pelo Asaas (32 a 255 caracteres, sem mais de 4 iguais seguidos)");
+    await this.chamar(chaveDaSubconta, "POST", "/webhooks", {
+      name: "Jards Ticketeria", url: webhook.url, email: webhook.email, enabled: true, interrupted: false, sendType: "NON_SEQUENTIALLY", events: [...EVENTOS_DO_WEBHOOK_DA_SUBCONTA], authToken: webhook.authToken,
+    });
   }
 
   /** A situação cadastral da subconta, na linguagem do Jards. */

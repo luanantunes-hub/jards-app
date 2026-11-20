@@ -174,3 +174,15 @@ main().catch(e => { rmSync(TMP, { force: true }); console.error("falhou:", (e as
 - Cada conta tem o **próprio** webhook; o da subconta se cria na criação (`webhooks` no `POST /v3/accounts`) ou com `POST /v3/webhooks` e a chave da subconta (inferência). Até 10 webhooks por conta.
 - O aviso **não traz o id da subconta**; o pedido é reconhecido pelo `externalReference` (o id do pedido que já mandamos na cobrança).
 - Só **HTTP 200** conta como entrega; **15 falhas seguidas** pausam a fila daquele webhook (reativar em Integrações, Webhooks). O `authToken` vai no cabeçalho `asaas-access-token`.
+
+
+## Resultado da prova de 20/11/2026
+
+O Asaas liberou a criação de subcontas (21 → 24, três delas órfãs: as duas primeiras tentativas perderam a chave por causa do limite de 20 s da criação, que leva uns 40 s, e a terceira não registrou por causa da chave Pix; o script foi ajustado e a quarta tentativa seguiu até o fim).
+
+- **O cadeado passou com a subconta:** A R$ 20,00 aprovado; B R$ 20,00 recusado (retido); C R$ 5,00 para outra conta recusado (`destino_nao_e_de_produtor_cadastrado`); D R$ 13,00 aprovado.
+- **A comissão estava sendo bloqueada:** o Asaas mandou um `PAYMENT_SPLIT` de R$ 1,25 (carteira do Jards) à validação, o cadeado respondeu `operacao_nao_permitida` e o Asaas cancelou a divisão (`EXTERNAL_AUTHORIZATION_REFUSED`). Corrigido: a divisão para a carteira do Jards é aprovada.
+- **Webhook:** só o endereço da SUBCONTA recebeu o aviso do pagamento (3 POSTs em `/api/ticketeria/avisos/asaas-sub`, nenhum em `/avisos/asaas`). O cadastro da subconta agora cria o webhook nela.
+- **Chave Pix da subconta:** criada, mas ficou `AWAITING_ACTIVATION` por mais de 5 minutos (sem QR de Pix nesse período). O saldo de teste veio de um boleto confirmado pelo sandbox (`POST /v3/sandbox/payment/{id}/confirm`).
+- **Token de webhook:** o Asaas recusa mais de 4 caracteres iguais seguidos (o script usava 40 letras iguais).
+- Banco de teste limpo (as quatro contagens em zero).

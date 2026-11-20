@@ -79,3 +79,44 @@ test("token recusado: só o tamanho do que chegou vai para o registro, nunca o t
   await rodar({ registrarTokenRecusado: n => certo.push(n) }).promessa;
   assert.deepEqual(certo, [], "token certo: nada é registrado");
 });
+
+// A comissão do Jards: o Asaas pede autorização para cada divisão do pagamento (PAYMENT_SPLIT). No sandbox, em 20/11/2026, o cadeado recusava e o Asaas cancelou
+// a divisão (EXTERNAL_AUTHORIZATION_REFUSED): o Jards ficou sem a comissão.
+const CARTEIRA_DO_JARDS = "abb1de6a-7867-45c5-9a4b-12674a2b324f";
+const divisao = (walletId: string | null = CARTEIRA_DO_JARDS, extra: Record<string, unknown> = {}) =>
+  JSON.stringify({ type: "PAYMENT_SPLIT", paymentSplit: { id: "sp_1", fixedValue: 1.25, totalValue: 1.25, status: "AWAITING_CREDIT", ...(walletId ? { walletId } : {}), payment: { id: "pay_1" }, ...extra } });
+
+test("a divisão do pagamento para a carteira do Jards (a comissão) é aprovada sem ir ao banco", async () => {
+  const chamadas: string[] = [];
+  const r = await tratarPedidoDeSaque({ tokenEsperado: TOKEN, assinatura: TOKEN, corpo: divisao(), carteiraDoJards: CARTEIRA_DO_JARDS, validar: async p => { chamadas.push(p.tipo); return { status: "REFUSED", motivo: "operacao_nao_permitida" }; } });
+  assert.deepEqual(r, { status: 200, corpo: { status: "APPROVED" } });
+  assert.deepEqual(chamadas, [], "a decisão é daqui: a comissão não depende do saldo liberável do produtor");
+});
+
+test("a divisão para OUTRA carteira, sem carteira do Jards configurada ou sem carteira no aviso não é aprovada aqui: segue para o banco, que recusa", async () => {
+  for (const [rotulo, corpo, carteira] of [
+    ["outra carteira", divisao("outra-carteira-qualquer"), CARTEIRA_DO_JARDS], ["Jards sem configurar", divisao(), null], ["carteira do Jards vazia", divisao(), ""], ["aviso sem carteira", divisao(null), CARTEIRA_DO_JARDS],
+  ] as [string, string, string | null][]) {
+    const chamadas: string[] = [];
+    const r = await tratarPedidoDeSaque({ tokenEsperado: TOKEN, assinatura: TOKEN, corpo, carteiraDoJards: carteira, validar: async p => { chamadas.push(`${p.tipo}:${p.carteira ?? ""}`); return { status: "REFUSED", motivo: "operacao_nao_permitida" }; } });
+    assert.equal(r.corpo.status, "REFUSED", rotulo);
+    assert.equal(chamadas.length, 1, `${rotulo}: foi ao banco`);
+  }
+});
+
+test("só a divisão é aprovada assim: saque, estorno e conta a pagar com a carteira do Jards no corpo continuam indo ao banco", async () => {
+  for (const corpo of [saque({ walletId: CARTEIRA_DO_JARDS }), JSON.stringify({ type: "PIX_REFUND", pixRefund: { id: "rf_1", value: 10, walletId: CARTEIRA_DO_JARDS } }), JSON.stringify({ type: "BILL", bill: { id: "b_1", value: 10, walletId: CARTEIRA_DO_JARDS } })]) {
+    const chamadas: string[] = [];
+    await tratarPedidoDeSaque({ tokenEsperado: TOKEN, assinatura: TOKEN, corpo, carteiraDoJards: CARTEIRA_DO_JARDS, validar: async p => { chamadas.push(p.tipo); return { status: "REFUSED", motivo: "x" }; } });
+    assert.equal(chamadas.length, 1, corpo.slice(0, 30));
+  }
+});
+
+test("a divisão com token errado, corpo ilegível ou erro do banco continua falhando fechada (a aprovação vem depois da leitura e do token)", async () => {
+  const errado = await tratarPedidoDeSaque({ tokenEsperado: TOKEN, assinatura: "errado", corpo: divisao(), carteiraDoJards: CARTEIRA_DO_JARDS, validar: async () => ({ status: "APPROVED", motivo: "x" }) });
+  assert.equal(errado.status, 401);
+  const ilegivel = await tratarPedidoDeSaque({ tokenEsperado: TOKEN, assinatura: TOKEN, corpo: JSON.stringify({ type: "PAYMENT_SPLIT", paymentSplit: { walletId: CARTEIRA_DO_JARDS } }), carteiraDoJards: CARTEIRA_DO_JARDS, validar: async () => ({ status: "APPROVED", motivo: "x" }) });
+  assert.equal(ilegivel.status, 400, "sem id nem valor o aviso não se entende, mesmo com a carteira certa");
+  assert.equal((lerPedidoDeSaque(divisao()) as { pedido: { carteira: string } }).pedido.carteira, CARTEIRA_DO_JARDS);
+  assert.equal("carteira" in (lerPedidoDeSaque(saque()) as { pedido: object }).pedido, false, "o saque não tem carteira");
+});

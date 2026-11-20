@@ -19,6 +19,8 @@ export type PedidoDeSaque = {
   /** CPF ou CNPJ de quem recebe, só os números (11 ou 14); null quando o aviso não traz ou vem mascarado (o caso do saque). */
   cpf_cnpj: string | null;
   valor_centavos: number;
+  /** Só no PAYMENT_SPLIT: a carteira (walletId) que recebe a divisão. */
+  carteira?: string | null;
 };
 
 const OBJETO_DO_TIPO: Record<string, string> = {
@@ -55,10 +57,11 @@ export function lerPedidoDeSaque(corpo: string): { ok: true; pedido: PedidoDeSaq
   } else if (tipo === "PIX_REFUND") {
     documento = apenasNumeros(registro(objeto.externalAccount)?.cpfCnpj);
   }
+  const carteira = tipo === "PAYMENT_SPLIT" && typeof objeto.walletId === "string" && objeto.walletId !== "" ? objeto.walletId : null;
   return {
     ok: true,
     payload: dados,
-    pedido: { tipo, id_externo: objeto.id, destino, cpf_cnpj: documento.length === 11 || documento.length === 14 ? documento : null, valor_centavos: Math.round(reais * 100) },
+    pedido: { tipo, id_externo: objeto.id, destino, cpf_cnpj: documento.length === 11 || documento.length === 14 ? documento : null, valor_centavos: Math.round(reais * 100), ...(tipo === "PAYMENT_SPLIT" ? { carteira } : {}) },
   };
 }
 
@@ -90,6 +93,8 @@ export async function tratarPedidoDeSaque(entrada: {
   assinatura: string | null;
   corpo: string;
   validar: (pedido: PedidoDeSaque, payload: unknown) => Promise<DecisaoDeSaque>;
+  /** A carteira do Jards no Asaas (ASAAS_WALLET_JARDS): a divisão de um pagamento (PAYMENT_SPLIT) para ELA é a comissão do Jards e é aprovada; para qualquer outra carteira, não. Sem ela configurada, nenhuma divisão é aprovada aqui. */
+  carteiraDoJards?: string | null;
   registrarErro?: (erro: unknown) => void;
   /** Quando o token não bate: só o TAMANHO do que chegou (0 = o Asaas não mandou token), para achar o desencontro sem expor segredo. */
   registrarTokenRecusado?: (tamanhoRecebido: number) => void;
@@ -105,6 +110,9 @@ export async function tratarPedidoDeSaque(entrada: {
   if (new TextEncoder().encode(entrada.corpo).length > TAMANHO_MAXIMO_DO_PEDIDO_DE_SAQUE) return { status: 413, corpo: { error: "corpo_grande_demais" } };
   const leitura = lerPedidoDeSaque(entrada.corpo);
   if (!leitura.ok) return { status: 400, corpo: { error: "pedido_ilegivel" } };
+  // A comissão do Jards: o Asaas pede autorização para cada divisão do pagamento (PAYMENT_SPLIT). Recusar essa cancela a divisão e o Jards fica sem a comissão
+  // (visto no sandbox em 20/11/2026). A divisão para a carteira do Jards é aprovada; divisão para outra carteira segue para o banco, que recusa e registra.
+  if (leitura.pedido.tipo === "PAYMENT_SPLIT" && entrada.carteiraDoJards && leitura.pedido.carteira === entrada.carteiraDoJards) return { status: 200, corpo: { status: "APPROVED" } };
   try {
     const decisao = await entrada.validar(leitura.pedido, leitura.payload);
     return decisao.status === "APPROVED"

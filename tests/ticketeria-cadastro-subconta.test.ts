@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ErroDoAsaas, URL_DO_SANDBOX, ambienteDoAsaas } from "../lib/ticketeria/pagamento/asaas";
-import { SubcontasAsaas, problemasDosDados, situacaoDoStatus, type DadosDoProdutor } from "../lib/ticketeria/pagamento/asaas-subconta";
+import { EVENTOS_DO_WEBHOOK_DA_SUBCONTA, SubcontasAsaas, TEMPO_DA_CRIACAO_DA_SUBCONTA_MS, problemasDosDados, situacaoDoStatus, tokenDeWebhookAceito, type DadosDoProdutor } from "../lib/ticketeria/pagamento/asaas-subconta";
 import { SubcontaSemChaveGuardada, cadastrarSubconta, problemasDaContaBancaria, type PortasDoCadastro } from "../lib/ticketeria/pagamento/cadastro-subconta";
 
 // O cadastro da subconta, provado com respostas falsas (os campos seguem a documentação e o que o sandbox devolveu em 19/11/2026).
@@ -81,7 +81,7 @@ test("o cadastro: cria, guarda a chave na hora, cria a chave Pix e atualiza a si
   });
   const { p, gravado, situacoes } = portas();
   const r = await cadastrarSubconta({ loja: LOJA, dados: empresa, asaas: new SubcontasAsaas({ chaveDaConta: CHAVE_DA_CONTA, fetch: http }), portas: p });
-  assert.deepEqual(r, { asaas_account_id: "conta-uuid", wallet_id: "carteira-uuid", situacao: "aprovada", chave_pix: "criada", conta_destino: "pendente" });
+  assert.deepEqual(r, { asaas_account_id: "conta-uuid", wallet_id: "carteira-uuid", situacao: "aprovada", chave_pix: "criada", conta_destino: "pendente", webhook: "nao_pedido" });
   assert.deepEqual(gravado, [{ loja: LOJA, chave: CHAVE_DA_SUBCONTA, situacao: "pendente", cpf_cnpj: "12345678000195" }], "a chave vai para o banco com o CNPJ só em números");
   assert.deepEqual(situacoes, ["aprovada"]);
   assert.deepEqual(chamadas.map(c => `${c.metodo} ${c.caminho} ${c.chave === CHAVE_DA_SUBCONTA ? "sub" : "conta"}`), ["POST /accounts conta", "POST /pix/addressKeys sub", "GET /myAccount/status sub"], "a chave Pix e a situação usam a chave da subconta");
@@ -126,4 +126,49 @@ test("a conta bancária de destino: conferida antes e gravada depois do cadastro
   falha.p.definirContaDestino = async () => { throw new Error("banco fora"); };
   const r2 = await cadastrarSubconta({ loja: LOJA, dados: empresa, asaas: new SubcontasAsaas({ chaveDaConta: CHAVE_DA_CONTA, fetch: http2 }), portas: falha.p, contaBancaria: { banco: "001", agencia: "0001", conta: "123456" } });
   assert.deepEqual([r2.conta_destino, falha.gravado.length], ["pendente", 1]);
+});
+
+const TOKEN_DO_WEBHOOK = "token-do-webhook-da-subconta-0123456789-abcdef";
+const webhook = { url: "https://jards.com.br/api/ticketeria/avisos/asaas", authToken: TOKEN_DO_WEBHOOK, email: "alerta@jards.invalid" };
+
+test("o token do webhook: 32 a 255 caracteres e sem mais de 4 iguais seguidos (o Asaas recusa o resto)", () => {
+  assert.equal(tokenDeWebhookAceito(TOKEN_DO_WEBHOOK), true);
+  assert.equal(tokenDeWebhookAceito("a".repeat(31)), false, "curto");
+  assert.equal(tokenDeWebhookAceito("abcd".repeat(64)), false, "comprido demais (256)");
+  assert.equal(tokenDeWebhookAceito("abcd".repeat(63)), true, "252 cabe");
+  assert.equal(tokenDeWebhookAceito("t".repeat(40)), false, "o que o teste de 20/11/2026 mandou: tudo igual");
+  assert.equal(tokenDeWebhookAceito("abcdefgh" + "x".repeat(5) + "ijklmnopqrstuvwxyz0123456789"), false, "5 iguais seguidos");
+  assert.equal(tokenDeWebhookAceito("abcdefgh" + "x".repeat(4) + "ijklmnopqrstuvwxyz0123456789"), true, "4 iguais seguidos pode");
+});
+
+test("o webhook da subconta: criado com a chave DELA, para o endereço e o token do Jards, nos eventos de pagamento e estorno", async () => {
+  const { http, chamadas } = asaasFalso({ "POST /webhooks": { corpo: { id: "wh-1" } } });
+  await new SubcontasAsaas({ chaveDaConta: CHAVE_DA_CONTA, fetch: http }).criarWebhook(CHAVE_DA_SUBCONTA, webhook);
+  assert.equal(chamadas[0].chave, CHAVE_DA_SUBCONTA, "quem cria é a subconta");
+  assert.deepEqual(chamadas[0].corpo, { name: "Jards Ticketeria", url: webhook.url, email: webhook.email, enabled: true, interrupted: false, sendType: "NON_SEQUENTIALLY", events: [...EVENTOS_DO_WEBHOOK_DA_SUBCONTA], authToken: TOKEN_DO_WEBHOOK });
+  for (const evento of ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_REFUNDED", "PAYMENT_PARTIALLY_REFUNDED", "PAYMENT_CHARGEBACK_REQUESTED"]) assert.ok(EVENTOS_DO_WEBHOOK_DA_SUBCONTA.includes(evento as never), evento);
+  await assert.rejects(new SubcontasAsaas({ chaveDaConta: CHAVE_DA_CONTA, fetch: http }).criarWebhook(CHAVE_DA_SUBCONTA, { ...webhook, authToken: "t".repeat(40) }), /token do webhook não é aceito/);
+  assert.equal(chamadas.length, 1, "token ruim nem chega ao Asaas");
+});
+
+test("criar a subconta espera até 120 s (no Asaas leva uns 40): com menos a chave, que só aparece uma vez, se perde", () => {
+  assert.ok(TEMPO_DA_CRIACAO_DA_SUBCONTA_MS >= 90_000);
+});
+
+test("o cadastro cria o webhook da subconta; se falhar, a subconta segue, o resultado diz 'pendente' e o erro não leva a chave", async () => {
+  const ok = asaasFalso({ "POST /accounts": { corpo: criada }, "POST /webhooks": { corpo: { id: "wh-1" } } });
+  const a = portas();
+  const r = await cadastrarSubconta({ loja: LOJA, dados: empresa, asaas: new SubcontasAsaas({ chaveDaConta: CHAVE_DA_CONTA, fetch: ok.http }), portas: a.p, webhook });
+  assert.equal(r.webhook, "criado");
+  assert.deepEqual(ok.chamadas.map(c => `${c.metodo} ${c.caminho} ${c.chave === CHAVE_DA_SUBCONTA ? "sub" : "conta"}`).slice(0, 2), ["POST /accounts conta", "POST /webhooks sub"], "o webhook nasce logo depois de a chave ser guardada");
+  assert.equal(a.gravado.length, 1);
+  const falha = asaasFalso({ "POST /accounts": { corpo: criada }, "POST /webhooks": { status: 400, corpo: { errors: [{ code: "invalid_object", description: `token ${CHAVE_DA_SUBCONTA}` }] } } });
+  const b = portas();
+  const erros: unknown[] = [];
+  const r2 = await cadastrarSubconta({ loja: LOJA, dados: empresa, asaas: new SubcontasAsaas({ chaveDaConta: CHAVE_DA_CONTA, fetch: falha.http }), portas: b.p, webhook, registrarErro: e => erros.push(e) });
+  assert.deepEqual([r2.webhook, b.gravado.length, erros.length], ["pendente", 1, 1], "a chave já estava guardada");
+  assert.ok(!String((erros[0] as Error).message).includes(CHAVE_DA_SUBCONTA));
+  const sem = asaasFalso({ "POST /accounts": { corpo: criada } });
+  assert.equal((await cadastrarSubconta({ loja: LOJA, dados: empresa, asaas: new SubcontasAsaas({ chaveDaConta: CHAVE_DA_CONTA, fetch: sem.http }), portas: portas().p })).webhook, "nao_pedido");
+  assert.ok(!sem.chamadas.some(c => c.caminho === "/webhooks"));
 });

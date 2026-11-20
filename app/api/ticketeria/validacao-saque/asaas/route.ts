@@ -1,7 +1,8 @@
 // POST /api/ticketeria/validacao-saque/asaas: a validação de saque do Asaas (o cadeado do repasse). Sem login: a prova é o token do cabeçalho
 // `asaas-access-token`, que está em ASAAS_VALIDACAO_SAQUE_TOKEN (32 letras ou mais). Sem ele, a rota responde 503 e o Asaas cancela a operação
 // (falha fechada). A decisão está em fn_ticketeria_validar_saque; tudo que importa está em lib/ticketeria/pagamento/validacao-saque.ts (testado).
-// NÃO ative no Asaas "validar também saques via interface" nem "autorização de saque para splits": a rota só decide saques pela API.
+// NÃO ative no Asaas "validar também saques via interface". A "autorização de saque para splits" pode ficar ligada: a divisão para a carteira do Jards (ASAAS_WALLET_JARDS,
+// a comissão) é aprovada aqui; divisão para qualquer outra carteira é recusada e registrada.
 
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -18,6 +19,7 @@ export async function POST(req: NextRequest) {
     assinatura: req.headers.get("asaas-access-token"),
     corpo: await req.text(),
     validar: validarSaqueDoSupabase(createAdminClient()),
+    carteiraDoJards: process.env.ASAAS_WALLET_JARDS || null,
     registrarTokenRecusado: tamanho => console.warn(`[ticketeria] validação de saque: token recusado (chegaram ${tamanho} caracteres; o esperado tem ${(process.env.ASAAS_VALIDACAO_SAQUE_TOKEN ?? "").length})`),
     registrarErro: erro => console.error("[ticketeria] validação de saque não decidida:", erro instanceof Error ? erro.message : erro),
   });

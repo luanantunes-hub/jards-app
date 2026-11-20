@@ -13,6 +13,10 @@ import { ErroDoAsaas, ambienteDoAsaas } from "@/lib/ticketeria/pagamento/asaas";
 import { SubcontasAsaas, problemasDosDados, type DadosDoProdutor } from "@/lib/ticketeria/pagamento/asaas-subconta";
 import { SubcontaSemChaveGuardada, cadastrarSubconta, problemasDaContaBancaria, type ContaBancaria } from "@/lib/ticketeria/pagamento/cadastro-subconta";
 import { portasDoCadastroDoSupabase } from "@/lib/ticketeria/pagamento/portas-supabase";
+import { appUrl } from "@/lib/email/config";
+
+// Criar a subconta leva uns 40 segundos no Asaas.
+export const maxDuration = 150;
 
 export async function POST(req: NextRequest, rota: { params: Promise<{ id: string }> }) {
   const a = await autorizarLoja(rota);
@@ -33,8 +37,11 @@ export async function POST(req: NextRequest, rota: { params: Promise<{ id: strin
   try {
     const resultado = await cadastrarSubconta({
       loja: a.loja.id, dados, asaas: new SubcontasAsaas({ chaveDaConta: base.chave, url: base.url }), portas: portasDoCadastroDoSupabase(createAdminClient()), contaBancaria,
+      // O aviso de pagamento da subconta vai para o webhook dela: o mesmo endereço e o mesmo token do webhook da conta principal.
+      webhook: process.env.ASAAS_WEBHOOK_TOKEN ? { url: `${appUrl()}/api/ticketeria/avisos/asaas`, authToken: process.env.ASAAS_WEBHOOK_TOKEN, email: process.env.TICKETERIA_EMAIL_DE_ALERTA || "luan.antunes@jards.com.br" } : null,
+      registrarErro: erro => console.error("[ticketeria] webhook da subconta não criado:", erro instanceof Error ? erro.message : erro),
     });
-    return resposta({ situacao: resultado.situacao, chave_pix: resultado.chave_pix, conta_destino: resultado.conta_destino });
+    return resposta({ situacao: resultado.situacao, chave_pix: resultado.chave_pix, conta_destino: resultado.conta_destino, webhook: resultado.webhook });
   } catch (erro) {
     if (erro instanceof SubcontaSemChaveGuardada) {
       console.error("[ticketeria] subconta criada no Asaas sem a chave guardada:", erro.message);
