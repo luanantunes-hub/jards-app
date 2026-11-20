@@ -8,7 +8,7 @@
 // (supabase gen types) em 18/11/2026, depois de aplicada: as mesmas colunas e anulabilidade. tests/ticketeria-banco-tipos.test.ts compara este arquivo com a migration.
 // Relationships não lista as chaves para auth.users (`criado_por`): o PostgREST só expõe o schema public.
 
-import type { CategoriaDoIngresso, ClassificacaoIndicativa, ContaDoRazao, MeioDePagamento, QuemPagaATaxa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoPedido, SituacaoDoSite, TipoDeTransacao, TipoDoCupom } from "@/lib/ticketeria/estados";
+import type { CategoriaDoIngresso, ClassificacaoIndicativa, ContaDoRazao, MeioDePagamento, QuemPagaATaxa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoPedido, SituacaoDoSite, TemaDoSite, TipoDeTransacao, TipoDoCupom } from "@/lib/ticketeria/estados";
 import type { Json } from "@/lib/supabase/types";
 
 export type BancoDaTicketeria = {
@@ -60,6 +60,7 @@ export type BancoDaTicketeria = {
           nome: string;
           titulo: string | null;
           cor: string;
+          tema: TemaDoSite;
           situacao: SituacaoDoSite;
           criado_por: string | null;
           created_at: string;
@@ -72,6 +73,7 @@ export type BancoDaTicketeria = {
           nome: string;
           titulo?: string | null;
           cor?: string;
+          tema?: TemaDoSite;
           situacao?: SituacaoDoSite;
           criado_por?: string | null;
           created_at?: string;
@@ -84,6 +86,7 @@ export type BancoDaTicketeria = {
           nome?: string;
           titulo?: string | null;
           cor?: string;
+          tema?: TemaDoSite;
           situacao?: SituacaoDoSite;
           criado_por?: string | null;
           created_at?: string;

@@ -2,10 +2,13 @@ import type { DiaPublico } from "@/lib/producao/programacao";
 import { MarcaDaSessao } from "@/components/producao/MarcaDaSessao";
 import { ContagemRegressiva } from "@/components/ticketeria/ContagemRegressiva";
 import { enderecoDoMapa, enderecoDoVideo, textoSobreCor, type Bloco, type ColunaDoBloco } from "@/lib/ticketeria/site";
+import { variaveisDoTema } from "@/lib/ticketeria/temas";
 import { diaPorExtenso } from "@/components/producao/ProgramacaoPublicaView";
 
 export type SiteParaDesenhar = {
   titulo: string; cor: string;
+  /** O tema do site (lib/ticketeria/temas.ts); sem ele, o clássico. */
+  tema?: string;
   menu: { slug: string; titulo: string }[];
   pagina: { slug: string; titulo: string; blocos: Bloco[] };
   /** A hora do servidor (ms), para a contagem regressiva começar certa; quem monta o site a traz de `agoraDoServidor`. */
@@ -24,13 +27,13 @@ function Programacao({ titulo, dias }: { titulo: string; dias: DiaPublico[] | nu
     <section aria-label={titulo || "Programação"}>
       {titulo && <h2 className="mb-3 text-[1.25rem] font-medium tracking-[-.01em]">{titulo}</h2>}
       {!dias || dias.length === 0 ? (
-        <p className="rounded-xl border border-black/10 px-4 py-5 text-[0.9375rem] opacity-70">Nenhuma sessão marcada por enquanto. Volte em breve.</p>
+        <p className="rounded-[var(--site-raio)] border border-[color:var(--site-borda)] px-4 py-5 text-[0.9375rem] opacity-70">Nenhuma sessão marcada por enquanto. Volte em breve.</p>
       ) : (
         <div className="space-y-4">
           {dias.map(dia => (
             <div key={dia.dia}>
               <h3 className="mb-1.5 text-[0.75rem] font-normal uppercase tracking-[.08em] opacity-60">{diaPorExtenso(dia.dia)}</h3>
-              <ul className="divide-y divide-black/10 overflow-hidden rounded-xl border border-black/10">
+              <ul className="divide-y divide-[color:var(--site-borda)] overflow-hidden rounded-[var(--site-raio)] border border-[color:var(--site-borda)]">
                 {dia.sessoes.map((sessao, indice) => (
                   <li key={`${sessao.inicio}-${sessao.sala}-${indice}`} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-4 py-3">
                     <span className="w-28 shrink-0 text-[0.9375rem] font-normal tabular-nums">{sessao.inicio} às {sessao.fim}</span>
@@ -53,16 +56,16 @@ export function IngressosDoEvento({ titulo, sessoes }: { titulo: string; sessoes
     <section aria-label={titulo || "Ingressos"}>
       {titulo && <h2 className="mb-3 text-[1.25rem] font-medium tracking-[-.01em]">{titulo}</h2>}
       {!sessoes || sessoes.length === 0 ? (
-        <p className="rounded-xl border border-black/10 px-4 py-5 text-[0.9375rem] opacity-70">Nenhuma sessão à venda por enquanto. Volte em breve.</p>
+        <p className="rounded-[var(--site-raio)] border border-[color:var(--site-borda)] px-4 py-5 text-[0.9375rem] opacity-70">Nenhuma sessão à venda por enquanto. Volte em breve.</p>
       ) : (
-        <ul className="divide-y divide-black/10 overflow-hidden rounded-xl border border-black/10">
+        <ul className="divide-y divide-[color:var(--site-borda)] overflow-hidden rounded-[var(--site-raio)] border border-[color:var(--site-borda)]">
           {sessoes.map(sessao => (
             <li key={sessao.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5">
               <span className="min-w-0 flex-1 basis-56">
                 <span className="block text-[0.9375rem] font-normal">{sessao.quando}</span>
                 {sessao.local && <span className="block text-[0.8125rem] opacity-60">{sessao.local}</span>}
               </span>
-              <a href={sessao.url} className="inline-flex min-h-11 items-center rounded-xl bg-[#282525] px-5 py-2.5 text-[0.875rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2">Comprar ingressos</a>
+              <a href={sessao.url} className="inline-flex min-h-11 items-center rounded-[var(--site-raio)] bg-[color:var(--site-botao)] px-5 py-2.5 text-[0.875rem] font-normal text-[color:var(--site-botao-texto)] transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2">Comprar ingressos</a>
             </li>
           ))}
         </ul>
@@ -72,14 +75,14 @@ export function IngressosDoEvento({ titulo, sessoes }: { titulo: string; sessoes
 }
 
 
-const BOTAO_CLARO = "inline-flex min-h-11 items-center rounded-xl bg-white px-5 py-2.5 text-[0.9375rem] font-normal text-[#282525] transition hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+const BOTAO_CLARO = "inline-flex min-h-11 items-center rounded-[var(--site-raio)] bg-white px-5 py-2.5 text-[0.9375rem] font-normal text-[#282525] transition hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 
 /** A faixa de abertura: com imagem de fundo (escurecida, para o texto branco ler bem) ou na cor do tema. */
 function Capa({ bloco, cor }: { bloco: Extract<Bloco, { tipo: "capa" }>; cor: string }) {
   const comImagem = bloco.imagem !== "";
   const texto = comImagem ? "#ffffff" : textoSobreCor(cor);
   return (
-    <section aria-label={bloco.titulo} className="relative isolate overflow-hidden rounded-xl" style={{ backgroundColor: cor, color: texto }}>
+    <section aria-label={bloco.titulo} className="relative isolate overflow-hidden rounded-[var(--site-raio)]" style={{ backgroundColor: cor, color: texto }}>
       {comImagem && (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element -- imagem de endereço externo (https), sem otimização do Next */}
@@ -92,7 +95,7 @@ function Capa({ bloco, cor }: { bloco: Extract<Bloco, { tipo: "capa" }>; cor: st
         {bloco.subtitulo && <p className="text-[1rem] leading-relaxed opacity-90">{bloco.subtitulo}</p>}
         {bloco.botao_rotulo && (comImagem || texto === "#ffffff"
           ? <a href={bloco.botao_url} target="_blank" rel="noopener noreferrer" className={`mt-2 ${BOTAO_CLARO}`}>{bloco.botao_rotulo}</a>
-          : <a href={bloco.botao_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center rounded-xl bg-[#282525] px-5 py-2.5 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]">{bloco.botao_rotulo}</a>)}
+          : <a href={bloco.botao_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center rounded-[var(--site-raio)] bg-[#282525] px-5 py-2.5 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]">{bloco.botao_rotulo}</a>)}
       </div>
     </section>
   );
@@ -101,7 +104,7 @@ function Capa({ bloco, cor }: { bloco: Extract<Bloco, { tipo: "capa" }>; cor: st
 function Coluna({ coluna }: { coluna: ColunaDoBloco }) {
   if (coluna.tipo === "imagem") {
     // eslint-disable-next-line @next/next/no-img-element -- imagem de endereço externo (https), sem otimização do Next
-    return <img src={coluna.url} alt={coluna.alt} loading="lazy" referrerPolicy="no-referrer" className="h-auto w-full rounded-xl" />;
+    return <img src={coluna.url} alt={coluna.alt} loading="lazy" referrerPolicy="no-referrer" className="h-auto w-full rounded-[var(--site-raio)]" />;
   }
   return <div className="space-y-3 text-[1rem] leading-relaxed">{coluna.texto.split(/\n{2,}/).map((paragrafo, indice) => <p key={indice} className="whitespace-pre-line">{paragrafo}</p>)}</div>;
 }
@@ -120,9 +123,9 @@ function BlocoDoSite({ bloco, cor, agora, programacoes, ingressos }: { bloco: Bl
       return <div className="space-y-3 text-[1rem] leading-relaxed">{bloco.texto.split(/\n{2,}/).map((paragrafo, indice) => <p key={indice} className="whitespace-pre-line">{paragrafo}</p>)}</div>;
     case "imagem":
       // eslint-disable-next-line @next/next/no-img-element -- imagem de endereço externo (https), sem otimização do Next
-      return <img src={bloco.url} alt={bloco.alt} loading="lazy" referrerPolicy="no-referrer" className="h-auto max-w-full rounded-xl" />;
+      return <img src={bloco.url} alt={bloco.alt} loading="lazy" referrerPolicy="no-referrer" className="h-auto max-w-full rounded-[var(--site-raio)]" />;
     case "botao":
-      return <a href={bloco.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl bg-[#282525] px-5 py-2.5 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{bloco.rotulo}</a>;
+      return <a href={bloco.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-[var(--site-raio)] bg-[color:var(--site-botao)] px-5 py-2.5 text-[0.9375rem] font-normal text-[color:var(--site-botao-texto)] transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{bloco.rotulo}</a>;
     case "capa":
       return <Capa bloco={bloco} cor={cor} />;
     case "colunas":
@@ -135,7 +138,7 @@ function BlocoDoSite({ bloco, cor, agora, programacoes, ingressos }: { bloco: Bl
             {bloco.imagens.map((imagem, indice) => (
               <li key={indice}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- imagem de endereço externo (https), sem otimização do Next */}
-                <img src={imagem.url} alt={imagem.alt} loading="lazy" referrerPolicy="no-referrer" className="aspect-square w-full rounded-xl object-cover" />
+                <img src={imagem.url} alt={imagem.alt} loading="lazy" referrerPolicy="no-referrer" className="aspect-square w-full rounded-[var(--site-raio)] object-cover" />
               </li>
             ))}
           </ul>
@@ -145,14 +148,14 @@ function BlocoDoSite({ bloco, cor, agora, programacoes, ingressos }: { bloco: Bl
       return (
         <section aria-label={bloco.titulo || "Vídeo"}>
           <TituloDoBloco titulo={bloco.titulo} />
-          <iframe src={enderecoDoVideo(bloco)} title={bloco.titulo || "Vídeo"} loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" sandbox={SANDBOX_DO_QUADRO} className="aspect-video w-full rounded-xl border-0 bg-black/5" />
+          <iframe src={enderecoDoVideo(bloco)} title={bloco.titulo || "Vídeo"} loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" sandbox={SANDBOX_DO_QUADRO} className="aspect-video w-full rounded-[var(--site-raio)] border-0 bg-black/5" />
         </section>
       );
     case "mapa":
       return (
         <section aria-label={bloco.titulo || "Mapa"}>
           <TituloDoBloco titulo={bloco.titulo} />
-          <iframe src={enderecoDoMapa(bloco.endereco)} title={bloco.titulo || `Mapa: ${bloco.endereco}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" sandbox={SANDBOX_DO_QUADRO} className="h-72 w-full rounded-xl border-0 bg-black/5 sm:h-80" />
+          <iframe src={enderecoDoMapa(bloco.endereco)} title={bloco.titulo || `Mapa: ${bloco.endereco}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" sandbox={SANDBOX_DO_QUADRO} className="h-72 w-full rounded-[var(--site-raio)] border-0 bg-black/5 sm:h-80" />
           <p className="mt-1.5 text-[0.8125rem] opacity-60">{bloco.endereco}</p>
         </section>
       );
@@ -162,7 +165,7 @@ function BlocoDoSite({ bloco, cor, agora, programacoes, ingressos }: { bloco: Bl
       return (
         <section aria-label={bloco.titulo || "Perguntas frequentes"}>
           <TituloDoBloco titulo={bloco.titulo} />
-          <div className="divide-y divide-black/10 overflow-hidden rounded-xl border border-black/10">
+          <div className="divide-y divide-[color:var(--site-borda)] overflow-hidden rounded-[var(--site-raio)] border border-[color:var(--site-borda)]">
             {bloco.itens.map((item, indice) => (
               <details key={indice} className="group">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3.5 text-[0.9375rem] font-normal focus-visible:outline-2 focus-visible:outline-offset-[-2px]">
@@ -210,7 +213,8 @@ function BlocoDoSite({ bloco, cor, agora, programacoes, ingressos }: { bloco: Bl
 export function SiteView({ site, base, previa }: { site: SiteParaDesenhar; base: string; previa?: boolean }) {
   const texto = textoSobreCor(site.cor);
   return (
-    <div className="min-h-screen bg-white text-[#282525]">
+    <div className="site-tema min-h-screen" style={{ ...variaveisDoTema(site.tema, site.cor), backgroundColor: "var(--site-fundo)", color: "var(--site-texto)", fontFamily: "var(--site-fonte)" }}>
+      <style>{".site-tema h1,.site-tema h2,.site-tema h3{font-family:var(--site-fonte-titulos)}"}</style>
       {previa && <p role="status" className="bg-[#282525] px-4 py-2 text-center text-[0.75rem] text-white">Prévia do rascunho: só quem está logado vê esta página.</p>}
       <header style={{ backgroundColor: site.cor, color: texto }}>
         <div className="mx-auto flex w-full max-w-[56rem] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 sm:px-6">
