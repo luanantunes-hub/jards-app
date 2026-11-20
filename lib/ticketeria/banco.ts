@@ -846,6 +846,126 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_envios: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          canal: string;
+          assunto: string;
+          mensagem: string;
+          sessao_id: string | null;
+          acao: string | null;
+          segmento: string;
+          destinatarios: number;
+          enviados: number;
+          falhas: number;
+          situacao: string;
+          created_by: string | null;
+          created_at: string;
+          enviado_em: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          canal?: string;
+          assunto: string;
+          mensagem: string;
+          sessao_id?: string | null;
+          acao?: string | null;
+          segmento: string;
+          destinatarios?: number;
+          enviados?: number;
+          falhas?: number;
+          situacao?: string;
+          created_by?: string | null;
+          created_at?: string;
+          enviado_em?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          canal?: string;
+          assunto?: string;
+          mensagem?: string;
+          sessao_id?: string | null;
+          acao?: string | null;
+          segmento?: string;
+          destinatarios?: number;
+          enviados?: number;
+          falhas?: number;
+          situacao?: string;
+          created_by?: string | null;
+          created_at?: string;
+          enviado_em?: string | null;
+        };
+        Relationships: [];
+      };
+      ticketeria_envio_destinatarios: {
+        Row: {
+          id: string;
+          organization_id: string;
+          envio_id: string;
+          email: string;
+          nome: string;
+          token: string;
+          situacao: string;
+          provedor_id: string | null;
+          enviado_em: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          envio_id: string;
+          email: string;
+          nome: string;
+          token?: string;
+          situacao?: string;
+          provedor_id?: string | null;
+          enviado_em?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          envio_id?: string;
+          email?: string;
+          nome?: string;
+          token?: string;
+          situacao?: string;
+          provedor_id?: string | null;
+          enviado_em?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ticketeria_saidas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          email: string;
+          saiu_em: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          email: string;
+          saiu_em?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          email?: string;
+          saiu_em?: string;
+        };
+        Relationships: [];
+      };
       ticketeria_cupons: {
         Row: {
           id: string;
@@ -1692,6 +1812,10 @@ export type BancoDaTicketeria = {
         Returns: string;
       };
       fn_ticketeria_espera_sair: {
+        Args: { p_token: string };
+        Returns: boolean;
+      };
+      fn_ticketeria_novidades_sair: {
         Args: { p_token: string };
         Returns: boolean;
       };
