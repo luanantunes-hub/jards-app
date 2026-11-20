@@ -4,10 +4,10 @@ import type { Database } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { diaNoFuso } from "@/lib/ticketeria/divulgacao";
 import { divulgacaoDaLoja } from "@/lib/ticketeria/divulgacao-servidor";
-import { controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles } from "@/lib/ticketeria/modelo-controles";
+import { controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
 import { compararComOsLinks, lerPartesDaBase, type CanalDoResultado, type ParteDaBase } from "@/lib/ticketeria/modelo-resultado";
 import type { Confianca } from "@/lib/ticketeria/modelo";
-import { avaliarProntidao, consolidarGasto, montarTabelaSemanal, semanasEntre, type EntradaDaProntidao, type ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
+import { avaliarProntidao, consolidarGasto, montarTabelaSemanal, type EntradaDaProntidao, type ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
 
 type Admin = SupabaseClient<Database>;
 const PAGINA = 1000;
@@ -42,10 +42,11 @@ export async function entradaDaLoja(admin: Admin, lojaId: string): Promise<Entra
     planilhas: gastoImportado.map(l => ({ dia: l.dia, canal: l.canal, centavos: Number(l.gasto_centavos) })),
     acoes: painel.acoes.map(a => ({ nome: a.nome, canal: a.canal, inicio: a.inicio, fim: a.fim, gasto_centavos: a.gasto_centavos })),
   });
-  // Visitas do GA4: só o primeiro e o último dia lidos (basta para saber quantas semanas há).
+  // Visitas do GA4: o primeiro e o último dia lidos e as sessões de cada dia e origem (o controle de visitas sem anúncio).
   const ga4Conectado = !!ga4 && (ga4.situacao === "ativa" || ga4.situacao === "erro");
   let primeiroDiaDeVisitas: string | null = null;
   let ultimoDiaDeVisitas: string | null = null;
+  let visitas: VisitaDoDia[] = [];
   if (ga4) {
     const [{ data: primeiro }, { data: ultimo }] = await Promise.all([
       t.from("ticketeria_visitas_diarias").select("dia").eq("conexao_id", ga4.id).order("dia", { ascending: true }).limit(1),
@@ -53,12 +54,13 @@ export async function entradaDaLoja(admin: Admin, lojaId: string): Promise<Entra
     ]);
     primeiroDiaDeVisitas = primeiro?.[0]?.dia ?? null;
     ultimoDiaDeVisitas = ultimo?.[0]?.dia ?? null;
+    if (primeiroDiaDeVisitas) visitas = (await todas(async (de, ate) => t.from("ticketeria_visitas_diarias").select("dia, origem, sessoes").eq("conexao_id", ga4.id).order("dia", { ascending: true }).order("origem", { ascending: true }).range(de, ate))).map(v => ({ dia: v.dia, origem: v.origem, sessoes: Number(v.sessoes) }));
   }
   const semanal = montarTabelaSemanal({ vendas, gasto });
   const { controles, resumo } = await controlesDaLoja(t, lojaId, semanal.map(s => s.semana));
-  const tabela = semanal.map(s => ({ ...s, controles: controles[s.semana] }));
-  const semanasDeVisitas = primeiroDiaDeVisitas && ultimoDiaDeVisitas ? semanasEntre(primeiroDiaDeVisitas, ultimoDiaDeVisitas) : 0;
-  return { tabela, ga4Conectado, primeiroDiaDeVisitas, ultimoDiaDeVisitas, ignoradas, controles: controlesDaTela(tabela, resumo, { conectado: ga4Conectado, semanas: semanasDeVisitas }) };
+  const doGa4 = controleDeVisitas(visitas, primeiroDiaDeVisitas, ultimoDiaDeVisitas, semanal.map(s => s.semana));
+  const tabela = semanal.map(s => ({ ...s, controles: { ...controles[s.semana], visitas: doGa4.valores[s.semana] ?? 0 } }));
+  return { tabela, ga4Conectado, primeiroDiaDeVisitas, ultimoDiaDeVisitas, ignoradas, controles: controlesDaTela(tabela, resumo, { conectado: ga4Conectado, semanas: doGa4.semanasLidas }) };
 }
 
 type Cliente = ReturnType<typeof clienteDaTicketeria>;

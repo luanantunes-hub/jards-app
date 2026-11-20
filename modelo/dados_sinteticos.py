@@ -34,7 +34,7 @@ def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, g
     gastos["instagram"] = np.full(n, 40.0) if gasto_constante else np.where(rng.random(n) < 0.5, rng.uniform(20, 80, n), 0.0)
     contribuicoes = {c: v["beta"] * (1 - np.exp(-v["lam"] * _adstock(gastos[c], v["adstock"]) / v["escala"])) for c, v in VERDADE.items()}
     base = 40 + 0.05 * t + 6 * np.sin(t * 2 * np.pi / 52)
-    # Os controles (só com `com_controles`): a proximidade da sessão (uma sessão a cada 13 semanas), as semanas de feriado, a virada de lote (junto da abertura de cada sessão) e o cupom.
+    # Os controles (só com `com_controles`): a proximidade da sessão (uma sessão a cada 13 semanas), as semanas de feriado, a virada de lote (junto da abertura de cada sessão), o cupom e as visitas sem anúncio.
     efeitos: dict[str, np.ndarray] = {}
     controles: dict[str, np.ndarray] = {}
     if com_controles:
@@ -42,8 +42,9 @@ def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, g
         feriado = (rng.random(n) < 0.12).astype(float)
         lote = (t % 13 == 4).astype(float)
         cupom = np.clip(rng.normal(0.1, 0.12, n), 0, 1) * (rng.random(n) < 0.5)
-        controles = {"proximidade": proximidade, "feriado": feriado, "lote": lote, "preco": np.zeros(n), "cupom": cupom}
-        efeitos = {"proximidade": 22 * proximidade, "feriado": 9 * feriado, "preco_e_lotes": 12 * lote, "cupom": 30 * cupom}
+        visitas = rng.normal(0.1, 0.3, n)  # visitas sem anúncio em log relativo à mediana (pode ser negativo)
+        controles = {"proximidade": proximidade, "feriado": feriado, "lote": lote, "preco": np.zeros(n), "cupom": cupom, "visitas": visitas}
+        efeitos = {"proximidade": 22 * proximidade, "feriado": 9 * feriado, "preco_e_lotes": 12 * lote, "cupom": 30 * cupom, "visitas": 15 * visitas}
     y = base + sum(contribuicoes.values()) + sum(efeitos.values()) + rng.normal(0, 3, n)
     total = float(y.sum())
     verdade = {c: float(v.sum()) / total * 100 for c, v in contribuicoes.items()}

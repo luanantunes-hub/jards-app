@@ -6,7 +6,7 @@ import sys
 from dados_sinteticos import gerar
 from mmm import SemDadosSuficientes, ajustar
 
-TOLERANCIA_DAS_PARTES_EM_PONTOS = 6.0  # cada parte da base (proximidade, feriado, lote, cupom) pode errar até isto, em pontos percentuais
+TOLERANCIA_DAS_PARTES_EM_PONTOS = 6.0  # cada parte da base (proximidade, feriado, lote, cupom, visitas) pode errar até isto, em pontos percentuais
 TOLERANCIA_EM_PONTOS = 12.0  # o porcento estimado de cada canal pode errar até isto, em pontos percentuais, em relação ao verdadeiro
 
 
@@ -49,13 +49,13 @@ def main() -> int:
     if soma_embaralhada > 0.6 * sum(c["porcento"] for c in r["canais"]):
         falhas.append("com o gasto embaralhado o modelo ainda atribuiu muito aos canais")
 
-    # Os controles: com proximidade, feriado, virada de lote e cupom de efeito conhecido, cada parte da base tem de voltar perto do verdadeiro e a soma das partes tem de fechar na base.
+    # Os controles: com proximidade, feriado, virada de lote, cupom e visitas de efeito conhecido, cada parte da base tem de voltar perto do verdadeiro e a soma das partes tem de fechar na base.
     tabela_c, verdade_c = gerar(semanas=90, semente=7, com_controles=True)
     rc = ajustar(tabela_c, draws=600, tune=600)
     partes = {p["chave"]: p for p in rc["base"]["partes"]}
     print("partes da base:", {k: (v["porcento"], v["baixo"], v["alto"]) for k, v in partes.items()})
     print("verdade das partes:", {k: round(v, 1) for k, v in verdade_c.items() if k.startswith("parte:")})
-    for chave in ("proximidade", "feriado", "preco_e_lotes", "cupom"):
+    for chave in ("proximidade", "feriado", "preco_e_lotes", "cupom", "visitas"):
         esperado = verdade_c[f"parte:{chave}"]
         if chave not in partes:
             falhas.append(f"a parte {chave} não saiu")
