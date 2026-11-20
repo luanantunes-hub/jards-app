@@ -25,7 +25,7 @@ begin
   insert into public.organization_members (organization_id, user_id, papel, modulos_acesso)
   select tv.id(o), tv.id(p), papel, acesso from (values
     ('a0', 'a1', 'admin', '{ticketeria}'::text[]), ('a0', 'a2', 'colaborador', '{ticketeria}'::text[]),
-    ('a0', 'a3', 'leitor', '{ticketeria}'::text[]), ('a0', 'a4', 'admin', '{}'::text[]), ('b0', 'b1', 'admin', '{ticketeria}'::text[])
+    ('a0', 'a3', 'leitor', '{ticketeria}'::text[]), ('a0', 'a4', 'admin', '{captacao}'::text[]), ('b0', 'b1', 'admin', '{ticketeria}'::text[])
   ) as v(o, p, papel, acesso);
   insert into public.ticketeria_lojas (id, organization_id, nome) values (tv.id('61'), tv.id('a0'), 'Loja A');
   insert into public.ticketeria_locais (id, organization_id, loja_id, nome) values (tv.id('51'), tv.id('a0'), tv.id('61'), 'Teatro A');

@@ -33,3 +33,8 @@ test("quem recebe: membros com a ticketeria que não são captador, proponente n
   assert.match(sql, /m\.papel not in \('captador', 'proponente', 'leitor'\)/);
   assert.match(sql, /p_dedupe \|\| ':' \|\| v_membro\.user_id/);
 });
+
+test("o aviso nunca impede o pagamento nem o reembolso: os gatilhos engolem o erro", async () => {
+  const sql = await readFile(SQL, "utf8");
+  assert.equal((sql.match(/exception when others then\s*--[^\n]*\n\s*raise warning/g) ?? []).length, 2);
+});

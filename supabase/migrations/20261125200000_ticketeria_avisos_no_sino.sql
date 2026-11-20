@@ -5,6 +5,7 @@
 -- Quem recebe: os membros da organização que têm a ticketeria (a organização a tem ativa e o vínculo dá acesso a ela) e não são
 -- captador, proponente nem leitor. Um aviso por pessoa e por fato (dedupe_key): repetir o mesmo evento do provedor não duplica.
 --
+-- Os gatilhos engolem qualquer erro do aviso (com um warning): o pagamento e o reembolso vêm primeiro.
 -- Expansão: funções e gatilhos novos, sem tabela nova e sem DROP. Reaplicável (create or replace; drop trigger if exists só dos gatilhos
 -- desta migration).
 
@@ -78,6 +79,10 @@ begin
     );
   end if;
   return new;
+exception when others then
+  -- O aviso nunca pode impedir o pagamento de ser confirmado.
+  raise warning 'ticketeria: aviso da venda não gerado: %', sqlerrm;
+  return new;
 end;
 $function$;
 
@@ -106,6 +111,10 @@ begin
       'ticketeria_reembolso_' || new.situacao || ':' || new.id
     );
   end if;
+  return new;
+exception when others then
+  -- O aviso nunca pode impedir o reembolso de ser registrado.
+  raise warning 'ticketeria: aviso do reembolso não gerado: %', sqlerrm;
   return new;
 end;
 $function$;
