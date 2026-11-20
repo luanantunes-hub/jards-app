@@ -5,7 +5,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
 import { ROTULO_DA_CLASSIFICACAO } from "@/lib/ticketeria/eventos";
 import { siteDaLoja, vitrineDaSessao } from "@/lib/ticketeria/vitrine-servidor";
-import { CHAVE_PUBLICA, MAX_SESSOES_NA_LISTA, VERSAO_DA_API, estadoNaApi, menorPreco, urlDeCompra, type EventoNaApi, type ListaDeEventosNaApi } from "@/lib/ticketeria/integracao";
+import { CHAVE_PUBLICA, MAX_SESSOES_NA_LISTA, VERSAO_DA_API, estadoNaApi, menorPreco, poucosNaSessao, urlDeCompra, type EventoNaApi, type ListaDeEventosNaApi } from "@/lib/ticketeria/integracao";
 
 type Admin = SupabaseClient<Database>;
 
@@ -51,7 +51,7 @@ export async function eventosDaLoja(admin: Admin, lojaId: string, origem: string
     const l = local.get(s.local_id);
     const quando = diaEHoraDoEvento(s.inicio, l?.fuso ?? "America/Sao_Paulo");
     const lista = porEvento.get(s.evento_id) ?? [];
-    lista.push({ id: s.id, inicio: s.inicio, quando: quando.charAt(0).toUpperCase() + quando.slice(1), local: v.evento.local, estado: estadoNaApi(v), a_partir_de_centavos: menorPreco(v.ingressos), url: urlDeCompra(origem, s.id) });
+    lista.push({ id: s.id, inicio: s.inicio, quando: quando.charAt(0).toUpperCase() + quando.slice(1), local: v.evento.local, estado: estadoNaApi(v), a_partir_de_centavos: menorPreco(v.ingressos), poucos: poucosNaSessao(v.ingressos), url: urlDeCompra(origem, s.id) });
     porEvento.set(s.evento_id, lista);
   });
   // Os eventos na ordem da primeira sessão; evento sem sessão futura não aparece.

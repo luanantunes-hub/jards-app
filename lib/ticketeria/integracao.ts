@@ -28,6 +28,8 @@ export type SessaoNaApi = {
   estado: EstadoPublicoDaSessao;
   /** O menor preço à venda hoje, em centavos; nulo se não há ingresso à venda. */
   a_partir_de_centavos: number | null;
+  /** Há ingresso à venda, mas são poucos (a API não diz quantos). */
+  poucos: boolean;
   /** O endereço da página de compra (no Jards). */
   url: string;
 };
@@ -73,6 +75,12 @@ export function estadoNaApi(vitrine: Pick<VitrineDaSessao, "estado" | "ingressos
   }
 }
 
+/** A sessão está com poucos ingressos: há algum, e o total de todos os tipos não passa de LIMITE_DE_POUCOS. */
+export function poucosNaSessao(ingressos: readonly IngressoDaVitrine[]): boolean {
+  const total = ingressos.reduce((soma, i) => soma + restantes(i), 0);
+  return total > 0 && total <= LIMITE_DE_POUCOS;
+}
+
 /** O menor preço à venda hoje entre os ingressos com vaga; nulo se não há. */
 export function menorPreco(ingressos: readonly IngressoDaVitrine[]): number | null {
   const precos = ingressos.filter(i => restantes(i) > 0).map(i => i.faixas[0].preco_centavos);
@@ -106,4 +114,12 @@ export function lerChaveDaLoja(resposta: unknown, origem: string): { chave: stri
   const r = (resposta && typeof resposta === "object" && !Array.isArray(resposta) ? resposta : {}) as Record<string, unknown>;
   if (typeof r.chave !== "string" || !CHAVE_PUBLICA.test(r.chave) || typeof r.ativa !== "boolean") return null;
   return { chave: r.chave, ativa: r.ativa, api: `${origem.replace(/\/$/, "")}/api/ticketeria/publico/${r.chave}` };
+}
+
+/** A chave como a tela a mostra, sem exibi-la inteira: "tkp_9f3a…c21e". */
+export const chaveResumida = (chave: string) => (CHAVE_PUBLICA.test(chave) ? `${chave.slice(0, 8)}…${chave.slice(-4)}` : "");
+
+/** O código que o produtor cola no site dele: o script do widget com a chave da loja. */
+export function codigoDoWidget(origem: string, chave: string): string {
+  return `<script src="${origem.replace(/\/$/, "")}/widget/ingressos.js" data-chave="${chave}" async></script>`;
 }

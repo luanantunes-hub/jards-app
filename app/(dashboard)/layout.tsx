@@ -61,6 +61,7 @@ import {
   Hourglass,
   Tag,
   Wallet,
+  Plug,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -209,6 +210,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
         { label: "Lista de espera", href: "/ingressos/espera", icon: Hourglass },
         { label: "Porta", href: "/ingressos/porta", icon: ScanLine },
         { label: "Recebimentos", href: "/ingressos/recebimentos", icon: Wallet },
+        { label: "Integrações", href: "/ingressos/integracoes", icon: Plug },
       ],
     },
   ],

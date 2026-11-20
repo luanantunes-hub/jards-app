@@ -359,7 +359,8 @@ async function paginaDeEntradaDe(supabase: Parameters<typeof lerAcessoAosModulos
 export const config = {
   matcher: [
     // dados/: tabelas públicas que a tela baixa (CNAE do IBGE), sem passar pela sessão.
+    // widget/: o script que o produtor cola no site dele (WordPress, Wix...), aberto a qualquer um.
     // menu-site.css/js: o menu das páginas públicas; sem isto, quem está deslogado recebia o redirecionamento para o login.
-    "/((?!_next/static|_next/image|favicon.ico|consentimento\\.js$|folha-sw\\.js$|origem-campanha\\.js$|menu-site\\.(?:css|js)$|dados/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|mp4|webm|ttf|woff|woff2|otf|eot)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|consentimento\\.js$|folha-sw\\.js$|origem-campanha\\.js$|menu-site\\.(?:css|js)$|dados/|widget/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|mp4|webm|ttf|woff|woff2|otf|eot)$).*)",
   ],
 };
