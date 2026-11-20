@@ -23,6 +23,8 @@ const API_LIMITS: [string, number][] = [
   // Conferir um cupom (sem login): o teto é bem menor, para ninguém ficar adivinhando códigos.
   // A equipe da porta pelo link (sem login): várias pessoas no mesmo wi-fi, uma leitura atrás da outra.
   ["/api/ticketeria/porta-equipe", 300],
+  // A API pública de leitura da Ticketeria (sem login, aberta a outros sites): por IP; o cache da borda segura o grosso.
+  ["/api/ticketeria/publico", 120],
   ["/api/ticketeria/compra/cupom", 15],
   // O mapa de lugares de uma sessão (sem login): a tela o relê a cada vez que abre.
   ["/api/ticketeria/compra/mapa", 40],

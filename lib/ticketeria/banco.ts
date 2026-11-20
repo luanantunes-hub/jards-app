@@ -1432,6 +1432,54 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_chaves_publicas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          chave: string;
+          ativa: boolean;
+          girada_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          chave: string;
+          ativa?: boolean;
+          girada_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          chave?: string;
+          ativa?: boolean;
+          girada_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_chaves_publicas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_chaves_publicas_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: true;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_transacoes: {
         Row: {
           id: string;
@@ -1981,6 +2029,22 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_porta_lista: {
         Args: { p_loja: string; p_sessao: string };
+        Returns: Json;
+      };
+      fn_ticketeria_chave_publica_garantir: {
+        Args: { p_loja: string };
+        Returns: Json;
+      };
+      fn_ticketeria_chave_publica_girar: {
+        Args: { p_loja: string };
+        Returns: Json;
+      };
+      fn_ticketeria_chave_publica_ligar: {
+        Args: { p_loja: string; p_ligada: boolean };
+        Returns: Json;
+      };
+      fn_ticketeria_chave_publica_resolver: {
+        Args: { p_chave: string };
         Returns: Json;
       };
       fn_ticketeria_porta_link_criar: {
