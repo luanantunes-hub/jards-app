@@ -101,7 +101,7 @@ export function PainelDaConversa({ item, meuId, nomesDosContatos, remetenteDaTri
       <FioDaConversa conversa={conversa} meuId={meuId} membros={membros} />
       {ehMinha && (
         <div className="mt-5 flex flex-wrap items-center gap-2">
-          <AcoesDaConversa conversa={conversa} meuId={meuId} onMudou={onMudou} onErro={setErro} />
+          <AcoesDaConversa conversa={conversa} meuId={meuId} onMudou={onMudou} />
         </div>
       )}
     </>

@@ -170,7 +170,7 @@ function NovoContatoInline({
 }
 
 /* ─── Modal principal ─────────────────────────────────────────────── */
-export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, sitePreEmpresa, contatosSugeridos, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
+export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, sitePreEmpresa, contatosSugeridos, contatoPreId, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
   onClose: () => void;
   onSaved: (id?: string) => void;
   empresaPreId?: string;
@@ -180,6 +180,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   sitePreEmpresa?: string;
   /** Responsáveis do patrocinador já liberados para a pessoa (página do patrocinador). */
   contatosSugeridos?: ContatoSugerido[];
+  /** Quem abriu a negociação a partir de um contato específico (já da empresa de `empresaPreId`): vem escolhido. */
+  contatoPreId?: string;
   statusPre?: StatusCaptacao;
   potentialPre?: PotencialFechamento;
   editData?: EditDataCaptacao;
@@ -237,7 +239,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const [supervisorId, setSupervisorId]           = useState<string | null>(editData?.supervisor_id ?? null);
 
   // Contato empresa
-  const [contatoEmpresaId, setContatoEmpresaId]   = useState<string | null>(editData?.contato_empresa_id ?? null);
+  const [contatoEmpresaId, setContatoEmpresaId]   = useState<string | null>(editData?.contato_empresa_id ?? contatoPreId ?? null);
   const [contatosEmpresa, setContatosEmpresa]     = useState<ContatoItem[]>([]);
   const [showNovoContato, setShowNovoContato]     = useState(false);
   // Responsável do patrocinador escolhido; vira contato salvo só ao salvar a negociação.

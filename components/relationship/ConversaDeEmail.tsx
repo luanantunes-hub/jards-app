@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { EtiquetaDeSituacao, EtiquetaSoEuVejo } from "@/components/email/EtiquetaDeConversa";
 import { AcoesDaConversa, FioDaConversa, nomeDe, type Pessoa } from "@/components/email/FioDaConversa";
@@ -19,8 +18,6 @@ type Props = {
 
 /** A conversa aberta como folha, a partir do histórico da empresa. A tela de Conversas mostra o mesmo fio ao lado da lista. */
 export function ConversaDeEmail({ conversa, meuId, contatos, membros, onClose, onMudou }: Props) {
-  const [erro, setErro] = useState<string | null>(null);
-
   const ehMinha = meuId !== null && conversa.mensagens.some((mensagem) => mensagem.user_id === meuId);
   const donoDaCaixa = conversa.donoIds[0] ? nomeDe(membros, conversa.donoIds[0]) : null;
   const nomesDosContatos = conversa.contatoIds.map((id) => nomeDe(contatos, id)).filter(Boolean).join(", ");
@@ -32,7 +29,7 @@ export function ConversaDeEmail({ conversa, meuId, contatos, membros, onClose, o
       subtitulo={[nomesDosContatos, `${total} ${total === 1 ? "mensagem" : "mensagens"}`].filter(Boolean).join(" · ")}
       onClose={onClose}
       footer={(close) => ehMinha ? (
-        <AcoesDaConversa conversa={conversa} meuId={meuId} onMudou={onMudou} onErro={setErro} />
+        <AcoesDaConversa conversa={conversa} meuId={meuId} onMudou={onMudou} />
       ) : (
         <button type="button" onClick={close} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Fechar</button>
       )}
@@ -44,7 +41,6 @@ export function ConversaDeEmail({ conversa, meuId, contatos, membros, onClose, o
           {!ehMinha && donoDaCaixa && <span className="text-[0.6875rem] text-black/40">Caixa de {donoDaCaixa}</span>}
         </div>
       )}
-      {erro && <p role="alert" className="mb-4 rounded border border-[#D94E4E]/20 px-3 py-2 text-xs text-[#D94E4E]">{erro}</p>}
       <FioDaConversa conversa={conversa} meuId={meuId} membros={membros} />
     </BottomSheet>
   );

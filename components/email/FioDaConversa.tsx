@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CornerUpLeft, ExternalLink, Lock, Users } from "lucide-react";
+import { CornerUpLeft, ExternalLink, ReplyAll } from "lucide-react";
 import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
-import { EscreverEmail } from "@/components/email/EscreverEmail";
+import { EscreverEmail, type InicioDoEmail } from "@/components/email/EscreverEmail";
 import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { assuntoDeResposta } from "@/lib/email/envio";
-import { NOME_DO_PROVEDOR, provedorDaMensagem, type Conversa, type EmailDeConversa } from "@/lib/email/conversas";
+import { destinatariosDeRespostaTodos, NOME_DO_PROVEDOR, provedorDaMensagem, type Conversa, type EmailDeConversa } from "@/lib/email/conversas";
 import { emPartes } from "@/lib/email/lotes";
 import { createClient } from "@/lib/supabase/client";
 
@@ -83,63 +83,43 @@ export function FioDaConversa({ conversa, meuId, membros }: { conversa: Conversa
   );
 }
 
-/**
- * Responder, mudar quem vê e abrir no provedor. Só aparecem na caixa de quem está com o Jards aberto.
- * "Só eu vejo" some quando a conversa não tem contato: aí não há empresa onde registrar (isso se faz na triagem).
- */
-export function AcoesDaConversa({ conversa, meuId, onMudou, onErro }: { conversa: Conversa; meuId: string | null; onMudou: () => void; onErro: (mensagem: string | null) => void }) {
-  const [salvando, setSalvando] = useState(false);
-  const [respondendo, setRespondendo] = useState(false);
+/** Responder e abrir no provedor. Só aparecem na caixa de quem está com o Jards aberto. */
+export function AcoesDaConversa({ conversa, meuId, onMudou }: { conversa: Conversa; meuId: string | null; onMudou: () => void }) {
+  const [inicioDaResposta, setInicioDaResposta] = useState<InicioDoEmail | null>(null);
 
   const minhasMensagens = meuId ? conversa.mensagens.filter((mensagem) => mensagem.user_id === meuId) : [];
   const ultimaMinha = minhasMensagens[minhasMensagens.length - 1];
   if (!ultimaMinha) return null;
   const provedor = provedorDaMensagem(ultimaMinha.message_id);
   const respostaPara = ultimaMinha.direction === "outbound" ? ultimaMinha.to_emails ?? [] : ultimaMinha.from_email ? [ultimaMinha.from_email] : [];
-
-  async function mudarVisibilidade() {
-    setSalvando(true);
-    onErro(null);
-    try {
-      const resposta = await fetch("/api/email/visibilidade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailIds: minhasMensagens.map((mensagem) => mensagem.id), visibilidade: conversa.privada ? "organization" : "private" }),
-      });
-      if (!resposta.ok) {
-        const corpo = (await resposta.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(corpo?.error ?? "Não foi possível mudar quem vê esta conversa.");
-      }
-      onMudou();
-    } catch (falha) {
-      onErro(falha instanceof Error ? falha.message : "Não foi possível mudar quem vê esta conversa.");
-    } finally {
-      setSalvando(false);
-    }
-  }
+  // O próprio endereço, para tirar da lista de "Responder a todos": a última mensagem enviada por mim já o revela.
+  const meuEmail = minhasMensagens.find((mensagem) => mensagem.direction === "outbound")?.from_email ?? null;
+  const { para: paraTodos, cc: ccTodos } = destinatariosDeRespostaTodos(ultimaMinha, meuEmail);
 
   return (
     <>
       {/* Responder também envia um e-mail: o mesmo peso visual do botão Escrever e-mail do topo da página. */}
-      <PrimaryListAction onClick={() => setRespondendo(true)}>
+      <PrimaryListAction onClick={() => setInicioDaResposta({ para: respostaPara, assunto: assuntoDeResposta(conversa.assunto), responderAEmailId: ultimaMinha.id })}>
         <CornerUpLeft size={13} aria-hidden="true" />
         Responder
       </PrimaryListAction>
-      {conversa.contatoIds.length > 0 && (
-        <button type="button" onClick={() => void mudarVisibilidade()} disabled={salvando} className={BOTAO_DA_CONVERSA}>
-          {conversa.privada ? <Users size={12} aria-hidden="true" /> : <Lock size={12} aria-hidden="true" />}
-          {salvando ? "Salvando…" : conversa.privada ? "Mostrar à equipe" : "Só eu vejo"}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setInicioDaResposta({ para: paraTodos, cc: ccTodos, assunto: assuntoDeResposta(conversa.assunto), responderAEmailId: ultimaMinha.id })}
+        className={BOTAO_DA_CONVERSA}
+      >
+        <ReplyAll size={12} aria-hidden="true" />
+        Responder a todos
+      </button>
       <a href={`/api/email/abrir?id=${ultimaMinha.id}`} target="_blank" rel="noopener noreferrer" className={BOTAO_DA_CONVERSA}>
         <ExternalLink size={12} aria-hidden="true" />
         Abrir no {NOME_DO_PROVEDOR[provedor]}
       </a>
-      {respondendo && (
+      {inicioDaResposta && (
         <EscreverEmail
-          inicio={{ para: respostaPara, assunto: assuntoDeResposta(conversa.assunto), responderAEmailId: ultimaMinha.id }}
-          onClose={() => setRespondendo(false)}
-          onEnviado={() => { setRespondendo(false); onMudou(); }}
+          inicio={inicioDaResposta}
+          onClose={() => setInicioDaResposta(null)}
+          onEnviado={() => { setInicioDaResposta(null); onMudou(); }}
         />
       )}
     </>

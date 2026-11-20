@@ -8,7 +8,7 @@ const AGORA = Date.parse("2026-11-19T12:00:00Z");
 function email(id: string, campos: Partial<EmailDeConversa>): EmailDeConversa {
   return {
     id, message_id: id, thread_id: `fio-${id}`, subject: "Assunto", snippet: "trecho", from_email: "novo@cliente.com.br", from_name: "Novo Cliente",
-    to_emails: ["luan@platibanda.com"], sent_at: "2026-11-18T10:00:00Z", direction: "inbound", visibility: "private", user_id: "u1",
+    to_emails: ["luan@platibanda.com"], cc_emails: null, sent_at: "2026-11-18T10:00:00Z", direction: "inbound", visibility: "private", user_id: "u1",
     contato_id: null, empresa_crm_id: null, captacao_id: null, ...campos,
   };
 }

@@ -1,6 +1,6 @@
 import type { EmailProvider } from "./config";
 import { getEmailConnection, getValidEmailAccessToken } from "./connections";
-import { montarMensagemDoGmail, podeEnviarPelaConexao, type PedidoDeEnvio } from "./envio";
+import { montarMensagemDoGmail, podeEnviarPelaConexao, type AnexoResolvido, type PedidoDeEnvio } from "./envio";
 import { enviarPeloGmail } from "./google";
 import { enviarPelaMicrosoft, responderPelaMicrosoft } from "./microsoft";
 import { NOME_DO_PROVEDOR } from "./conversas";
@@ -21,7 +21,12 @@ export class ErroDeEnvio extends Error {
  * Envia pela caixa da própria pessoa (Gmail ou Outlook), então a cópia fica em Enviados e a próxima sincronização
  * a traz de volta. Exige a permissão de envio: quem conectou antes de ela ser pedida precisa reconectar.
  */
-export async function enviarPelaConta(userId: string, provider: EmailProvider, pedido: Pick<PedidoDeEnvio, "para" | "cc" | "assunto" | "texto">, resposta: MensagemRespondida | null): Promise<void> {
+export async function enviarPelaConta(
+  userId: string,
+  provider: EmailProvider,
+  pedido: Pick<PedidoDeEnvio, "para" | "cc" | "cco" | "assunto" | "texto" | "fonte"> & { anexos: readonly AnexoResolvido[] },
+  resposta: MensagemRespondida | null,
+): Promise<void> {
   const nome = NOME_DO_PROVEDOR[provider];
   const conexao = await getEmailConnection(userId, provider);
   if (!conexao) throw new ErroDeEnvio("sem-conexao", `Conecte seu ${nome} em Configurações › Minhas ferramentas para enviar.`);
@@ -36,8 +41,11 @@ export async function enviarPelaConta(userId: string, provider: EmailProvider, p
         de: conexao.provider_account_email ?? "",
         para: pedido.para,
         cc: pedido.cc,
+        cco: pedido.cco,
         assunto: pedido.assunto,
         texto: pedido.texto,
+        fonte: pedido.fonte,
+        anexos: pedido.anexos,
         respondendoA: resposta?.internetMessageId ?? null,
       });
       await enviarPeloGmail(accessToken, raw, resposta?.threadId ?? null);
