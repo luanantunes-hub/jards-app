@@ -1,0 +1,20 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "jards/ingressos",
+	"title": "Ingressos Jards",
+	"category": "widgets",
+	"icon": "tickets-alt",
+	"description": "Mostra os ingressos da sua loja da Ticketeria (Jards). A compra termina na página segura do Jards.",
+	"textdomain": "jards-ingressos",
+	"attributes": {
+		"evento": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "file:./editor.js"
+}

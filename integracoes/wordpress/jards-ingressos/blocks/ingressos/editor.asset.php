@@ -1,0 +1,11 @@
+<?php
+/**
+ * As dependências do script do editor do bloco.
+ *
+ * @package JardsIngressos
+ */
+
+return array(
+	'dependencies' => array( 'wp-blocks', 'wp-element', 'wp-components', 'wp-block-editor', 'wp-i18n' ),
+	'version'      => '1.0.0',
+);
