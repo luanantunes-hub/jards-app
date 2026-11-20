@@ -56,7 +56,7 @@ test("sem sessão por vir (ou sem evento), a frase de espera, sem botão", () =>
 });
 
 test("o site desenha o bloco com os dados do evento certo e ignora os de outro", () => {
-  const site = { titulo: "Cia", cor: "#1C0E33", menu: [{ slug: "inicio", titulo: "Início" }], pagina: { slug: "inicio", titulo: "Início", blocos: [{ tipo: "ingressos" as const, titulo: "Ingressos", evento_id: EVENTO }] }, programacoes: {}, ingressos: { [EVENTO]: sessoes, [OUTRO]: [{ id: "x", quando: "Outro dia", local: "", url: "https://jards.com.br/comprar/x" }] } };
+  const site = { agora: 0, titulo: "Cia", cor: "#1C0E33", menu: [{ slug: "inicio", titulo: "Início" }], pagina: { slug: "inicio", titulo: "Início", blocos: [{ tipo: "ingressos" as const, titulo: "Ingressos", evento_id: EVENTO }] }, programacoes: {}, ingressos: { [EVENTO]: sessoes, [OUTRO]: [{ id: "x", quando: "Outro dia", local: "", url: "https://jards.com.br/comprar/x" }] } };
   const h = renderToStaticMarkup(createElement(SiteView, { site, base: "" }));
   assert.match(h, /comprar\/s1/);
   assert.doesNotMatch(h, /Outro dia/);

@@ -6,6 +6,7 @@ import type { DiaPublico } from "@/lib/producao/programacao";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { blocosDoJson, corDoTema, espacosDosBlocos, eventosDosBlocos, hostDoPedido, ordemDasPaginas, type Bloco } from "@/lib/ticketeria/site";
 import { appUrl } from "@/lib/email/config";
+import { agoraDoServidor } from "@/lib/ticketeria/contagem";
 import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
 import type { Database } from "@/lib/supabase/types";
 
@@ -26,6 +27,8 @@ export type SitePublico = {
   titulo: string; cor: string; organizacao: string;
   menu: { slug: string; titulo: string }[];
   pagina: { slug: string; titulo: string; blocos: Bloco[]; descricao: string | null; imagem: string | null };
+  /** A hora do servidor (ms) ao montar a página, para a contagem regressiva. */
+  agora: number;
   /** As sessões confirmadas dos espaços que os blocos de programação citam (só os da organização do site). */
   programacoes: ProgramacoesDoSite;
   /** As sessões que ainda vão acontecer de cada evento citado num bloco de ingressos, pelo id do evento. */
@@ -104,6 +107,7 @@ export async function paginaPublicaDoDominio(admin: Admin, host: string, slug: s
     organizacao: (organizacao.data as { nome?: string | null } | null)?.nome ?? "",
     menu: publicadas.map(pagina => ({ slug: pagina.slug, titulo: pagina.titulo })),
     pagina: { slug: atual.slug, titulo: atual.titulo, blocos, descricao: atual.descricao, imagem: atual.imagem_url },
+    agora: agoraDoServidor(),
     programacoes,
     ingressos,
   };

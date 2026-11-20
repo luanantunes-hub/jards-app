@@ -7,6 +7,7 @@ import { SiteView, type SiteParaDesenhar } from "@/components/ticketeria/SiteVie
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { ingressosDosBlocos, programacoesDosBlocos } from "@/lib/ticketeria/site-publico";
 import { blocosDoJson, corDoTema, ordemDasPaginas } from "@/lib/ticketeria/site";
+import { agoraDoServidor } from "@/lib/ticketeria/contagem";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,6 +33,7 @@ export default async function PreviaDoSite({ params }: { params: Promise<{ id: s
     titulo: site.titulo ?? site.nome, cor: corDoTema(site.cor),
     menu: ordenadas.map(item => ({ slug: item.slug, titulo: item.titulo })),
     pagina: { slug: atual.slug, titulo: atual.titulo, blocos },
+    agora: agoraDoServidor(),
     programacoes: await programacoesDosBlocos(createAdminClient(), site.organization_id, blocos),
     ingressos: await ingressosDosBlocos(createAdminClient(), site.organization_id, blocos),
   };

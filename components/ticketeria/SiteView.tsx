@@ -1,12 +1,15 @@
 import type { DiaPublico } from "@/lib/producao/programacao";
 import { MarcaDaSessao } from "@/components/producao/MarcaDaSessao";
-import { textoSobreCor, type Bloco } from "@/lib/ticketeria/site";
+import { ContagemRegressiva } from "@/components/ticketeria/ContagemRegressiva";
+import { enderecoDoMapa, enderecoDoVideo, textoSobreCor, type Bloco, type ColunaDoBloco } from "@/lib/ticketeria/site";
 import { diaPorExtenso } from "@/components/producao/ProgramacaoPublicaView";
 
 export type SiteParaDesenhar = {
   titulo: string; cor: string;
   menu: { slug: string; titulo: string }[];
   pagina: { slug: string; titulo: string; blocos: Bloco[] };
+  /** A hora do servidor (ms), para a contagem regressiva começar certa; quem monta o site a traz de `agoraDoServidor`. */
+  agora: number;
   /** A programação de cada espaço da Produção citado num bloco, pelo id do espaço. */
   programacoes: Record<string, DiaPublico[]>;
   /** As sessões de cada evento citado num bloco de ingressos, pelo id do evento. */
@@ -68,7 +71,48 @@ export function IngressosDoEvento({ titulo, sessoes }: { titulo: string; sessoes
   );
 }
 
-function BlocoDoSite({ bloco, programacoes, ingressos }: { bloco: Bloco; programacoes: Record<string, DiaPublico[]>; ingressos: Record<string, { id: string; quando: string; local: string; url: string }[]> }) {
+
+const BOTAO_CLARO = "inline-flex min-h-11 items-center rounded-xl bg-white px-5 py-2.5 text-[0.9375rem] font-normal text-[#282525] transition hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+
+/** A faixa de abertura: com imagem de fundo (escurecida, para o texto branco ler bem) ou na cor do tema. */
+function Capa({ bloco, cor }: { bloco: Extract<Bloco, { tipo: "capa" }>; cor: string }) {
+  const comImagem = bloco.imagem !== "";
+  const texto = comImagem ? "#ffffff" : textoSobreCor(cor);
+  return (
+    <section aria-label={bloco.titulo} className="relative isolate overflow-hidden rounded-xl" style={{ backgroundColor: cor, color: texto }}>
+      {comImagem && (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element -- imagem de endereço externo (https), sem otimização do Next */}
+          <img src={bloco.imagem} alt="" loading="eager" referrerPolicy="no-referrer" className="absolute inset-0 -z-20 h-full w-full object-cover" />
+          <span aria-hidden="true" className="absolute inset-0 -z-10 bg-black/55" />
+        </>
+      )}
+      <div className="mx-auto flex max-w-[40rem] flex-col items-center gap-3 px-5 py-12 text-center sm:py-16">
+        <h2 className="text-[1.75rem] font-medium leading-tight tracking-[-.02em] sm:text-[2.25rem]">{bloco.titulo}</h2>
+        {bloco.subtitulo && <p className="text-[1rem] leading-relaxed opacity-90">{bloco.subtitulo}</p>}
+        {bloco.botao_rotulo && (comImagem || texto === "#ffffff"
+          ? <a href={bloco.botao_url} target="_blank" rel="noopener noreferrer" className={`mt-2 ${BOTAO_CLARO}`}>{bloco.botao_rotulo}</a>
+          : <a href={bloco.botao_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center rounded-xl bg-[#282525] px-5 py-2.5 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]">{bloco.botao_rotulo}</a>)}
+      </div>
+    </section>
+  );
+}
+
+function Coluna({ coluna }: { coluna: ColunaDoBloco }) {
+  if (coluna.tipo === "imagem") {
+    // eslint-disable-next-line @next/next/no-img-element -- imagem de endereço externo (https), sem otimização do Next
+    return <img src={coluna.url} alt={coluna.alt} loading="lazy" referrerPolicy="no-referrer" className="h-auto w-full rounded-xl" />;
+  }
+  return <div className="space-y-3 text-[1rem] leading-relaxed">{coluna.texto.split(/\n{2,}/).map((paragrafo, indice) => <p key={indice} className="whitespace-pre-line">{paragrafo}</p>)}</div>;
+}
+
+function TituloDoBloco({ titulo }: { titulo: string }) {
+  return titulo ? <h2 className="mb-3 text-[1.25rem] font-medium tracking-[-.01em]">{titulo}</h2> : null;
+}
+
+const SANDBOX_DO_QUADRO = "allow-scripts allow-same-origin allow-popups allow-presentation";
+
+function BlocoDoSite({ bloco, cor, agora, programacoes, ingressos }: { bloco: Bloco; cor: string; agora: number; programacoes: Record<string, DiaPublico[]>; ingressos: Record<string, { id: string; quando: string; local: string; url: string }[]> }) {
   switch (bloco.tipo) {
     case "titulo":
       return <h2 className="text-[1.5rem] font-medium tracking-[-.02em]">{bloco.texto}</h2>;
@@ -79,6 +123,71 @@ function BlocoDoSite({ bloco, programacoes, ingressos }: { bloco: Bloco; program
       return <img src={bloco.url} alt={bloco.alt} loading="lazy" referrerPolicy="no-referrer" className="h-auto max-w-full rounded-xl" />;
     case "botao":
       return <a href={bloco.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl bg-[#282525] px-5 py-2.5 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{bloco.rotulo}</a>;
+    case "capa":
+      return <Capa bloco={bloco} cor={cor} />;
+    case "colunas":
+      return <div className="grid items-center gap-5 sm:grid-cols-2"><Coluna coluna={bloco.esquerda} /><Coluna coluna={bloco.direita} /></div>;
+    case "galeria":
+      return (
+        <section aria-label={bloco.titulo || "Galeria"}>
+          <TituloDoBloco titulo={bloco.titulo} />
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+            {bloco.imagens.map((imagem, indice) => (
+              <li key={indice}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- imagem de endereço externo (https), sem otimização do Next */}
+                <img src={imagem.url} alt={imagem.alt} loading="lazy" referrerPolicy="no-referrer" className="aspect-square w-full rounded-xl object-cover" />
+              </li>
+            ))}
+          </ul>
+        </section>
+      );
+    case "video":
+      return (
+        <section aria-label={bloco.titulo || "Vídeo"}>
+          <TituloDoBloco titulo={bloco.titulo} />
+          <iframe src={enderecoDoVideo(bloco)} title={bloco.titulo || "Vídeo"} loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" sandbox={SANDBOX_DO_QUADRO} className="aspect-video w-full rounded-xl border-0 bg-black/5" />
+        </section>
+      );
+    case "mapa":
+      return (
+        <section aria-label={bloco.titulo || "Mapa"}>
+          <TituloDoBloco titulo={bloco.titulo} />
+          <iframe src={enderecoDoMapa(bloco.endereco)} title={bloco.titulo || `Mapa: ${bloco.endereco}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" sandbox={SANDBOX_DO_QUADRO} className="h-72 w-full rounded-xl border-0 bg-black/5 sm:h-80" />
+          <p className="mt-1.5 text-[0.8125rem] opacity-60">{bloco.endereco}</p>
+        </section>
+      );
+    case "contagem":
+      return <ContagemRegressiva titulo={bloco.titulo} ate={bloco.ate} depois={bloco.depois} inicial={agora} />;
+    case "faq":
+      return (
+        <section aria-label={bloco.titulo || "Perguntas frequentes"}>
+          <TituloDoBloco titulo={bloco.titulo} />
+          <div className="divide-y divide-black/10 overflow-hidden rounded-xl border border-black/10">
+            {bloco.itens.map((item, indice) => (
+              <details key={indice} className="group">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3.5 text-[0.9375rem] font-normal focus-visible:outline-2 focus-visible:outline-offset-[-2px]">
+                  <span>{item.pergunta}</span>
+                  <span aria-hidden="true" className="shrink-0 opacity-50 transition group-open:rotate-45">+</span>
+                </summary>
+                <p className="whitespace-pre-line px-4 pb-4 text-[0.9375rem] leading-relaxed opacity-80">{item.resposta}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+      );
+    case "patrocinadores":
+      return (
+        <section aria-label={bloco.titulo || "Patrocinadores"}>
+          {bloco.titulo && <h2 className="mb-3 text-center text-[0.8125rem] font-normal opacity-60">{bloco.titulo}</h2>}
+          <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-5">
+            {bloco.itens.map((item, indice) => {
+              // eslint-disable-next-line @next/next/no-img-element -- imagem de endereço externo (https), sem otimização do Next
+              const logo = <img src={item.url} alt={item.alt} loading="lazy" referrerPolicy="no-referrer" className="h-12 w-auto max-w-[9rem] object-contain" />;
+              return <li key={indice}>{item.link ? <a href={item.link} target="_blank" rel="noopener noreferrer sponsored" className="block focus-visible:outline-2 focus-visible:outline-offset-4">{logo}</a> : logo}</li>;
+            })}
+          </ul>
+        </section>
+      );
     case "programacao":
       return <Programacao titulo={bloco.titulo} dias={bloco.espaco_id ? programacoes[bloco.espaco_id] ?? null : null} />;
     case "ingressos":
@@ -123,7 +232,7 @@ export function SiteView({ site, base, previa }: { site: SiteParaDesenhar; base:
           <p className="text-[0.9375rem] opacity-60">Esta página ainda não tem conteúdo.</p>
         ) : (
           <div className="space-y-8">
-            {site.pagina.blocos.map((bloco, indice) => <BlocoDoSite key={indice} bloco={bloco} programacoes={site.programacoes} ingressos={site.ingressos ?? {}} />)}
+            {site.pagina.blocos.map((bloco, indice) => <BlocoDoSite key={indice} bloco={bloco} cor={site.cor} agora={site.agora} programacoes={site.programacoes} ingressos={site.ingressos ?? {}} />)}
           </div>
         )}
       </main>
