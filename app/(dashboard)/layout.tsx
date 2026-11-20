@@ -638,7 +638,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           transition: "width 220ms cubic-bezier(0.4,0,0.2,1), transform 220ms cubic-bezier(0.4,0,0.2,1)",
           background: "#FFFFFF",
           borderRight: "1px solid rgba(13,13,13,.08)",
-          boxShadow: "4px 0 24px rgba(0,0,0,0.06)",
+          // Na Ticketeria o menu é fixo e não cobre o conteúdo: sem sombra, o fundo do menu e o do workspace ficam iguais (só o fio da borda separa).
+          boxShadow: menuFixoAberto && !mobileOpen ? "none" : "4px 0 24px rgba(0,0,0,0.06)",
         }}
         onMouseEnter={() => setExpanded(true)}
         onMouseLeave={() => setExpanded(false)}
