@@ -209,6 +209,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
         { label: "Cupons", href: "/ingressos/cupons", icon: Tag },
         { label: "Lista de espera", href: "/ingressos/espera", icon: Hourglass },
         { label: "Porta", href: "/ingressos/porta", icon: ScanLine },
+        { label: "Bilheteria", href: "/ingressos/bilheteria", icon: Store },
         { label: "Recebimentos", href: "/ingressos/recebimentos", icon: Wallet },
         { label: "Integrações", href: "/ingressos/integracoes", icon: Plug },
       ],
