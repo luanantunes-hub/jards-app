@@ -130,3 +130,14 @@ test("lerPartesDaBase: vazio e ausente são aceitos; formato errado devolve null
   assert.deepEqual(lerPartesDaBase([]), []);
   assert.equal(lerPartesDaBase("x"), null);
 });
+
+// ─── A cautela com a margem ─────────────────────────────────────────────────
+
+import { FATOR_DE_CAUTELA, margemMostrada } from "../lib/ticketeria/modelo-resultado";
+
+test("a margem mostrada é a maior distância até uma ponta do intervalo, vezes o fator de cautela", () => {
+  assert.equal(FATOR_DE_CAUTELA, 3);
+  assert.equal(margemMostrada(33, 49.5, 41), 26, "8 de um lado e 8,5 do outro: 3 x 8,5 = 25,5, arredondado");
+  assert.equal(margemMostrada(10, 40, 20), 60, "o lado maior (20) vezes 3");
+  assert.equal(margemMostrada(20, 20, 20), 0);
+});

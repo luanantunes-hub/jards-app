@@ -6,7 +6,7 @@
 // já teve (FATOR_DA_CURVA, o mesmo `max_value` de modelo/mmm.py); acima do maior gasto já testado a estimativa fica bem menos firme e a tela avisa. A faixa de cada previsão reaproveita a
 // incerteza do próprio modelo sobre o canal, que costuma ser otimista. Só entram canais com gasto e curva (o que não tem gasto não tem o que ajustar).
 
-import type { CanalDoResultado, PontoDaCurva } from "@/lib/ticketeria/modelo-resultado";
+import { FATOR_DE_CAUTELA, type CanalDoResultado, type PontoDaCurva } from "@/lib/ticketeria/modelo-resultado";
 
 /** O mesmo `max_value` de `sample_saturation_curve` em modelo/mmm.py: a curva vai até esta parte do maior gasto semanal do canal. */
 export const FATOR_DA_CURVA = 1.5;
@@ -84,7 +84,7 @@ export function recomendar(linhas: LinhaDeInvestimento[]): Recomendacao {
 
 export type Divisao = { porCanal: Record<string, number>; totalCentavos: number };
 export type Previsao = {
-  /** Os ingressos por semana que os anúncios trazem com esta divisão. */ ingressos: number; /** A faixa, vinda da incerteza do próprio modelo sobre cada canal. */ baixo: number; alto: number;
+  /** Os ingressos por semana que os anúncios trazem com esta divisão. */ ingressos: number; /** A faixa, vinda da incerteza do próprio modelo sobre cada canal, alargada por FATOR_DE_CAUTELA. */ baixo: number; alto: number;
   custoPorIngressoCentavos: number | null; /** Os canais com gasto acima do maior que já teve. */ foraDaFaixa: string[];
 };
 
@@ -117,8 +117,9 @@ export function preverDivisao(canais: CanalComCurva[], porCanal: Record<string, 
     const g = porCanal[c.canal] ?? 0;
     const i = ingressosNoGasto(c, g);
     ingressos += i; gasto += g;
-    baixo += c.porcento > 0 ? i * (c.baixo / c.porcento) : i;
-    alto += c.porcento > 0 ? i * (c.alto / c.porcento) : i;
+    // A faixa do canal: a incerteza do modelo sobre ele, alargada como a margem da tela (FATOR_DE_CAUTELA).
+    baixo += c.porcento > 0 ? Math.max(0, i - FATOR_DE_CAUTELA * (i - i * (c.baixo / c.porcento))) : i;
+    alto += c.porcento > 0 ? i + FATOR_DE_CAUTELA * (i * (c.alto / c.porcento) - i) : i;
     if (g > maiorGastoTestado(c)) fora.push(c.canal);
   }
   return { ingressos: Math.round(ingressos * 10) / 10, baixo: Math.round(baixo), alto: Math.round(alto), custoPorIngressoCentavos: ingressos >= 1 && gasto > 0 ? Math.round(gasto / ingressos) : null, foraDaFaixa: fora };

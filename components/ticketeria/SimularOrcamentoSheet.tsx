@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { CAMPO, ROTULO } from "@/components/ticketeria/FolhasDosEventos";
 import { emCentavos, lerValorEmReais } from "@/lib/producao/dinheiro";
-import { rotuloDoCanalDeGasto } from "@/lib/ticketeria/modelo";
+import { rotuloDoCanalDeGasto, type Confianca } from "@/lib/ticketeria/modelo";
 import { canaisComCurva, dividirOrcamento, orcamentoMaximo, preverDivisao } from "@/lib/ticketeria/modelo-recomendacao";
 import type { CanalDoResultado } from "@/lib/ticketeria/modelo-resultado";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
@@ -18,7 +18,7 @@ const CELULA = "px-4 py-2.5 text-[0.8125rem] text-[#282525]";
 const inteiro = (n: number) => String(Math.round(n));
 const reaisParaCampo = (centavos: number) => (centavos / 100).toFixed(2).replace(".", ",").replace(/,00$/, "");
 
-export function SimularOrcamentoSheet({ canais, gastoSemanal, onClose, valorInicial }: { canais: CanalDoResultado[]; gastoSemanal: Record<string, number>; onClose: () => void; valorInicial?: string }) {
+export function SimularOrcamentoSheet({ canais, gastoSemanal, onClose, valorInicial, confianca = "boa", semanas }: { canais: CanalDoResultado[]; gastoSemanal: Record<string, number>; onClose: () => void; valorInicial?: string; confianca?: Confianca; semanas?: number }) {
   const comCurva = useMemo(() => canaisComCurva(canais).filter(c => (gastoSemanal[c.canal] ?? 0) > 0), [canais, gastoSemanal]);
   const hojePorCanal = useMemo(() => Object.fromEntries(comCurva.map(c => [c.canal, gastoSemanal[c.canal] ?? 0])), [comCurva, gastoSemanal]);
   const totalHoje = Object.values(hojePorCanal).reduce((s, n) => s + n, 0);
@@ -49,7 +49,7 @@ export function SimularOrcamentoSheet({ canais, gastoSemanal, onClose, valorInic
                 <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={`${CABECALHO} text-left`}><span className="sr-only">Canal</span></th><th className={`${CABECALHO} text-right`}>Hoje</th><th className={`${CABECALHO} text-right`}>Dividindo como sugerido</th></tr></thead>
                 <tbody className="divide-y divide-black/[.08]">
                   {comCurva.map(c => <tr key={c.canal}><td className={CELULA}>{rotuloDoCanalDeGasto(c.canal)}</td><td className={`${CELULA} text-right tabular-nums`}>{formatarMoeda(hojePorCanal[c.canal])}</td><td className={`${CELULA} text-right tabular-nums`}>{formatarMoeda(sugerida.porCanal[c.canal] ?? 0)}</td></tr>)}
-                  <tr><td className={CELULA}>Ingressos esperados por semana, pelos anúncios</td><td className={`${CELULA} text-right tabular-nums`}>{inteiro(hoje.ingressos)}</td><td className={`${CELULA} text-right tabular-nums`}>{inteiro(nova.ingressos)} <span className="text-black/35">entre {nova.baixo} e {nova.alto}</span></td></tr>
+                  <tr><td className={CELULA}>Ingressos esperados por semana, pelos anúncios</td><td className={`${CELULA} text-right tabular-nums`}>{inteiro(hoje.ingressos)}</td><td className={`${CELULA} text-right tabular-nums`}>{inteiro(nova.ingressos)} <span className="text-black/35">entre {nova.baixo} e {nova.alto}, com margem alargada</span></td></tr>
                   <tr><td className={CELULA}>Custo por ingresso</td><td className={`${CELULA} text-right tabular-nums`}>{hoje.custoPorIngressoCentavos === null ? "—" : formatarMoeda(hoje.custoPorIngressoCentavos)}</td><td className={`${CELULA} text-right tabular-nums`}>{nova.custoPorIngressoCentavos === null ? "—" : formatarMoeda(nova.custoPorIngressoCentavos)}</td></tr>
                 </tbody>
               </table>
@@ -63,6 +63,7 @@ export function SimularOrcamentoSheet({ canais, gastoSemanal, onClose, valorInic
             </p>
           </>
         )}
+        {confianca !== "boa" && <p className="rounded-xl border px-3 py-2 text-[0.75rem] text-black/60" style={{ borderColor: "rgba(176,122,20,.25)", background: "#FFFBF2" }}>{semanas ? `Com ${semanas} semanas` : "Com este histórico"} de dados, trate este resultado como indício: o modelo costuma errar mais quando tem menos de 104 semanas.</p>}
         {comCurva.length === 0 && <p className="text-[0.8125rem] text-black/45">Ainda não há canal com anúncio e curva para simular.</p>}
       </div>
     </TopSheet>

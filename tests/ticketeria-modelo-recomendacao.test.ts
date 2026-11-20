@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { FATOR_DA_CURVA, canaisComCurva, dividirOrcamento, ingressosNoGasto, ingressosPorCemReais, limiteDaCurva, linhasDeInvestimento, maiorGastoTestado, orcamentoMaximo, preverDivisao, recomendar, type CanalComCurva } from "../lib/ticketeria/modelo-recomendacao";
-import type { CanalDoResultado } from "../lib/ticketeria/modelo-resultado";
+import { FATOR_DE_CAUTELA, type CanalDoResultado } from "../lib/ticketeria/modelo-resultado";
 
 // Uma curva que satura: ingressos = beta * (1 - exp(-lam * gasto / escala)), até 1,5 vez o maior gasto testado, em 16 pontos (como o cálculo em Python).
 const curva = (beta: number, lam: number, maiorTestado: number) => Array.from({ length: 16 }, (_, i) => {
@@ -89,4 +89,16 @@ test("prever uma divisão: ingressos, faixa pela incerteza do modelo, custo por 
   assert.deepEqual(p.foraDaFaixa, []);
   assert.deepEqual(preverDivisao(cs, { "meta-ads": 20000, "google-ads": 22000 }).foraDaFaixa, ["google-ads"], "22.000 passa do maior gasto testado do Google (15.000)");
   assert.equal(preverDivisao(cs, { "meta-ads": 0, "google-ads": 0 }).custoPorIngressoCentavos, null);
+});
+
+test("a faixa da previsão é a incerteza do modelo alargada pelo fator de cautela (e nunca abaixo de zero)", () => {
+  const cs = canais();
+  const g = { "meta-ads": 20000, "google-ads": 4000 };
+  const p = preverDivisao(cs, g);
+  const i = (c: CanalComCurva) => ingressosNoGasto(c, g[c.canal as keyof typeof g]);
+  const bruto = (f: (c: CanalComCurva) => number) => cs.reduce((s, c) => s + f(c), 0);
+  const alto = bruto(c => i(c) + FATOR_DE_CAUTELA * (i(c) * (c.alto / c.porcento) - i(c)));
+  assert.ok(Math.abs(p.alto - Math.round(alto)) <= 1);
+  assert.ok(p.baixo >= 0 && p.baixo < p.ingressos);
+  assert.ok(p.alto - p.ingressos > FATOR_DE_CAUTELA * 0.9 * bruto(c => i(c) * (c.alto / c.porcento) - i(c)) - 1);
 });

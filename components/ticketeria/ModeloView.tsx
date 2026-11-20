@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import { SEMANAS_IDEAIS, rotuloDoCanalDeGasto, type Confianca, type ProntidaoDoModelo, type Verificacao } from "@/lib/ticketeria/modelo";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
 import { SEMANAS_DOS_CONTROLES_EXTRAS, type ControleDaTela } from "@/lib/ticketeria/modelo-controles";
-import { temMargemGrande, type CanalDoResultado, type ChaveDaParte } from "@/lib/ticketeria/modelo-resultado";
+import { FATOR_DE_CAUTELA, margemMostrada, temMargemGrande, type CanalDoResultado, type ChaveDaParte } from "@/lib/ticketeria/modelo-resultado";
 import { canaisComCurva, linhasDeInvestimento, recomendar } from "@/lib/ticketeria/modelo-recomendacao";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 
@@ -96,22 +96,32 @@ const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase t
 const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
 const dataBr = (iso: string) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso));
 const pontos = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ","));
-const margem = (baixo: number, alto: number, meio: number) => Math.round(Math.max(meio - baixo, alto - meio));
+const margem = margemMostrada;
 
 
 // ─── De onde vale investir mais (previsão) ──────────────────────────────────
 
 /** A recomendação e a tabela "onde vale investir mais": o que R$ 100 a mais por semana trazem em cada canal, o custo do ingresso extra e se o canal está perto do limite. Previsão, não garantia. */
-export function RecomendacaoDeInvestimento({ canais, gastoSemanal }: { canais: CanalDoResultado[]; gastoSemanal: Record<string, number> }) {
+export function RecomendacaoDeInvestimento({ canais, gastoSemanal, confianca = "boa", semanas }: { canais: CanalDoResultado[]; gastoSemanal: Record<string, number>; confianca?: Confianca; semanas?: number }) {
   const comCurva = canaisComCurva(canais);
   const linhas = linhasDeInvestimento(comCurva, gastoSemanal).filter(l => l.gastoCentavos > 0);
   if (linhas.length === 0) return null;
   const r = recomendar(linhas);
+  const firme = confianca === "boa";
   const rotulo = (c: string) => rotuloDoCanalDeGasto(c);
   const noLimite = linhas.filter(l => l.estado === "limite");
   const limiteDe = (c: string) => comCurva.find(x => x.canal === c)?.saturacaoCentavos ?? null;
   return (
     <section className="space-y-3" aria-label="De onde vale investir mais">
+      {!firme ? (
+        <div className="flex items-start gap-3.5 rounded-xl border px-5 py-4" style={{ borderColor: "rgba(176,122,20,.25)", background: "#FFFBF2" }}>
+          <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[0.6875rem] text-white" style={{ background: AMBAR }} aria-hidden="true">!</span>
+          <div className="min-w-0">
+            <p className="text-[0.875rem] text-[#282525]">{semanas ? `Com ${semanas} semanas` : "Com este histórico"} ainda não dá para recomendar um canal com segurança.</p>
+            <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/50">A tabela abaixo é um indício. Nos testes com dados inventados, o modelo errou a ordem dos canais quando tinha menos de 104 semanas de histórico.</p>
+          </div>
+        </div>
+      ) : (
       <div className="flex items-start gap-3.5 rounded-xl border px-5 py-4" style={{ borderColor: "rgba(46,137,50,.28)", background: "#F8FCF8" }}>
         <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[0.6875rem] text-white" style={{ background: VERDE }} aria-hidden="true">↑</span>
         <div className="min-w-0">
@@ -131,6 +141,7 @@ export function RecomendacaoDeInvestimento({ canais, gastoSemanal }: { canais: C
           )}
         </div>
       </div>
+      )}
       <h3 className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Onde vale investir mais</h3>
       <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>
         <table className="w-full min-w-[46rem] border-collapse">
@@ -220,7 +231,7 @@ export function ResultadoDoModelo({ resultado, gastoSemanal }: { resultado: Resu
         <div className="mt-2.5 h-2 rounded bg-[#F1E6C8]" aria-hidden="true"><div className="h-2 rounded" style={{ width: `${parte}%`, background: AMBAR }} /></div>
         {e.confianca === "baixa" && (e.r_hat_maximo > 1.05 || e.divergencias > 0) && <p className="mt-2 text-[0.75rem] text-black/50">O cálculo ainda não se firmou direito com estes dados: leia os números como indício.</p>}
       </div>
-      {gastoSemanal && <RecomendacaoDeInvestimento canais={canais} gastoSemanal={gastoSemanal} />}
+      {gastoSemanal && <RecomendacaoDeInvestimento canais={canais} gastoSemanal={gastoSemanal} confianca={e.confianca} semanas={e.semanas} />}
       {ultimaFalha && <p role="alert" className="rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-black/55" style={{ borderColor: "rgba(176,122,20,.25)" }}>A rodada de {dataBr(ultimaFalha.created_at)} não deu: {ultimaFalha.motivo} Esta tela mostra a anterior.</p>}
       <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>
         <table className="w-full min-w-[46rem] border-collapse">
@@ -250,7 +261,7 @@ export function ResultadoDoModelo({ resultado, gastoSemanal }: { resultado: Resu
           {saturacoes.map(c => <li key={c.canal}>{rotuloDoCanalDeGasto(c.canal)}: acima de {formatarMoeda(c.saturacao_gasto_centavos as number)} por semana, cada real a mais rende pouco.</li>)}
         </ul>
       )}
-      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Os links só contam quem clicou e comprou. O modelo também enxerga quem viu o anúncio e comprou depois por outro caminho. Quando os dois números se parecem, a leitura é mais segura; quando diferem muito, desconfie do modelo até ter mais semanas. É uma estimativa, não uma prova: o ± é o quanto o próprio modelo acha que ainda pode errar, e costuma ser otimista.</p>
+      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Os links só contam quem clicou e comprou. O modelo também enxerga quem viu o anúncio e comprou depois por outro caminho. Quando os dois números se parecem, a leitura é mais segura; quando diferem muito, desconfie do modelo até ter mais semanas. É uma estimativa, não uma prova: o ± é o quanto o modelo acha que ainda pode errar, já alargado {FATOR_DE_CAUTELA} vezes: nos testes com dados inventados ele errou até {FATOR_DE_CAUTELA} vezes mais do que dizia. Leia a margem como o mínimo de incerteza.</p>
     </div>
   );
 }
