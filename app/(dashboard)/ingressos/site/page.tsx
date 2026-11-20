@@ -13,11 +13,13 @@ import { corDoTema, type Bloco } from "@/lib/ticketeria/site";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { TopSheet } from "@/components/ui/TopSheet";
+import { TemaDoSiteSheet } from "@/components/ticketeria/TemaDoSiteSheet";
+import { temaDoSite } from "@/lib/ticketeria/temas";
 import { EditorDoSite, type EspacoDaProgramacao, type EventoParaBloco } from "@/components/ticketeria/EditorDoSite";
 import { DominiosDoSite } from "@/components/ticketeria/DominiosDoSite";
 
 type Loja = { id: string; nome: string };
-type Site = { id: string; nome: string; titulo: string | null; cor: string; situacao: SituacaoDoSite };
+type Site = { id: string; nome: string; titulo: string | null; cor: string; tema: string; situacao: SituacaoDoSite };
 
 const CAMPO = "h-10 w-full rounded-xl border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-normal text-black/55";
@@ -87,6 +89,7 @@ export default function SiteDaLojaPage() {
   const [titulo, setTitulo] = useState("");
   const [cor, setCor] = useState("#282525");
   const [folha, setFolha] = useState(false);
+  const [folhaDoTema, setFolhaDoTema] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
@@ -105,7 +108,7 @@ export default function SiteDaLojaPage() {
         clienteDaProducao(cliente).from("producao_espacos").select("id, nome").eq("organization_id", organizationId).eq("arquivado", false).order("nome"),
       ]);
       const loja = lojas.data ?? null;
-      const sites = loja ? await ticketeria.from("ticketeria_sites").select("id, nome, titulo, cor, situacao").eq("loja_id", loja.id).maybeSingle() : { data: null, error: null };
+      const sites = loja ? await ticketeria.from("ticketeria_sites").select("id, nome, titulo, cor, tema, situacao").eq("loja_id", loja.id).maybeSingle() : { data: null, error: null };
       if (!ativo) return;
       const site = (sites.data ?? null) as Site | null;
       const ev = loja ? await ticketeria.from("ticketeria_eventos").select("id, titulo, situacao").eq("loja_id", loja.id).neq("situacao", "cancelado").order("titulo") : { data: [] };
@@ -197,10 +200,16 @@ export default function SiteDaLojaPage() {
           </div>
           {podeEditar && <button type="button" disabled={salvando || (titulo.trim() === (site.titulo ?? "") && cor === corDoTema(site.cor))} onClick={() => void atualizar({ titulo: titulo.trim() === "" ? null : titulo.trim(), cor })} className="inline-flex h-10 items-center rounded-xl acao-salvar px-4 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">Salvar</button>}
         </section>
+        <div className="-mt-6 mb-10 flex max-w-2xl items-center gap-3 text-[0.8125rem]">
+          <span className="text-[0.6875rem] font-normal text-black/55">Tema</span>
+          <span className="text-[#282525]">{temaDoSite(site.tema).nome}</span>
+          {podeEditar && <button type="button" onClick={() => setFolhaDoTema(true)} className="rounded-xl text-[0.8125rem] text-black/55 underline underline-offset-2 transition hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Mudar</button>}
+        </div>
         <EditorDoSite siteId={site.id} organizationId={organizationId} podeEditar={podeEditar} espacos={espacos} eventos={eventos} />
         <DominiosDoSite siteId={site.id} podeEditar={podeEditar} />
         {podeEditar && <div className="mt-12"><button type="button" onClick={apagar} className="text-[0.75rem] font-normal text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Apagar este site</button></div>}
       </DetailPageContent>
+      {folhaDoTema && <TemaDoSiteSheet siteId={site.id} temaAtual={site.tema} cor={corDoTema(site.cor)} onClose={() => setFolhaDoTema(false)} onSaved={recarregar} />}
     </div>
   );
 }

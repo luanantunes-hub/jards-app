@@ -20,7 +20,7 @@ export default async function PreviaDoSite({ params }: { params: Promise<{ id: s
   const { id, pagina } = await params;
   if (!UUID.test(id) || (pagina && pagina.length > 1)) notFound();
   const ticketeria = clienteDaTicketeria(await createClient());
-  const { data: site } = await ticketeria.from("ticketeria_sites").select("id, organization_id, nome, titulo, cor").eq("id", id).maybeSingle();
+  const { data: site } = await ticketeria.from("ticketeria_sites").select("id, organization_id, nome, titulo, cor, tema").eq("id", id).maybeSingle();
   if (!site) notFound();
   const { data: pode } = await ticketeria.rpc("auth_ticketeria_pode", { p_org: site.organization_id, p_acao: "editar" });
   if (pode !== true) notFound();
@@ -30,7 +30,7 @@ export default async function PreviaDoSite({ params }: { params: Promise<{ id: s
   if (!atual) notFound();
   const blocos = blocosDoJson(atual.blocos);
   const desenho: SiteParaDesenhar = {
-    titulo: site.titulo ?? site.nome, cor: corDoTema(site.cor),
+    titulo: site.titulo ?? site.nome, cor: corDoTema(site.cor), tema: site.tema,
     menu: ordenadas.map(item => ({ slug: item.slug, titulo: item.titulo })),
     pagina: { slug: atual.slug, titulo: atual.titulo, blocos },
     agora: agoraDoServidor(),

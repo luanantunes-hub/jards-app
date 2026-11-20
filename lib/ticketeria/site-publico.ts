@@ -24,7 +24,7 @@ export type SessaoParaComprar = { id: string; quando: string; local: string; url
 export type IngressosDoSite = Record<string, SessaoParaComprar[]>;
 
 export type SitePublico = {
-  titulo: string; cor: string; organizacao: string;
+  titulo: string; cor: string; tema: string; organizacao: string;
   menu: { slug: string; titulo: string }[];
   pagina: { slug: string; titulo: string; blocos: Bloco[]; descricao: string | null; imagem: string | null };
   /** A hora do servidor (ms) ao montar a página, para a contagem regressiva. */
@@ -82,7 +82,7 @@ async function siteNoAr(admin: Admin, host: string) {
   const { data: registro, error } = await ticketeria.from("ticketeria_site_dominios").select("site_id, situacao").eq("dominio", dominio).maybeSingle();
   if (error) throw new Error("não foi possível conferir o domínio");
   if (!registro || registro.situacao !== "ativo") return null;
-  const { data: site } = await ticketeria.from("ticketeria_sites").select("id, organization_id, nome, titulo, cor, situacao").eq("id", registro.site_id).maybeSingle();
+  const { data: site } = await ticketeria.from("ticketeria_sites").select("id, organization_id, nome, titulo, cor, tema, situacao").eq("id", registro.site_id).maybeSingle();
   if (!site || site.situacao !== "publicado") return null;
   return site;
 }
@@ -104,6 +104,7 @@ export async function paginaPublicaDoDominio(admin: Admin, host: string, slug: s
   return {
     titulo: site.titulo ?? site.nome,
     cor: corDoTema(site.cor),
+    tema: site.tema,
     organizacao: (organizacao.data as { nome?: string | null } | null)?.nome ?? "",
     menu: publicadas.map(pagina => ({ slug: pagina.slug, titulo: pagina.titulo })),
     pagina: { slug: atual.slug, titulo: atual.titulo, blocos, descricao: atual.descricao, imagem: atual.imagem_url },

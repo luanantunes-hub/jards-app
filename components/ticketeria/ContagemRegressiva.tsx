@@ -12,7 +12,7 @@ export function ContagemRegressiva({ titulo, ate, depois, inicial }: { titulo: s
   }, []);
   const p = partesDaContagem(Date.parse(ate), agora);
   return (
-    <section aria-label={titulo || "Contagem regressiva"} className="rounded-xl border border-black/10 px-4 py-5 text-center">
+    <section aria-label={titulo || "Contagem regressiva"} className="rounded-[var(--site-raio)] border border-[color:var(--site-borda)] px-4 py-5 text-center">
       {titulo && <h2 className="mb-1 text-[0.8125rem] font-normal opacity-60">{titulo}</h2>}
       {p === null
         ? <p className="text-[1.125rem] font-medium tracking-[-.01em]">{depois || "Já começou"}</p>

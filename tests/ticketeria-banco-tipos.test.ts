@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
-import { CATEGORIAS_DO_INGRESSO, CLASSIFICACOES_INDICATIVAS, CONTAS_DO_RAZAO, MEIOS_DE_PAGAMENTO, QUEM_PAGA_A_TAXA, SITUACOES_DO_PEDIDO, TIPOS_DE_TRANSACAO, TIPOS_DO_CUPOM, SITUACOES_DO_DOMINIO, SITUACOES_DO_EVENTO, SITUACOES_DO_SITE } from "../lib/ticketeria/estados";
+import { CATEGORIAS_DO_INGRESSO, CLASSIFICACOES_INDICATIVAS, CONTAS_DO_RAZAO, MEIOS_DE_PAGAMENTO, QUEM_PAGA_A_TAXA, SITUACOES_DO_PEDIDO, TIPOS_DE_TRANSACAO, TIPOS_DO_CUPOM, SITUACOES_DO_DOMINIO, SITUACOES_DO_EVENTO, SITUACOES_DO_SITE, TEMAS_DO_SITE } from "../lib/ticketeria/estados";
 
 // lib/ticketeria/banco.ts é o tipo do banco só da Ticketeria, escrito à mão (como lib/producao/banco.ts). Este teste o compara,
 // sem banco, com as migrations da Ticketeria: as mesmas tabelas, as mesmas colunas, a mesma anulabilidade, as listas fechadas
@@ -11,7 +11,7 @@ type Coluna = { nome: string; anulavel: boolean };
 
 async function migrationsDaTicketeria(): Promise<{ nome: string; sql: string }[]> {
   const pasta = "supabase/migrations";
-  const nomes = (await readdir(pasta)).filter(nome => /_ticketeria_(lojas_site|eventos|catalogo|pagamentos|custo_do_meio|custo_real_do_pagamento|validacao_de_saque|chave_da_subconta|saque_por_conta_bancaria|troca_de_conta_de_saque|ingressos_emitidos|reembolsos|reembolso_reabrir|porta|aceite_dos_termos|cupons|lista_de_espera|assentos_mapa|assentos_compra|assentos_porta|porta_melhor|origem_das_vendas|porta_equipe|aceite_de_novidades|acoes_de_divulgacao|saidas_e_envios|chave_publica|bilheteiros|conexoes_de_midia|google_ads|webhooks|ga4)\.sql$/.test(nome)).sort();
+  const nomes = (await readdir(pasta)).filter(nome => /_ticketeria_(lojas_site|eventos|catalogo|pagamentos|custo_do_meio|custo_real_do_pagamento|validacao_de_saque|chave_da_subconta|saque_por_conta_bancaria|troca_de_conta_de_saque|ingressos_emitidos|reembolsos|reembolso_reabrir|porta|aceite_dos_termos|cupons|lista_de_espera|assentos_mapa|assentos_compra|assentos_porta|porta_melhor|origem_das_vendas|porta_equipe|aceite_de_novidades|acoes_de_divulgacao|saidas_e_envios|chave_publica|bilheteiros|conexoes_de_midia|google_ads|webhooks|ga4|site_tema)\.sql$/.test(nome)).sort();
   return Promise.all(nomes.map(async nome => ({ nome, sql: await readFile(`${pasta}/${nome}`, "utf8") })));
 }
 
@@ -45,7 +45,7 @@ function tabelasDoTipo(ts: string): Map<string, Coluna[]> {
 
 test("lib/ticketeria/banco.ts tem as tabelas e as colunas da migration, com a mesma anulabilidade", async () => {
   const migrations = await migrationsDaTicketeria();
-  assert.equal(migrations.length, 32, "achou as migrations da T1 a T5, a do custo real, a do cadeado, a da chave da subconta, a da conta de saques, a da troca dela a dos ingressos emitidos a dos reembolsos, a de reabrir um reembolso, a da porta, a do aceite dos termos, a dos cupons, a da lista de espera a do mapa dos assentos a da compra com lugares, a do lugar na porta a da porta melhor, a da origem das vendas e a do link da equipe e a das ações de divulgação e a das contas da bilheteria e a da chave pública e a das conexões de mídia e a do Google Ads e a do GA4");
+  assert.equal(migrations.length, 33, "achou as migrations da T1 a T5, a do custo real, a do cadeado, a da chave da subconta, a da conta de saques, a da troca dela a dos ingressos emitidos a dos reembolsos, a de reabrir um reembolso, a da porta, a do aceite dos termos, a dos cupons, a da lista de espera a do mapa dos assentos a da compra com lugares, a do lugar na porta a da porta melhor, a da origem das vendas e a do link da equipe e a das ações de divulgação e a das contas da bilheteria e a da chave pública e a das conexões de mídia e a do Google Ads e a do GA4");
   const doSql = tabelasDoSql(migrations.map(m => m.sql).join("\n"));
   const doTipo = tabelasDoTipo(await readFile("lib/ticketeria/banco.ts", "utf8"));
   assert.deepEqual([...doTipo.keys()].sort(), [...doSql.keys()].sort(), "as mesmas tabelas");
@@ -62,6 +62,7 @@ test("as listas fechadas do banco são as de lib/ticketeria/estados.ts", async (
     return [...m[1].matchAll(/'([^']*)'/g)].map(x => x[1]);
   };
   assert.deepEqual(lista("ticketeria_sites_situacao_check"), [...SITUACOES_DO_SITE]);
+  assert.deepEqual(lista("ticketeria_sites_tema_check", "tema"), [...TEMAS_DO_SITE]);
   assert.deepEqual(lista("ticketeria_site_dominios_situacao_check"), [...SITUACOES_DO_DOMINIO]);
   assert.deepEqual(lista("ticketeria_eventos_situacao_check"), [...SITUACOES_DO_EVENTO]);
   assert.deepEqual(lista("ticketeria_eventos_classificacao_check", "classificacao"), [...CLASSIFICACOES_INDICATIVAS]);
@@ -82,7 +83,7 @@ test("as migrations da loja, do site e dos eventos não apagam nada e toda funç
   const semComentarios = migration.sql.replace(/--.*$/gm, "").replace(/alter table public\.ticketeria_conexoes_midia drop constraint ticketeria_conexoes_midia_provedor_check;/g, "");
   assert.doesNotMatch(semComentarios, /\bdrop\s+(table|function|policy|trigger|column|constraint)\b/i, "sem DROP");
   const funcoes = [...semComentarios.matchAll(/create or replace function public\.(\w+)\(([^)]*)\)/g)].map(m => m[1]);
-  assert.ok(funcoes.length >= 1, `${migration.nome}: leu as funções`);
+  assert.ok(funcoes.length >= 1 || !/create (or replace )?function/i.test(semComentarios), `${migration.nome}: leu as funções (migration só de coluna não tem função)`);
   for (const funcao of funcoes) assert.match(semComentarios, new RegExp(`revoke execute on function public\\.${funcao}\\([^)]*\\) from public, anon`), `${funcao} revoga de public e anon`);
   assert.doesNotMatch(semComentarios, /grant [^;]*delete[^;]* on public\.ticketeria_lojas\b/, "a loja não se apaga pelo navegador");
   if (migration.nome.endsWith("_ticketeria_lojas_site.sql")) assert.match(semComentarios, /grant select on public\.ticketeria_site_dominios to authenticated;/, "o navegador só lê os domínios");

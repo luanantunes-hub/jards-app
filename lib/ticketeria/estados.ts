@@ -4,6 +4,10 @@
 export type SituacaoDoSite = "rascunho" | "publicado";
 export const SITUACOES_DO_SITE: readonly SituacaoDoSite[] = ["rascunho", "publicado"];
 
+/** `ticketeria_sites.tema`: o jeito do site todo (os cinco temas prontos de lib/ticketeria/temas.ts). */
+export type TemaDoSite = "classico" | "editorial" | "moderno" | "noite" | "calor";
+export const TEMAS_DO_SITE: readonly TemaDoSite[] = ["classico", "editorial", "moderno", "noite", "calor"];
+
 /** `ticketeria_site_dominios.situacao`: aguardando o DNS, conferindo, ativo ou com erro. */
 export type SituacaoDoDominio = "aguardando" | "verificando" | "ativo" | "erro";
 export const SITUACOES_DO_DOMINIO: readonly SituacaoDoDominio[] = ["aguardando", "verificando", "ativo", "erro"];
