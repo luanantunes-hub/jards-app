@@ -44,6 +44,7 @@ import {
   HandCoins,
   Shield,
   Sparkles,
+  ArrowLeft,
   ArrowLeftRight,
   Menu,
   Store,
@@ -73,7 +74,7 @@ import { SeletorDeModulo, type OpcaoDeModulo } from "@/components/navegacao/Sele
 import { ConvitePrestacao } from "@/components/navegacao/ConvitePrestacao";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
-import { destinoSemAcesso, moduloDaRota, moduloVisivel, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, paginaDeEntrada, podeUsarModulo, situacaoNoSeletor, type ModuloId } from "@/lib/modulos";
+import { destinoSemAcesso, inicioDeOutroModulo, moduloDaRota, moduloVisivel, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, paginaDeEntrada, podeUsarModulo, situacaoNoSeletor, type ModuloId } from "@/lib/modulos";
 import { TESTE_GRATIS_DIAS } from "@/lib/modulos-contrato";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
@@ -872,6 +873,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <DoorOpen size={16} className="flex-shrink-0" aria-hidden="true" />
               {isExpanded && <span>Acesso de convidado</span>}
+            </Link>
+          )}
+          {/* Na Ticketeria o menu não tem o seletor de módulo: este link leva ao primeiro outro módulo que a pessoa usa. */}
+          {menuFixoAberto && (
+            <Link
+              href={inicioDeOutroModulo(acessoModulos, "ticketeria")}
+              prefetch={false}
+              className="flex items-center rounded text-[0.8125rem] font-medium text-black/35 transition whitespace-nowrap overflow-hidden hover:text-[#282525] hover:bg-black/[0.05] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
+              style={{ gap: 10, padding: "8px 10px" }}
+            >
+              <ArrowLeft size={16} className="flex-shrink-0" aria-hidden="true" />
+              <span>Sair da Ticketeria</span>
             </Link>
           )}
           {!isWorkspaceCaptador && (
