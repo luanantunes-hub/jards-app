@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { LOGOS_HISTORICOS } from "@/lib/logos-historicos";
 
 const TOKEN = process.env.NEXT_PUBLIC_LOGODEV_TOKEN ?? process.env.NEXT_PUBLIC_LOGODOTDEV_TOKEN ?? "";
 
@@ -25,10 +26,11 @@ interface Props {
 
 export function CompanyLogo({ nome, domain: domainProp, site, logo_url, size = 32, className = "" }: Props) {
   const domain = useMemo(() => resolveCompanyDomain(domainProp ?? site), [domainProp, site]);
-  const logodotdev = domain
+  const historico = domain ? LOGOS_HISTORICOS[domain] ?? null : null;
+  const logodotdev = domain && !historico
     ? `https://img.logo.dev/${domain}?${new URLSearchParams({ ...(TOKEN ? { token: TOKEN } : {}), size: String(size * 2), format: "png" })}`
     : null;
-  const initial = logodotdev ?? logo_url ?? null;
+  const initial = historico ?? logodotdev ?? logo_url ?? null;
   const [src, setSrc] = useState<string | null>(initial);
 
   useEffect(() => setSrc(initial), [initial]);
