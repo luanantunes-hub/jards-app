@@ -155,14 +155,13 @@ export default function SiteDaLojaPage() {
   if (!site) {
     return (
       <>
-        <ListPageHeader eyebrow="Ticketeria" title="Site" />
+        <ListPageHeader title="Site" />
         <ListContent>
           {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
           <ListTableSurface>
             <ListEmptyState
               icon={Globe}
               title="Nenhum site ainda"
-              description="Crie o site da sua casa, festival ou companhia, escreva as páginas e ligue o seu domínio. Depois, a venda de ingressos entra nele."
               action={podeEditar ? <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo site</PrimaryListAction> : undefined}
             />
           </ListTableSurface>
@@ -175,9 +174,7 @@ export default function SiteDaLojaPage() {
   return (
     <div className="min-h-full">
       <ListPageHeader
-        eyebrow="Ticketeria"
         title={site.nome}
-        description={site.situacao === "publicado" ? "No ar: abre no domínio ligado, com as páginas publicadas." : "Rascunho: só quem edita vê, pela prévia."}
         actions={podeEditar ? (
           <button type="button" disabled={salvando} onClick={() => void atualizar({ situacao: site.situacao === "publicado" ? "rascunho" : "publicado" })}
             className={site.situacao === "publicado"

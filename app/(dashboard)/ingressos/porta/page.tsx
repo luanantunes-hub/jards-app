@@ -142,11 +142,11 @@ export default function PortaPage() {
   if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   return (
     <>
-      <ListPageHeader eyebrow="Ticketeria" title="Porta" />
+      <ListPageHeader title="Porta" />
       <ListContent>
         {erro && <p role="alert" className="mx-auto mb-4 max-w-[34rem] rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {opcoes.length === 0 ? (
-          <ListTableSurface><ListEmptyState icon={ScanLine} title="Nenhuma sessão para conferir" description="As sessões que ainda vão acontecer (e as das últimas 12 horas) aparecem aqui." /></ListTableSurface>
+          <ListTableSurface><ListEmptyState icon={ScanLine} title="Nenhuma sessão para conferir" /></ListTableSurface>
         ) : (
           <PortaView
             sessoes={opcoes} sessaoId={sessaoId} onSessao={setSessaoId}

@@ -61,14 +61,14 @@ export default function VendasPage() {
   if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   return (
     <>
-      <ListPageHeader eyebrow="Ticketeria" title="Vendas" />
+      <ListPageHeader title="Vendas" />
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {estado.vendas ? (
           <VendasView resumo={estado.vendas.resumo} sessoes={estado.vendas.sessoes} compras={compras} filtro={filtro} onFiltrar={setFiltro} onAbrir={setAberta} reembolsos={estado.vendas.reembolsos} onTentarDeNovo={id => void tentarDeNovo(id)} tentando={tentando} />
         ) : !erro && (
           <ListTableSurface>
-            <ListEmptyState icon={Receipt} title="Nenhuma venda ainda" description="Crie um evento e cadastre a conta de recebimento. As vendas aparecem aqui." />
+            <ListEmptyState icon={Receipt} title="Nenhuma venda ainda" />
           </ListTableSurface>
         )}
       </ListContent>

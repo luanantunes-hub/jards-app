@@ -62,14 +62,14 @@ export default function IngressosPage() {
 
   return (
     <>
-      <ListPageHeader eyebrow="Ticketeria" title="Eventos" actions={eventos && eventos.length > 0 ? novo : undefined} />
+      <ListPageHeader title="Eventos" actions={eventos && eventos.length > 0 ? novo : undefined} />
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         <ListTableSurface>
           {eventos === null ? (
             <div className="h-32 bg-black/[.02] motion-safe:animate-pulse" />
           ) : eventos.length === 0 ? (
-            <ListEmptyState icon={Ticket} title="Nenhum evento ainda" description="Crie o evento, ponha as sessões com dia, hora e local, e publique. A venda de ingressos chega na próxima etapa." action={novo} />
+            <ListEmptyState icon={Ticket} title="Nenhum evento ainda" action={novo} />
           ) : (
             <ul className="divide-y divide-black/[.06]">
               {linhas.map(({ evento, total, proxima }) => (
