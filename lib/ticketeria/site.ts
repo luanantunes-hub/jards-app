@@ -4,18 +4,44 @@
 
 // ─── Blocos ─────────────────────────────────────────────────────────────────
 
-export const TIPOS_DE_BLOCO = ["titulo", "texto", "imagem", "botao", "programacao", "ingressos", "contato"] as const;
+export const TIPOS_DE_BLOCO = ["capa", "titulo", "texto", "colunas", "imagem", "galeria", "video", "mapa", "botao", "contagem", "faq", "patrocinadores", "programacao", "ingressos", "contato"] as const;
 export type TipoDeBloco = (typeof TIPOS_DE_BLOCO)[number];
 
 export const ROTULO_DO_TIPO_DE_BLOCO: Record<TipoDeBloco, string> = {
-  titulo: "Título", texto: "Texto", imagem: "Imagem", botao: "Botão com link", programacao: "Programação de um espaço (Produção)", ingressos: "Ingressos de um evento", contato: "Contato",
+  capa: "Capa", titulo: "Título", texto: "Texto", colunas: "Duas colunas", imagem: "Imagem", galeria: "Galeria", video: "Vídeo", mapa: "Mapa", botao: "Botão com link",
+  contagem: "Contagem regressiva", faq: "Perguntas frequentes", patrocinadores: "Patrocinadores", programacao: "Programação de um espaço (Produção)", ingressos: "Ingressos de um evento", contato: "Contato",
 };
+
+/** Os grupos do seletor "Acrescentar bloco", na ordem em que aparecem (desenho aprovado pelo dono em 20/11/2026). */
+export const GRUPOS_DE_BLOCOS: { titulo: string; tipos: readonly TipoDeBloco[] }[] = [
+  { titulo: "Conteúdo", tipos: ["capa", "titulo", "texto", "colunas", "imagem", "galeria"] },
+  { titulo: "Mídia e local", tipos: ["video", "mapa", "contato"] },
+  { titulo: "Venda e confiança", tipos: ["ingressos", "botao", "contagem", "faq", "patrocinadores", "programacao"] },
+];
+
+/** Uma das duas colunas do bloco "Duas colunas": um texto ou uma imagem. */
+export type ColunaDoBloco = { tipo: "texto"; texto: string } | { tipo: "imagem"; url: string; alt: string };
+export type ImagemDaGaleria = { url: string; alt: string };
+export type PerguntaFrequente = { pergunta: string; resposta: string };
+export type Patrocinador = { url: string; alt: string; link: string };
 
 export type Bloco =
   | { tipo: "titulo"; texto: string }
   | { tipo: "texto"; texto: string }
   | { tipo: "imagem"; url: string; alt: string }
   | { tipo: "botao"; rotulo: string; url: string }
+  /** A faixa de abertura da página: título, subtítulo, imagem de fundo (https, opcional) e um botão (opcional, rótulo e endereço juntos). */
+  | { tipo: "capa"; titulo: string; subtitulo: string; imagem: string; botao_rotulo: string; botao_url: string }
+  | { tipo: "colunas"; esquerda: ColunaDoBloco; direita: ColunaDoBloco }
+  | { tipo: "galeria"; titulo: string; imagens: ImagemDaGaleria[] }
+  /** Só YouTube e Vimeo: guarda o provedor e o id do vídeo (nunca um endereço livre); o endereço do player sai de `enderecoDoVideo`. */
+  | { tipo: "video"; titulo: string; provedor: "youtube" | "vimeo"; id: string }
+  /** O mapa do Google para um endereço digitado (o endereço do mapa sai de `enderecoDoMapa`). */
+  | { tipo: "mapa"; titulo: string; endereco: string }
+  /** Quanto falta para um instante (ISO, em UTC); passado o instante, mostra `depois`. */
+  | { tipo: "contagem"; titulo: string; ate: string; depois: string }
+  | { tipo: "faq"; titulo: string; itens: PerguntaFrequente[] }
+  | { tipo: "patrocinadores"; titulo: string; itens: Patrocinador[] }
   /** As sessões confirmadas de um espaço da Produção da mesma organização; sem espaço, o bloco não mostra nada. */
   | { tipo: "programacao"; titulo: string; espaco_id: string | null }
   /** As sessões de um evento publicado da mesma organização, cada uma com o botão de comprar (a página de compra do Jards); sem evento, o bloco não mostra nada. */
@@ -39,6 +65,59 @@ export function lerUrlHttps(bruto: unknown): { ok: true; url: string } | { ok: f
     return { ok: false };
   }
 }
+
+/** Uma imagem (endereço https e texto alternativo), como a galeria e os patrocinadores a guardam. */
+function lerImagem(entrada: unknown, rotulo: string): { ok: true; imagem: ImagemDaGaleria } | { ok: false; erro: string } {
+  const i = (entrada && typeof entrada === "object" ? entrada : {}) as Record<string, unknown>;
+  const url = lerUrlHttps(i.url), alt = texto(i.alt);
+  if (!url.ok) return { ok: false, erro: `${rotulo}: o endereço da imagem tem de começar com https://.` };
+  if (alt === "" || alt.length > 200) return { ok: false, erro: `${rotulo}: descreva a imagem em até 200 letras (texto alternativo).` };
+  return { ok: true, imagem: { url: url.url, alt } };
+}
+
+function lerColuna(entrada: unknown, qual: string): { ok: true; coluna: ColunaDoBloco } | { ok: false; erro: string } {
+  const c = (entrada && typeof entrada === "object" ? entrada : {}) as Record<string, unknown>;
+  if (c.tipo === "texto") {
+    const t = texto(c.texto);
+    return t === "" || t.length > 2000 ? { ok: false, erro: `O texto da coluna ${qual} tem de ter de 1 a 2.000 letras.` } : { ok: true, coluna: { tipo: "texto", texto: t } };
+  }
+  if (c.tipo === "imagem") {
+    const l = lerImagem(c, `Coluna ${qual}`);
+    return l.ok ? { ok: true, coluna: { tipo: "imagem", ...l.imagem } } : l;
+  }
+  return { ok: false, erro: `Escolha texto ou imagem para a coluna ${qual}.` };
+}
+
+const ID_DO_YOUTUBE = /^[A-Za-z0-9_-]{11}$/;
+const ID_DO_VIMEO = /^\d{6,12}$/;
+
+/** O provedor e o id de um vídeo, a partir do que a pessoa cola (watch, youtu.be, shorts, embed, vimeo.com/ID, player.vimeo.com) ou de "provedor:id"; nulo se não for do YouTube nem do Vimeo. */
+export function lerVideo(bruto: string): { provedor: "youtube" | "vimeo"; id: string } | null {
+  const t = bruto.trim();
+  const direto = /^(youtube|vimeo):(.+)$/.exec(t);
+  if (direto) return (direto[1] === "youtube" ? ID_DO_YOUTUBE : ID_DO_VIMEO).test(direto[2]) ? { provedor: direto[1] as "youtube" | "vimeo", id: direto[2] } : null;
+  let url: URL;
+  try { url = new URL(t); } catch { return null; }
+  if (url.protocol !== "https:" || url.username !== "" || url.password !== "") return null;
+  const host = url.hostname.toLowerCase().replace(/^www\./, "").replace(/^m\./, "");
+  const partes = url.pathname.split("/").filter(Boolean);
+  if (host === "youtu.be") return partes[0] && ID_DO_YOUTUBE.test(partes[0]) ? { provedor: "youtube", id: partes[0] } : null;
+  if (host === "youtube.com" || host === "youtube-nocookie.com") {
+    const id = partes[0] === "watch" ? url.searchParams.get("v") : ["embed", "shorts", "live", "v"].includes(partes[0] ?? "") ? partes[1] : null;
+    return id && ID_DO_YOUTUBE.test(id) ? { provedor: "youtube", id } : null;
+  }
+  if (host === "vimeo.com") return partes[0] && ID_DO_VIMEO.test(partes[0]) ? { provedor: "vimeo", id: partes[0] } : null;
+  if (host === "player.vimeo.com") return partes[0] === "video" && partes[1] && ID_DO_VIMEO.test(partes[1]) ? { provedor: "vimeo", id: partes[1] } : null;
+  return null;
+}
+
+/** O endereço do player para o iframe: sempre de um destes dois domínios, e o id já conferido. */
+export function enderecoDoVideo(bloco: { provedor: "youtube" | "vimeo"; id: string }): string {
+  return bloco.provedor === "youtube" ? `https://www.youtube-nocookie.com/embed/${bloco.id}` : `https://player.vimeo.com/video/${bloco.id}`;
+}
+
+/** O endereço do mapa (Google Maps, sem chave) para o iframe. */
+export const enderecoDoMapa = (endereco: string) => `https://www.google.com/maps?q=${encodeURIComponent(endereco)}&output=embed`;
 
 export type LeituraDoBloco = { ok: true; bloco: Bloco } | { ok: false; erro: string };
 
@@ -85,6 +164,94 @@ export function lerBloco(entrada: unknown): LeituraDoBloco {
       if (telefone.length > 40) return { ok: false, erro: "O telefone pode ter até 40 letras." };
       if (endereco.length > 200) return { ok: false, erro: "O endereço pode ter até 200 letras." };
       return { ok: true, bloco: { tipo: "contato", email, telefone, endereco } };
+    }
+    case "capa": {
+      const titulo = texto(e.titulo), subtitulo = texto(e.subtitulo), imagem = texto(e.imagem), rotulo = texto(e.botao_rotulo), botao = texto(e.botao_url);
+      if (titulo === "" || titulo.length > 120) return { ok: false, erro: "O título da capa tem de ter de 1 a 120 letras." };
+      if (subtitulo.length > 200) return { ok: false, erro: "O subtítulo da capa pode ter até 200 letras." };
+      let urlDaImagem = "";
+      if (imagem !== "") { const u = lerUrlHttps(imagem); if (!u.ok) return { ok: false, erro: "O endereço da imagem de fundo tem de começar com https://." }; urlDaImagem = u.url; }
+      if ((rotulo === "") !== (botao === "")) return { ok: false, erro: "O botão da capa precisa do texto e do endereço juntos (ou de nenhum dos dois)." };
+      let urlDoBotao = "";
+      if (rotulo !== "") {
+        if (rotulo.length > 60) return { ok: false, erro: "O texto do botão tem de ter de 1 a 60 letras." };
+        const u = lerUrlHttps(botao);
+        if (!u.ok) return { ok: false, erro: "O endereço do botão tem de começar com https://." };
+        urlDoBotao = u.url;
+      }
+      return { ok: true, bloco: { tipo: "capa", titulo, subtitulo, imagem: urlDaImagem, botao_rotulo: rotulo, botao_url: urlDoBotao } };
+    }
+    case "colunas": {
+      const esquerda = lerColuna(e.esquerda, "da esquerda"), direita = lerColuna(e.direita, "da direita");
+      if (!esquerda.ok) return esquerda;
+      if (!direita.ok) return direita;
+      return { ok: true, bloco: { tipo: "colunas", esquerda: esquerda.coluna, direita: direita.coluna } };
+    }
+    case "galeria": {
+      const titulo = texto(e.titulo);
+      if (titulo.length > 120) return { ok: false, erro: "O título da galeria pode ter até 120 letras." };
+      const entradas = Array.isArray(e.imagens) ? e.imagens : [];
+      if (entradas.length < 2 || entradas.length > 12) return { ok: false, erro: "A galeria leva de 2 a 12 imagens." };
+      const imagens: ImagemDaGaleria[] = [];
+      for (const [n, entrada] of entradas.entries()) {
+        const l = lerImagem(entrada, `Imagem ${n + 1}`);
+        if (!l.ok) return l;
+        imagens.push(l.imagem);
+      }
+      return { ok: true, bloco: { tipo: "galeria", titulo, imagens } };
+    }
+    case "video": {
+      const titulo = texto(e.titulo);
+      if (titulo.length > 120) return { ok: false, erro: "O título do vídeo pode ter até 120 letras." };
+      const v = lerVideo(typeof e.url === "string" ? e.url : e.provedor && e.id ? `${e.provedor}:${e.id}` : "");
+      if (!v) return { ok: false, erro: "Cole o endereço de um vídeo do YouTube ou do Vimeo." };
+      return { ok: true, bloco: { tipo: "video", titulo, provedor: v.provedor, id: v.id } };
+    }
+    case "mapa": {
+      const titulo = texto(e.titulo), endereco = texto(e.endereco);
+      if (titulo.length > 120) return { ok: false, erro: "O título do mapa pode ter até 120 letras." };
+      if (endereco === "" || endereco.length > 200) return { ok: false, erro: "Escreva o endereço do mapa, com até 200 letras." };
+      return { ok: true, bloco: { tipo: "mapa", titulo, endereco } };
+    }
+    case "contagem": {
+      const titulo = texto(e.titulo), depois = texto(e.depois), ate = texto(e.ate);
+      if (titulo.length > 120) return { ok: false, erro: "O título da contagem pode ter até 120 letras." };
+      if (depois.length > 120) return { ok: false, erro: "A frase de depois da contagem pode ter até 120 letras." };
+      const instante = Date.parse(ate);
+      if (ate === "" || !Number.isFinite(instante) || !/^\d{4}-\d{2}-\d{2}T/.test(ate)) return { ok: false, erro: "Escolha o dia e a hora do fim da contagem." };
+      return { ok: true, bloco: { tipo: "contagem", titulo, ate: new Date(instante).toISOString(), depois } };
+    }
+    case "faq": {
+      const titulo = texto(e.titulo);
+      if (titulo.length > 120) return { ok: false, erro: "O título das perguntas pode ter até 120 letras." };
+      const entradas = Array.isArray(e.itens) ? e.itens : [];
+      if (entradas.length < 1 || entradas.length > 20) return { ok: false, erro: "Escreva de 1 a 20 perguntas." };
+      const itens: PerguntaFrequente[] = [];
+      for (const [n, entrada] of entradas.entries()) {
+        const i = (entrada && typeof entrada === "object" ? entrada : {}) as Record<string, unknown>;
+        const pergunta = texto(i.pergunta), resposta = texto(i.resposta);
+        if (pergunta === "" || pergunta.length > 200) return { ok: false, erro: `Pergunta ${n + 1}: escreva a pergunta, com até 200 letras.` };
+        if (resposta === "" || resposta.length > 2000) return { ok: false, erro: `Pergunta ${n + 1}: escreva a resposta, com até 2.000 letras.` };
+        itens.push({ pergunta, resposta });
+      }
+      return { ok: true, bloco: { tipo: "faq", titulo, itens } };
+    }
+    case "patrocinadores": {
+      const titulo = texto(e.titulo);
+      if (titulo.length > 120) return { ok: false, erro: "O título dos patrocinadores pode ter até 120 letras." };
+      const entradas = Array.isArray(e.itens) ? e.itens : [];
+      if (entradas.length < 1 || entradas.length > 12) return { ok: false, erro: "Escreva de 1 a 12 patrocinadores." };
+      const itens: Patrocinador[] = [];
+      for (const [n, entrada] of entradas.entries()) {
+        const i = (entrada && typeof entrada === "object" ? entrada : {}) as Record<string, unknown>;
+        const l = lerImagem(i, `Patrocinador ${n + 1}`);
+        if (!l.ok) return l;
+        const link = texto(i.link);
+        let urlDoLink = "";
+        if (link !== "") { const u = lerUrlHttps(link); if (!u.ok) return { ok: false, erro: `Patrocinador ${n + 1}: o endereço do site tem de começar com https://.` }; urlDoLink = u.url; }
+        itens.push({ ...l.imagem, link: urlDoLink });
+      }
+      return { ok: true, bloco: { tipo: "patrocinadores", titulo, itens } };
     }
     default:
       return { ok: false, erro: "Escolha o tipo do bloco." };

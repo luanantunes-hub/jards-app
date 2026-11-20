@@ -8,7 +8,9 @@ import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
-import { blocosDoJson, lerBloco, lerSeo, ordemDasPaginas, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, TIPOS_DE_BLOCO, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
+import { partesNoFuso } from "@/lib/ticketeria/eventos";
+import { blocosDoJson, lerBloco, lerSeo, ordemDasPaginas, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
+import { AcrescentarBlocoSheet, BlocoNovoSheet, TIPOS_DAS_FOLHAS_NOVAS } from "@/components/ticketeria/BlocosNovosSheet";
 
 /** Um evento da loja: a fonte de um bloco de ingressos. */
 export type EventoParaBloco = { id: string; titulo: string; situacao: string };
@@ -37,6 +39,14 @@ const resumoDoBloco = (bloco: Bloco, espacos: readonly EspacoDaProgramacao[], ev
       return [bloco.titulo, evento ? `as sessões de ${evento.titulo}${evento.situacao === "publicado" ? "" : " (o evento ainda não está publicado: o bloco não mostra nada)"}` : "sem evento: o bloco não mostra nada"].filter(Boolean).join(" · ");
     }
     case "contato": return [bloco.endereco, bloco.telefone, bloco.email].filter(Boolean).join(" · ");
+    case "capa": return [bloco.titulo, bloco.subtitulo].filter(Boolean).join(" · ");
+    case "colunas": return `${bloco.esquerda.tipo === "texto" ? "texto" : "imagem"} e ${bloco.direita.tipo === "texto" ? "texto" : "imagem"}`;
+    case "galeria": return [bloco.titulo, `${bloco.imagens.length} imagens`].filter(Boolean).join(" · ");
+    case "video": return [bloco.titulo, bloco.provedor === "youtube" ? "YouTube" : "Vimeo"].filter(Boolean).join(" · ");
+    case "mapa": return [bloco.titulo, bloco.endereco].filter(Boolean).join(" · ");
+    case "contagem": return [bloco.titulo, `até ${partesNoFuso(bloco.ate, "America/Sao_Paulo").dia.split("-").reverse().join("/")} ${partesNoFuso(bloco.ate, "America/Sao_Paulo").hora}`].filter(Boolean).join(" · ");
+    case "faq": return [bloco.titulo, `${bloco.itens.length} ${bloco.itens.length === 1 ? "pergunta" : "perguntas"}`].filter(Boolean).join(" · ");
+    case "patrocinadores": return [bloco.titulo, `${bloco.itens.length} ${bloco.itens.length === 1 ? "patrocinador" : "patrocinadores"}`].filter(Boolean).join(" · ");
   }
 };
 
@@ -207,8 +217,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
   const { confirmDelete } = useDeleteConfirm();
   const [paginas, setPaginas] = useState<Pagina[] | null>(null);
   const [slug, setSlug] = useState("inicio");
-  const [folha, setFolha] = useState<{ tipo: "bloco"; indice: number | null; tipoDeBloco: TipoDeBloco } | { tipo: "pagina" } | null>(null);
-  const [novoTipo, setNovoTipo] = useState<string>("texto");
+  const [folha, setFolha] = useState<{ tipo: "bloco"; indice: number | null; tipoDeBloco: TipoDeBloco } | { tipo: "pagina" } | { tipo: "escolher" } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
   const recarregar = () => setVersao(atual => atual + 1);
@@ -315,8 +324,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
               <SeoDaPagina key={`${atual.id}-${atual.descricao ?? ""}-${atual.imagem_url ?? ""}`} pagina={atual} podeEditar={podeEditar} onSalvo={recarregar} />
               {podeEditar && atual.blocos.length < 60 && (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <div className="w-64 max-w-full"><Dropdown ariaLabel="Tipo do novo bloco" value={novoTipo} onChange={setNovoTipo} options={TIPOS_DE_BLOCO.filter(tipo => (tipo !== "programacao" || espacos.length > 0) && (tipo !== "ingressos" || eventos.length > 0)).map(tipo => ({ value: tipo, label: ROTULO_DO_TIPO_DE_BLOCO[tipo] }))} /></div>
-                  <button type="button" onClick={() => setFolha({ tipo: "bloco", indice: null, tipoDeBloco: novoTipo as TipoDeBloco })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Acrescentar bloco</button>
+                  <button type="button" onClick={() => setFolha({ tipo: "escolher" })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Acrescentar bloco</button>
                 </div>
               )}
             </div>
@@ -324,7 +332,16 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
         </>
       )}
       {folha?.tipo === "pagina" && paginas && <NovaPaginaSheet siteId={siteId} organizationId={organizationId} existentes={paginas} onClose={() => setFolha(null)} onCreated={novoSlug => { setSlug(novoSlug); recarregar(); }} />}
-      {folha?.tipo === "bloco" && atual && (
+      {folha?.tipo === "escolher" && (
+        <AcrescentarBlocoSheet temEspacos={espacos.length > 0} temEventos={eventos.length > 0} onClose={() => setFolha(null)} onEscolher={tipoDeBloco => setFolha({ tipo: "bloco", indice: null, tipoDeBloco })} />
+      )}
+      {folha?.tipo === "bloco" && atual && TIPOS_DAS_FOLHAS_NOVAS.includes(folha.tipoDeBloco) && (
+        <BlocoNovoSheet
+          bloco={folha.indice === null ? undefined : atual.blocos[folha.indice]} tipo={folha.tipoDeBloco} onClose={() => setFolha(null)}
+          onSalvar={novo => gravar(folha.indice === null ? [...atual.blocos, novo] : atual.blocos.map((existente, i) => (i === folha.indice ? novo : existente)))}
+        />
+      )}
+      {folha?.tipo === "bloco" && atual && !TIPOS_DAS_FOLHAS_NOVAS.includes(folha.tipoDeBloco) && (
         <BlocoSheet
           bloco={folha.indice === null ? undefined : atual.blocos[folha.indice]} tipoInicial={folha.tipoDeBloco} espacos={espacos} eventos={eventos} onClose={() => setFolha(null)}
           onSalvar={novo => gravar(folha.indice === null ? [...atual.blocos, novo] : atual.blocos.map((existente, i) => (i === folha.indice ? novo : existente)))}
