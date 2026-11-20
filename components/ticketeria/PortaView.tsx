@@ -12,12 +12,13 @@ const ROTULO = "text-[0.625rem] font-normal uppercase tracking-[.08em] text-blac
 const CAMPO = "h-12 w-full rounded-xl border border-black/15 bg-white px-3.5 text-[1.0625rem] font-normal uppercase tracking-[.14em] text-[#282525] placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-black/30 focus:border-[#7259B5] focus:outline-none";
 
 export type SessaoDaPorta = { id: string; rotulo: string };
-export type EntradaRecente = { codigo: string; ingresso: string; comprador: string; hora: string };
+/** `assento`: o lugar do ingresso de um setor numerado ("Plateia · Fileira C · lugar 7"); nulo no setor comum. */
+export type EntradaRecente = { codigo: string; ingresso: string; assento?: string | null; comprador: string; hora: string };
 
 /** O que a conferência de um código respondeu. */
 export type ResultadoDaConferencia =
-  | { tipo: "pode_entrar"; ingresso: string; comprador: string; codigo: string; restantes: number }
-  | { tipo: "ja_usado"; ingresso: string; comprador: string; codigo: string; usado_em: string }
+  | { tipo: "pode_entrar"; ingresso: string; assento?: string | null; comprador: string; codigo: string; restantes: number }
+  | { tipo: "ja_usado"; ingresso: string; assento?: string | null; comprador: string; codigo: string; usado_em: string }
   | { tipo: "outra_sessao"; ingresso: string; sessao_do_ingresso: string; codigo: string }
   | { tipo: "cancelado"; ingresso: string; codigo: string }
   | { tipo: "nao_encontrado"; codigo: string };
@@ -37,6 +38,7 @@ export function ResultadoDaPorta({ resultado, onProximo }: { resultado: Resultad
       <div role="status" className={base} style={{ borderColor: "#2E893280", backgroundColor: "#2E89320D" }}>
         <p className="flex items-center gap-2 text-[1.375rem] font-medium tracking-[-.02em] text-[#2E8932]"><CheckCircle2 size={24} aria-hidden="true" />Pode entrar</p>
         <p className="mt-2 text-[1.0625rem] font-normal text-[#282525]">{resultado.ingresso}</p>
+        {resultado.assento && <p className="mt-0.5 text-[1.25rem] font-medium tracking-[-.01em] text-[#282525]">{resultado.assento}</p>}
         <p className="text-[0.875rem] text-black/60">{resultado.comprador}</p>
         <p className="mt-2 text-[0.75rem] tabular-nums tracking-[.1em] text-black/45">{resultado.codigo} · faltam {resultado.restantes.toLocaleString("pt-BR")} entrar</p>
         {proximo}
@@ -48,6 +50,7 @@ export function ResultadoDaPorta({ resultado, onProximo }: { resultado: Resultad
       <div role="alert" className={base} style={{ borderColor: "#B07A1480", backgroundColor: "#B07A140D" }}>
         <p className="flex items-center gap-2 text-[1.375rem] font-medium tracking-[-.02em] text-[#B07A14]"><AlertTriangle size={24} aria-hidden="true" />Já foi usado</p>
         <p className="mt-2 text-[1.0625rem] font-normal text-[#282525]">{resultado.ingresso}</p>
+        {resultado.assento && <p className="mt-0.5 text-[1.0625rem] text-black/70">{resultado.assento}</p>}
         <p className="text-[0.875rem] text-black/60">{resultado.comprador}</p>
         <p className="mt-2 text-[0.875rem] text-black/70">Entrou às {resultado.usado_em}. Não deixe entrar de novo.</p>
         <p className="mt-1 text-[0.75rem] tabular-nums tracking-[.1em] text-black/45">{resultado.codigo}</p>
@@ -119,7 +122,7 @@ export function PortaView({ sessoes, sessaoId, onSessao, entraram, lugares, codi
           <ul className="divide-y divide-black/[.08] overflow-hidden rounded-xl border bg-white" style={{ borderColor: BORDA }}>
             {recentes.map(r => (
               <li key={r.codigo} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0"><p className="truncate text-[0.875rem] text-[#282525]">{r.comprador}</p><p className="text-[0.6875rem] text-black/45">{r.ingresso} · <span className="tabular-nums tracking-[.08em]">{r.codigo}</span></p></div>
+                <div className="min-w-0"><p className="truncate text-[0.875rem] text-[#282525]">{r.comprador}</p><p className="text-[0.6875rem] text-black/45">{r.ingresso}{r.assento ? ` · ${r.assento}` : ""} · <span className="tabular-nums tracking-[.08em]">{r.codigo}</span></p></div>
                 <span className="shrink-0 text-[0.75rem] tabular-nums text-black/45">{r.hora}</span>
               </li>
             ))}

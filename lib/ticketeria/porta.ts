@@ -25,9 +25,9 @@ export function resultadoDaConferencia(bruto: unknown, fusoDaSessao: string): Re
   const codigo = texto(r.codigo);
   switch (r.tipo) {
     case "pode_entrar":
-      return typeof r.restantes === "number" ? { tipo: "pode_entrar", ingresso: texto(r.ingresso), comprador: texto(r.comprador), codigo, restantes: r.restantes } : null;
+      return typeof r.restantes === "number" ? { tipo: "pode_entrar", ingresso: texto(r.ingresso), assento: texto(r.assento) || null, comprador: texto(r.comprador), codigo, restantes: r.restantes } : null;
     case "ja_usado":
-      return { tipo: "ja_usado", ingresso: texto(r.ingresso), comprador: texto(r.comprador), codigo, usado_em: horaNoFuso(texto(r.usado_em), texto(r.fuso) || fusoDaSessao) };
+      return { tipo: "ja_usado", ingresso: texto(r.ingresso), assento: texto(r.assento) || null, comprador: texto(r.comprador), codigo, usado_em: horaNoFuso(texto(r.usado_em), texto(r.fuso) || fusoDaSessao) };
     case "outra_sessao": {
       const quando = texto(r.sessao_inicio) ? diaEHoraDoEvento(texto(r.sessao_inicio), texto(r.sessao_fuso) || fusoDaSessao) : "";
       return { tipo: "outra_sessao", ingresso: texto(r.ingresso), sessao_do_ingresso: [texto(r.evento), quando].filter(Boolean).join(", "), codigo };
@@ -46,6 +46,6 @@ export function resumoDaPorta(bruto: unknown): ResumoDaPorta | null {
   const fuso = texto(r.fuso) || "America/Sao_Paulo";
   return {
     validos: r.validos, entraram: r.entraram,
-    recentes: r.recentes.map(x => { const e = (x && typeof x === "object" ? x : {}) as Record<string, unknown>; return { codigo: texto(e.codigo), ingresso: texto(e.ingresso), comprador: texto(e.comprador), hora: horaNoFuso(texto(e.usado_em), fuso) }; }),
+    recentes: r.recentes.map(x => { const e = (x && typeof x === "object" ? x : {}) as Record<string, unknown>; return { codigo: texto(e.codigo), ingresso: texto(e.ingresso), assento: texto(e.assento) || null, comprador: texto(e.comprador), hora: horaNoFuso(texto(e.usado_em), fuso) }; }),
   };
 }

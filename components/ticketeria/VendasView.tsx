@@ -149,7 +149,7 @@ export function ComprasDeVendas({ compras, filtro, onFiltrar, onAbrir }: { compr
 
 export type DetalheDaCompra = {
   codigo: string; comprador: string; email: string; evento: string; quando: string; situacao: SituacaoDaCompra; pago_em: string | null;
-  ingressos: { codigo: string; nome: string; usado: boolean; cancelado: boolean }[];
+  ingressos: { codigo: string; nome: string; assento?: string | null; usado: boolean; cancelado: boolean }[];
   total_centavos: number; taxa_centavos: number; custo_do_pix_centavos: number | null; repasse_centavos: number;
   endereco_do_pedido: string;
 };
@@ -178,7 +178,7 @@ export function DetalheDaCompraSheet({ compra, onClose }: { compra: DetalheDaCom
             <ul className="divide-y divide-black/[.08] rounded-xl border" style={{ borderColor: BORDA }}>
               {compra.ingressos.map(i => (
                 <li key={i.codigo} className="flex items-center justify-between gap-3 px-3 py-2.5 text-[0.8125rem]">
-                  <span>{i.nome}</span>
+                  <span className="min-w-0">{i.nome}{i.assento && <span className="block text-[0.75rem] text-black/50">{i.assento}</span>}</span>
                   <span className="flex items-center gap-2"><span className="font-normal tabular-nums tracking-[.08em]">{i.codigo}</span>{i.cancelado ? <Etiqueta texto="CANCELADO" cor="#6b6767" /> : i.usado ? <Etiqueta texto="USADO" cor="#6b6767" /> : null}</span>
                 </li>
               ))}

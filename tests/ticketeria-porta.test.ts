@@ -22,8 +22,8 @@ test("a hora no fuso do local", () => {
 });
 
 test("a resposta do banco vira o resultado da tela, nos cinco casos", () => {
-  assert.deepEqual(resultadoDaConferencia({ tipo: "pode_entrar", codigo: "K7M2QX9HTR", ingresso: "Inteira", comprador: "Rita", restantes: 5 }, "America/Sao_Paulo"), { tipo: "pode_entrar", ingresso: "Inteira", comprador: "Rita", codigo: "K7M2QX9HTR", restantes: 5 });
-  assert.deepEqual(resultadoDaConferencia({ tipo: "ja_usado", codigo: "K", ingresso: "Inteira", comprador: "Rita", usado_em: "2026-11-19T22:58:00.000Z", fuso: "America/Sao_Paulo" }, "America/Sao_Paulo"), { tipo: "ja_usado", ingresso: "Inteira", comprador: "Rita", codigo: "K", usado_em: "19:58" });
+  assert.deepEqual(resultadoDaConferencia({ tipo: "pode_entrar", codigo: "K7M2QX9HTR", ingresso: "Inteira", comprador: "Rita", restantes: 5 }, "America/Sao_Paulo"), { tipo: "pode_entrar", ingresso: "Inteira", assento: null, comprador: "Rita", codigo: "K7M2QX9HTR", restantes: 5 });
+  assert.deepEqual(resultadoDaConferencia({ tipo: "ja_usado", codigo: "K", ingresso: "Inteira", comprador: "Rita", usado_em: "2026-11-19T22:58:00.000Z", fuso: "America/Sao_Paulo" }, "America/Sao_Paulo"), { tipo: "ja_usado", ingresso: "Inteira", assento: null, comprador: "Rita", codigo: "K", usado_em: "19:58" });
   const outra = resultadoDaConferencia({ tipo: "outra_sessao", codigo: "K", ingresso: "Inteira", evento: "Hamlet", sessao_inicio: "2026-11-22T21:00:00.000Z", sessao_fuso: "America/Sao_Paulo" }, "America/Sao_Paulo");
   assert.equal(outra?.tipo, "outra_sessao");
   assert.match(outra?.tipo === "outra_sessao" ? outra.sessao_do_ingresso : "", /^Hamlet, domingo, 22\/11\/2026 às 18:00$/);
@@ -37,7 +37,7 @@ test("resposta que não se entende nunca vira 'pode entrar'", () => {
 
 test("o resumo da sessão: válidos, entraram e as últimas entradas com a hora do local", () => {
   const r = resumoDaPorta({ validos: 96, entraram: 63, fuso: "America/Sao_Paulo", recentes: [{ codigo: "K", ingresso: "Inteira", comprador: "Rita", usado_em: "2026-11-19T22:58:00.000Z" }] });
-  assert.deepEqual(r, { validos: 96, entraram: 63, recentes: [{ codigo: "K", ingresso: "Inteira", comprador: "Rita", hora: "19:58" }] });
+  assert.deepEqual(r, { validos: 96, entraram: 63, recentes: [{ codigo: "K", ingresso: "Inteira", assento: null, comprador: "Rita", hora: "19:58" }] });
   for (const ruim of [null, {}, { validos: 1 }, { validos: 1, entraram: 1, recentes: "x" }]) assert.equal(resumoDaPorta(ruim), null);
 });
 
@@ -82,4 +82,21 @@ test("com resultado na tela, o leitor some (o botão Próximo ingresso volta a e
   const h = html({ resultado: { tipo: "pode_entrar", ingresso: "Inteira", comprador: "Rita", codigo: "K", restantes: 1 }, onProximo: () => {} });
   assert.match(h, /Pode entrar/);
   assert.doesNotMatch(h, /Ler QR Code/);
+});
+
+test("o lugar na porta: o banco manda o lugar do ingresso de setor numerado e a tela o mostra ao deixar entrar, ao avisar de ingresso já usado e nas últimas entradas", () => {
+  const lugar = "Plateia · Fileira C · lugar 7";
+  assert.deepEqual(resultadoDaConferencia({ tipo: "pode_entrar", codigo: "K", ingresso: "Inteira", assento: lugar, comprador: "Rita", restantes: 5 }, "America/Sao_Paulo"), { tipo: "pode_entrar", ingresso: "Inteira", assento: lugar, comprador: "Rita", codigo: "K", restantes: 5 });
+  assert.equal((resultadoDaConferencia({ tipo: "ja_usado", codigo: "K", ingresso: "Inteira", assento: lugar, comprador: "Rita", usado_em: "2026-11-19T22:58:00.000Z", fuso: "America/Sao_Paulo" }, "America/Sao_Paulo") as { assento: string }).assento, lugar);
+  assert.equal((resultadoDaConferencia({ tipo: "pode_entrar", codigo: "K", ingresso: "Pista", assento: "", comprador: "Bia", restantes: 1 }, "America/Sao_Paulo") as { assento: string | null }).assento, null, "vazio é sem lugar");
+  const r = resumoDaPorta({ validos: 2, entraram: 2, fuso: "America/Sao_Paulo", recentes: [{ codigo: "K", ingresso: "Inteira", assento: lugar, comprador: "Rita", usado_em: "2026-11-19T22:58:00.000Z" }, { codigo: "P", ingresso: "Pista", comprador: "Bia", usado_em: "2026-11-19T22:50:00.000Z" }] });
+  assert.deepEqual(r?.recentes.map(x => x.assento), [lugar, null]);
+  const entra = html({ resultado: { tipo: "pode_entrar", ingresso: "Inteira", assento: lugar, comprador: "Rita", codigo: "K", restantes: 1 } });
+  assert.ok(entra.includes("Pode entrar") && entra.includes(lugar), "o lugar aparece para a equipe orientar a pessoa");
+  const usado = html({ resultado: { tipo: "ja_usado", ingresso: "Inteira", assento: lugar, comprador: "Rita", codigo: "K", usado_em: "19:58" } });
+  assert.ok(usado.includes("Já foi usado") && usado.includes(lugar));
+  const semLugar = html({ resultado: { tipo: "pode_entrar", ingresso: "Pista", comprador: "Bia", codigo: "P", restantes: 1 } });
+  assert.ok(!semLugar.includes("Fileira"), "ingresso de setor comum não ganha linha de lugar");
+  const lista = html({ recentes: [{ codigo: "K7M2QX9HTR", ingresso: "Inteira", assento: lugar, comprador: "Rita Teste", hora: "19:58" }, { codigo: "PPPPPPPPPP", ingresso: "Pista", comprador: "Bia", hora: "19:50" }] });
+  assert.ok(lista.includes(`Inteira · ${lugar} · `) && lista.includes("Pista · "));
 });

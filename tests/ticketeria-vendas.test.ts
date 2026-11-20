@@ -153,3 +153,13 @@ test("a seção Reembolsos: situação e frase de cada um; só o que falhou ganh
   assert.doesNotMatch(html(createElement(VendasView, { resumo: v.resumo, sessoes: v.sessoes, compras: v.compras, filtro: "todas" })), /Reembolsos/, "sem reembolsos, a seção não aparece");
   assert.match(html(createElement(VendasView, { resumo: v.resumo, sessoes: v.sessoes, compras: v.compras, filtro: "todas", reembolsos: lista })), /Reembolsos/);
 });
+
+test("o lugar nas vendas: o detalhe da compra traz o lugar de cada ingresso de setor numerado e a folha o mostra", () => {
+  const { compras } = montarVendas({ ...entrada, emitidos: entrada.emitidos.map((e, i) => (i === 0 ? { ...e, assento_rotulo: "Plateia · Fileira C · lugar 7" } : e)) });
+  const comLugar = compras.flatMap(c => c.detalhe.ingressos).filter(i => i.assento);
+  assert.deepEqual(comLugar.map(i => i.assento), ["Plateia · Fileira C · lugar 7"], "só o ingresso que tem lugar");
+  assert.ok(compras.flatMap(c => c.detalhe.ingressos).every(i => i.assento === null || typeof i.assento === "string"), "os outros vêm com lugar nulo");
+  const detalhe = compras.find(c => c.detalhe.ingressos.some(i => i.assento))!.detalhe;
+  const folha = renderToStaticMarkup(createElement(DetalheDaCompraSheet, { compra: { ...detalhe, endereco_do_pedido: "https://jards.com.br/pedido/x" }, onClose: () => {} })).replace(/\u00a0/g, " ");
+  assert.ok(folha.includes("Plateia · Fileira C · lugar 7"));
+});
