@@ -1330,6 +1330,57 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_bilheteiros: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          user_id: string;
+          nome: string;
+          ativo: boolean;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          user_id: string;
+          nome: string;
+          ativo?: boolean;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          user_id?: string;
+          nome?: string;
+          ativo?: boolean;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_bilheteiros_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_bilheteiros_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_porta_links: {
         Row: {
           id: string;
@@ -1845,6 +1896,11 @@ export type BancoDaTicketeria = {
       auth_ticketeria_pode: {
         Args: { p_org: string; p_acao: "ler" | "editar" };
         Returns: boolean;
+      };
+      // A pessoa logada chama: as lojas em que ela é bilheteira ligada ([{ id, loja_id, loja, nome }]).
+      fn_ticketeria_bilheteiro_atual: {
+        Args: Record<string, never>;
+        Returns: Json;
       };
       fn_ticketeria_site_publicar_pagina: {
         Args: { p_pagina: string };
