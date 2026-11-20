@@ -4,6 +4,7 @@
 // De qual canal é uma venda: o canal do link de divulgação (`?canal=`) vale mais; depois a utm_source, depois o site de onde a pessoa chegou, depois o cupom usado; sem
 // nada disso, "sem origem conhecida". Só entram vendas pagas; ingressos e valor são o que o comprador pagou (já com o desconto do cupom).
 
+import { emCentavos, lerValorEmReais } from "@/lib/producao/dinheiro";
 import { MAX_ACAO_DA_ORIGEM, MAX_CANAL_DA_ORIGEM, rotuloDeCampanha } from "@/lib/ticketeria/origem";
 
 /** Os canais que o produtor escolhe ao criar um link. */
@@ -66,7 +67,7 @@ export function canalDoPedido(p: OrigemDoPedido): { chave: string; rotulo: strin
   return { chave: SEM_ORIGEM, rotulo: ROTULO_SEM_ORIGEM };
 }
 
-export type PedidoPagoParaOrigem = OrigemDoPedido & { id: string; sessao_id: string; total_centavos: number };
+export type PedidoPagoParaOrigem = OrigemDoPedido & { id: string; sessao_id: string; total_centavos: number; origem_acao?: string | null; pago_em?: string | null };
 /** Vendas somadas por sessão e canal. */
 export type LinhaDaDivulgacao = { sessao_id: string; chave: string; rotulo: string; ingressos: number; vendido_centavos: number };
 
@@ -118,4 +119,116 @@ export function enderecoDeDivulgacao(origem: string, sessaoId: string, canal: st
 }
 
 export type SessaoParaDivulgar = { id: string; evento: string; quando: string; a_venda: boolean };
-export type DivulgacaoDaLoja = { linhas: LinhaDaDivulgacao[]; sessoes: SessaoParaDivulgar[] };
+export type DivulgacaoDaLoja = {
+  linhas: LinhaDaDivulgacao[]; sessoes: SessaoParaDivulgar[];
+  /** As ações registradas, com o que cada uma vendeu (pelos pedidos cujo link tinha o nome da ação) e o custo por ingresso. */
+  acoes: AcaoComResultado[];
+  /** Ingressos vendidos por dia (AAAA-MM-DD, no fuso da loja), das vendas pagas. */
+  por_dia: Record<string, number>;
+  /** O dia de hoje no fuso da loja, AAAA-MM-DD: o fim do gráfico. */
+  hoje: string;
+};
+
+// ─── Ações de divulgação (passo B) ──────────────────────────────────────────
+
+export type AcaoDaLoja = { id: string; evento_id: string | null; nome: string; canal: string; inicio: string; fim: string; gasto_centavos: number };
+export type AcaoComResultado = AcaoDaLoja & { rotulo_do_canal: string; ingressos: number; vendido_centavos: number; custo_por_ingresso_centavos: number | null };
+
+/** O nome da ação como o link de divulgação o leva (`?acao=`): é por ele que a venda acha a ação. */
+export const nomeDaAcaoNoLink = (nome: string): string | null => rotuloDeCampanha(nome, MAX_ACAO_DA_ORIGEM);
+
+/** Quanto custou cada ingresso: o gasto dividido pelos ingressos (arredondado ao centavo). Sem gasto ou sem ingresso, não há o que mostrar. */
+export function custoPorIngresso(gastoCentavos: number, ingressos: number): number | null {
+  return gastoCentavos > 0 && ingressos > 0 ? Math.round(gastoCentavos / ingressos) : null;
+}
+
+export function rotuloDoCanal(canal: string): string {
+  return ROTULOS[canal] ?? bonito(canal);
+}
+
+/** O que cada ação vendeu: os pedidos pagos cujo link de divulgação tinha o mesmo nome de ação. Ações com o mesmo nome no link dividem as mesmas vendas. */
+export function resultadoDasAcoes(acoes: AcaoDaLoja[], pedidosPagos: Pick<PedidoPagoParaOrigem, "id" | "total_centavos" | "origem_acao">[], quantidadePorPedido: Record<string, number>): AcaoComResultado[] {
+  const porNome = new Map<string, { ingressos: number; vendido: number }>();
+  for (const p of pedidosPagos) {
+    if (!p.origem_acao) continue;
+    const c = porNome.get(p.origem_acao) ?? { ingressos: 0, vendido: 0 };
+    c.ingressos += quantidadePorPedido[p.id] ?? 0;
+    c.vendido += p.total_centavos;
+    porNome.set(p.origem_acao, c);
+  }
+  return acoes.map(a => {
+    const chave = nomeDaAcaoNoLink(a.nome);
+    const c = (chave && porNome.get(chave)) || { ingressos: 0, vendido: 0 };
+    return { ...a, rotulo_do_canal: rotuloDoCanal(a.canal), ingressos: c.ingressos, vendido_centavos: c.vendido, custo_por_ingresso_centavos: custoPorIngresso(a.gasto_centavos, c.ingressos) };
+  });
+}
+
+const FUSO_DA_LOJA = "America/Sao_Paulo";
+/** O dia (AAAA-MM-DD) de um instante no fuso da loja. */
+export function diaNoFuso(instante: string | Date, fuso: string = FUSO_DA_LOJA): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: fuso, year: "numeric", month: "2-digit", day: "2-digit" }).format(typeof instante === "string" ? new Date(instante) : instante);
+}
+
+export function ingressosPorDia(pedidosPagos: Pick<PedidoPagoParaOrigem, "id" | "pago_em">[], quantidadePorPedido: Record<string, number>, fuso: string = FUSO_DA_LOJA): Record<string, number> {
+  const dias: Record<string, number> = {};
+  for (const p of pedidosPagos) {
+    if (!p.pago_em) continue;
+    const dia = diaNoFuso(p.pago_em, fuso);
+    dias[dia] = (dias[dia] ?? 0) + (quantidadePorPedido[p.id] ?? 0);
+  }
+  return dias;
+}
+
+const somaDias = (dia: string, n: number): string => { const d = new Date(`${dia}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const diasEntre = (de: string, ate: string): number => Math.round((Date.parse(`${ate}T00:00:00Z`) - Date.parse(`${de}T00:00:00Z`)) / 86400000);
+const MAX_DIAS_NO_GRAFICO = 120;
+
+export type FaixaDoGrafico = { id: string; nome: string; de: number; ate: number; linha: number };
+export type SerieDoGrafico = { dias: { dia: string; ingressos: number }[]; faixas: FaixaDoGrafico[] };
+
+/** O gráfico: um dia por barra, do primeiro dia com venda ou ação até o último (no máximo os 120 mais recentes), e uma faixa por ação (as que se sobrepõem ficam em linhas diferentes). */
+export function serieDoGrafico(porDia: Record<string, number>, acoes: AcaoDaLoja[], hoje: string): SerieDoGrafico {
+  const pontas = [...Object.keys(porDia), ...acoes.flatMap(a => [a.inicio, a.fim])].filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d));
+  if (pontas.length === 0) return { dias: [], faixas: [] };
+  const ultimo = [...pontas, hoje].sort().at(-1) as string;
+  let primeiro = pontas.sort()[0];
+  if (diasEntre(primeiro, ultimo) + 1 > MAX_DIAS_NO_GRAFICO) primeiro = somaDias(ultimo, -(MAX_DIAS_NO_GRAFICO - 1));
+  const total = diasEntre(primeiro, ultimo) + 1;
+  const dias = Array.from({ length: total }, (_, i) => { const dia = somaDias(primeiro, i); return { dia, ingressos: porDia[dia] ?? 0 }; });
+  const ordenadas = acoes.filter(a => a.fim >= primeiro && a.inicio <= ultimo).sort((a, b) => a.inicio.localeCompare(b.inicio) || a.fim.localeCompare(b.fim));
+  const fimDaLinha: number[] = [];
+  const faixas: FaixaDoGrafico[] = ordenadas.map(a => {
+    const de = Math.max(0, diasEntre(primeiro, a.inicio));
+    const ate = Math.min(total - 1, diasEntre(primeiro, a.fim));
+    let linha = fimDaLinha.findIndex(fim => fim < de);
+    if (linha === -1) { linha = fimDaLinha.length; fimDaLinha.push(ate); } else fimDaLinha[linha] = ate;
+    return { id: a.id, nome: a.nome, de, ate, linha };
+  });
+  return { dias, faixas };
+}
+
+export type CamposDaAcao = { nome: string; canal: string; inicio: string; fim: string; gasto: string };
+export type AcaoLida = { nome: string; canal: string; inicio: string; fim: string; gasto_centavos: number };
+
+const DIA_VALIDO = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && diaNoFuso(new Date(`${d}T12:00:00Z`), "UTC") === d;
+
+/** O formulário de registrar ação, conferido: nome de 2 a 80 letras, um canal, o período (o fim não vem antes do início) e o gasto em reais (em branco vale zero). */
+export function lerAcao(c: CamposDaAcao): { ok: true; valor: AcaoLida } | { ok: false; erro: string } {
+  const nome = c.nome.replace(/\s+/g, " ").trim();
+  if (nome.length < 2 || nome.length > 80) return { ok: false, erro: "Dê um nome à ação, de 2 a 80 letras." };
+  const canal = rotuloDeCampanha(c.canal, MAX_CANAL_DA_ORIGEM);
+  if (!canal) return { ok: false, erro: "Escolha onde você divulgou." };
+  if (!DIA_VALIDO(c.inicio) || !DIA_VALIDO(c.fim)) return { ok: false, erro: "Escolha o dia em que começou e o dia em que terminou." };
+  if (c.fim < c.inicio) return { ok: false, erro: "A ação não pode terminar antes de começar." };
+  let gasto = 0;
+  if (c.gasto.trim() !== "") {
+    const reais = lerValorEmReais(c.gasto);
+    if (reais === null) return { ok: false, erro: "Escreva o gasto em reais, como 150 ou 1.200,50 (ou deixe em branco se não gastou)." };
+    if (reais > 10000000) return { ok: false, erro: "O gasto vai até R$ 10.000.000." };
+    gasto = emCentavos(reais);
+  }
+  return { ok: true, valor: { nome, canal, inicio: c.inicio, fim: c.fim, gasto_centavos: gasto } };
+}
+
+/** O gasto como o formulário o mostra: "150,00"; zero fica em branco. */
+export const gastoParaCampo = (centavos: number): string => (centavos > 0 ? (centavos / 100).toFixed(2).replace(".", ",") : "");

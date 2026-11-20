@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
-import { agruparDivulgacao, type DivulgacaoDaLoja, type PedidoPagoParaOrigem } from "@/lib/ticketeria/divulgacao";
+import { agruparDivulgacao, diaNoFuso, ingressosPorDia, resultadoDasAcoes, type AcaoDaLoja, type DivulgacaoDaLoja, type PedidoPagoParaOrigem } from "@/lib/ticketeria/divulgacao";
 import { diaCurtoEHora } from "@/lib/ticketeria/vendas";
 
 type Admin = SupabaseClient<Database>;
@@ -14,11 +14,11 @@ export async function divulgacaoDaLoja(admin: Admin, lojaId: string, agora: numb
   // Em páginas de 1.000: a consulta sem .range() corta em silêncio.
   const pedidos: PedidoPagoParaOrigem[] = [];
   for (let de = 0; ; de += PAGINA) {
-    const { data, error } = await t.from("ticketeria_pedidos").select("id, sessao_id, total_centavos, origem_canal, origem_utm, origem_referencia, cupom_codigo")
+    const { data, error } = await t.from("ticketeria_pedidos").select("id, sessao_id, total_centavos, pago_em, origem_canal, origem_acao, origem_utm, origem_referencia, cupom_codigo")
       .eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, de + PAGINA - 1);
     if (error) throw new Error(error.message);
     for (const p of data ?? []) {
-      pedidos.push({ id: p.id, sessao_id: p.sessao_id, total_centavos: Number(p.total_centavos), origem_canal: p.origem_canal, origem_utm: (p.origem_utm && typeof p.origem_utm === "object" && !Array.isArray(p.origem_utm) ? p.origem_utm : null) as Record<string, unknown> | null, origem_referencia: p.origem_referencia, cupom_codigo: p.cupom_codigo });
+      pedidos.push({ id: p.id, sessao_id: p.sessao_id, total_centavos: Number(p.total_centavos), pago_em: p.pago_em, origem_canal: p.origem_canal, origem_acao: p.origem_acao, origem_utm: (p.origem_utm && typeof p.origem_utm === "object" && !Array.isArray(p.origem_utm) ? p.origem_utm : null) as Record<string, unknown> | null, origem_referencia: p.origem_referencia, cupom_codigo: p.cupom_codigo });
     }
     if ((data ?? []).length < PAGINA) break;
   }
@@ -27,9 +27,10 @@ export async function divulgacaoDaLoja(admin: Admin, lojaId: string, agora: numb
     const { data } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade").in("pedido_id", pedidos.slice(i, i + 150).map(p => p.id));
     for (const it of data ?? []) quantidadePorPedido[it.pedido_id] = (quantidadePorPedido[it.pedido_id] ?? 0) + it.quantidade;
   }
-  const [{ data: eventos }, { data: locais }] = await Promise.all([
+  const [{ data: eventos }, { data: locais }, { data: acoes }] = await Promise.all([
     t.from("ticketeria_eventos").select("id, titulo").eq("loja_id", lojaId),
     t.from("ticketeria_locais").select("id, fuso").eq("loja_id", lojaId),
+    t.from("ticketeria_acoes_divulgacao").select("id, evento_id, nome, canal, inicio, fim, gasto_centavos").eq("loja_id", lojaId).order("inicio", { ascending: false }),
   ]);
   const ids = (eventos ?? []).map(e => e.id);
   const { data: sessoes } = ids.length > 0 ? await t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").in("evento_id", ids).order("inicio", { ascending: false }) : { data: [] };
@@ -37,6 +38,9 @@ export async function divulgacaoDaLoja(admin: Admin, lojaId: string, agora: numb
   const fuso = new Map((locais ?? []).map(l => [l.id, l.fuso]));
   return {
     linhas: agruparDivulgacao(pedidos, quantidadePorPedido),
+    acoes: resultadoDasAcoes((acoes ?? []) as AcaoDaLoja[], pedidos, quantidadePorPedido),
+    por_dia: ingressosPorDia(pedidos, quantidadePorPedido),
+    hoje: diaNoFuso(new Date(agora)),
     sessoes: (sessoes ?? []).filter(s => !s.cancelada_em).map(s => ({
       id: s.id, evento: titulo.get(s.evento_id) ?? "Evento", quando: diaCurtoEHora(s.inicio, fuso.get(s.local_id)), a_venda: Date.parse(s.inicio) > agora,
     })),

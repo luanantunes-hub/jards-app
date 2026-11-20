@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Check, Megaphone } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { CANAIS_DE_DIVULGACAO, ROTULO_SEM_ORIGEM, SEM_ORIGEM, enderecoDeDivulgacao, resumirDivulgacao, type LinhaDaDivulgacao, type SessaoParaDivulgar } from "@/lib/ticketeria/divulgacao";
+import { CANAIS_DE_DIVULGACAO, ROTULO_SEM_ORIGEM, SEM_ORIGEM, enderecoDeDivulgacao, nomeDaAcaoNoLink, resumirDivulgacao, serieDoGrafico, type AcaoComResultado, type CamposDaAcao, type LinhaDaDivulgacao, type SessaoParaDivulgar } from "@/lib/ticketeria/divulgacao";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
-import { CAMPO, ROTULO } from "@/components/ticketeria/FolhasDosEventos";
+import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 
 // O painel Divulgação (a tela do produtor): de onde vieram as vendas, por canal, e a folha de criar um link de divulgação. Só desenho: os dados e as ações chegam por props.
 // Segue o DESIGN.md da Ticketeria: rótulos pequenos em caixa alta, valores em tinta e tabulares, cantos de 12px, sem cor fora de estado e de gráfico.
@@ -125,6 +125,110 @@ export function LinkDeDivulgacaoSheet({ sessoes, origem, sessaoInicial = null, c
             <div className="break-all rounded-xl bg-[#F6F5F8] px-4 py-3 text-[0.75rem] leading-relaxed text-black/60" aria-label="Link de divulgação">{endereco}</div>
           </>
         )}
+      </div>
+    </TopSheet>
+  );
+}
+
+// ─── Ações e gasto (passo B) ────────────────────────────────────────────────
+
+const dataCurta = (dia: string) => { const [, m, d] = dia.split("-"); return `${d}/${m}`; };
+const periodoEmTexto = (inicio: string, fim: string) => (inicio === fim ? dataCurta(inicio) : `${dataCurta(inicio)} a ${dataCurta(fim)}`);
+
+/** O gráfico de ingressos por dia, com uma faixa por ação em cima. Os dias sem venda ficam vazios; os rótulos de data saem de 7 em 7 dias. */
+function GraficoDeVendas({ por_dia, acoes, hoje }: { por_dia: Record<string, number>; acoes: AcaoComResultado[]; hoje: string }) {
+  const { dias, faixas } = serieDoGrafico(por_dia, acoes, hoje);
+  if (dias.length === 0) return null;
+  const W = 1000, ALTURA = 190, ESQ = 30, BASE = 22, LINHA = 12;
+  const linhas = faixas.reduce((m, f) => Math.max(m, f.linha + 1), 0);
+  const TOPO = 6 + linhas * LINHA;
+  const maximo = Math.max(4, ...dias.map(d => d.ingressos));
+  const h = ALTURA - TOPO - BASE;
+  const largura = (W - ESQ) / dias.length;
+  const marcas = [0, Math.ceil(maximo / 2), maximo];
+  return (
+    <svg viewBox={`0 0 ${W} ${ALTURA}`} width="100%" role="img" aria-label="Ingressos vendidos por dia, com as ações de divulgação marcadas" className="mt-3">
+      {marcas.map(v => { const y = TOPO + h - (v / maximo) * h; return <g key={v}><line x1={ESQ} x2={W} y1={y} y2={y} stroke="rgba(13,13,13,.07)" /><text x={0} y={y + 4} fontSize="10" fill="rgba(13,13,13,.35)">{v}</text></g>; })}
+      {faixas.map(f => <rect key={f.id} x={ESQ + f.de * largura} y={4 + f.linha * LINHA} width={(f.ate - f.de + 1) * largura} height={8} rx={4} fill="#D9A441" opacity={0.75}><title>{f.nome}</title></rect>)}
+      {dias.map((d, i) => d.ingressos > 0 && <rect key={d.dia} x={ESQ + i * largura + largura * 0.18} y={TOPO + h - (d.ingressos / maximo) * h} width={largura * 0.64} height={(d.ingressos / maximo) * h} rx={Math.min(3, largura * 0.2)} fill="#7259B5"><title>{`${dataCurta(d.dia)}: ${d.ingressos}`}</title></rect>)}
+      {dias.map((d, i) => i % 7 === 0 && <text key={`r${d.dia}`} x={ESQ + i * largura + 2} y={ALTURA - 6} fontSize="10" fill="rgba(13,13,13,.4)">{dataCurta(d.dia)}</text>)}
+    </svg>
+  );
+}
+
+/** As ações de divulgação: o gráfico de vendas por dia com as ações marcadas e a tabela com gasto, ingressos e custo por ingresso. */
+export function AcoesDaLoja({ acoes, por_dia, hoje, onAbrir, onRegistrar }: { acoes: AcaoComResultado[]; por_dia: Record<string, number>; hoje: string; onAbrir?: (id: string) => void; onRegistrar?: () => void }) {
+  const temVenda = Object.keys(por_dia).length > 0;
+  if (acoes.length === 0 && !temVenda) {
+    return (
+      <div className="rounded-xl border bg-white" style={{ borderColor: BORDA }}>
+        <div className="flex flex-col items-center px-4 py-20 text-center">
+          <Megaphone size={28} className="mb-3 text-black/15" aria-hidden="true" />
+          <p className="text-[0.875rem] font-medium text-black/55">Nenhuma ação registrada</p>
+          <p className="mt-1.5 max-w-sm text-[0.75rem] leading-relaxed text-black/35">Anote o que você fez para vender (um anúncio, os stories, um e-mail) e quanto gastou. Aqui você vê se as vendas subiram e quanto custou cada ingresso.</p>
+          <button type="button" onClick={onRegistrar} className="mt-4 rounded-xl border bg-white px-3.5 py-2 text-[0.75rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]" style={{ borderColor: BORDA }}>Registrar ação</button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border bg-white px-5 pb-3 pt-4" style={{ borderColor: BORDA }}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className={ROTULO_PEQUENO}>Ingressos vendidos por dia</p>
+          <p className="flex gap-4 text-[0.6875rem] text-black/50"><span><i className="mr-1.5 inline-block size-2 rounded-sm bg-[#7259B5]" aria-hidden="true" />Vendas</span><span><i className="mr-1.5 inline-block size-2 rounded-sm bg-[#D9A441]" aria-hidden="true" />Ações de divulgação</span></p>
+        </div>
+        {temVenda || acoes.length > 0 ? <GraficoDeVendas por_dia={por_dia} acoes={acoes} hoje={hoje} /> : null}
+      </div>
+      <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>
+        <table className="w-full min-w-[44rem] border-collapse">
+          <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Ação</th><th className={CABECALHO}>Canal</th><th className={CABECALHO}>Período</th><th className={`${CABECALHO} text-right`}>Gasto</th><th className={`${CABECALHO} text-right`}>Ingressos</th><th className={`${CABECALHO} text-right`}>Custo por ingresso</th></tr></thead>
+          <tbody className="divide-y divide-black/[.08]">
+            {acoes.map(a => (
+              <tr key={a.id}>
+                <td className={CELULA}><button type="button" onClick={() => onAbrir?.(a.id)} className="rounded-xl text-left font-normal underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{a.nome}</button></td>
+                <td className={`${CELULA} text-black/70`}>{a.rotulo_do_canal}</td>
+                <td className={`${CELULA} tabular-nums text-black/70`}>{periodoEmTexto(a.inicio, a.fim)}</td>
+                <td className={`${CELULA} text-right tabular-nums`}>{formatarMoeda(a.gasto_centavos)}</td>
+                <td className={`${CELULA} text-right tabular-nums`}>{a.ingressos > 0 ? a.ingressos : <span className="text-black/35">—</span>}</td>
+                <td className={`${CELULA} text-right tabular-nums`}>{a.custo_por_ingresso_centavos !== null ? formatarMoeda(a.custo_por_ingresso_centavos) : <span className="text-black/35">—</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Isto mostra o que aconteceu junto, não prova que a ação causou a venda: quem viu um anúncio pode comprar dias depois, por outro caminho. Os ingressos de cada ação são os de quem comprou pelo link de divulgação com o mesmo nome; sem o link, aparece um traço.</p>
+    </div>
+  );
+}
+
+/** A folha de registrar ou editar uma ação: nome, onde divulgou, o período e quanto gastou. */
+export function AcaoSheet({ editando, valores, erro, salvando, onMudar, onClose, onSalvar, onApagar }: {
+  editando: boolean; valores: CamposDaAcao; erro?: string | null; salvando?: boolean;
+  onMudar?: <K extends keyof CamposDaAcao>(campo: K, valor: CamposDaAcao[K]) => void; onClose: () => void; onSalvar?: () => void; onApagar?: () => void;
+}) {
+  const nomeNoLink = nomeDaAcaoNoLink(valores.nome);
+  return (
+    <TopSheet titulo={editando ? "Editar ação" : "Registrar ação"} onClose={onClose} footer={fechar => <Rodape fechar={fechar} salvando={!!salvando} rotulo={editando ? "Salvar" : "Registrar ação"} onSalvar={() => onSalvar?.()} onApagar={editando ? onApagar : undefined} rotuloApagar="Apagar" />}>
+      <div className="space-y-4">
+        {erro && <Aviso texto={erro} />}
+        <div><label className={ROTULO} htmlFor="ac-nome">Nome da ação</label><input id="ac-nome" className={CAMPO} value={valores.nome} onChange={e => onMudar?.("nome", e.target.value)} placeholder="Stories do lote 2" maxLength={80} disabled={salvando} />
+          {nomeNoLink && <p className="mt-1.5 text-[0.75rem] text-black/45">Para contar os ingressos, crie o link de divulgação com o nome da ação <span className="text-black/70">{nomeNoLink}</span>.</p>}</div>
+        <div>
+          <span className={ROTULO}>Onde você divulgou</span>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Onde você divulgou">
+            {CANAIS_DE_DIVULGACAO.map(c => (
+              <button key={c.valor} type="button" disabled={salvando} onClick={() => onMudar?.("canal", c.valor)} aria-pressed={valores.canal === c.valor}
+                className={`rounded-xl border px-3 py-1.5 text-[0.8125rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${valores.canal === c.valor ? "border-[#7259B5] bg-[#F5F2FB] font-normal text-[#1C0E33]" : "bg-white text-black/60 hover:bg-black/[.03]"}`}
+                style={valores.canal === c.valor ? undefined : { borderColor: BORDA }}>{c.rotulo}</button>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div><label className={ROTULO} htmlFor="ac-inicio">Começou em</label><input id="ac-inicio" type="date" className={CAMPO} value={valores.inicio} onChange={e => onMudar?.("inicio", e.target.value)} disabled={salvando} /></div>
+          <div><label className={ROTULO} htmlFor="ac-fim">Terminou em</label><input id="ac-fim" type="date" className={CAMPO} value={valores.fim} onChange={e => onMudar?.("fim", e.target.value)} disabled={salvando} /></div>
+        </div>
+        <div><label className={ROTULO} htmlFor="ac-gasto">Quanto gastou (opcional)</label><input id="ac-gasto" inputMode="decimal" className={CAMPO} value={valores.gasto} onChange={e => onMudar?.("gasto", e.target.value)} placeholder="150,00" disabled={salvando} /><p className="mt-1.5 text-[0.75rem] text-black/45">Em reais. Deixe em branco se não custou nada, como um e-mail.</p></div>
       </div>
     </TopSheet>
   );
