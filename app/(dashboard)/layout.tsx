@@ -44,7 +44,6 @@ import {
   HandCoins,
   Shield,
   Sparkles,
-  ArrowLeft,
   ArrowLeftRight,
   Home,
   Menu,
@@ -71,12 +70,13 @@ import { EtiquetasProvider } from "@/contexts/EtiquetasContext";
 import { TaxonomiasComerciaisProvider } from "@/contexts/TaxonomiasComerciaisContext";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { BuscaDoTopo } from "@/components/ticketeria/BuscaDoTopo";
 import { AjudaFlutuante } from "@/components/suporte/AjudaFlutuante";
 import { SeletorDeModulo, type OpcaoDeModulo } from "@/components/navegacao/SeletorDeModulo";
 import { ConvitePrestacao } from "@/components/navegacao/ConvitePrestacao";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
-import { destinoSemAcesso, inicioDeOutroModulo, moduloDaRota, moduloVisivel, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, paginaDeEntrada, podeUsarModulo, situacaoNoSeletor, type ModuloId } from "@/lib/modulos";
+import { destinoSemAcesso, moduloDaRota, moduloVisivel, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, paginaDeEntrada, podeUsarModulo, situacaoNoSeletor, type ModuloId } from "@/lib/modulos";
 import { TESTE_GRATIS_DIAS } from "@/lib/modulos-contrato";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
@@ -833,8 +833,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {usaCaptacao && <BotaoUpgrade expandido={isExpanded} />}
         </nav>
 
-        {/* Bottom */}
-        <div className="px-2 py-2.5 border-t space-y-0.5 flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+        {/* Bottom (na Ticketeria não há rodapé no menu: configurações e notificações ficam na barra do topo) */}
+        {!menuFixoAberto && <div className="px-2 py-2.5 border-t space-y-0.5 flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           {isSuperAdmin && !isWorkspaceCaptador && (
             <Link
               href="/admin"
@@ -887,18 +887,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {isExpanded && <span>Acesso de convidado</span>}
             </Link>
           )}
-          {/* Na Ticketeria o menu não tem o seletor de módulo: este link leva ao primeiro outro módulo que a pessoa usa. */}
-          {menuFixoAberto && (
-            <Link
-              href={inicioDeOutroModulo(acessoModulos, "ticketeria")}
-              prefetch={false}
-              className="flex items-center rounded text-[0.8125rem] font-medium text-black/35 transition whitespace-nowrap overflow-hidden hover:text-[#282525] hover:bg-black/[0.05] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
-              style={{ gap: 10, padding: "8px 10px" }}
-            >
-              <ArrowLeft size={16} className="flex-shrink-0" aria-hidden="true" />
-              <span>Sair da Ticketeria</span>
-            </Link>
-          )}
           {!isWorkspaceCaptador && (
           <Link
             href="/configuracoes"
@@ -933,7 +921,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <LogOut size={16} className="flex-shrink-0" />
             {isExpanded && <span>Sair</span>}
           </button>
-        </div>
+        </div>}
       </aside>
       {/* Main */}
       <div className={`flex flex-col h-full overflow-hidden transition-[padding] duration-200 motion-reduce:transition-none ${menuFixoAberto ? "md:pl-56" : "md:pl-14"}`}>
@@ -943,7 +931,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           className="flex-shrink-0 flex items-center justify-end px-4 md:px-8 border-b"
           style={{ height: "3.5rem", background: "#FFFFFF", borderColor: "rgba(13,13,13,.08)" }}
         >
-          <div className="mr-auto flex items-center gap-2 md:hidden">
+          <div className={`${menuFixoAberto ? "" : "mr-auto"} flex items-center gap-2 md:hidden`}>
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
@@ -956,10 +944,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
             {!menuFixoAberto && <img src="/jards-icon.svg" alt="Jards" className="h-6 w-6" />}
           </div>
+          {/* Na Ticketeria a barra do topo tem a busca, as notificações e as configurações */}
+          {menuFixoAberto && <BuscaDoTopo organizationId={organizationId} />}
           {/* Right actions */}
-          <div className="flex items-center gap-3">
-            {/* Na Ticketeria a barra do topo não tem o sino de notificações. */}
-            {user && !menuFixoAberto && <NotificationBell userId={user.id} />}
+          <div className={`flex items-center gap-3 ${menuFixoAberto ? "ml-auto shrink-0 pl-3" : ""}`}>
+            {user && <NotificationBell userId={user.id} />}
+            {menuFixoAberto && (
+              <Link
+                href="/configuracoes"
+                title="Configurações"
+                aria-label="Configurações"
+                aria-current={correspondeRota(path, "/configuracoes") ? "page" : undefined}
+                className={`flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${correspondeRota(path, "/configuracoes") ? "bg-black/[.05] text-[#282525]" : "text-black/45 hover:text-[#282525]"}`}
+              >
+                <Settings size={18} aria-hidden="true" />
+              </Link>
+            )}
             {memberships.length > 1 ? (
               <div className="relative">
                 <button
@@ -973,6 +973,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   {org.avatar_url ? (
                     <img src={org.avatar_url} alt="" className="w-full h-full object-cover bg-white" />
+                  ) : menuFixoAberto ? (
+                    <Building2 size={14} aria-hidden="true" />
                   ) : (
                     <span>{org.nome ? org.nome.charAt(0).toUpperCase() : "?"}</span>
                   )}
@@ -1004,7 +1006,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </>
                 )}
               </div>
-            ) : (
+            ) : menuFixoAberto ? null : (
               <Link
                 href="/configuracoes"
                 title={org.nome || "Configurações"}
