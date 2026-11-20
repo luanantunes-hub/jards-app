@@ -38,7 +38,7 @@ export function ListSummary({ strong, children, icone, alerta, tone }: { strong:
 }
 
 export function ListToolbar({ children, search }: { children?: ReactNode; search?: ReactNode }) {
-  return <div className="flex shrink-0 flex-col gap-3 border-b bg-white px-4 py-3 md:px-8 lg:flex-row lg:items-center lg:justify-between" style={{borderColor:"rgba(13,13,13,.06)"}}><div className="flex max-w-full items-center gap-2 overflow-x-auto">{children}</div>{search}</div>;
+  return <div className="flex shrink-0 flex-col gap-3 border-b bg-white px-4 py-3 md:px-8 lg:flex-row lg:items-center lg:justify-between" style={{borderColor:"rgba(13,13,13,.06)"}}><div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">{children}</div>{search}</div>;
 }
 
 export function ListSearch({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) {

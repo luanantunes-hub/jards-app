@@ -584,7 +584,7 @@ export default function CaptadoresPage() {
                   />
                 </label>
 
-                <div className="flex max-w-full items-center gap-2 overflow-x-auto lg:ml-auto">
+                <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2 lg:ml-auto">
                   <SegmentedControl value={teamPriority} onChange={setTeamPriority} ariaLabel="Filtrar por prioridade" options={[{ value: "todas", label: "Prioridade" }, { value: "alta", label: "Alta" }, { value: "media", label: "Média" }, { value: "baixa", label: "Baixa" }]} />
 
                   <SegmentedControl value={teamLink} onChange={setTeamLink} ariaLabel="Filtrar por vínculo" options={[{ value: "todos", label: "Todos" }, { value: "workspace", label: "Workspace" }, { value: "externos", label: "Externos" }]} />

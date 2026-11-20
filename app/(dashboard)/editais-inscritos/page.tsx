@@ -584,7 +584,7 @@ export default function EditaisInscritosPage() {
 
       <div className="flex shrink-0 flex-col gap-3 border-b bg-white px-4 py-3 md:px-8 lg:flex-row lg:items-center" style={{borderColor:"rgba(13,13,13,.06)"}}>
         <ListSearch value={search} onChange={setSearch} placeholder="Buscar empresa ou projeto"/>
-        <div className="flex max-w-full items-center gap-2 overflow-x-auto">
+        <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={(e) => {
