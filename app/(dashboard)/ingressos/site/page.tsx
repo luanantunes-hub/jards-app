@@ -13,7 +13,7 @@ import { corDoTema, type Bloco } from "@/lib/ticketeria/site";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { EditorDoSite, type EspacoDaProgramacao } from "@/components/ticketeria/EditorDoSite";
+import { EditorDoSite, type EspacoDaProgramacao, type EventoParaBloco } from "@/components/ticketeria/EditorDoSite";
 import { DominiosDoSite } from "@/components/ticketeria/DominiosDoSite";
 
 type Loja = { id: string; nome: string };
@@ -83,6 +83,7 @@ export default function SiteDaLojaPage() {
   const { confirmDelete } = useDeleteConfirm();
   const [estado, setEstado] = useState<{ loja: Loja | null; site: Site | null } | undefined>(undefined);
   const [espacos, setEspacos] = useState<EspacoDaProgramacao[]>([]);
+  const [eventos, setEventos] = useState<EventoParaBloco[]>([]);
   const [titulo, setTitulo] = useState("");
   const [cor, setCor] = useState("#282525");
   const [folha, setFolha] = useState(false);
@@ -107,6 +108,9 @@ export default function SiteDaLojaPage() {
       const sites = loja ? await ticketeria.from("ticketeria_sites").select("id, nome, titulo, cor, situacao").eq("loja_id", loja.id).maybeSingle() : { data: null, error: null };
       if (!ativo) return;
       const site = (sites.data ?? null) as Site | null;
+      const ev = loja ? await ticketeria.from("ticketeria_eventos").select("id, titulo, situacao").eq("loja_id", loja.id).neq("situacao", "cancelado").order("titulo") : { data: [] };
+      if (!ativo) return;
+      setEventos((ev.data ?? []) as EventoParaBloco[]);
       setEstado({ loja, site });
       setEspacos((esp.data ?? []) as EspacoDaProgramacao[]);
       if (site) { setTitulo(site.titulo ?? ""); setCor(corDoTema(site.cor)); }
@@ -196,7 +200,7 @@ export default function SiteDaLojaPage() {
           </div>
           {podeEditar && <button type="button" disabled={salvando || (titulo.trim() === (site.titulo ?? "") && cor === corDoTema(site.cor))} onClick={() => void atualizar({ titulo: titulo.trim() === "" ? null : titulo.trim(), cor })} className="inline-flex h-10 items-center rounded acao-salvar px-4 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">Salvar</button>}
         </section>
-        <EditorDoSite siteId={site.id} organizationId={organizationId} podeEditar={podeEditar} espacos={espacos} />
+        <EditorDoSite siteId={site.id} organizationId={organizationId} podeEditar={podeEditar} espacos={espacos} eventos={eventos} />
         <DominiosDoSite siteId={site.id} podeEditar={podeEditar} />
         {podeEditar && <div className="mt-12"><button type="button" onClick={apagar} className="text-[0.75rem] font-medium text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Apagar este site</button></div>}
       </DetailPageContent>
