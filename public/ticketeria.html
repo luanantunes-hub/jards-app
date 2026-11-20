@@ -71,6 +71,7 @@
 .tku-spec { border:1px solid var(--tku-linha); border-radius:var(--tku-raio); overflow:hidden; background:var(--tku-sup); }
 .tku-arte { align-self:start; border-radius:var(--tku-raio); overflow:hidden; background:#E9E5DF; aspect-ratio:626/600; }
 .tku-arte img { display:block; width:100%; height:100%; object-fit:cover; object-position:50% 46%; }
+.tku-arte video { display:block; width:100%; height:100%; object-fit:cover; object-position:50% 24%; }
 .tku-spec li { display:flex; gap:14px; padding:9px 14px; border-top:1px solid var(--tku-linha); font-size:13.5px; line-height:1.45; font-weight:400; }
 .tku-spec li:first-child { border-top:0; }
 .tku-spec b { font-family:'Geist Mono',monospace; font-weight:500; color:var(--tku-vio); min-width:22px; }
@@ -337,21 +338,30 @@ section[id] { scroll-margin-top:72px; }
 <section id="aberta" class="tku-sec" aria-labelledby="aberta-titulo">
   <div class="tku-in">
     <p class="tku-cab tku-mono"><span class="tku-idx tku-vio">/04</span><span>Integração</span></p>
-    <h2 id="aberta-titulo" class="tku-h2 tku-cond">Infraestrutura aberta <span class="tku-vio">para cada pilha.</span></h2>
-    <p class="tku-lede">Os ingressos se integram a sites, CRM, e-mail e sistemas de gestão.</p>
-    <div class="tku-tres tku-tres--st">
-      <article><span class="tku-st tku-st--c">Em construção</span><h3 class="tku-cond" style="margin-top:20px">Integre aos seus sistemas</h3><p class="tku-t">API pública de leitura, widget de ingressos e webhooks assinados. Depois, plugins para plataformas de sites.</p></article>
-      <article><span class="tku-st">Em teste</span><h3 class="tku-cond" style="margin-top:20px">Opere com segurança</h3><p class="tku-t">Pagamento dividido na transação, dados mínimos do comprador e reembolso com devolução da taxa.</p></article>
-      <article><span class="tku-st tku-st--c">Em construção</span><h3 class="tku-cond" style="margin-top:20px">Escolha o modo de integração</h3><p class="tku-t">Um widget de uma linha no seu site, a API de eventos e sessões, ou webhooks para notificar o seu sistema.</p></article>
-    </div>
-    <div class="tku-janela" style="margin-top:40px;max-width:640px" aria-hidden="true">
-      <div class="tku-h tku-mono"><span>Exemplo ilustrativo</span><span>Resposta da API</span></div>
-      <pre class="tku-pre"><span class="k">GET</span> /eventos
+    <div class="tku-duas" style="margin-top:26px">
+      <div>
+        <h2 id="aberta-titulo" class="tku-h2 tku-cond">Infraestrutura aberta <span class="tku-vio">para cada pilha.</span></h2>
+        <p class="tku-lede">Os ingressos se integram a sites, CRM, e-mail e sistemas de gestão.</p>
+        <div class="tku-janela" style="margin-top:28px" aria-hidden="true">
+          <div class="tku-h tku-mono"><span>Exemplo ilustrativo</span><span>Resposta da API</span></div>
+          <pre class="tku-pre"><span class="k">GET</span> /eventos
 {
   <span class="k">"evento"</span>: <span class="v">"O Auto da Compadecida"</span>,
   <span class="k">"sessoes"</span>: [{ <span class="k">"inicio"</span>: <span class="v">"2026-12-12T20:00"</span>, <span class="k">"disponivel"</span>: <span class="v">164</span> }],
   <span class="k">"ingressos"</span>: [{ <span class="k">"nome"</span>: <span class="v">"Inteira"</span>, <span class="k">"preco"</span>: <span class="v">60.00</span> }]
 }</pre>
+        </div>
+      </div>
+      <div class="tku-arte" role="img" aria-label="Ilustração de um polvo rosa gigante abraçando, com os tentáculos, um edifício histórico ao entardecer.">
+        <video muted loop playsinline preload="none" poster="assets/ticketeria-polvo.webp" data-video-loop aria-hidden="true" tabindex="-1">
+          <source src="assets/ticketeria-polvo.mp4" type="video/mp4" />
+        </video>
+      </div>
+    </div>
+    <div class="tku-tres tku-tres--st">
+      <article><span class="tku-st tku-st--c">Em construção</span><h3 class="tku-cond" style="margin-top:20px">Integre aos seus sistemas</h3><p class="tku-t">API pública de leitura, widget de ingressos e webhooks assinados. Depois, plugins para plataformas de sites.</p></article>
+      <article><span class="tku-st">Em teste</span><h3 class="tku-cond" style="margin-top:20px">Opere com segurança</h3><p class="tku-t">Pagamento dividido na transação, dados mínimos do comprador e reembolso com devolução da taxa.</p></article>
+      <article><span class="tku-st tku-st--c">Em construção</span><h3 class="tku-cond" style="margin-top:20px">Escolha o modo de integração</h3><p class="tku-t">Um widget de uma linha no seu site, a API de eventos e sessões, ou webhooks para notificar o seu sistema.</p></article>
     </div>
   </div>
 </section>
@@ -507,5 +517,18 @@ section[id] { scroll-margin-top:72px; }
     .whatsapp-float { right: 1rem; bottom: 1rem; width: 3.25rem; height: 3.25rem; }
   }
 </style>
+<script>
+// O polvo só se mexe quando aparece na tela, e fica parado (só o quadro de capa) com "reduzir movimento" ou sem JavaScript.
+(function () {
+  var v = document.querySelector("[data-video-loop]");
+  if (!v || !("IntersectionObserver" in window)) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  new IntersectionObserver(function (entradas) {
+    entradas.forEach(function (e) {
+      if (e.isIntersecting) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else { v.pause(); }
+    });
+  }, { threshold: 0.25 }).observe(v);
+})();
+</script>
 </body>
 </html>
