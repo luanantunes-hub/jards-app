@@ -74,7 +74,7 @@ export default function PropostaPublicaPage({ params }: { params: Promise<{ slug
       <header className="flex flex-shrink-0 items-center justify-between px-5 py-3 border-b border-white/8">
         <div className="flex items-center gap-3">
           <a href="https://jards.com.br" target="_blank" rel="noopener noreferrer">
-            <Image src="/jards-logo.svg" alt="Jards" width={63} height={20} className="h-5 w-auto opacity-60 hover:opacity-90 transition brightness-0 invert" />
+            <Image src="/jards-logo.svg" alt="Jards" width={68} height={20} className="h-5 w-auto opacity-60 hover:opacity-90 transition brightness-0 invert" />
           </a>
           <span className="h-4 w-px bg-white/12" />
           <p className="text-[0.8125rem] font-semibold text-white/70 truncate max-w-[15rem] sm:max-w-sm md:max-w-lg">
