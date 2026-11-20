@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TelaAbrindoPagamento, TelaAviso, TelaDados, TelaEscolherIngressos, TelaPagarPix } from "@/components/ticketeria/CompraView";
+import { TelaListaDeEspera, TelaNaListaDeEspera } from "@/components/ticketeria/ListaDeEsperaView";
+import { lerCorpoDaEspera } from "@/lib/ticketeria/espera";
 import { lerCorpoDaCompra } from "@/lib/ticketeria/pagamento/compra";
 import { codigoDoCupomValido, descontoEmTexto, descontoNasFaixas, normalizarCodigo, type CupomConferido } from "@/lib/ticketeria/cupom";
 import { VERSAO_DOS_TERMOS_DE_COMPRA } from "@/lib/ticketeria/termos-de-compra";
@@ -14,7 +16,7 @@ import { totalNasFaixas, type VitrineDaSessao } from "@/lib/ticketeria/vitrine";
 
 /** O pedido em andamento: Pix (o código copia e cola) ou cartão (o endereço da página segura de pagamento). */
 type PedidoComPix = { pedido_id: string; codigo: string; total_centavos: number; reservado_ate: string; pix_copia_e_cola?: string; url_de_pagamento?: string };
-type Passo = "escolher" | "dados" | "pix" | "cartao" | "expirou";
+type Passo = "escolher" | "dados" | "pix" | "cartao" | "expirou" | "espera" | "na-lista";
 
 const chaveDaSessao = (sessao: string) => `ticketeria-compra-${sessao}`;
 const guardar = (sessao: string, pedido: PedidoComPix | null) => { try { if (pedido) sessionStorage.setItem(chaveDaSessao(sessao), JSON.stringify(pedido)); else sessionStorage.removeItem(chaveDaSessao(sessao)); } catch { /* sem armazenamento: segue sem */ } };
@@ -53,6 +55,12 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
   const [codigoDoCupom, setCodigoDoCupom] = useState("");
   const [cupomErro, setCupomErro] = useState<string | null>(null);
   const [aplicandoCupom, setAplicandoCupom] = useState(false);
+  // A lista de espera de um ingresso esgotado: qual ingresso, quem entra, quantos ingressos quer e o erro.
+  const [esperaIngresso, setEsperaIngresso] = useState<string | null>(null);
+  const [esperaValores, setEsperaValores] = useState({ nome: "", email: "" });
+  const [esperaQuantidade, setEsperaQuantidade] = useState(1);
+  const [esperaErro, setEsperaErro] = useState<string | null>(null);
+  const [entrandoNaEspera, setEntrandoNaEspera] = useState(false);
 
   // Recarregou no meio do Pix: volta a ele (o servidor não sabe do armazenamento do navegador, então só dá para ler depois de montar).
   useEffect(() => {
@@ -114,6 +122,23 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     }
   }, [sessao, quantidades, valores, aceito, meio, parcelas, cupom, router]);
 
+  const entrarNaEspera = useCallback(async () => {
+    setEsperaErro(null);
+    const leitura = lerCorpoDaEspera({ sessao_id: sessao, ingresso_id: esperaIngresso, ...esperaValores, quantidade: esperaQuantidade });
+    if (!leitura.ok) { setEsperaErro(`Confira: ${leitura.problemas.join(", ")}.`); return; }
+    setEntrandoNaEspera(true);
+    try {
+      const r = await fetch("/api/ticketeria/compra/espera", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(leitura.corpo) });
+      const d = (await r.json().catch(() => ({}))) as { situacao?: string; mensagem?: string; problemas?: string[]; error?: string };
+      if (r.status === 201) { setPasso("na-lista"); return; }
+      setEsperaErro(d.error === "dados_invalidos" && d.problemas ? `Confira: ${d.problemas.join(", ")}.` : d.mensagem ?? (r.status === 429 ? "Muitas tentativas. Espere um instante." : "Não foi possível entrar na lista agora. Tente de novo."));
+    } catch {
+      setEsperaErro("Sem conexão. Tente de novo.");
+    } finally {
+      setEntrandoNaEspera(false);
+    }
+  }, [sessao, esperaIngresso, esperaValores, esperaQuantidade]);
+
   const aplicarCupom = useCallback(async () => {
     const codigo = normalizarCodigo(codigoDoCupom);
     if (!codigoDoCupomValido(codigo)) { setCupomErro("Esse cupom não existe ou não está mais valendo."); return; }
@@ -142,6 +167,14 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     try { await navigator.clipboard.writeText(pedido.pix_copia_e_cola); setCopiado(true); setTimeout(() => setCopiado(false), 3000); } catch { setErro("Não foi possível copiar. Selecione o código e copie."); }
   }, [pedido]);
 
+  const ingressoDaEspera = ingressos.find(i => i.id === esperaIngresso);
+  if (passo === "espera" && ingressoDaEspera) {
+    return <TelaListaDeEspera site={site} evento={evento} ingresso={ingressoDaEspera} valores={esperaValores} quantidade={esperaQuantidade} max={ingressoDaEspera.limite} erro={esperaErro} trabalhando={entrandoNaEspera}
+      onMudar={(campo, valor) => setEsperaValores(v => ({ ...v, [campo]: valor }))} onQuantidade={setEsperaQuantidade} onVoltar={() => { setEsperaErro(null); setPasso("escolher"); }} onEntrar={() => void entrarNaEspera()} />;
+  }
+  if (passo === "na-lista" && ingressoDaEspera) {
+    return <TelaNaListaDeEspera site={site} evento={evento} ingresso={ingressoDaEspera} email={esperaValores.email.trim().toLowerCase()} quantidade={esperaQuantidade} onVoltar={() => { setEsperaErro(null); setPasso("escolher"); }} />;
+  }
   if (passo === "expirou") {
     return <TelaAviso site={site} titulo="O tempo para pagar acabou" texto="A reserva dos seus lugares venceu e eles voltaram para a venda. Se você já pagou o Pix, os ingressos chegam por e-mail em instantes. Se não, escolha de novo." acao={{ rotulo: "Escolher os ingressos de novo", onClick: () => { setPedido(null); setPasso("escolher"); } }} />;
   }
@@ -161,5 +194,6 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     onMudar={(id, novo) => setQuantidades(q => ({ ...q, [id]: Math.max(0, novo) }))} onContinuar={() => { setErro(null); setPasso("dados"); }}
     cupom={cupomParaMostrar} cupomErro={cupomErro} codigoDoCupom={codigoDoCupom} cupomAberto={cupomAberto} aplicandoCupom={aplicandoCupom}
     onCodigoDoCupom={codigo => { setCodigoDoCupom(codigo); setCupomErro(null); }} onAbrirCupom={() => setCupomAberto(true)} onAplicarCupom={() => void aplicarCupom()}
-    onRemoverCupom={() => { setCupom(null); setCupomErro(null); }} />;
+    onRemoverCupom={() => { setCupom(null); setCupomErro(null); }}
+    onEntrarNaEspera={id => { setEsperaIngresso(id); setEsperaQuantidade(1); setEsperaErro(null); setPasso("espera"); }} />;
 }

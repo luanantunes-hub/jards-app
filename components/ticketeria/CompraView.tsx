@@ -103,7 +103,7 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
                 ? (
                   <div className="flex shrink-0 flex-col items-end gap-1.5">
                     <span className={ETIQUETA} style={{ borderColor: "#6b676747", color: "#6b6767" }}>Esgotado</span>
-                    {onEntrarNaEspera && <button type="button" onClick={() => onEntrarNaEspera(i.id)} className="rounded text-[0.8125rem] text-black/60 underline underline-offset-2 hover:text-black/80">Avise-me se voltar</button>}
+                    {onEntrarNaEspera && <button type="button" onClick={() => onEntrarNaEspera(i.id)} className="rounded-xl text-[0.8125rem] text-black/60 underline underline-offset-2 hover:text-black/80">Avise-me se voltar</button>}
                   </div>
                 )
                 : <Contador valor={quantidades[i.id] ?? 0} max={max} nome={i.nome} onMudar={novo => onMudar?.(i.id, novo)} />}
