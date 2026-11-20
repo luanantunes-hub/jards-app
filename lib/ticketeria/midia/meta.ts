@@ -4,6 +4,12 @@
 // A CONFERIR com uma resposta real da Meta antes de ir ao ar (as páginas oficiais lidas em 20/11/2026 não cobrem): a duração do token longo (~60 dias, troca `fb_exchange_token`),
 // os campos de `/me/adaccounts` e se `spend` vem em reais (aqui lido como texto em reais: "5339.5" = R$ 5.339,50). A versão da API fica em META_GRAPH_VERSION.
 
+import { ErroDeMidia } from "@/lib/ticketeria/midia/erro";
+
+export { fraseDoErro } from "@/lib/ticketeria/midia/erro";
+/** O erro da Meta é o erro genérico de mídia (o mesmo tipo serve ao Google). */
+export { ErroDeMidia as ErroDaMeta } from "@/lib/ticketeria/midia/erro";
+
 export const ESCOPO_DA_META = "ads_read";
 export const VERSAO_PADRAO_DA_API = "v25.0";
 const DIAS_DO_TOKEN_LONGO_SEM_AVISO = 60;
@@ -26,40 +32,24 @@ export function urlDeLoginDaMeta(c: ConfigDaMeta, state: string): string {
 }
 
 export type RespostaHttp = { ok: boolean; status: number; json(): Promise<unknown> };
-export type BuscarHttp = (url: string) => Promise<RespostaHttp>;
-
-/** Por que a Meta recusou: `token` (venceu ou foi retirado: o produtor conecta de novo), `limite` (muitas chamadas: tentar mais tarde) ou `outro`. */
-export class ErroDaMeta extends Error {
-  constructor(readonly tipo: "token" | "limite" | "outro", readonly codigo: number | null, readonly subcodigo: number | null) {
-    super(`meta:${tipo}:${codigo ?? "-"}`);
-    this.name = "ErroDaMeta";
-  }
-}
+export type PedidoHttp = { method?: "GET" | "POST"; headers?: Record<string, string>; body?: string };
+export type BuscarHttp = (url: string, pedido?: PedidoHttp) => Promise<RespostaHttp>;
 
 const CODIGOS_DE_TOKEN = new Set([190, 102, 463, 467, 459, 460]);
 const CODIGOS_DE_LIMITE = new Set([4, 17, 32, 613, 80000, 80003, 80004, 80014]);
 
-export function classificarErroDaMeta(corpo: unknown, status: number): ErroDaMeta {
+export function classificarErroDaMeta(corpo: unknown, status: number): ErroDeMidia {
   const erro = (corpo && typeof corpo === "object" ? (corpo as { error?: unknown }).error : null) as { code?: unknown; error_subcode?: unknown } | null;
   const codigo = typeof erro?.code === "number" ? erro.code : null;
   const subcodigo = typeof erro?.error_subcode === "number" ? erro.error_subcode : null;
-  if ((codigo !== null && CODIGOS_DE_TOKEN.has(codigo)) || status === 401) return new ErroDaMeta("token", codigo, subcodigo);
-  if ((codigo !== null && CODIGOS_DE_LIMITE.has(codigo)) || status === 429) return new ErroDaMeta("limite", codigo, subcodigo);
-  return new ErroDaMeta("outro", codigo, subcodigo);
-}
-
-/** A frase para o produtor (nunca o texto cru da Meta, que pode trazer dados do app). */
-export function fraseDoErro(erro: unknown): { frase: string; tokenInvalido: boolean } {
-  if (erro instanceof ErroDaMeta) {
-    if (erro.tipo === "token") return { frase: "O acesso ao Meta venceu ou foi retirado. Conecte de novo.", tokenInvalido: true };
-    if (erro.tipo === "limite") return { frase: "A Meta pediu para esperar um pouco. O Jards tenta de novo amanhã.", tokenInvalido: false };
-  }
-  return { frase: "Não foi possível ler o Meta agora. O Jards tenta de novo amanhã.", tokenInvalido: false };
+  if ((codigo !== null && CODIGOS_DE_TOKEN.has(codigo)) || status === 401) return new ErroDeMidia("token", codigo, subcodigo);
+  if ((codigo !== null && CODIGOS_DE_LIMITE.has(codigo)) || status === 429) return new ErroDeMidia("limite", codigo, subcodigo);
+  return new ErroDeMidia("outro", codigo, subcodigo);
 }
 
 async function pedir(buscar: BuscarHttp, url: string): Promise<unknown> {
   let r: RespostaHttp;
-  try { r = await buscar(url); } catch { throw new ErroDaMeta("outro", null, null); }
+  try { r = await buscar(url); } catch { throw new ErroDeMidia("outro", null, null); }
   let corpo: unknown = null;
   try { corpo = await r.json(); } catch { /* corpo ilegível */ }
   if (!r.ok) throw classificarErroDaMeta(corpo, r.status);
@@ -72,14 +62,15 @@ export type TokenDaMeta = { token: string; expira_em: string };
 export async function trocarCodigoPeloToken(c: ConfigDaMeta, codigo: string, buscar: BuscarHttp, agora: Date = new Date()): Promise<TokenDaMeta> {
   const base = `https://graph.facebook.com/${c.versao}/oauth/access_token`;
   const curto = (await pedir(buscar, `${base}?${new URLSearchParams({ client_id: c.appId, redirect_uri: c.redirectUri, client_secret: c.appSecret, code: codigo }).toString()}`)) as { access_token?: unknown };
-  if (typeof curto.access_token !== "string" || curto.access_token.length < 20) throw new ErroDaMeta("outro", null, null);
+  if (typeof curto.access_token !== "string" || curto.access_token.length < 20) throw new ErroDeMidia("outro", null, null);
   const longo = (await pedir(buscar, `${base}?${new URLSearchParams({ grant_type: "fb_exchange_token", client_id: c.appId, client_secret: c.appSecret, fb_exchange_token: curto.access_token }).toString()}`)) as { access_token?: unknown; expires_in?: unknown };
   const token = typeof longo.access_token === "string" && longo.access_token.length >= 20 ? longo.access_token : curto.access_token;
   const segundos = typeof longo.expires_in === "number" && longo.expires_in > 0 ? longo.expires_in : DIAS_DO_TOKEN_LONGO_SEM_AVISO * 86400;
   return { token, expira_em: new Date(agora.getTime() + segundos * 1000).toISOString() };
 }
 
-export type ContaDeAnuncios = { id: string; nome: string; moeda: string; ativa: boolean };
+/** `gerente`: a conta gerente por onde se chega a esta conta (Google Ads), ou null/ausente quando a conta é acessada direto. */
+export type ContaDeAnuncios = { id: string; nome: string; moeda: string; ativa: boolean; gerente?: string | null };
 
 type PaginaDaMeta = { data?: unknown; paging?: { next?: unknown } };
 const MAX_PAGINAS = 20;
