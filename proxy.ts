@@ -207,6 +207,8 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/novidades/") ||
         // A porta da equipe pelo link (sem login): o segredo do link, conferido no servidor, é a prova.
         pathname.startsWith("/porta/") ||
+        // A entrada da bilheteria (venda na porta): e-mail e senha; o resto de /bilheteria pede login e o painel confere se a conta é de bilheteria.
+        pathname === "/bilheteria/entrar" ||
         pathname.startsWith("/embed/") ||
         pathname.startsWith("/convite/") ||
         pathname === "/login" ||
@@ -290,6 +292,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/espera/") ||
     pathname.startsWith("/novidades/") ||
     pathname.startsWith("/porta/") ||
+    pathname === "/bilheteria/entrar" ||
     pathname.startsWith("/embed/") ||
     // Convite de convidado da prestação (P5.3): o banco confere o link; o aceite pede login.
     pathname.startsWith("/convite/") ||
@@ -307,6 +310,14 @@ export async function proxy(request: NextRequest) {
     pathname === "/precos" ||
     pathname === "/prestacao-de-contas" ||
     pathname === "/ticketeria";
+
+  // Quem não entrou na bilheteria volta para a entrada dela, não para o login do Jards.
+  if (!user && !isPublicRoute && (pathname === "/bilheteria" || pathname.startsWith("/bilheteria/"))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/bilheteria/entrar";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
 
   // Usuário não logado tentando acessar rota privada → login
   if (!user && !isPublicRoute) {
@@ -359,7 +370,8 @@ async function paginaDeEntradaDe(supabase: Parameters<typeof lerAcessoAosModulos
 export const config = {
   matcher: [
     // dados/: tabelas públicas que a tela baixa (CNAE do IBGE), sem passar pela sessão.
+    // widget/: o script que o produtor cola no site dele (WordPress, Wix...), aberto a qualquer um.
     // menu-site.css/js: o menu das páginas públicas; sem isto, quem está deslogado recebia o redirecionamento para o login.
-    "/((?!_next/static|_next/image|favicon.ico|consentimento\\.js$|folha-sw\\.js$|origem-campanha\\.js$|menu-site\\.(?:css|js)$|dados/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|mp4|webm|ttf|woff|woff2|otf|eot)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|consentimento\\.js$|folha-sw\\.js$|origem-campanha\\.js$|menu-site\\.(?:css|js)$|dados/|widget/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|mp4|webm|ttf|woff|woff2|otf|eot)$).*)",
   ],
 };
