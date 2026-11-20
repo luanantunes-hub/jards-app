@@ -965,12 +965,7 @@ export default function PatrocinadorPage() {
           />
         )}
         <div
-          className="folha-vidro fixed inset-x-0 top-0 z-50 mx-auto flex max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-y-auto"
-          style={{
-            transform: showSugerirForm ? "none" : "translateY(-110%)",
-            visibility: showSugerirForm ? "visible" : "hidden",
-            transition: "transform 0.26s cubic-bezier(.32,.72,0,1), visibility 0.26s",
-          }}
+          className={`folha-vidro fixed inset-x-0 top-0 z-50 mx-auto max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-y-auto ${showSugerirForm ? "folha-desce flex" : "hidden"}`}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
