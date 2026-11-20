@@ -8,7 +8,7 @@
 // (supabase gen types) em 18/11/2026, depois de aplicada: as mesmas colunas e anulabilidade. tests/ticketeria-banco-tipos.test.ts compara este arquivo com a migration.
 // Relationships não lista as chaves para auth.users (`criado_por`): o PostgREST só expõe o schema public.
 
-import type { CategoriaDoIngresso, ClassificacaoIndicativa, ContaDoRazao, MeioDePagamento, QuemPagaATaxa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoPedido, OrigemDaVersao, SituacaoDoSite, TemaDoSite, TipoDeTransacao, TipoDoCupom } from "@/lib/ticketeria/estados";
+import type { CategoriaDoIngresso, ClassificacaoIndicativa, ContaDoRazao, MeioDePagamento, QuemPagaATaxa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoPedido, OrigemDaVersao, SituacaoDoSite, TipoDeImagem, TemaDoSite, TipoDeTransacao, TipoDoCupom } from "@/lib/ticketeria/estados";
 import type { Json } from "@/lib/supabase/types";
 
 export type BancoDaTicketeria = {
@@ -2156,6 +2156,53 @@ export type BancoDaTicketeria = {
             columns: ["pagina_id"];
             isOneToOne: false;
             referencedRelation: "ticketeria_site_paginas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_site_imagens: {
+        Row: {
+          id: string;
+          organization_id: string;
+          caminho: string;
+          nome: string;
+          tipo: TipoDeImagem;
+          bytes: number;
+          largura: number;
+          altura: number;
+          criado_por: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          caminho: string;
+          nome: string;
+          tipo: TipoDeImagem;
+          bytes: number;
+          largura: number;
+          altura: number;
+          criado_por?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          caminho?: string;
+          nome?: string;
+          tipo?: TipoDeImagem;
+          bytes?: number;
+          largura?: number;
+          altura?: number;
+          criado_por?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_site_imagens_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];

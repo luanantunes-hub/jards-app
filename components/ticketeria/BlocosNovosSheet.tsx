@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { Clock, Columns2, HelpCircle, Image as IconeImagem, ImagePlus, LayoutGrid, MapPin, MousePointerClick, Phone, Play, Store, Ticket, Type, AlignLeft, CalendarDays, Plus, Trash2, type LucideIcon } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Aviso, AREA, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
+import { CampoDeImagem } from "@/components/ticketeria/CampoDeImagem";
 import { instanteNoFuso, partesNoFuso } from "@/lib/ticketeria/eventos";
 import { GRUPOS_DE_BLOCOS, ROTULO_DO_TIPO_DE_BLOCO, lerBloco, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
 
@@ -60,7 +61,7 @@ type PerguntaEmEdicao = { pergunta: string; resposta: string };
 const colunaInicial = (c: Extract<Bloco, { tipo: "colunas" }>["esquerda"] | undefined, tipo: "texto" | "imagem"): ColunaEmEdicao => (c ? { tipo: c.tipo, texto: c.tipo === "texto" ? c.texto : "", url: c.tipo === "imagem" ? c.url : "https://", alt: c.tipo === "imagem" ? c.alt : "" } : { tipo, texto: "", url: "https://", alt: "" });
 const entradaDaColuna = (c: ColunaEmEdicao) => (c.tipo === "texto" ? { tipo: "texto", texto: c.texto } : { tipo: "imagem", url: c.url, alt: c.alt });
 
-function CamposDaColuna({ id, nome, coluna, onChange, desabilitado }: { id: string; nome: string; coluna: ColunaEmEdicao; onChange: (c: ColunaEmEdicao) => void; desabilitado: boolean }) {
+function CamposDaColuna({ id, nome, coluna, onChange, desabilitado, organizationId }: { id: string; nome: string; coluna: ColunaEmEdicao; onChange: (c: ColunaEmEdicao) => void; desabilitado: boolean; organizationId: string }) {
   return (
     <fieldset className="space-y-2 rounded-xl border border-black/[.08] p-3">
       <legend className="px-1 text-[0.6875rem] text-black/55">{nome}</legend>
@@ -73,7 +74,7 @@ function CamposDaColuna({ id, nome, coluna, onChange, desabilitado }: { id: stri
         ? <textarea aria-label={`Texto da coluna ${nome.toLowerCase()}`} rows={4} className={AREA} value={coluna.texto} onChange={e => onChange({ ...coluna, texto: e.target.value })} maxLength={2000} disabled={desabilitado} />
         : (
           <>
-            <input aria-label={`Endereço da imagem da coluna ${nome.toLowerCase()}`} className={CAMPO} value={coluna.url} onChange={e => onChange({ ...coluna, url: e.target.value })} maxLength={500} disabled={desabilitado} />
+            <CampoDeImagem id={`${id}-url`} ariaLabel={`Endereço da imagem da coluna ${nome.toLowerCase()}`} valor={coluna.url} onChange={url => onChange({ ...coluna, url })} organizationId={organizationId} desabilitado={desabilitado} />
             <input aria-label={`Texto alternativo da imagem da coluna ${nome.toLowerCase()}`} className={CAMPO} value={coluna.alt} onChange={e => onChange({ ...coluna, alt: e.target.value })} maxLength={200} placeholder="Descreva a imagem" disabled={desabilitado} />
           </>
         )}
@@ -82,7 +83,7 @@ function CamposDaColuna({ id, nome, coluna, onChange, desabilitado }: { id: stri
 }
 
 /** A folha de um bloco novo (ou de um existente, ao editar). `tipo` é um de TIPOS_DAS_FOLHAS_NOVAS. */
-export function BlocoNovoSheet({ bloco, tipo, onClose, onSalvar }: { bloco?: Bloco; tipo: TipoDeBloco; onClose: () => void; onSalvar: (bloco: Bloco) => Promise<string | null> }) {
+export function BlocoNovoSheet({ bloco, tipo, organizationId, onClose, onSalvar }: { bloco?: Bloco; tipo: TipoDeBloco; organizationId: string; onClose: () => void; onSalvar: (bloco: Bloco) => Promise<string | null> }) {
   const id = useId();
   const b = bloco?.tipo === tipo ? bloco : undefined;
   const [titulo, setTitulo] = useState(b && "titulo" in b ? b.titulo : "");
@@ -143,7 +144,7 @@ export function BlocoNovoSheet({ bloco, tipo, onClose, onSalvar }: { bloco?: Blo
           <>
             <div><label className={ROTULO} htmlFor={`${id}-titulo`}>Título</label><input id={`${id}-titulo`} autoFocus className={CAMPO} value={titulo} onChange={e => setTitulo(e.target.value)} maxLength={120} disabled={salvando} /></div>
             <div><label className={ROTULO} htmlFor={`${id}-sub`}>Subtítulo (opcional)</label><input id={`${id}-sub`} className={CAMPO} value={subtitulo} onChange={e => setSubtitulo(e.target.value)} maxLength={200} disabled={salvando} /></div>
-            <div><label className={ROTULO} htmlFor={`${id}-img`}>Imagem de fundo (https://…, opcional)</label><input id={`${id}-img`} className={CAMPO} value={imagem} onChange={e => setImagem(e.target.value)} maxLength={500} placeholder="https://" disabled={salvando} /></div>
+            <CampoDeImagem id={`${id}-img`} rotulo="Imagem de fundo (https://…, opcional)" valor={imagem} onChange={setImagem} organizationId={organizationId} desabilitado={salvando} />
             <div className="grid gap-3 sm:grid-cols-2">
               <div><label className={ROTULO} htmlFor={`${id}-br`}>Botão: texto (opcional)</label><input id={`${id}-br`} className={CAMPO} value={botaoRotulo} onChange={e => setBotaoRotulo(e.target.value)} maxLength={60} placeholder="Comprar ingressos" disabled={salvando} /></div>
               <div><label className={ROTULO} htmlFor={`${id}-bu`}>Botão: para onde leva</label><input id={`${id}-bu`} className={CAMPO} value={botaoUrl} onChange={e => setBotaoUrl(e.target.value)} maxLength={500} placeholder="https://" disabled={salvando} /></div>
@@ -153,8 +154,8 @@ export function BlocoNovoSheet({ bloco, tipo, onClose, onSalvar }: { bloco?: Blo
         )}
         {tipo === "colunas" && (
           <>
-            <CamposDaColuna id={`${id}-e`} nome="Esquerda" coluna={esquerda} onChange={setEsquerda} desabilitado={salvando} />
-            <CamposDaColuna id={`${id}-d`} nome="Direita" coluna={direita} onChange={setDireita} desabilitado={salvando} />
+            <CamposDaColuna id={`${id}-e`} nome="Esquerda" coluna={esquerda} onChange={setEsquerda} desabilitado={salvando} organizationId={organizationId} />
+            <CamposDaColuna id={`${id}-d`} nome="Direita" coluna={direita} onChange={setDireita} desabilitado={salvando} organizationId={organizationId} />
             <p className="text-[0.75rem] text-black/55">No celular, as colunas ficam uma em cima da outra.</p>
           </>
         )}
@@ -165,7 +166,7 @@ export function BlocoNovoSheet({ bloco, tipo, onClose, onSalvar }: { bloco?: Blo
               {imagens.map((im, i) => (
                 <li key={i} className="space-y-1.5 rounded-xl border border-black/[.08] p-3">
                   <div className="flex items-center justify-between"><span className="text-[0.6875rem] text-black/55">Imagem {i + 1}</span>{imagens.length > 2 && <button type="button" onClick={() => setImagens(imagens.filter((_, j) => j !== i))} disabled={salvando} aria-label={`Tirar a imagem ${i + 1}`} className="flex h-7 w-7 items-center justify-center rounded-xl text-black/45 hover:bg-black/[.05]"><Trash2 size={13} aria-hidden="true" /></button>}</div>
-                  <input aria-label={`Endereço da imagem ${i + 1}`} className={CAMPO} value={im.url} onChange={e => setImagens(mudar(imagens, i, { url: e.target.value }))} maxLength={500} disabled={salvando} />
+                  <CampoDeImagem id={`${id}-gal-${i}`} ariaLabel={`Endereço da imagem ${i + 1}`} valor={im.url} onChange={url => setImagens(mudar(imagens, i, { url }))} organizationId={organizationId} desabilitado={salvando} />
                   <input aria-label={`Texto alternativo da imagem ${i + 1}`} className={CAMPO} value={im.alt} onChange={e => setImagens(mudar(imagens, i, { alt: e.target.value }))} maxLength={200} placeholder="Descreva a imagem" disabled={salvando} />
                 </li>
               ))}
@@ -221,7 +222,7 @@ export function BlocoNovoSheet({ bloco, tipo, onClose, onSalvar }: { bloco?: Blo
               {patrocinadores.map((p, i) => (
                 <li key={i} className="space-y-1.5 rounded-xl border border-black/[.08] p-3">
                   <div className="flex items-center justify-between"><span className="text-[0.6875rem] text-black/55">Patrocinador {i + 1}</span>{patrocinadores.length > 1 && <button type="button" onClick={() => setPatrocinadores(patrocinadores.filter((_, j) => j !== i))} disabled={salvando} aria-label={`Tirar o patrocinador ${i + 1}`} className="flex h-7 w-7 items-center justify-center rounded-xl text-black/45 hover:bg-black/[.05]"><Trash2 size={13} aria-hidden="true" /></button>}</div>
-                  <input aria-label={`Endereço do logo ${i + 1}`} className={CAMPO} value={p.url} onChange={e => setPatrocinadores(mudar(patrocinadores, i, { url: e.target.value }))} maxLength={500} disabled={salvando} />
+                  <CampoDeImagem id={`${id}-pat-${i}`} ariaLabel={`Endereço do logo ${i + 1}`} valor={p.url} onChange={url => setPatrocinadores(mudar(patrocinadores, i, { url }))} organizationId={organizationId} desabilitado={salvando} />
                   <input aria-label={`Nome do patrocinador ${i + 1}`} className={CAMPO} value={p.alt} onChange={e => setPatrocinadores(mudar(patrocinadores, i, { alt: e.target.value }))} maxLength={200} placeholder="Nome (texto alternativo do logo)" disabled={salvando} />
                   <input aria-label={`Site do patrocinador ${i + 1}`} className={CAMPO} value={p.link} onChange={e => setPatrocinadores(mudar(patrocinadores, i, { link: e.target.value }))} maxLength={500} placeholder="Site (https://…, opcional)" disabled={salvando} />
                 </li>

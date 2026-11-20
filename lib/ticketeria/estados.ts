@@ -4,6 +4,10 @@
 export type SituacaoDoSite = "rascunho" | "publicado";
 export const SITUACOES_DO_SITE: readonly SituacaoDoSite[] = ["rascunho", "publicado"];
 
+/** `ticketeria_site_imagens.tipo`: os tipos de imagem que a biblioteca guarda (o espaço de arquivos aceita os mesmos; sem SVG, que pode levar código). */
+export type TipoDeImagem = "image/webp" | "image/jpeg" | "image/png";
+export const TIPOS_DE_IMAGEM: readonly TipoDeImagem[] = ["image/webp", "image/jpeg", "image/png"];
+
 /** `ticketeria_site_versoes.origem`: uma versão publicada ou o rascunho guardado antes de restaurar outra. */
 export type OrigemDaVersao = "publicada" | "rascunho_guardado";
 export const ORIGENS_DA_VERSAO: readonly OrigemDaVersao[] = ["publicada", "rascunho_guardado"];
