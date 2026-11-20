@@ -16,7 +16,7 @@ type Resultado = { chave: string; grupo: "Páginas" | "Eventos" | "Compras"; rot
 const PAGINAS: { rotulo: string; href: string }[] = [
   { rotulo: "Página inicial", href: "/ingressos" }, { rotulo: "Eventos", href: "/ingressos/eventos" }, { rotulo: "Locais", href: "/ingressos/locais" },
   { rotulo: "Site", href: "/ingressos/site" }, { rotulo: "Vendas", href: "/ingressos/vendas" }, { rotulo: "Cupons", href: "/ingressos/cupons" },
-  { rotulo: "Lista de espera", href: "/ingressos/espera" }, { rotulo: "Porta", href: "/ingressos/porta" }, { rotulo: "Recebimentos", href: "/ingressos/recebimentos" },
+  { rotulo: "Lista de espera", href: "/ingressos/espera" }, { rotulo: "Porta", href: "/ingressos/porta" }, { rotulo: "Bilheteria", href: "/ingressos/bilheteria" }, { rotulo: "Recebimentos", href: "/ingressos/recebimentos" },
 ];
 
 /** Sem acento e em minúscula, para a busca não depender de como a pessoa digita. */

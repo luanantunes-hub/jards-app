@@ -4,7 +4,8 @@ import test from "node:test";
 import { createElement, type FunctionComponent } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { BilheteriaShell } from "../components/ticketeria/BilheteriaShell";
-import { frasesDaEntrada, lerBilheteiros, mensagemDoLogin, motivoDaEntrada } from "../lib/ticketeria/bilheteria";
+import { BilheteiroSheet, BilheteirosDaLoja } from "../components/ticketeria/BilheteirosView";
+import { destinoDaNovaSenha, frasesDaEntrada, lerAlteracaoDeBilheteiro, lerBilheteiros, lerListaDeBilheteiros, lerNovoBilheteiro, mensagemDoErroDoCadastro, mensagemDoLogin, motivoDaEntrada } from "../lib/ticketeria/bilheteria";
 
 const MIGRATION = "supabase/migrations/20261120062929_ticketeria_bilheteiros.sql";
 
@@ -55,4 +56,73 @@ test("a rota /bilheteria pede login pela entrada própria e só a entrada é pú
   const proxy = await readFile("proxy.ts", "utf8");
   assert.equal(proxy.match(/pathname === "\/bilheteria\/entrar" \|\|/g)?.length, 2, "pública na lista da regra de limite e na das rotas sem login");
   assert.match(proxy, /url\.pathname = "\/bilheteria\/entrar"/);
+});
+
+// ─── B1b: o cadastro de quem vende ──────────────────────────────────────────
+
+const html = (el: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(el).replace(/ /g, " ");
+
+test("cadastrar: nome aparado e sem espaços repetidos, e-mail em minúsculas e com forma de e-mail", () => {
+  assert.deepEqual(lerNovoBilheteiro({ nome: "  Marina   Lopes ", email: " Marina@TeatroCentral.com.br " }), { ok: true, valor: { nome: "Marina Lopes", email: "marina@teatrocentral.com.br" } });
+  for (const ruim of [{ nome: "", email: "a@b.co" }, { nome: "   ", email: "a@b.co" }, { nome: "x".repeat(121), email: "a@b.co" }, { nome: "A", email: "sem-arroba" }, { nome: "A", email: "a@b" }, { nome: "A", email: `${"x".repeat(250)}@b.co` }, { nome: 7, email: "a@b.co" }, null, "texto"]) assert.equal(lerNovoBilheteiro(ruim).ok, false);
+});
+
+test("mudar: o nome e o ligar/desligar; pelo menos um; o resto é recusado", () => {
+  assert.deepEqual(lerAlteracaoDeBilheteiro({ ativo: false }), { ok: true, valor: { ativo: false } });
+  assert.deepEqual(lerAlteracaoDeBilheteiro({ nome: " Carlos  Dias ", ativo: true }), { ok: true, valor: { nome: "Carlos Dias", ativo: true } });
+  for (const ruim of [{}, { nome: "" }, { nome: "x".repeat(121) }, { ativo: "sim" }, { ativo: 1 }, null]) assert.equal(lerAlteracaoDeBilheteiro(ruim).ok, false);
+  assert.deepEqual(lerAlteracaoDeBilheteiro({ email: "outro@x.co", ativo: false }), { ok: true, valor: { ativo: false } }, "o e-mail não muda: é o login da pessoa");
+});
+
+test("a lista da rota: só item inteiro entra; e-mail ausente vira nulo", () => {
+  const lista = lerListaDeBilheteiros({ bilheteiros: [{ id: "b1", nome: "Marina", email: "m@x.co", ativo: true, criado_em: "2026-11-20T12:00:00Z" }, { id: "b2", nome: "Carlos", ativo: false }, { id: "b3", nome: "Sem ativo" }, null] });
+  assert.deepEqual(lista, [{ id: "b1", nome: "Marina", email: "m@x.co", ativo: true, criadoEm: "2026-11-20T12:00:00Z" }, { id: "b2", nome: "Carlos", email: null, ativo: false, criadoEm: "" }]);
+  for (const ruim of [null, [], {}, { bilheteiros: "x" }]) assert.deepEqual(lerListaDeBilheteiros(ruim), []);
+});
+
+test("os erros do cadastro viram frases, e o desconhecido cai numa frase honesta", () => {
+  assert.match(mensagemDoErroDoCadastro("ja_cadastrada"), /já está cadastrada/);
+  assert.match(mensagemDoErroDoCadastro("convite_pendente"), /ainda não o abriu/);
+  assert.match(mensagemDoErroDoCadastro("sem_permissao"), /edita a Ticketeria/);
+  assert.match(mensagemDoErroDoCadastro("qualquer-coisa"), /Não foi possível salvar/);
+  assert.match(mensagemDoErroDoCadastro(null), /Não foi possível salvar/);
+});
+
+test("depois de criar a senha pelo convite: só /bilheteria é aceito como destino", () => {
+  assert.equal(destinoDaNovaSenha("/bilheteria"), "/bilheteria");
+  for (const ruim of [null, undefined, "", "/dashboard", "https://outro.site", "//outro.site", "/bilheteria/../x", "/bilheteria?x=1"]) assert.equal(destinoDaNovaSenha(ruim), "/dashboard");
+});
+
+test("a lista do produtor: vazia explica o que a bilheteira faz; cheia mostra nome, e-mail e acesso", () => {
+  assert.match(html(createElement(BilheteirosDaLoja, { bilheteiros: [] })), /Ninguém cadastrado ainda[\s\S]*não vê relatórios, repasses nem configurações/);
+  const cheia = html(createElement(BilheteirosDaLoja, { bilheteiros: [{ id: "b1", nome: "Marina Lopes", email: "marina@x.co", ativo: true, criadoEm: "2026-11-20T15:00:00Z" }, { id: "b2", nome: "Carlos Dias", email: null, ativo: false, criadoEm: "" }] }));
+  assert.match(cheia, /Marina Lopes/);
+  assert.match(cheia, /marina@x\.co/);
+  assert.match(cheia, /LIGADO/);
+  assert.match(cheia, /DESLIGADO/);
+  assert.match(cheia, /20\/11\/2026/);
+});
+
+test("a folha: novo pede nome e e-mail; editar trava o e-mail e oferece ligar ou desligar", () => {
+  const novo = html(createElement(BilheteiroSheet, { editando: false, valores: { nome: "", email: "" }, onClose: () => {} }));
+  assert.match(novo, /Nova bilheteira/);
+  assert.match(novo, /Cadastrar/);
+  assert.match(novo, /recebe um e-mail para criar a senha/);
+  assert.doesNotMatch(novo, /Desligar acesso|Ligar acesso/);
+  const edita = html(createElement(BilheteiroSheet, { editando: true, valores: { nome: "Marina", email: "m@x.co" }, ativo: true, onClose: () => {}, onAlternar: () => {} }));
+  assert.match(edita, /Editar bilheteira/);
+  assert.match(edita, /Desligar acesso/);
+  assert.match(edita, /id="bl-email"[^>]*disabled/);
+  const desligada = html(createElement(BilheteiroSheet, { editando: true, valores: { nome: "Marina", email: "m@x.co" }, ativo: false, onClose: () => {}, onAlternar: () => {} }));
+  assert.match(desligada, /Ligar acesso/);
+});
+
+test("as rotas do cadastro: conferem quem edita a Ticketeria e a pessoa é sempre da loja da rota", async () => {
+  const lista = await readFile("app/api/ticketeria/lojas/[id]/bilheteiros/route.ts", "utf8");
+  const muda = await readFile("app/api/ticketeria/lojas/[id]/bilheteiros/[bid]/route.ts", "utf8");
+  for (const fonte of [lista, muda]) assert.match(fonte, /autorizarLoja\(rota/);
+  assert.match(muda, /\.eq\("loja_id", a\.loja\.id\)/);
+  assert.match(lista, /inviteUserByEmail/);
+  assert.match(lista, /next=\$\{encodeURIComponent\("\/nova-senha\?next=\/bilheteria"\)\}/);
+  assert.doesNotMatch(lista, /ja_tinha_conta|ja_tem_conta/, "a resposta não diz se o e-mail já tinha conta");
 });

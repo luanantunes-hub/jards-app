@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, CheckCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { destinoDaNovaSenha } from "@/lib/ticketeria/bilheteria";
 
 export default function NovaSenhaPage() {
   const router = useRouter();
@@ -38,7 +39,9 @@ export default function NovaSenhaPage() {
     }
 
     setDone(true);
-    setTimeout(() => router.push("/dashboard"), 2000);
+    // O convite da bilheteria leva ?next=/bilheteria; qualquer outro destino cai no padrão.
+    const destino = destinoDaNovaSenha(new URLSearchParams(window.location.search).get("next"));
+    setTimeout(() => router.push(destino), 2000);
   }
 
   return (
