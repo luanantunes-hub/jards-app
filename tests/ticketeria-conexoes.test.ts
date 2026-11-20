@@ -36,9 +36,9 @@ test("o cartão do Google Ads: o mesmo cartão, com o nome e as frases dele", ()
 
 test("a aba: o texto de só leitura, os dois cartões, o TikTok em breve e o aviso da volta do login", () => {
   const sem = { disponivel: true, conexao: null };
-  const aba = html(createElement(ConexoesDaLoja, { estados: { meta: sem, google_ads: { disponivel: false, conexao: null } }, aviso: "O Meta não liberou o acesso." }));
-  for (const t of ["Só leitura", "Anúncios pagos", "Meta Ads", "Google Ads", "TikTok Ads", "Em breve", "O Meta não liberou o acesso."]) assert.ok(aba.includes(t), `falta: ${t}`);
-  assert.equal((aba.match(/Em breve/g) ?? []).length, 2, "o Google (sem credenciais) e o TikTok");
+  const aba = html(createElement(ConexoesDaLoja, { estados: { meta: sem, google_ads: { disponivel: false, conexao: null }, ga4: { disponivel: false, conexao: null } }, aviso: "O Meta não liberou o acesso." }));
+  for (const t of ["Só leitura", "Anúncios pagos", "Site e redes", "Meta Ads", "Google Ads", "Google Analytics 4", "TikTok Ads", "Em breve", "O Meta não liberou o acesso."]) assert.ok(aba.includes(t), `falta: ${t}`);
+  assert.equal((aba.match(/Em breve/g) ?? []).length, 3, "o Google Ads e o GA4 (sem credenciais) e o TikTok");
 });
 
 test("a folha de escolher a conta: só real e ativa pode ser escolhida; carregando, vazio e erro", () => {
@@ -55,4 +55,18 @@ test("a folha de escolher a conta: só real e ativa pode ser escolhida; carregan
   const semEscolha = html(createElement(EscolherContaSheet, { contas, escolhida: null, onClose: () => {} }));
   assert.ok(/<button[^>]*disabled=""[^>]*>Conectar esta conta/.test(semEscolha), "sem conta escolhida não conecta");
   assert.ok(html(createElement(EscolherContaSheet, { contas, escolhida: "1048771", erro: "Por enquanto só contas em real (BRL).", onClose: () => {} })).includes("só contas em real"));
+});
+
+test("o cartão do GA4: visitas em vez de gasto, a origem que mais trouxe e as frases da propriedade", () => {
+  const ga4: ConexaoMeta = { ...ativa, conta_nome: "Cia Atores de Mar · Site", moeda: null, visitas_30_dias: 4210, principal_origem: { nome: "Instagram", porcento: 38 }, gasto_30_dias_centavos: 0 };
+  const ok = html(createElement(CartaoDeAnuncios, { provedor: "ga4", estado: { disponivel: true, conexao: ga4 } }));
+  for (const t of ["Google Analytics 4", "Visitas ao seu site", "CONECTADO", "Site", "Cia Atores de Mar · Site", "Visitas lidas nos últimos 30 dias", "4.210", "principal origem: Instagram (38%)", "Trocar site", "Ler agora"]) assert.ok(ok.includes(t), `falta: ${t}`);
+  assert.ok(!ok.includes("Gasto lido") && !ok.includes("Moeda"), "o GA4 não tem gasto nem moeda");
+  assert.ok(html(createElement(CartaoDeAnuncios, { provedor: "ga4", estado: { disponivel: true, conexao: { ...ga4, principal_origem: null, visitas_30_dias: 0 } } })).includes("ainda sem visitas lidas"));
+  assert.ok(html(createElement(CartaoDeAnuncios, { provedor: "ga4", estado: { disponivel: true, conexao: { ...ga4, situacao: "escolher_conta" } } })).includes("Escolher o site"));
+  assert.ok(html(createElement(CartaoDeAnuncios, { provedor: "ga4", estado: { disponivel: true, conexao: { ...ga4, situacao: "erro", ultimo_erro: null } } })).includes("O acesso ao Google Analytics venceu ou foi retirado"));
+  const folha = html(createElement(EscolherContaSheet, { fonte: "Google Analytics", tipo: "visitas", contas: [{ id: "338100094", nome: "Cia Atores de Mar · Site", moeda: "", ativa: true, suportada: true }], escolhida: "338100094", onClose: () => {} }));
+  for (const t of ["Escolha o site do Analytics", "cujas visitas o Jards vai ler", "Propriedade 3381 …094", "Cia Atores de Mar · Site"]) assert.ok(folha.includes(t), `falta: ${t}`);
+  assert.ok(!folha.includes("real (BRL)") && !folha.includes("moeda desconhecida"));
+  assert.ok(html(createElement(EscolherContaSheet, { fonte: "Google Analytics", tipo: "visitas", contas: [], escolhida: null, onClose: () => {} })).includes("não devolveu nenhuma propriedade"));
 });

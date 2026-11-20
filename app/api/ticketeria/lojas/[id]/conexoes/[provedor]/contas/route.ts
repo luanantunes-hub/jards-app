@@ -1,5 +1,5 @@
 // /api/ticketeria/lojas/{id}/conexoes/{provedor}/contas
-//   GET  → as contas de anúncios do produtor, lidas da plataforma com o token guardado: { contas: [{ id, nome, moeda, ativa, gerente, suportada }] }. Só real (BRL) é suportada por ora.
+//   GET  → as contas de anúncios (ou, no GA4, as propriedades) do produtor, lidas da plataforma com o token guardado: { contas: [{ id, nome, moeda, ativa, gerente, suportada }] }. Só real (BRL) é suportada por ora.
 //   POST { conta_id } → escolhe a conta (precisa ser uma das que a plataforma devolve), liga a conexão e já faz a primeira leitura (o último ano de gasto).
 // Quem pede precisa EDITAR a Ticketeria da organização. `provedor` é `meta` ou `google`.
 
@@ -48,7 +48,7 @@ export async function GET(_req: NextRequest, rota: { params: Promise<{ id: strin
   if (p.erro) return p.erro;
   const r = await contasDaPlataforma(p.conexao.id, p.adaptador);
   if (r.erro) return r.erro;
-  return resposta({ contas: r.contas.map(c => ({ ...c, suportada: c.moeda === "BRL" })) });
+  return resposta({ contas: r.contas.map(c => ({ ...c, suportada: p.adaptador.tipo === "visitas" || c.moeda === "BRL" })) });
 }
 
 export async function POST(req: NextRequest, rota: { params: Promise<{ id: string; provedor: string }> }) {
@@ -62,10 +62,10 @@ export async function POST(req: NextRequest, rota: { params: Promise<{ id: strin
   if (r.erro) return r.erro;
   const conta = r.contas.find(c => c.id === contaId);
   if (!conta) return resposta({ error: "conta_invalida" }, 400);
-  if (conta.moeda !== "BRL") return resposta({ error: "moeda_nao_suportada", mensagem: "Por enquanto só contas em real (BRL)." }, 409);
+  if (p.adaptador.tipo === "gasto" && conta.moeda !== "BRL") return resposta({ error: "moeda_nao_suportada", mensagem: "Por enquanto só contas em real (BRL)." }, 409);
   const admin = createAdminClient();
   const t = clienteDaTicketeria(admin);
-  const { error } = await t.rpc("fn_ticketeria_midia_escolher_conta", { p_conexao: p.conexao.id, p_conta: conta.id, p_nome: conta.nome, p_moeda: conta.moeda });
+  const { error } = await t.rpc("fn_ticketeria_midia_escolher_conta", { p_conexao: p.conexao.id, p_conta: conta.id, p_nome: conta.nome, p_moeda: p.adaptador.tipo === "visitas" ? "" : conta.moeda });
   if (error) {
     console.error("[ticketeria] escolher conta de mídia:", error.message);
     return resposta({ error: "falha_ao_gravar" }, 500);

@@ -106,14 +106,22 @@ export function resumirDivulgacao(linhas: LinhaDaDivulgacao[], sessaoId: string 
   return { ingressos, vendido_centavos: vendido, sem_origem_porcento: sem?.porcento ?? 0, canais };
 }
 
-/** O link de divulgação de uma sessão: a página de compra com o canal (e o nome da ação, se houver) no endereço. */
-export function enderecoDeDivulgacao(origem: string, sessaoId: string, canal: string, acao: string): string {
+/**
+ * O link de divulgação de uma sessão: a página de compra com o canal (e o nome da ação, se houver) no endereço. Com `comUtm`, leva também `utm_source` (o canal), `utm_medium=divulgacao`
+ * e `utm_campaign` (a ação): é o que o Google Analytics enxerga (ele não conhece `?canal=`). Sem `comUtm` (o padrão), o endereço é o de antes.
+ */
+export function enderecoDeDivulgacao(origem: string, sessaoId: string, canal: string, acao: string, comUtm: boolean = false): string {
   const base = `${origem.replace(/\/$/, "")}/comprar/${sessaoId}`;
   const parametros = new URLSearchParams();
   const c = rotuloDeCampanha(canal, MAX_CANAL_DA_ORIGEM);
   const a = rotuloDeCampanha(acao, MAX_ACAO_DA_ORIGEM);
   if (c) parametros.set("canal", c);
   if (a) parametros.set("acao", a);
+  if (comUtm && c) {
+    parametros.set("utm_source", c);
+    parametros.set("utm_medium", "divulgacao");
+    if (a) parametros.set("utm_campaign", a);
+  }
   const busca = parametros.toString();
   return busca === "" ? base : `${base}?${busca}`;
 }

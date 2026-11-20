@@ -59,6 +59,9 @@ test("o link de divulgação: a página de compra com o canal e a ação no ende
   assert.equal(enderecoDeDivulgacao("https://jards.com.br", S1, "whatsapp", "  "), `https://jards.com.br/comprar/${S1}?canal=whatsapp`);
   assert.equal(enderecoDeDivulgacao("https://jards.com.br", S1, "", ""), `https://jards.com.br/comprar/${S1}`);
   assert.equal(enderecoDeDivulgacao("https://jards.com.br", S1, "Anúncio pago!", "x"), `https://jards.com.br/comprar/${S1}?canal=anuncio-pago&acao=x`);
+  assert.equal(enderecoDeDivulgacao("https://jards.com.br", S1, "instagram", "Stories do lote 2", true), `https://jards.com.br/comprar/${S1}?canal=instagram&acao=stories-do-lote-2&utm_source=instagram&utm_medium=divulgacao&utm_campaign=stories-do-lote-2`, "com utm: o Google Analytics enxerga a origem");
+  assert.equal(enderecoDeDivulgacao("https://jards.com.br", S1, "whatsapp", "", true), `https://jards.com.br/comprar/${S1}?canal=whatsapp&utm_source=whatsapp&utm_medium=divulgacao`);
+  assert.equal(enderecoDeDivulgacao("https://jards.com.br", S1, "", "x", true), `https://jards.com.br/comprar/${S1}?acao=x`, "sem canal não há utm_source");
 });
 
 const sessoes: SessaoParaDivulgar[] = [{ id: S1, evento: "Noite de Jazz", quando: "12/12 às 20:00", a_venda: true }, { id: S2, evento: "Hamlet", quando: "01/11 às 19:00", a_venda: false }];
@@ -74,7 +77,7 @@ test("a tela: números, tabela por canal, o vazio e o aviso", () => {
 test("a folha de criar link: só sessões à venda, o link já montado e o aviso quando não há sessão", () => {
   const folha = html(createElement(LinkDeDivulgacaoSheet, { sessoes, origem: "https://jards.com.br", canalInicial: "instagram", acaoInicial: "Stories do lote 2", onClose: () => {} }));
   assert.ok(folha.includes("Criar link de divulgação") && folha.includes("Copiar link") && folha.includes("Cancelar"));
-  assert.ok(folha.includes(`https://jards.com.br/comprar/${S1}?canal=instagram&amp;acao=stories-do-lote-2`), "o link da sessão à venda");
+  assert.ok(folha.includes(`https://jards.com.br/comprar/${S1}?canal=instagram&amp;acao=stories-do-lote-2&amp;utm_source=instagram&amp;utm_medium=divulgacao&amp;utm_campaign=stories-do-lote-2`), "o link da sessão à venda");
   assert.ok(!folha.includes(S2), "sessão que já passou não entra");
   for (const c of ["Instagram", "WhatsApp", "E-mail", "Anúncio pago", "Parceiro ou influenciador", "Outro"]) assert.ok(folha.includes(c), c);
   const copiada = html(createElement(LinkDeDivulgacaoSheet, { sessoes, origem: "https://jards.com.br", copiadoDeInicio: true, onClose: () => {} }));

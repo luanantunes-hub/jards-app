@@ -28,8 +28,8 @@ export function configDoGoogle(env: Record<string, string | undefined>, origem: 
 }
 
 /** O endereço do login do Google. `access_type=offline` e `prompt=consent` fazem o Google devolver o token de renovação; `state` volta intacto no retorno. */
-export function urlDeLoginDoGoogle(c: ConfigDoGoogle, state: string): string {
-  const p = new URLSearchParams({ client_id: c.clientId, redirect_uri: c.redirectUri, response_type: "code", scope: ESCOPO_DO_GOOGLE_ADS, access_type: "offline", prompt: "consent", include_granted_scopes: "false", state });
+export function urlDeLoginDoGoogle(c: ConfigDoGoogle, state: string, escopo: string = ESCOPO_DO_GOOGLE_ADS): string {
+  const p = new URLSearchParams({ client_id: c.clientId, redirect_uri: c.redirectUri, response_type: "code", scope: escopo, access_type: "offline", prompt: "consent", include_granted_scopes: "false", state });
   return `https://accounts.google.com/o/oauth2/v2/auth?${p.toString()}`;
 }
 
@@ -48,7 +48,7 @@ export function classificarErroDoGoogle(corpo: unknown, status: number): ErroDeM
   return new ErroDeMidia("outro", codigo ?? status, null);
 }
 
-async function pedir(buscar: BuscarHttp, url: string, pedido?: Parameters<BuscarHttp>[1]): Promise<unknown> {
+export async function pedirAoGoogle(buscar: BuscarHttp, url: string, pedido?: Parameters<BuscarHttp>[1]): Promise<unknown> {
   let r: RespostaHttp;
   try { r = await buscar(url, pedido); } catch { throw new ErroDeMidia("outro", null, null); }
   let corpo: unknown = null;
@@ -61,14 +61,14 @@ const FORMULARIO = { "content-type": "application/x-www-form-urlencoded" };
 
 /** O código do login vira o token de renovação (que fica no Vault). Sem ele (o Google só o devolve na primeira autorização com `prompt=consent`), a conexão não vale. */
 export async function trocarCodigoDoGoogle(c: ConfigDoGoogle, codigo: string, buscar: BuscarHttp): Promise<{ token: string; expira_em: null }> {
-  const corpo = (await pedir(buscar, "https://oauth2.googleapis.com/token", { method: "POST", headers: FORMULARIO, body: new URLSearchParams({ code: codigo, client_id: c.clientId, client_secret: c.clientSecret, redirect_uri: c.redirectUri, grant_type: "authorization_code" }).toString() })) as { refresh_token?: unknown };
+  const corpo = (await pedirAoGoogle(buscar, "https://oauth2.googleapis.com/token", { method: "POST", headers: FORMULARIO, body: new URLSearchParams({ code: codigo, client_id: c.clientId, client_secret: c.clientSecret, redirect_uri: c.redirectUri, grant_type: "authorization_code" }).toString() })) as { refresh_token?: unknown };
   if (typeof corpo.refresh_token !== "string" || corpo.refresh_token.length < 20) throw new ErroDeMidia("outro", null, null);
   return { token: corpo.refresh_token, expira_em: null };
 }
 
 /** O token de acesso (1 hora) a partir do de renovação. */
 export async function renovarAcessoDoGoogle(c: ConfigDoGoogle, renovacao: string, buscar: BuscarHttp): Promise<string> {
-  const corpo = (await pedir(buscar, "https://oauth2.googleapis.com/token", { method: "POST", headers: FORMULARIO, body: new URLSearchParams({ client_id: c.clientId, client_secret: c.clientSecret, refresh_token: renovacao, grant_type: "refresh_token" }).toString() })) as { access_token?: unknown };
+  const corpo = (await pedirAoGoogle(buscar, "https://oauth2.googleapis.com/token", { method: "POST", headers: FORMULARIO, body: new URLSearchParams({ client_id: c.clientId, client_secret: c.clientSecret, refresh_token: renovacao, grant_type: "refresh_token" }).toString() })) as { access_token?: unknown };
   if (typeof corpo.access_token !== "string" || corpo.access_token.length < 20) throw new ErroDeMidia("outro", null, null);
   return corpo.access_token;
 }
@@ -79,7 +79,7 @@ const SO_NUMEROS = /^\d{3,20}$/;
 
 /** As linhas de uma consulta (`searchStream` devolve uma lista de blocos, cada um com `results`). */
 async function consultar(c: ConfigDoGoogle, buscar: BuscarHttp, acesso: string, conta: string, gerente: string | null, gaql: string): Promise<Record<string, unknown>[]> {
-  const corpo = await pedir(buscar, url(c, `customers/${conta}/googleAds:searchStream`), { method: "POST", headers: cabecalhos(acesso, gerente), body: JSON.stringify({ query: gaql }) });
+  const corpo = await pedirAoGoogle(buscar, url(c, `customers/${conta}/googleAds:searchStream`), { method: "POST", headers: cabecalhos(acesso, gerente), body: JSON.stringify({ query: gaql }) });
   const blocos = Array.isArray(corpo) ? corpo : [corpo];
   const linhas: Record<string, unknown>[] = [];
   for (const b of blocos) {
@@ -98,7 +98,7 @@ const dentro = (o: unknown, chave: string): Record<string, unknown> => ((o && ty
  */
 export async function listarContasDoGoogleAds(c: ConfigDoGoogle, renovacao: string, buscar: BuscarHttp): Promise<ContaDeAnuncios[]> {
   const acesso = await renovarAcessoDoGoogle(c, renovacao, buscar);
-  const lista = (await pedir(buscar, url(c, "customers:listAccessibleCustomers"), { method: "GET", headers: cabecalhos(acesso, null) })) as { resourceNames?: unknown };
+  const lista = (await pedirAoGoogle(buscar, url(c, "customers:listAccessibleCustomers"), { method: "GET", headers: cabecalhos(acesso, null) })) as { resourceNames?: unknown };
   const ids = (Array.isArray(lista.resourceNames) ? lista.resourceNames : []).map(n => texto(n).replace(/^customers\//, "")).filter(i => SO_NUMEROS.test(i)).slice(0, MAX_CONTAS_ACESSIVEIS);
   const contas = new Map<string, ContaDeAnuncios>();
   for (const id of ids) {
