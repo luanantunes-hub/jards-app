@@ -47,14 +47,20 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     .maybeSingle();
   if (!membership) return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
 
-  const [{ data: transcricoes }, { data: participantes }, { data: marcadores }] = await Promise.all([
+  const [{ data: transcricoes }, { data: participantes }, { data: marcadores }, { data: negociacao }, { data: empresa }] = await Promise.all([
     admin.from("reuniao_transcricoes").select("id,falante,texto,inicio_ms,fim_ms").eq("reuniao_id", id).order("inicio_ms"),
     admin.from("reuniao_participantes").select("id,nome,email").eq("reuniao_id", id),
     admin.from("reuniao_marcadores").select("id,tipo,texto,timestamp_ms").eq("reuniao_id", id).order("timestamp_ms"),
+    reuniao.captacao_id
+      ? admin.from("captacoes").select("id,titulo").eq("id", reuniao.captacao_id).eq("organization_id", reuniao.organization_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    reuniao.empresa_crm_id
+      ? admin.from("empresas_crm").select("id,nome,domain_key,site").eq("id", reuniao.empresa_crm_id).eq("organization_id", reuniao.organization_id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   return NextResponse.json(
-    { reuniao, transcricoes: transcricoes ?? [], participantes: participantes ?? [], marcadores: marcadores ?? [] },
+    { reuniao, transcricoes: transcricoes ?? [], participantes: participantes ?? [], marcadores: marcadores ?? [], negociacao, empresa },
     { headers: { "Cache-Control": "private, no-store" } },
   );
 }

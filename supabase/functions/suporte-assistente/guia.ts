@@ -1,10 +1,8 @@
 // Guia do Jards que a IA da ajuda (o botão "?") usa para responder. É a única fonte dela: o que não estiver aqui, ela manda
 // para a equipe. Preços e planos seguem a página de preços (public/precos.html) e a tela Meu plano.
 //
-// Mantenha este texto em dia quando mudar plano, preço, menu ou fluxo. Em especial: Conversas (e-mails e reuniões) está
-// escondida do menu dos clientes enquanto o e-mail está em teste fechado e o Vexa não está no ar (ROTAS_SO_SUPER_ADMIN em
-// app/(dashboard)/layout.tsx); quando ela abrir, tire "/conversas" de lá, passe o trecho de Conversas para o menu e
-// republique a função. Um teste avisa se uma ponta mudar sem a outra.
+// Mantenha este texto em dia quando mudar plano, preço, menu ou fluxo, e republique a função. Telas escondidas dos
+// clientes (ROTAS_SO_SUPER_ADMIN em app/(dashboard)/layout.tsx) ficam fora do menu daqui; um teste confere Conversas.
 // Sem crases nem "${" aqui dentro: o texto é um template string.
 
 export const GUIA_DO_JARDS = `
@@ -14,6 +12,7 @@ O Jards é uma plataforma brasileira para captar patrocínio pelas leis de incen
 MENU DA CAPTAÇÃO
 Gerenciamento
 - Visão geral: o painel com o funil consolidado de eficácia dos canais, as negociações estagnadas e os próximos eventos.
+- Conversas: reúne num lugar só o que foi conversado com o patrocinador, em dois ambientes. No de e-mail, a pessoa conecta o Gmail ou o Outlook e vê as conversas com os contatos, escreve, responde, responde a todos, agenda o envio e anexa arquivos; e-mail de quem ainda não é contato chega para triagem (criar contato ou registrar a conversa). No de reuniões, marca uma reunião pelo Jards, que cria o evento na agenda com a sala do Meet ou do Teams e convida quem ela escolher; o assistente entra na reunião, grava e transcreve. A página da reunião mostra o resumo, quem falou, os números da conversa, a transcrição com busca e os próximos passos, que viram atividade com um clique.
 - Atividades: tarefas, reuniões, ligações e e-mails com prazo. Dá para ver em Lista, Calendário, Gantt e Carga da equipe, com as abas A fazer e Histórico.
 - Projetos: os projetos incentivados que você capta.
 Oportunidades
@@ -30,9 +29,6 @@ Relacionamento
 - Contatos: as pessoas das empresas e dos projetos.
 - Clientes: as empresas que já patrocinam. É onde ficam as entregas combinadas e o acompanhamento depois da venda.
 O sino no alto da tela mostra os avisos. Configurações e Sair ficam no fim do menu lateral.
-
-AINDA NÃO DISPONÍVEL
-- Conversas: a ideia é reunir num lugar só o que foi conversado com o patrocinador, em dois ambientes. No de e-mail, as conversas trocadas com os contatos (Gmail ou Outlook), com escrever, responder e agendar o envio. No de reuniões, marcar uma reunião pelo Jards, que cria o evento na agenda da pessoa com a sala do Meet ou do Teams e convida quem ela escolher. Ainda está em preparação e não aparece no menu. Se perguntarem, diga que ainda não está disponível.
 
 COMO FAZER AS TAREFAS MAIS COMUNS
 - Criar uma negociação: Prospecções, Negociações, botão Nova negociação. Escolha o patrocinador (ou crie na hora), o projeto, o valor e a etapa.

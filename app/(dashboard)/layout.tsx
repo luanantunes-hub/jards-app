@@ -86,9 +86,8 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
 ];
 
 // Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
-// "Conversas" (e-mails e reuniões) acompanha o beta fechado do e-mail; as reuniões ainda dependem do servidor
-// do Vexa (docs/reunioes-deploy-vexa.md), que não está no ar. Tire a rota daqui quando abrir.
-const ROTAS_SO_SUPER_ADMIN = ["/conversas"];
+// Conectar e-mail continua valendo a lista EMAIL_BETA_LIBERADO (lib/email/beta.ts).
+const ROTAS_SO_SUPER_ADMIN: string[] = [];
 
 // `icone`: o grupo aparece no menu como uma seção que abre e fecha para baixo (como no Apollo), com este ícone no título e as telas dele logo abaixo.
 const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementType; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {

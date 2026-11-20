@@ -153,6 +153,8 @@ export function NovaAtividadeModal({
     date?: string;
     /** "HH:MM": quem clica num horário do calendário já cria a atividade com início e fim (uma hora). */
     hora?: string;
+    nome?: string;
+    tipo?: TipoAtividade;
   };
 }) {
   const supabase = createClient();
@@ -169,8 +171,8 @@ export function NovaAtividadeModal({
   }, []);
 
   // Form
-  const [nome, setNome] = useState("");
-  const [tipo, setTipo] = useState<TipoAtividade>("reuniao");
+  const [nome, setNome] = useState(prefill?.nome ?? "");
+  const [tipo, setTipo] = useState<TipoAtividade>(prefill?.tipo ?? "reuniao");
   const [tipoCustomId, setTipoCustomId] = useState<string | null>(null);
   // Prioriza o vínculo mais específico primeiro — mesma convenção usada em
   // entityLabel() (app/(dashboard)/atividades/page.tsx): contato/captação são
@@ -205,7 +207,7 @@ export function NovaAtividadeModal({
   const [resultado, setResultado] = useState("");
   const [prioridade, setPrioridade] = useState<Prioridade | null>(null);
   // A reunião (tipo inicial) nasce sincronizada; a escolha de quem mexer na caixa vale mais que o tipo.
-  const [calendarSyncRequested, setCalendarSyncRequested] = useState(true);
+  const [calendarSyncRequested, setCalendarSyncRequested] = useState(() => sincronizaPorPadrao(prefill?.tipo ?? "reuniao", null));
   const sincronizacaoEditada = useRef(false);
   const responsavelEditado = useRef(false);
   // "Mais detalhes" já abre quando há algo preenchido lá dentro.
