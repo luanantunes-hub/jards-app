@@ -504,6 +504,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Na Ticketeria o menu fica sempre aberto (com rótulos) e o conteúdo se afasta dele; nos outros módulos abre ao passar o mouse.
   const menuFixoAberto = moduloDoMenu === "ticketeria";
   const isExpanded  = expanded || mobileOpen || seletorAberto || menuFixoAberto;
+  // Cantos de 12px em tudo na Ticketeria (menu, barra do topo, botões e os menus que abrem sobre a página, que saem do layout): a classe vai no body e a regra está em globals.css.
+  useEffect(() => {
+    document.body.classList.toggle("cantos-ticketeria", menuFixoAberto);
+    return () => document.body.classList.remove("cantos-ticketeria");
+  }, [menuFixoAberto]);
   const menuPath    = itemAtivoDoMenu(path);
   const hrefAtivo   = hrefAtivoDoMenu(menuPath, navGroups.flatMap(grupo => grupo.items.map(item => item.href)));
   // Os grupos com `icone` viram seções que abrem e fecham. Com o menu recolhido (só ícones) cada seção mostra apenas o ícone; o da página aberta fica aceso.
@@ -649,7 +654,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setExpanded(false); }}
         onClick={event => { if ((event.target as HTMLElement).closest("a")) setMobileOpen(false); }}
       >
-        {/* Logo (na Ticketeria o menu começa direto no perfil, sem o logo no topo) */}
+        {/* Na Ticketeria não há logo: fica a faixa vazia, com a linha alinhada à da barra do topo, e a lista começa abaixo dela. */}
+        {menuFixoAberto && <div className="flex-shrink-0 border-b" style={{ height: "3.5rem", borderColor: "rgba(13,13,13,.07)" }} aria-hidden="true" />}
+        {/* Logo */}
         {!menuFixoAberto && <div
           className="flex items-center flex-shrink-0 border-b overflow-hidden"
           style={{
