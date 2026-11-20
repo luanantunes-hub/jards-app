@@ -8,6 +8,8 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { podeEditarATicketeria } from "@/lib/ticketeria/permissoes";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
+import { CartaoDoParcelamento, ParcelamentoSheet } from "@/components/ticketeria/ParcelamentoDoCartao";
+import { parcelasDaLoja } from "@/lib/ticketeria/parcelas";
 import { CadastroDaContaSheet, CartaoDaConta, TrocaDaContaSheet, type ContaCadastrada } from "@/components/ticketeria/ContaDeRecebimento";
 import type { EstadoDaTroca } from "@/lib/ticketeria/pagamento/troca-de-conta-textos";
 
@@ -19,8 +21,9 @@ export default function RecebimentosPage() {
   const nomeDaOrganizacao = useOrganizationName();
   const papel = useOrganizationRole();
   const podeEditar = podeEditarATicketeria(papel);
-  const [estado, setEstado] = useState<{ lojaId: string | null; conta: ContaCadastrada | null } | undefined>(undefined);
+  const [estado, setEstado] = useState<{ lojaId: string | null; parcelasMax: number; conta: ContaCadastrada | null } | undefined>(undefined);
   const [folha, setFolha] = useState(false);
+  const [folhaDasParcelas, setFolhaDasParcelas] = useState(false);
   const [troca, setTroca] = useState<TrocaAberta | null>(null);
   const [folhaDaTroca, setFolhaDaTroca] = useState<{ retomar: boolean } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -33,12 +36,12 @@ export default function RecebimentosPage() {
     let ativo = true;
     void (async () => {
       const ticketeria = clienteDaTicketeria(createClient());
-      const { data: loja, error } = await ticketeria.from("ticketeria_lojas").select("id").eq("organization_id", organizationId).maybeSingle();
+      const { data: loja, error } = await ticketeria.from("ticketeria_lojas").select("id, parcelas_max").eq("organization_id", organizationId).maybeSingle();
       const { data: conta, error: erroDaConta } = loja
         ? await ticketeria.from("ticketeria_contas_asaas").select("situacao, cpf_cnpj, banco_codigo, agencia, conta, conta_digito").eq("loja_id", loja.id).maybeSingle()
         : { data: null, error: null };
       if (!ativo) return;
-      setEstado({ lojaId: loja?.id ?? null, conta: (conta ?? null) as ContaCadastrada | null });
+      setEstado({ lojaId: loja?.id ?? null, parcelasMax: parcelasDaLoja(loja?.parcelas_max), conta: (conta ?? null) as ContaCadastrada | null });
       setErro(error || erroDaConta ? "Não foi possível carregar os recebimentos. Recarregue a página." : null);
       // Conta ativa: a troca da conta de saques que estiver aberta (a que passou das 24 horas é aplicada pelo servidor antes de responder).
       if (loja && conta && conta.situacao === "aprovada") {
@@ -84,7 +87,12 @@ export default function RecebimentosPage() {
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {estado.conta
-          ? <CartaoDaConta conta={estado.conta} troca={troca} podeEditar={podeEditar} onAlterar={() => setFolhaDaTroca({ retomar: Boolean(troca && !troca.confirmada && troca.minha) })} onCancelarTroca={() => void cancelarTroca()} />
+          ? (
+            <div className="space-y-4">
+              <CartaoDaConta conta={estado.conta} troca={troca} podeEditar={podeEditar} onAlterar={() => setFolhaDaTroca({ retomar: Boolean(troca && !troca.confirmada && troca.minha) })} onCancelarTroca={() => void cancelarTroca()} />
+              {estado.conta.situacao === "aprovada" && <CartaoDoParcelamento parcelasMax={estado.parcelasMax} podeEditar={podeEditar} onMudar={() => setFolhaDasParcelas(true)} />}
+            </div>
+          )
           : (
             <ListTableSurface>
               <ListEmptyState
@@ -94,6 +102,7 @@ export default function RecebimentosPage() {
             </ListTableSurface>
           )}
       </ListContent>
+      {folhaDasParcelas && estado.lojaId && <ParcelamentoSheet lojaId={estado.lojaId} parcelasMax={estado.parcelasMax} onClose={() => setFolhaDasParcelas(false)} onSaved={() => { setFolhaDasParcelas(false); recarregar(); }} />}
       {folhaDaTroca && estado.lojaId && <TrocaDaContaSheet lojaId={estado.lojaId} retomar={folhaDaTroca.retomar} onClose={() => setFolhaDaTroca(null)} onDone={() => { setFolhaDaTroca(null); recarregar(); }} />}
       {folha && <CadastroDaContaSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} onClose={() => setFolha(false)} onSaved={() => { setFolha(false); recarregar(); }} />}
     </>
