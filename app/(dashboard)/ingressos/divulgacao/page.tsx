@@ -8,11 +8,13 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { ListContent, ListPageHeader, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from "@/components/ticketeria/DivulgacaoView";
+import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
+import type { CorpoDaImportacao, ImportacaoDaLista, TipoDeHistorico } from "@/lib/ticketeria/historico";
 import { CARTOES, ConexoesDaLoja, EscolherContaSheet, type ContaParaEscolher, type EstadoDeMidia, type ProvedorDoCartao } from "@/components/ticketeria/ConexoesView";
 import { gastoParaCampo, lerAcao, type CamposDaAcao, type DivulgacaoDaLoja as DadosDaDivulgacao } from "@/lib/ticketeria/divulgacao";
 
-type Aba = "origem" | "acoes" | "conexoes";
-const ABAS: { valor: Aba; rotulo: string }[] = [{ valor: "origem", rotulo: "De onde vieram" }, { valor: "acoes", rotulo: "Ações e gasto" }, { valor: "conexoes", rotulo: "Conexões" }];
+type Aba = "origem" | "acoes" | "conexoes" | "historico";
+const ABAS: { valor: Aba; rotulo: string }[] = [{ valor: "origem", rotulo: "De onde vieram" }, { valor: "acoes", rotulo: "Ações e gasto" }, { valor: "conexoes", rotulo: "Conexões" }, { valor: "historico", rotulo: "Histórico" }];
 /** O que a volta do login da Meta conta (?meta=…): a frase quando não deu certo. */
 const AVISO_DO_RETORNO = (fonte: string): Record<string, string> => ({
   negado: `O ${fonte} não liberou o acesso. Conecte de novo e aceite a leitura dos anúncios.`, invalido: `Não foi possível confirmar o login do ${fonte}. Conecte de novo.`,
@@ -40,6 +42,12 @@ export default function DivulgacaoPage() {
   const [escolhendo, setEscolhendo] = useState<{ provedor: ProvedorDoCartao; contas: ContaParaEscolher[] | null; escolhida: string | null; erro: string | null } | null>(null);
   const [ocupadoMidia, setOcupadoMidia] = useState<ProvedorDoCartao | null>(null);
   const [avisoMidia, setAvisoMidia] = useState<string | null>(null);
+  // O histórico importado de planilha (aba Histórico): as importações, a folha de importar e o que está sendo desfeito.
+  const [historico, setHistorico] = useState<{ importacoes: ImportacaoDaLista[]; semanas: Record<TipoDeHistorico, number> }>({ importacoes: [], semanas: { vendas: 0, gasto: 0 } });
+  const [importando, setImportando] = useState(false);
+  const [folhaDeImportar, setFolhaDeImportar] = useState(false);
+  const [erroDeImportar, setErroDeImportar] = useState<string | null>(null);
+  const [desfazendo, setDesfazendo] = useState<string | null>(null);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -54,7 +62,8 @@ export default function DivulgacaoPage() {
         if (!resposta.ok) throw new Error(String(resposta.status));
         const dados = (await resposta.json()) as DadosDaDivulgacao;
         const c = await fetch(`/api/ticketeria/lojas/${loja.id}/conexoes`, { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).catch(() => null) as Partial<Record<ProvedorDoCartao, EstadoDeMidia>> | null;
-        if (ativo) { setErro(null); setEstado({ lojaId: loja.id, dados }); if (c) setConexoes({ meta: c.meta ?? SEM_CONEXAO.meta, google_ads: c.google_ads ?? SEM_CONEXAO.google_ads, ga4: c.ga4 ?? SEM_CONEXAO.ga4 }); }
+        const h = await fetch(`/api/ticketeria/lojas/${loja.id}/historico`, { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).catch(() => null) as { importacoes: ImportacaoDaLista[]; semanas: Record<TipoDeHistorico, number> } | null;
+        if (ativo) { setErro(null); setEstado({ lojaId: loja.id, dados }); if (h) setHistorico(h); if (c) setConexoes({ meta: c.meta ?? SEM_CONEXAO.meta, google_ads: c.google_ads ?? SEM_CONEXAO.google_ads, ga4: c.ga4 ?? SEM_CONEXAO.ga4 }); }
       } catch {
         if (ativo) { setErro("Não foi possível carregar a divulgação. Só quem edita a Ticketeria vê esta página."); setEstado({ lojaId: loja.id, dados: null }); }
       }
@@ -156,11 +165,30 @@ export default function DivulgacaoPage() {
     try { await fetch(`/api/ticketeria/lojas/${estado.lojaId}/conexoes/${PEDACO[provedor]}`, { method: "DELETE" }); } finally { setOcupadoMidia(null); setVersao(v => v + 1); }
   }
 
+  async function importar(corpo: CorpoDaImportacao) {
+    if (!estado?.lojaId) return;
+    setImportando(true);
+    setErroDeImportar(null);
+    try {
+      const r = await fetch(`/api/ticketeria/lojas/${estado.lojaId}/historico`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(corpo) });
+      if (!r.ok) { setErroDeImportar(r.status === 413 ? "O arquivo ficou grande demais. Divida em partes menores." : r.status === 429 ? "Muitas importações seguidas. Espere um instante." : "Não foi possível importar agora. Tente de novo."); return; }
+      setFolhaDeImportar(false);
+      setVersao(v => v + 1);
+    } catch { setErroDeImportar("Sem conexão. Tente de novo."); } finally { setImportando(false); }
+  }
+
+  async function desfazerImportacao(id: string) {
+    if (!estado?.lojaId || !window.confirm("Desfazer esta importação? O que ela trouxe é apagado (o arquivo original não muda).")) return;
+    setDesfazendo(id);
+    try { await fetch(`/api/ticketeria/lojas/${estado.lojaId}/historico/${id}`, { method: "DELETE" }); } finally { setDesfazendo(null); setVersao(v => v + 1); }
+  }
+
   if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   const dados = estado.dados;
   const acoes = (
     <>
       {dados && aba === "acoes" && <SecondaryListAction onClick={() => abrirNova(dados.hoje)}>Registrar ação</SecondaryListAction>}
+      {dados && aba === "historico" && <SecondaryListAction onClick={() => { setErroDeImportar(null); setFolhaDeImportar(true); }}>Importar planilha</SecondaryListAction>}
       {dados && <PrimaryListAction onClick={() => setCriando(true)}><Link2 size={13} aria-hidden="true" /> Criar link de divulgação</PrimaryListAction>}
     </>
   );
@@ -180,6 +208,8 @@ export default function DivulgacaoPage() {
             </div>
             {aba === "origem"
               ? <DivulgacaoDaLoja linhas={dados.linhas} sessoes={dados.sessoes} sessaoId={sessaoId} onSessao={setSessaoId} onCriarLink={() => setCriando(true)} />
+              : aba === "historico"
+              ? <HistoricoDaLoja importacoes={historico.importacoes} semanas={historico.semanas} desfazendo={desfazendo} onDesfazer={id => void desfazerImportacao(id)} onImportar={() => { setErroDeImportar(null); setFolhaDeImportar(true); }} />
               : aba === "conexoes"
               ? <ConexoesDaLoja estados={conexoes} aviso={avisoMidia} ocupado={ocupadoMidia} onConectar={conectar} onEscolherConta={p => void abrirEscolha(p)} onLer={p => void ler(p)} onDesconectar={p => void desconectar(p)} />
               : <AcoesDaLoja acoes={dados.acoes} por_dia={dados.por_dia} hoje={dados.hoje} onRegistrar={() => abrirNova(dados.hoje)}
@@ -188,6 +218,7 @@ export default function DivulgacaoPage() {
         )}
       </ListContent>
       {criando && dados && <LinkDeDivulgacaoSheet sessoes={dados.sessoes} origem={window.location.origin} sessaoInicial={sessaoId} onClose={() => setCriando(false)} />}
+      {folhaDeImportar && <ImportarPlanilhaSheet existentes={historico.importacoes} erro={erroDeImportar} importando={importando} onClose={() => setFolhaDeImportar(false)} onImportar={c => void importar(c)} />}
       {escolhendo && <EscolherContaSheet fonte={CARTOES[escolhendo.provedor].fonte} tipo={escolhendo.provedor === "ga4" ? "visitas" : "gasto"} contas={escolhendo.contas} escolhida={escolhendo.escolhida} erro={escolhendo.erro} salvando={salvando} onEscolher={id => setEscolhendo(e => (e ? { ...e, escolhida: id } : e))} onClose={() => setEscolhendo(null)} onSalvar={() => void confirmarConta()} />}
       {acao && <AcaoSheet editando={acao.id !== null} valores={acao.valores} erro={acaoErro} salvando={salvando} onMudar={(campo, valor) => setAcao(a => (a ? { ...a, valores: { ...a.valores, [campo]: valor } } : a))} onClose={() => setAcao(null)} onSalvar={() => void salvar()} onApagar={() => void apagar()} />}
     </>
