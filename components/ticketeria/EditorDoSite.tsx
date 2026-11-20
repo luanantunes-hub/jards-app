@@ -11,6 +11,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { partesNoFuso } from "@/lib/ticketeria/eventos";
 import { copiaDeUmaPagina, duplicarBloco, enderecoDaPrevia, moverBloco } from "@/lib/ticketeria/editor-site";
 import { PreviaDoSite } from "@/components/ticketeria/PreviaDoSite";
+import { VersoesSheet } from "@/components/ticketeria/VersoesDoSite";
 import { blocosDoJson, lerBloco, lerSeo, ordemDasPaginas, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
 import { AcrescentarBlocoSheet, BlocoNovoSheet, TIPOS_DAS_FOLHAS_NOVAS } from "@/components/ticketeria/BlocosNovosSheet";
 
@@ -219,7 +220,8 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
   const { confirmDelete } = useDeleteConfirm();
   const [paginas, setPaginas] = useState<Pagina[] | null>(null);
   const [slug, setSlug] = useState("inicio");
-  const [folha, setFolha] = useState<{ tipo: "bloco"; indice: number | null; tipoDeBloco: TipoDeBloco } | { tipo: "pagina" } | { tipo: "escolher" } | null>(null);
+  const [folha, setFolha] = useState<{ tipo: "bloco"; indice: number | null; tipoDeBloco: TipoDeBloco } | { tipo: "pagina" } | { tipo: "escolher" } | { tipo: "versoes" } | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
   const [arrastando, setArrastando] = useState<number | null>(null);
@@ -316,6 +318,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
         <h2 id="paginas-do-site" className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Páginas</h2>
         {podeEditar && <PrimaryListAction onClick={() => setFolha({ tipo: "pagina" })}><Plus size={13} aria-hidden="true" /> Nova página</PrimaryListAction>}
       </div>
+      {aviso && <p role="status" className="mb-3 rounded-xl border border-black/[.1] bg-white px-4 py-2.5 text-[0.75rem] text-black/70">{aviso}</p>}
       {erro && <p role="alert" className="mb-3 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
       {paginas === null ? (
         <div className="h-24 rounded-xl border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
@@ -323,7 +326,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
         <>
           <div role="tablist" aria-label="Páginas do site" className="mb-4 flex gap-1 overflow-x-auto">
             {paginas.map(pagina => (
-              <button key={pagina.id} type="button" role="tab" aria-selected={atual?.id === pagina.id} onClick={() => setSlug(pagina.slug)} className={`h-10 shrink-0 rounded-xl border px-3.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${atual?.id === pagina.id ? "border-[#282525] bg-black/[.06] font-normal text-[#282525]" : "border-black/[.12] text-black/55 hover:bg-black/[.04]"}`}>{pagina.titulo}</button>
+              <button key={pagina.id} type="button" role="tab" aria-selected={atual?.id === pagina.id} onClick={() => { setSlug(pagina.slug); setAviso(null); }} className={`h-10 shrink-0 rounded-xl border px-3.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${atual?.id === pagina.id ? "border-[#282525] bg-black/[.06] font-normal text-[#282525]" : "border-black/[.12] text-black/55 hover:bg-black/[.04]"}`}>{pagina.titulo}</button>
             ))}
           </div>
           {atual && (
@@ -333,6 +336,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
                 <p className="mr-auto text-[0.75rem] text-black/55">{atual.publicada_em === null ? "Ainda não publicada." : publicadaIgual ? "Publicada, sem mudanças." : "Há mudanças que ainda não estão no ar."}</p>
                 <button type="button" onClick={() => setMostrarPrevia(valor => !valor)} aria-pressed={mostrarPrevia} className={BOTAO}>{mostrarPrevia ? "Ocultar a prévia" : "Mostrar a prévia"}</button>
                 <a href={enderecoDaPrevia(siteId, atual.slug)} target="_blank" rel="noopener noreferrer" className={BOTAO}><ExternalLink size={13} aria-hidden="true" /> Ver a prévia</a>
+                {podeEditar && <button type="button" onClick={() => setFolha({ tipo: "versoes" })} className={BOTAO}>Versões</button>}
                 {podeEditar && <button type="button" onClick={() => void duplicarPagina()} className={BOTAO}>Duplicar a página</button>}
                 {podeEditar && <button type="button" onClick={() => void publicar()} disabled={publicadaIgual} className="inline-flex h-9 items-center rounded-xl acao-salvar px-3.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">Publicar esta página</button>}
                 {podeEditar && atual.slug !== "inicio" && <button type="button" onClick={apagarPagina} className={BOTAO}>Apagar a página</button>}
@@ -381,6 +385,9 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
         </>
       )}
       {folha?.tipo === "pagina" && paginas && <NovaPaginaSheet siteId={siteId} organizationId={organizationId} existentes={paginas} onClose={() => setFolha(null)} onCreated={novoSlug => { setSlug(novoSlug); recarregar(); }} />}
+      {folha?.tipo === "versoes" && atual && (
+        <VersoesSheet paginaId={atual.id} titulo={atual.titulo} publicados={atual.blocos_publicados} podeEditar={podeEditar} onClose={() => setFolha(null)} onRestaurado={mensagem => { setAviso(mensagem); recarregar(); }} />
+      )}
       {folha?.tipo === "escolher" && (
         <AcrescentarBlocoSheet temEspacos={espacos.length > 0} temEventos={eventos.length > 0} onClose={() => setFolha(null)} onEscolher={tipoDeBloco => setFolha({ tipo: "bloco", indice: null, tipoDeBloco })} />
       )}
