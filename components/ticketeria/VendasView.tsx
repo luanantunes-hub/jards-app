@@ -11,12 +11,12 @@ const BORDA = "rgba(13,13,13,.08)";
 
 // A superfície das tabelas e o estado vazio, iguais aos de ListPagePrimitives (que puxa a fonte do título e não roda fora do Next, nem nos testes das telas).
 function ListTableSurface({ children }: { children: React.ReactNode }) { return <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>{children}</div>; }
-function ListEmptyState({ title, description }: { title: string; description: string }) {
+function ListEmptyState({ title, description }: { title: string; description?: string }) {
   return (
     <div className="flex flex-col items-center px-4 py-20 text-center">
       <Ticket size={28} className="mb-3 text-black/15" aria-hidden="true" />
       <p className="text-[0.875rem] font-medium text-black/55">{title}</p>
-      <p className="mt-1.5 max-w-sm text-[0.75rem] leading-relaxed text-black/35">{description}</p>
+      {description && <p className="mt-1.5 max-w-sm text-[0.75rem] leading-relaxed text-black/35">{description}</p>}
     </div>
   );
 }
@@ -124,7 +124,7 @@ export function ComprasDeVendas({ compras, filtro, onFiltrar, onAbrir }: { compr
       </div>
       <ListTableSurface>
         {compras.length === 0 ? (
-          <ListEmptyState title="Nenhuma compra aqui" description="As compras aparecem assim que alguém reservar ou pagar um ingresso." />
+          <ListEmptyState title="Nenhuma compra aqui" />
         ) : (
           <table className="w-full min-w-[46rem] border-collapse">
             <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Compra</th><th className={CABECALHO}>Comprador</th><th className={CABECALHO}>Sessão</th><th className={`${CABECALHO} text-right`}>Ingressos</th><th className={`${CABECALHO} text-right`}>Valor</th><th className={CABECALHO}><span className="sr-only">Situação</span></th></tr></thead>

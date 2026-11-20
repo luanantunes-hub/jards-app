@@ -78,7 +78,6 @@ export default function RecebimentosPage() {
   return (
     <>
       <ListPageHeader
-        eyebrow="Ticketeria"
         title="Recebimentos"
         actions={podeEditar && !estado.conta ? <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Cadastrar conta</PrimaryListAction> : undefined}
       />
@@ -91,7 +90,6 @@ export default function RecebimentosPage() {
               <ListEmptyState
                 icon={Wallet}
                 title="Receba o valor das suas vendas"
-                description="Cadastre a conta do titular para vender ingressos. O repasse é liberado às 18h do dia seguinte ao evento."
               />
             </ListTableSurface>
           )}
