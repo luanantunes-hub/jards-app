@@ -108,7 +108,7 @@ export default function CadastroPage({ searchParams }: { searchParams: Promise<{
         ? "Despesas, extrato, checagens pela lei do projeto e o pacote de envio no mesmo lugar, para a equipe e para o cliente."
         : "Crie seu workspace e conecte projetos, oportunidades, contatos e próximos passos desde o primeiro dia."}
     >
-      <Image src="/jards-logo.svg" alt="Jards" width={88} height={28} priority className="mb-8 h-7 w-auto lg:hidden" />
+      <Image src="/jards-logo.svg" alt="Jards" width={95} height={28} priority className="mb-8 h-7 w-auto lg:hidden" />
 
         {sent ? (
           <section className="py-5 text-center">

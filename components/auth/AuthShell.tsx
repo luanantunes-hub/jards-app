@@ -18,7 +18,7 @@ export function AuthShell({ children, eyebrow, title, description, asideContent,
         <div className="relative z-10 flex min-h-0 flex-1 flex-col max-w-[42rem]">
           {showAsideLogo && (
             <a href="/" aria-label="Ir para a página inicial do Jards" className="inline-block shrink-0">
-              <Image src="/jards-logo.svg" alt="Jards" width={94} height={30} priority className="h-7 w-auto" />
+              <Image src="/jards-logo.svg" alt="Jards" width={102} height={30} priority className="h-7 w-auto" />
             </a>
           )}
 

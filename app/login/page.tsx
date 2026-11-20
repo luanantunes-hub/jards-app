@@ -344,7 +344,7 @@ export default function LoginPage() {
   return (
     <AuthShell asideContent={<ObliqueStrategyCard />} showAsideLogo={false}>
       <a href="/" aria-label="Ir para a página inicial do Jards" className="mb-6 inline-block">
-        <Image src="/jards-logo.svg" alt="Jards" width={88} height={28} priority className="h-7 w-auto" />
+        <Image src="/jards-logo.svg" alt="Jards" width={95} height={28} priority className="h-7 w-auto" />
       </a>
       <p className="mb-2.5 text-[0.6875rem] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Continue seu trabalho</p>
       <h1 className="text-[clamp(2.2rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#282525]">Hoje é o dia.</h1>
