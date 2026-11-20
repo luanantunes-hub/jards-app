@@ -1,12 +1,14 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decryptSecret, encryptSecret } from "@/lib/calendar/crypto";
+import type { EmailProvider } from "./config";
 import { refreshGoogleEmailToken } from "./google";
+import { refreshMicrosoftEmailToken } from "./microsoft";
 
 export type EmailConnectionRow = {
   id: string;
   user_id: string;
   organization_id: string | null;
-  provider: "google";
+  provider: EmailProvider;
   provider_account_email: string | null;
   access_token_enc: string;
   refresh_token_enc: string;
@@ -30,6 +32,7 @@ function toPublic(row: EmailConnectionRow): EmailConnectionPublic {
   return rest;
 }
 
+/** Todas as conexões de e-mail da pessoa (Gmail e Microsoft), sem os tokens. */
 export async function listEmailConnections(
   userId: string,
 ): Promise<EmailConnectionPublic[]> {
@@ -37,20 +40,22 @@ export async function listEmailConnections(
   const { data, error } = await supabase
     .from("email_connections" as any)
     .select("*")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
   return ((data ?? []) as EmailConnectionRow[]).map(toPublic);
 }
 
 export async function getEmailConnection(
   userId: string,
+  provider: EmailProvider,
 ): Promise<EmailConnectionRow | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("email_connections" as any)
     .select("*")
     .eq("user_id", userId)
-    .eq("provider", "google")
+    .eq("provider", provider)
     .maybeSingle();
   if (error) throw new Error(error.message);
   return (data as EmailConnectionRow | null) ?? null;
@@ -59,7 +64,7 @@ export async function getEmailConnection(
 export async function upsertEmailConnection(input: {
   userId: string;
   organizationId: string | null;
-  provider: "google";
+  provider: EmailProvider;
   email: string | null;
   accessToken: string;
   refreshToken: string;
@@ -85,20 +90,26 @@ export async function upsertEmailConnection(input: {
   if (error) throw new Error(error.message);
 }
 
-export async function deleteEmailConnection(userId: string): Promise<void> {
+export async function deleteEmailConnection(
+  userId: string,
+  provider: EmailProvider,
+): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("email_connections" as any)
     .delete()
     .eq("user_id", userId)
-    .eq("provider", "google");
+    .eq("provider", provider);
   if (error) throw new Error(error.message);
 }
 
 const REFRESH_SKEW_MS = 2 * 60 * 1000;
 
-export async function getValidEmailAccessToken(userId: string): Promise<string> {
-  const conn = await getEmailConnection(userId);
+export async function getValidEmailAccessToken(
+  userId: string,
+  provider: EmailProvider,
+): Promise<string> {
+  const conn = await getEmailConnection(userId, provider);
   if (!conn) throw new Error("Conta de email não conectada");
 
   const expires = new Date(conn.token_expires_at).getTime();
@@ -107,7 +118,10 @@ export async function getValidEmailAccessToken(userId: string): Promise<string> 
   }
 
   const refresh = decryptSecret(conn.refresh_token_enc);
-  const next = await refreshGoogleEmailToken(refresh);
+  const next =
+    provider === "microsoft"
+      ? await refreshMicrosoftEmailToken(refresh)
+      : await refreshGoogleEmailToken(refresh);
 
   const supabase = createAdminClient();
   await (supabase as any)
@@ -121,7 +135,7 @@ export async function getValidEmailAccessToken(userId: string): Promise<string> 
       last_error: null,
     })
     .eq("user_id", userId)
-    .eq("provider", "google");
+    .eq("provider", provider);
 
   return next.accessToken;
 }

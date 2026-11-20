@@ -83,18 +83,14 @@ export function TiposPatrocinioSheet({
 
   return (
     <div
-      className="fixed inset-0 z-50"
-      style={{
-        background: sheetVisible ? "rgba(0,0,0,.38)" : "rgba(0,0,0,0)",
-        transition: "background 260ms ease",
-      }}
+      className={`fixed inset-0 z-50 veu ${sheetVisible ? "" : "veu-oculto"}`}
       onClick={close}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="absolute inset-x-0 top-0 mx-auto flex max-h-[96dvh] flex-col overflow-hidden rounded-b bg-white"
+        className="absolute inset-x-0 top-0 mx-auto flex max-h-[96dvh] flex-col overflow-hidden folha-vidro"
         style={{
           width: "32.5rem",
           maxWidth: "92vw",
@@ -124,7 +120,7 @@ export function TiposPatrocinioSheet({
                     <div
                       onClick={() => toggleFederal(type.value)}
                       className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded transition ${
-                        active ? "bg-[#282525]" : "border border-black/[.2] bg-white"
+                        active ? "bg-[#1C0E33]" : "border border-black/[.2] bg-white"
                       }`}
                     >
                       {active && <Check size={10} className="text-white" strokeWidth={3} />}
@@ -177,7 +173,7 @@ export function TiposPatrocinioSheet({
                       options={BRAZIL_STATES.map(([code, name]) => ({ value: code, label: `${code} — ${name}` }))}
                     />
                   </div>
-                  <button onClick={addEstadual} disabled={!estadualState} className="h-10 rounded bg-[#282525] px-3 text-[0.6875rem] font-medium text-white transition hover:bg-[#3A3535] disabled:opacity-40">
+                  <button onClick={addEstadual} disabled={!estadualState} className="h-10 rounded bg-[#1C0E33] px-3 text-[0.6875rem] font-medium text-white transition hover:bg-[#2D1A53] disabled:opacity-40">
                     Adicionar
                   </button>
                   <button onClick={() => { setAddingEstadual(false); setEstadualState(""); }} className="text-[0.6875rem] text-black/35 transition hover:text-black/55">
@@ -205,7 +201,7 @@ export function TiposPatrocinioSheet({
                     autoFocus
                     className="h-10 w-40 rounded border border-black/[.15] px-3 text-[0.75rem] outline-none focus:border-black/30 transition"
                   />
-                  <button onClick={addMunicipal} disabled={!municipalName.trim()} className="h-10 rounded bg-[#282525] px-3 text-[0.6875rem] font-medium text-white transition hover:bg-[#3A3535] disabled:opacity-40">
+                  <button onClick={addMunicipal} disabled={!municipalName.trim()} className="h-10 rounded bg-[#1C0E33] px-3 text-[0.6875rem] font-medium text-white transition hover:bg-[#2D1A53] disabled:opacity-40">
                     Adicionar
                   </button>
                   <button onClick={() => { setAddingMunicipal(false); setMunicipalName(""); }} className="text-[0.6875rem] text-black/35 transition hover:text-black/55">
@@ -219,14 +215,14 @@ export function TiposPatrocinioSheet({
 
         {/* Footer */}
         {erro && <p role="alert" className="shrink-0 px-6 pb-3 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
-        <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+        <div className="folha-rodape flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4">
           <button onClick={close} className="text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">
             Cancelar
           </button>
           <button
             onClick={() => void save()}
             disabled={saving}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Check size={12} /> {saving ? "Salvando…" : "Salvar"}
           </button>

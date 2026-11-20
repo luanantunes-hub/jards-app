@@ -9,12 +9,18 @@ export function useAnchoredPopover() {
   const [pos, setPos] = useState<PopoverPos | null>(null);
 
   // width em px na base de 16px; acompanha a fonte base em telas grandes.
-  function abrir(event: React.MouseEvent<HTMLElement>, larguraBase = 340) {
+  function abrir(event: React.MouseEvent<HTMLElement>, larguraBase = 340, alinhar: "direita" | "esquerda" = "direita") {
     const r = event.currentTarget.getBoundingClientRect();
     const width = larguraBase * escalaUi();
+    const margem = 8 * escalaUi();
+    // Por padrão alinha a borda direita com a do botão (botões no canto direito da página); se isso empurrar para
+    // fora pela esquerda (botão perto da borda esquerda da tela), alinha pela esquerda do botão. Com "esquerda",
+    // alinha sempre pela esquerda do botão (barras e botões no começo da página). Nunca sai da tela dos dois lados.
+    const alinhadoADireita = r.right - width;
+    const esquerda = alinhar === "esquerda" || alinhadoADireita < margem ? r.left : alinhadoADireita;
     setPos({
       top: r.bottom + 6,
-      left: Math.min(r.right - width, window.innerWidth - width - 8),
+      left: Math.max(margem, Math.min(esquerda, window.innerWidth - width - margem)),
       width,
     });
   }
@@ -42,7 +48,7 @@ export function AnchoredPopover({ pos, onClose, children }: {
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
-        className="fixed z-50 rounded border bg-white p-4 shadow-xl"
+        className="fixed z-50 rounded bg-white p-4 border elevacao-1"
         style={{ top: pos.top, left: pos.left, width: pos.width, borderColor: "rgba(13,13,13,.1)" }}
         onClick={event => event.stopPropagation()}
       >

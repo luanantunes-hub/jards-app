@@ -140,7 +140,7 @@ function FormularioDaFonte({ fonte, regimes, onFechar, onSalvo }: {
         <>
           <button type="button" onClick={onFechar} className="h-10 rounded px-3 text-[0.75rem] text-black/55 transition hover:text-black/80 focus-visible:outline-2 focus-visible:outline-[#7259B5]">Cancelar</button>
           <button type="button" onClick={salvar} disabled={salvando}
-            className="h-10 rounded bg-[#2E8932] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50">
+            className="h-10 rounded acao-salvar px-4 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50">
             {salvando ? "Salvando…" : fonte ? "Salvar" : "Incluir fonte"}
           </button>
         </>
@@ -304,7 +304,7 @@ export function FontesVigiadas({ onColetou }: { onColetou: () => void }) {
           Todo dia às 9h37, as páginas e os arquivos vencidos pela frequência são baixados. Mudou o texto ou a lista de arquivos, a versão nova vai para Para conferir, com a diferença lado a lado.
         </p>
         <button type="button" onClick={() => setEditando("nova")}
-          className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
+          className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
           <Plus size={14} aria-hidden /> Incluir fonte
         </button>
       </div>

@@ -148,15 +148,15 @@ function DocForm({
   const corStyle = COR_MAP[cor] ?? COR_MAP.azul;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: "rgba(0,0,0,.5)" }}>
+    <div className="fixed inset-0 z-[60] flex justify-center veu items-start">
       <div role="dialog" aria-modal="true" aria-labelledby={titleId}
-        className="bg-white rounded border w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col shadow-2xl"
+        className="folha-desce folha-vidro w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col"
         style={{ borderColor: "rgba(13,13,13,.12)" }}>
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-2.5">
             <SelectedIcon size={16} className="text-black/40" />
-            <span id={titleId} className="text-[0.8125rem] font-bold text-[#282525]">
+            <span id={titleId} className="text-[0.8125rem] text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">
               {doc ? "Editar documento" : "Novo documento"}
             </span>
           </div>
@@ -271,7 +271,7 @@ function DocForm({
           <button
             onClick={handleSave}
             disabled={saving || !titulo.trim()}
-            className="w-full py-2.5 rounded text-sm font-medium text-white bg-[#2E8932] hover:bg-[#26752A] transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full py-2.5 rounded text-sm font-medium text-white acao-salvar transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : null}
             Salvar
@@ -336,9 +336,9 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,.45)" }}>
+      <div className="fixed inset-0 z-50 flex justify-center veu items-start">
         <div role="dialog" aria-modal="true" aria-label="Documentos"
-          className="bg-white rounded border shadow-2xl w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col"
+          className="folha-desce folha-vidro w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col"
           style={{ borderColor: "rgba(13,13,13,.10)" }}>
 
           {/* Header */}

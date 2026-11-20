@@ -119,7 +119,7 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
       <button
         type="button"
         onClick={() => setFechando(true)}
-        className="flex h-11 items-center gap-2 rounded bg-[#2E8932] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98]"
+        className="flex h-11 items-center gap-2 rounded acao-salvar px-4 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98]"
       >
         <Check size={13} aria-hidden="true" /> Fechar negócio
       </button>
@@ -215,7 +215,7 @@ function ValorSheet({ db, captacao, empresaNome, comProjeto, cotas, cotaAtual, o
             Cancelar
           </button>
           <button type="button" onClick={() => void salvar(close)} disabled={salvando}
-            className="min-h-10 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-40">
+            className="min-h-10 rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-40">
             {salvando ? "Salvando…" : "Salvar"}
           </button>
         </>

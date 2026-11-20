@@ -410,6 +410,11 @@ verify_jwt = true
 [functions.suporte-assistente]
 verify_jwt = true
 
+# Vigia normativo: a rotina do cofre (pg_cron + pg_net) chama com o segredo no cabeçalho
+# x-agente-segredo, sem JWT; a própria função confere o segredo ou o token do super admin.
+[functions.agente-normativo]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

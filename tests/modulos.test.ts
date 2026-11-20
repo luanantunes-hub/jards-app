@@ -76,7 +76,7 @@ test("seletor aparece só para quem usa os dois módulos", () => {
   assert.equal(mostraSeletorDeModulo(SO_CAPTACAO), false);
   assert.equal(mostraSeletorDeModulo(SO_PRESTACAO), false);
   assert.equal(mostraSeletorDeModulo(OS_DOIS), true);
-  assert.deepEqual(modulosDisponiveis(SUPER), ["captacao", "prestacao", "producao"]);
+  assert.deepEqual(modulosDisponiveis(SUPER), ["captacao", "prestacao", "producao", "ticketeria"]);
 });
 
 test("a prestação nunca aparece como não contratada no seletor", () => {
@@ -132,7 +132,7 @@ test("cada módulo tem página inicial, e quem só usa a produção vai para ela
 });
 
 test("módulo em construção fica escondido até a organização tê-lo", () => {
-  assert.deepEqual([...MODULOS_EM_CONSTRUCAO], ["producao"]);
+  assert.deepEqual([...MODULOS_EM_CONSTRUCAO], ["producao", "ticketeria"]);
   assert.equal(moduloVisivel("producao", ["captacao"]), false);
   assert.equal(moduloVisivel("producao", ["captacao", "prestacao"]), false);
   assert.equal(moduloVisivel("producao", ["captacao", "producao"]), true);

@@ -19,12 +19,12 @@ export function ModalPrestacao({ titulo, subtitulo, onClose, children, rodape, l
   const titleId = useId();
   useModalDismiss(onClose);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center veu p-4" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`flex max-h-[92dvh] w-full ${largura} flex-col overflow-hidden rounded bg-white shadow-2xl`}
+        className={`flex max-h-[92dvh] w-full ${largura} flex-col overflow-hidden rounded bg-white border elevacao-3`}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>

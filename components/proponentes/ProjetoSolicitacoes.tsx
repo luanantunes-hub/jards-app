@@ -100,7 +100,7 @@ export function ProjetoSolicitacoes({ projetoId, isOrganizacao, proponenteNome }
                 {acao.status === "pendente" && acao.destinatario === meuPapel && <div className="mt-3 space-y-2">
                   <label htmlFor={`resposta-${acao.id}`} className="sr-only">Resposta ao pedido</label>
                   <textarea id={`resposta-${acao.id}`} rows={2} maxLength={2000} value={respostas[acao.id] ?? ""} onChange={e => setRespostas(prev => ({ ...prev, [acao.id]: e.target.value }))} placeholder="Responder ao pedido…" className="w-full resize-none rounded border border-black/[.15] bg-white px-3 py-2 text-[0.75rem] outline-none focus:border-[#7259B5]" />
-                  <button type="button" disabled={saving || !respostas[acao.id]?.trim()} onClick={() => void executar("fn_projeto_responder_acao", { p_acao_id: acao.id, p_resposta: respostas[acao.id].trim() }, () => setRespostas(prev => ({ ...prev, [acao.id]: "" })))} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-3 py-1.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40"><Send size={12} />Responder</button>
+                  <button type="button" disabled={saving || !respostas[acao.id]?.trim()} onClick={() => void executar("fn_projeto_responder_acao", { p_acao_id: acao.id, p_resposta: respostas[acao.id].trim() }, () => setRespostas(prev => ({ ...prev, [acao.id]: "" })))} className="inline-flex items-center gap-1.5 rounded acao-salvar px-3 py-1.5 text-[0.75rem] font-semibold text-white transition disabled:opacity-40"><Send size={12} />Responder</button>
                 </div>}
                 {acao.status === "respondida" && <button type="button" disabled={saving} onClick={() => void executar("fn_projeto_resolver_acao", { p_acao_id: acao.id }, () => {})} className="mt-3 inline-flex items-center gap-1.5 rounded border border-black/[.14] px-2.5 py-1 text-[0.6875rem] font-semibold text-black/60 transition hover:border-black/30 hover:text-[#282525] disabled:opacity-40"><Check size={12} />Marcar resolvido</button>}
               </article>
@@ -117,7 +117,7 @@ export function ProjetoSolicitacoes({ projetoId, isOrganizacao, proponenteNome }
 
     {pedindoAcao && <TopSheet titulo={`Nova solicitação para ${nomeDestinatario(destinatario)}`} onClose={() => setPedindoAcao(false)} footer={close => <>
       <button type="button" onClick={close} className="text-[0.75rem] text-black/50 hover:text-black/70">Cancelar</button>
-      <button type="button" disabled={saving || !novaAcao.trim()} onClick={() => void executar("fn_projeto_criar_acao", { p_projeto_id: projetoId, p_destinatario: destinatario, p_descricao: novaAcao.trim(), p_prazo: prazo || null }, () => { setNovaAcao(""); setPrazo(""); close(); })} className="rounded bg-[#2E8932] px-3.5 py-1.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">
+      <button type="button" disabled={saving || !novaAcao.trim()} onClick={() => void executar("fn_projeto_criar_acao", { p_projeto_id: projetoId, p_destinatario: destinatario, p_descricao: novaAcao.trim(), p_prazo: prazo || null }, () => { setNovaAcao(""); setPrazo(""); close(); })} className="rounded acao-salvar px-3.5 py-1.5 text-[0.75rem] font-semibold text-white transition disabled:opacity-40">
         {saving ? "Enviando…" : "Enviar solicitação"}
       </button>
     </>}>

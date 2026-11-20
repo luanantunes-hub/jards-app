@@ -14,12 +14,12 @@ export function ContatoExportadoModal({ contatoId, nome, empresaNome, onClose }:
   useModalDismiss(onClose);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-3" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center veu px-3" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="contato-exportado-title"
-        className="w-full max-w-[23.75rem] overflow-hidden rounded-b bg-white shadow-[0_22px_72px_rgba(13,13,13,.2)]"
+        className="folha-vidro w-full max-w-[23.75rem] overflow-hidden"
         onClick={event => event.stopPropagation()}
       >
         <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">
@@ -32,7 +32,7 @@ export function ContatoExportadoModal({ contatoId, nome, empresaNome, onClose }:
             {empresaNome ? <> e vinculado a <strong className="font-semibold text-black/70">{empresaNome}</strong></> : null}.
           </p>
         </div>
-        <footer className="flex items-center justify-center gap-2 border-t border-black/[.08] px-5 py-3.5">
+        <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex items-center justify-center gap-2 border-t border-black/[.08] px-5 py-3.5">
           <button
             type="button"
             onClick={onClose}

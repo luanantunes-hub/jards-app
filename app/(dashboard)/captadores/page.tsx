@@ -519,7 +519,7 @@ export default function CaptadoresPage() {
     <div className="flex flex-col h-full">
 
       {/* ── Header ── */}
-      <ListPageHeader
+      <ListPageHeader secao="captadores"
         eyebrow="Rede de captação"
         title="Captadores"
         summary={activeTab === "equipe" && !loadingEquipe

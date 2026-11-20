@@ -7,7 +7,7 @@ import { ITENS_DO_MENU, PERFIS, destinoAoAbrir, inicioDo, moduloDoMenu, perfilCo
 // que não usa, cai na página inicial do que usa, sem laço de redirecionamento.
 // Rodar com as variáveis E2E_PERFIL_* (e2e/perfis.ts); sem elas o perfil é pulado.
 
-const ROTAS_PELA_URL = ["/captacoes", "/contatos", "/projetos", "/prestacoes", "/prestacoes/fornecedores", "/producoes", "/configuracoes"];
+const ROTAS_PELA_URL = ["/captacoes", "/contatos", "/projetos", "/prestacoes", "/prestacoes/fornecedores", "/producoes", "/ingressos", "/configuracoes"];
 
 const menu = (page: Page) => page.getByLabel("Menu principal");
 
@@ -42,7 +42,7 @@ for (const perfil of PERFIS) {
     });
 
     test("o menu mostra só os itens do módulo da página aberta", async ({ page }) => {
-      for (const rota of ["/dashboard", "/prestacoes", "/producoes", "/configuracoes"]) {
+      for (const rota of ["/dashboard", "/prestacoes", "/producoes", "/ingressos", "/configuracoes"]) {
         await page.goto(rota);
         const aberto = destinoAoAbrir(perfil, rota);
         await expect(page, rota).toHaveURL(new RegExp(`${aberto}$`));

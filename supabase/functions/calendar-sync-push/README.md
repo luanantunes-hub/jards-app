@@ -1,5 +1,7 @@
 # Calendar sync push — Fase 2
 
+> **Substituída (18/11/2026).** O envio das atividades para a agenda agora roda dentro do app (`lib/calendar/empurrar.ts`, rota `/api/calendar/push`), usando as mesmas chaves e a mesma criptografia do resto da integração, e a importação das reuniões da agenda para o Jards roda em `lib/calendar/importar.ts` (rota `/api/calendar/importar`). Esta função Deno nunca foi publicada e não precisa ser. O texto abaixo fica como histórico.
+
 Esta Edge Function recebe o Database Webhook de `atividades` e cria, atualiza ou remove eventos no Google Calendar e no Microsoft Outlook.
 
 ## Deploy

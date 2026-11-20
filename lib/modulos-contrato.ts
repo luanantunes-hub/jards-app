@@ -5,15 +5,15 @@
 // decide o acesso; aqui elas servem para a tela explicar a situação e para a
 // rota de admin validar o pedido antes de gravar.
 //
-// Cada módulo com contrato (prestação e produção) usa as mesmas regras: o que
+// Cada módulo com contrato (prestação, produção e ticketeria) usa as mesmas regras: o que
 // muda é o nome dele nos textos, que vem de NOME_NO_TEXTO.
 
 import type { ModuloId } from "@/lib/modulos";
 
 /**
  * Como cada módulo se chama nos textos do contrato: o nome completo ("a prestação
- * de contas") e o curto ("a prestação"). Os dois módulos com contrato são
- * femininos, e os textos usam "a", "da" e "à": um módulo masculino pede o artigo
+ * de contas") e o curto ("a prestação"). Os módulos com contrato são
+ * todos femininos, e os textos usam "a", "da" e "à": um módulo masculino pede o artigo
  * aqui. Em lib/equipe-modulos.ts, MODULO_LABEL é o mesmo nome com inicial
  * maiúscula (tests/modulos-contrato.test.ts confere).
  */
@@ -21,6 +21,7 @@ export const NOME_NO_TEXTO: Record<ModuloId, { completo: string; curto: string }
   captacao: { completo: "captação", curto: "captação" },
   prestacao: { completo: "prestação de contas", curto: "prestação" },
   producao: { completo: "produção", curto: "produção" },
+  ticketeria: { completo: "ticketeria", curto: "ticketeria" },
 };
 
 export type StatusContrato = "ativo" | "teste" | "atraso" | "cancelado" | "cortesia";
@@ -143,7 +144,7 @@ export function validarCortesia(pedido: PedidoCortesia, emUso: number, hoje: str
 /**
  * Erros das funções de acesso por módulo (admin_definir_acesso_modulo,
  * alterar_modulos_membro, convites), em linguagem da tela. Os códigos mais
- * específicos vêm antes: "sem_vaga_prestacao" e "sem_vaga_producao" também
+ * específicos vêm antes: "sem_vaga_prestacao", "sem_vaga_producao" e "sem_vaga_ticketeria" também
  * contêm "sem_vaga".
  */
 const ERROS_ACESSO: Record<string, string> = {
@@ -155,6 +156,7 @@ const ERROS_ACESSO: Record<string, string> = {
   sem_vaga_captacao: "Todas as vagas da captação estão em uso. Compre usuários extras antes.",
   sem_vaga_prestacao: "Todas as vagas da prestação de contas estão em uso.",
   sem_vaga_producao: "Todas as vagas da produção estão em uso.",
+  sem_vaga_ticketeria: "Todas as vagas da ticketeria estão em uso.",
   sem_vaga: "Todas as vagas estão em uso.",
   ultimo_modulo: "A pessoa ficaria sem nenhum módulo.",
 };

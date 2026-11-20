@@ -186,7 +186,7 @@ function DeliveryForm({ accounts, contaId, contracts, projects, projetoId, membe
   const [evidenceRequired, setEvidenceRequired] = useState("true");
   const dropdownClass = "w-full [&>button]:h-10 [&>button]:w-full";
 
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}><form className="w-full max-w-xl overflow-hidden rounded border border-black/[.09] bg-white shadow-[0_24px_70px_rgba(13,13,13,.16)]" onClick={event => event.stopPropagation()} onSubmit={event => { event.preventDefault(); onSubmit(Object.fromEntries(new FormData(event.currentTarget))); }}>
+  return <div className="fixed inset-0 z-50 flex items-center justify-center veu p-4" onClick={onClose}><form className="w-full max-w-xl overflow-hidden rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()} onSubmit={event => { event.preventDefault(); onSubmit(Object.fromEntries(new FormData(event.currentTarget))); }}>
     <header className="flex items-center justify-between border-b border-black/[.07] px-5 py-4"><div><p className="text-[0.625rem] text-black/30">Execução</p><h3 className="mt-0.5 text-[0.9375rem] font-semibold text-black/80">Nova entrega</h3></div><button type="button" onClick={onClose} className="rounded p-1.5 text-black/30 hover:bg-black/[.04] hover:text-black/55"><X size={15}/></button></header>
     <div className="grid gap-4 p-5 sm:grid-cols-2">
       <label className="sm:col-span-2"><Label>Título</Label><input name="titulo" required autoFocus placeholder="O que precisa ser entregue?" className={fieldClass}/></label>
@@ -200,7 +200,7 @@ function DeliveryForm({ accounts, contaId, contracts, projects, projetoId, membe
       <label className="sm:col-span-2"><Label>Orientações</Label><textarea name="observacoes" rows={3} placeholder="Critério de aceite, formato ou contexto" className={`${fieldClass} h-auto resize-none py-2.5`}/></label>
       {error && <p className="sm:col-span-2 text-[0.6875rem] text-[#D94E4E]">{error}</p>}
     </div>
-    <footer className="flex justify-end gap-3 border-t border-black/[.07] px-5 py-4"><button type="button" onClick={onClose} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button disabled={saving} className="rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></footer>
+    <footer className="flex justify-end gap-3 border-t border-black/[.07] px-5 py-4"><button type="button" onClick={onClose} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button disabled={saving} className="rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></footer>
   </form></div>;
 }
 

@@ -137,7 +137,7 @@ test("o bloqueio da prestação continua exatamente o de antes, em todas as comb
     );
   }
   const todas = linhasDeVinculo();
-  assert.equal(todas.length, 252);
+  assert.equal(todas.length, 585);
 
   const casos: { superAdmin: boolean; linhas: LinhaDeVinculo[]; erro: boolean }[] = [];
   for (const superAdmin of [false, true]) {

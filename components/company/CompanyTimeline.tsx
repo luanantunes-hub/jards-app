@@ -50,7 +50,7 @@ function formatRelative(dateStr: string): string {
 }
 
 type TimelineEvent = {
-  tipo: "atividade" | "nota" | "mudanca" | "inscricao";
+  tipo: "atividade" | "nota" | "mudanca" | "inscricao" | "interacao";
   atividade_tipo: string;
   titulo: string;
   descricao: string | null;
@@ -71,7 +71,7 @@ function EventIcon({ tipo }: { tipo: string }) {
 
 export function CompanyTimeline({
   empresaCrmId,
-  sources = ["atividades", "notas", "historico_captações", "inscricoes"],
+  sources = ["atividades", "notas", "historico_captações", "inscricoes", "interacoes"],
   showHeader = true,
   embedded = false,
 }: {
@@ -156,11 +156,28 @@ export function CompanyTimeline({
       promises.push(Promise.resolve({ data: null }));
     }
 
-    const [atvRes, notRes, histRes, inscRes] = await Promise.all(promises);
+    if (sources.includes("interacoes")) {
+      promises.push(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any)
+          .from("crm_interacoes")
+          .select("id, tipo, assunto, resumo, ocorreu_em, created_by, account_id, contato:contatos(nome)")
+          .eq("empresa_crm_id", empresaCrmId)
+          .order("ocorreu_em", { ascending: false })
+          .limit(30) as any
+      );
+    } else {
+      promises.push(Promise.resolve({ data: null }));
+    }
 
-    // Quem escreveu as notas e as inscrições: perfis de quem é da mesma organização.
+    const [atvRes, notRes, histRes, inscRes, interRes] = await Promise.all(promises);
+
+    // Quem escreveu as notas, as inscrições e as interações: perfis de quem é da mesma organização.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const autoresIds = [...new Set([...((notRes.data ?? []) as any[]), ...((inscRes.data ?? []) as any[])].map(item => item.account_id).filter(Boolean))] as string[];
+    const autoresDiretos = [...((notRes.data ?? []) as any[]), ...((inscRes.data ?? []) as any[])].map(item => item.account_id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const autoresDasInteracoes = ((interRes.data ?? []) as any[]).map(item => item.created_by ?? item.account_id);
+    const autoresIds = [...new Set([...autoresDiretos, ...autoresDasInteracoes])].filter(Boolean) as string[];
     const nomes = new Map<string, string>();
     if (autoresIds.length > 0) {
       const { data: perfis } = await supabase.from("profiles").select("id, full_name").in("id", autoresIds);
@@ -212,7 +229,17 @@ export function CompanyTimeline({
       created_at: e.created_at,
     }));
 
-    const all = [...atividades, ...notas, ...historico, ...inscricoes]
+    const interacoes = ((interRes.data ?? []) as any[]).map(i => ({
+      tipo: "interacao" as const,
+      atividade_tipo: i.tipo || "outro",
+      titulo: i.assunto || "Interação",
+      descricao: [i.contato?.nome, i.resumo].filter(Boolean).join(" · ") || null,
+      data: i.ocorreu_em,
+      usuario: porAutor(i.created_by ?? i.account_id),
+      created_at: i.ocorreu_em,
+    }));
+
+    const all = [...atividades, ...notas, ...historico, ...inscricoes, ...interacoes]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     setEvents(all);

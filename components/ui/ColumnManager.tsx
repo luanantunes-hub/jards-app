@@ -168,7 +168,7 @@ export function ColumnManager<Id extends string>({ columns, hidden, onToggle, on
       <Settings2 size={15} strokeWidth={1.6} className="transition-[stroke-width] group-hover:[stroke-width:2.5]" />
     </button>
     {open && menuPos && createPortal(
-      <div ref={menuRef} className="fixed z-50 rounded border border-black/[.09] bg-white p-2 shadow-[0_16px_45px_rgba(13,13,13,.12)]" style={{ left: menuPos.left, top: menuPos.top, width: `${MENU_WIDTH / 16}rem` }}>
+      <div ref={menuRef} className="fixed z-50 rounded bg-white p-2 border elevacao-1" style={{ left: menuPos.left, top: menuPos.top, width: `${MENU_WIDTH / 16}rem` }}>
         <div className="flex items-center justify-between px-2 pb-2 pt-1"><p className="text-[0.8125rem] font-semibold text-black/70">Colunas da lista</p><button type="button" onClick={onReset} title="Restaurar padrão" className="flex h-8 w-8 items-center justify-center rounded text-black/30 hover:bg-black/[.04] hover:text-black/55"><RotateCcw size={13}/></button></div>
         <div className="max-h-[min(320px,calc(100dvh-490px))] overflow-y-auto">{columns.map(column => {
           const isHidden = hidden.includes(column.id);

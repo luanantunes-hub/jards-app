@@ -94,12 +94,11 @@ export default function PermissoesProducaoModal({ organizationId, membro, atual,
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,.45)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 veu"
       onMouseDown={evento => { clicouNoFundo.current = evento.target === evento.currentTarget; }}
       onClick={() => { if (clicouNoFundo.current) fechar(); }}
     >
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[90vh] w-full max-w-[26.25rem] flex-col overflow-hidden rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[90vh] w-full max-w-[26.25rem] flex-col overflow-hidden rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()}>
         <div className="flex shrink-0 items-center justify-between gap-3 border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-black/[.05] text-[#282525]">
@@ -159,7 +158,7 @@ export default function PermissoesProducaoModal({ organizationId, membro, atual,
               ref={botaoSalvar}
               type="submit"
               disabled={salvando}
-              className="rounded bg-[#2E8932] px-5 py-2 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded acao-salvar px-5 py-2 text-[0.75rem] font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-40"
             >
               {salvando ? "Salvando…" : "Salvar"}
             </button>

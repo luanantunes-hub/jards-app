@@ -30,7 +30,7 @@ export function BoasVindasEquipeModal({ quantity, onInvite, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/30 p-0 backdrop-blur-[2px] sm:items-center sm:p-6"
+      className="fixed inset-0 z-[80] flex items-end justify-center veu p-0 sm:items-center sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="welcome-team-title"
@@ -38,7 +38,7 @@ export function BoasVindasEquipeModal({ quantity, onInvite, onClose }: Props) {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <section className="relative grid max-h-[96dvh] w-full overflow-y-auto rounded-t bg-white shadow-[0_24px_80px_rgba(13,13,13,.18)] sm:max-w-3xl sm:grid-cols-[1.05fr_.95fr] sm:rounded">
+      <section className="relative grid max-h-[96dvh] w-full overflow-y-auto rounded-t bg-white sm:max-w-3xl sm:grid-cols-[1.05fr_.95fr] sm:rounded border elevacao-3">
         <button
           type="button"
           onClick={onClose}
@@ -74,7 +74,7 @@ export function BoasVindasEquipeModal({ quantity, onInvite, onClose }: Props) {
             ref={actionRef}
             type="button"
             onClick={onInvite}
-            className="mt-7 inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded bg-[#2E8932] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#26752A] focus:outline-none focus:ring-2 focus:ring-[#2E8932]/30 focus:ring-offset-2 active:scale-[.99] sm:w-fit"
+            className="mt-7 inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded acao-salvar px-5 py-3 text-sm font-bold text-white transition focus:outline-none focus:ring-2 focus:ring-[#2E8932]/30 focus:ring-offset-2 active:scale-[.99] sm:w-fit"
           >
             <UserPlus size={16} weight="bold" />
             Convidar membros

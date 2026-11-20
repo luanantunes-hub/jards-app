@@ -44,12 +44,12 @@ export function ModalIlustrado({ passos, acoesFinais, onClose }: {
   if (!passo) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex justify-center veu items-start" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={tituloId}
-        className="relative flex max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-hidden rounded-t bg-white shadow-2xl sm:rounded"
+        className="folha-desce folha-vidro relative flex max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => {
           if (e.key === "ArrowRight") irPara(indice + 1);
@@ -88,7 +88,7 @@ export function ModalIlustrado({ passos, acoesFinais, onClose }: {
                 <button key={p.titulo} type="button" onClick={() => irPara(i)}
                   aria-label={`Passo ${i + 1}: ${p.titulo}`} aria-current={i === indice ? "step" : undefined}
                   className="flex h-6 items-center rounded px-0.5 focus-visible:outline-2 focus-visible:outline-[#7259B5]">
-                  <span className={`block h-1.5 rounded-full transition-all duration-200 motion-reduce:transition-none ${i === indice ? "w-5 bg-[#282525]" : "w-1.5 bg-black/15"}`} />
+                  <span className={`block h-1.5 rounded-full transition-all duration-200 motion-reduce:transition-none ${i === indice ? "w-5 bg-[#1C0E33]" : "w-1.5 bg-black/15"}`} />
                 </button>
               ))}
             </div>
@@ -103,7 +103,7 @@ export function ModalIlustrado({ passos, acoesFinais, onClose }: {
             )}
             {ultimo ? acoesFinais : (
               <button type="button" data-principal onClick={() => irPara(indice + 1)}
-                className="flex items-center gap-1.5 rounded bg-[#282525] px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
+                className="flex items-center gap-1.5 rounded bg-[#1C0E33] px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
                 Avançar
                 <ArrowRight size={14} aria-hidden />
               </button>

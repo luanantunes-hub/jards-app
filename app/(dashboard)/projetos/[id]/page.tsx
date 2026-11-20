@@ -2,14 +2,15 @@
 import { useState, useEffect, use, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AlertTriangle, AlignLeft, ArrowLeft, Check, ChevronDown, FolderOpen, Pencil, Plus, Calendar, BarChart2, TrendingUp, Users, FileText, Eye, ImageIcon, ImagePlus, FileSpreadsheet, BriefcaseBusiness, Zap } from "lucide-react";
+import { AlertTriangle, AlignLeft, ArrowLeft, Check, ChevronDown, Pencil, Plus, Calendar, BarChart2, TrendingUp, Users, FileText, Eye, ImageIcon, FileSpreadsheet, BriefcaseBusiness, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
 import { EditarObjetivoModal } from "@/components/modals/EditarObjetivoModal";
 import { NovoResultadoModal, type EditDataResultado } from "@/components/modals/NovoResultadoModal";
 import { CotasProjetoManager, type VendaPatrocinioComEmpresa } from "@/components/CotasProjetoManager";
-import { PROJECT_ICON_COLORS, PROJECT_ICON_OPTIONS, ProjectIdentity } from "@/components/ui/ProjectIdentity";
+import { PROJECT_ICON_OPTIONS } from "@/components/ui/ProjectIdentity";
+import { IdentityPickerPopup } from "@/components/ui/IdentityPickerPopup";
 import { AbrirProducaoBotao } from "@/components/producao/AbrirProducaoBotao";
 import { podeAbrirProducao } from "@/lib/producao/abrir";
 import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
@@ -198,7 +199,6 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
   const [editingProposta, setEditingProposta] = useState<Proposta | null>(null);
   const [captacaoTab, setCaptacaoTab] = useState<"objetivo" | "negociacoes" | "inscricoes" | "entregas">("objetivo");
   const [propostaTab, setPropostaTab]  = useState<"cotas" | "propostas">("cotas");
-  const [identityOpen, setIdentityOpen] = useState(false);
   const [identitySaving, setIdentitySaving] = useState(false);
   const [fasePop, setFasePop] = useState<{ top: number; left: number } | null>(null);
   const [showNovaCaptacao, setShowNovaCaptacao] = useState(false);
@@ -206,15 +206,6 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
   const [editingCaptacao, setEditingCaptacao] = useState<CaptacaoLinked | null>(null);
   const [editingInscricao, setEditingInscricao] = useState<InscricaoLinked | null>(null);
   const [orcamentoTotal, setOrcamentoTotal] = useState(0);
-  const identityRef = useRef<HTMLDivElement>(null);
-  const identityLogoInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!identityOpen) return;
-    const close = (event: MouseEvent) => { if (!identityRef.current?.contains(event.target as Node)) setIdentityOpen(false); };
-    window.addEventListener("mousedown", close);
-    return () => window.removeEventListener("mousedown", close);
-  }, [identityOpen]);
 
   async function fetchAll() {
     setLoading(true);
@@ -317,7 +308,6 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
     const { error } = await (supabase as any).from("projetos_crm").update({ identidade_tipo: tipo, identidade_valor: valor, identidade_logo_url: logoUrl, identidade_cor: cor }).eq("id", projeto.id);
     if (!error) {
       setProjeto(current => current ? { ...current, identidade_tipo: tipo, identidade_valor: valor, identidade_logo_url: logoUrl, identidade_cor: cor } : current);
-      setIdentityOpen(false);
     } else {
       console.error("Erro ao salvar identidade:", error.message);
     }
@@ -666,34 +656,20 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
 
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 items-start gap-4">
-            <div ref={identityRef} className="relative flex-shrink-0 sm:mt-0.5">
-              <input ref={identityLogoInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={event => { handleIdentityLogo(event.target.files?.[0]); event.target.value = ""; }} />
-              <button type="button" onClick={() => setIdentityOpen(open => !open)} aria-label="Alterar identidade do projeto" aria-expanded={identityOpen} className="group relative rounded outline-none ring-[#7259B5]/25 focus-visible:ring-2">
-                <ProjectIdentity nome={projeto.nome} tipo={projeto.identidade_tipo} valor={projeto.identidade_valor} logoUrl={projeto.identidade_logo_url} cor={projeto.identidade_cor} size="md" />
-                <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded border border-black/10 bg-white text-black/45 shadow-sm opacity-0 transition group-hover:opacity-100 group-hover:text-[#7259B5]"><Pencil size={8}/></span>
-              </button>
-              {identityOpen && <div className="absolute left-0 top-12 z-30 w-[17.875rem] rounded border border-black/[.09] bg-white p-3 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
-                <div className="px-1 pb-3"><p className="text-[0.8125rem] font-semibold text-black/70">Identidade do projeto</p></div>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {PROJECT_ICON_OPTIONS.map(({ key, label, Icon }) => {
-                    const active = projeto.identidade_tipo === "icone" && projeto.identidade_valor === key;
-                    return <button key={key} type="button" title={label} disabled={identitySaving} onClick={() => void saveIdentity("icone", key, null, projeto.identidade_cor ?? PROJECT_ICON_COLORS[0].cor)} className={`flex h-12 items-center justify-center rounded border bg-white transition hover:bg-black/[.04] disabled:opacity-40 ${active ? "border-[#7259B5]/45 text-[#7259B5]" : "border-black/[.08] text-black/40"}`}><Icon size={17}/></button>;
-                  })}
-                  <button type="button" title="Identidade padrão" disabled={identitySaving} onClick={() => void saveIdentity("padrao", null)} className={`flex h-12 items-center justify-center rounded border bg-white transition hover:bg-black/[.04] disabled:opacity-40 ${projeto.identidade_tipo === "padrao" ? "border-[#7259B5]/45 text-[#7259B5]" : "border-black/[.08] text-black/40"}`}><FolderOpen size={17}/></button>
-                </div>
-                {projeto.identidade_tipo === "icone" && (
-                  <div className="mt-2.5 border-t pt-2.5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                    <p className="px-1 pb-2 text-[0.625rem] font-semibold text-black/40">Cor do ícone</p>
-                    <div className="grid grid-cols-8 gap-1.5">
-                      {PROJECT_ICON_COLORS.map(({ key, label, cor }) => {
-                        const active = (projeto.identidade_cor ?? PROJECT_ICON_COLORS[0].cor) === cor;
-                        return <button key={key} type="button" title={label} disabled={identitySaving} onClick={() => void saveIdentity("icone", projeto.identidade_valor ?? PROJECT_ICON_OPTIONS[0].key, null, cor)} className={`flex h-7 items-center justify-center rounded border bg-white transition hover:scale-105 disabled:opacity-40 ${active ? "border-[#7259B5]/60 ring-1 ring-[#7259B5]/25" : "border-black/[.08]"}`}><span className="h-3.5 w-3.5 rounded-full" style={{ background: cor }} /></button>;
-                      })}
-                    </div>
-                  </div>
-                )}
-                <button type="button" disabled={identitySaving} onClick={() => identityLogoInputRef.current?.click()} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded border border-[#7259B5]/25 bg-white text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40"><ImagePlus size={14}/>{identitySaving ? "Salvando…" : projeto.identidade_tipo === "logo" ? "Trocar logo" : "Usar logo"}</button>
-              </div>}
+            <div className="flex-shrink-0 sm:mt-0.5">
+              <IdentityPickerPopup
+                nome={projeto.nome}
+                tipo={projeto.identidade_tipo}
+                valor={projeto.identidade_valor}
+                logoUrl={projeto.identidade_logo_url}
+                cor={projeto.identidade_cor}
+                iconOptions={PROJECT_ICON_OPTIONS}
+                saving={identitySaving}
+                title="Identidade do projeto"
+                onSave={(tipo, valor, logoUrl, cor) => void saveIdentity(tipo, valor, logoUrl ?? null, cor ?? null)}
+                onLogoFile={handleIdentityLogo}
+                triggerLabel="Alterar identidade do projeto"
+              />
             </div>
             <div className="min-w-0">
               {(projeto.status_operacional === "pausado" || projeto.status_operacional === "arquivado") && (
@@ -835,7 +811,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setFasePop(null)} />
                       <div
-                        className="fixed z-50 rounded border bg-white p-2 shadow-xl"
+                        className="fixed z-50 rounded bg-white p-2 border elevacao-1"
                         style={{ top: fasePop.top, left: fasePop.left, borderColor: "rgba(13,13,13,.09)", width: "17rem" }}
                       >
                         <div className="grid grid-cols-3 gap-1.5">

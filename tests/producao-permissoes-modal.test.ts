@@ -102,7 +102,7 @@ test("colaborador e leitor que usam a produção: o botão 'Permissões da produ
     assert.doesNotMatch(acao.classe, /rounded-(sm|md|lg|xl|2xl|3xl|full)/, `${papel}: só os 4px`);
     // Secundário: branco com borda leve, nunca o verde do Salvar nem o preto da ação principal.
     assert.match(acao.classe, /\bbg-white\b/, papel);
-    assert.doesNotMatch(acao.classe, /bg-\[#(2E8932|282525)\]/, papel);
+    assert.doesNotMatch(acao.classe, /bg-\[#(2E8932|282525)\]|\bacao-salvar\b/, papel);
     // Edição só por botão e modal: nenhum campo solto na linha.
     assert.doesNotMatch(html, /<(input|select|textarea)\b/i, papel);
     assert.equal(botoes(html).length, 1, papel);
@@ -163,7 +163,7 @@ test("modal do colaborador: o dinheiro, a alçada de hoje, o nome da pessoa e as
   // Salvar sempre verde; Cancelar só texto, sem fundo e sem borda.
   const salvar = botao(html, "Salvar");
   assert.match(salvar.tag, /type="submit"/);
-  assert.match(salvar.classe, /\bbg-\[#2E8932\]/);
+  assert.match(salvar.classe, /\bacao-salvar\b/, "Salvar é o verde com volume");
   assert.match(salvar.classe, /\btext-white\b/);
   assert.match(salvar.classe, /\brounded\b/);
   const cancelar = botao(html, "Cancelar");
@@ -203,7 +203,7 @@ test("modal do leitor: só o dinheiro; o campo da alçada nem aparece, porque le
   assert.doesNotMatch(html, /Aprova pedidos/);
   assert.equal(campoDaAlcada(html), undefined);
   assert.doesNotMatch(html, /Não aprova/);
-  assert.match(botao(html, "Salvar").classe, /bg-\[#2E8932\]/);
+  assert.match(botao(html, "Salvar").classe, /\bacao-salvar\b/);
 });
 
 test("modal: sem nome cadastrado, o cabeçalho mostra o e-mail", () => {

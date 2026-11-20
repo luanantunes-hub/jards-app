@@ -151,6 +151,8 @@ export function NovaAtividadeModal({
     compromisso_id?: string;
     conta_patrocinio_id?: string;
     date?: string;
+    /** "HH:MM": quem clica num horário do calendário já cria a atividade com início e fim (uma hora). */
+    hora?: string;
   };
 }) {
   const supabase = createClient();
@@ -193,8 +195,13 @@ export function NovaAtividadeModal({
   const [dataPrevista, setDataPrevista] = useState(prefill?.date ?? todayInputValue());
   const [inicioEditado, setInicioEditado] = useState(false);
   const [nota, setNota] = useState("");
-  const [horaInicio, setHoraInicio] = useState("");
-  const [horaFim, setHoraFim] = useState("");
+  const [horaInicio, setHoraInicio] = useState(prefill?.hora ?? "");
+  const [horaFim, setHoraFim] = useState(() => {
+    const m = /^(\d{2}):(\d{2})/.exec(prefill?.hora ?? "");
+    if (!m) return "";
+    const fim = Math.min(Number(m[1]) * 60 + Number(m[2]) + 60, 23 * 60 + 59);
+    return `${String(Math.floor(fim / 60)).padStart(2, "0")}:${String(fim % 60).padStart(2, "0")}`;
+  });
   const [resultado, setResultado] = useState("");
   const [prioridade, setPrioridade] = useState<Prioridade | null>(null);
   // A reunião (tipo inicial) nasce sincronizada; a escolha de quem mexer na caixa vale mais que o tipo.
@@ -202,7 +209,7 @@ export function NovaAtividadeModal({
   const sincronizacaoEditada = useRef(false);
   const responsavelEditado = useRef(false);
   // "Mais detalhes" já abre quando há algo preenchido lá dentro.
-  const [maisDetalhes, setMaisDetalhes] = useState(() => Boolean(prefill?.responsavel_id));
+  const [maisDetalhes, setMaisDetalhes] = useState(() => Boolean(prefill?.responsavel_id || prefill?.hora));
 
   // Dropdowns data
   const [captacoes, setCaptacoes] = useState<Opcao[]>([]);
@@ -461,8 +468,7 @@ export function NovaAtividadeModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center transition-colors duration-[260ms] motion-reduce:transition-none"
-      style={{ background: visible ? "rgba(0,0,0,.45)" : "rgba(0,0,0,0)" }}
+      className={`fixed inset-0 z-50 flex flex-col items-center transition-colors duration-[260ms] motion-reduce:transition-none veu ${visible ? "" : "veu-oculto"}`}
       onClick={onClose}
     >
       {/* Panel — grudado no topo */}
@@ -470,12 +476,8 @@ export function NovaAtividadeModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[96dvh] w-full max-w-[47.5rem] flex-col overflow-hidden rounded-b bg-white transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none"
+        className="flex max-h-[96dvh] w-full max-w-[47.5rem] flex-col overflow-hidden folha-vidro transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none"
         style={{
-          boxShadow: "0 8px 32px rgba(0,0,0,.12)",
-          borderBottom: "1px solid rgba(13,13,13,.08)",
-          borderLeft: "1px solid rgba(13,13,13,.06)",
-          borderRight: "1px solid rgba(13,13,13,.06)",
           transform: visible ? "none" : "translateY(-100%)",
         }}
         onClick={e => e.stopPropagation()}
@@ -669,12 +671,12 @@ export function NovaAtividadeModal({
           </div>
         </main>
 
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <footer className="folha-rodape flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6">
           {erro ? <p role="alert" className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
           <div className="ml-auto flex flex-shrink-0 items-center gap-2">
             <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
             <button type="button" onClick={handleSave} disabled={saving || !nome.trim()}
-              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60">
+              className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60">
               <Save size={12} /> {saving ? "Salvando…" : "Criar atividade"}
             </button>
           </div>

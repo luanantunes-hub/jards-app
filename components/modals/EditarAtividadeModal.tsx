@@ -329,24 +329,20 @@ export function EditarAtividadeModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex"
+      className="fixed inset-0 z-50 flex items-start justify-center veu"
       onClick={onClose}
     >
-      {/* Backdrop */}
-      <div className="flex-1" style={{ background: "rgba(0,0,0,.18)" }} />
-
-      {/* Drawer */}
+      {/* Folha que desce do topo */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white h-full w-[40rem] max-w-[92vw] overflow-hidden flex flex-col shadow-2xl"
-        style={{ borderLeft: "1px solid rgba(13,13,13,.08)" }}
+        className="folha-desce folha-vidro max-h-[96dvh] w-full max-w-[47.5rem] overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 id={titleId} className="text-[0.875rem] font-bold text-[#282525]">Editar atividade</h2>
+          <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Editar atividade</h2>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={14} className="text-black/40" />
           </button>
@@ -583,7 +579,7 @@ export function EditarAtividadeModal({
             <button
               onClick={handleSave}
               disabled={saving || loadingAtividade || !nome.trim()}
-              className="rounded border border-[#2E8932] bg-[#2E8932] px-4 py-2 text-xs font-medium text-white transition hover:border-[#26752A] hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="rounded border border-[#2E8932] acao-salvar px-4 py-2 text-xs font-medium text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saving ? "Salvando…" : "Salvar alterações"}
             </button>
@@ -679,7 +675,7 @@ function Dropdown({
         <ChevronDown size={14} className={`text-black/30 transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="fixed z-[999] flex flex-col overflow-hidden bg-white border rounded shadow-lg" style={{ ...menuStyle, borderColor: "rgba(13,13,13,.1)" }}>
+        <div className="fixed z-[999] flex flex-col overflow-hidden bg-white rounded border elevacao-1" style={{ ...menuStyle }}>
           <div className="max-h-48 min-h-0 overflow-y-auto overscroll-contain">
             {value && (
               <button onClick={() => { onChange(null); onClose(); }}

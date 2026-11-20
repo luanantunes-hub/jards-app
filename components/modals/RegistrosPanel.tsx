@@ -344,13 +344,12 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
 
   return (
     <div
-      className={embedded ? "w-full" : "fixed inset-0 z-50 flex items-stretch justify-end"}
-      style={embedded ? undefined : { background: "rgba(0,0,0,.4)" }}
+      className={embedded ? "w-full" : "fixed inset-0 z-50 flex items-start justify-center veu"}
       onClick={e => { if (!embedded && e.target === e.currentTarget) onClose?.(); }}
     >
       <div role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true} aria-label={embedded ? undefined : "Conteúdo preenchido"} className={embedded
         ? "bg-white w-full flex flex-col rounded border overflow-hidden"
-        : "bg-white w-full max-w-[42.5rem] flex flex-col h-full shadow-2xl overflow-hidden"
+        : "folha-desce folha-vidro w-full max-w-[47.5rem] flex flex-col max-h-[96dvh] overflow-hidden"
       } style={embedded ? { borderColor: "rgba(13,13,13,.08)" } : undefined}>
 
         {/* Header empresa */}
@@ -441,18 +440,17 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
 
       {showBusca && (
         <div
-          className="fixed inset-0 z-[70] flex items-stretch justify-end transition-colors duration-200"
-          style={{ background: buscaVisible ? "rgba(0,0,0,.34)" : "rgba(0,0,0,0)" }}
+          className={`fixed inset-0 z-[70] flex items-start justify-center transition-colors duration-200 veu ${buscaVisible ? "" : "veu-oculto"}`}
           onClick={closeBusca}
         >
           <section
             role="dialog"
             aria-modal="true"
             aria-label="Novo conteúdo"
-            className={`flex h-full w-full max-w-[32.5rem] flex-col rounded-l bg-white shadow-2xl transition-transform duration-200 ease-out ${buscaVisible ? "translate-x-0" : "translate-x-full"}`}
+            className="folha-desce folha-vidro flex max-h-[96dvh] w-full max-w-[40rem] flex-col"
             onClick={event => event.stopPropagation()}
           >
-            <header className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+            <header className="flex items-center justify-between border-b px-6 py-5 sm:px-8 sm:py-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <h3 className="text-[0.9375rem] font-semibold text-[#282525]">Novo conteúdo</h3>
               <button type="button" onClick={closeBusca} className="flex h-8 w-8 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/60" aria-label="Fechar">
                 <X size={15} />

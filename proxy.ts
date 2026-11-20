@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { INICIO_DO_MODULO } from "@/lib/modulos";
 import { entradaDoAcesso, lerAcessoAosModulos } from "@/lib/modulos-acesso";
+import { ehHostDoApp, hostDoPedido } from "@/lib/ticketeria/site";
 
 const WINDOW_MS = 60_000;
 
@@ -14,6 +15,12 @@ const API_LIMITS: [string, number][] = [
   ["/api/patrocinadores", 10],
   ["/api/calendar", 30],
   ["/api/email", 30],
+  // Avisos de pagamento do provedor (sem login, token próprio): muitos em rajada quando um evento abre as vendas.
+  ["/api/ticketeria/avisos", 600],
+  // Validação de saque do Asaas (sem login, token próprio): um pedido por saque, rápido.
+  ["/api/ticketeria/validacao-saque", 300],
+  // Compra de ingressos (sem login): por IP. Cada compra abre uma reserva e uma cobrança, então o teto é baixo; a consulta do Pix pago é mais frequente.
+  ["/api/ticketeria/compra", 60],
   ["/api/mcp/keys", 10],
   ["/api/mcp/oauth/token", 60],
   ["/api/mcp/oauth/register", 30],
@@ -22,6 +29,18 @@ const API_LIMITS: [string, number][] = [
   ["/api/mcp", 60],
   // Página de envio de arquivos do assistente (sem login): preparar e concluir, por IP.
   ["/api/enviar", 40],
+  // Resposta do acerto técnico pela casa (sem login): por IP.
+  ["/api/acerto", 30],
+  // Resposta ao convite da produção pelo link (sem login): por IP.
+  ["/api/presenca", 30],
+  // Inscrição de voluntários pelo link (sem login): por IP.
+  ["/api/voluntario", 10],
+  // Agendamento de visitas pelo link (sem login): por IP.
+  ["/api/visita", 10],
+  // Programação pública de um espaço (sem login, aberta a outros sites): por IP.
+  ["/api/programacao", 60],
+  // Tela de palco pelo link (sem login): lê a cada 10 segundos, e vários aparelhos podem dividir o mesmo IP.
+  ["/api/palco", 240],
   ["/api/auth/conta-sem-senha", 10],
   ["/api/", 60],
 ];
@@ -69,7 +88,27 @@ function getIp(request: NextRequest): string {
   );
 }
 
+/**
+ * O pedido chegou por um domínio que não é do Jards: é o site de uma pessoa (o site da loja na Ticketeria). Reescreve para a rota interna
+ * /dominio/[host]/... (que só mostra o que está publicado) e não deixa passar o app, a API nem o painel por esse endereço.
+ */
+function rotearSiteDaPessoa(request: NextRequest, host: string): NextResponse {
+  const { pathname } = request.nextUrl;
+  if (pathname.startsWith("/_next") || pathname === "/favicon.ico") return NextResponse.next();
+  if (pathname.startsWith("/api") || pathname.startsWith("/dominio")) return new NextResponse("Não encontrado", { status: 404 });
+  if (isRateLimited(`site:${getIp(request)}`, 300)) return new NextResponse("Muitas requisições. Aguarde um momento.", { status: 429 });
+  const url = request.nextUrl.clone();
+  url.pathname = `/dominio/${encodeURIComponent(host)}${pathname === "/" ? "" : pathname}`;
+  return NextResponse.rewrite(url);
+}
+
 export async function proxy(request: NextRequest) {
+  // Domínio de uma pessoa: o site dela, sem login e sem passar pelo app.
+  const host = hostDoPedido(request.headers.get("host"));
+  if (!ehHostDoApp(host, process.env.NEXT_PUBLIC_APP_URL)) return rotearSiteDaPessoa(request, host);
+  // Na casa do Jards, a rota interna dos sites não abre direto: só o domínio da pessoa chega nela.
+  if (request.nextUrl.pathname.startsWith("/dominio")) return new NextResponse("Não encontrado", { status: 404 });
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -137,17 +176,33 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/p/") ||
         pathname.startsWith("/r/") ||
         pathname.startsWith("/enviar/") ||
+        pathname.startsWith("/acerto/") ||
+        pathname.startsWith("/presenca/") ||
+        pathname.startsWith("/voluntario/") ||
+        pathname.startsWith("/visita/") ||
+        pathname.startsWith("/programacao/") ||
+        pathname.startsWith("/hospedagem/") ||
+        pathname.startsWith("/patrocinador/") ||
+        pathname.startsWith("/palco/") ||
+        pathname.startsWith("/ficha/") ||
+        pathname.startsWith("/tabela/") ||
+        // Compra de ingressos e os ingressos de um pedido (sem login): o id da sessão e o do pedido (UUID sorteado) são a prova; o servidor confere tudo.
+        pathname.startsWith("/comprar/") ||
+        pathname.startsWith("/pedido/") ||
+        pathname.startsWith("/embed/") ||
         pathname.startsWith("/convite/") ||
         pathname === "/login" ||
         pathname === "/" ||
         pathname === "/robots.txt" ||
         pathname === "/sitemap.xml" ||
         pathname === "/termos" ||
+        pathname === "/termos-de-compra" ||
         pathname === "/privacidade" ||
         pathname === "/incentivadores" ||
         pathname === "/crm" ||
         pathname === "/precos" ||
         pathname === "/prestacao-de-contas" ||
+        pathname === "/ticketeria" ||
         pathname.startsWith("/redefinir-senha") ||
         pathname.startsWith("/nova-senha") ||
         pathname.startsWith("/cadastro") ||
@@ -191,6 +246,30 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/r/") ||
     // Envio de arquivos pelo link que o assistente deu (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/enviar/") ||
+    // Acerto técnico pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/acerto/") ||
+    // Convite da produção pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/presenca/") ||
+    // Inscrição de voluntários pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/voluntario/") ||
+    // Agendamento de visitas pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/visita/") ||
+    // Programação pública de um espaço e a versão para embutir (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/programacao/") ||
+    // Lista de quartos para o hotel, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/hospedagem/") ||
+    // Portal do patrocinador, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/patrocinador/") ||
+    // Tela de palco pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/palco/") ||
+    // Ficha técnica do espaço, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/ficha/") ||
+    // Tabelas para a transportadora e a locadora, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/tabela/") ||
+    // Compra de ingressos e os ingressos de um pedido (sem login): o id da sessão e o do pedido (UUID sorteado) são a prova; o servidor confere tudo.
+    pathname.startsWith("/comprar/") ||
+    pathname.startsWith("/pedido/") ||
+    pathname.startsWith("/embed/") ||
     // Convite de convidado da prestação (P5.3): o banco confere o link; o aceite pede login.
     pathname.startsWith("/convite/") ||
     pathname.startsWith("/.well-known") ||
@@ -200,11 +279,13 @@ export async function proxy(request: NextRequest) {
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" ||
     pathname === "/termos" ||
+    pathname === "/termos-de-compra" ||
     pathname === "/privacidade" ||
     pathname === "/incentivadores" ||
     pathname === "/crm" ||
     pathname === "/precos" ||
-    pathname === "/prestacao-de-contas";
+    pathname === "/prestacao-de-contas" ||
+    pathname === "/ticketeria";
 
   // Usuário não logado tentando acessar rota privada → login
   if (!user && !isPublicRoute) {
@@ -258,6 +339,6 @@ export const config = {
   matcher: [
     // dados/: tabelas públicas que a tela baixa (CNAE do IBGE), sem passar pela sessão.
     // menu-site.css/js: o menu das páginas públicas; sem isto, quem está deslogado recebia o redirecionamento para o login.
-    "/((?!_next/static|_next/image|favicon.ico|consentimento\\.js$|origem-campanha\\.js$|menu-site\\.(?:css|js)$|dados/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|mp4|webm|ttf|woff|woff2|otf|eot)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|consentimento\\.js$|folha-sw\\.js$|origem-campanha\\.js$|menu-site\\.(?:css|js)$|dados/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|mp4|webm|ttf|woff|woff2|otf|eot)$).*)",
   ],
 };

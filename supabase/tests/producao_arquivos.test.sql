@@ -46,7 +46,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(234);
+select plan(238);
 
 create schema pa_teste;
 grant usage on schema pa_teste to authenticated, anon;
@@ -368,10 +368,11 @@ select is((select (regexp_match(pg_get_triggerdef(t.oid), 'fn_producao_historico
 select is((select array_agg(conname::text || ' ' || confdeltype::text || ' ' || condeferrable::text || ' ' || condeferred::text order by conname::text collate "C") from pg_constraint
            where contype = 'f' and conrelid = 'public.producao_arquivos'::regclass),
           array['producao_arquivos_data_id_fkey a true true', 'producao_arquivos_enviado_por_fkey n false false',
+                'producao_arquivos_lancamento_id_fkey c false false',
                 'producao_arquivos_organization_id_fkey c false false', 'producao_arquivos_temporada_id_fkey a true true'],
           'apagar a organização leva os arquivos; temporada e data com arquivo não se apagam (conferidas no fim da transação); apagar a conta de quem enviou só zera o campo');
 select is((select array_agg(indexname::text order by indexname::text collate "C") from pg_indexes where schemaname = 'public' and tablename = 'producao_arquivos'),
-          array['producao_arquivos_data_idx', 'producao_arquivos_enviado_por_idx', 'producao_arquivos_org_idx', 'producao_arquivos_pkey',
+          array['producao_arquivos_data_idx', 'producao_arquivos_enviado_por_idx', 'producao_arquivos_lancamento_idx', 'producao_arquivos_org_idx', 'producao_arquivos_pkey',
                 'producao_arquivos_storage_path_key', 'producao_arquivos_temporada_idx'],
           'os índices: por organização, por temporada e pasta, por data, por quem enviou, o caminho único e a chave');
 select is((select coalesce(array_agg(c.conname::text order by c.conname::text collate "C"), '{}'::text[])
@@ -386,7 +387,7 @@ select is((select coalesce(array_agg(c.conname::text order by c.conname::text co
           '{}'::text[], 'toda chave estrangeira tem um índice que começa nas colunas dela');
 select is((select array_agg(column_name::text order by ordinal_position) from information_schema.columns
            where table_schema = 'public' and table_name = 'producao_arquivos'),
-          array['id', 'organization_id', 'temporada_id', 'data_id', 'pasta', 'storage_path', 'nome', 'tipo', 'tamanho', 'sha256', 'enviado_por', 'created_at', 'updated_at'],
+          array['id', 'organization_id', 'temporada_id', 'data_id', 'pasta', 'storage_path', 'nome', 'tipo', 'tamanho', 'sha256', 'enviado_por', 'created_at', 'updated_at', 'lancamento_id'],
           'colunas de producao_arquivos');
 select is((select count(*)::int from pg_constraint where contype = 'c' and conrelid = 'public.producao_arquivos'::regclass),
           6, 'as seis restrições de valor estão lá: pasta, caminho, nome, tipo, tamanho e sha256');
@@ -667,6 +668,27 @@ select is(pa_teste.insere(p_temporada => 'ee'), '23514 temporada_de_outra_organi
 select is(pa_teste.insere(p_data => '3b'), '23514 data_de_outra_organizacao', 'a data de outra organização é recusada');
 select is(pa_teste.insere(p_data => '3e'), '23514 data_de_outra_temporada', 'a data de outra temporada da mesma organização é recusada');
 select is(pa_teste.insere(p_data => '3a'), 'aceito', 'a data da mesma temporada passa');
+
+-- A nota fiscal de um lançamento (PD5.3/PD10.2): o lançamento é da organização e da temporada do arquivo.
+do $lan$
+begin
+  insert into public.producao_lancamentos (id, organization_id, temporada_id, descricao, data, valor) values
+    (pa_teste.id('fa1'), pa_teste.id('a0'), pa_teste.id('2a'), 'PA pagamento A', date '2026-12-05', 100),
+    (pa_teste.id('fab'), pa_teste.id('b0'), pa_teste.id('2b'), 'PA pagamento B', date '2026-12-05', 100),
+    (pa_teste.id('fae'), pa_teste.id('a0'), pa_teste.id('2e'), 'PA pagamento A2', date '2026-12-05', 100);
+end
+$lan$;
+
+select is(pa_teste.tenta(format($t$insert into public.producao_arquivos (organization_id, temporada_id, lancamento_id, pasta, storage_path, nome, tipo, tamanho, sha256) values (%L, %L, %L, 'documentos', %L, 'nota.pdf', 'application/pdf', 10, %L)$t$,
+            pa_teste.id('a0'), pa_teste.id('2a'), pa_teste.id('fa1'), pa_teste.caminho('a0', '2a', 'documentos', 'fa01'), repeat('e', 64))),
+          'aceito', 'a nota do lançamento da mesma temporada passa');
+select is(pa_teste.tenta(format($t$insert into public.producao_arquivos (organization_id, temporada_id, lancamento_id, pasta, storage_path, nome, tipo, tamanho, sha256) values (%L, %L, %L, 'documentos', %L, 'nota.pdf', 'application/pdf', 10, %L)$t$,
+            pa_teste.id('a0'), pa_teste.id('2a'), pa_teste.id('fab'), pa_teste.caminho('a0', '2a', 'documentos', 'fa02'), repeat('e', 64))),
+          '23514 lancamento_de_outra_organizacao', 'o lançamento de outra organização é recusado');
+select is(pa_teste.tenta(format($t$insert into public.producao_arquivos (organization_id, temporada_id, lancamento_id, pasta, storage_path, nome, tipo, tamanho, sha256) values (%L, %L, %L, 'documentos', %L, 'nota.pdf', 'application/pdf', 10, %L)$t$,
+            pa_teste.id('a0'), pa_teste.id('2a'), pa_teste.id('fae'), pa_teste.caminho('a0', '2a', 'documentos', 'fa03'), repeat('e', 64))),
+          '23514 lancamento_de_outra_temporada', 'o lançamento de outra temporada da mesma organização é recusado');
+select is((select count(*)::int from public.producao_arquivos where lancamento_id = pa_teste.id('fa1')), 0, 'a tentativa aceita foi desfeita pelo ensaio: nada ficou');
 select is(pa_teste.insere(p_enviado => 'a1'), 'aceito', 'o dono do banco, a chave de serviço ou uma rotina dizem quem enviou');
 select is(pa_teste.insere(p_enviado => 'nulo'), 'aceito', 'e podem deixar sem autor');
 select is(pa_teste.insere(p_quem => 'a2'), 'aceito', 'quem está logado é o autor: o padrão do campo é auth.uid()');

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Copy, Plus } from "lucide-react";
+import { CalendarDays, Copy, FileText, Plus, Truck, Users, Wallet } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
@@ -11,13 +11,49 @@ import { papelNaProducao } from "@/lib/producao/permissoes";
 import { SITUACOES_DA_DATA, type SituacaoDaData } from "@/lib/producao/estados";
 import { diaDaSemana, diaEMes, mudancaDeSituacao, opcaoVencida, ROTULO_DA_SITUACAO_DA_DATA, ROTULO_DO_TIPO_DE_DATA, type DataDaAgenda } from "@/lib/producao/agenda";
 import { ROTULO_DO_FORMATO, tipoDeProducao, type FormatoTemporada, type TipoProducao } from "@/lib/producao/vocabulario";
-import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
-import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton, DetailTabs } from "@/components/ui/DetailPagePrimitives";
+import { SubAbas } from "@/components/producao/SubAbas";
+import { PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { Select } from "@/components/ui/Select";
 import { NovaDataSheet } from "@/components/producao/NovaDataSheet";
+import { EquipeDaTemporada } from "@/components/producao/EquipeDaTemporada";
+import { CargaDaTemporada } from "@/components/producao/CargaDaTemporada";
+import { CargaPorVeiculo } from "@/components/producao/CargaPorVeiculo";
+import { HospedagemDaTemporada } from "@/components/producao/HospedagemDaTemporada";
+import { LinksDaTemporada } from "@/components/producao/LinksDaTemporada";
+import { ConvitesDaTemporada } from "@/components/producao/ConvitesDaTemporada";
+import { VoluntariosDaTemporada } from "@/components/producao/VoluntariosDaTemporada";
+import { RelatorioDaTemporada } from "@/components/producao/RelatorioDaTemporada";
+import { OrcamentoDaTemporada } from "@/components/producao/OrcamentoDaTemporada";
+import { AcordosDaTemporada } from "@/components/producao/AcordosDaTemporada";
+import { LancamentosDaTemporada } from "@/components/producao/LancamentosDaTemporada";
+import { PacoteDoDinheiro } from "@/components/producao/PacoteDoDinheiro";
+import { AdiantamentosDaTemporada } from "@/components/producao/AdiantamentosDaTemporada";
+import { DiariasDaTemporada } from "@/components/producao/DiariasDaTemporada";
+import { PedidosDaTemporada } from "@/components/producao/PedidosDaTemporada";
+import { FaturasDaTemporada } from "@/components/producao/FaturasDaTemporada";
 import { CopiarTemporadaSheet, type TemporadaParaCopiar } from "@/components/producao/CopiarTemporadaSheet";
 
 type Temporada = TemporadaParaCopiar;
+
+type Aba = "datas" | "equipe" | "logistica" | "dinheiro" | "relatorio";
+type SubAba = "orcamento" | "acordos" | "pagar" | "receber" | "pessoas" | "pacote";
+const ABAS: readonly Aba[] = ["datas", "equipe", "logistica", "dinheiro", "relatorio"];
+/** Os assuntos do dinheiro, na ordem em que se usam: combinar, orçar, pagar, receber, a equipe e exportar. */
+const SUBABAS: readonly { id: SubAba; rotulo: string }[] = [
+  { id: "acordos", rotulo: "Acordos" }, { id: "orcamento", rotulo: "Orçamento" }, { id: "pagar", rotulo: "Pedidos e pagamentos" },
+  { id: "receber", rotulo: "A receber" }, { id: "pessoas", rotulo: "Diárias e adiantamentos" }, { id: "pacote", rotulo: "Pacote" },
+];
+
+/** A aba e o assunto do dinheiro que o endereço pede (#dinheiro/pagar); sem pedido, as datas e os acordos. */
+function abaDoEndereco(): { aba: Aba; subAba: SubAba } {
+  if (typeof window === "undefined") return { aba: "datas", subAba: "acordos" };
+  const [primeira, segunda] = window.location.hash.replace(/^#/, "").split("/");
+  return {
+    aba: (ABAS as readonly string[]).includes(primeira) ? (primeira as Aba) : "datas",
+    subAba: SUBABAS.some(item => item.id === segunda) ? (segunda as SubAba) : "acordos",
+  };
+}
 
 const PLURAL_DA_SITUACAO: Record<SituacaoDaData, string> = { opcao: "Opções", confirmada: "Confirmadas", realizada: "Realizadas", cancelada: "Canceladas" };
 
@@ -32,6 +68,9 @@ export default function TemporadaPage() {
   const [folha, setFolha] = useState<"data" | "copiar" | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
+  const [aba, setAba] = useState<Aba>(() => abaDoEndereco().aba);
+  const [subAba, setSubAba] = useState<SubAba>(() => abaDoEndereco().subAba);
+  const [comDinheiro, setComDinheiro] = useState(false);
   const podeEditar = papel !== null && papelNaProducao(papel) !== null && papelNaProducao(papel) !== "leitor";
   const hoje = new Date().toISOString().slice(0, 10);
 
@@ -54,6 +93,37 @@ export default function TemporadaPage() {
     })();
     return () => { ativo = false; };
   }, [id, organizationId, versao]);
+
+  useEffect(() => {
+    if (!organizationId) return;
+    let ativo = true;
+    void (async () => {
+      const { data } = await clienteDaProducao(createClient()).rpc("auth_producao_pode", { p_org: organizationId, p_acao: "dinheiro" });
+      if (ativo) setComDinheiro(data === true);
+    })();
+    return () => { ativo = false; };
+  }, [organizationId]);
+
+  // Trocar só o #aba no endereço (colar um link, voltar no histórico) também troca a aba. `replaceState`, usado abaixo, não dispara esse evento.
+  useEffect(() => {
+    function aoMudarOEndereco() {
+      const pedida = abaDoEndereco();
+      setAba(pedida.aba);
+      setSubAba(pedida.subAba);
+    }
+    window.addEventListener("hashchange", aoMudarOEndereco);
+    return () => window.removeEventListener("hashchange", aoMudarOEndereco);
+  }, []);
+
+  // A aba aberta fica no endereço (#dinheiro/pagar), para recarregar ou mandar o link e cair no mesmo lugar.
+  function escolherAba(nova: Aba) {
+    setAba(nova);
+    window.history.replaceState(null, "", `#${nova}${nova === "dinheiro" ? `/${subAba}` : ""}`);
+  }
+  function escolherSubAba(nova: SubAba) {
+    setSubAba(nova);
+    window.history.replaceState(null, "", `#dinheiro/${nova}`);
+  }
 
   const resumo = useMemo(() => {
     const por: Record<string, number> = {};
@@ -88,7 +158,7 @@ export default function TemporadaPage() {
             </div>
             {podeEditar && (
               <div className="flex items-center gap-2">
-                <PrimaryListAction onClick={() => setFolha("copiar")}><Copy size={13} aria-hidden="true" /> Copiar</PrimaryListAction>
+                <SecondaryListAction onClick={() => setFolha("copiar")}><Copy size={13} aria-hidden="true" /> Copiar</SecondaryListAction>
                 <PrimaryListAction onClick={() => setFolha("data")}><Plus size={13} aria-hidden="true" /> Nova data</PrimaryListAction>
               </div>
             )}
@@ -96,8 +166,24 @@ export default function TemporadaPage() {
         </div>
       </header>
 
+      <DetailTabs
+        ariaLabel="Seções da temporada"
+        tabs={[
+          { id: "datas", label: "Datas", icon: CalendarDays, count: datas.length },
+          { id: "equipe", label: "Equipe e convites", icon: Users },
+          { id: "logistica", label: "Logística", icon: Truck },
+          ...(comDinheiro ? [{ id: "dinheiro", label: "Dinheiro", icon: Wallet }] : []),
+          { id: "relatorio", label: "Relatório", icon: FileText },
+        ]}
+        activeTab={aba === "dinheiro" && !comDinheiro ? "datas" : aba}
+        onChange={id => escolherAba(id as Aba)}
+      />
+
       <DetailPageContent>
         {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+
+        {aba === "datas" && (
+          <>
         {datas.length === 0 ? (
           <p className="py-12 text-center text-[0.8125rem] text-black/45">Nenhuma data nesta temporada ainda.</p>
         ) : (
@@ -125,6 +211,49 @@ export default function TemporadaPage() {
             </ul>
           </div>
         )}
+          </>
+        )}
+
+        {aba === "equipe" && organizationId && (
+          <>
+            {organizationId && <EquipeDaTemporada organizationId={organizationId} temporadaId={temporada.id} podeEditar={podeEditar} />}
+            {organizationId && <ConvitesDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
+            {organizationId && <VoluntariosDaTemporada organizationId={organizationId} temporadaId={temporada.id} podeEditar={podeEditar} />}
+          </>
+        )}
+
+        {aba === "logistica" && organizationId && (
+          <>
+            {organizationId && <HospedagemDaTemporada organizationId={organizationId} temporadaId={temporada.id} podeEditar={podeEditar} />}
+            {organizationId && <CargaDaTemporada organizationId={organizationId} temporadaId={temporada.id} />}
+            {organizationId && <CargaPorVeiculo organizationId={organizationId} temporadaId={temporada.id} />}
+            <LinksDaTemporada temporadaId={temporada.id} podeEditar={podeEditar} />
+          </>
+        )}
+
+        {aba === "dinheiro" && comDinheiro && organizationId && (
+          <>
+            <SubAbas ariaLabel="Assuntos do dinheiro" itens={SUBABAS} ativo={subAba} onChange={id => escolherSubAba(id as SubAba)} />
+            {subAba === "acordos" && <AcordosDaTemporada organizationId={organizationId} temporadaId={temporada.id} podeEditar={podeEditar} />}
+            {subAba === "orcamento" && <OrcamentoDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
+            {subAba === "pagar" && (
+              <>
+                {organizationId && <PedidosDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
+                {organizationId && <LancamentosDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
+              </>
+            )}
+            {subAba === "receber" && <FaturasDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
+            {subAba === "pessoas" && (
+              <>
+                {organizationId && <DiariasDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
+                {organizationId && <AdiantamentosDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
+              </>
+            )}
+            {subAba === "pacote" && <PacoteDoDinheiro organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} />}
+          </>
+        )}
+
+        {aba === "relatorio" && organizationId && <RelatorioDaTemporada organizationId={organizationId} temporadaId={temporada.id} titulo={temporada.titulo} />}
       </DetailPageContent>
 
       {folha === "data" && organizationId && (

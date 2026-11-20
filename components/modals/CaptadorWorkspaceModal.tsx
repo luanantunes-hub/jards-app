@@ -19,7 +19,7 @@ function TooltipBotao({ texto, children }: { texto: string; children: React.Reac
   return (
     <div className="group/tip relative">
       {children}
-      <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 w-max max-w-[10.625rem] -translate-x-1/2 rounded bg-[#282525] px-2 py-1.5 text-center text-[0.625rem] font-medium leading-snug text-white opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100">
+      <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 w-max max-w-[10.625rem] -translate-x-1/2 rounded bg-[#1C0E33] px-2 py-1.5 text-center text-[0.625rem] font-medium leading-snug text-white opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100">
         {texto}
       </div>
     </div>
@@ -101,19 +101,19 @@ export function CaptadorWorkspaceModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center bg-black/45" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[calc(100dvh-20px)] w-full max-w-[35rem] flex-col overflow-hidden rounded-b border-x border-b border-black/[.07] bg-white shadow-[0_16px_45px_rgba(13,13,13,.15)]"
+        className="folha-vidro flex max-h-[calc(100dvh-20px)] w-full max-w-[35rem] flex-col overflow-hidden"
         onClick={event => event.stopPropagation()}
       >
-        <header className="flex shrink-0 items-center justify-between border-b border-black/[.08] px-5 py-4">
+        <header className="flex shrink-0 items-center justify-between border-b border-black/[.08] px-6 py-5 sm:px-7 sm:py-6">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05]"><Briefcase size={16} className="text-black/50" /></div>
             <div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">{isNovo ? "Criar workspace" : "Configurar workspace"}</h2>
+              <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">{isNovo ? "Criar workspace" : "Configurar workspace"}</h2>
               <p className="mt-0.5 text-[0.625rem] text-black/35">Escolha como novas oportunidades entram no trabalho conjunto</p>
             </div>
           </div>
@@ -175,7 +175,7 @@ export function CaptadorWorkspaceModal({
                   <div className="grid gap-2 sm:grid-cols-2">
                     {MODO_OPCOES.map(opcao => <TooltipBotao key={opcao.value} texto={opcao.descricao}>
                       <button type="button" onClick={() => setModo(opcao.value)} aria-pressed={modo === opcao.value}
-                        className={`w-full rounded border px-2.5 py-2 text-left text-[0.6875rem] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${modo === opcao.value ? "border-[#171717] bg-[#171717] text-white" : "border-black/[.14] bg-white text-black/60 hover:border-black/30"}`}>
+                        className={`w-full rounded border px-2.5 py-2 text-left text-[0.6875rem] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${modo === opcao.value ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/[.14] bg-white text-black/60 hover:border-black/30"}`}>
                         {opcao.label}
                       </button>
                     </TooltipBotao>)}
@@ -184,7 +184,7 @@ export function CaptadorWorkspaceModal({
                 </div>}
               </div>
             </main>
-            <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-black/[.08] px-5 py-3.5">
+            <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex shrink-0 items-center justify-between gap-4 border-t border-black/[.08] px-5 py-3.5">
               {erro ? <p role="alert" className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
               <div className="ml-auto flex shrink-0 items-center gap-2">
                 <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
@@ -192,7 +192,7 @@ export function CaptadorWorkspaceModal({
                   type="button"
                   onClick={() => void handleSalvar()}
                   disabled={saving}
-                  className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save size={12} />{saving ? "Salvando…" : isNovo ? "Criar workspace" : "Salvar"}
                 </button>

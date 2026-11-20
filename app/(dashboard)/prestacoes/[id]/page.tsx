@@ -331,14 +331,14 @@ export default function PrestacaoDetalhe() {
             <button
               onClick={() => setAvancarOpen(!avancarOpen)}
               aria-expanded={avancarOpen}
-              className="flex items-center gap-2 rounded bg-[#282525] px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
+              className="flex items-center gap-2 rounded bg-[#1C0E33] px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
             >
               Avançar status <ChevronDown size={13} aria-hidden />
             </button>
 
             {avancarOpen && avancarMenuPos && createPortal(
               <div
-                className="fixed bg-white rounded border shadow-lg z-20"
+                className="fixed bg-white rounded z-20 border elevacao-1"
                 style={{ right: avancarMenuPos.right, top: avancarMenuPos.top, borderColor: "rgba(13,13,13,.10)", minWidth: "15rem" }}
               >
                 <div className="p-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>

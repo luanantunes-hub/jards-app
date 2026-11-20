@@ -27,6 +27,7 @@ import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
 import { RenovarCicloModal } from "@/components/modals/RenovarCicloModal";
 import { RelationshipWorkspace } from "@/components/relationship/RelationshipWorkspace";
+import { SeloAguardandoResposta } from "@/components/email/SeloAguardandoResposta";
 import { ConcluirAtividadeModal } from "@/components/modals/ConcluirAtividadeModal";
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
 import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
@@ -594,6 +595,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                     Ver ciclo anterior
                   </Link>
                 )}
+                <SeloAguardandoResposta key={captacao.id} captacaoId={captacao.id} />
               </div>
             </div>
           </div>
@@ -1057,7 +1059,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
         <>
           <div className="fixed inset-0 z-40" onClick={() => setPrioMenuPos(null)} />
           <div
-            className="fixed z-50 overflow-hidden rounded-lg border bg-white shadow-xl"
+            className="fixed z-50 overflow-hidden rounded bg-white border elevacao-1"
             style={{ top: prioMenuPos.top, left: prioMenuPos.left, borderColor: "rgba(13,13,13,.10)", minWidth: "11.25rem" }}
           >
             {(["sem", "alta", "media", "baixa"] as const).map(p => {

@@ -34,7 +34,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
-const SALVAR = "flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40";
+const SALVAR = "flex items-center gap-1.5 rounded acao-salvar px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40";
 const CANCELAR = "rounded px-2 py-2 text-[0.8125rem] text-black/45 transition hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5]";
 const LINK = "rounded text-[0.6875rem] text-black/45 underline decoration-black/20 underline-offset-2 transition focus-visible:outline-2 focus-visible:outline-[#7259B5]";
 const EVENTOS_VISIVEIS = 6;
@@ -104,7 +104,7 @@ function ConvidarModal({ prestacaoId, onClose, onCriado }: { prestacaoId: string
   const rodape = criado ? (
     <>
       <span />
-      <button type="button" onClick={onClose} className="rounded bg-[#282525] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]">Concluir</button>
+      <button type="button" onClick={onClose} className="rounded bg-[#1C0E33] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]">Concluir</button>
     </>
   ) : (
     <>

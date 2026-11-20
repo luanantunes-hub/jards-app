@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, Play, Plus, Square, Trash2, Undo2 } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
@@ -10,18 +10,40 @@ import { clienteDaProducao } from "@/lib/producao/cliente";
 import { papelNaProducao } from "@/lib/producao/permissoes";
 import { SITUACOES_DA_DATA, type ExibicaoDoBloco, type SituacaoDaData } from "@/lib/producao/estados";
 import { diaDaSemana, diaEMes, mudancaDeSituacao, ROTULO_DA_SITUACAO_DA_DATA, ROTULO_DO_TIPO_DE_DATA } from "@/lib/producao/agenda";
-import { FUSO_PADRAO, montarDiaDoModelo, ordenarBlocos, rotuloDaHora, ROTULO_DO_TIPO_DE_BLOCO } from "@/lib/producao/dia";
+import { FUSO_PADRAO, instanteParaHoraLocal, montarDiaDoModelo, ordenarBlocos, rotuloDaHora, ROTULO_DO_TIPO_DE_BLOCO } from "@/lib/producao/dia";
+import { situacaoDoRoteiro, textoDoAtraso } from "@/lib/producao/ao-vivo";
 import { modelosDeDia, type TipoBloco, type TipoData, type TipoProducao } from "@/lib/producao/vocabulario";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
-import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { Select } from "@/components/ui/Select";
 import { NovoBlocoSheet } from "@/components/producao/NovoBlocoSheet";
+import { EquipeDaData } from "@/components/producao/EquipeDaData";
+import { ViagemEHospedagem } from "@/components/producao/ViagemEHospedagem";
+import { DeslocamentosDaData } from "@/components/producao/DeslocamentosDaData";
+import { QueLevarDaData } from "@/components/producao/QueLevarDaData";
+import { OcorrenciasDaData } from "@/components/producao/OcorrenciasDaData";
+import { TarefasDaData } from "@/components/producao/TarefasDaData";
+import { HistoricoDaData } from "@/components/producao/HistoricoDaData";
+import { ArquivosDaData } from "@/components/producao/ArquivosDaData";
+import { NotasDaData } from "@/components/producao/NotasDaData";
+import { ComunicacaoDaData } from "@/components/producao/ComunicacaoDaData";
+import { ContrapartidasDaData } from "@/components/producao/ContrapartidasDaData";
+import { LicencasDaData } from "@/components/producao/LicencasDaData";
+import { AcertosDaData } from "@/components/producao/AcertosDaData";
+import { ItensDaData } from "@/components/producao/ItensDaData";
+import { textoDaFolha } from "@/lib/producao/folha-texto";
+import { rotuloDoLugar } from "@/lib/producao/espacos";
+import { LugarDaData } from "@/components/producao/LugarDaData";
+import { CopiarDiaSheet } from "@/components/producao/CopiarDiaSheet";
+import { LinkDoPalcoSheet } from "@/components/producao/LinkDoPalcoSheet";
+import { SalvarModeloDoDiaSheet } from "@/components/producao/SalvarModeloDoDiaSheet";
+import { blocosParaModelo, modeloDaOrganizacao, type ModeloGuardado } from "@/lib/producao/modelos-dia";
 
 type Data = {
   id: string; temporada_id: string; data: string; data_fim: string | null; tipo: TipoData; situacao: SituacaoDaData; uf: string | null; fuso: string;
   temporada: { titulo: string; tipo: string; lado: string } | null;
 };
-type Bloco = { id: string; dia: string; inicio: string | null; fim: string | null; exibicao: ExibicaoDoBloco; tipo: string; titulo: string | null; confirmado: boolean; ordem: number };
+type Bloco = { id: string; dia: string; inicio: string | null; fim: string | null; exibicao: ExibicaoDoBloco; tipo: string; titulo: string | null; confirmado: boolean; ordem: number; iniciado_em: string | null; terminado_em: string | null };
 
 const CAMPO_HORA = "h-9 rounded border border-black/[.12] bg-white px-2.5 text-[0.75rem] text-[#282525] outline-none focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 
@@ -34,6 +56,11 @@ export default function DataPage() {
   const [data, setData] = useState<Data | null | undefined>(undefined);
   const [blocos, setBlocos] = useState<Bloco[]>([]);
   const [folha, setFolha] = useState(false);
+  const [copiar, setCopiar] = useState(false);
+  const [palcoAberto, setPalcoAberto] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+  const [salvarModelo, setSalvarModelo] = useState(false);
+  const [modelosDaOrganizacao, setModelosDaOrganizacao] = useState<ModeloGuardado[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
   const [modeloId, setModeloId] = useState("");
@@ -46,11 +73,13 @@ export default function DataPage() {
     let ativo = true;
     void (async () => {
       const producao = clienteDaProducao(createClient());
-      const [dat, blo] = await Promise.all([
+      const [dat, blo, mod] = await Promise.all([
         producao.from("producao_datas").select("id, temporada_id, data, data_fim, tipo, situacao, uf, fuso, temporada:producao_temporadas!temporada_id(titulo, tipo, lado)").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
-        producao.from("producao_blocos").select("id, dia, inicio, fim, exibicao, tipo, titulo, confirmado, ordem").eq("data_id", id),
+        producao.from("producao_blocos").select("id, dia, inicio, fim, exibicao, tipo, titulo, confirmado, ordem, iniciado_em, terminado_em").eq("data_id", id),
+        producao.from("producao_modelos_dia").select("id, nome, blocos").eq("organization_id", organizationId).order("nome"),
       ]);
       if (!ativo) return;
+      setModelosDaOrganizacao((mod.data ?? []) as ModeloGuardado[]);
       setData(dat.error ? null : (dat.data as Data | null));
       setBlocos((blo.data ?? []) as Bloco[]);
     })();
@@ -59,7 +88,12 @@ export default function DataPage() {
 
   const fuso = data?.fuso ?? FUSO_PADRAO;
   const ordenados = useMemo(() => ordenarBlocos(blocos), [blocos]);
-  const modelos = useMemo(() => (data?.temporada ? modelosDeDia(data.temporada.tipo as TipoProducao) : []), [data]);
+  const aoVivo = useMemo(() => situacaoDoRoteiro(blocos), [blocos]);
+  const modelos = useMemo(() => {
+    const doTipo = data?.temporada ? modelosDeDia(data.temporada.tipo as TipoProducao) : [];
+    return [...doTipo, ...modelosDaOrganizacao.map(modelo => modeloDaOrganizacao(modelo, data?.tipo ?? "outro"))];
+  }, [data, modelosDaOrganizacao]);
+  const blocosParaSalvar = useMemo(() => blocosParaModelo(blocos), [blocos]);
   const modeloEscolhido = modelos.find(item => item.id === modeloId) ?? modelos.find(item => item.tipoData === data?.tipo) ?? modelos[0];
   const recarregar = () => setVersao(atual => atual + 1);
 
@@ -83,11 +117,40 @@ export default function DataPage() {
     recarregar();
   }
 
+  async function copiarTexto() {
+    if (!data) return;
+    setErro(null);
+    const producao = clienteDaProducao(createClient());
+    const { data: lugar } = await producao.from("producao_datas").select("espaco:producao_espacos!espaco_id(nome), sala:producao_salas!sala_id(nome)").eq("id", data.id).maybeSingle();
+    const texto = textoDaFolha({
+      tipo: data.tipo, data: data.data, dataFim: data.data_fim, temporada: data.temporada?.titulo ?? null, fuso,
+      lugar: rotuloDoLugar((lugar as { espaco: { nome: string } | null } | null)?.espaco?.nome ?? null, (lugar as { sala: { nome: string } | null } | null)?.sala?.nome ?? null),
+      blocos,
+    });
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiado(true);
+      window.setTimeout(() => setCopiado(false), 2500);
+    } catch {
+      setErro("Não foi possível copiar. Tente de novo.");
+    }
+  }
+
   async function confirmar(bloco: Bloco) {
     setErro(null);
     setBlocos(atual => atual.map(item => (item.id === bloco.id ? { ...item, confirmado: !item.confirmado } : item)));
     const { error } = await clienteDaProducao(createClient()).from("producao_blocos").update({ confirmado: !bloco.confirmado }).eq("id", bloco.id);
     if (error) { recarregar(); setErro("Não foi possível confirmar. Tente de novo."); }
+  }
+
+  /** O roteiro ao vivo (PD7.1): marca agora o começo ou o fim do bloco, ou desfaz a marca. */
+  async function marcar(bloco: Bloco, acao: "comecou" | "terminou" | "desfazer") {
+    setErro(null);
+    const agora = new Date().toISOString();
+    const valores = acao === "comecou" ? { iniciado_em: agora, terminado_em: null } : acao === "terminou" ? { terminado_em: agora } : { iniciado_em: null, terminado_em: null };
+    setBlocos(atual => atual.map(item => (item.id === bloco.id ? { ...item, ...valores } : item)));
+    const { error } = await clienteDaProducao(createClient()).from("producao_blocos").update(valores).eq("id", bloco.id);
+    if (error) { recarregar(); setErro("Não foi possível marcar o bloco. Tente de novo."); }
   }
 
   function remover(bloco: Bloco) {
@@ -126,6 +189,7 @@ export default function DataPage() {
               </Select>
             ) : <span className="text-[0.75rem] text-black/55">{ROTULO_DA_SITUACAO_DA_DATA[data.situacao]}</span>}
           </div>
+          {organizationId && <LugarDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
         </div>
       </header>
 
@@ -134,7 +198,17 @@ export default function DataPage() {
         <section aria-labelledby="o-dia">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 id="o-dia" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">O dia</h2>
-            {podeEditar && blocos.length > 0 && <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</PrimaryListAction>}
+            {blocos.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => setPalcoAberto(true)} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Tela de palco</button>
+                <button type="button" onClick={() => void copiarTexto()} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{copiado ? "Texto copiado" : "Copiar para o WhatsApp"}</button>
+                {podeEditar && (<>
+                <button type="button" onClick={() => setSalvarModelo(true)} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Salvar como modelo</button>
+                <button type="button" onClick={() => setCopiar(true)} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Copiar para outras datas</button>
+                <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</PrimaryListAction>
+                </>)}
+              </div>
+            )}
           </div>
 
           {blocos.length === 0 ? (
@@ -157,7 +231,10 @@ export default function DataPage() {
                       <PrimaryListAction onClick={() => void aplicarModelo()} disabled={aplicando || !horaDoPrimeiro}>{aplicando ? "Montando…" : "Montar o dia"}</PrimaryListAction>
                     </>
                   )}
-                  <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</PrimaryListAction>
+                  {/* Com modelo à mão, "Montar o dia" é o caminho principal e montar à mão é o de apoio. */}
+                  {modelos.length > 0
+                    ? <SecondaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</SecondaryListAction>
+                    : <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</PrimaryListAction>}
                 </div>
               ) : null}
             </div>
@@ -170,9 +247,34 @@ export default function DataPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{bloco.titulo ?? ROTULO_DO_TIPO_DE_BLOCO[bloco.tipo as TipoBloco] ?? bloco.tipo}</p>
                       <p className="text-[0.6875rem] text-black/45">{ROTULO_DO_TIPO_DE_BLOCO[bloco.tipo as TipoBloco] ?? bloco.tipo}{bloco.confirmado ? "" : " · não confirmado"}</p>
+                      {(() => {
+                        const situacao = aoVivo.get(bloco.id);
+                        if (!situacao) return null;
+                        if (situacao.estado === "pendente") {
+                          return situacao.previstoPara ? <p className="text-[0.6875rem]" style={{ color: "#B07A14" }}>Previsto às {instanteParaHoraLocal(situacao.previstoPara, fuso).hora} ({textoDoAtraso(situacao.atrasoPropagadoMin)})</p> : null;
+                        }
+                        const comecou = bloco.iniciado_em ? instanteParaHoraLocal(bloco.iniciado_em, fuso).hora : "";
+                        const atraso = situacao.atrasoDoComecoMin;
+                        const corDoAtraso = atraso !== null && atraso > 0 ? "#B07A14" : undefined;
+                        return (
+                          <p className="text-[0.6875rem] text-black/55">
+                            {situacao.estado === "em_andamento" ? `Em andamento desde ${comecou}` : `Feito: ${comecou} às ${bloco.terminado_em ? instanteParaHoraLocal(bloco.terminado_em, fuso).hora : ""}`}
+                            {atraso !== null && <span style={{ color: corDoAtraso }}> · {textoDoAtraso(atraso)}</span>}
+                          </p>
+                        );
+                      })()}
                     </div>
                     {podeEditar && (
                       <div className="flex shrink-0 items-center gap-1">
+                        {aoVivo.get(bloco.id)?.estado === "pendente" && (
+                          <button type="button" onClick={() => void marcar(bloco, "comecou")} aria-label="Marcar que o bloco começou" title="Começou" className="flex h-9 items-center gap-1 rounded border border-black/[.14] px-2.5 text-[0.6875rem] font-medium text-[#282525] transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Play size={11} aria-hidden="true" /> Começou</button>
+                        )}
+                        {aoVivo.get(bloco.id)?.estado === "em_andamento" && (
+                          <button type="button" onClick={() => void marcar(bloco, "terminou")} aria-label="Marcar que o bloco terminou" title="Terminou" className="flex h-9 items-center gap-1 rounded bg-[#1C0E33] px-2.5 text-[0.6875rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><Square size={11} aria-hidden="true" /> Terminou</button>
+                        )}
+                        {aoVivo.get(bloco.id)?.estado !== "pendente" && (
+                          <button type="button" onClick={() => void marcar(bloco, "desfazer")} aria-label="Desfazer a marcação do bloco" title="Desfazer" className="flex h-9 w-9 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Undo2 size={14} aria-hidden="true" /></button>
+                        )}
                         <button type="button" onClick={() => void confirmar(bloco)} aria-pressed={bloco.confirmado} aria-label={bloco.confirmado ? "Desmarcar confirmação" : "Confirmar bloco"} title={bloco.confirmado ? "Confirmado" : "Confirmar"} className={`flex h-9 w-9 items-center justify-center rounded transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${bloco.confirmado ? "text-[#2E8932]" : "text-black/30"}`}><Check size={15} aria-hidden="true" /></button>
                         <button type="button" onClick={() => remover(bloco)} aria-label="Remover bloco" title="Remover" className="flex h-9 w-9 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Trash2 size={14} aria-hidden="true" /></button>
                       </div>
@@ -183,8 +285,32 @@ export default function DataPage() {
             </div>
           )}
         </section>
+
+        {organizationId && <EquipeDaData organizationId={organizationId} data={{ id: data.id, data: data.data, data_fim: data.data_fim, fuso }} podeEditar={podeEditar} />}
+        {organizationId && <ViagemEHospedagem organizationId={organizationId} data={{ id: data.id, data: data.data, fuso }} podeEditar={podeEditar} />}
+        {organizationId && <DeslocamentosDaData organizationId={organizationId} data={{ id: data.id, data: data.data, fuso }} podeEditar={podeEditar} />}
+        {organizationId && <QueLevarDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
+        {organizationId && <OcorrenciasDaData organizationId={organizationId} data={{ id: data.id, fuso }} podeEditar={podeEditar} />}
+        {organizationId && <TarefasDaData organizationId={organizationId} dataId={data.id} tipoDeProducao={(data.temporada?.tipo as TipoProducao | undefined) ?? null} podeEditar={podeEditar} />}
+        {organizationId && <LicencasDaData organizationId={organizationId} dataId={data.id} dataDoEvento={data.data} podeEditar={podeEditar} />}
+        {organizationId && <AcertosDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
+        {organizationId && <ItensDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
+        {organizationId && <ContrapartidasDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
+        {organizationId && <ComunicacaoDaData organizationId={organizationId} dataId={data.id} titulo={`${nomeDoTipo} de ${diaEMes(data.data)}${data.temporada?.titulo ? ` · ${data.temporada.titulo}` : ""}`} podeEditar={podeEditar} />}
+        {organizationId && <NotasDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
+        {organizationId && <ArquivosDaData organizationId={organizationId} temporadaId={data.temporada_id} dataId={data.id} podeEditar={podeEditar} />}
+        {organizationId && <HistoricoDaData dataId={data.id} />}
       </DetailPageContent>
 
+      {salvarModelo && organizationId && (
+        <SalvarModeloDoDiaSheet organizationId={organizationId} blocos={blocosParaSalvar} onClose={() => setSalvarModelo(false)} onSaved={recarregar} />
+      )}
+      {palcoAberto && (
+        <LinkDoPalcoSheet dataId={data.id} rotulo={`${diaEMes(data.data)}`} podeEditar={podeEditar} onClose={() => setPalcoAberto(false)} />
+      )}
+      {copiar && organizationId && (
+        <CopiarDiaSheet organizationId={organizationId} temporadaId={data.temporada_id} dataId={data.id} dia={data.data} fuso={fuso} onClose={() => setCopiar(false)} onCopied={recarregar} />
+      )}
       {folha && organizationId && (
         <NovoBlocoSheet organizationId={organizationId} dataId={data.id} dia={data.data} fuso={fuso} proximaOrdem={blocos.length} onClose={() => setFolha(false)} onCreated={recarregar} />
       )}

@@ -107,7 +107,7 @@ export default function MembroDaEquipePage() {
           <DetailBackLink href="/configuracoes" label="Equipe" />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-4">
-              <div aria-hidden="true" className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-[#282525] text-[1.125rem] font-semibold text-white">
+              <div aria-hidden="true" className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-[#1C0E33] text-[1.125rem] font-semibold text-white">
                 {nome.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">

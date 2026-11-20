@@ -4,11 +4,30 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense, useCallback } from "react";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { PastDueBanner } from "@/components/PastDueBanner";
+import { EmailAutoSync } from "@/components/email/EmailAutoSync";
 import {
+  Accessibility,
   BarChart2,
+  CalendarCheck,
+  CalendarClock,
   CalendarDays,
+  Globe,
   CalendarRange,
+  UsersRound,
+  ListChecks,
+  MapPin,
+  Boxes,
+  Truck,
+  Ticket,
+  School,
+  GraduationCap,
+  Frame,
+  History,
+  Ruler,
+  FileText,
   BriefcaseBusiness,
+  Clapperboard,
+  Wrench,
   ContactRound,
   FilePenLine,
   FileStack,
@@ -31,7 +50,13 @@ import {
   DoorOpen,
   Drama,
   Video,
+  ChevronDown,
+  FileCheck,
   type LucideIcon,
+  Mail,
+  Receipt,
+  ScanLine,
+  Wallet,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -56,21 +81,23 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
   { id: "captacao",  label: "Captação",  descricao: "Patrocinadores, editais e negociações",       icone: HandCoins      },
   { id: "prestacao", label: "Prestação", descricao: "Prestação de contas e relatórios do projeto", icone: ClipboardCheck },
   { id: "producao",  label: "Produção",  descricao: "Agenda, equipe, logística e o dia",            icone: Drama          },
+  { id: "ticketeria", label: "Ticketeria", descricao: "Ingressos, vendas e a porta do evento",    icone: Ticket         },
 ];
 
 // Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
-// "Reuniões" depende do servidor do Vexa (docs/reunioes-deploy-vexa.md), que ainda não está
-// no ar; sem ele, toda reunião criada termina como "falhou". Tire a rota daqui quando ligar.
-const ROTAS_SO_SUPER_ADMIN = ["/reunioes"];
+// "Conversas" (e-mails e reuniões) acompanha o beta fechado do e-mail; as reuniões ainda dependem do servidor
+// do Vexa (docs/reunioes-deploy-vexa.md), que não está no ar. Tire a rota daqui quando abrir.
+const ROTAS_SO_SUPER_ADMIN = ["/conversas"];
 
-const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
+// `icone`: o grupo aparece no menu como uma seção que abre e fecha para baixo (como no Apollo), com este ícone no título e as telas dele logo abaixo.
+const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementType; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
   captacao: [
     {
       section: "Gerenciamento",
       items: [
         { label: "Visão geral",  href: "/dashboard",    icon: BarChart2    },
+        { label: "Conversas",    href: "/conversas",    icon: Mail         },
         { label: "Atividades",   href: "/atividades",   icon: CalendarDays },
-        { label: "Reuniões",     href: "/reunioes",     icon: Video        },
         { label: "Projetos",     href: "/projetos",     icon: FolderOpen   },
       ],
     },
@@ -109,13 +136,70 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       ],
     },
   ],
-  // O primeiro item é a página inicial do módulo (trocarModulo abre ele).
+  // O primeiro item do primeiro grupo é a página inicial do módulo (trocarModulo abre ele). Cada grupo é uma seção do menu que abre e fecha para baixo.
   producao: [
     {
       section: "Produção",
+      icone: Clapperboard,
       items: [
         { label: "Agenda", href: "/producoes", icon: CalendarDays },
         { label: "Temporadas", href: "/producoes/temporadas", icon: CalendarRange },
+        { label: "Equipe", href: "/producoes/equipe", icon: UsersRound },
+        { label: "Tarefas", href: "/producoes/tarefas", icon: ListChecks },
+        { label: "Espaços", href: "/producoes/espacos", icon: Building2 },
+        { label: "Documentos", href: "/producoes/documentos", icon: FileCheck },
+      ],
+    },
+    {
+      section: "Programação",
+      icone: CalendarClock,
+      items: [
+        { label: "Pauta", href: "/producoes/pauta", icon: CalendarCheck },
+        { label: "Programação", href: "/producoes/programacao", icon: CalendarClock },
+      ],
+    },
+    {
+      section: "Público",
+      icone: UsersRound,
+      items: [
+        { label: "Acessibilidade", href: "/producoes/acessibilidade", icon: Accessibility },
+        { label: "Visitação", href: "/producoes/visitacao", icon: School },
+        { label: "Formação", href: "/producoes/formacao", icon: GraduationCap },
+        { label: "Expografia", href: "/producoes/expografia", icon: Frame },
+      ],
+    },
+    {
+      section: "Técnica e logística",
+      icone: Wrench,
+      items: [
+        { label: "Inventário", href: "/producoes/inventario", icon: Boxes },
+        { label: "Plantas", href: "/producoes/plantas", icon: Ruler },
+        { label: "Riders", href: "/producoes/riders", icon: FileText },
+        { label: "Acertos", href: "/producoes/acertos", icon: Handshake },
+        { label: "Veículos", href: "/producoes/veiculos", icon: Truck },
+      ],
+    },
+    {
+      section: "Acompanhar",
+      icone: MapPin,
+      items: [
+        { label: "Mapa da turnê", href: "/producoes/mapa", icon: MapPin },
+        { label: "Linha do tempo", href: "/producoes/linha-do-tempo", icon: History },
+      ],
+    },
+  ],
+  // Escondida dos clientes (MODULOS_EM_CONSTRUCAO em lib/modulos.ts): só o super admin e quem já tem o módulo a veem.
+  // A rota é /ingressos: jards.com.br/ticketeria é a página pública do produto.
+  ticketeria: [
+    {
+      section: "Ticketeria",
+      items: [
+        { label: "Eventos", href: "/ingressos", icon: Ticket },
+        { label: "Locais", href: "/ingressos/locais", icon: MapPin },
+        { label: "Site", href: "/ingressos/site", icon: Globe },
+        { label: "Vendas", href: "/ingressos/vendas", icon: Receipt },
+        { label: "Porta", href: "/ingressos/porta", icon: ScanLine },
+        { label: "Recebimentos", href: "/ingressos/recebimentos", icon: Wallet },
       ],
     },
   ],
@@ -194,6 +278,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const [user, setUser]                     = useState<User | null>(null);
   const [expanded, setExpanded]             = useState(false);
+  // As seções do menu que a pessoa abriu ou fechou à mão. A seção da página aberta abre sozinha, a menos que a pessoa a feche.
+  const [secoesAbertas, setSecoesAbertas] = useState<ReadonlySet<string>>(new Set());
+  const [secoesFechadas, setSecoesFechadas] = useState<ReadonlySet<string>>(new Set());
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [moduloAtivo, setModuloAtivo]       = useState<ModuloId>(() => moduloDaRota(path));
   const [modulosOrg, setModulosOrg]         = useState<ModuloId[]>(["captacao"]);
@@ -413,6 +500,62 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isExpanded  = expanded || mobileOpen || seletorAberto;
   const menuPath    = itemAtivoDoMenu(path);
   const hrefAtivo   = hrefAtivoDoMenu(menuPath, navGroups.flatMap(grupo => grupo.items.map(item => item.href)));
+  // Os grupos com `icone` viram seções que abrem e fecham. Com o menu recolhido (só ícones) cada seção mostra apenas o ícone; o da página aberta fica aceso.
+  const gruposFixos = navGroups.filter(grupo => !grupo.icone && grupo.items.length > 0);
+  const gruposEmSecao = navGroups.filter(grupo => grupo.icone && grupo.items.length > 0);
+  const secaoAberta = (grupo: (typeof navGroups)[number]) =>
+    secoesAbertas.has(grupo.section) || (!secoesFechadas.has(grupo.section) && grupo.items.some(item => item.href === hrefAtivo));
+  function alternarSecao(grupo: (typeof navGroups)[number]) {
+    const abrir = !secaoAberta(grupo);
+    const troca = (conjunto: ReadonlySet<string>, entrar: boolean) => { const novo = new Set(conjunto); if (entrar) novo.add(grupo.section); else novo.delete(grupo.section); return novo; };
+    setSecoesAbertas(atual => troca(atual, abrir));
+    setSecoesFechadas(atual => troca(atual, !abrir));
+  }
+  const desenharGrupo = ({ section, items }: (typeof navGroups)[number], gi: number) => (
+    <div key={section} className={gi > 0 ? "mt-4" : ""}>
+              <div
+                style={{
+                  height: isExpanded ? "auto" : 0,
+                  overflow: "hidden",
+                  opacity: isExpanded ? 1 : 0,
+                  transition: "opacity 150ms",
+                  marginBottom: isExpanded ? 6 : 0,
+                }}
+              >
+                <p className="px-2 text-[0.625rem] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap">
+                  {section}
+                </p>
+              </div>
+              <div className="space-y-0.5">
+                {items.map(({ label, href, icon: Icon }) => {
+                  const active = href === hrefAtivo;
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      // Sem antecipar a página: cada item do menu antecipado era uma página inteira pedida ao servidor (com a checagem de login), e dezenas delas disputavam a banda com a página que a pessoa abriu.
+                      prefetch={false}
+                      title={!isExpanded ? label : undefined}
+                      aria-label={!isExpanded ? label : undefined}
+                      aria-current={active ? "page" : undefined}
+                      className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                        active ? "bg-[#1C0E33] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                      }`}
+                      style={{
+                        gap: isExpanded ? 10 : 0,
+                        padding: isExpanded ? "8px 10px" : "8px 0",
+                        justifyContent: isExpanded ? "flex-start" : "center",
+                      }}
+                    >
+                      <Icon size={16} className="flex-shrink-0" aria-hidden="true" />
+                      {isExpanded && <span>{label}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+  );
+
   // EXPERIMENTAL: dentro de uma organização onde o papel é "captador", o
   // menu lateral vira um menu próprio e mínimo — sem as áreas internas da
   // organização que convidou (essas continuam existindo, só não fazem
@@ -479,7 +622,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Sidebar */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-20 bg-black/30 md:hidden" aria-hidden="true" onClick={() => setMobileOpen(false)} />
+        <div className="fixed inset-0 z-20 veu md:hidden" aria-hidden="true" onClick={() => setMobileOpen(false)} />
       )}
       <aside
         id="menu-principal"
@@ -595,7 +738,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 title={!isExpanded ? "Meu workspace" : undefined}
                 aria-current={correspondeRota(path, "/workspace-captador") ? "page" : undefined}
                 className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                  correspondeRota(path, "/workspace-captador") ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                  correspondeRota(path, "/workspace-captador") ? "bg-[#1C0E33] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
                 }`}
                 style={{
                   gap: isExpanded ? 10 : 0,
@@ -607,48 +750,66 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {isExpanded && <span>Meu workspace</span>}
               </Link>
             </div>
-          ) : navGroups.map(({ section, items }, gi) => (
-            <div key={section} className={gi > 0 ? "mt-4" : ""}>
-              <div
-                style={{
-                  height: isExpanded ? "auto" : 0,
-                  overflow: "hidden",
-                  opacity: isExpanded ? 1 : 0,
-                  transition: "opacity 150ms",
-                  marginBottom: isExpanded ? 6 : 0,
-                }}
-              >
-                <p className="px-2 text-[0.625rem] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap">
-                  {section}
-                </p>
-              </div>
-              <div className="space-y-0.5">
-                {items.map(({ label, href, icon: Icon }) => {
-                  const active = href === hrefAtivo;
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      title={!isExpanded ? label : undefined}
-                      aria-label={!isExpanded ? label : undefined}
-                      aria-current={active ? "page" : undefined}
-                      className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                        active ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
-                      }`}
-                      style={{
-                        gap: isExpanded ? 10 : 0,
-                        padding: isExpanded ? "8px 10px" : "8px 0",
-                        justifyContent: isExpanded ? "flex-start" : "center",
-                      }}
-                    >
-                      <Icon size={16} className="flex-shrink-0" aria-hidden="true" />
-                      {isExpanded && <span>{label}</span>}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+          ) : (
+            <>
+              {gruposFixos.map(desenharGrupo)}
+              {gruposEmSecao.length > 0 && (
+                <div className={`space-y-0.5 ${gruposFixos.length > 0 ? "mt-4" : ""}`}>
+                  {gruposEmSecao.map(grupo => {
+                    const Icone = grupo.icone as React.ElementType;
+                    const comAtivo = grupo.items.some(item => item.href === hrefAtivo);
+                    const aberta = secaoAberta(grupo);
+                    const idDaLista = `menu-secao-${grupo.section.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-")}`;
+                    return (
+                      <div key={grupo.section}>
+                        <button
+                          type="button"
+                          onClick={() => alternarSecao(grupo)}
+                          aria-expanded={isExpanded ? aberta : undefined}
+                          aria-controls={isExpanded ? idDaLista : undefined}
+                          aria-current={comAtivo && !isExpanded ? "true" : undefined}
+                          title={!isExpanded ? grupo.section : undefined}
+                          aria-label={!isExpanded ? grupo.section : undefined}
+                          className={`flex w-full items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                            comAtivo && !isExpanded ? "bg-[#1C0E33] text-white" : comAtivo ? "text-[#282525] hover:bg-black/[0.05]" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                          }`}
+                          style={{ gap: isExpanded ? 10 : 0, padding: isExpanded ? "8px 10px" : "8px 0", justifyContent: isExpanded ? "flex-start" : "center" }}
+                        >
+                          <Icone size={16} className="flex-shrink-0" aria-hidden="true" />
+                          {isExpanded && <span className="flex-1 text-left">{grupo.section}</span>}
+                          {isExpanded && <ChevronDown size={14} aria-hidden="true" className={`flex-shrink-0 text-black/35 transition-transform duration-200 motion-reduce:transition-none ${aberta ? "rotate-180" : ""}`} />}
+                        </button>
+                        {isExpanded && (
+                          <div id={idDaLista} className="grid transition-[grid-template-rows] duration-200 motion-reduce:transition-none" style={{ gridTemplateRows: aberta ? "1fr" : "0fr" }}>
+                            <div className="min-h-0 overflow-hidden" style={{ visibility: aberta ? "visible" : "hidden", transition: aberta ? "visibility 0s" : "visibility 0s linear 200ms" }}>
+                              <div className="space-y-0.5 pb-1 pt-0.5">
+                                {grupo.items.map(({ label, href }) => {
+                                  const ativo = href === hrefAtivo;
+                                  return (
+                                    <Link
+                                      key={href}
+                                      href={href}
+                                      prefetch={false}
+                                      aria-current={ativo ? "page" : undefined}
+                                      className={`block truncate rounded py-2 pl-[2.25rem] pr-2.5 text-[0.8125rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                                        ativo ? "bg-[#1C0E33] text-white" : "text-black/55 hover:text-[#282525] hover:bg-black/[0.05]"
+                                      }`}
+                                    >
+                                      {label}
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
           {usaCaptacao && <BotaoUpgrade expandido={isExpanded} />}
         </nav>
 
@@ -742,7 +903,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
         </div>
       </aside>
-
       {/* Main */}
       <div className="flex flex-col h-full overflow-hidden md:pl-14">
 
@@ -787,7 +947,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {orgSwitcherOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setOrgSwitcherOpen(false)} />
-                    <div role="menu" aria-label="Organizações" className="absolute right-0 top-10 z-50 w-64 rounded border border-black/[.09] bg-white p-1.5 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
+                    <div role="menu" aria-label="Organizações" className="absolute right-0 top-10 z-50 w-64 rounded bg-white p-1.5 border elevacao-1">
                       <p className="px-2.5 pb-1.5 pt-1 text-[0.5625rem] font-bold uppercase tracking-widest text-black/30">Trocar organização</p>
                       {memberships.map(m => (
                         <button
@@ -834,6 +994,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <ImpersonationBanner />
           </Suspense>
           <PastDueBanner />
+          <EmailAutoSync />
           {children}
         </main>
       </div>

@@ -13,6 +13,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { webhookDoResendValido } from "@/lib/email/webhook-resend";
+import { tratarEventoDeReembolso } from "@/lib/ticketeria/pagamento/reembolso-entrada";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import { lerDocumentoFiscal } from "@/lib/prestacao/documento-fiscal";
 import {
@@ -104,7 +105,12 @@ export async function POST(req: NextRequest) {
   if (evento.type !== "email.received" || !d?.email_id) return NextResponse.json({ ignorado: true });
 
   const tokens = tokensDosDestinatarios([...(d.to ?? []), ...(d.cc ?? []), ...(d.received_for ?? [])], dominio);
-  if (tokens.length === 0) return NextResponse.json({ ignorado: true });
+  if (tokens.length === 0) {
+    // Não é de uma prestação: pode ser um pedido de reembolso de ingresso (Ticketeria, passo D).
+    const reembolso = await tratarEventoDeReembolso(d);
+    if (reembolso) return NextResponse.json(reembolso.corpo, { status: reembolso.status });
+    return NextResponse.json({ ignorado: true });
+  }
 
   const admin = createAdminClient();
   const remetente = enderecoPuro(d.from ?? "");

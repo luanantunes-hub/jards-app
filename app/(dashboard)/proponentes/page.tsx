@@ -263,7 +263,7 @@ export default function ProponentesPage() {
         />
       )}
 
-      <ListPageHeader eyebrow="Estrutura institucional" title="Proponentes" summary={!loading&&<ListSummary strong={visibleProponentes.length}>proponentes</ListSummary>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo proponente</PrimaryListAction></>}/>
+      <ListPageHeader secao="proponentes" eyebrow="Estrutura institucional" title="Proponentes" summary={!loading&&<ListSummary strong={visibleProponentes.length}>proponentes</ListSummary>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo proponente</PrimaryListAction></>}/>
 
       {!loading && proponentes.length > 0 && <ListToolbar><div className="flex max-w-full flex-col gap-2 lg:flex-row"><SegmentedControl value={tipoFilter} onChange={setTipoFilter} ariaLabel="Filtrar proponentes por tipo" options={[{ value: "todos", label: "Todos os tipos" }, ...etiquetasProponente.map(item => ({ value: item.key, label: item.label }))]}/><SegmentedControl value={quickFilter} onChange={value => setQuickFilter(value as QuickFilter)} ariaLabel="Filtrar proponentes por situação" options={[{ value: "todos", label: "Todos" }, { value: "com_projetos", label: "Com projetos" }, { value: "sem_projetos", label: "Sem projetos" }, { value: "com_captacao", label: "Com captação" }, { value: "sem_atividade", label: "Sem atividade" }]}/></div></ListToolbar>}
 

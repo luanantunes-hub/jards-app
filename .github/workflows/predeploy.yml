@@ -1,12 +1,15 @@
 name: Pre-deploy
 
+# As três verificações (tipos, testes e build) rodam ao mesmo tempo, cada uma no seu job, e o job `validate` só passa se as três passarem.
+# O nome `validate` continua sendo o que a branch e o deploy conferem. O cache do Next.js (.next/cache) acelera o build sem tirar nada dele.
+
 on:
   pull_request:
   push:
     branches: [main]
 
 jobs:
-  validate:
+  tipos:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -17,9 +20,50 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-next-${{ hashFiles('package-lock.json') }}-${{ hashFiles('app/**', 'components/**', 'lib/**', 'contexts/**', 'hooks/**', 'public/**', 'next.config.*', 'proxy.ts', 'tsconfig.json') }}
+          restore-keys: |
+            ${{ runner.os }}-next-${{ hashFiles('package-lock.json') }}-
       - run: npm run build -- --webpack
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
 
+  validate:
+    needs: [tipos, testes, build]
+    # Sem o `always()`, um job que falhou deixaria este "pulado", e um check pulado pode contar como aprovado: aqui ele falha de verdade.
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: As três verificações passaram
+        run: |
+          echo "tipos: ${{ needs.tipos.result }}, testes: ${{ needs.testes.result }}, build: ${{ needs.build.result }}"
+          test "${{ needs.tipos.result }}" = "success"
+          test "${{ needs.testes.result }}" = "success"
+          test "${{ needs.build.result }}" = "success"

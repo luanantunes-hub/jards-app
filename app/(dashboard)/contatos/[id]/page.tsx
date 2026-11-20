@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { TagsDoRegistro } from "@/components/ui/Tags";
 import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
 import { DetailHeaderAction, DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
@@ -34,6 +35,7 @@ function LinkedinIcon({ size = 14 }: { size?: number }) {
 
 type Contato = {
   id: string;
+  tags?: string[];
   nome: string | null;
   cargo: string | null;
   email: string | null;
@@ -306,7 +308,7 @@ function InlineSelect({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setMenuPos(null)} />
           <div
-            className="fixed z-50 min-w-[10rem] overflow-hidden rounded border bg-white py-1 shadow-xl"
+            className="fixed z-50 min-w-[10rem] overflow-hidden rounded bg-white py-1 border elevacao-1"
             style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width, borderColor: "rgba(13,13,13,.12)" }}
             role="listbox"
           >
@@ -412,7 +414,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
     const [cRes, aRes, capRes] = await Promise.all([
       (supabase as any)
         .from("contatos")
-        .select("id, nome, cargo, email, telefone, telefone_2, linkedin_url, score, origem, notas, ultima_interacao, created_at, updated_at, papel_decisao, influencia, sentimento, forca_relacao, canal_preferido, ativo_na_empresa, empresa_crm_id, empresa_crm:empresas_crm!empresa_crm_id(id, nome, domain_key, site)")
+        .select("id, tags, nome, cargo, email, telefone, telefone_2, linkedin_url, score, origem, notas, ultima_interacao, created_at, updated_at, papel_decisao, influencia, sentimento, forca_relacao, canal_preferido, ativo_na_empresa, empresa_crm_id, empresa_crm:empresas_crm!empresa_crm_id(id, nome, domain_key, site)")
         .eq("id", id)
         .single(),
       (supabase as any)
@@ -534,6 +536,9 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                       </Link>
                     </>
                   )}
+                </div>
+                <div className="mt-2.5">
+                  <TagsDoRegistro tabela="contatos" id={contato.id} tags={contato.tags} onSalvo={tags => setContato(atual => atual ? { ...atual, tags } : atual)} />
                 </div>
               </div>
             </div>

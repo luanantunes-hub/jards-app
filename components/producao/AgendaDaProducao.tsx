@@ -7,8 +7,11 @@ import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationC
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { papelNaProducao } from "@/lib/producao/permissoes";
+import type { EstadoDoEquipamento, SituacaoDaLicenca, TipoDeLicenca } from "@/lib/producao/estados";
+import { avisosDeEquipamentosParaHoje, avisosDeLicencasParaHoje, type AvisoDeHoje } from "@/lib/producao/hoje";
+import { avisosDeDocumentosParaHoje, type DocumentoDaPasta } from "@/lib/producao/documentos";
 import { agruparPorMes, diaDaSemana, diaEMes, filtrarDatas, opcaoVencida, pendenciasDeHoje, proximasDatas, type FiltrosDaAgenda, ROTULO_DA_SITUACAO_DA_DATA, ROTULO_DO_TIPO_DE_DATA, type DataDaAgenda } from "@/lib/producao/agenda";
-import { ListContent, ListEmptyState, ListPageHeader, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { ListContent, ListEmptyState, ListPageHeader, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { Select } from "@/components/ui/Select";
 import { CalendarioDaAgenda } from "@/components/producao/CalendarioDaAgenda";
@@ -25,17 +28,21 @@ const OPCOES_DE_VISAO = [
   { value: "semana", label: "Semana", icon: CalendarRange },
 ] as const;
 
+const SEM_FILTROS: FiltrosDaAgenda = { temporada: "todas", situacao: "todas", espaco: "todos", sala: "todas" };
+
 /** A agenda: as datas da produção por mês, e o cadastro de temporadas e de datas. */
 export function AgendaDaProducao() {
   const organizationId = useOrganizationId();
   const papel = useOrganizationRole();
   const [temporadas, setTemporadas] = useState<Temporada[]>([]);
+  const [espacos, setEspacos] = useState<{ id: string; nome: string }[]>([]);
+  const [salas, setSalas] = useState<{ id: string; espaco_id: string; nome: string }[]>([]);
   const [datas, setDatas] = useState<DataDaAgenda[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(false);
   const [folha, setFolha] = useState<"temporada" | "data" | null>(null);
   const [visao, trocarVisao] = usePersistedViewMode<Visao>("jards-producao-agenda-visao", VISOES, "lista");
-  const [filtros, setFiltros] = useState<FiltrosDaAgenda>({ temporada: "todas", situacao: "todas" });
+  const [filtros, setFiltros] = useState<FiltrosDaAgenda>(SEM_FILTROS);
 
   // Quem edita: administrador e colaborador; o leitor só vê. O banco confere de novo.
   const podeEditar = papel !== null && papelNaProducao(papel) !== "leitor" && papelNaProducao(papel) !== null;
@@ -43,44 +50,83 @@ export function AgendaDaProducao() {
 
   // Mudar a versão relê a agenda (depois de criar uma temporada ou datas).
   const [versao, setVersao] = useState(0);
+  // O que as licenças e os equipamentos pedem (PD4.9 e PD3.2), lido à parte: se falhar, o resto da agenda segue.
+  const [licencasDeHoje, setLicencasDeHoje] = useState<{ id: string; data_id: string; tipo: TipoDeLicenca; situacao: SituacaoDaLicenca; prazo_dias: number | null; validade: string | null }[]>([]);
+  const [equipamentosDeHoje, setEquipamentosDeHoje] = useState<{ id: string; nome: string; estado: EstadoDoEquipamento; espaco_id: string }[]>([]);
+  const [documentosDeHoje, setDocumentosDeHoje] = useState<DocumentoDaPasta[]>([]);
+  const [nomesDasPessoas, setNomesDasPessoas] = useState<Record<string, string>>({});
+  const [manutencoesDeHoje, setManutencoesDeHoje] = useState<{ id: string; equipamento_id: string; descricao: string; prevista_para: string; feita_em: string | null }[]>([]);
 
   useEffect(() => {
     if (!organizationId) return;
     let ativo = true;
     void (async () => {
       const producao = clienteDaProducao(createClient());
-      const [temp, dat] = await Promise.all([
+      const [temp, dat, esp, sal] = await Promise.all([
         producao.from("producao_temporadas").select("id, titulo").eq("organization_id", organizationId).order("created_at", { ascending: false }),
         producao
           .from("producao_datas")
-          .select("id, data, data_fim, tipo, situacao, opcao_ordem, opcao_ate, temporada_id, uf, temporada:producao_temporadas!temporada_id(titulo)")
+          .select("id, data, data_fim, tipo, situacao, opcao_ordem, opcao_ate, temporada_id, uf, espaco_id, sala_id, temporada:producao_temporadas!temporada_id(titulo)")
           .eq("organization_id", organizationId)
           .order("data", { ascending: true })
           .limit(500),
+        producao.from("producao_espacos").select("id, nome").eq("organization_id", organizationId).order("nome"),
+        producao.from("producao_salas").select("id, espaco_id, nome").eq("organization_id", organizationId).order("nome"),
       ]);
       if (!ativo) return;
       if (temp.error || dat.error) { setErro(true); setCarregando(false); return; }
       setErro(false);
       setTemporadas(temp.data ?? []);
+      setEspacos(esp.data ?? []);
+      setSalas(sal.data ?? []);
       setDatas((dat.data ?? []).map(linha => ({
         id: linha.id, data: linha.data, data_fim: linha.data_fim, tipo: linha.tipo, situacao: linha.situacao,
         opcao_ordem: linha.opcao_ordem, opcao_ate: linha.opcao_ate, temporada_id: linha.temporada_id,
         temporada_titulo: linha.temporada?.titulo ?? null, obra_titulo: null, municipio: null, uf: linha.uf,
+        espaco_id: linha.espaco_id, sala_id: linha.sala_id,
       })));
       setCarregando(false);
     })();
     return () => { ativo = false; };
   }, [organizationId, versao]);
 
+  useEffect(() => {
+    if (!organizationId) return;
+    let ativo = true;
+    void (async () => {
+      const producao = clienteDaProducao(createClient());
+      const [lic, equ, man, doc, pes] = await Promise.all([
+        producao.from("producao_licencas").select("id, data_id, tipo, situacao, prazo_dias, validade").eq("organization_id", organizationId).in("situacao", ["a_pedir", "pedida", "negada", "concedida"]),
+        producao.from("producao_equipamentos").select("id, nome, estado, espaco_id").eq("organization_id", organizationId).neq("estado", "baixado"),
+        producao.from("producao_manutencoes").select("id, equipamento_id, descricao, prevista_para, feita_em").eq("organization_id", organizationId).is("feita_em", null),
+        // Só os que têm validade; o banco entrega só o que a pessoa pode ver (o documento de uma pessoa pede a permissão de dinheiro).
+        producao.from("producao_documentos").select("id, escopo, pessoa_id, tipo, titulo, emitido_em, validade, notas").eq("organization_id", organizationId).not("validade", "is", null),
+        producao.from("producao_pessoas").select("id, nome").eq("organization_id", organizationId),
+      ]);
+      if (!ativo) return;
+      setLicencasDeHoje(lic.data ?? []);
+      setEquipamentosDeHoje(equ.data ?? []);
+      setManutencoesDeHoje(man.data ?? []);
+      setDocumentosDeHoje((doc.data ?? []) as DocumentoDaPasta[]);
+      setNomesDasPessoas(Object.fromEntries((pes.data ?? []).map(pessoa => [pessoa.id, pessoa.nome])));
+    })();
+    return () => { ativo = false; };
+  }, [organizationId, versao]);
+
+  const avisos = useMemo<AvisoDeHoje[]>(() => [
+    ...avisosDeLicencasParaHoje(licencasDeHoje, datas, hoje),
+    ...avisosDeEquipamentosParaHoje(equipamentosDeHoje, manutencoesDeHoje, hoje),
+    ...avisosDeDocumentosParaHoje(documentosDeHoje, id => nomesDasPessoas[id] ?? "uma pessoa", hoje),
+  ], [licencasDeHoje, equipamentosDeHoje, manutencoesDeHoje, documentosDeHoje, nomesDasPessoas, datas, hoje]);
   const filtradas = useMemo(() => filtrarDatas(datas, filtros), [datas, filtros]);
   const meses = useMemo(() => agruparPorMes(filtradas), [filtradas]);
   const pendencias = useMemo(() => pendenciasDeHoje(datas, hoje), [datas, hoje]);
   const proximas = useMemo(() => proximasDatas(datas, hoje, 3), [datas, hoje]);
-  const comFiltro = filtros.temporada !== "todas" || filtros.situacao !== "todas";
+  const comFiltro = filtros.temporada !== "todas" || filtros.situacao !== "todas" || filtros.espaco !== "todos" || filtros.sala !== "todas";
   // Sem nada ainda, o botão está no estado vazio: não repete no cabeçalho.
   const acoes = podeEditar && temporadas.length > 0 && (
     <>
-      <PrimaryListAction onClick={() => setFolha("temporada")}>Nova temporada</PrimaryListAction>
+      <SecondaryListAction onClick={() => setFolha("temporada")}>Nova temporada</SecondaryListAction>
       {temporadas.length > 0 && <PrimaryListAction onClick={() => setFolha("data")}><Plus size={13} aria-hidden="true" /> Nova data</PrimaryListAction>}
     </>
   );
@@ -101,11 +147,23 @@ export function AgendaDaProducao() {
               {temporadas.map(item => <option key={item.id} value={item.id}>{item.titulo}</option>)}
             </Select>
           )}
+          {espacos.length > 0 && (
+            <Select block={false} aria-label="Filtrar por espaço" value={filtros.espaco ?? "todos"} onChange={event => setFiltros(atual => ({ ...atual, espaco: event.target.value, sala: "todas" }))} className="h-9 shrink-0 pl-3 pr-8 text-black/60">
+              <option value="todos">Todos os espaços</option>
+              {espacos.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}
+            </Select>
+          )}
+          {filtros.espaco && filtros.espaco !== "todos" && salas.some(sala => sala.espaco_id === filtros.espaco) && (
+            <Select block={false} aria-label="Filtrar por sala" value={filtros.sala ?? "todas"} onChange={event => setFiltros(atual => ({ ...atual, sala: event.target.value }))} className="h-9 shrink-0 pl-3 pr-8 text-black/60">
+              <option value="todas">Todas as salas</option>
+              {salas.filter(sala => sala.espaco_id === filtros.espaco).map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}
+            </Select>
+          )}
           <Select block={false} aria-label="Filtrar por situação" value={filtros.situacao} onChange={event => setFiltros(atual => ({ ...atual, situacao: event.target.value as FiltrosDaAgenda["situacao"] }))} className="h-9 shrink-0 pl-3 pr-8 text-black/60">
             <option value="todas">Todas as situações</option>
             {(Object.keys(ROTULO_DA_SITUACAO_DA_DATA) as (keyof typeof ROTULO_DA_SITUACAO_DA_DATA)[]).map(situacao => <option key={situacao} value={situacao}>{ROTULO_DA_SITUACAO_DA_DATA[situacao]}</option>)}
           </Select>
-          {comFiltro && <button type="button" onClick={() => setFiltros({ temporada: "todas", situacao: "todas" })} className="h-9 shrink-0 rounded px-2.5 text-[0.75rem] font-medium text-black/50 transition hover:bg-black/[.04] hover:text-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Limpar filtros</button>}
+          {comFiltro && <button type="button" onClick={() => setFiltros(SEM_FILTROS)} className="h-9 shrink-0 rounded px-2.5 text-[0.75rem] font-medium text-black/50 transition hover:bg-black/[.04] hover:text-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Limpar filtros</button>}
         </ListToolbar>
       )}
       <ListContent>
@@ -124,7 +182,7 @@ export function AgendaDaProducao() {
           </ListTableSurface>
         ) : (
           <div className="space-y-6">
-            {(pendencias.length > 0 || proximas.length > 0) && (
+            {(pendencias.length > 0 || proximas.length > 0 || avisos.length > 0) && (
               <section aria-labelledby="hoje-titulo" className="rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <h2 id="hoje-titulo" className="mb-2 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Hoje</h2>
                 <ul className="space-y-1.5">
@@ -132,6 +190,12 @@ export function AgendaDaProducao() {
                     <li key={`p-${item.id}`} className="flex items-baseline gap-2 text-[0.75rem]">
                       <span className="shrink-0 font-medium text-[#B23B3B]">{tipo === "opcao_vencida" ? "Opção vencida" : "Opção vencendo"}</span>
                       <span className="min-w-0 truncate text-black/60">{ROTULO_DO_TIPO_DE_DATA[item.tipo]} de {diaEMes(item.data)}{item.temporada_titulo ? ` · ${item.temporada_titulo}` : ""}</span>
+                    </li>
+                  ))}
+                  {avisos.map(aviso => (
+                    <li key={aviso.chave} className="flex items-baseline gap-2 text-[0.75rem]">
+                      <span className="shrink-0 font-medium text-[#B07A14]">{aviso.rotulo}</span>
+                      <Link href={aviso.href} className="min-w-0 truncate text-black/60 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">{aviso.texto}</Link>
                     </li>
                   ))}
                   {proximas.map(item => (
@@ -145,7 +209,7 @@ export function AgendaDaProducao() {
             )}
             {filtradas.length === 0 ? (
               <ListTableSurface>
-                <ListEmptyState icon={CalendarDays} title="Nenhuma data com esses filtros" filtered onClearFilters={() => setFiltros({ temporada: "todas", situacao: "todas" })} />
+                <ListEmptyState icon={CalendarDays} title="Nenhuma data com esses filtros" filtered onClearFilters={() => setFiltros(SEM_FILTROS)} />
               </ListTableSurface>
             ) : visao !== "lista" ? (
               <CalendarioDaAgenda datas={filtradas} modo={visao} hoje={hoje} />
