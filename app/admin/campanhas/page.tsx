@@ -31,7 +31,7 @@ export default async function AdminCampanhasPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-[#0D0D0D]">Cadastros por campanha</h1>
+        <h1 className="text-xl font-bold text-[#282525]">Cadastros por campanha</h1>
         <p className="text-sm text-black/40 mt-0.5">
           De qual campanha e palavra-chave veio cada cadastro, e a lista de conversões para o Google Ads.
         </p>
@@ -40,8 +40,8 @@ export default async function AdminCampanhasPage() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         {cards.map((card) => (
           <div key={card.rotulo} className="rounded p-5" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
-            <p className="text-[0.6875rem] font-semibold text-black/40 uppercase tracking-wide">{card.rotulo}</p>
-            <p className="text-2xl font-bold text-[#0D0D0D] mt-1 tabular-nums">{card.valor}</p>
+            <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{card.rotulo}</p>
+            <p className={`mt-1 text-2xl font-semibold tabular-nums ${card.valor ? "text-[#282525]" : "text-black/30"}`}>{card.valor}</p>
           </div>
         ))}
       </div>
@@ -49,7 +49,7 @@ export default async function AdminCampanhasPage() {
       <section className="rounded p-6 mb-6" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-[38rem]">
-            <h2 className="text-sm font-bold text-[#0D0D0D]">Enviar ao Google Ads</h2>
+            <h2 className="text-sm font-bold text-[#282525]">Enviar ao Google Ads</h2>
             <ol className="mt-2 space-y-1.5 text-[0.8125rem] leading-5 text-black/55 list-decimal pl-4">
               <li>
                 Na primeira vez, crie em Metas, Conversões, duas ações de importação de cliques com estes nomes:{" "}
@@ -66,7 +66,7 @@ export default async function AdminCampanhasPage() {
           <a
             href="/api/admin/conversoes-google-ads"
             download
-            className="inline-flex shrink-0 items-center gap-2 rounded bg-[#0D0D0D] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2B2828] active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+            className="inline-flex shrink-0 items-center gap-2 rounded bg-[#1C0E33] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2D1A53] active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
           >
             <Download size={15} /> Baixar lista ({paraEnviar})
           </a>
@@ -76,7 +76,7 @@ export default async function AdminCampanhasPage() {
       <section className="rounded" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
         <div className="flex items-center gap-2 px-6 pt-5 pb-3">
           <Megaphone size={15} className="text-black/40" />
-          <h2 className="text-sm font-bold text-[#0D0D0D]">Últimos cadastros com origem</h2>
+          <h2 className="text-sm font-bold text-[#282525]">Últimos cadastros com origem</h2>
         </div>
 
         {usuarios.length === 0 ? (

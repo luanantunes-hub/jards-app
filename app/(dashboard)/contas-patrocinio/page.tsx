@@ -15,6 +15,7 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type ViewMode = "lista" | "carteira";
 type PortfolioLane = "intervir" | "renovar" | "expandir" | "acompanhar";
@@ -52,26 +53,19 @@ const STATUS_LABEL: Record<string, { label: string; bg: string }> = {
   encerrada: { label: "Encerrada", bg: "#D94E4E" },
 };
 
-function diasSemAtividadeCor(dias: number | null): string {
-  if (dias === null) return "rgba(13,13,13,.25)";
-  if (dias <= 30)  return "#2E8932";
-  if (dias <= 60)  return "#B07A14";
-  return "#D94E4E";
+/** Só o atraso pinta o ícone: âmbar de 31 a 60 dias sem atividade, vermelho depois disso. */
+function diasSemAtividadeAlerta(dias: number | null): string | undefined {
+  if (dias === null || dias <= 30) return undefined;
+  return dias <= 60 ? "#B07A14" : "#D94A4A";
 }
 
-function healthMeta(score: number | null, readings: number) {
-  if (score === null || readings === 0) return { label: "Sem leitura", color: "rgba(13,13,13,.35)" };
-  if (score < 44) return { label: "Risco", color: "#D94E4E" };
-  if (score < 64) return { label: "Atenção", color: "#B07A14" };
-  if (score < 84) return { label: "Estável", color: "#2D72B0" };
-  return { label: "Saudável", color: "#2E8932" };
-}
-
-function fmtCurrency(v: number | null): string {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
+/** A leitura fica neutra; só Risco e Atenção pintam o ícone de alerta. */
+function healthMeta(score: number | null, readings: number): { label: string; alerta?: string } {
+  if (score === null || readings === 0) return { label: "Sem leitura" };
+  if (score < 44) return { label: "Risco", alerta: "#D94A4A" };
+  if (score < 64) return { label: "Atenção", alerta: "#B07A14" };
+  if (score < 84) return { label: "Estável" };
+  return { label: "Saudável" };
 }
 
 function fmtDate(d: string | null): string {
@@ -150,13 +144,14 @@ const PORTFOLIO_LANES: Array<{
   key: PortfolioLane;
   label: string;
   description: string;
-  color: string;
+  /** Só a faixa de alerta pinta o ícone; as demais ficam cinza. */
+  alerta?: string;
   icon: typeof HeartPulse;
 }> = [
-  { key: "intervir", label: "Intervir", description: "Risco ou atraso exige ação", color: "#D94E4E", icon: HeartPulse },
-  { key: "renovar", label: "Renovar", description: "Renovação nos próximos 90 dias", color: "#B07A14", icon: RefreshCw },
-  { key: "expandir", label: "Expandir", description: "Parceria pronta para crescer", color: "#2E8932", icon: TrendingUp },
-  { key: "acompanhar", label: "Acompanhar", description: "Relacionamento em curso", color: "#2D72B0", icon: Eye },
+  { key: "intervir", label: "Intervir", description: "Risco ou atraso exige ação", alerta: "#D94A4A", icon: HeartPulse },
+  { key: "renovar", label: "Renovar", description: "Renovação nos próximos 90 dias", icon: RefreshCw },
+  { key: "expandir", label: "Expandir", description: "Parceria pronta para crescer", icon: TrendingUp },
+  { key: "acompanhar", label: "Acompanhar", description: "Relacionamento em curso", icon: Eye },
 ];
 
 function classifyPortfolio(account: Omit<ContaRow, "portfolio_lane" | "portfolio_reason" | "portfolio_action" | "portfolio_deadline" | "portfolio_urgency">) {
@@ -230,32 +225,33 @@ function CustomerPortfolio({ accounts, loading, onOpen }: { accounts: ContaRow[]
             <section key={lane.key} className="flex min-h-[32.5rem] flex-col rounded border border-black/[.08] bg-[#F7F7F5]">
               <header className="border-b border-black/[.07] px-3.5 py-3">
                 <div className="flex items-start justify-between gap-3">
-                  <div><div className="flex items-center gap-1.5"><LaneIcon size={13} style={{ color: lane.color }}/><h2 className="text-[0.75rem] font-bold" style={{ color: lane.color }}>{lane.label}</h2></div><p className="mt-1 text-[0.59375rem] text-black/30">{lane.description}</p></div>
+                  <div><div className="flex items-center gap-1.5"><LaneIcon size={12} strokeWidth={1.75} aria-hidden="true" className={lane.alerta ? "shrink-0" : "shrink-0 text-black/40"} style={lane.alerta ? { color: lane.alerta } : undefined}/><h2 className="text-[0.75rem] font-semibold text-black/75">{lane.label}</h2></div><p className="mt-1 text-[0.59375rem] text-black/30">{lane.description}</p></div>
                   <span className="text-[0.625rem] font-semibold tabular-nums text-black/30">{items.length}</span>
                 </div>
-                <p className="mt-2 text-[0.625rem] tabular-nums text-black/35">{total > 0 ? `${fmtCurrency(total)} na carteira` : "Sem valor registrado"}</p>
+                <p className="mt-2 text-[0.625rem] tabular-nums text-black/35">{total > 0 ? <span title={formatarValorCompleto(total)}>{formatarValorCurto(total)} na carteira</span> : "Sem valor registrado"}</p>
               </header>
               <div className="space-y-2 p-2.5">
                 {items.length === 0 ? (
                   <div className="rounded border border-dashed border-black/10 px-3 py-10 text-center text-[0.65625rem] text-black/25">Nenhum cliente nesta faixa</div>
                 ) : items.map(account => {
                   const companyName = account.empresa_crm?.nome ?? account.nome ?? "Cliente";
+                  const alerta = healthMeta(account.health_score, account.health_readings).alerta;
                   return (
                     <button key={account.id} type="button" onClick={() => onOpen(account.id)} className="w-full rounded border border-black/[.08] bg-white p-3 text-left transition hover:border-black/20 hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
                       <div className="flex items-start gap-2.5">
                         <CompanyLogo nome={companyName} domain={account.empresa_crm?.domain_key} site={account.empresa_crm?.site} size={32} className="shrink-0 border border-black/[.06]"/>
-                        <div className="min-w-0 flex-1"><p className="truncate text-[0.75rem] font-semibold text-black">{companyName}</p><p className="mt-0.5 truncate text-[0.59375rem] text-black/30">{account.nome && account.nome !== companyName ? account.nome : account.empresa_crm?.setor ?? "Cliente"}</p></div>
-                        {account.health_score !== null && <span className="text-[0.625rem] font-bold tabular-nums" style={{ color: account.health_score >= 70 ? "#2E8932" : account.health_score >= 45 ? "#B07A14" : "#D94E4E" }}>{account.health_score}</span>}
+                        <div className="min-w-0 flex-1"><p className="truncate text-[0.75rem] font-semibold text-[#282525]">{companyName}</p><p className="mt-0.5 truncate text-[0.59375rem] text-black/30">{account.nome && account.nome !== companyName ? account.nome : account.empresa_crm?.setor ?? "Cliente"}</p></div>
+                        {account.health_score !== null && <span className="flex shrink-0 items-center gap-1 text-[0.625rem] font-semibold tabular-nums text-[#282525]"><HeartPulse size={12} strokeWidth={1.75} aria-hidden="true" className={alerta ? "shrink-0" : "shrink-0 text-black/40"} style={alerta ? { color: alerta } : undefined}/>{account.health_score}</span>}
                       </div>
                       <div className="mt-3 border-t border-black/[.06] pt-2.5">
-                        <p className="text-[0.625rem] font-semibold" style={{ color: lane.color }}>{account.portfolio_reason}</p>
+                        <p className="text-[0.625rem] font-semibold text-black/55">{account.portfolio_reason}</p>
                         <p className="mt-1 line-clamp-2 text-[0.6875rem] font-medium leading-[1.4] text-black/65">{account.portfolio_action}</p>
                       </div>
                       <div className="mt-2.5 space-y-1.5 text-[0.59375rem] text-black/35">
                         <div className="flex items-center gap-1.5"><CalendarDays size={10}/><span>{account.portfolio_deadline ? fmtDate(account.portfolio_deadline) : "Sem prazo definido"}</span></div>
                         <div className="flex items-center gap-1.5"><UserRound size={10}/><span className="truncate">{account.proxima_atividade?.responsavel ?? account.responsavel_nome ?? "Sem responsável"}</span></div>
                       </div>
-                      <div className="mt-2.5 flex items-center justify-between border-t border-black/[.05] pt-2"><span className="text-[0.5625rem] text-black/25">{account.n_contratos} {account.n_contratos === 1 ? "contrato" : "contratos"}</span><span className="text-[0.625rem] font-bold tabular-nums text-black/55">{fmtCurrency(account.valor_total)}</span></div>
+                      <div className="mt-2.5 flex items-center justify-between border-t border-black/[.05] pt-2"><span className="text-[0.5625rem] text-black/25">{account.n_contratos} {account.n_contratos === 1 ? "contrato" : "contratos"}</span><span className="text-[0.625rem] font-semibold tabular-nums text-black/55" title={account.valor_total ? formatarValorCompleto(account.valor_total) : undefined}>{account.valor_total ? formatarValorCurto(account.valor_total) : "—"}</span></div>
                     </button>
                   );
                 })}
@@ -450,12 +446,10 @@ export default function ContasPatrocinioPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <ListPageHeader eyebrow="Gestão da carteira" title="Clientes" summary={!loading&&<><ListSummary strong={stats.ativas} tone="#2E8932">ativas</ListSummary><ListSummary strong={stats.renovacao} tone="#B07A14">renovações próximas</ListSummary><ListSummary strong={stats.emRisco} tone="#D94E4E">em atenção</ListSummary></>} actions={
+      <ListPageHeader secao="clientes" eyebrow="Gestão da carteira" title="Clientes" summary={!loading&&<><ListSummary strong={stats.ativas}>ativas</ListSummary><ListSummary strong={stats.renovacao}>renovações próximas</ListSummary><ListSummary strong={stats.emRisco} icone={AlertTriangle} alerta={stats.emRisco > 0 ? "vermelho" : undefined}>em atenção</ListSummary></>} actions={
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowNovoCliente(true)} className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-black rounded hover:bg-black/5 transition">
-            <Plus size={13} /> Novo cliente
-          </button>
           <EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/>
+          <PrimaryListAction onClick={() => setShowNovoCliente(true)}><Plus size={13} aria-hidden="true" /> Novo cliente</PrimaryListAction>
         </div>
       }/>
 
@@ -552,7 +546,7 @@ export default function ContasPatrocinioPage() {
                           className="flex-shrink-0"
                         />
                         <div className="min-w-0">
-                          <span className="text-[0.8125rem] font-semibold text-[#0D0D0D] truncate block">
+                          <span className="text-[0.8125rem] font-semibold text-[#282525] min-w-0 break-words block">
                             {c.empresa_crm?.nome || "—"}
                           </span>
                         </div>
@@ -574,10 +568,10 @@ export default function ContasPatrocinioPage() {
                     {/* Saúde da parceria */}
                     <td className="px-5 py-3.5">
                       <span
-                        className="text-[0.625rem] font-semibold uppercase tracking-wide whitespace-nowrap"
-                        style={{ color: health.color }}
+                        className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[0.75rem] font-medium ${c.health_score === null || c.health_readings === 0 ? "text-black/30" : "text-black/60"}`}
                         title={c.health_score === null ? "Saúde ainda não avaliada" : `Score de saúde: ${c.health_score} de 100`}
                       >
+                        {health.alerta && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: health.alerta }} />}
                         {health.label}
                       </span>
                     </td>
@@ -586,7 +580,7 @@ export default function ContasPatrocinioPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex min-w-0 items-center gap-1.5 text-[0.75rem] text-black/55">
                         <UserRound size={12} className="shrink-0 text-black/25" />
-                        <span className="truncate">{c.responsavel_nome ?? "Sem responsável"}</span>
+                        <span className="min-w-0 break-words">{c.responsavel_nome ?? "Sem responsável"}</span>
                       </div>
                     </td>
 
@@ -596,16 +590,20 @@ export default function ContasPatrocinioPage() {
                     </td>
 
                     {/* Valor Total */}
-                    <td className="px-5 py-3.5 text-[0.75rem] font-bold text-black/75">
-                      {fmtCurrency(c.valor_total)}
+                    <td className="px-5 py-3.5 text-[0.75rem] font-semibold tabular-nums text-black/75" title={c.valor_total ? formatarValorCompleto(c.valor_total) : undefined}>
+                      {c.valor_total ? formatarValorCurto(c.valor_total) : "—"}
                     </td>
 
                     {/* Próxima Renovação */}
                     <td className="px-5 py-3.5">
                       {c.proxima_renovacao ? (
                         <div className="flex items-center gap-1.5">
-                          {renovWarning && <AlertTriangle size={11} className="text-[#B07A14]" />}
-                          <span className={`text-[0.75rem] ${renovWarning ? "font-bold text-[#B07A14]" : "text-black/40"}`}>
+                          {renovWarning && (
+                            <span role="img" className="shrink-0" title="Renovação próxima" aria-label="Renovação próxima">
+                              <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="text-[#B07A14]" />
+                            </span>
+                          )}
+                          <span className="text-[0.75rem] tabular-nums text-black/60">
                             {fmtDate(c.proxima_renovacao)}
                           </span>
                         </div>
@@ -616,11 +614,17 @@ export default function ContasPatrocinioPage() {
 
                     {/* Última interação */}
                     <td className="px-5 py-3.5">
-                      {c.dias_sem_atividade !== null ? (
-                        <span className="text-[0.75rem] font-semibold" style={{ color: diasSemAtividadeCor(c.dias_sem_atividade) }}>
-                          {c.dias_sem_atividade === 0 ? "Hoje" : `há ${c.dias_sem_atividade} dias`}
-                        </span>
-                      ) : (
+                      {c.dias_sem_atividade !== null ? (() => {
+                        const alerta = diasSemAtividadeAlerta(c.dias_sem_atividade);
+                        return (
+                          <span className="inline-flex items-center gap-1.5">
+                            {alerta && <Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: alerta }} />}
+                            <span className="text-[0.75rem] font-medium tabular-nums text-black/60">
+                              {c.dias_sem_atividade === 0 ? "Hoje" : `há ${c.dias_sem_atividade} dias`}
+                            </span>
+                          </span>
+                        );
+                      })() : (
                         <span className="text-black/25 text-[0.75rem]">Sem registro</span>
                       )}
                     </td>

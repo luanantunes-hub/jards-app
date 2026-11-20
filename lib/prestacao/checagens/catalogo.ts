@@ -12,7 +12,11 @@ import type { EvidenciaParaChecar } from "../evidencias";
 import type { LinhaDistribuicao } from "../distribuicao";
 import type { BemParaChecar } from "../bens";
 import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
-import type { PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
+import type { BeneficiadoParaChecar } from "../beneficiarios";
+import type { TurmaDaGrade } from "../grade";
+import type { CargoDaGrade } from "../grade-rh";
+import type { ProducaoDoCmd } from "../cmd";
+import type { ManifestacaoEsportiva, ModalidadeSaude, PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoDevolucao, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
 export const SEVERIDADES = ["bloqueio", "alerta", "justificativa", "info"] as const;
@@ -28,7 +32,7 @@ export const STATUS_VERIFICACAO = ["aberta", "justificada", "dispensada", "resol
 export type StatusVerificacao = (typeof STATUS_VERIFICACAO)[number];
 
 /** A aba da prestação onde a pendência se resolve. */
-export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao" | "bens" | "divulgacao";
+export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao" | "bens" | "divulgacao" | "beneficiarios" | "carimbos" | "devolucoes";
 
 type DoCatalogo = {
   titulo: string;
@@ -63,6 +67,12 @@ export const CATALOGO_CHECAGENS = {
   DOC_DESCRICAO_VAGA: { titulo: "Descrição vaga no documento", grupo: "despesa", resultado: "revisar", destino: "comprovantes", regras: ["em_nome_do_proponente"] },
   DOC_RECIBO_INCOMPLETO: { titulo: "Recibo incompleto", grupo: "despesa", resultado: "revisar", destino: "comprovantes" },
   DESPESA_VEDADA: { titulo: "Despesa possivelmente vedada", grupo: "despesa", resultado: "revisar", destino: "comprovantes", dimensao: "despesas" },
+  // Análise por resultados (P9.2)
+  SALDO_DO_ENCERRAMENTO: { titulo: "Saldo do encerramento", grupo: "prestacao", resultado: "revisar", destino: "devolucoes", dimensao: "contas" },
+  ANALISE_FINANCEIRA_PELA_META: { titulo: "Meta abaixo do previsto leva ao exame do financeiro", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["analise_por_resultados"] },
+  // Obras vedadas (P9.1)
+  ITEM_DE_OBRA: { titulo: "Item do orçamento com cara de obra", grupo: "orcamento", resultado: "revisar", destino: "orcamento", dimensao: "despesas" },
+  DESPESA_DE_OBRA: { titulo: "Fornecedor da construção", grupo: "despesa", resultado: "revisar", destino: "comprovantes", dimensao: "despesas" },
   // Fornecedor (P2.3)
   FORNECEDOR_DOCUMENTO: { titulo: "CPF ou CNPJ do fornecedor", grupo: "fornecedor", resultado: "nao_conforme", destino: "comprovantes" },
   FORNECEDOR_NAO_CONSULTADO: { titulo: "Fornecedor sem consulta na Receita", grupo: "fornecedor", resultado: "nao_calculavel", destino: "comprovantes" },
@@ -90,10 +100,42 @@ export const CATALOGO_CHECAGENS = {
   PAGAMENTO_SEM_LANCAMENTO: { titulo: "Pagamento sem débito no extrato", grupo: "conciliacao", resultado: "revisar", destino: "conciliacao", regras: ["numero_do_pagamento"] },
   NUMERO_PAGAMENTO_DIVERGENTE: { titulo: "Número do pagamento diferente do extrato", grupo: "conciliacao", resultado: "nao_conforme", destino: "conciliacao", regras: ["numero_do_pagamento"] },
   EXTRATO_AUSENTE: { titulo: "Extrato não importado", grupo: "conciliacao", resultado: "nao_calculavel", destino: "extrato", dimensao: "contas" },
+  // Regras da conta e do documento que a ANCINE cobra (P7.1); valem para todo regime que as traz.
+  TARIFA_GLOSAVEL: { titulo: "Tarifa bancária que pode ser glosada", grupo: "conciliacao", resultado: "revisar", destino: "extrato", dimensao: "contas" },
+  DOC_EMISSAO_POS_DEBITO: { titulo: "Documento emitido muito depois do débito", grupo: "despesa", resultado: "nao_conforme", destino: "comprovantes", regras: ["emissao_30_dias"] },
+  // Contas pelo extrato (P8.1, a partir da LIE).
+  SAQUE_NO_EXTRATO: { titulo: "Saque em dinheiro na conta do projeto", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", dimensao: "pagamentos" },
+  CAPTADO_ACIMA_DO_AUTORIZADO: { titulo: "Captação acima do autorizado", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", regras: ["captar_acima", "captacao_acima"] },
+  // Captação e liberação da execução (P9.1)
+  EXECUCAO_SEM_CAPTACAO_MINIMA: { titulo: "Pagamentos sem a captação que libera a execução", grupo: "pagamento", resultado: "nao_conforme", destino: "extrato", dimensao: "contas" },
+  READEQUACAO_DA_CAPTACAO: { titulo: "Readequação pela captação", grupo: "orcamento", resultado: "revisar", destino: "orcamento", dimensao: "contas" },
+  CAPTACAO_INSUFICIENTE: { titulo: "Captação abaixo do mínimo", grupo: "prestacao", resultado: "nao_conforme", destino: "extrato", dimensao: "contas" },
+  APORTE_FORA_DA_CAPTACAO: { titulo: "Aporte fora da conta de captação", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", regras: ["deposito_identificado"] },
+  DEBITO_FORA_DA_VIGENCIA: { titulo: "Débito fora da vigência", grupo: "conciliacao", resultado: "nao_conforme", destino: "conciliacao", dimensao: "despesas" },
+  // Nível da manifestação esportiva e CRC (P8.4, LIE).
+  NIVEL_ESPORTIVO_AUSENTE: { titulo: "Nível da manifestação esportiva", grupo: "prestacao", resultado: "nao_calculavel", destino: "visao_geral", regras: ["elaboracao_por_nivel", "limite_de_captacao"] },
+  ELABORACAO_ACIMA_DO_NIVEL: { titulo: "Elaboração e captação acima do limite do nível", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento", regras: ["elaboracao_por_nivel"] },
+  CAPTACAO_ACIMA_DO_NIVEL: { titulo: "Captação acima do limite do nível", grupo: "orcamento", resultado: "nao_conforme", destino: "visao_geral", regras: ["limite_de_captacao"] },
+  BOLSA_FORA_DA_EXCELENCIA: { titulo: "Bolsa fora do nível excelência", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento", regras: ["bolsa_auxilio"] },
+  CRC_EXCELENCIA: { titulo: "CRC no nível excelência", grupo: "prestacao", resultado: "nao_conforme", destino: "visao_geral", regras: ["crc_excelencia"] },
+  // Beneficiados (P8.5, LIE).
+  BENEFICIADOS_AUSENTES: { titulo: "Relação de beneficiados", grupo: "objeto", resultado: "nao_calculavel", destino: "beneficiarios", regras: ["beneficiados"] },
+  BENEFICIADO_SEM_SEXO: { titulo: "Beneficiado sem sexo", grupo: "objeto", resultado: "revisar", destino: "beneficiarios", regras: ["beneficiados"] },
+  BENEFICIADO_REPETIDO: { titulo: "Beneficiado repetido", grupo: "objeto", resultado: "revisar", destino: "beneficiarios", regras: ["beneficiados"] },
+  REDE_PUBLICA_ABAIXO_DO_MINIMO: { titulo: "Rede pública abaixo do mínimo", grupo: "objeto", resultado: "nao_conforme", destino: "beneficiarios", regras: ["rede_publica"] },
+  // Grade de RH (P8.7): cargos × itens de RH × quem foi pago.
+  RH_SEM_GRADE: { titulo: "Item de RH sem cargo na grade", grupo: "orcamento", resultado: "nao_calculavel", destino: "atividades" },
+  RH_ACIMA_DA_GRADE: { titulo: "Mais pessoas pagas que a grade de RH", grupo: "pagamento", resultado: "revisar", destino: "atividades" },
+  RH_FORMA_DE_CONTRATACAO: { titulo: "Pagamento fora da forma de contratação", grupo: "pagamento", resultado: "revisar", destino: "atividades", regras: ["contratacao_de_pessoal"] },
+  // Carimbo e atesto das notas (P8.8).
+  ATESTO_AUSENTE: { titulo: "Notas sem atesto de recebimento", grupo: "despesa", resultado: "nao_calculavel", destino: "carimbos", regras: ["carimbo_e_atesto"] },
+  ATESTO_FORA_DA_DATA: { titulo: "Atesto fora da data", grupo: "despesa", resultado: "revisar", destino: "carimbos", regras: ["carimbo_e_atesto"] },
   // Orçamento (P1.6, P1.7)
   ITEM_SEM_SALDO: { titulo: "Item sem saldo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   TETO_GRUPO_CUSTO: { titulo: "Teto de grupo de custo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   ALTERACAO_PENDENTE: { titulo: "Alteração do orçamento sem decisão", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento", regras: ["sem_readequacao_em_analise"] },
+  // Contrapartida (P7.2): o mínimo do regime sobre o orçamento global, comprovado com despesas.
+  CONTRAPARTIDA_MINIMA: { titulo: "Contrapartida abaixo do mínimo", grupo: "orcamento", resultado: "nao_conforme", destino: "comprovantes", regras: ["contrapartida_minima"] },
   // Objeto (P3.1): metas propostas × resultados e situação de cada local.
   OBJETO_SEM_METAS: { titulo: "Objeto sem metas", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["metas_resultados"], dimensao: "objeto" },
   META_SEM_RESULTADO: { titulo: "Meta sem resultado", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["metas_resultados"], dimensao: "objeto" },
@@ -128,6 +170,12 @@ export const CATALOGO_CHECAGENS = {
   PECA_MARCA_FALTANDO: { titulo: "Marca faltando na peça", grupo: "objeto", resultado: "nao_conforme", destino: "divulgacao", regras: ["marcas_em_todas_as_pecas", "selo_a_cada_insercao", "logotipo_do_ms", "bandeira", "onde_aplicar"], dimensao: "divulgacao" },
   PECA_MARCA_NO_DEFESO: { titulo: "Marca do Governo Federal no defeso", grupo: "objeto", resultado: "nao_conforme", destino: "divulgacao", dimensao: "divulgacao" },
   PECA_SEM_AMOSTRA: { titulo: "Peça sem amostra", grupo: "objeto", resultado: "nao_calculavel", destino: "divulgacao", regras: ["comprovacao"], dimensao: "divulgacao" },
+  // Produção no CMD e dado de saúde (P9.5).
+  CMD_SEM_PRODUCAO: { titulo: "Produção no CMD", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["cmd"] },
+  CMD_DIFERE_DA_META: { titulo: "Meta diferente da produção no CMD", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["cmd"] },
+  CMD_FORA_DA_EXECUCAO: { titulo: "Produção no CMD fora da execução", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["cmd"] },
+  DADO_CLINICO_BENEFICIADO: { titulo: "Dado de saúde na relação de beneficiados", grupo: "objeto", resultado: "revisar", destino: "beneficiarios", regras: ["dados_de_pacientes"] },
+  DADO_CLINICO_EVIDENCIA: { titulo: "Documento clínico nas evidências", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["dados_de_pacientes"] },
   // Dados que faltam para calcular
   DATAS_DA_PRESTACAO: { titulo: "Datas da prestação", grupo: "prestacao", resultado: "nao_calculavel", destino: "visao_geral" },
   LIMITE_SEM_BASE: { titulo: "Limite sem base de cálculo", grupo: "prestacao", resultado: "nao_calculavel", destino: "extrato", dimensao: "fornecedores" },
@@ -168,7 +216,7 @@ export type Achado = {
 
 export type DespesaDoEstado = DespesaParaChecar &
   Pick<PrestacaoComprovante, "id" | "nome_arquivo" | "status" | "no_id"> &
-  Partial<Pick<PrestacaoComprovante, "justificativa" | "valor_liquido" | "motivos_ia" | "serie">>;
+  Partial<Pick<PrestacaoComprovante, "justificativa" | "valor_liquido" | "motivos_ia" | "serie" | "contrapartida" | "atestado_em" | "descricao_servico">>;
 
 export type ItemDoEstado = { id: string; nome: string; cnaes: readonly string[]; cnaesDe: { id: string; nome: string } | null };
 
@@ -177,18 +225,26 @@ export type PagamentoDoEstado = PagamentoParaChecar & Pick<PrestacaoPagamento, "
 /** Marcos da prestação que as checagens de período usam (P1.2). */
 export type DatasDaPrestacao = {
   data_aprovacao?: string | null;
+  /** Assinatura do Termo de Compromisso (LIE): início da vigência das despesas. */
+  data_termo?: string | null;
   data_liberacao?: string | null;
   data_inicio_execucao?: string | null;
   data_fim_execucao?: string | null;
+  /** P9.1: fim da captação, de onde conta o prazo da readequação. */
+  data_fim_captacao?: string | null;
 };
 
 export type AlteracaoDoEstado = { id: string; numero: number; status: string; solicitada_em: string | null; tipo?: string; justificativa?: string | null; decidida_em?: string | null };
 
 export type MetaDoEstado = Pick<PrestacaoMeta, "id" | "descricao" | "unidade" | "previsto" | "realizado" | "justificativa">;
 export type LocalDoEstado = Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municipio" | "status">
-  & Partial<Pick<PrestacaoLocal, "latitude" | "longitude" | "espaco" | "inicio" | "fim" | "justificativa">>;
+  & Partial<Pick<PrestacaoLocal, "latitude" | "longitude" | "espaco" | "inicio" | "fim" | "justificativa" | "endereco" | "responsavel" | "telefone">>;
 export type AtividadeDoEstado = Pick<PrestacaoAtividade, "id" | "titulo" | "data_realizacao" | "data_inicio" | "data_fim" | "local_id">
-  & Partial<Pick<PrestacaoAtividade, "meta_id" | "status_realizacao" | "descricao" | "democratizacao_descricao" | "acessibilidade_descricao" | "justificativa_nao_realizacao">>;
+  & Partial<Pick<PrestacaoAtividade, "meta_id" | "status_realizacao" | "descricao" | "democratizacao_descricao" | "acessibilidade_descricao" | "justificativa_nao_realizacao" | "local" | "cidade" | "estado" | "meta_prevista">>;
+
+export type DevolucaoDoEstado = Pick<PrestacaoDevolucao, "motivo" | "situacao" | "valor_principal" | "valor_atualizado" | "valor_pago" | "pago_em" | "storage_path">;
+/** O saldo final da importação mais recente da conta que trouxe saldo. */
+export type SaldoDaConta = { conta_id: string; saldo: number; data: string };
 
 export type EstadoDaPrestacao = {
   regime: RegimeNormativo | null;
@@ -198,7 +254,25 @@ export type EstadoDaPrestacao = {
   /** Itens da versão em uso do orçamento, com os CNAEs que valem para cada um. */
   itens: readonly ItemDoEstado[];
   pagamentos: readonly PagamentoDoEstado[];
-  lancamentos: readonly LancamentoParaConciliar[];
+  /** Tipo de cada conta do projeto (P8.1): captação, movimento… */
+  contas?: readonly { id: string; tipo: string }[];
+  /** LIE (P8.4): nível da manifestação esportiva e validade da CRC. */
+  manifestacaoEsportiva?: ManifestacaoEsportiva | null;
+  crcValidade?: string | null;
+  /** P8.5: relação de beneficiados. */
+  beneficiarios?: readonly BeneficiadoParaChecar[];
+  /** P8.6: turmas da grade semanal. */
+  turmas?: readonly TurmaDaGrade[];
+  /** P8.7: cargos da grade horária dos recursos humanos. */
+  cargos?: readonly CargoDaGrade[];
+  /** P9.4: guias de devolução e o último saldo informado de cada conta (pela importação do extrato). */
+  devolucoes?: readonly DevolucaoDoEstado[];
+  saldos?: readonly SaldoDaConta[];
+  /** P9.5: modalidade do projeto da saúde e a produção registrada no CMD. */
+  modalidadeSaude?: ModalidadeSaude | null;
+  producaoCmd?: readonly ProducaoDoCmd[];
+  /** A conta vem junto para as planilhas por conta (P7.3). */
+  lancamentos: readonly (LancamentoParaConciliar & { conta_id?: string })[];
   /** P2.8: datas da prestação, nós da versão em uso e alterações do orçamento. */
   prestacao?: DatasDaPrestacao;
   nos?: readonly NoOrcamento[];
@@ -218,6 +292,11 @@ export type EstadoDaPrestacao = {
   pecas?: readonly PecaParaChecar[];
   defesos?: readonly DefesoEleitoral[];
   hoje?: Date;
+  /** P7.4: as outras prestações da mesma obra (ANCINE) e as despesas delas, para a concentração somada. */
+  obra?: {
+    prestacoes: readonly { id: string; titulo: string; identificador: string | null }[];
+    despesas: readonly (DespesaDoEstado & { prestacao_id: string })[];
+  };
 };
 
 export const centavos = (v: unknown) => Math.round((Number(v) || 0) * 100);

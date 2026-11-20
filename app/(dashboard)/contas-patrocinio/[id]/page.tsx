@@ -29,6 +29,7 @@ import { NegotiationsTable, type CaptacaoRow } from "@/components/company/Negoti
 import { InscricoesTable, type EditalRow } from "@/components/company/InscricoesTable";
 import { FilterButton } from "@/components/ui/FilterControls";
 import type { SaudeConta } from "@/lib/supabase/types";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 const HEALTH_WEIGHT: Record<SaudeConta["estado"], number> = {
   saudavel: 90,
@@ -36,11 +37,6 @@ const HEALTH_WEIGHT: Record<SaudeConta["estado"], number> = {
   risco: 24,
   sem_dados: 40,
 };
-
-function money(value: number | null) {
-  if (value == null) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
-}
 
 type AccountDetail = {
   id: string;
@@ -161,19 +157,19 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const coverageRatio = scorecardHealth.total ? scorecardHealth.evaluated / scorecardHealth.total : 0;
   const coverageLabel = !scorecardHealth.evaluated ? "Sem leitura" : coverageRatio < .5 ? "Leitura inicial" : coverageRatio < .8 ? "Leitura parcial" : "Leitura completa";
   const nextRenewal = contracts.filter(contract => contract.proxima_renovacao).sort((a, b) => String(a.proxima_renovacao).localeCompare(String(b.proxima_renovacao)))[0]?.proxima_renovacao ?? null;
-  const contractedValue = account.valor_total > 0 ? money(account.valor_total) : "Não informado";
+  const contractedValue = account.valor_total > 0 ? formatarValorCurto(account.valor_total) : "Não informado";
   const activeAgencies = [...new Map(agencyParticipations.filter(item => item.status === "ativa" && item.captador).map(item => [item.captador_id, item.captador!])).values()];
   const agencyLabel = !activeAgencies.length ? "Sem agência" : activeAgencies.length === 1 ? activeAgencies[0].nome : `${activeAgencies[0].nome} +${activeAgencies.length - 1}`;
 
   return <div className="min-h-full">
     <header>
       <div className="mx-auto max-w-pagina px-4 pb-5 pt-6 sm:px-6 lg:px-10 lg:pt-8">
-      <Link href="/contas-patrocinio" className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-black/35 transition hover:text-black"><ArrowLeft size={13}/>Clientes</Link>
+      <Link href="/contas-patrocinio" className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-black/35 transition hover:text-[#282525]"><ArrowLeft size={13}/>Clientes</Link>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
           <CompanyLogo nome={account.empresa_crm?.nome ?? account.nome ?? "Cliente"} domain={account.empresa_crm?.domain_key} site={account.empresa_crm?.site} size={48} className="rounded"/>
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2.5"><h1 className="truncate text-[1.5rem] font-semibold tracking-[-.03em] text-[#0D0D0D]">{displayName}</h1></div>
+            <div className="flex flex-wrap items-center gap-2.5"><h1 className="truncate text-[1.5rem] font-semibold tracking-[-.03em] text-[#282525]">{displayName}</h1></div>
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.75rem] text-black/40">{!repeatedCompanyName && companyName && <Link href={`/empresas-crm/${account.empresa_crm_id}`} className="inline-flex items-center gap-1 text-black/55 transition hover:text-[#7259B5]">{companyName}<ArrowUpRight size={10}/></Link>}{account.empresa_crm?.setor && <span>{!repeatedCompanyName && companyName ? "· " : ""}{account.empresa_crm.setor}</span>}{(account.empresa_crm?.site || account.empresa_crm?.domain_key) && <a href={(() => { const u = account.empresa_crm?.site || account.empresa_crm?.domain_key || ""; return u.startsWith("http") ? u : `https://${u}`; })()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 transition hover:text-[#7259B5]" title={account.empresa_crm?.site || account.empresa_crm?.domain_key || ""}><Globe size={11}/>Website</a>}</div>
           </div>
         </div>
@@ -184,10 +180,10 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
 
       <section className="mt-6 grid gap-px bg-black/[.07] min-[480px]:grid-cols-2 xl:grid-cols-[13.75rem_repeat(4,minmax(0,1fr))]" aria-label="Resumo da parceria">
         <div className="flex min-h-[7rem] items-center justify-center bg-white px-4 py-3"><RelationshipScoreGauge score={healthScore} label="Saúde da parceria" variant="health" compact/></div>
-        <SummaryMetric label="Qualidade da leitura" value={coverageLabel} detail={scorecardHealth.total ? `${scorecardHealth.evaluated} de ${scorecardHealth.total} dimensões avaliadas` : "Avalie os scorecards"}/>
-        <SummaryMetric label="Valor contratado" value={contractedValue}/>
-        <SummaryMetric label="Próxima renovação" value={nextRenewal ? new Date(`${nextRenewal}T12:00:00`).toLocaleDateString("pt-BR") : "Sem previsão"}/>
-        <SummaryMetric label="Agência de captação" value={agencyLabel} className="min-[480px]:col-span-2 xl:col-span-1"/>
+        <SummaryMetric label="Qualidade da leitura" value={coverageLabel} vazio={!scorecardHealth.evaluated} detail={scorecardHealth.total ? `${scorecardHealth.evaluated} de ${scorecardHealth.total} dimensões avaliadas` : "Avalie os scorecards"}/>
+        <SummaryMetric label="Valor contratado" value={contractedValue} title={account.valor_total > 0 ? formatarValorCompleto(account.valor_total) : undefined} vazio={!(account.valor_total > 0)}/>
+        <SummaryMetric label="Próxima renovação" value={nextRenewal ? new Date(`${nextRenewal}T12:00:00`).toLocaleDateString("pt-BR") : "Sem previsão"} vazio={!nextRenewal}/>
+        <SummaryMetric label="Agência de captação" value={agencyLabel} vazio={!activeAgencies.length} className="min-[480px]:col-span-2 xl:col-span-1"/>
       </section>
       </div>
     </header>
@@ -239,8 +235,8 @@ function calculateHealth(rows: SaudeConta[]) {
   return Math.round(rows.reduce((total, row) => total + HEALTH_WEIGHT[row.estado], 0) / rows.length);
 }
 
-function SummaryMetric({label,value,detail,className=""}:{label:string;value:string;detail?:string;className?:string}) {
-  return <div className={`flex min-h-[7rem] flex-col justify-center bg-white px-5 py-4 ${className}`}><p className="text-[0.625rem] font-medium text-black/30">{label}</p><p className="mt-1.5 text-[1rem] font-semibold tracking-[-.02em] text-black/70">{value}</p>{detail && <p className="mt-1 text-[0.625rem] text-black/30">{detail}</p>}</div>;
+function SummaryMetric({label,value,detail,title,vazio=false,className=""}:{label:string;value:string;detail?:string;title?:string;vazio?:boolean;className?:string}) {
+  return <div className={`flex min-h-[7rem] flex-col justify-center bg-white px-5 py-4 ${className}`}><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p><p className={`mt-1.5 text-[1rem] font-semibold tabular-nums tracking-[-.02em] ${vazio ? "text-black/30" : "text-[#282525]"}`} title={title}>{value}</p>{detail && <p className="mt-1 text-[0.625rem] text-black/30">{detail}</p>}</div>;
 }
 
 function ClientNegotiationsHistory({ rows }: { rows: NegotiationHistoryRow[] }) {

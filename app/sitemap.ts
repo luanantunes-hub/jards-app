@@ -6,8 +6,12 @@ const BASE_URL = "https://jards.com.br";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, changeFrequency: "monthly", priority: 1 },
-    { url: `${BASE_URL}/blog`, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${BASE_URL}/publicacoes`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE_URL}/incentivadores`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE_URL}/crm`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE_URL}/precos`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE_URL}/prestacao-de-contas`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE_URL}/ticketeria`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/termos`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${BASE_URL}/privacidade`, changeFrequency: "yearly", priority: 0.3 },
   ];
@@ -20,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const postRoutes: MetadataRoute.Sitemap = ((posts ?? []) as { slug: string; publicado_em: string | null }[]).map(
     (post) => ({
-      url: `${BASE_URL}/blog/${post.slug}`,
+      url: `${BASE_URL}/publicacoes/${post.slug}`,
       lastModified: post.publicado_em ?? undefined,
       changeFrequency: "monthly",
       priority: 0.6,

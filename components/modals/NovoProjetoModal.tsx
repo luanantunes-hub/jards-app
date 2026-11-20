@@ -315,8 +315,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-6 sm:pt-10"
-        style={{ background: "rgba(0,0,0,.45)" }}
+        className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-6 sm:pt-10 veu"
         onClick={showNovoProponente ? undefined : onClose}
         aria-hidden={showNovoProponente || undefined}
       >
@@ -324,17 +323,17 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="bg-white rounded shadow-2xl w-full flex flex-col"
+          className="folha-desce folha-vidro w-full flex flex-col max-h-[96dvh]"
           style={{ maxWidth: "37.5rem", maxHeight: "calc(100vh - 48px)" }}
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
-          <header className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <header className="flex items-center justify-between px-6 py-5 sm:px-8 sm:py-6 border-b flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-black">
+              <span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-[#282525]">
                 <FolderOpen size={16} />
               </span>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">{editData ? "Editar projeto" : "Novo projeto"}</h2>
+              <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">{editData ? "Editar projeto" : "Novo projeto"}</h2>
             </div>
             <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.06] transition">
               <X size={15} className="text-black/40" />
@@ -353,7 +352,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                 placeholder="Nome do projeto"
                 value={nome}
                 onChange={e => setNome(e.target.value)}
-                className="mb-4 w-full rounded border border-black/[.12] px-3 py-2.5 text-[0.8125rem] font-medium text-black outline-none placeholder:text-black/30 focus:border-black/25 transition"
+                className="mb-4 w-full rounded border border-black/[.12] px-3 py-2.5 text-[0.8125rem] font-medium text-[#282525] outline-none placeholder:text-black/30 focus:border-black/25 transition"
               />
               <input ref={logoInputRef} type="file" accept="image/png,image/webp" className="hidden" onChange={e => handleLogoChange(e.target.files?.[0])} />
               <IdentityEditor
@@ -382,7 +381,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                   value={descricao}
                   onChange={e => setDescricao(e.target.value)}
                   rows={3}
-                  className="w-full resize-none rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition"
+                  className="w-full resize-none rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
@@ -432,7 +431,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                     value={proponenteQuery}
                     onChange={e => { setProponenteQuery(e.target.value); setProponenteId(null); setProponenteNome(""); setProponenteOpen(true); }}
                     onFocus={() => setProponenteOpen(true)}
-                    className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none"
+                    className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-[#282525] outline-none"
                   />
                   {proponenteId && (
                     <button onClick={e => { e.stopPropagation(); setProponenteId(null); setProponenteNome(""); setProponenteQuery(""); }}
@@ -440,11 +439,11 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                   )}
                 </div>
                 {proponenteOpen && (
-                  <div className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded border bg-white shadow-lg" style={{ borderColor: "rgba(13,13,13,.12)" }}>
+                  <div className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded bg-white border elevacao-1">
                     {proponenteOptions.map(opt => (
                       <button key={opt.id} onMouseDown={e => { e.preventDefault(); selectProponente(opt); }}
                         className="w-full px-3 py-2.5 text-left text-[0.8125rem] transition hover:bg-black/[0.04]">
-                        <span className="font-medium text-black">{opt.nome}</span>
+                        <span className="font-medium text-[#282525]">{opt.nome}</span>
                         {(opt.cidade || opt.estado) && (
                           <span className="ml-1.5 text-[0.6875rem] text-black/35">{[opt.cidade, opt.estado].filter(Boolean).join(", ")}</span>
                         )}
@@ -530,7 +529,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                     <div className="flex justify-end">
                       <button type="button" onClick={addIncentivoLocal}
                         disabled={!incentivoNome.trim() || !incentivoEstado || (incentivoEscopo === "municipal" && !incentivoCidade.trim())}
-                        className="rounded bg-[#2E8932] px-3 py-1.5 text-[0.625rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-35">
+                        className="rounded acao-salvar px-3 py-1.5 text-[0.625rem] font-semibold text-white transition disabled:opacity-35">
                         Adicionar
                       </button>
                     </div>
@@ -553,14 +552,14 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
           </main>
 
           {/* Footer */}
-          <footer className="flex flex-shrink-0 items-center justify-between border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex flex-shrink-0 items-center justify-between border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {erro ? <p role="alert" className="mr-4 min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
             <div className="ml-auto flex flex-shrink-0 items-center gap-2">
               <button onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">
                 Cancelar
               </button>
               <button onClick={handleSalvar} disabled={saving}
-                className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
+                className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
                 <Save size={12} /> {saving ? "Salvando…" : "Salvar projeto"}
               </button>
             </div>

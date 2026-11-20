@@ -9,8 +9,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Check, Copy } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Copy, FileText } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import {
@@ -24,12 +25,14 @@ import {
   type Paragrafo,
   type SecaoDoRelatorio,
 } from "@/lib/prestacao/relatorio-objeto";
+import { etapaSugerida, type EtapaDoFormulario } from "@/lib/prestacao/formulario-lie";
+import { definida } from "@/lib/prestacao/regimes";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const CABECALHO = "px-3 py-2 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] text-black/70 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:text-black/35 active:scale-[.98]";
-const SALVAR = "h-9 rounded bg-[#2E8932] px-4 text-[0.6875rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:opacity-50 active:scale-[.98]";
+const SALVAR = "h-9 rounded acao-salvar px-4 text-[0.6875rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:opacity-50 active:scale-[.98]";
 
 const CAMINHO: Record<FonteDoDado["aba"], string> = {
   visao_geral: "", objeto: "/objeto", atividades: "/atividades", distribuicao: "/distribuicao", bens: "/bens", divulgacao: "/divulgacao", orcamento: "/orcamento", envio: "/envio",
@@ -162,10 +165,15 @@ function Secao({ secao, modelo, prestacaoId, podeEditar, guardar }: { secao: Sec
     <section className="rounded border bg-white" style={BORDA} aria-labelledby={`secao-${secao.id}`}>
       <div className="flex flex-wrap items-start justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="min-w-0">
-          <h3 id={`secao-${secao.id}`} className="text-[0.75rem] font-semibold text-black">
+          <h3 id={`secao-${secao.id}`} className="text-[0.75rem] font-semibold text-[#282525]">
             {secao.titulo}
             {secao.obrigatoria && <span className="ml-2 text-[0.625rem] font-normal text-black/40">obrigatório</span>}
-            {secao.lacunas > 0 && <span className="ml-2 text-[0.625rem] font-normal text-[#B07A14]">{secao.lacunas} {secao.lacunas === 1 ? "lacuna" : "lacunas"}</span>}
+            {secao.lacunas > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 text-[0.625rem] font-normal text-black/55">
+                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />
+                {secao.lacunas} {secao.lacunas === 1 ? "lacuna" : "lacunas"}
+              </span>
+            )}
           </h3>
           {secao.instrucao && <p className="mt-0.5 max-w-[48rem] text-[0.6875rem] text-black/45">{secao.instrucao}</p>}
         </div>
@@ -205,7 +213,7 @@ function Secao({ secao, modelo, prestacaoId, podeEditar, guardar }: { secao: Sec
   );
 }
 
-type Prestacao = { titulo: string; identificador_oficial: string | null; proponente: { nome: string; cnpj: string | null } | null };
+type Prestacao = { titulo: string; identificador_oficial: string | null; numero_processo: string | null; proponente: { nome: string; cnpj: string | null } | null };
 
 export default function RelatorioDoObjetoPage() {
   const { id } = useParams<{ id: string }>();
@@ -220,7 +228,7 @@ export default function RelatorioDoObjetoPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
     const db = supabase as any;
     const [p, r] = await Promise.all([
-      db.from("prestacoes_contas").select("titulo, identificador_oficial, proponente:proponente_id(nome, cnpj)").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("titulo, identificador_oficial, numero_processo, proponente:proponente_id(nome, cnpj)").eq("id", id).maybeSingle(),
       db.from("prestacao_relatorio").select("secao, conteudo").eq("prestacao_id", id),
     ]);
     const falha = p.error ?? r.error;
@@ -262,6 +270,39 @@ export default function RelatorioDoObjetoPage() {
     return rascunhoDoRelatorio({ regime: dados.regime, estado: dados.estado, prestacao, guardados, envio: dados });
   }, [dados, prestacao, guardados]);
 
+  // LIE: o RCO no modelo oficial (.docx), com o título da etapa (P8.3).
+  const modeloDoRco = rascunho?.modelo === "rco" && dados?.regime ? definida(dados.regime.envio)?.modelos.find(m => m.codigo === "rco")?.arquivo ?? null : null;
+  const [etapaEscolhida, setEtapa] = useState<EtapaDoFormulario | null>(null);
+  const etapaInicial = useMemo(() => (dados ? etapaSugerida(dados.estado, new Date()) : null), [dados]);
+  const etapa: EtapaDoFormulario = etapaEscolhida ?? etapaInicial ?? "parcial";
+  const [gerando, setGerando] = useState(false);
+  const [erroDoRco, setErroDoRco] = useState("");
+
+  async function baixarRco() {
+    if (!rascunho || !prestacao || !modeloDoRco) return;
+    setGerando(true);
+    setErroDoRco("");
+    try {
+      const [{ gravarRco, nomeDoRco }, resposta] = await Promise.all([import("@/lib/prestacao/rco-docx"), fetch(`/modelos/${modeloDoRco}`)]);
+      if (!resposta.ok) throw new Error("Não foi possível abrir o modelo do RCO.");
+      const dadosDoRco = {
+        etapa, projeto: prestacao.titulo, sli: prestacao.identificador_oficial,
+        proponente: prestacao.proponente?.nome ?? null, cnpj: prestacao.proponente?.cnpj ?? null, processo: prestacao.numero_processo,
+      };
+      const arquivo = await gravarRco(new Uint8Array(await resposta.arrayBuffer()), rascunho, dadosDoRco);
+      const url = URL.createObjectURL(new Blob([arquivo as BlobPart], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nomeDoRco(dadosDoRco);
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setErroDoRco(e instanceof Error ? e.message : "Não foi possível gerar o RCO.");
+    } finally {
+      setGerando(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <Link href={`/prestacoes/${id}/envio`} className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/45 hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5]">
@@ -275,19 +316,45 @@ export default function RelatorioDoObjetoPage() {
         <>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">{rascunho.titulo}</h2>
+              <h2 className="text-[0.9375rem] font-semibold text-[#282525]">{rascunho.titulo}</h2>
               <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
                 Rascunho para revisar e copiar. {rascunho.descricao} Cada dado leva à aba de onde veio; o que falta aparece como lacuna.
                 {rascunho.fonte && <span className="text-black/35"> ({rascunho.fonte.documento}, {rascunho.fonte.dispositivo})</span>}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-[0.75rem] ${rascunho.lacunas ? "text-[#B07A14]" : "text-[#2E8932]"}`}>
+              <span className="inline-flex items-center gap-1 text-[0.75rem] tabular-nums text-black/55">
+                {rascunho.lacunas > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />}
                 {rascunho.lacunas ? `${rascunho.lacunas} ${rascunho.lacunas === 1 ? "lacuna" : "lacunas"}` : "Sem lacunas"}
               </span>
               <CopiarTudo texto={textoDoRascunho(rascunho)} />
             </div>
           </div>
+          {modeloDoRco && (
+            <section className="flex flex-wrap items-end gap-3 rounded border bg-white px-5 py-4" style={BORDA} aria-label="RCO no modelo oficial">
+              <div className="min-w-0 flex-1 basis-[16rem]">
+                <p className="text-[0.75rem] font-semibold text-[#282525]">RCO no modelo oficial</p>
+                <p className="text-[0.6875rem] text-black/45">
+                  O documento do Ministério do Esporte com este rascunho no lugar das orientações; o que falta sai em vermelho, entre colchetes, para completar no Word.
+                </p>
+              </div>
+              <div className="w-full sm:w-[16rem]">
+                <Dropdown
+                  value={etapa}
+                  onChange={v => setEtapa(v as EtapaDoFormulario)}
+                  ariaLabel="Etapa do RCO"
+                  options={[{ value: "parcial", label: "Prestação de contas parcial" }, { value: "final", label: "Prestação de contas final" }]}
+                />
+              </div>
+              <button type="button" onClick={baixarRco} disabled={gerando} className={BOTAO} style={BORDA}>
+                {gerando
+                  ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/15 border-t-black/50 motion-reduce:animate-none" aria-hidden />
+                  : <FileText size={12} aria-hidden />}
+                Baixar RCO (.docx)
+              </button>
+              {erroDoRco && <p role="alert" className="w-full text-[0.6875rem] text-[#B23B3B]">{erroDoRco}</p>}
+            </section>
+          )}
           {rascunho.secoes.map(s => (
             <Secao key={`${rascunho.modelo}:${s.id}:${s.complemento?.valor ?? ""}:${JSON.stringify(s.numeros ?? [])}`} secao={s} modelo={rascunho.modelo} prestacaoId={id} podeEditar={permissoes.editar} guardar={guardar} />
           ))}
@@ -307,7 +374,7 @@ function CopiarTudo({ texto }: { texto: string }) {
     } catch { /* sem área de transferência */ }
   }
   return (
-    <button type="button" onClick={copiar} className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]">
+    <button type="button" onClick={copiar} className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
       {copiado ? <Check size={13} aria-hidden /> : <Copy size={13} aria-hidden />} {copiado ? "Copiado" : "Copiar tudo"}
     </button>
   );

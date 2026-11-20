@@ -180,15 +180,14 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,.45)" }}
+      className="fixed inset-0 z-50 flex justify-center veu items-start"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded shadow-2xl w-full overflow-hidden flex flex-col"
+        className="folha-desce folha-vidro w-full overflow-hidden flex flex-col max-h-[96dvh]"
         style={{ maxWidth: "32.5rem", maxHeight: "90vh" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -198,7 +197,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
             <div className="w-9 h-9 rounded flex items-center justify-center" style={{ background: "rgba(13,13,13,.04)" }}>
               <ArrowRightLeft size={16} style={{ color: "#7259B5" }} />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Solicitar transferência</h2>
+            <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Solicitar transferência</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/5 transition">
             <X size={15} className="text-black/40" />
@@ -246,7 +245,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition text-[0.75rem]"
                     style={
                       destinatarioId === m.user_id
-                        ? { background: "rgba(13,13,13,.08)", color: "#0D0D0D", fontWeight: 600 }
+                        ? { background: "rgba(13,13,13,.08)", color: "#282525", fontWeight: 600 }
                         : { color: "rgba(13,13,13,.40)" }
                     }
                   >
@@ -285,7 +284,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
           <button
             onClick={handleSalvar}
             disabled={saving || !atribuicaoId || !destinatarioId || !motivo.trim()}
-            className="px-5 py-2 text-[0.75rem] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-5 py-2 text-[0.75rem] font-medium acao-salvar text-white rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? "Enviando…" : "Enviar solicitação"}
           </button>

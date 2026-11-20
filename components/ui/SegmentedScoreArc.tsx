@@ -7,7 +7,7 @@ export function SegmentedScoreArc({
   viewBoxSize = 112,
   radius = 46,
   strokeWidth = 8,
-  color = "#7259B5",
+  color = "#3DA86A",
   className = "h-full w-full -rotate-90",
   label,
 }: {

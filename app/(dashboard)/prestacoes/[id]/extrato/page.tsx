@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Landmark, Pencil, Plus, Search, Trash2, Undo2, Upload } from "lucide-react";
+import { CloudDownload, Landmark, Pencil, Plus, Search, Trash2, Undo2, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Select } from "@/components/ui/Select";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -10,6 +10,9 @@ import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { ContaBancariaModal, rotuloDaConta } from "@/components/prestacao/extrato/ContaBancariaModal";
 import { ImportarExtrato } from "@/components/prestacao/extrato/ImportarExtrato";
+import { ImportarDoTransferegov } from "@/components/prestacao/extrato/ImportarDoTransferegov";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { processoDoNup } from "@/lib/prestacao/transferegov";
 import { CATEGORIAS_LANCAMENTO } from "@/lib/prestacao/extrato";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
@@ -19,6 +22,7 @@ const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", curren
 const dataCurta = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR");
 const rotuloCategoria = (id: string) => CATEGORIAS_LANCAMENTO.find(c => c.id === id)?.rotulo ?? id;
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const LINHA = { borderColor: "rgba(13,13,13,.05)" };
 
 type Natureza = "todos" | "credito" | "debito";
@@ -39,6 +43,10 @@ export default function ExtratoPage() {
 
   const [editandoConta, setEditandoConta] = useState<PrestacaoContaBancaria | "nova" | null>(null);
   const [importando, setImportando] = useState(false);
+  const [importandoTransferegov, setImportandoTransferegov] = useState(false);
+  // P9.4: nas prestações do Transferegov (Pronon e Pronas/PCD), o extrato também vem da API pública, pelo NUP.
+  const regimes = useRegimesPublicados();
+  const [dadosOficiais, setDadosOficiais] = useState<{ regime_id: string | null; identificador_oficial: string | null } | null>(null);
   const [filtroConta, setFiltroConta] = useState("todas");
   const [filtroNatureza, setFiltroNatureza] = useState<Natureza>("todos");
   const [busca, setBusca] = useState("");
@@ -46,10 +54,11 @@ export default function ExtratoPage() {
   const buscar = useCallback(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas do extrato ainda não estão no tipo Database
     const db = supabase as any;
-    const [c, imp, l] = await Promise.all([
+    const [c, imp, l, p] = await Promise.all([
       db.from("prestacao_contas_bancarias").select("*").eq("prestacao_id", id).order("created_at"),
       db.from("prestacao_extrato_importacoes").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
       db.from("prestacao_lancamentos").select("*").eq("prestacao_id", id).order("data", { ascending: false }).order("created_at", { ascending: false }).limit(5000),
+      db.from("prestacoes_contas").select("regime_id, identificador_oficial").eq("id", id).maybeSingle(),
     ]);
     const falha = c.error ?? imp.error ?? l.error;
     return {
@@ -58,6 +67,7 @@ export default function ExtratoPage() {
       importacoes: (imp.data ?? []) as PrestacaoExtratoImportacao[],
       // Valor sempre como número para as somas da tela.
       lancamentos: ((l.data ?? []) as PrestacaoLancamento[]).map(x => ({ ...x, valor: Number(x.valor) })),
+      prestacao: (p.data ?? null) as { regime_id: string | null; identificador_oficial: string | null } | null,
     };
   }, [id, supabase]);
 
@@ -66,6 +76,7 @@ export default function ExtratoPage() {
     setContas(dados.contas);
     setImportacoes(dados.importacoes);
     setLancamentos(dados.lancamentos);
+    setDadosOficiais(dados.prestacao);
     setCarregando(false);
   }, []);
 
@@ -76,6 +87,9 @@ export default function ExtratoPage() {
     buscar().then(dados => { if (ativo) aplicar(dados); });
     return () => { ativo = false; };
   }, [aplicar, buscar]);
+
+  const doTransferegov = Boolean(dadosOficiais && regimes.find(r => r.id === dadosOficiais.regime_id)?.regime?.sistemaOficial?.includes("Transferegov"));
+  const nupValido = Boolean(processoDoNup(dadosOficiais?.identificador_oficial));
 
   const contaPorId = useMemo(() => new Map(contas.map(c => [c.id, c])), [contas]);
   const lancamentosPorConta = useMemo(() => {
@@ -138,8 +152,7 @@ export default function ExtratoPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Extrato bancário</h2>
-          <p className="text-[0.6875rem] text-black/45">Lançamentos das contas do projeto, importados do arquivo do banco.</p>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Extrato bancário</h2>
         </div>
         {podeEditar && (
           <div className="flex flex-wrap items-center gap-2">
@@ -151,12 +164,24 @@ export default function ExtratoPage() {
             >
               <Plus size={13} aria-hidden /> Nova conta
             </button>
+            {doTransferegov && (
+              <button
+                type="button"
+                onClick={() => { setAviso(""); setImportandoTransferegov(true); }}
+                disabled={!nupValido}
+                title={nupValido ? "Importar as linhas do extrato pela API pública do Transferegov" : "Informe o NUP nos dados oficiais da prestação"}
+                className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] text-black/70 transition hover:border-black/25 hover:text-black/90 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-40"
+                style={{ borderColor: "rgba(13,13,13,.14)" }}
+              >
+                <CloudDownload size={13} aria-hidden /> Importar do Transferegov
+              </button>
+            )}
             <button
               type="button"
               onClick={() => { setAviso(""); setImportando(true); }}
               disabled={contas.length === 0}
               title={contas.length === 0 ? "Cadastre a conta antes de importar" : undefined}
-              className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Upload size={13} aria-hidden /> Importar extrato
             </button>
@@ -170,7 +195,7 @@ export default function ExtratoPage() {
       {/* Contas */}
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="contas-titulo">
         <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="contas-titulo" className="text-[0.75rem] font-semibold text-black">Contas</h3>
+          <h3 id="contas-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Contas</h3>
         </div>
         {carregando ? (
           <div className="space-y-2 p-5">{[0, 1].map(i => <div key={i} className="h-10 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
@@ -178,7 +203,7 @@ export default function ExtratoPage() {
           <div className="px-5 py-8 text-center">
             <Landmark size={20} className="mx-auto text-black/20" aria-hidden />
             <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma conta cadastrada.</p>
-            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre a conta do projeto para importar o extrato do banco." : "Quem edita a prestação cadastra as contas."}</p>
+            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre a conta do projeto para importar o extrato." : "Nenhuma conta cadastrada."}</p>
           </div>
         ) : (
           <ul className="divide-y divide-black/[.05]">
@@ -210,7 +235,7 @@ export default function ExtratoPage() {
       {/* Lançamentos */}
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="lancamentos-titulo">
         <div className="flex flex-wrap items-center gap-3 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="lancamentos-titulo" className="mr-auto text-[0.75rem] font-semibold text-black">
+          <h3 id="lancamentos-titulo" className="mr-auto text-[0.75rem] font-semibold text-[#282525]">
             Lançamentos <span className="font-normal tabular-nums text-black/35">({filtrados.length})</span>
           </h3>
           {contas.length > 1 && (
@@ -240,9 +265,9 @@ export default function ExtratoPage() {
 
         {filtrados.length > 0 && (
           <dl className="flex flex-wrap gap-x-6 gap-y-1 border-b px-5 py-2.5 text-[0.6875rem]" style={{ borderColor: "rgba(13,13,13,.05)" }}>
-            <div className="flex gap-1.5"><dt className="text-black/40">Créditos</dt><dd className="tabular-nums text-[#1A8B7A]">{fmt(totais.creditos)}</dd></div>
-            <div className="flex gap-1.5"><dt className="text-black/40">Débitos</dt><dd className="tabular-nums text-black/75">{fmt(totais.debitos)}</dd></div>
-            <div className="flex gap-1.5"><dt className="text-black/40">Diferença</dt><dd className="tabular-nums text-black/75">{fmt(totais.creditos - totais.debitos)}</dd></div>
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Créditos</dt><dd className={`font-semibold tabular-nums ${totais.creditos ? "text-[#282525]" : "text-black/30"}`}>{fmt(totais.creditos)}</dd></div>
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Débitos</dt><dd className={`font-semibold tabular-nums ${totais.debitos ? "text-[#282525]" : "text-black/30"}`}>{fmt(totais.debitos)}</dd></div>
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Diferença</dt><dd className={`font-semibold tabular-nums ${totais.creditos - totais.debitos ? "text-[#282525]" : "text-black/30"}`}>{fmt(totais.creditos - totais.debitos)}</dd></div>
           </dl>
         )}
 
@@ -270,11 +295,11 @@ export default function ExtratoPage() {
                     <td className="whitespace-nowrap px-4 py-2 tabular-nums text-black/55">{dataCurta(l.data)}</td>
                     <td className="max-w-[28rem] px-4 py-2">
                       <p className="truncate text-black/80" title={l.historico}>{l.historico || "—"}</p>
-                      {l.numero_documento && <p className="truncate text-[0.625rem] text-black/35">Doc. {l.numero_documento}</p>}
+                      {l.numero_documento && <p className="min-w-0 break-words text-[0.625rem] text-black/35">Doc. {l.numero_documento}</p>}
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-black/50">{rotuloCategoria(l.categoria)}</td>
-                    {contas.length > 1 && <td className="max-w-[12rem] truncate px-4 py-2 text-black/45">{contaPorId.get(l.conta_id) ? rotuloDaConta(contaPorId.get(l.conta_id)!) : "—"}</td>}
-                    <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-[#1A8B7A]">{l.natureza === "credito" ? fmt(l.valor) : ""}</td>
+                    {contas.length > 1 && <td className="max-w-[12rem] min-w-0 break-words px-4 py-2 text-black/45">{contaPorId.get(l.conta_id) ? rotuloDaConta(contaPorId.get(l.conta_id)!) : "—"}</td>}
+                    <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-black/75">{l.natureza === "credito" ? fmt(l.valor) : ""}</td>
                     <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-black/75">{l.natureza === "debito" ? fmt(l.valor) : ""}</td>
                   </tr>
                 ))}
@@ -287,7 +312,7 @@ export default function ExtratoPage() {
                     <p className="truncate text-[0.75rem] text-black/80">{l.historico || "—"}</p>
                     <p className="text-[0.625rem] text-black/40"><span className="tabular-nums">{dataCurta(l.data)}</span> · {rotuloCategoria(l.categoria)}</p>
                   </div>
-                  <p className={`shrink-0 text-[0.75rem] tabular-nums ${l.natureza === "credito" ? "text-[#1A8B7A]" : "text-black/75"}`}>
+                  <p className="shrink-0 text-[0.75rem] tabular-nums text-black/75">
                     {l.natureza === "credito" ? "+" : "−"} {fmt(l.valor)}
                   </p>
                 </li>
@@ -301,7 +326,7 @@ export default function ExtratoPage() {
       {importacoes.length > 0 && (
         <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="importacoes-titulo">
           <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-            <h3 id="importacoes-titulo" className="text-[0.75rem] font-semibold text-black">Arquivos importados</h3>
+            <h3 id="importacoes-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Arquivos importados</h3>
           </div>
           <ul className="divide-y divide-black/[.05]">
             {importacoes.map(imp => (
@@ -338,6 +363,15 @@ export default function ExtratoPage() {
           conta={editandoConta === "nova" ? null : editandoConta}
           onClose={() => setEditandoConta(null)}
           onSaved={() => { setEditandoConta(null); void carregar(); }}
+        />
+      )}
+      {importandoTransferegov && (
+        <ImportarDoTransferegov
+          prestacaoId={id}
+          contas={contas}
+          lancamentos={lancamentos}
+          onClose={() => setImportandoTransferegov(false)}
+          onImported={mensagem => { setImportandoTransferegov(false); setAviso(mensagem); void carregar(); pedirVerificacao(id); }}
         />
       )}
       {importando && (

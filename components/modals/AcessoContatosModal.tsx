@@ -31,8 +31,8 @@ const CONTEUDO: Record<
     eyebrow: "Créditos do ciclo",
     titulo: "Seus créditos acabaram por enquanto.",
     descricao:
-      "Seu plano continua ativo. Os créditos serão renovados no início do próximo mês. Se precisar continuar agora, você pode comprar créditos adicionais.",
-    botao: "Comprar créditos",
+      "Seu plano continua ativo. Cada mês pago soma novos créditos ao saldo; no Pro, são 200 por mês.",
+    botao: "Ver planos",
   },
   sem_plano: {
     eyebrow: "Acesso aos contatos",
@@ -78,7 +78,7 @@ export function AcessoContatosModal({
 
   return (
     <div
-      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/25 px-4 py-6 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[110] flex justify-center veu items-start"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -88,7 +88,7 @@ export function AcessoContatosModal({
         aria-modal="true"
         aria-labelledby="acesso-contatos-title"
         aria-describedby="acesso-contatos-description"
-        className="relative w-full max-w-[30rem] overflow-hidden rounded border border-black/10 bg-white shadow-[0_24px_70px_rgba(13,13,13,.16)]"
+        className="folha-desce folha-vidro relative w-full max-w-[30rem] overflow-hidden max-h-[96dvh]"
       >
         <button
           type="button"
@@ -129,7 +129,7 @@ export function AcessoContatosModal({
 
           <h2
             id="acesso-contatos-title"
-            className="mt-2 max-w-[24.375rem] text-[1.375rem] font-semibold leading-[1.2] tracking-[-.025em] text-[#0D0D0D]"
+            className="mt-2 max-w-[24.375rem] text-[1.375rem] font-semibold leading-[1.2] tracking-[-.025em] text-[#282525]"
           >
             {conteudo.titulo}
           </h2>

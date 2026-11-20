@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AlertCircle, Clock } from "lucide-react";
 import { hojeEmBrasilia } from "@/lib/modulos-contrato";
 import { descreverRegra, prazoFinalCalculado, ROTULO_DO_MARCO } from "@/lib/prestacao/prazo-final";
 import { situacaoDoPrazo } from "@/lib/prestacao/prazos";
@@ -51,12 +52,14 @@ export function PrazoPrestacao({ prestacao, regime, podeEditar, onSalvar }: {
 
   return (
     <div>
-      <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-2">Prazo de envio</p>
-      <p className="text-[0.9375rem] font-bold tabular-nums" style={{ color: vencido ? "#D94E4E" : "rgba(13,13,13,.75)" }}>
+      <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-2">Prazo de envio</p>
+      <p className={`flex items-center gap-1 text-[0.9375rem] font-semibold tabular-nums ${prestacao.prazo ? "text-[#282525]" : "text-black/30"}`}>
+        {vencido && <Clock size={12} strokeWidth={1.75} role="img" aria-label="Prazo vencido" className="shrink-0 text-[#D94A4A]" />}
         {dataBr(prestacao.prazo)}
       </p>
       {situacao && !encerrada && situacao.diasRestantes >= 0 && (
-        <p className="text-[0.625rem] mt-1" style={{ color: situacao.diasRestantes <= 15 ? "#B07A14" : "rgba(13,13,13,.35)" }}>
+        <p className="flex items-center gap-1 text-[0.625rem] text-black/45 mt-1">
+          {situacao.diasRestantes <= 15 && <Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />}
           {situacao.diasRestantes > 0 ? `${situacao.diasRestantes} dias restantes` : "Vence hoje"}
         </p>
       )}
@@ -66,8 +69,9 @@ export function PrazoPrestacao({ prestacao, regime, podeEditar, onSalvar }: {
           <>
             <p>Informado à mão{prestacao.prazo_final_justificativa ? `: “${prestacao.prazo_final_justificativa}”` : "."}</p>
             {calculado && calculado !== informado && (
-              <p style={{ color: prestacao.prazo_final_justificativa ? undefined : "#B07A14" }}>
-                Pelo regime, seria {dataBr(calculado)}{prestacao.prazo_final_justificativa ? "." : ", e falta a justificativa."}
+              <p className="flex items-start gap-1">
+                {!prestacao.prazo_final_justificativa && <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0 text-black/40" />}
+                <span>Pelo regime, seria {dataBr(calculado)}{prestacao.prazo_final_justificativa ? "." : ", e falta a justificativa."}</span>
               </p>
             )}
           </>
@@ -134,7 +138,7 @@ export function PrazoPrestacao({ prestacao, regime, podeEditar, onSalvar }: {
               type="button"
               disabled={salvando || !data || (precisaJustificar && justificativa.trim().length < 3)}
               onClick={() => void salvar({ prazo_final_override: data, prazo_final_justificativa: justificativa.trim() || null })}
-              className="rounded bg-[#2E8932] px-3 py-1.5 text-[0.6875rem] text-white transition hover:bg-[#26752A] disabled:opacity-50"
+              className="rounded acao-salvar px-3 py-1.5 text-[0.6875rem] text-white transition disabled:opacity-50"
             >
               {salvando ? "Salvando…" : "Salvar prazo"}
             </button>

@@ -155,10 +155,10 @@ export function PropostaOperacionalModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded border border-black/[.09] bg-white shadow-xl" onClick={event => event.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex justify-center veu items-start" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-desce folha-vidro flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden" onClick={event => event.stopPropagation()}>
         <div className="flex shrink-0 items-center justify-between border-b border-black/[.07] px-6 py-4">
-          <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><FileCheck2 size={16} /></span><div><h2 id={titleId} className="text-[0.875rem] font-semibold text-black/80">{proposta ? "Proposta completa" : "Nova proposta"}</h2></div></div>
+          <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><FileCheck2 size={16} /></span><div><h2 id={titleId} className="text-black/80 font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">{proposta ? "Proposta completa" : "Nova proposta"}</h2></div></div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="rounded p-2 text-black/30 hover:bg-black/[.05]"><X size={14} /></button>
         </div>
 
@@ -207,7 +207,7 @@ export function PropostaOperacionalModal({
           {erro && <p role="alert" className="rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[0.6875rem] text-[#B23A3A]">{erro}</p>}
         </div>
 
-        <div className="flex shrink-0 items-center justify-between border-t border-black/[.07] px-6 py-4"><div>{proposta && <button type="button" onClick={remove} className="flex items-center gap-1.5 text-[0.6875rem] font-semibold text-[#D94E4E]/70 hover:text-[#D94E4E]"><Trash2 size={12} /> Excluir</button>}</div><div className="flex items-center gap-3"><button type="button" onClick={onClose} className="text-[0.75rem] font-semibold text-black/35 hover:text-black/55">Cancelar</button><button type="button" onClick={() => void save()} disabled={saving} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"><Check size={12} /> {saving ? "Salvando…" : "Salvar"}</button></div></div>
+        <div className="flex shrink-0 items-center justify-between border-t border-black/[.07] px-6 py-4"><div>{proposta && <button type="button" onClick={remove} className="flex items-center gap-1.5 text-[0.6875rem] font-semibold text-[#D94E4E]/70 hover:text-[#D94E4E]"><Trash2 size={12} /> Excluir</button>}</div><div className="flex items-center gap-3"><button type="button" onClick={onClose} className="text-[0.75rem] font-semibold text-black/35 hover:text-black/55">Cancelar</button><button type="button" onClick={() => void save()} disabled={saving} className="flex items-center gap-1.5 rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition disabled:opacity-40 disabled:cursor-not-allowed"><Check size={12} /> {saving ? "Salvando…" : "Salvar"}</button></div></div>
       </div>
     </div>
   );

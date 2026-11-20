@@ -6,6 +6,7 @@ import {
   UserCheck, Plus, Activity, Shield, ArrowUpDown,
   AlertTriangle, Clock, Check, Mail, Pencil,
   Search, LayoutGrid, List, Network, Trash2,
+  Building2, Gauge, Handshake, ShieldCheck, TimerOff,
 } from "lucide-react";
 import PrioBadge from "@/components/ui/PrioBadge";
 import { createClient } from "@/lib/supabase/client";
@@ -22,6 +23,7 @@ import { calculateWeightedScore, CompactDecisionScoreRing } from "@/components/r
 import { ColumnManager, useColumnManager, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import { ListPageHeader, ListSummary, PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 /* -------------------------------------------------------------------------- */
 /*                                  TYPES                                     */
@@ -126,22 +128,7 @@ const STATUS_CONFIG: Record<StatusAtribuicao, { label: string; bg: string }> = {
 /* -------------------------------------------------------------------------- */
 
 function fmtValor(v: number): string {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
-}
-
-function getRiskColor(dias: number) {
-  if (dias <= 30) return "#2E8932";
-  if (dias <= 60) return "#B07A14";
-  return "#D94E4E";
-}
-
-function getScoreColor(score: number) {
-  if (score >= 80) return "#2E8932";
-  if (score >= 50) return "#B07A14";
-  return "#D94E4E";
+  return v ? formatarValorCurto(v) : "—";
 }
 
 function formatDias(dias: number | null): string {
@@ -224,8 +211,8 @@ function CaptadoresList({
   function renderCell(id: CaptadorColumnId, captador: CaptadorRow) {
     if (id === "captador") return (
       <div className="flex min-w-0 items-center gap-2.5">
-        <ProjectIdentity nome={captador.nome} tipo={captador.identidade_tipo ?? (captador.logo_url ? "logo" : "padrao")} valor={captador.identidade_valor} logoUrl={captador.identidade_logo_url ?? captador.logo_url} cor={captador.identidade_cor} size="sm" iconOptions={CAPTADOR_ICON_OPTIONS} />
-        <div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black" title={captador.nome}>{captador.nome}</p>{captador.agencia && <p className="truncate text-[0.6875rem] text-black/35" title={captador.agencia}>{captador.agencia}</p>}</div>
+        <ProjectIdentity nome={captador.nome} tipo={captador.identidade_tipo ?? (captador.logo_url ? "logo" : "padrao")} valor={captador.identidade_valor} logoUrl={captador.identidade_logo_url ?? captador.logo_url} cor={captador.identidade_cor} size="sm" iconOptions={CAPTADOR_ICON_OPTIONS} semFundo />
+        <div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-[#282525]" title={captador.nome}>{captador.nome}</p>{captador.agencia && <p className="truncate text-[0.6875rem] text-black/35" title={captador.agencia}>{captador.agencia}</p>}</div>
       </div>
     );
     if (id === "contato") return <div className="min-w-0"><p className="truncate text-[0.75rem] text-black/55" title={captador.email ?? undefined}>{captador.email || "—"}</p>{captador.telefone && <p className="truncate text-[0.625rem] text-black/30">{captador.telefone}</p>}</div>;
@@ -235,8 +222,8 @@ function CaptadoresList({
       const conversion = captador.n_encerradas > 0 ? Math.round((captador.n_aprovadas / captador.n_encerradas) * 100) : null;
       return <div><p className={`text-[0.75rem] font-semibold tabular-nums ${conversion === null ? "text-black/25" : "text-black/65"}`}>{conversion === null ? "—" : `${conversion}%`}</p><p className="mt-0.5 text-[0.625rem] tabular-nums text-black/30">{captador.n_encerradas > 0 ? `${captador.n_aprovadas} de ${captador.n_encerradas} encerradas` : "Sem amostra"}</p></div>;
     }
-    if (id === "valor") return <span className="text-[0.75rem] font-semibold text-black/60">{fmtValor(captador.valor_captado)}</span>;
-    if (id === "proximo") return captador.proxima_atividade ? <div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60" title={captador.proxima_atividade.nome}>{captador.proxima_atividade.nome}</p><p className="mt-0.5 text-[0.625rem] tabular-nums text-black/30">{fmtDate(captador.proxima_atividade.data_prevista)}</p></div> : <span className="text-[0.6875rem] text-[#B07A14]">Sem atividade</span>;
+    if (id === "valor") return <span className="text-[0.75rem] font-semibold tabular-nums text-black/60" title={captador.valor_captado ? formatarValorCompleto(captador.valor_captado) : undefined}>{fmtValor(captador.valor_captado)}</span>;
+    if (id === "proximo") return captador.proxima_atividade ? <div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60" title={captador.proxima_atividade.nome}>{captador.proxima_atividade.nome}</p><p className="mt-0.5 text-[0.625rem] tabular-nums text-black/30">{fmtDate(captador.proxima_atividade.data_prevista)}</p></div> : <span className="text-[0.6875rem] text-black/30">Sem atividade</span>;
     if (id === "adicionado") return <span className="text-[0.6875rem] tabular-nums text-black/40">{fmtDate(captador.created_at)}</span>;
     if (id === "atualizado") return <span className="text-[0.6875rem] tabular-nums text-black/40">{fmtDate(captador.updated_at)}</span>;
     if (id === "score") return <CompactDecisionScoreRing score={captador.score} />;
@@ -532,7 +519,7 @@ export default function CaptadoresPage() {
     <div className="flex flex-col h-full">
 
       {/* ── Header ── */}
-      <ListPageHeader
+      <ListPageHeader secao="captadores"
         eyebrow="Rede de captação"
         title="Captadores"
         summary={activeTab === "equipe" && !loadingEquipe
@@ -593,7 +580,7 @@ export default function CaptadoresPage() {
                     value={teamSearch}
                     onChange={event => setTeamSearch(event.target.value)}
                     placeholder="Buscar captador, agência ou contato"
-                    className="h-9 w-full rounded border border-black/10 bg-white pl-9 pr-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/10"
+                    className="h-9 w-full rounded border border-black/10 bg-white pl-9 pr-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/10"
                   />
                 </label>
 
@@ -615,29 +602,37 @@ export default function CaptadoresPage() {
             {metricas && (
               <div className="rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)", background: "white" }}>
                 <div className="flex items-center gap-2 mb-4">
-                  <Activity size={14} className="text-[#7259B5]" />
-                  <span className="text-[0.75rem] font-bold text-black">Meu painel</span>
+                  <Activity size={14} aria-hidden="true" className="text-black/40" />
+                  <span className="text-[0.75rem] font-semibold text-[#282525]">Meu painel</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                   {[
-                    { label:"Score", value: `${metricas.score_atividade}`, sub:"/100", color: getScoreColor(metricas.score_atividade) },
-                    { label:"Ativas", value: `${metricas.captações_ativas}`, sub: `${metricas.captações_ganhas} ganhas · ${metricas.captações_perdidas} perdidas`, color:"#7259B5" },
-                    { label:"Em Risco", value: `${metricas.empresas_em_risco}`, sub:`${metricas.dias_sem_avanco}d sem avanço`, color: getRiskColor(metricas.dias_sem_avanco) },
-                    { label:"Minhas Empresas", value: `${metricas.empresas_atribuidas}`, sub:`${metricas.total_captações} negociações no total`, color:"#0D0D0D" },
+                    { label:"Score", value: `${metricas.score_atividade}`, sub:"/100", Icone: Gauge, alerta: undefined },
+                    { label:"Ativas", value: `${metricas.captações_ativas}`, sub: `${metricas.captações_ganhas} ganhas · ${metricas.captações_perdidas} perdidas`, Icone: Handshake, alerta: undefined },
+                    { label:"Em Risco", value: `${metricas.empresas_em_risco}`, sub:`${metricas.dias_sem_avanco}d sem avanço`, Icone: AlertTriangle, alerta: metricas.empresas_em_risco > 0 ? "#B07A14" : undefined },
+                    { label:"Minhas Empresas", value: `${metricas.empresas_atribuidas}`, sub:`${metricas.total_captações} negociações no total`, Icone: Building2, alerta: undefined },
                   ].map(m => (
                     <div key={m.label}>
-                      <p className="text-[0.625rem] font-bold uppercase tracking-widest text-black/30 mb-1">{m.label}</p>
-                      <p className="text-[1.5rem] font-bold" style={{ color: m.color }}>{m.value}</p>
+                      <p className="mb-1 flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                        <m.Icone size={12} strokeWidth={1.75} aria-hidden="true" className={m.alerta ? "shrink-0" : "shrink-0 text-black/40"} style={m.alerta ? { color: m.alerta } : undefined} />
+                        {m.label}
+                      </p>
+                      <p className={`text-[1.5rem] font-semibold tabular-nums ${m.value === "0" ? "text-black/30" : "text-[#282525]"}`}>{m.value}</p>
                       <p className="text-[0.625rem] text-black/30">{m.sub}</p>
                     </div>
                   ))}
                 </div>
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[0.6875rem] text-black/40">Taxa de conversão</span>
-                    <span className="text-[0.75rem] font-bold text-black">
-                      {metricas.total_captações > 0 ? Math.round((metricas.captações_ganhas / metricas.total_captações) * 100) : 0}%
-                    </span>
+                    <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Taxa de conversão</span>
+                    {(() => {
+                      const taxa = metricas.total_captações > 0 ? Math.round((metricas.captações_ganhas / metricas.total_captações) * 100) : 0;
+                      return (
+                        <span className={`text-[0.75rem] font-semibold tabular-nums ${taxa === 0 ? "text-black/30" : "text-[#282525]"}`}>
+                          {taxa}%
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div className="w-full h-1.5 rounded-full" style={{ background: "rgba(13,13,13,.06)" }}>
                     <div className="h-full rounded-full" style={{ width: `${metricas.total_captações > 0 ? (metricas.captações_ganhas / metricas.total_captações) * 100 : 0}%`, background: "#2E8932" }} />
@@ -709,7 +704,7 @@ export default function CaptadoresPage() {
                               iconOptions={CAPTADOR_ICON_OPTIONS}
                             />
                             <div>
-                              <Link href={`/captadores/${c.id}`} className="text-[0.9375rem] font-bold text-[#0D0D0D] leading-tight hover:text-[#7259B5] transition">{c.nome}</Link>
+                              <Link href={`/captadores/${c.id}`} className="text-[0.9375rem] font-bold text-[#282525] leading-tight hover:text-[#7259B5] transition">{c.nome}</Link>
                               {c.agencia && (
                                 <p className="text-[0.6875rem] text-black/35 mt-0.5">{c.agencia}</p>
                               )}
@@ -721,16 +716,16 @@ export default function CaptadoresPage() {
                         {/* Meta grid */}
                         <div className="grid grid-cols-3 gap-2 text-[0.625rem] mb-3">
                           <div>
-                            <p className="text-black/35 font-semibold uppercase tracking-wide mb-0.5">Empresas</p>
-                            <p className="text-[1.25rem] font-bold leading-tight" style={{ color: c.n_empresas > 0 ? "#0D0D0D" : "rgba(13,13,13,.2)" }}>{c.n_empresas}</p>
+                            <p className="mb-0.5 font-medium uppercase tracking-[.08em] text-black/45">Empresas</p>
+                            <p className={`text-[1.25rem] font-semibold leading-tight tabular-nums ${c.n_empresas > 0 ? "text-[#282525]" : "text-black/30"}`}>{c.n_empresas}</p>
                           </div>
                           <div>
-                            <p className="text-black/35 font-semibold uppercase tracking-wide mb-0.5">Negociações</p>
-                            <p className="text-[1.25rem] font-bold leading-tight" style={{ color: c.n_negociacoes_ativas > 0 ? "#2E8932" : "rgba(13,13,13,.2)" }}>{c.n_negociacoes_ativas}</p>
+                            <p className="mb-0.5 font-medium uppercase tracking-[.08em] text-black/45">Negociações</p>
+                            <p className={`text-[1.25rem] font-semibold leading-tight tabular-nums ${c.n_negociacoes_ativas > 0 ? "text-[#282525]" : "text-black/30"}`}>{c.n_negociacoes_ativas}</p>
                           </div>
                           <div>
-                            <p className="text-black/35 font-semibold uppercase tracking-wide mb-0.5">Valor Captado</p>
-                            <p className="text-[0.8125rem] font-bold leading-tight mt-1" style={{ color: c.valor_captado > 0 ? "#0D0D0D" : "rgba(13,13,13,.2)" }}>{fmtValor(c.valor_captado)}</p>
+                            <p className="mb-0.5 font-medium uppercase tracking-[.08em] text-black/45">Valor Captado</p>
+                            <p className={`mt-1 truncate text-[0.8125rem] font-semibold leading-tight tabular-nums ${c.valor_captado > 0 ? "text-[#282525]" : "text-black/30"}`} title={c.valor_captado > 0 ? formatarValorCompleto(c.valor_captado) : undefined}>{fmtValor(c.valor_captado)}</p>
                           </div>
                         </div>
 
@@ -794,18 +789,21 @@ export default function CaptadoresPage() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 overflow-hidden rounded border border-black/[.08] bg-white sm:grid-cols-4">
               {[
-                { label:"Total",    value:statsAtribuicoes.total,    color:"#0D0D0D" },
-                { label:"Ativas",   value:statsAtribuicoes.ativas,   color:"#1A8B7A" },
-                { label:"Em risco", value:statsAtribuicoes.emRisco,  color:statsAtribuicoes.emRisco > 0 ? "#A66B10" : "rgba(13,13,13,.28)" },
-                { label:"Expiradas",value:statsAtribuicoes.expiradas,color:statsAtribuicoes.expiradas > 0 ? "#C84242" : "rgba(13,13,13,.28)" },
+                { label:"Total",    value:statsAtribuicoes.total,    Icone: Shield,        alerta: undefined },
+                { label:"Ativas",   value:statsAtribuicoes.ativas,   Icone: ShieldCheck,   alerta: undefined },
+                { label:"Em risco", value:statsAtribuicoes.emRisco,  Icone: AlertTriangle, alerta: statsAtribuicoes.emRisco > 0 ? "#B07A14" : undefined },
+                { label:"Expiradas",value:statsAtribuicoes.expiradas,Icone: TimerOff,      alerta: statsAtribuicoes.expiradas > 0 ? "#D94A4A" : undefined },
               ].map((s, index) => (
                 <div
                   key={s.label}
                   className={`relative px-5 py-4 sm:px-6 sm:py-5 ${index % 2 ? "border-l" : ""} ${index >= 2 ? "border-t sm:border-t-0" : ""} ${index > 0 ? "sm:border-l" : ""}`}
                   style={{ borderColor: "rgba(13,13,13,.065)" }}
                 >
-                  <p className="text-[0.625rem] font-semibold uppercase tracking-[.09em] text-black/32">{s.label}</p>
-                  <p className="mt-1 text-[1.625rem] font-semibold leading-none tabular-nums tracking-[-.035em]" style={{ color: s.color }}>{s.value}</p>
+                  <p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                    <s.Icone size={12} strokeWidth={1.75} aria-hidden="true" className={s.alerta ? "shrink-0" : "shrink-0 text-black/40"} style={s.alerta ? { color: s.alerta } : undefined} />
+                    {s.label}
+                  </p>
+                  <p className={`mt-1 text-[1.625rem] font-semibold leading-none tabular-nums tracking-[-.035em] ${s.value ? "text-[#282525]" : "text-black/30"}`}>{s.value}</p>
                 </div>
               ))}
             </div>
@@ -815,7 +813,7 @@ export default function CaptadoresPage() {
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/25" />
                 <input type="text" value={busca} onChange={e => setBusca(e.target.value)}
                   placeholder="Buscar empresa, captador..."
-                  className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition"
+                  className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-[#282525] placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition"
                   style={{ borderColor: "rgba(13,13,13,.12)" }} />
               </div>
               <div className="flex rounded overflow-hidden border bg-white" style={{ borderColor: "rgba(13,13,13,.12)" }}>
@@ -901,7 +899,7 @@ export default function CaptadoresPage() {
                           size={32}
                           className="flex-shrink-0"
                         />
-                        <span className="truncate text-[0.8125rem] font-semibold text-[#0D0D0D]">
+                        <span className="truncate text-[0.8125rem] font-semibold text-[#282525]">
                           {a.empresa_crm?.nome || "—"}
                         </span>
                       </div>
@@ -912,8 +910,12 @@ export default function CaptadoresPage() {
                       <span className="text-[0.75rem] text-black/50 truncate">{a.projeto?.nome || "Todos"}</span>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.625rem] font-semibold w-fit text-white" style={{ background: st.bg }}>{st.label}</span>
                       <div className="flex items-center gap-1.5">
-                        {emRisco && <AlertTriangle size={12} className="text-[#B07A14]" />}
-                        <span className={`text-[0.75rem] ${emRisco?"text-[#B07A14] font-semibold":"text-black/40"}`}>{formatDias(a.dias_sem_avanco)}</span>
+                        {emRisco && (
+                          <span role="img" className="shrink-0" title="Em risco" aria-label="Em risco">
+                            <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="text-[#B07A14]" />
+                          </span>
+                        )}
+                        <span className={`text-[0.75rem] tabular-nums ${emRisco ? "font-medium text-[#282525]" : "text-black/60"}`}>{formatDias(a.dias_sem_avanco)}</span>
                       </div>
                       <div className="flex items-center justify-end">
                         <button type="button" aria-label="Editar atribuição" title="Editar atribuição" onClick={(event) => { event.stopPropagation(); setEditData(a); setShowAtribuicaoModal(true); }} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/70 transition focus-visible:outline-2 focus-visible:outline-[#7259B5]">

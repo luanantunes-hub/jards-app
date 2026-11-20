@@ -18,12 +18,6 @@ const TIPO_ICONS: Record<string, React.ElementType> = {
   inscricao: () => <CheckCircle2 size={13} />,
 };
 
-const TIPO_COLORS: Record<string, string> = {
-  email: "#2D72B0", telefone: "#1A8B7A", linkedin: "#0A66C2",
-  reuniao: "#7259B5", evento: "#B07A14", mudanca: "#7259B5",
-  nota: "#D94E4E", outro: "rgba(13,13,13,.40)", inscricao: "#2E8932",
-};
-
 const STATUS_LABEL: Record<string, string> = {
   prospeccao: "Prospecção", primeiro_contato: "1º Contato",
   proposta_enviada: "Proposta enviada", em_negociacao: "Em negociação",
@@ -56,7 +50,7 @@ function formatRelative(dateStr: string): string {
 }
 
 type TimelineEvent = {
-  tipo: "atividade" | "nota" | "mudanca" | "inscricao";
+  tipo: "atividade" | "nota" | "mudanca" | "inscricao" | "interacao";
   atividade_tipo: string;
   titulo: string;
   descricao: string | null;
@@ -68,12 +62,8 @@ type TimelineEvent = {
 
 function EventIcon({ tipo }: { tipo: string }) {
   const Icon = TIPO_ICONS[tipo] || MoreHorizontal;
-  const color = TIPO_COLORS[tipo] || "rgba(13,13,13,.40)";
   return (
-    <div
-      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-      style={{ background: "#fff", border: `1px solid ${color}47`, color }}
-    >
+    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-black/[.08] bg-white text-black/45">
       <Icon size={13} />
     </div>
   );
@@ -81,7 +71,7 @@ function EventIcon({ tipo }: { tipo: string }) {
 
 export function CompanyTimeline({
   empresaCrmId,
-  sources = ["atividades", "notas", "historico_captações", "inscricoes"],
+  sources = ["atividades", "notas", "historico_captações", "inscricoes", "interacoes"],
   showHeader = true,
   embedded = false,
 }: {
@@ -105,7 +95,7 @@ export function CompanyTimeline({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         supabase
           .from("atividades")
-          .select("id, nome, tipo, data_realizada, nota, created_at, contato:contatos!contato_id(nome), captacao:captacoes!captacao_id(titulo)")
+          .select("id, nome, tipo, data_realizada, nota, created_at, responsavel:profiles!responsavel_id(full_name), contato:contatos!contato_id(nome), captacao:captacoes!captacao_id(titulo)")
           .eq("empresa_crm_id", empresaCrmId)
           .order("created_at", { ascending: false })
           .limit(50) as any
@@ -119,7 +109,7 @@ export function CompanyTimeline({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         supabase
           .from("notas")
-          .select("id, titulo, conteudo, created_at")
+          .select("id, titulo, conteudo, created_at, account_id")
           .eq("empresa_crm_id", empresaCrmId)
           .order("created_at", { ascending: false })
           .limit(30) as any
@@ -157,7 +147,7 @@ export function CompanyTimeline({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         supabase
           .from("editais_user")
-          .select("id, status, created_at, projeto:projetos_crm!projeto_id(nome)")
+          .select("id, status, created_at, account_id, projeto:projetos_crm!projeto_id(nome)")
           .eq("empresa_crm_id", empresaCrmId)
           .order("created_at", { ascending: false })
           .limit(30) as any
@@ -166,7 +156,34 @@ export function CompanyTimeline({
       promises.push(Promise.resolve({ data: null }));
     }
 
-    const [atvRes, notRes, histRes, inscRes] = await Promise.all(promises);
+    if (sources.includes("interacoes")) {
+      promises.push(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any)
+          .from("crm_interacoes")
+          .select("id, tipo, assunto, resumo, ocorreu_em, created_by, account_id, contato:contatos(nome)")
+          .eq("empresa_crm_id", empresaCrmId)
+          .order("ocorreu_em", { ascending: false })
+          .limit(30) as any
+      );
+    } else {
+      promises.push(Promise.resolve({ data: null }));
+    }
+
+    const [atvRes, notRes, histRes, inscRes, interRes] = await Promise.all(promises);
+
+    // Quem escreveu as notas, as inscrições e as interações: perfis de quem é da mesma organização.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const autoresDiretos = [...((notRes.data ?? []) as any[]), ...((inscRes.data ?? []) as any[])].map(item => item.account_id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const autoresDasInteracoes = ((interRes.data ?? []) as any[]).map(item => item.created_by ?? item.account_id);
+    const autoresIds = [...new Set([...autoresDiretos, ...autoresDasInteracoes])].filter(Boolean) as string[];
+    const nomes = new Map<string, string>();
+    if (autoresIds.length > 0) {
+      const { data: perfis } = await supabase.from("profiles").select("id, full_name").in("id", autoresIds);
+      for (const perfil of (perfis ?? []) as { id: string; full_name: string | null }[]) if (perfil.full_name?.trim()) nomes.set(perfil.id, perfil.full_name.trim());
+    }
+    const porAutor = (id: string | null | undefined) => (id ? nomes.get(id) ?? null : null);
 
     const atividades = ((atvRes.data ?? []) as any[]).map(a => ({
       tipo: "atividade" as const,
@@ -174,7 +191,7 @@ export function CompanyTimeline({
       titulo: a.nome,
       descricao: a.nota || (a.contato?.nome ? `Contato: ${a.contato.nome}` : null),
       data: a.data_realizada || a.created_at,
-      usuario: null,
+      usuario: a.responsavel?.full_name ?? null,
       created_at: a.created_at,
       captacao_titulo: a.captacao?.titulo,
     }));
@@ -185,7 +202,7 @@ export function CompanyTimeline({
       titulo: n.titulo || (n.conteudo.length > 80 ? n.conteudo.slice(0, 80) + "…" : n.conteudo),
       descricao: n.titulo ? (n.conteudo || null) : null,
       data: n.created_at,
-      usuario: null,
+      usuario: porAutor(n.account_id),
       created_at: n.created_at,
     }));
 
@@ -208,11 +225,21 @@ export function CompanyTimeline({
       titulo: e.projeto?.nome ? `Inscrição: ${e.projeto.nome}` : "Inscrição",
       descricao: `Status: ${EDITAL_STATUS_LABEL[e.status] || e.status}`,
       data: e.created_at,
-      usuario: null,
+      usuario: porAutor(e.account_id),
       created_at: e.created_at,
     }));
 
-    const all = [...atividades, ...notas, ...historico, ...inscricoes]
+    const interacoes = ((interRes.data ?? []) as any[]).map(i => ({
+      tipo: "interacao" as const,
+      atividade_tipo: i.tipo || "outro",
+      titulo: i.assunto || "Interação",
+      descricao: [i.contato?.nome, i.resumo].filter(Boolean).join(" · ") || null,
+      data: i.ocorreu_em,
+      usuario: porAutor(i.created_by ?? i.account_id),
+      created_at: i.ocorreu_em,
+    }));
+
+    const all = [...atividades, ...notas, ...historico, ...inscricoes, ...interacoes]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     setEvents(all);
@@ -267,12 +294,12 @@ export function CompanyTimeline({
                   <span className="text-[0.6875rem] font-semibold text-black/50">{formatDate(evt.data)}</span>
                   <span className="text-[0.625rem] text-black/25">{formatRelative(evt.data)}</span>
                 </div>
-                <p className="text-[0.8125rem] font-medium text-[#0D0D0D]">{evt.titulo}</p>
+                <p className="text-[0.8125rem] font-medium text-[#282525]">{evt.titulo}</p>
                 {evt.descricao && <p className="text-xs text-black/40 mt-0.5">{evt.descricao}</p>}
                 {evt.captacao_titulo && (
                   <p className="text-[0.625rem] text-[#7259B5] mt-1">↗ {evt.captacao_titulo}</p>
                 )}
-                {evt.usuario && <p className="text-[0.625rem] text-black/25 mt-1">{evt.usuario}</p>}
+                {evt.usuario && <p className="text-[0.625rem] text-black/45 mt-1">por {evt.usuario}</p>}
               </div>
             </div>
           ))}

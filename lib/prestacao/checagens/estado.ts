@@ -12,13 +12,20 @@ import type { EvidenciaParaChecar } from "../evidencias";
 import type { LinhaDistribuicao } from "../distribuicao";
 import { lerCotacoes, type BemParaChecar } from "../bens";
 import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
-import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
+import type { BeneficiadoParaChecar } from "../beneficiarios";
+import type { TurmaDaGrade } from "../grade";
+import type { CargoDaGrade } from "../grade-rh";
+import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, DevolucaoDoEstado, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado, SaldoDaConta } from "./catalogo";
+import type { ProducaoDoCmd } from "../cmd";
+import type { ManifestacaoEsportiva, ModalidadeSaude } from "@/lib/supabase/types";
 
 const PAGINA = 1000;
 
 type Resposta = { data: unknown; error: { message: string } | null };
 type Consulta = PromiseLike<Resposta> & { range: (de: number, ate: number) => PromiseLike<Resposta> };
-type Cliente = { from: (tabela: string) => { select: (colunas: string) => unknown } };
+/** O que o carregador pede ao cliente do Supabase: o do navegador (RLS) ou o do service role. */
+export type ClienteDoEstado = { from: (tabela: string) => { select: (colunas: string) => unknown } };
+type Cliente = ClienteDoEstado;
 
 /** Todas as linhas, de mil em mil (o PostgREST corta em mil por resposta). */
 async function todas<T>(consulta: () => Consulta): Promise<T[]> {
@@ -38,37 +45,48 @@ async function uma<T>(consulta: PromiseLike<Resposta>): Promise<T | null> {
   return (data as T | null) ?? null;
 }
 
+/** O saldo da importação mais recente de cada conta (pelo fim do período, depois pela gravação). */
+function ultimosSaldos(importacoes: readonly { conta_id: string; saldo_final: number; periodo_fim: string | null; created_at: string }[]): SaldoDaConta[] {
+  const ultimo = new Map<string, (typeof importacoes)[number]>();
+  for (const i of importacoes) {
+    const atual = ultimo.get(i.conta_id);
+    const chave = (x: (typeof importacoes)[number]) => `${x.periodo_fim ?? x.created_at.slice(0, 10)}|${x.created_at}`;
+    if (!atual || chave(i) > chave(atual)) ultimo.set(i.conta_id, i);
+  }
+  return [...ultimo.values()].map(i => ({ conta_id: i.conta_id, saldo: Number(i.saldo_final), data: i.periodo_fim ?? i.created_at.slice(0, 10) }));
+}
+
 export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, hoje: Date = new Date()): Promise<EstadoDaPrestacao> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
   const db = cliente as any;
-  const prestacao = await uma<{ organization_id: string; regime_id: string | null; valor_aprovado: number | null } & DatasDaPrestacao>(
+  const prestacao = await uma<{ organization_id: string; regime_id: string | null; valor_aprovado: number | null; obra_grupo: string | null; manifestacao_esportiva: ManifestacaoEsportiva | null; crc_validade: string | null; modalidade_saude?: ModalidadeSaude | null } & DatasDaPrestacao>(
     db.from("prestacoes_contas")
-      .select("organization_id, regime_id, valor_aprovado, data_aprovacao, data_liberacao, data_inicio_execucao, data_fim_execucao")
+      .select("organization_id, regime_id, valor_aprovado, obra_grupo, manifestacao_esportiva, crc_validade, modalidade_saude, data_aprovacao, data_liberacao, data_termo, data_inicio_execucao, data_fim_execucao, data_fim_captacao")
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas, beneficiarios, turmas, cargos, devolucoes, importacoes, producaoCmd] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
     uma<{ id: string }>(db.from("prestacao_orcamento_versoes").select("id").eq("prestacao_id", prestacaoId).eq("ativa", true).maybeSingle()),
     todas<EstadoDaPrestacao["despesas"][number]>(() => db.from("prestacao_comprovantes")
-      .select("id, nome_arquivo, status, no_id, tipo, data_doc, valor_extraido, valor_liquido, fornecedor_id, numero_documento, serie, chave_acesso, iss, inss, irrf, outras_retencoes, identificacao_projeto, justificativa, motivos_ia")
+      .select("id, nome_arquivo, status, no_id, tipo, data_doc, valor_extraido, valor_liquido, fornecedor_id, numero_documento, serie, chave_acesso, iss, inss, irrf, outras_retencoes, identificacao_projeto, justificativa, motivos_ia, contrapartida, atestado_em, descricao_servico")
       .eq("prestacao_id", prestacaoId).order("id")),
     todas<EstadoDaPrestacao["pagamentos"][number]>(() => db.from("prestacao_pagamentos")
       .select("id, despesa_id, lancamento_id, forma, data, valor, favorecido_documento, numero_documento")
       .eq("prestacao_id", prestacaoId).order("id")),
     todas<EstadoDaPrestacao["lancamentos"][number]>(() => db.from("prestacao_lancamentos")
-      .select("id, data, natureza, valor, historico, numero_documento, numero_normalizado, categoria")
+      .select("id, conta_id, data, natureza, valor, historico, numero_documento, numero_normalizado, categoria")
       .eq("prestacao_id", prestacaoId).order("id")),
     todas<AlteracaoDoEstado>(() => db.from("prestacao_alteracoes")
       .select("id, numero, status, solicitada_em, tipo, justificativa, decidida_em").eq("prestacao_id", prestacaoId).order("id")),
     todas<MetaDoEstado>(() => db.from("prestacao_metas")
       .select("id, descricao, unidade, previsto, realizado, justificativa").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
     todas<LocalDoEstado>(() => db.from("prestacao_locais")
-      .select("id, pais, uf, municipio, status, latitude, longitude, espaco, inicio, fim, justificativa").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
+      .select("id, pais, uf, municipio, status, latitude, longitude, espaco, inicio, fim, justificativa, endereco, responsavel, telefone").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
     todas<AtividadeDoEstado>(() => db.from("prestacao_atividades")
-      .select("id, titulo, data_realizacao, data_inicio, data_fim, local_id, meta_id, status_realizacao, descricao, democratizacao_descricao, acessibilidade_descricao, justificativa_nao_realizacao").eq("prestacao_id", prestacaoId).order("id")),
+      .select("id, titulo, data_realizacao, data_inicio, data_fim, local_id, meta_id, status_realizacao, descricao, democratizacao_descricao, acessibilidade_descricao, justificativa_nao_realizacao, local, cidade, estado, meta_prevista").eq("prestacao_id", prestacaoId).order("id")),
     todas<EvidenciaParaChecar>(() => db.from("prestacao_evidencias")
       .select("id, tipo, requisitos, nome_arquivo, url, atividade_id, meta_id, local_id, capturada_em, latitude, longitude, justificativa, descricao")
       .eq("prestacao_id", prestacaoId).order("id")),
@@ -83,6 +101,19 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("prestacao_id", prestacaoId).order("ordem").order("id")),
     todas<DefesoEleitoral>(() => db.from("calendario_regulatorio")
       .select("inicio, fim, descricao").eq("tipo", "defeso_eleitoral").order("inicio")),
+    todas<{ id: string; tipo: string }>(() => db.from("prestacao_contas_bancarias").select("id, tipo").eq("prestacao_id", prestacaoId).order("id")),
+    todas<BeneficiadoParaChecar>(() => db.from("prestacao_beneficiarios")
+      .select("id, nome, modalidade, sexo, idade, rede_publica, telefone, endereco, beneficios, observacoes").eq("prestacao_id", prestacaoId).order("id")),
+    todas<TurmaDaGrade>(() => db.from("prestacao_turmas")
+      .select("id, local_id, nome, modalidade, alunos, dias, hora_inicio, hora_fim, equipe, observacoes, ordem").eq("prestacao_id", prestacaoId).order("id")),
+    todas<CargoDaGrade>(() => db.from("prestacao_cargos")
+      .select("id, no_id, cargo, atribuicoes, quantidade, horarios, carga_semanal, contratacao, formacao, ordem").eq("prestacao_id", prestacaoId).order("id")),
+    todas<DevolucaoDoEstado>(() => db.from("prestacao_devolucoes")
+      .select("motivo, situacao, valor_principal, valor_atualizado, valor_pago, pago_em, storage_path").eq("prestacao_id", prestacaoId).order("id")),
+    todas<{ conta_id: string; saldo_final: number; periodo_fim: string | null; created_at: string }>(() => db.from("prestacao_extrato_importacoes")
+      .select("conta_id, saldo_final, periodo_fim, created_at").eq("prestacao_id", prestacaoId).not("saldo_final", "is", null).order("id")),
+    todas<ProducaoDoCmd>(() => db.from("prestacao_producao_cmd")
+      .select("id, competencia, meta_id, quantidade, protocolo").eq("prestacao_id", prestacaoId).order("competencia").order("id")),
   ]);
 
   const nos = versao
@@ -91,7 +122,19 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
   const itens = itensDaArvore(montarArvore(nos, []).raizes)
     .map(linha => ({ id: linha.no.id, nome: linha.no.nome, cnaes: linha.cnaes, cnaesDe: linha.cnaesDe }));
 
-  const idsFornecedores = [...new Set(despesas.map(d => d.fornecedor_id).filter((f): f is string => Boolean(f)))];
+  // P7.4: as outras prestações da mesma obra, sempre da mesma organização (esta leitura usa o service role).
+  const outras = prestacao.obra_grupo
+    ? await todas<{ id: string; titulo: string; identificador_oficial: string | null }>(() => db.from("prestacoes_contas")
+      .select("id, titulo, identificador_oficial").eq("organization_id", prestacao.organization_id)
+      .eq("obra_grupo", prestacao.obra_grupo).neq("id", prestacaoId).order("id"))
+    : [];
+  const despesasDaObra = outras.length
+    ? await todas<EstadoDaPrestacao["despesas"][number] & { prestacao_id: string }>(() => db.from("prestacao_comprovantes")
+      .select("id, prestacao_id, nome_arquivo, status, no_id, tipo, data_doc, valor_extraido, fornecedor_id, numero_documento, chave_acesso, iss, inss, irrf, outras_retencoes, identificacao_projeto")
+      .in("prestacao_id", outras.map(o => o.id)).order("id"))
+    : [];
+
+  const idsFornecedores = [...new Set([...despesas, ...despesasDaObra].map(d => d.fornecedor_id).filter((f): f is string => Boolean(f)))];
   const [fornecedores, documentos] = idsFornecedores.length
     ? await Promise.all([
       todas<EstadoDaPrestacao["fornecedores"][number]>(() => db.from("prestacao_fornecedores").select("*")
@@ -106,9 +149,11 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     regime: regime?.success ? regime.data : null,
     prestacao: {
       data_aprovacao: prestacao.data_aprovacao ?? null,
+      data_termo: prestacao.data_termo ?? null,
       data_liberacao: prestacao.data_liberacao ?? null,
       data_inicio_execucao: prestacao.data_inicio_execucao ?? null,
       data_fim_execucao: prestacao.data_fim_execucao ?? null,
+      data_fim_captacao: prestacao.data_fim_captacao ?? null,
     },
     despesas,
     fornecedores,
@@ -117,6 +162,16 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     nos,
     pagamentos,
     lancamentos,
+    contas,
+    manifestacaoEsportiva: prestacao.manifestacao_esportiva ?? null,
+    crcValidade: prestacao.crc_validade ?? null,
+    beneficiarios,
+    turmas,
+    cargos,
+    devolucoes,
+    saldos: ultimosSaldos(importacoes),
+    modalidadeSaude: prestacao.modalidade_saude ?? null,
+    producaoCmd: producaoCmd.map(p => ({ ...p, quantidade: Number(p.quantidade) })),
     alteracoes,
     metas,
     locais,
@@ -128,5 +183,11 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     defesos,
     valorAprovado: prestacao.valor_aprovado === null || prestacao.valor_aprovado === undefined ? null : Number(prestacao.valor_aprovado),
     hoje,
+    ...(outras.length ? {
+      obra: {
+        prestacoes: outras.map(o => ({ id: o.id, titulo: o.titulo, identificador: o.identificador_oficial })),
+        despesas: despesasDaObra,
+      },
+    } : {}),
   };
 }

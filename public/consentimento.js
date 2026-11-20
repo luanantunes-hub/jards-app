@@ -20,7 +20,8 @@
   var historicoNativo = { pushState: history.pushState, replaceState: history.replaceState };
 
   function ehPublica(caminho) {
-    return caminho === "/" || caminho === "/privacidade" || caminho === "/termos" || caminho === "/incentivadores" ||
+    return caminho === "/" || caminho === "/privacidade" || caminho === "/termos" || caminho === "/incentivadores" || caminho === "/crm" || caminho === "/precos" || caminho === "/prestacao-de-contas" ||
+      caminho === "/publicacoes" || caminho.indexOf("/publicacoes/") === 0 ||
       caminho === "/blog" || caminho.indexOf("/blog/") === 0 ||
       caminho === "/cadastro" || caminho.indexOf("/cadastro/") === 0 ||
       caminho === "/assinatura/concluida";
@@ -146,22 +147,27 @@
   });
 
   var CSS =
-    ".jc-aviso{position:fixed;left:16px;right:16px;bottom:16px;z-index:90;max-width:400px;box-sizing:border-box;padding:16px;" +
-    "background:#fff;color:#0D0D0D;border:1px solid rgba(13,13,13,.10);border-radius:4px;box-shadow:0 10px 30px rgba(40,37,37,.12);" +
-    "font-family:inherit;font-size:13px;font-weight:400;line-height:1.5;text-align:left;animation:jc-entra .22s ease-out}" +
-    ".jc-aviso p{margin:0;color:rgba(13,13,13,.72);text-wrap:pretty}" +
-    ".jc-aviso a{color:#684DB0;text-decoration:underline;text-underline-offset:2px}" +
-    ".jc-atual{margin-top:6px!important;font-size:12px;color:rgba(13,13,13,.5)!important}" +
-    ".jc-acoes{display:flex;gap:8px;margin-top:12px}" +
-    ".jc-btn{flex:1;height:36px;padding:0 16px;border-radius:4px;font-family:inherit;font-size:13px;font-weight:500;line-height:1;cursor:pointer;" +
+    // Faixa escura e compacta, centralizada no rodapé: texto pequeno à esquerda, escolha à direita.
+    ".jc-aviso{position:fixed;left:16px;right:16px;bottom:16px;z-index:90;max-width:920px;margin:0 auto;box-sizing:border-box;" +
+    "display:flex;align-items:center;gap:12px 20px;padding:10px 10px 10px 18px;" +
+    "background:rgba(40,37,37,.94);color:#fff;border:1px solid rgba(255,255,255,.08);border-radius:8px;box-shadow:0 12px 32px rgba(40,37,37,.22);" +
+    "-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);" +
+    "font-family:inherit;font-size:12px;font-weight:400;line-height:1.45;text-align:left;animation:jc-entra .22s ease-out}" +
+    ".jc-texto{flex:1;min-width:0}" +
+    ".jc-aviso p{margin:0;color:rgba(255,255,255,.78);text-wrap:pretty}" +
+    ".jc-aviso a{color:#fff;text-decoration:underline;text-underline-offset:2px}" +
+    ".jc-atual{margin-top:2px!important;color:rgba(255,255,255,.55)!important}" +
+    ".jc-acoes{display:flex;flex-shrink:0;gap:6px}" +
+    ".jc-btn{height:32px;padding:0 14px;border-radius:5px;font-family:inherit;font-size:12.5px;font-weight:500;line-height:1;cursor:pointer;" +
     "transition:background-color .16s ease,border-color .16s ease,transform .16s ease}" +
     ".jc-btn:active{transform:translateY(1px)}" +
-    ".jc-btn:focus-visible{outline:2px solid #7259B5;outline-offset:2px}" +
-    ".jc-recusar{background:#fff;color:#0D0D0D;border:1px solid rgba(13,13,13,.18)}" +
-    ".jc-recusar:hover{background:#F6F5F3;border-color:rgba(13,13,13,.28)}" +
-    ".jc-aceitar{background:#0D0D0D;color:#fff;border:1px solid #0D0D0D}" +
-    ".jc-aceitar:hover{background:#2B2828;border-color:#2B2828}" +
+    ".jc-btn:focus-visible{outline:2px solid rgba(255,255,255,.6);outline-offset:2px}" +
+    ".jc-recusar{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.22)}" +
+    ".jc-recusar:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.34)}" +
+    ".jc-aceitar{background:#fff;color:#282525;border:1px solid #fff}" +
+    ".jc-aceitar:hover{background:rgba(255,255,255,.86);border-color:transparent}" +
     "@keyframes jc-entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}" +
+    "@media (max-width:640px){.jc-aviso{flex-direction:column;align-items:stretch;left:12px;right:12px;bottom:12px;padding:12px}.jc-acoes .jc-btn{flex:1;height:36px}}" +
     "@media (prefers-reduced-motion:reduce){.jc-aviso{animation:none}.jc-btn{transition:none}}";
 
   function garantirEstilo() {
@@ -193,10 +199,12 @@
     aviso.setAttribute("role", "region");
     aviso.setAttribute("aria-label", "Preferências de cookies");
     aviso.innerHTML =
+      '<div class="jc-texto">' +
       "<p>Usamos o Google Analytics e o Google Ads para medir as visitas e o resultado das nossas campanhas, " +
       "e para mostrar nossos anúncios a quem já visitou o site. Isso grava cookies de análise e de publicidade, " +
       'e só ativamos se você aceitar. <a href="/privacidade#s10">Política de Privacidade</a></p>' +
       (atual ? '<p class="jc-atual">Escolha atual: ' + (atual.analytics ? "aceito" : "recusado") + ".</p>" : "") +
+      "</div>" +
       '<div class="jc-acoes">' +
       '<button type="button" class="jc-btn jc-recusar">Recusar</button>' +
       '<button type="button" class="jc-btn jc-aceitar">Aceitar</button>' +

@@ -5,6 +5,8 @@ import { Plus, Trash2, MapPin, Users, CalendarDays, ChevronDown, ChevronUp, Brie
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoAtividade, PrestacaoEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
 import { EvidenciaModal } from "@/components/prestacao/objeto/EvidenciaModal";
+import { GradeSemanal } from "@/components/prestacao/grade/GradeSemanal";
+import { GradeRh } from "@/components/prestacao/grade/GradeRh";
 import { ListaEvidencias } from "@/components/prestacao/objeto/ListaEvidencias";
 import { checarEvidencias } from "@/lib/prestacao/checagens/checar-evidencias";
 import type { Achado } from "@/lib/prestacao/checagens";
@@ -13,6 +15,8 @@ import { rotuloDoLocal } from "@/lib/prestacao/objeto";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { regraDoRegime } from "@/lib/prestacao/regimes";
 
 // Evidências da tabela do objeto (P3.2), ligadas à atividade.
 type AtividadeComEvidencias = PrestacaoAtividade & { evidencias: PrestacaoEvidencia[] };
@@ -56,6 +60,10 @@ export default function AtividadesPage() {
   const [metas, setMetas] = useState<Pick<PrestacaoMeta, "id" | "descricao">[]>([]);
   const [locais, setLocais] = useState<LocalDaAtividade[]>([]);
   const [execucao, setExecucao] = useState<{ data_inicio_execucao: string | null; data_fim_execucao: string | null }>({ data_inicio_execucao: null, data_fim_execucao: null });
+  // Saúde (P9.5): o modal da evidência avisa sobre dado de paciente.
+  const [regimeId, setRegimeId] = useState<string | null>(null);
+  const regimes = useRegimesPublicados();
+  const saude = Boolean(regraDoRegime(regimes.find(r => r.id === regimeId)?.regime ?? null, "dados_de_pacientes"));
   const [evidenciaAberta, setEvidenciaAberta] = useState<{ evidencia: PrestacaoEvidencia | null; atividade: AtividadeComEvidencias } | null>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<FormState | null>(null);
@@ -88,11 +96,12 @@ export default function AtividadesPage() {
     const [{ data: ms }, { data: ls }, { data: prest }] = await Promise.all([
       (supabase as any).from("prestacao_metas").select("id, descricao").eq("prestacao_id", id).order("ordem").order("created_at"),
       (supabase as any).from("prestacao_locais").select("id, pais, uf, municipio, espaco, status, latitude, longitude").eq("prestacao_id", id).order("ordem").order("created_at"),
-      (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
+      (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao, regime_id").eq("id", id).maybeSingle(),
     ]);
     setMetas(ms ?? []);
     setLocais(ls ?? []);
     setExecucao({ data_inicio_execucao: prest?.data_inicio_execucao ?? null, data_fim_execucao: prest?.data_fim_execucao ?? null });
+    setRegimeId(prest?.regime_id ?? null);
     setLoading(false);
   }, [id, supabase]);
 
@@ -197,7 +206,12 @@ export default function AtividadesPage() {
   }
 
   return (
-    <div className="px-8 py-6 space-y-4">
+    <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
+      {/* Grade semanal (P8.6): só quando o regime pede ou já há turmas */}
+      <GradeSemanal prestacaoId={id} />
+      {/* Grade de RH (P8.7): só quando o regime pede ou já há cargos */}
+      <GradeRh prestacaoId={id} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-[0.8125rem] font-semibold text-black/50">
@@ -237,11 +251,10 @@ export default function AtividadesPage() {
                 : null;
               return (
                 <div key={at.id} className="flex gap-4">
-                  {/* Dot */}
+                  {/* Marcador */}
                   <div className="flex-shrink-0 mt-3.5">
-                    <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
-                      style={{ borderColor: "#7259B5", background: "white" }}>
-                      <div className="w-2 h-2 rounded-full" style={{ background: "#7259B5" }} />
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full border border-black/[.12] bg-white">
+                      <CalendarDays size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
                     </div>
                   </div>
 
@@ -252,7 +265,7 @@ export default function AtividadesPage() {
                       onClick={() => toggle(at.id)}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-[0.8125rem] font-semibold text-black">{at.titulo}</p>
+                        <p className="text-[0.8125rem] font-semibold text-[#282525]">{at.titulo}</p>
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           <span className="flex items-center gap-1 text-[0.625rem] text-black/40">
                             <CalendarDays size={10} /> {fmtDate(at.data_realizacao)}
@@ -272,7 +285,7 @@ export default function AtividadesPage() {
                           {at.publico_atingido !== null && (
                             <span className="flex items-center gap-1 text-[0.625rem] text-black/40">
                               <Users size={10} /> {at.publico_atingido.toLocaleString("pt-BR")} pessoas
-                              {pct !== null && <span style={{ color: pct >= 100 ? "#2E8932" : pct >= 70 ? "#B07A14" : "rgba(13,13,13,.35)" }}>({pct}% do previsto)</span>}
+                              {pct !== null && <span className="tabular-nums">({pct}% do previsto)</span>}
                             </span>
                           )}
                           {at.evidencias.length > 0 && (
@@ -392,6 +405,7 @@ export default function AtividadesPage() {
           metas={metas}
           locais={locais}
           execucao={execucao}
+          saude={saude}
           onClose={() => setEvidenciaAberta(null)}
           onSaved={() => { setEvidenciaAberta(null); fetchAll(); }}
         />
@@ -399,9 +413,9 @@ export default function AtividadesPage() {
 
       {/* Modal de criação/edição */}
       {form && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setForm(null); setErro(""); }}>
-          <div className="bg-white rounded shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h3 className="text-[0.875rem] font-semibold text-black mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center veu" onClick={() => { setForm(null); setErro(""); }}>
+          <div className="bg-white rounded w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto border elevacao-3" onClick={e => e.stopPropagation()}>
+            <h3 className="text-[0.875rem] font-semibold text-[#282525] mb-4">
               {form._new ? "Nova atividade" : "Editar atividade"}
             </h3>
             <div className="space-y-3">

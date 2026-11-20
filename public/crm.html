@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <script>document.documentElement.classList.add('js');if('scrollRestoration' in history)history.scrollRestoration='manual';</script>
+  <script src="/consentimento.js" defer></script>
+  <script src="/origem-campanha.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRM para captação de patrocínio | Jards</title>
+  <meta name="description" content="Empresas, contatos, negociações, propostas, prazos e renovação no mesmo lugar. O CRM do Jards é feito para quem capta patrocínio para projetos incentivados. Comece grátis." />
+  <link rel="canonical" href="https://jards.com.br/crm" />
+  <meta property="og:title" content="CRM para captação de patrocínio | Jards" />
+  <meta property="og:description" content="Empresas, contatos, negociações, propostas, prazos e renovação no mesmo lugar. O CRM do Jards é feito para quem capta patrocínio para projetos incentivados. Comece grátis." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://jards.com.br/crm" />
+  <meta property="og:site_name" content="Jards" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:image" content="https://jards.com.br/assets/brand/modulos-conectados.jpeg" />
+  <meta property="og:image:width" content="960" />
+  <meta property="og:image:height" content="1200" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="CRM para captação de patrocínio | Jards" />
+  <meta name="twitter:description" content="Empresas, contatos, negociações, propostas, prazos e renovação no mesmo lugar. O CRM do Jards é feito para quem capta patrocínio para projetos incentivados. Comece grátis." />
+  <meta name="twitter:image" content="https://jards.com.br/assets/brand/modulos-conectados.jpeg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
+  <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+  <link rel="icon" href="/assets/jards-icon-final.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans:    ['"Google Sans"','system-ui','sans-serif'],
+            display: ['"Google Sans"','system-ui','sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-SemiBold.ttf') format('truetype'); font-weight:600; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-Bold.ttf') format('truetype'); font-weight:700 800; font-display:swap; }
+    h1, h2 { text-wrap: balance; }
+    p { text-wrap: pretty; }
+
+    :root {
+      --cream:  #FFFFFF;
+      --ink:    #282525;
+    }
+    body { font-family:'Google Sans',system-ui,sans-serif; background:var(--cream); color:var(--ink); overflow-x:hidden; }
+
+    /* ── Mockup de conversa (conector MCP) ── */
+    .mcp-chat { background: linear-gradient(165deg,#fff,#F7F7F5); border: 1px solid rgba(13,13,13,.10); border-radius: 4px; box-shadow: 0 22px 44px -12px rgba(52,42,78,.18), 0 6px 14px -6px rgba(52,42,78,.10); overflow: hidden; }
+    .mcp-chat-head { display:flex; align-items:center; gap:7px; padding:12px 50px 12px 16px; border-bottom:1px solid rgba(40,37,37,.08); }
+    .mcp-chat-dot { width:7px; height:7px; border-radius:50%; background:rgba(40,37,37,.15); flex-shrink:0; }
+    .mcp-tabs { display:grid; grid-template-columns:1fr 1fr; gap:3px; margin-left:8px; padding:3px; border-radius:6px; background:rgba(13,13,13,.05); }
+    .mcp-tab { display:flex; align-items:center; justify-content:center; gap:6px; padding:5px 12px; border-radius:4px; font-size:12px; font-weight:600; color:rgba(13,13,13,.58); transition:background-color .25s ease, color .25s ease, box-shadow .25s ease; }
+    .mcp-tab img { width:15px; height:15px; object-fit:contain; filter:grayscale(1); opacity:.5; transition:filter .25s ease, opacity .25s ease; }
+    .mcp-tab.is-on { background:#fff; color:#282525; box-shadow:0 1px 3px rgba(13,13,13,.12); }
+    .mcp-tab.is-on img { filter:none; opacity:1; }
+    .mcp-conectado { display:flex; align-items:center; gap:5px; margin-left:auto; font-size:10.5px; font-weight:600; color:rgba(13,13,13,.6); white-space:nowrap; }
+    .mcp-conectado::before { content:""; width:6px; height:6px; border-radius:50%; background:#2E8932; }
+    .mcp-chat-body { height:292px; padding:20px 18px; display:flex; flex-direction:column; justify-content:flex-end; gap:12px; overflow:hidden; transition:opacity .22s ease; }
+    .mcp-msg { font-size:13.5px; line-height:1.55; }
+    .mcp-msg-user { align-self:flex-end; max-width:82%; padding:9px 13px; border-radius:12px 12px 4px 12px; background:rgba(13,13,13,.06); color:#282525; }
+    .mcp-tool { align-self:flex-start; display:flex; flex-wrap:wrap; align-items:center; gap:3px 7px; max-width:calc(100% - 32px); margin-left:32px; padding:5px 10px; border:1px solid rgba(13,13,13,.09); border-radius:4px; background:#fff; font-size:11.5px; font-weight:600; color:rgba(13,13,13,.6); }
+    /* a chamada real da ferramenta do servidor MCP, alinhada sob o rótulo */
+    .mcp-tool-chamada { flex-basis:100%; padding-left:19px; font-family:var(--font-mono); font-size:10.5px; font-weight:400; line-height:1.45; color:rgba(13,13,13,.5); overflow-wrap:anywhere; }
+    .mcp-tool-chamada b { font-weight:500; color:#684DB0; }
+    .mcp-tool-icone { width:12px; height:12px; flex-shrink:0; border-radius:50%; border:1.5px solid rgba(13,13,13,.18); border-top-color:#684DB0; animation:mcp-gira .8s linear infinite; }
+    .mcp-tool svg { width:12px; height:12px; flex-shrink:0; }
+    .mcp-tool.is-ok { color:rgba(13,13,13,.62); }
+    .mcp-ai { align-self:flex-start; display:flex; gap:10px; max-width:94%; color:#282525; }
+    .mcp-ai-avatar { width:22px; height:22px; flex-shrink:0; margin-top:1px; object-fit:contain; }
+    .mcp-ai strong { display:block; margin-bottom:3px; color:#684DB0; font-weight:700; }
+    .mcp-input { display:flex; align-items:center; gap:10px; margin:0 14px 14px; padding:9px 9px 9px 13px; border:1px solid rgba(13,13,13,.11); border-radius:10px; background:#fff; }
+    .mcp-input-texto { flex:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:clip; font-size:13px; color:#282525; }
+    .mcp-input-texto.is-vazio { color:rgba(13,13,13,.35); }
+    .mcp-caret { display:inline-block; width:1.5px; height:15px; margin-left:1px; vertical-align:-3px; background:#282525; animation:mcp-pisca 1s steps(1) infinite; }
+    .mcp-enviar { display:flex; align-items:center; justify-content:center; width:28px; height:28px; flex-shrink:0; border-radius:50%; background:rgba(13,13,13,.12); color:#fff; transition:background-color .2s ease, transform .15s ease; }
+    .mcp-enviar.is-pronto { background:#282525; }
+    .mcp-enviar.is-apertado { transform:scale(.86); }
+    .mcp-entra { animation:mcp-entra .32s cubic-bezier(.16,1,.3,1) both; }
+    .mcp-plat { display:flex; align-items:flex-start; gap:10px; padding:11px 12px; border:1px solid rgba(13,13,13,.09); border-radius:4px; background:#fff; }
+    .mcp-plat img { width:28px; height:28px; flex-shrink:0; object-fit:contain; }
+    .mcp-figura { position:relative; }
+    .mcp-pausar { position:absolute; top:10px; right:12px; z-index:1; display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:4px; color:rgba(13,13,13,.6); transition:background-color .2s ease, color .2s ease; }
+    .mcp-pausar:hover { background:rgba(13,13,13,.06); color:#282525; }
+    .mcp-pausar:focus-visible { outline:2px solid rgba(104,77,176,.5); outline-offset:1px; }
+    .mcp-pausar .icone-retomar, .mcp-pausar[aria-pressed="true"] .icone-pausar { display:none; }
+    .mcp-pausar[aria-pressed="true"] .icone-retomar { display:block; }
+    .mcp-chat.is-pausado .mcp-tool-icone, .mcp-chat.is-pausado .mcp-caret { animation-play-state:paused; }
+    .mcp-chat-body.is-estatico { height:auto; justify-content:flex-start; }
+    .mcp-chat-body.is-estatico + .mcp-input { display:none; }
+    @media (max-width:400px) {
+      .mcp-chat-dot { display:none; }
+      .mcp-tabs { margin-left:0; }
+      .mcp-tab { padding:5px 8px; }
+      .mcp-conectado { font-size:0; gap:0; }
+    }
+    @keyframes mcp-gira { to { transform:rotate(360deg); } }
+    @keyframes mcp-pisca { 50% { opacity:0; } }
+    @keyframes mcp-entra { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    @media (prefers-reduced-motion: reduce) { .mcp-tool-icone, .mcp-caret { animation:none; } .mcp-entra { animation:none; } }
+
+    /* ── Reveal ── */
+    section[id] { scroll-margin-top:96px; }
+    :focus-visible { outline:3px solid rgba(104,77,176,.45); outline-offset:3px; }
+    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#282525; color:#fff; font-size:13px; font-weight:500; transition:transform .18s ease; }
+    .skip-link:focus { transform:translateY(0); }
+    .reveal { opacity:1; transform:none; }
+    html.js .reveal { opacity:0; transform:translateY(20px); transition:opacity .55s ease,transform .55s ease; }
+    html.js .reveal.in { opacity:1; transform:translateY(0); }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal, html.js .reveal, html.js .reveal.in { opacity:1; transform:none; transition:none; }
+    }
+
+    /* Mono só para dados: numerais, contadores, notas da prancheta e chamadas do MCP.
+       Títulos e texto seguem em Google Sans, que é o lado amigável. */
+    :root { --font-mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    .section-space { padding-top:clamp(6rem,8vw,9rem); padding-bottom:clamp(6rem,8vw,9rem); }
+
+    /* Prancheta: linhas de construção alinhadas à página e os módulos do
+       símbolo feitos a compasso (desenhados pelo script "Prancheta"). */
+    .prancheta { position:absolute; inset:0; z-index:-2; overflow:hidden; pointer-events:none; }
+    .prancheta svg { position:absolute; inset:0; width:100%; height:100%; }
+    .pr-linha { fill:none; stroke:rgba(40,37,37,.26); stroke-width:1; }
+    .pr-linha.is-guia { stroke:rgba(40,37,37,.17); stroke-dasharray:3 7; }
+    .pr-linha.is-forte { stroke:rgba(40,37,37,.5); }
+    .pr-arco { fill:none; stroke:rgba(40,37,37,.2); stroke-width:1; stroke-dasharray:2 6; }
+    .pr-marca { fill:none; stroke:rgba(40,37,37,.5); stroke-width:1; }
+    .pr-contorno { fill:none; stroke-width:1.25; }
+    .pr-nota { fill:rgba(40,37,37,.5); font-family:var(--font-mono); font-size:10.5px; font-weight:500; letter-spacing:.04em; }
+    .pr-host { position:relative; isolation:isolate; }
+    /* A linha que chega ao botão principal fica roxa quando ele é apontado. */
+    .pr-cta, .pr-aguada-cor { transition:stroke .2s ease, fill-opacity .2s ease; }
+    .landing-hero:has(.hero-actions .alt-cta:is(:hover,:focus-visible)) .pr-cta,
+    .closing-cta:has(.alt-cta:is(:hover,:focus-visible)) .pr-cta { stroke:#684DB0; }
+    @media print {
+      .prancheta { display:none !important; }
+      html.js .reveal { opacity:1 !important; transform:none !important; }
+    }
+    @media (forced-colors: active) { .prancheta { display:none; } }
+
+    .landing-nav-shell { margin-top:10px; border:1px solid rgba(40,37,37,.08); border-radius:4px; background:rgba(255,255,255,.76); backdrop-filter:blur(22px) saturate(150%); -webkit-backdrop-filter:blur(22px) saturate(150%); box-shadow:0 12px 44px rgba(104,77,176,.09),inset 0 1px 0 rgba(255,255,255,.8); }
+    .landing-hero { position:relative; isolation:isolate; overflow:hidden; min-height:100dvh; background:#F7F7F5; }
+    .landing-hero::before { content:""; position:absolute; inset:0; z-index:-3; background:#F7F7F5; }
+    .landing-hero::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.22; pointer-events:none; background-image:repeating-linear-gradient(0deg,rgba(40,37,37,.025) 0,rgba(40,37,37,.025) .5px,transparent .5px,transparent 3px); mix-blend-mode:multiply; }
+    .closing-cta { position:relative; isolation:isolate; overflow:hidden; background:#F7F7F5; }
+    .site-footer { position:relative; overflow:hidden; padding:88px 24px 28px; background:#F7F7F5; color:#282525; }
+    .site-footer-main { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(150px,.55fr) minmax(180px,.55fr); gap:64px; align-items:start; }
+    .footer-brand { min-height:390px; }
+    .footer-icon-stack { position:relative; display:block; width:430px; height:390px; }
+    .footer-icon { position:absolute; top:-78px; left:-96px; display:block; width:430px; height:430px; transform:rotate(-32deg); transform-origin:center; transition:transform .45s cubic-bezier(.2,.7,.2,1); }
+    .footer-icon-stack:hover .footer-icon { transform:rotate(-27deg) scale(1.02); }
+    .footer-column-title { margin-bottom:22px; color:rgba(40,37,37,.42); font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+    .footer-nav,.footer-social-links { display:flex; flex-direction:column; align-items:flex-start; gap:13px; }
+    .footer-nav a,.footer-social-links a { color:#282525; font-size:15px; font-weight:650; line-height:1.25; transition:color .2s ease,transform .2s ease; }
+    .footer-social-links a { display:inline-flex; align-items:center; gap:9px; }
+    .footer-social-links i { font-size:21px; line-height:1; }
+    .footer-nav a:hover,.footer-social-links a:hover { color:#684DB0; transform:translateX(3px); }
+    .footer-social-note { max-width:22ch; margin-top:28px; color:rgba(40,37,37,.48); font-size:13px; line-height:1.6; }
+    .footer-social-illustration { display:block; width:min(260px,22vw); height:auto; margin:26px 0 10px -16px; }
+    .site-footer-bottom { position:relative; z-index:2; display:grid; grid-template-columns:minmax(0,1.45fr) minmax(150px,.55fr) minmax(180px,.55fr); align-items:center; gap:64px; padding-top:28px; border-top:1px solid rgba(40,37,37,.12); }
+    .site-footer-legal { display:flex; flex-wrap:wrap; gap:20px; }
+    .site-footer-bottom .site-footer-legal { grid-column:2; }
+    .site-footer-bottom>p { justify-self:end; }
+    .site-footer-bottom a,.site-footer-bottom p { color:rgba(40,37,37,.42); font-size:11px; font-weight:600; }
+    .site-footer-bottom a:hover { color:#684DB0; }
+    .site-footer-cookies { padding:0; border:0; background:none; color:rgba(40,37,37,.42); font:inherit; font-size:11px; font-weight:600; cursor:pointer; }
+    .site-footer-cookies:hover { color:#684DB0; }
+    .site-footer-cookies:focus-visible { outline:2px solid #7259B5; outline-offset:2px; border-radius:2px; }
+    @media (max-width:800px) {
+      .site-footer { padding-top:64px; }
+      .site-footer-main { grid-template-columns:1fr 1fr; gap:48px 28px; }
+      .footer-brand { grid-column:1 / -1; }
+      .footer-brand { min-height:340px; }
+      .footer-icon-stack { width:350px; height:340px; }
+      .footer-icon { top:-64px; left:-82px; width:360px; height:360px; }
+      .footer-social-illustration { width:min(230px,42vw); margin-left:-10px; }
+      .site-footer-bottom { display:flex; align-items:flex-start; flex-direction:column; gap:14px; }
+    }
+    @media (max-width:430px) {
+      .site-footer-main { grid-template-columns:1fr; }
+      .footer-brand { grid-column:auto; }
+      .footer-brand { min-height:280px; }
+      .footer-icon-stack { width:280px; height:280px; }
+      .footer-icon { top:-54px; left:-72px; width:300px; height:300px; }
+      .footer-social-illustration { width:min(250px,78vw); margin-bottom:8px; }
+    }
+    .hero-layout { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); align-items:center; gap:40px; width:min(1480px,100%); min-height:100dvh; margin:auto; padding:112px 40px 72px; }
+    .hero-copy { min-width:0; text-align:left; }
+    .hero-copy h1 { max-width:100%; margin:0; font-size:clamp(52px,5.2vw,80px); font-weight:700; line-height:.98; letter-spacing:-.06em; color:#282525; text-wrap:balance; }
+    .hero-description { max-width:43ch; margin-top:24px; font-size:17px; line-height:1.65; color:#625f68; }
+    .hero-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:28px; }
+    .hero-actions a { white-space:nowrap; }
+    .hero-visual { position:relative; justify-self:end; min-width:0; width:90%; aspect-ratio:1424 / 960; }
+    .landing-hero { min-height:100dvh; }
+    @media (max-width:1023px) { .hero-layout { gap:28px; padding-right:24px; padding-left:24px; } .hero-copy h1 { font-size:clamp(48px,5.5vw,58px); } .hero-description { font-size:16px; } }
+    @media (max-width:767px) { .hero-layout { grid-template-columns:minmax(0,1fr); gap:42px; min-height:100svh; padding:118px 24px 92px; } .hero-copy h1 { max-width:14ch; font-size:clamp(42px,11vw,52px); } .hero-visual { justify-self:center; width:94%; margin-top:2px; } }
+    @media (max-width:767px) { .landing-nav-shell { margin:8px 8px 0; padding-left:14px; padding-right:10px; } .landing-hero { min-height:auto; } }
+
+    /* ── Alternativa: tokens ── */
+    :root {
+      --alt-ink: #282525;
+      --alt-ink-hover: #3A3535;
+      --alt-purple: #684DB0;
+      --alt-purple-focus: #7259B5;
+      --alt-surface: #F7F7F5;
+      --alt-radius: 4px;
+      --alt-container: 72rem;
+      --alt-h2-section: clamp(34px, 3.6vw, 52px);
+      /* coluna da direita dos cabeçalhos divididos (fluxo, preços, blog): mesma largura, mesmo x */
+      --alt-split-side: clamp(260px, 30vw, 360px);
+    }
+
+    /* Rolagem das âncoras sem animação quando o sistema pede movimento reduzido
+       (html.scroll-smooth vence a classe .scroll-smooth do Tailwind) */
+    @media (prefers-reduced-motion: reduce) { html.scroll-smooth { scroll-behavior:auto; } }
+
+    /* CTA principal único ("Começar grátis") e variantes */
+    .alt-cta { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:44px; padding:0 18px; border:1px solid transparent; border-radius:var(--alt-radius); background:var(--alt-ink); color:#fff; font-size:14px; font-weight:500; line-height:1; white-space:nowrap; text-decoration:none; cursor:pointer; transition:background-color .18s ease, border-color .18s ease, color .18s ease, transform .12s ease; }
+    .alt-cta:hover { background:var(--alt-ink-hover); }
+    .alt-cta:active { transform:translateY(1px); }
+    .alt-cta:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:2px; }
+    .alt-cta .ph, .alt-link .ph { font-size:16px; line-height:1; }
+    .alt-cta--header { height:40px; }
+    /* secundário: texto com seta, sem borda e sem fundo */
+    .alt-link { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0; border:0; background:none; color:var(--alt-ink); font-size:14px; font-weight:500; line-height:1.2; white-space:nowrap; text-decoration:none; cursor:pointer; transition:color .18s ease; }
+    .alt-link .ph { transition:transform .18s ease; }
+    .alt-link:hover .ph { transform:translateX(3px); }
+    .alt-link:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:2px; border-radius:var(--alt-radius); }
+    .hero-actions { gap:12px 28px; }
+
+    /* Títulos h2 de seção */
+    h2.alt-h2 { font-weight:700; letter-spacing:-.035em; line-height:1.04; text-wrap:balance; }
+    h2.alt-h2--section { font-size:var(--alt-h2-section); }
+    /* Linha de h2 em bloco próprio: o text-wrap:balance herdado equilibra cada linha (o <br> impedia) */
+    .alt-h2-line { display:block; }
+
+    /* Cabeçalho dividido: título à esquerda, texto de apoio numa coluna de largura fixa à direita */
+    .alt-split-head { display:grid; grid-template-columns:minmax(0,1fr) var(--alt-split-side); align-items:end; gap:48px; }
+    .alt-split-head .alt-h2 { margin:0; }
+    .alt-split-lede { color:rgba(40,37,37,.56); font-size:15px; line-height:1.65; }
+    @media (max-width:767px) { .alt-split-head { grid-template-columns:minmax(0,1fr); gap:18px; } }
+
+    /* Kicker único acima de cada h2 */
+    .alt-kicker { display:block; margin:0 0 16px; font-size:12px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:var(--alt-purple); }
+
+    .alt-check { flex:0 0 auto; width:16px; height:16px; margin-top:2px; color:var(--alt-purple); }
+
+    /* Uma superfície neutra só */
+    .alt-surface { background:var(--alt-surface); }
+
+    /* Grade: texto do hero alinhado ao contêiner de 1152px (o mockup continua sangrando à direita) */
+    @media (min-width:1024px) {
+      .hero-layout { padding-left:max(24px, calc(min(50%, 740px) - (var(--alt-container) / 2))); }
+    }
+
+    @media (prefers-reduced-motion: reduce) { .alt-cta, .alt-link, .alt-link .ph { transition:none; } }
+
+    /* ── Alternativa: estrutura e mobile ── */
+
+    /* Header: "Entrar" visível no celular, mesmo destino do "Fazer login" */
+    .alt-nav-login { display:inline-flex; align-items:center; min-height:40px; padding:0 12px; border-radius:var(--alt-radius); color:rgba(13,13,13,.55); font-size:14px; font-weight:500; white-space:nowrap; transition:color .18s ease; }
+    .alt-nav-login:hover { color:var(--alt-ink); }
+    .alt-nav-login:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:2px; }
+    @media (max-width:767px) { .alt-nav-login { padding:0 10px; } }
+
+    /* Abas roláveis: o JS marca o lado que ainda tem conteúdo e só esse lado esmaece */
+    .alt-scroll-x { overflow-x:auto; scrollbar-width:none; overscroll-behavior-x:contain; }
+    .alt-scroll-x::-webkit-scrollbar { display:none; }
+    .alt-scroll-x.is-fade-r { -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent); }
+    .alt-scroll-x.is-fade-l { -webkit-mask-image:linear-gradient(90deg,transparent,#000 40px); mask-image:linear-gradient(90deg,transparent,#000 40px); }
+    .alt-scroll-x.is-fade-l.is-fade-r { -webkit-mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent); mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent); }
+
+    @media (prefers-reduced-motion: reduce) { .alt-nav-login { transition:none; } }
+
+  </style>
+  <style>
+    .faq-lista { border-top:1px solid rgba(40,37,37,.12); }
+    .faq-lista details { border-bottom:1px solid rgba(40,37,37,.12); }
+    .faq-lista summary { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:22px 0; list-style:none; cursor:pointer; font-size:17px; font-weight:600; color:#282525; }
+    .faq-lista summary::-webkit-details-marker { display:none; }
+    .faq-lista summary .ph { font-size:18px; color:rgba(40,37,37,.4); transition:transform .18s ease; }
+    .faq-lista details[open] summary .ph { transform:rotate(45deg); }
+    .faq-lista p { margin:-6px 0 22px; max-width:62ch; font-size:15px; line-height:1.7; color:rgba(40,37,37,.6); }
+    .faq-lista a { color:#684DB0; text-decoration:underline; text-underline-offset:2px; }
+    @media (min-width: 1024px) {
+      .hero-layout { grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr); gap:56px; }
+      .hero-copy h1 { font-size:clamp(48px,4.3vw,70px); }
+    }
+    /* Abertura: o quadro de negociações ocupa a coluna inteira e rola na horizontal quando falta espaço */
+    .hero-visual--quadro { aspect-ratio:auto; width:100%; max-width:720px; justify-self:end; }
+    @media (max-width: 1023px) { .hero-visual--quadro { justify-self:stretch; max-width:none; } }
+
+    /* ── Seções "texto + tela" (molde do /incentivadores) ── */
+    .fx-sec { position:relative; }
+    .fx-grade { display:grid; grid-template-columns:minmax(0,1fr); gap:40px; align-items:center; }
+    @media (min-width:1024px) {
+      .fx-grade { grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr); gap:64px; }
+      .fx-grade--inverso { grid-template-columns:minmax(0,1.18fr) minmax(0,.82fr); }
+      .fx-grade--inverso .fx-copia { order:2; }
+      .fx-grade--texto { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    }
+    .fx-texto { margin-top:20px; max-width:46ch; font-size:16px; line-height:1.65; color:#625f68; }
+    .fx-lista { display:grid; gap:12px; margin:26px 0 0; padding:0; list-style:none; }
+    .fx-lista li { display:flex; gap:10px; align-items:flex-start; font-size:15px; line-height:1.5; color:rgba(40,37,37,.78); }
+    .fx-lista .ph { flex:0 0 auto; margin-top:2px; font-size:17px; color:var(--fx-cor,#684DB0); }
+    /* janela do app */
+    .app-frame { position:relative; overflow:hidden; background:#fff; border:1px solid rgba(13,13,13,.08); border-radius:4px; box-shadow:0 22px 44px -12px rgba(52,42,78,.18),0 6px 14px -6px rgba(52,42,78,.10); font-size:12px; color:#282525; }
+    .app-barra { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(13,13,13,.07); background:#F9F9F8; font-size:11px; color:rgba(13,13,13,.4); white-space:nowrap; }
+    .app-barra img { width:14px; height:14px; }
+    .app-barra b { color:rgba(13,13,13,.75); font-weight:600; }
+    .mk-rotulo { font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(13,13,13,.35); }
+    .mk-painel { border:1px solid rgba(13,13,13,.08); border-radius:4px; background:#fff; overflow:hidden; }
+    .mk-painel-topo { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 12px; border-bottom:1px solid rgba(13,13,13,.06); }
+    .mk-painel-topo > span:first-child { display:flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700; color:rgba(13,13,13,.75); }
+
+    /* ── Quadro de negociações e lista de atividades (do #produto-tabs da landing, fora do shell de abas) ── */
+    .crm-quadro-topo { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:10px 16px; padding:14px 14px 12px; border-bottom:1px solid rgba(40,37,37,.08); }
+    .crm-quadro-titulo { font-size:20px; font-weight:700; line-height:1.1; letter-spacing:-.025em; color:#282525; }
+    .crm-quadro-acoes { display:flex; align-items:center; gap:10px; }
+    .ms-eyebrow { margin-bottom:4px; font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:rgba(40,37,37,.30); }
+    .ms-summary { display:flex; align-items:center; gap:10px; font-size:11px; color:rgba(40,37,37,.38); white-space:nowrap; }
+    .ms-summary strong { color:#282525; font-variant-numeric:tabular-nums; }
+    .ms-view-toggle { display:flex; height:30px; overflow:hidden; border:1px solid rgba(40,37,37,.12); border-radius:4px; background:#fff; }
+    .ms-view-toggle span { display:flex; width:30px; align-items:center; justify-content:center; border-left:1px solid rgba(40,37,37,.10); color:rgba(40,37,37,.35); font-size:14px; }
+    .ms-view-toggle span:first-child { border-left:0; }
+    .ms-view-toggle .on { position:relative; z-index:1; color:#684DB0; box-shadow:inset 0 0 0 1px #684DB0; }
+    .ms-tb { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(40,37,37,.08); }
+    .ms-seg { display:flex; height:30px; overflow:hidden; border:1px solid rgba(40,37,37,.12); border-radius:4px; }
+    .ms-seg-btn { display:flex; align-items:center; padding:0 12px; background:#fff; font-size:11.5px; font-weight:600; color:rgba(40,37,37,.45); white-space:nowrap; }
+    .ms-seg-btn + .ms-seg-btn { border-left:1px solid rgba(40,37,37,.12); }
+    .ms-seg-btn.on { position:relative; z-index:1; color:#684DB0; box-shadow:inset 0 0 0 1px #684DB0; }
+    .ms-logo { display:flex; flex-shrink:0; align-items:center; justify-content:center; overflow:hidden; border:1px solid rgba(40,37,37,.08); border-radius:4px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.04); font-weight:700; }
+    .ms-logo img { display:block; width:78%; height:78%; object-fit:contain; }
+    .ms-kanban { display:flex; align-items:stretch; gap:10px; padding:12px; overflow-x:auto; overflow-y:hidden; background:rgba(13,13,13,.012); }
+    .ms-kanban.alt-scroll-x { scrollbar-width:thin; scrollbar-color:rgba(13,13,13,.20) transparent; }
+    .ms-k-column { display:flex; flex:1 0 156px; min-width:0; flex-direction:column; overflow:hidden; border:1px solid rgba(13,13,13,.07); border-radius:4px; background:rgba(13,13,13,.018); }
+    .ms-kc-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; padding:10px 10px 9px; border-bottom:1px solid rgba(13,13,13,.06); background:rgba(255,255,255,.82); }
+    .ms-kc-title { display:flex; min-width:0; align-items:center; gap:6px; }
+    .ms-kc-label { overflow:hidden; font-size:11.5px; font-weight:600; color:rgba(13,13,13,.75); text-overflow:ellipsis; white-space:nowrap; }
+    .ms-kc-meta { margin-top:3px; font-size:9.5px; font-weight:500; color:rgba(13,13,13,.38); font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .ms-kc-add { display:flex; width:22px; height:22px; flex-shrink:0; align-items:center; justify-content:center; border:1px solid rgba(13,13,13,.10); border-radius:4px; background:#fff; color:rgba(13,13,13,.30); font-size:14px; line-height:1; }
+    .ms-k-cards { display:flex; flex:1; flex-direction:column; gap:8px; padding:8px; }
+    .ms-k-card { padding:11px; border:1px solid rgba(13,13,13,.08); border-radius:4px; background:#fff; }
+    .ms-k-emp { display:flex; min-width:0; align-items:center; gap:6px; margin-bottom:7px; }
+    .ms-k-emp span { overflow:hidden; font-size:10px; font-weight:600; color:rgba(40,37,37,.50); text-overflow:ellipsis; white-space:nowrap; }
+    .ms-k-titulo { display:-webkit-box; overflow:hidden; margin-bottom:9px; font-size:12px; font-weight:600; line-height:1.35; letter-spacing:-.01em; color:rgba(40,37,37,.85); -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+    .ms-k-linha { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+    .ms-k-valor { font-size:12px; font-weight:600; color:rgba(40,37,37,.65); font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .ms-k-selo { display:inline-flex; padding:1px 5px; border:1px solid; border-radius:4px; background:#fff; font-size:9px; font-weight:600; white-space:nowrap; }
+    .ms-k-contato { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:9px; padding-top:8px; border-top:1px solid rgba(13,13,13,.06); font-size:9.5px; font-weight:500; color:rgba(40,37,37,.45); white-space:nowrap; }
+    .ms-k-contato span:first-child { overflow:hidden; text-overflow:ellipsis; }
+    .ms-k-contato span:last-child { display:inline-flex; align-items:center; gap:3px; color:rgba(40,37,37,.62); font-variant-numeric:tabular-nums; }
+    .ms-tbl { width:100%; min-width:600px; border-collapse:collapse; }
+    .ms-tbl thead tr { border-bottom:1px solid rgba(40,37,37,.07); }
+    .ms-tbl th { padding:9px 12px; background:#F9F9F8; text-align:left; font-size:9.5px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:rgba(40,37,37,.38); white-space:nowrap; }
+    .ms-tbl td { padding:10px 12px; border-bottom:1px solid rgba(40,37,37,.045); vertical-align:middle; }
+    .ms-tbl tr:last-child td { border-bottom:none; }
+    .ms-prio { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; font-size:10.5px; font-weight:600; color:rgba(13,13,13,.72); }
+    .ms-prio-icon { display:inline-flex; width:13px; height:13px; flex-shrink:0; align-items:center; justify-content:center; border-radius:3px; color:#fff; }
+    .ms-prio-icon svg { display:block; width:9px; height:9px; }
+    .crm-rolagem { overflow-x:auto; overscroll-behavior-x:contain; }
+    .crm-contadores { display:flex; flex-wrap:wrap; gap:4px 12px; font-size:11px; color:rgba(40,37,37,.42); }
+    .crm-contadores strong { color:#282525; font-variant-numeric:tabular-nums; }
+    .crm-contadores .is-atrasada strong { color:#D94A4A; }
+    .crm-feito { display:block; width:17px; height:17px; border:1.5px solid rgba(40,37,37,.20); border-radius:50%; }
+    .crm-ativ-nome { font-size:12px; font-weight:600; color:rgba(40,37,37,.78); white-space:nowrap; }
+    .crm-ativ-tipo { display:flex; align-items:center; gap:4px; margin-top:2px; font-size:10px; color:rgba(40,37,37,.42); white-space:nowrap; }
+    .crm-ativ-neg { display:flex; align-items:center; gap:8px; }
+    .crm-ativ-neg b { display:block; font-size:11px; font-weight:600; color:rgba(40,37,37,.68); white-space:nowrap; }
+    .crm-ativ-neg small { display:block; margin-top:1px; font-size:10px; color:rgba(40,37,37,.42); white-space:nowrap; }
+    .crm-ativ-prazo { font-size:11px; font-weight:500; color:rgba(40,37,37,.6); white-space:nowrap; }
+    .crm-ativ-prazo.is-atrasada { color:#D94A4A; }
+    .crm-resp { display:flex; align-items:center; gap:6px; font-size:11px; color:rgba(40,37,37,.58); white-space:nowrap; }
+    .crm-resp i { display:grid; width:20px; height:20px; place-items:center; border-radius:50%; background:#684DB0; color:#fff; font-size:8.5px; font-style:normal; font-weight:700; }
+
+    /* ── Telas estáticas do CRM: empresa, negociação e cliente ── */
+    .crm-tela { container-type:inline-size; }
+    .crm-topo { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px 16px; padding:14px 16px; border-bottom:1px solid rgba(13,13,13,.07); }
+    .crm-id { display:flex; min-width:0; align-items:center; gap:11px; }
+    .crm-id .ms-logo { width:44px; height:44px; }
+    .crm-id > div { min-width:0; }
+    .crm-sobre { overflow:hidden; font-size:10.5px; color:rgba(13,13,13,.45); text-overflow:ellipsis; white-space:nowrap; }
+    .crm-nome { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-top:2px; font-size:19px; font-weight:650; line-height:1.15; letter-spacing:-.03em; color:#282525; }
+    .crm-nome .ph { font-size:13px; color:rgba(13,13,13,.25); }
+    .crm-nome--menor { font-size:16px; letter-spacing:-.02em; }
+    .crm-selo { display:inline-flex; align-items:center; padding:2px 7px; border:1px solid; border-radius:4px; background:#fff; font-size:9.5px; font-weight:600; letter-spacing:0; white-space:nowrap; }
+    .crm-abas { display:flex; gap:16px; padding:0 16px; overflow:hidden; border-bottom:1px solid rgba(13,13,13,.07); }
+    .crm-abas span { position:relative; padding:9px 0; font-size:10.5px; font-weight:600; color:rgba(13,13,13,.4); white-space:nowrap; }
+    .crm-abas span.is-ativa { color:#7259B5; }
+    .crm-abas span.is-ativa::after { content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:#7259B5; }
+    .crm-corpo { display:grid; gap:10px; padding:12px; background:rgba(13,13,13,.018); }
+    .crm-metricas { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .crm-medidor { width:132px; flex:0 0 auto; text-align:center; }
+    .crm-medidor p:first-child { font-size:8.5px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:rgba(13,13,13,.45); white-space:nowrap; }
+    .crm-medidor svg { display:block; width:100%; height:52px; margin-top:3px; }
+    .crm-medidor p:last-child { margin-top:-2px; font-size:10.5px; font-weight:500; color:rgba(13,13,13,.6); }
+    .crm-metrica { min-width:0; padding:10px 11px; border:1px solid rgba(13,13,13,.08); border-radius:4px; background:#fff; }
+    .crm-metrica .mk-rotulo { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .crm-metrica strong { display:block; margin-top:6px; font-size:16px; font-weight:650; letter-spacing:-.02em; color:#282525; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .crm-pessoa { display:grid; grid-template-columns:30px minmax(0,1fr) auto auto; align-items:center; gap:9px; padding:9px 12px; border-bottom:1px solid rgba(13,13,13,.05); }
+    .crm-pessoa:last-child { border-bottom:0; }
+    .crm-avatar { display:grid; width:30px; height:30px; place-items:center; border-radius:4px; background:linear-gradient(145deg,#fff 0%,rgba(13,13,13,.035) 32%,rgba(13,13,13,.10) 100%); font-size:12px; font-weight:600; color:rgba(13,13,13,.45); }
+    .crm-pessoa div { min-width:0; }
+    .crm-pessoa strong { display:block; overflow:hidden; font-size:11.5px; font-weight:600; color:rgba(13,13,13,.75); text-overflow:ellipsis; white-space:nowrap; }
+    .crm-pessoa small { display:block; overflow:hidden; margin-top:2px; font-size:10px; color:rgba(13,13,13,.45); text-overflow:ellipsis; white-space:nowrap; }
+    .crm-pessoa > .ph { font-size:13px; color:rgba(13,13,13,.25); }
+    /* negociação */
+    .crm-neg-acoes { display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; }
+    .crm-proposta { display:flex; align-items:stretch; height:40px; overflow:hidden; border:1px solid rgba(13,13,13,.12); border-radius:4px; background:#fff; }
+    .crm-proposta > span:first-child { display:flex; align-items:center; gap:10px; padding:0 12px; }
+    .crm-proposta-rotulo { display:block; font-size:9px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:rgba(13,13,13,.45); white-space:nowrap; }
+    .crm-proposta-rotulo span { font-weight:400; letter-spacing:0; text-transform:none; }
+    .crm-proposta-valor { display:block; font-size:12px; font-weight:600; color:#282525; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .crm-proposta .ph-pencil-simple { font-size:11px; color:rgba(13,13,13,.25); }
+    .crm-proposta-mais { display:flex; width:32px; align-items:center; justify-content:center; border-left:1px solid rgba(13,13,13,.08); color:rgba(13,13,13,.4); font-size:14px; }
+    .crm-fechar { display:inline-flex; align-items:center; gap:6px; height:40px; padding:0 13px; border-radius:4px; background:#2E8932; color:#fff; font-size:11.5px; font-weight:500; white-space:nowrap; }
+    .crm-neg-grade { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:10px; align-items:start; }
+    .crm-evento { display:grid; grid-template-columns:26px minmax(0,1fr); gap:10px; padding:10px 12px; border-bottom:1px solid rgba(13,13,13,.05); }
+    .crm-evento:last-child { border-bottom:0; }
+    .crm-evento-icone { display:grid; width:26px; height:26px; place-items:center; border:1px solid rgba(13,13,13,.10); border-radius:50%; background:#fff; color:rgba(13,13,13,.5); font-size:12px; }
+    .crm-evento p { font-size:11.5px; font-weight:600; line-height:1.35; color:rgba(13,13,13,.78); }
+    .crm-evento small { display:block; margin-top:3px; font-size:9.5px; color:rgba(13,13,13,.42); }
+    .crm-detalhe { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 12px; border-bottom:1px solid rgba(13,13,13,.05); font-size:10.5px; color:rgba(13,13,13,.5); }
+    .crm-detalhe:last-child { border-bottom:0; }
+    .crm-detalhe b { font-weight:600; color:rgba(13,13,13,.75); white-space:nowrap; }
+    /* cliente */
+    .crm-cli-acoes { display:flex; flex-wrap:wrap; gap:6px; }
+    .crm-botao { display:inline-flex; align-items:center; gap:5px; height:30px; padding:0 10px; border:1px solid rgba(13,13,13,.12); border-radius:4px; background:#fff; font-size:10.5px; font-weight:600; color:rgba(13,13,13,.6); white-space:nowrap; }
+    .crm-botao.is-destaque { border-color:rgba(114,89,181,.4); color:#7259B5; }
+    .crm-resumo { display:grid; grid-template-columns:152px repeat(2,minmax(0,1fr)); gap:8px; }
+    .crm-resumo .crm-metrica:first-child { display:flex; align-items:center; justify-content:center; }
+    .crm-entrega { display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid rgba(13,13,13,.05); }
+    .crm-entrega:last-child { border-bottom:0; }
+    .crm-entrega strong { display:block; overflow:hidden; font-size:11px; font-weight:600; color:rgba(13,13,13,.75); text-overflow:ellipsis; white-space:nowrap; }
+    .crm-entrega small { display:block; margin-top:2px; font-size:9.5px; color:rgba(13,13,13,.42); }
+    .crm-entrega time { font-size:10px; color:rgba(13,13,13,.45); white-space:nowrap; font-variant-numeric:tabular-nums; }
+    @container (max-width:520px) { .crm-neg-grade { grid-template-columns:minmax(0,1fr); } }
+    @container (max-width:440px) {
+      .crm-medidor { width:116px; }
+      .crm-metricas, .crm-resumo { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+      .crm-metricas .crm-metrica:last-child, .crm-resumo .crm-metrica:first-child { grid-column:1 / -1; }
+      .crm-pessoa { grid-template-columns:30px minmax(0,1fr) auto; }
+      .crm-pessoa > .ph, .crm-entrega time { display:none; }
+      .crm-entrega { grid-template-columns:minmax(0,1fr) auto; }
+      .crm-tela .ms-tb { padding:10px 12px; }
+      .crm-tela .ms-seg-btn { padding:0 8px; font-size:11px; }
+    }
+
+    /* ── Seções de texto ── */
+    .crm-tres { display:grid; grid-template-columns:minmax(0,1fr); margin-top:56px; border-top:1px solid rgba(40,37,37,.12); }
+    .crm-tres article { padding:28px 0; border-bottom:1px solid rgba(40,37,37,.12); }
+    .crm-tres-icone { display:inline-flex; width:40px; height:40px; align-items:center; justify-content:center; margin-bottom:22px; border:1px solid rgba(104,77,176,.28); border-radius:4px; color:#684DB0; font-size:20px; }
+    .crm-tres h3 { margin-bottom:10px; font-size:20px; font-weight:700; line-height:1.2; letter-spacing:-.02em; color:#282525; }
+    .crm-tres p { max-width:36ch; font-size:15px; line-height:1.6; color:rgba(40,37,37,.58); }
+    @media (min-width:768px) {
+      .crm-tres { grid-template-columns:repeat(3,minmax(0,1fr)); border-bottom:1px solid rgba(40,37,37,.12); }
+      .crm-tres article { padding:36px 28px 40px; border-bottom:0; border-right:1px solid rgba(40,37,37,.12); }
+      .crm-tres article:first-child { padding-left:0; }
+      .crm-tres article:last-child { padding-right:0; border-right:0; }
+    }
+    .crm-itens { margin:0; padding:0; list-style:none; border-top:1px solid rgba(40,37,37,.12); }
+    .crm-itens li { display:flex; align-items:flex-start; gap:16px; padding:22px 0; border-bottom:1px solid rgba(40,37,37,.12); font-size:16px; line-height:1.55; color:rgba(40,37,37,.78); }
+    .crm-itens .ph { display:inline-flex; flex:0 0 auto; width:36px; height:36px; align-items:center; justify-content:center; border:1px solid rgba(13,13,13,.12); border-radius:4px; background:#fff; color:var(--fx-cor,#684DB0); font-size:18px; }
+    .crm-itens li span { padding-top:6px; }
+    .crm-faixa { padding-top:clamp(4rem,6vw,6rem); padding-bottom:clamp(4rem,6vw,6rem); border-top:1px solid rgba(40,37,37,.08); }
+    .crm-fechamento-link { margin-top:18px; }
+  </style>
+  <link rel="stylesheet" href="/menu-site.css" />
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+
+<!-- ════════════════════════ NAV ════════════════════════ -->
+<header class="fixed inset-x-0 top-0 z-50">
+  <div class="landing-nav-shell max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
+    <a href="/" aria-label="Jards, página inicial"><img src="/assets/jards-logo.svg" alt="Jards" class="h-7" /></a>
+
+    <nav class="menu-site" aria-label="Principal">
+      <div class="menu-site__grupo" data-menu-grupo>
+        <button type="button" class="menu-site__gatilho" data-menu-gatilho aria-expanded="false" aria-controls="menuProduto">Produto <i class="ph ph-caret-down menu-site__seta" aria-hidden="true"></i></button>
+        <div class="menu-site__painel" id="menuProduto" style="--colunas:2">
+          <div class="menu-site__coluna">
+            <p class="menu-site__secao">Captação de recursos</p>
+            <a class="menu-site__item" href="/incentivadores"><span class="menu-site__titulo">Inteligência</span><span class="menu-site__desc">Quem incentiva cada lei, empresa por empresa, e os editais abertos.</span></a>
+            <a class="menu-site__item" href="/crm" aria-current="page"><span class="menu-site__titulo">CRM</span><span class="menu-site__desc">Empresas, negociações, propostas e prazos, até a renovação.</span></a>
+          </div>
+          <div class="menu-site__coluna">
+            <p class="menu-site__secao">Prestação de contas</p>
+            <a class="menu-site__item" href="/prestacao-de-contas"><span class="menu-site__titulo">Prestação de contas</span><span class="menu-site__desc">Orçamento, extrato, comprovantes e envio, conferidos pelas regras de cada lei.</span></a>
+          </div>
+        </div>
+      </div>
+      <a class="menu-site__link" href="/precos">Preços</a>
+      <a class="menu-site__link" href="/publicacoes">Publicações</a>
+    </nav>
+
+    <div class="flex items-center gap-1 md:gap-3">
+      <a href="/login" data-app-path="/login" class="alt-nav-login menu-site__login"><span class="md:hidden">Entrar</span><span class="hidden md:inline">Fazer login</span></a>
+      <a href="/cadastro" data-app-path="/cadastro" class="alt-cta alt-cta--header">
+        Começar grátis
+        <i class="ph ph-arrow-right" aria-hidden="true"></i>
+      </a>
+      <button type="button" class="menu-site__botao-celular" data-menu-celular aria-expanded="false" aria-controls="menuCelular" aria-label="Abrir menu"><i class="ph ph-list" aria-hidden="true"></i></button>
+    </div>
+  </div>
+  <div class="menu-celular" id="menuCelular" hidden>
+    <div class="menu-celular__secao">
+      <span class="menu-celular__rotulo">Captação de recursos</span>
+      <a class="menu-celular__link" href="/incentivadores">Inteligência</a>
+      <a class="menu-celular__link" href="/crm" aria-current="page">CRM</a>
+    </div>
+    <div class="menu-celular__secao">
+      <span class="menu-celular__rotulo">Prestação de contas</span>
+      <a class="menu-celular__link" href="/prestacao-de-contas">Prestação de contas</a>
+    </div>
+    <div class="menu-celular__secao">
+      <a class="menu-celular__link" href="/precos">Preços</a>
+      <a class="menu-celular__link" href="/publicacoes">Publicações</a>
+      <a class="menu-celular__link" href="/login" data-app-path="/login">Fazer login</a>
+    </div>
+  </div>
+</header>
+
+<main id="conteudo">
+
+<!-- ════════════════════════ ABERTURA ════════════════════════ -->
+<section id="top" class="landing-hero" aria-labelledby="crm-titulo">
+  <div class="hero-layout">
+    <div class="hero-copy">
+      <p class="alt-kicker mb-6">CRM de captação de recursos</p>
+      <h1 id="crm-titulo" class="font-display">Do primeiro contato à renovação.</h1>
+      <p class="hero-description">Empresas, contatos, negociações, propostas e prazos no mesmo lugar. A equipe sabe o que aconteceu com cada patrocinador e o que precisa acontecer agora.</p>
+      <div class="hero-actions">
+        <a href="/cadastro" data-app-path="/cadastro" class="alt-cta">
+          Começar grátis
+          <i class="ph ph-arrow-right" aria-hidden="true"></i>
+        </a>
+        <a href="#negociacoes" class="alt-link">Ver como funciona <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+      </div>
+    </div>
+    <div class="hero-visual hero-visual--quadro">
+      <!-- Quadro de negociações no padrão do app; os cartões vêm de KS/KCOLS no script das telas -->
+      <div class="app-frame reveal" aria-hidden="true">
+        <div class="app-barra"><img src="/assets/jards-icon-final.svg" alt="" /><span>Prospecções</span><span>/</span><b>Negociações</b></div>
+        <div class="crm-quadro-topo">
+          <div><p class="ms-eyebrow">Pipeline comercial</p><p class="crm-quadro-titulo">Negociações</p></div>
+          <div class="crm-quadro-acoes">
+            <div class="ms-summary"><span><strong>7</strong> de 7</span><span><strong>R$ 1,28 mi</strong> no pipeline</span></div>
+            <div class="ms-view-toggle"><span><i class="ph ph-list-bullets"></i></span><span class="on"><i class="ph ph-kanban"></i></span><span><i class="ph ph-chart-line-up"></i></span></div>
+          </div>
+        </div>
+        <div class="ms-kanban alt-scroll-x" tabindex="-1" id="ms-kanban"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ POR QUE UM CRM ════════════════════════ -->
+<section id="historico" class="section-space bg-white px-6" aria-labelledby="historico-titulo">
+  <div class="max-w-6xl mx-auto">
+    <div class="alt-split-head reveal">
+      <div>
+        <p class="alt-kicker">Por que um CRM</p>
+        <h2 id="historico-titulo" class="alt-h2 alt-h2--section font-display">
+          <span class="alt-h2-line">A planilha guarda o valor.</span>
+          <span class="alt-h2-line">Não guarda a conversa.</span>
+        </h2>
+      </div>
+      <p class="alt-split-lede">Quando a captação vive em planilhas, e-mails e mensagens soltas, cada troca na equipe recomeça do zero. No Jards, cada negociação carrega o próprio histórico.</p>
+    </div>
+    <div class="crm-tres reveal">
+      <article>
+        <span class="crm-tres-icone"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i></span>
+        <h3>Histórico que se grava sozinho</h3>
+        <p>Mudanças de etapa, valor, responsável interno e próximo contato ficam registradas com o nome de quem mudou.</p>
+      </article>
+      <article>
+        <span class="crm-tres-icone"><i class="ph ph-calendar-check" aria-hidden="true"></i></span>
+        <h3>Próximo passo com data e dono</h3>
+        <p>Follow-ups e atividades têm responsável, prazo e ficam ligados à negociação, à empresa ou ao contato.</p>
+      </article>
+      <article>
+        <span class="crm-tres-icone"><i class="ph ph-bell" aria-hidden="true"></i></span>
+        <h3>Aviso antes do atraso</h3>
+        <p>O sino do app avisa prazos de atividades, follow-ups, entregas e inscrições em editais.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ EMPRESAS E CONTATOS ════════════════════════ -->
+<section id="empresas" class="fx-sec section-space alt-surface px-6" aria-labelledby="empresas-titulo" style="--fx-cor:#684DB0">
+  <div class="max-w-6xl mx-auto">
+    <div class="fx-grade">
+      <div class="fx-copia reveal">
+        <p class="alt-kicker">Empresas e contatos</p>
+        <h2 id="empresas-titulo" class="alt-h2 alt-h2--section font-display">Quem decide o patrocínio, empresa por empresa.</h2>
+        <p class="fx-texto">Cada empresa tem a sua página, com oportunidades abertas, valor no pipeline, próximo contato e o histórico comercial. Nos contatos, você marca o papel de cada pessoa na decisão e a força da relação.</p>
+        <ul class="fx-lista">
+          <li><i class="ph ph-check" aria-hidden="true"></i>Papel na decisão: decisor, champion, influenciador ou gatekeeper.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Visão de stakeholders, por empresa e por influência.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Classificação da empresa: prospect, cliente ativo ou ex-cliente.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Perfil de patrocínio: leis que a empresa usa e quando ela decide o orçamento.</li>
+        </ul>
+      </div>
+      <!-- Página da empresa (Empresas > empresa), no padrão do app -->
+      <div class="app-frame crm-tela reveal" aria-hidden="true">
+        <div class="app-barra"><img src="/assets/jards-icon-final.svg" alt="" /><span>Empresas</span><span>/</span><b>Natura</b></div>
+        <div class="crm-topo">
+          <div class="crm-id">
+            <span class="ms-logo"><img src="/assets/natura-logo.svg" alt="" /></span>
+            <div><p class="crm-sobre">Cosméticos</p><p class="crm-nome">Natura<i class="ph ph-globe"></i></p></div>
+          </div>
+          <span class="crm-selo" style="border-color:rgba(13,13,13,.14);color:rgba(13,13,13,.6)">Prospect</span>
+        </div>
+        <div class="crm-abas"><span class="is-ativa">Visão geral</span><span>Negociações (2)</span><span>Inscrições (1)</span><span>Relacionamento</span></div>
+        <div class="crm-corpo">
+          <div class="crm-metricas">
+            <div class="crm-metrica"><span class="mk-rotulo">Oportunidades abertas</span><strong>3</strong></div>
+            <div class="crm-metrica"><span class="mk-rotulo">Valor no pipeline</span><strong>R$ 420 mil</strong></div>
+            <div class="crm-metrica"><span class="mk-rotulo">Próximo contato</span><strong>23/10</strong></div>
+          </div>
+          <div class="mk-painel">
+            <div class="mk-painel-topo"><span><i class="ph ph-users"></i>Contatos-chave</span><span class="mk-rotulo">3</span></div>
+            <div class="crm-pessoa"><span class="crm-avatar">M</span><div><strong>Marina Lopes</strong><small>Diretora de Marketing</small></div><i class="ph ph-envelope-simple"></i></div>
+            <div class="crm-pessoa"><span class="crm-avatar">P</span><div><strong>Paulo Reis</strong><small>Gerente de Patrocínios</small></div><i class="ph ph-envelope-simple"></i></div>
+            <div class="crm-pessoa"><span class="crm-avatar">C</span><div><strong>Clara Mendes</strong><small>Comunicação Institucional</small></div><i class="ph ph-envelope-simple"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ NEGOCIAÇÕES ════════════════════════ -->
+<section id="negociacoes" class="fx-sec section-space bg-white px-6" aria-labelledby="negociacoes-titulo" style="--fx-cor:#2E8932">
+  <div class="max-w-6xl mx-auto">
+    <div class="fx-grade fx-grade--inverso">
+      <div class="fx-copia reveal">
+        <p class="alt-kicker">Negociações</p>
+        <h2 id="negociacoes-titulo" class="alt-h2 alt-h2--section font-display">O funil do patrocínio, etapa por etapa.</h2>
+        <p class="fx-texto">Arraste cada negociação entre as etapas. Empresa, projeto, valor e próximo contato ficam no cartão; na lista, o selo de tempo mostra o que está esfriando.</p>
+        <ul class="fx-lista">
+          <li><i class="ph ph-check" aria-hidden="true"></i>Lista, quadro por etapa ou quadro por potencial de fechamento.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Etapas, nomes e cores do funil do seu jeito.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Recusou neste ano? A negociação volta sozinha na data que você marcar.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Fechar negócio cria o cliente, e as contrapartidas da proposta viram entregas.</li>
+        </ul>
+      </div>
+      <!-- Página da negociação, no padrão do app -->
+      <div class="app-frame crm-tela reveal" aria-hidden="true">
+        <div class="app-barra"><img src="/assets/jards-icon-final.svg" alt="" /><span>Negociações</span><span>/</span><b>Natura</b></div>
+        <div class="crm-topo">
+          <div class="crm-id">
+            <span class="ms-logo"><img src="/assets/natura-logo.svg" alt="" /></span>
+            <div><p class="crm-sobre">Natura</p><p class="crm-nome crm-nome--menor">Orquestra Jovem nas Escolas<span class="crm-selo" style="border-color:rgba(114,89,181,.3);color:#7259B5">Ciclo 2026</span></p></div>
+          </div>
+          <div class="crm-neg-acoes">
+            <div class="crm-proposta">
+              <span><span><span class="crm-proposta-rotulo">Proposta<span> · Cota Ouro</span></span><span class="crm-proposta-valor">R$ 300.000,00</span></span><i class="ph ph-pencil-simple"></i></span>
+              <span class="crm-proposta-mais"><i class="ph ph-dots-three"></i></span>
+            </div>
+            <span class="crm-fechar"><i class="ph ph-check"></i>Fechar negócio</span>
+          </div>
+        </div>
+        <div class="crm-abas"><span class="is-ativa">Visão geral</span><span>Cotas</span><span>Relacionamento</span></div>
+        <div class="crm-corpo">
+          <div class="crm-neg-grade">
+            <div class="mk-painel">
+              <div class="mk-painel-topo"><span><i class="ph ph-clock-counter-clockwise"></i>Histórico</span><span class="mk-rotulo">3</span></div>
+              <div class="crm-evento"><span class="crm-evento-icone"><i class="ph ph-kanban"></i></span><div><p>Status alterado: 1º Contato → Proposta</p><small>Luana M. · 16/10</small></div></div>
+              <div class="crm-evento"><span class="crm-evento-icone"><i class="ph ph-users-three"></i></span><div><p>Reunião com a diretoria de marketing</p><small>Reunião · Paulo Reis · 14/10</small></div></div>
+              <div class="crm-evento"><span class="crm-evento-icone"><i class="ph ph-currency-circle-dollar"></i></span><div><p>Valor solicitado alterado: R$ 250.000 → R$ 300.000</p><small>Luana M. · 14/10</small></div></div>
+            </div>
+            <div class="mk-painel">
+              <div class="mk-painel-topo"><span>Detalhes</span></div>
+              <div class="crm-detalhe"><span>Status</span><span class="crm-selo" style="border-color:rgba(176,122,20,.3);color:#B07A14">Proposta</span></div>
+              <div class="crm-detalhe"><span>Próximo follow-up</span><b>23/10</b></div>
+              <div class="crm-detalhe"><span>Criado em</span><b>02/09</b></div>
+              <div class="crm-detalhe"><span>Previsão</span><b>12/2026</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ ROTINA DA EQUIPE ════════════════════════ -->
+<section id="rotina" class="fx-sec section-space alt-surface px-6" aria-labelledby="rotina-titulo" style="--fx-cor:#2D72B0">
+  <div class="max-w-6xl mx-auto">
+    <div class="fx-grade">
+      <div class="fx-copia reveal">
+        <p class="alt-kicker">Rotina</p>
+        <h2 id="rotina-titulo" class="alt-h2 alt-h2--section font-display">O próximo passo, com data e dono.</h2>
+        <p class="fx-texto">Atividades e follow-ups ficam ligados ao que eles movem. Você acompanha em lista, calendário ou Gantt e vê a carga de cada pessoa na semana.</p>
+        <ul class="fx-lista">
+          <li><i class="ph ph-check" aria-hidden="true"></i>Ao concluir, o Jards pergunta se houve contato e registra canal e resultado.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Cada atividade se liga à negociação, à empresa, ao contato, ao projeto ou à entrega que ela move.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Carga da equipe: arraste uma atividade para outra pessoa.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Atalhos para situações comuns, como "sem resposta" e "pós-reunião", já criam o próximo follow-up.</li>
+        </ul>
+      </div>
+      <!-- Lista de atividades, no padrão do app; as linhas vêm de ATIVS no script das telas -->
+      <div class="app-frame crm-tela reveal" aria-hidden="true">
+        <div class="app-barra"><img src="/assets/jards-icon-final.svg" alt="" /><span>Gerenciamento</span><span>/</span><b>Atividades</b></div>
+        <div class="crm-quadro-topo">
+          <div><p class="ms-eyebrow">Rotina comercial</p><p class="crm-quadro-titulo">Atividades</p></div>
+          <div class="crm-contadores"><span><strong>5</strong> pendentes</span><span class="is-atrasada"><strong>1</strong> atrasada</span><span><strong>1</strong> para hoje</span></div>
+        </div>
+        <div class="ms-tb">
+          <div class="ms-seg"><span class="ms-seg-btn on">Lista</span><span class="ms-seg-btn">Calendário</span><span class="ms-seg-btn">Gantt</span><span class="ms-seg-btn">Carga da equipe</span></div>
+          <div class="ms-seg"><span class="ms-seg-btn on">A fazer</span><span class="ms-seg-btn">Histórico</span></div>
+        </div>
+        <div class="crm-rolagem alt-scroll-x" tabindex="-1">
+          <table class="ms-tbl">
+            <thead><tr><th></th><th>Atividade</th><th>Negociação</th><th>Prazo</th><th>Prioridade</th><th>Responsável</th></tr></thead>
+            <tbody id="ms-ativ-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// ── Telas do CRM: quadro de negociações (abertura) e lista de atividades (rotina) ──
+// Vêm do #produto-tabs da landing, montados fora do shell de abas.
+(function(){
+  // Logos em 128px pelo Logo.dev (o mesmo token público da landing) ou em /assets; sem logo, vale a inicial.
+  var LOGODEV = 'https://img.logo.dev/';
+  var LOGODEV_Q = '?token=pk_A2QRZaI_S5urxuYmsI6baQ&size=128&format=png';
+  var COMPANY_LOGOS = [
+    ['Itaú BBA', LOGODEV + 'itau.com.br' + LOGODEV_Q],
+    ['Petrobras', '/assets/petrobras.svg'],
+    ['Ambev', LOGODEV + 'ambev.com.br' + LOGODEV_Q],
+    ['Sabesp', LOGODEV + 'sabesp.com.br' + LOGODEV_Q],
+    ['Porto Seguro', LOGODEV + 'portoseguro.com.br' + LOGODEV_Q],
+    ['Embraer', LOGODEV + 'embraer.com' + LOGODEV_Q],
+    ['Natura', '/assets/natura-logo.svg'],
+    ['Vale', '/assets/vale-logo.png']
+  ];
+  function logo(name, size){
+    var item = null;
+    for (var i = 0; i < COMPANY_LOGOS.length; i++) { if (name.indexOf(COMPANY_LOGOS[i][0]) === 0) { item = COMPANY_LOGOS[i]; break; } }
+    if (item) return '<div class="ms-logo" style="width:' + size + 'px;height:' + size + 'px"><img src="' + item[1] + '" alt="" loading="lazy"></div>';
+    var ch = name.trim().charAt(0).toUpperCase();
+    return '<div class="ms-logo" style="width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size * .38) + 'px;color:#9e9ea8">' + ch + '</div>';
+  }
+  function prioridade(tipo){
+    var p = {
+      alta:{label:'Alta',color:'#D94E4E',path:'<path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>'},
+      media:{label:'Média',color:'#B07A14',path:'<path d="M5 12h14"/>'},
+      baixa:{label:'Baixa',color:'#888888',path:'<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>'}
+    }[tipo];
+    if (!p) return '';
+    return '<span class="ms-prio"><span class="ms-prio-icon" style="background:' + p.color + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p.path + '</svg></span><span>' + p.label + '</span></span>';
+  }
+
+  /* QUADRO DE NEGOCIAÇÕES: etapas e selo de tempo com os nomes e as cores do app */
+  var KS = {prospeccao:{l:'Prospecção',c:'#666666',i:'lightbulb'},primeiro_contato:{l:'1º Contato',c:'#2D72B0',i:'chat-text'},proposta_enviada:{l:'Proposta',c:'#B07A14',i:'briefcase'},em_negociacao:{l:'Negociação',c:'#B07A14',i:'trend-up'}};
+  var SELO = {rouanet:['Rouanet','rgba(13,13,13,.55)'],esporte:['Esporte','rgba(13,13,13,.55)'],audiovisual:['Audiovisual','rgba(13,13,13,.55)']};
+  var KCOLS = [
+    {key:'prospeccao',total:'R$ 200k',cards:[{co:'TV Cultura',t:'Série Documental de Patrimônio',v:'R$ 80k',s:'audiovisual',dt:'27/10'},{co:'Sabesp',t:'Programa Ambiental e Arte 2026',v:'R$ 120k',s:'rouanet'}]},
+    {key:'primeiro_contato',total:'R$ 250k',cards:[{co:'Porto Seguro',t:'Atletismo nas Escolas',v:'R$ 90k',s:'esporte',dt:'22/10'},{co:'Embraer',t:'Arte e Inovação: Projeto Cultural',v:'R$ 160k',s:'rouanet'}]},
+    {key:'proposta_enviada',total:'R$ 480k',cards:[{co:'Itaú BBA',t:'Ciclo de Shows Nacionais 2026',v:'R$ 200k',s:'rouanet',dt:'23/10'},{co:'Petrobras',t:'Documentário Audiovisual 2026',v:'R$ 280k',s:'audiovisual',dt:'30/10'}]},
+    {key:'em_negociacao',total:'R$ 350k',cards:[{co:'Ambev',t:'Turnê Nacional Música Brasileira',v:'R$ 350k',s:'rouanet',dt:'21/10'}]}
+  ];
+  var kanban = document.getElementById('ms-kanban');
+  if (kanban) {
+    kanban.innerHTML = KCOLS.map(function(col){
+      var s = KS[col.key], n = col.cards.length;
+      if (!s) return '';
+      return '<div class="ms-k-column">' +
+        '<div class="ms-kc-head"><div style="min-width:0"><div class="ms-kc-title"><i class="ph ph-' + s.i + '" style="color:' + s.c + ';font-size:12px;flex-shrink:0" aria-hidden="true"></i><span class="ms-kc-label">' + s.l + '</span></div><p class="ms-kc-meta">' + (n === 1 ? '1 item' : n + ' itens') + ' · ' + col.total + '</p></div><span class="ms-kc-add">+</span></div>' +
+        '<div class="ms-k-cards">' + col.cards.map(function(c){
+          var selo = SELO[c.s];
+          return '<div class="ms-k-card">' +
+            '<div class="ms-k-emp">' + logo(c.co, 18) + '<span>' + c.co + '</span></div>' +
+            '<p class="ms-k-titulo">' + c.t + '</p>' +
+            '<div class="ms-k-linha">' + (selo ? '<span class="ms-k-selo" style="border-color:' + selo[1] + '40;color:' + selo[1] + '">' + selo[0] + '</span>' : '<span></span>') + '<span class="ms-k-valor">' + c.v + '</span></div>' +
+            (c.dt ? '<div class="ms-k-contato"><span>Próximo contato</span><span><i class="ph ph-calendar-blank" aria-hidden="true"></i>' + c.dt + '</span></div>' : '') +
+          '</div>';
+        }).join('') + '</div></div>';
+    }).join('');
+  }
+
+  /* ATIVIDADES: só os tipos que existem no app (E-mail, Telefone, Reunião, LinkedIn, Evento) */
+  var TIPOS = {email:['E-mail','envelope-simple'],telefone:['Telefone','phone'],reuniao:['Reunião','users-three'],linkedin:['LinkedIn','linkedin-logo'],evento:['Evento','ticket']};
+  var ATIVS = [
+    {nome:'Enviar a proposta atualizada',tipo:'email',co:'Itaú BBA',neg:'Shows Nacionais 2026',prazo:'21/10',prio:'alta',resp:'Luana M.'},
+    {nome:'Retomar o contato sobre a cota',tipo:'telefone',co:'Porto Seguro',neg:'Atletismo nas Escolas',prazo:'20/10',atrasada:true,prio:'alta',resp:'Rafael C.'},
+    {nome:'Alinhar as contrapartidas',tipo:'reuniao',co:'Ambev',neg:'Turnê Música Brasileira',prazo:'22/10',prio:'media',resp:'Luana M.'},
+    {nome:'Conectar com a diretoria de patrocínio',tipo:'linkedin',co:'Embraer',neg:'Arte e Inovação',prazo:'26/10',prio:'media',resp:'Bia S.'},
+    {nome:'Encontro de patrocinadores do setor',tipo:'evento',co:'Sabesp',neg:'Ambiental e Arte 2026',prazo:'29/10',prio:'baixa',resp:'Bia S.'}
+  ];
+  var corpo = document.getElementById('ms-ativ-body');
+  if (corpo) {
+    corpo.innerHTML = ATIVS.map(function(a){
+      var t = TIPOS[a.tipo] || TIPOS.email;
+      return '<tr>' +
+        '<td><span class="crm-feito"></span></td>' +
+        '<td><p class="crm-ativ-nome">' + a.nome + '</p><p class="crm-ativ-tipo"><i class="ph ph-' + t[1] + '" aria-hidden="true"></i>' + t[0] + '</p></td>' +
+        '<td><div class="crm-ativ-neg">' + logo(a.co, 22) + '<div><b>' + a.co + '</b><small>' + a.neg + '</small></div></div></td>' +
+        '<td><span class="crm-ativ-prazo' + (a.atrasada ? ' is-atrasada' : '') + '">' + a.prazo + '</span></td>' +
+        '<td>' + prioridade(a.prio) + '</td>' +
+        '<td><span class="crm-resp"><i>' + a.resp.charAt(0) + '</i>' + a.resp + '</span></td>' +
+      '</tr>';
+    }).join('');
+  }
+})();
+</script>
+
+<!-- ════════════════════════ PROJETOS E PROPOSTAS ════════════════════════ -->
+<section id="propostas" class="fx-sec section-space bg-white px-6" aria-labelledby="propostas-titulo" style="--fx-cor:#7259B5">
+  <div class="max-w-6xl mx-auto">
+    <div class="fx-grade fx-grade--texto">
+      <div class="fx-copia reveal">
+        <p class="alt-kicker">Projetos e propostas</p>
+        <h2 id="propostas-titulo" class="alt-h2 alt-h2--section font-display">Uma proposta para cada patrocinador, a partir do mesmo projeto.</h2>
+        <p class="fx-texto">As cotas ficam no projeto. Cada negociação ganha a sua versão da proposta, com cota, valor e contrapartidas, e o pitch fica pronto para a reunião.</p>
+      </div>
+      <ul class="crm-itens reveal">
+        <li><i class="ph ph-stack" aria-hidden="true"></i><span>Cotas com valor de referência e unidades vendidas.</span></li>
+        <li><i class="ph ph-files" aria-hidden="true"></i><span>Versões da proposta por negociação ou por inscrição em edital.</span></li>
+        <li><i class="ph ph-presentation" aria-hidden="true"></i><span>Pitch com roteiro, argumentos, respostas a objeções e flash cards.</span></li>
+        <li><i class="ph ph-folder-open" aria-hidden="true"></i><span>Orçamento, documentos e textos padrão do projeto num lugar só.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ CLIENTES E RENOVAÇÃO ════════════════════════ -->
+<section id="clientes" class="fx-sec section-space alt-surface px-6" aria-labelledby="clientes-titulo" style="--fx-cor:#1A8B7A">
+  <div class="max-w-6xl mx-auto">
+    <div class="fx-grade fx-grade--inverso">
+      <div class="fx-copia reveal">
+        <p class="alt-kicker">Clientes e renovação</p>
+        <h2 id="clientes-titulo" class="alt-h2 alt-h2--section font-display">Depois do sim, a parceria continua no mesmo lugar.</h2>
+        <p class="fx-texto">Quem fecha vira cliente. As contrapartidas viram entregas; você define prazo e responsável de cada uma e anexa a evidência. A saúde da parceria é medida por critérios que você define.</p>
+        <ul class="fx-lista">
+          <li><i class="ph ph-check" aria-hidden="true"></i>Entregas pendentes, em andamento, entregues e aprovadas.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Contratos com arquivo, situação e vigência.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Planeje a renovação: cenário, valor esperado e a árvore de decisão até o diagnóstico.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Na data que você marcar, a negociação de renovação abre sozinha.</li>
+        </ul>
+      </div>
+      <!-- Página do cliente (Clientes > cliente), no padrão do app -->
+      <div class="app-frame crm-tela reveal" aria-hidden="true">
+        <div class="app-barra"><img src="/assets/jards-icon-final.svg" alt="" /><span>Clientes</span><span>/</span><b>Vale</b></div>
+        <div class="crm-topo">
+          <div class="crm-id">
+            <span class="ms-logo"><img src="/assets/vale-logo.png" alt="" /></span>
+            <div><p class="crm-sobre">Mineração</p><p class="crm-nome">Vale<span class="crm-selo" style="border-color:rgba(46,137,50,.3);color:#2E8932">Ativa</span></p></div>
+          </div>
+          <div class="crm-cli-acoes"><span class="crm-botao"><i class="ph ph-package"></i>Registrar entrega</span><span class="crm-botao is-destaque"><i class="ph ph-arrows-clockwise"></i>Planejar renovação</span></div>
+        </div>
+        <div class="crm-abas"><span class="is-ativa">Visão geral</span><span>Entregas</span><span>Contratos</span><span>Renovação</span><span>Relacionamento</span></div>
+        <div class="crm-corpo">
+          <div class="crm-resumo">
+            <div class="crm-metrica"><div class="crm-medidor"><p>Saúde da parceria</p><svg viewBox="0 0 160 78" aria-hidden="true"><path d="M32 68A48 48 0 0 1 39.29 42.56" fill="none" stroke="rgba(26,139,122,.35)" stroke-width="17"/><path d="M41.17 39.79A48 48 0 0 1 62.02 23.5" fill="none" stroke="rgba(26,139,122,.50)" stroke-width="17"/><path d="M65.17 22.35A48 48 0 0 1 91.61 21.43" fill="none" stroke="rgba(26,139,122,.65)" stroke-width="17"/><path d="M94.83 22.35A48 48 0 0 1 116.77 37.15" fill="none" stroke="rgba(13,13,13,.075)" stroke-width="17"/><path d="M118.83 39.79A48 48 0 0 1 127.88 64.65" fill="none" stroke="rgba(13,13,13,.075)" stroke-width="17"/><path d="M75.98 61.31L84.44 39.34L85.86 62.83Z" fill="#fff" stroke="#282525" stroke-width="2" stroke-linejoin="round"/><circle cx="80" cy="68" r="7" fill="#fff" stroke="#282525" stroke-width="2.25"/><circle cx="80" cy="68" r="2.25" fill="#282525"/></svg><p>Estável</p></div></div>
+            <div class="crm-metrica"><span class="mk-rotulo">Valor contratado</span><strong>R$ 480 mil</strong></div>
+            <div class="crm-metrica"><span class="mk-rotulo">Próxima renovação</span><strong>15/03/2027</strong></div>
+          </div>
+          <div class="mk-painel">
+            <div class="mk-painel-topo"><span><i class="ph ph-package"></i>Entregas</span><span class="mk-rotulo">4</span></div>
+            <div class="crm-entrega"><div><strong>Logo nos materiais de divulgação</strong><small>Marca e comunicação</small></div><time>10/08</time><span class="crm-selo" style="border-color:#2E893247;color:#2E8932">Aprovada</span></div>
+            <div class="crm-entrega"><div><strong>Relatório de mídia do 1º semestre</strong><small>Relatório</small></div><time>30/09</time><span class="crm-selo" style="border-color:#B07A1447;color:#B07A14">Entregue</span></div>
+            <div class="crm-entrega"><div><strong>Concerto para colaboradores</strong><small>Colaboradores</small></div><time>06/11</time><span class="crm-selo" style="border-color:#2D72B047;color:#2D72B0">Em andamento</span></div>
+            <div class="crm-entrega"><div><strong>Ação com a comunidade local</strong><small>Evento ou ação</small></div><time>28/11</time><span class="crm-selo" style="border-color:#28252547;color:#282525">Pendente</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ EQUIPE E CAPTADORES ════════════════════════ -->
+<section id="equipe" class="crm-faixa bg-white px-6" aria-labelledby="equipe-titulo">
+  <div class="max-w-6xl mx-auto alt-split-head reveal">
+    <h2 id="equipe-titulo" class="alt-h2 alt-h2--section font-display">Equipe, agências e captadores no mesmo funil.</h2>
+    <p class="alt-split-lede">Cada registro pode ter um responsável. Agências e captadores externos recebem as empresas que vão trabalhar, com ou sem exclusividade, e podem ter acesso próprio para propor oportunidades, que você aprova.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════ CONECTOR MCP ════════════════════════ -->
+<section id="conector-ia" class="section-space alt-surface pr-host px-6" aria-labelledby="conector-titulo">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <div class="reveal min-w-0">
+        <p class="alt-kicker">Conector MCP</p>
+        <h2 id="conector-titulo" class="alt-h2 alt-h2--section font-display">
+          <span class="alt-h2-line">Claude e ChatGPT.</span>
+          <span class="alt-h2-line">Os dados vêm do seu&nbsp;Jards.</span>
+        </h2>
+        <p class="text-black/55 text-[15px] leading-relaxed mt-6 max-w-md">
+          Conecte sua conta Jards e pergunte. O assistente consulta o CRM ao vivo, sem copiar e colar.
+        </p>
+        <ul class="space-y-3 mt-8 text-sm text-black/70 max-w-md">
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Lê projetos, propostas, atividades, captadores, proponentes e empresas</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Avalia o histórico da empresa com você: patrocínios fechados, valor total, áreas recorrentes e último patrocínio</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Traz contatos de uma patrocinadora (1 crédito, como no app)</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Resume a organização: projetos por fase, propostas por status, total captado</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Cria contatos e atividades pela conversa</li>
+        </ul>
+        <div class="grid grid-cols-2 gap-3 mt-8 max-w-md">
+          <div class="mcp-plat">
+            <img src="/assets/icons/logo-claude.png" alt="" />
+            <div class="min-w-0"><p class="text-[13px] font-bold text-[#282525]">Claude</p><p class="text-[11px] leading-snug text-black/60">Conector no claude.ai · também no Claude Code</p></div>
+          </div>
+          <div class="mcp-plat">
+            <img src="/assets/icons/logo-chatgpt.png" alt="" />
+            <div class="min-w-0"><p class="text-[13px] font-bold text-[#282525]">ChatGPT</p><p class="text-[11px] leading-snug text-black/60">Servidor MCP no ChatGPT · ou GPT personalizada</p></div>
+          </div>
+        </div>
+        <p class="text-black/60 text-xs mt-4 max-w-md">Nos planos pagos.</p>
+      </div>
+
+      <figure class="reveal min-w-0 mcp-figura">
+        <figcaption class="sr-only" id="mcp-transcricao">Exemplo de conversa com o ChatGPT e o Claude conectados ao Jards.</figcaption>
+        <button type="button" class="mcp-pausar" id="mcp-pausar" aria-pressed="false" aria-label="Pausar animação">
+          <svg class="icone-pausar" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1.5" width="2.6" height="9" rx=".8" fill="currentColor"/><rect x="7.4" y="1.5" width="2.6" height="9" rx=".8" fill="currentColor"/></svg>
+          <svg class="icone-retomar" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8v8.4c0 .5.5.8.9.5l6.4-4.2a.6.6 0 0 0 0-1L3.9 1.3c-.4-.3-.9 0-.9.5z" fill="currentColor"/></svg>
+        </button>
+        <div class="mcp-chat" id="mcp-chat" aria-hidden="true">
+          <div class="mcp-chat-head">
+            <span class="mcp-chat-dot"></span><span class="mcp-chat-dot"></span><span class="mcp-chat-dot"></span>
+            <div class="mcp-tabs">
+              <span class="mcp-tab is-on" data-assistente="chatgpt"><img src="/assets/icons/logo-chatgpt.png" alt="" />ChatGPT</span>
+              <span class="mcp-tab" data-assistente="claude"><img src="/assets/icons/logo-claude.png" alt="" />Claude</span>
+            </div>
+            <span class="mcp-conectado">Jards</span>
+          </div>
+          <div class="mcp-chat-body" id="mcp-chat-body"></div>
+          <div class="mcp-input">
+            <span class="mcp-input-texto is-vazio" id="mcp-input-texto">Pergunte ao ChatGPT</span>
+            <span class="mcp-enviar" id="mcp-enviar" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 11.5V2.5M7 2.5L3 6.5M7 2.5l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var LOGOS = { chatgpt: '/assets/icons/logo-chatgpt.png', claude: '/assets/icons/logo-claude.png' };
+  var NOMES = { chatgpt: 'ChatGPT', claude: 'Claude' };
+  // Uma leitura (carteira da empresa) e uma escrita (criar atividade), uma em cada assistente
+  var CONVERSAS = [
+    { assistente: 'chatgpt', pergunta: 'A Ambev combina com o nosso projeto de esporte?', ferramenta: 'Jards · carteira da empresa', chamada: ['avaliar_carteira_empresa', '{ empresa_crm_id }'], destaque: '2 patrocínios com você · R$ 420 mil · Esporte', resposta: 'Ela já patrocinou dois projetos de esporte seus, o último há 8 meses: boa janela para o novo.' },
+    { assistente: 'claude', pergunta: 'Cria uma atividade: enviar a proposta à Ambev até sexta', ferramenta: 'Jards · criar atividade', chamada: ['criar_atividade', '{ nome: "Enviar proposta à Ambev", tipo: "email", data_prevista }'], destaque: 'Atividade criada · prazo sexta', resposta: '“Enviar proposta à Ambev” já está nas suas atividades no Jards. Ficou gravada no CRM, não só nesta conversa.' }
+  ];
+  var CHECK = '<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="6" fill="#2E8932"/><path d="M3.4 6.2l1.8 1.8 3.6-3.8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  var chat = document.getElementById('mcp-chat');
+  var corpo = document.getElementById('mcp-chat-body');
+  var campo = document.getElementById('mcp-input-texto');
+  var enviar = document.getElementById('mcp-enviar');
+  var pausar = document.getElementById('mcp-pausar');
+  var transcricao = document.getElementById('mcp-transcricao');
+  if(!chat || !corpo || !campo || !enviar || !pausar) return;
+  var abas = chat.querySelectorAll('.mcp-tab');
+  var movimento = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  var visivel = false, pausado = false, rodando = false;
+
+  if(transcricao){
+    transcricao.textContent = 'Exemplo de conversa com os assistentes conectados ao Jards. ' + CONVERSAS.map(function(c){
+      return 'No ' + NOMES[c.assistente] + ', a pessoa pede: “' + c.pergunta + '”. O ' + NOMES[c.assistente] + ' usa ' + c.ferramenta + (c.chamada ? ' (ferramenta ' + c.chamada[0] + ')' : '') + ' e responde: ' + c.destaque + '. ' + c.resposta;
+    }).join(' ');
+  }
+
+  function dormir(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  async function esperar(ms){ await dormir(ms); while(pausado) await dormir(150); }
+  async function quandoVisivel(){ while(!visivel || pausado) await dormir(300); }
+  function el(tag, classe){ var e = document.createElement(tag); if(classe) e.className = classe; return e; }
+
+  function ativarAba(assistente){
+    abas.forEach(function(t){ t.classList.toggle('is-on', !assistente || t.dataset.assistente === assistente); });
+  }
+  function esvaziarCampo(assistente){
+    campo.classList.add('is-vazio');
+    campo.textContent = 'Pergunte ao ' + NOMES[assistente];
+    campo.scrollLeft = 0;
+    enviar.classList.remove('is-pronto');
+  }
+  function balaoUsuario(c){ var u = el('div', 'mcp-msg mcp-msg-user'); u.textContent = c.pergunta; return u; }
+  function linhaFerramenta(c, pronta){
+    var t = el('div', 'mcp-tool' + (pronta ? ' is-ok' : ''));
+    if(pronta){ t.innerHTML = CHECK; t.appendChild(document.createTextNode(c.ferramenta)); }
+    else { t.appendChild(el('span', 'mcp-tool-icone')); t.appendChild(document.createTextNode('Acessando o Jards…')); }
+    if(c.chamada){
+      var cod = el('code', 'mcp-tool-chamada'), nome = el('b');
+      nome.textContent = c.chamada[0];
+      cod.appendChild(nome);
+      cod.appendChild(document.createTextNode('(' + c.chamada[1] + ')'));
+      t.appendChild(cod);
+    }
+    return t;
+  }
+  function resposta(c, texto){
+    var r = el('div', 'mcp-msg mcp-ai');
+    var avatar = el('img', 'mcp-ai-avatar'); avatar.src = LOGOS[c.assistente]; avatar.alt = '';
+    var bloco = el('div'), forte = el('strong'), corpoTexto = el('span');
+    forte.textContent = c.destaque; corpoTexto.textContent = texto;
+    bloco.appendChild(forte); bloco.appendChild(corpoTexto);
+    r.appendChild(avatar); r.appendChild(bloco);
+    return r;
+  }
+  function entrar(no){ no.classList.add('mcp-entra'); corpo.appendChild(no); return no; }
+
+  // Movimento reduzido: as duas conversas prontas, sem alternar nem digitar
+  function mostrarEstatico(){
+    corpo.classList.add('is-estatico');
+    corpo.style.opacity = '';
+    corpo.innerHTML = '';
+    ativarAba(null);
+    CONVERSAS.forEach(function(c){
+      corpo.appendChild(balaoUsuario(c));
+      corpo.appendChild(linhaFerramenta(c, true));
+      corpo.appendChild(resposta(c, c.resposta));
+    });
+    pausar.hidden = true;
+  }
+
+  async function tocar(c){
+    corpo.style.opacity = '0';
+    await esperar(240);
+    corpo.innerHTML = '';
+    corpo.style.opacity = '';
+    ativarAba(c.assistente);
+    esvaziarCampo(c.assistente);
+    await esperar(650);
+
+    campo.classList.remove('is-vazio');
+    campo.textContent = '';
+    var digitado = document.createTextNode('');
+    campo.appendChild(digitado);
+    campo.appendChild(el('span', 'mcp-caret'));
+    enviar.classList.add('is-pronto');
+    for(var i = 1; i <= c.pergunta.length; i++){
+      digitado.nodeValue = c.pergunta.slice(0, i);
+      campo.scrollLeft = campo.scrollWidth;
+      await esperar(c.pergunta.charAt(i - 1) === ' ' ? 60 : 34);
+    }
+    await esperar(320);
+    enviar.classList.add('is-apertado');
+    await esperar(150);
+    enviar.classList.remove('is-apertado');
+    esvaziarCampo(c.assistente);
+    entrar(balaoUsuario(c));
+
+    await esperar(550);
+    var ferramenta = entrar(linhaFerramenta(c, false));
+    await esperar(1200);
+    ferramenta.replaceWith(linhaFerramenta(c, true));
+
+    await esperar(350);
+    var r = entrar(resposta(c, ''));
+    var alvo = r.querySelector('span');
+    var palavras = c.resposta.split(' ');
+    for(var k = 1; k <= palavras.length; k++){
+      alvo.textContent = palavras.slice(0, k).join(' ');
+      await esperar(62);
+    }
+    await esperar(3400);
+  }
+
+  async function ciclo(){
+    if(rodando) return;
+    rodando = true;
+    corpo.classList.remove('is-estatico');
+    pausar.hidden = false;
+    for(var i = 0; !movimento.matches; i++){
+      await quandoVisivel();
+      if(movimento.matches) break;
+      await tocar(CONVERSAS[i % CONVERSAS.length]);
+    }
+    rodando = false;
+    mostrarEstatico();
+  }
+
+  pausar.addEventListener('click', function(){
+    pausado = !pausado;
+    pausar.setAttribute('aria-pressed', String(pausado));
+    pausar.setAttribute('aria-label', pausado ? 'Retomar animação' : 'Pausar animação');
+    chat.classList.toggle('is-pausado', pausado);
+  });
+
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(entradas){
+      visivel = entradas.some(function(e){ return e.isIntersecting; });
+    }, { threshold: 0.35 }).observe(chat);
+  } else {
+    visivel = true;
+  }
+
+  if(movimento.addEventListener){
+    movimento.addEventListener('change', function(){
+      if(movimento.matches){ if(!rodando) mostrarEstatico(); }
+      else ciclo();
+    });
+  }
+
+  if(movimento.matches) mostrarEstatico();
+  else ciclo();
+})();
+</script>
+
+<!-- ════════════════════════ DÚVIDAS ════════════════════════ -->
+<section id="duvidas" class="section-space bg-white px-6" aria-labelledby="duvidas-titulo">
+  <div class="max-w-3xl mx-auto reveal">
+    <p class="alt-kicker">Dúvidas</p>
+    <h2 id="duvidas-titulo" class="alt-h2 alt-h2--section font-display mb-10">Antes de começar.</h2>
+    <div class="faq-lista">
+      <details>
+        <summary>Para quem é o CRM do Jards?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Para quem capta patrocínio para projetos incentivados: produtoras, proponentes, agências e captadores. As etapas e os nomes do funil se ajustam ao seu jeito de trabalhar.</p>
+      </details>
+      <details>
+        <summary>O que o plano gratuito inclui?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Negociações, empresas e contatos sem limite. O gratuito tem 1 usuário, 1 projeto ativo, 5 atividades em aberto, 5 inscrições em andamento, 1 captador ativo, 1 proponente e 5 clientes ativos. Arquivar, concluir ou encerrar libera a vaga.</p>
+      </details>
+      <details>
+        <summary>Qual a diferença entre o CRM e a Inteligência?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>A <a href="/incentivadores">Inteligência</a> mostra quem incentiva cada lei e quanto aportou. O CRM é onde você trabalha a relação com essas empresas. Os dois fazem parte do módulo de captação de recursos.</p>
+      </details>
+      <details>
+        <summary>O CRM avisa quando algo atrasa?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Sim. O sino do app avisa atividades e follow-ups atrasados ou com prazo próximo, entregas e o fechamento das suas inscrições em editais.</p>
+      </details>
+      <details>
+        <summary>Posso trabalhar com captadores externos?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Sim. Cadastre agências e captadores, defina quais empresas cada um trabalha, com ou sem exclusividade, e dê a eles um acesso próprio.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ CTA FINAL ════════════════════════ -->
+<section class="closing-cta section-space px-6" aria-labelledby="fechamento-titulo">
+  <div class="max-w-3xl mx-auto text-center reveal">
+    <h2 id="fechamento-titulo" class="alt-h2 alt-h2--section font-display text-[#282525] mb-5">Comece pelo próximo patrocinador.</h2>
+    <p class="text-black/55 text-lg mb-10">Crie a conta grátis e cadastre a primeira empresa. A negociação já nasce no funil.</p>
+    <a href="/cadastro" data-app-path="/cadastro" class="alt-cta">
+      Começar grátis
+      <i class="ph ph-arrow-right" aria-hidden="true"></i>
+    </a>
+    <p class="crm-fechamento-link"><a href="/precos" class="alt-link">Ver os planos <i class="ph ph-arrow-right" aria-hidden="true"></i></a></p>
+  </div>
+</section>
+
+</main>
+
+<!-- ════════════════════════ FOOTER ════════════════════════ -->
+<footer id="rodape" class="site-footer">
+  <div class="max-w-6xl mx-auto">
+    <div class="site-footer-main">
+      <div class="footer-brand">
+        <a href="#top" class="footer-icon-stack" aria-label="Voltar ao início">
+          <img src="/assets/jards-icon-final.svg" alt="" class="footer-icon" />
+        </a>
+      </div>
+
+      <nav aria-label="Navegação do rodapé">
+        <p class="footer-column-title">Navegue</p>
+        <div class="footer-nav">
+          <a href="/incentivadores">Inteligência</a>
+          <a href="/crm">CRM</a>
+          <a href="/prestacao-de-contas">Prestação de contas</a>
+          <a href="/precos">Preços</a>
+          <a href="/publicacoes" data-app-path="/publicacoes">Publicações</a>
+        </div>
+      </nav>
+
+      <div>
+        <p class="footer-column-title">Acompanhe a Jards</p>
+        <div class="footer-social-links">
+          <a href="https://www.linkedin.com/company/jardsapp/home/?viewAsMember=true" target="_blank" rel="noopener noreferrer"><i class="ph ph-linkedin-logo" aria-hidden="true"></i><span>LinkedIn</span></a>
+          <a href="https://www.instagram.com/jardsapp/" target="_blank" rel="noopener noreferrer"><i class="ph ph-instagram-logo" aria-hidden="true"></i><span>Instagram</span></a>
+        </div>
+        <p class="footer-social-note">Conteúdo sobre captação, patrocínios, impacto e continuidade.</p>
+        <img src="/assets/tamandua-celular-footer.png" alt="Tamanduá segurando um celular" class="footer-social-illustration" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="site-footer-bottom">
+      <div class="site-footer-legal">
+        <a href="/privacidade" data-app-path="/privacidade">Política de Privacidade</a>
+        <a href="/termos" data-app-path="/termos">Termos de Uso</a>
+        <button type="button" class="site-footer-cookies" data-preferencias-cookies>Preferências de cookies</button>
+      </div>
+      <p>© 2026 Jards. Feito no Brasil.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ── Destinos da aplicação ──
+  const appOrigin = window.location.protocol === 'file:' ? 'http://localhost:3000' : window.location.origin;
+  document.querySelectorAll('[data-app-path]').forEach(function(link) {
+    var destino = new URL(link.dataset.appPath, appOrigin);
+    var atual = new URL(link.href, location.href);
+    destino.search = atual.search;
+    link.href = destino.href;
+  });
+
+  // ── Listas roláveis: sombra nas bordas ──
+  document.querySelectorAll('.alt-scroll-x').forEach(function(trilho) {
+    const atualizar = function() {
+      const max = trilho.scrollWidth - trilho.clientWidth;
+      trilho.classList.toggle('is-fade-l', max > 1 && trilho.scrollLeft > 1);
+      trilho.classList.toggle('is-fade-r', max > 1 && trilho.scrollLeft < max - 1);
+    };
+    trilho.addEventListener('scroll', atualizar, { passive: true });
+    if ('ResizeObserver' in window) new ResizeObserver(atualizar).observe(trilho);
+    window.addEventListener('load', atualizar);
+    atualizar();
+  });
+
+  // ── Revelação ao rolar ──
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }});
+    }, { threshold: 0.06 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  } else {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+  }
+</script>
+<script>
+// ── Prancheta ──
+// As superfícies de papel (topo, conector e fechamento) são
+// desenhadas como uma prancha técnica: um eixo único na margem do conteúdo,
+// linhas de construção que nascem de elementos reais da página e passam um
+// pouco das quinas, e os módulos do símbolo da Jards (quarto de círculo coral
+// + quarto roxo de meio raio) feitos a compasso. As seções brancas são folhas
+// sobre a prancha.
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var COR = { coral:'#D94A4A', roxo:'#684DB0', grafite:'#282525' };
+  var movimento = window.matchMedia('(prefers-reduced-motion: no-preference)');
+  var largo = window.matchMedia('(min-width: 768px)');
+  var pranchetas = Array.prototype.slice.call(document.querySelectorAll('[data-prancheta]'));
+  if (!pranchetas.length) return;
+
+  function no(tag, attrs, pai){
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (pai) pai.appendChild(n);
+    return n;
+  }
+  // Posição final do elemento: desconta o deslocamento de entrada dos .reveal,
+  // que ainda pode estar em andamento quando a prancha é medida.
+  function caixa(alvo, base){
+    if (!alvo) return null;
+    var a = alvo.getBoundingClientRect(), b = base.getBoundingClientRect(), dx = 0, dy = 0;
+    for (var n = alvo; n && n !== base; n = n.parentElement) {
+      if (n.classList && n.classList.contains('reveal')) {
+        var t = getComputedStyle(n).transform;
+        if (t && t !== 'none') { var m = new DOMMatrixReadOnly(t); dx += m.m41; dy += m.m42; }
+      }
+    }
+    var x = a.left - b.left - dx, y = a.top - b.top - dy;
+    return { x:x, y:y, w:a.width, h:a.height, r:x + a.width, b:y + a.height, cx:x + a.width/2, cy:y + a.height/2 };
+  }
+  // O eixo corre na margem, 12px antes da borda do container de conteúdo
+  // (72rem centralizado, 24px no mínimo): igual em todas as seções e sem
+  // encostar nas letras.
+  function eixo(w){
+    var rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    return Math.floor(Math.max(24, (w - 72*rem) / 2) - 12) + .5;
+  }
+  // Traço de 1px nítido: a coordenada fixa de linhas retas cai no meio do pixel.
+  function px(v){ return Math.round(v - .5) + .5; }
+
+  function Desenho(svg, id){
+    this.svg = svg; this.id = id; this.hachuras = {};
+    this.defs = no('defs', {}, svg);
+    this.g = no('g', {}, svg);
+  }
+  Desenho.prototype.hachura = function(cor){
+    if (this.hachuras[cor]) return this.hachuras[cor];
+    var pid = 'pr-' + this.id + '-' + cor;
+    var p = no('pattern', { id:pid, width:7, height:7, patternUnits:'userSpaceOnUse', patternTransform:'rotate(45)' }, this.defs);
+    no('line', { x1:3.5, y1:0, x2:3.5, y2:7, stroke:COR[cor], 'stroke-width':1, 'stroke-opacity':.3 }, p);
+    return (this.hachuras[cor] = 'url(#' + pid + ')');
+  };
+  // Linha de construção: passa das pontas, como no traço à mão.
+  Desenho.prototype.linha = function(x1, y1, x2, y2, tipo, sobra){
+    sobra = sobra == null ? 16 : sobra;
+    if (x1 === x2) x1 = x2 = px(x1);
+    if (y1 === y2) y1 = y2 = px(y1);
+    var dx = x2-x1, dy = y2-y1, L = Math.hypot(dx, dy) || 1, ux = dx/L*sobra, uy = dy/L*sobra;
+    return no('line', { x1:x1-ux, y1:y1-uy, x2:x2+ux, y2:y2+uy, 'class':'pr-linha ' + (tipo || '') }, this.g);
+  };
+  Desenho.prototype.eixo = function(x, h){ return this.linha(x, 0, x, h, 'is-guia', 0); };
+  Desenho.prototype.circulo = function(cx, cy, r){
+    return no('circle', { cx:cx, cy:cy, r:r, 'class':'pr-arco' }, this.g);
+  };
+  Desenho.prototype.centro = function(cx, cy, r){
+    var b = r ? Math.min(8, Math.max(4, r * .22)) : 8;
+    this.linha(cx-b, cy, cx+b, cy, 'is-forte', 0);
+    this.linha(cx, cy-b, cx, cy+b, 'is-forte', 0);
+    no('circle', { cx:px(cx), cy:px(cy), r:b * .44, 'class':'pr-marca' }, this.g);
+  };
+  Desenho.prototype.nota = function(x, y, texto, ancora){
+    var t = no('text', { x:x, y:y, 'class':'pr-nota', 'text-anchor':ancora || 'middle' }, this.g);
+    t.textContent = texto;
+    return t;
+  };
+  // Cruz de registro: só onde duas linhas reais se encontram.
+  Desenho.prototype.registro = function(x, y){
+    this.linha(x-5, y, x+5, y, 'is-forte', 0);
+    this.linha(x, y-5, x, y+5, 'is-forte', 0);
+  };
+  // Módulo: quarto de círculo com aguada, hachura e contorno.
+  // Abre para 'no' (cima-esquerda), 'ne', 'so' ou 'se'.
+  Desenho.prototype.modulo = function(cx, cy, r, abre, cor, aguada, marca){
+    var ang = { ne:[-90,0], se:[0,90], so:[90,180], no:[180,270] }[abre];
+    var t0 = ang[0]*Math.PI/180, t1 = ang[1]*Math.PI/180;
+    var d = 'M' + cx + ' ' + cy +
+      ' L' + (cx + r*Math.cos(t0)) + ' ' + (cy + r*Math.sin(t0)) +
+      ' A' + r + ' ' + r + ' 0 0 1 ' + (cx + r*Math.cos(t1)) + ' ' + (cy + r*Math.sin(t1)) + ' Z';
+    var extra = marca ? { 'data-forca':marca } : {};
+    function com(o){ for (var k in extra) o[k] = extra[k]; return o; }
+    no('path', com({ d:d, fill:COR[cor], 'fill-opacity':aguada == null ? .1 : aguada, 'class':'pr-aguada pr-aguada-cor' }), this.g);
+    no('path', { d:d, fill:this.hachura(cor), 'class':'pr-aguada' }, this.g);
+    no('path', com({ d:d, 'class':'pr-contorno', stroke:COR[cor], 'stroke-opacity':.6 }), this.g);
+  };
+  // O símbolo da Jards: o quarto roxo (raio R/2) encaixa embaixo do coral.
+  Desenho.prototype.simbolo = function(cx, cy, R, w, h, compacto){
+    var rx = cx - R/2;
+    if (compacto) {
+      this.linha(cx - R - 24, cy, cx + 24, cy, 'is-guia', 0);
+      this.linha(cx, cy - R - 16, cx, cy + R/2 + 16, 'is-guia', 0);
+      this.linha(rx, cy - R - 16, rx, cy + R/2 + 16, 'is-guia', 0);
+    } else {
+      this.linha(0, cy, w, cy, 'is-guia', 0);
+      this.linha(cx, 0, cx, h, 'is-guia', 0);
+      this.linha(rx, 0, rx, h, 'is-guia', 0);
+    }
+    this.circulo(cx, cy, R);
+    this.circulo(rx, cy, R/2);
+    this.modulo(cx, cy, R, 'no', 'coral', .12);
+    this.modulo(rx, cy, R/2, 'se', 'roxo', .14);
+    this.centro(cx, cy, R);
+    this.centro(rx, cy, R/2);
+    // A proporção real da marca: o roxo tem metade do raio do coral.
+    this.linha(cx, cy, cx - R*Math.SQRT1_2, cy - R*Math.SQRT1_2, '', 0);
+    this.linha(rx, cy, rx + R/2*Math.SQRT1_2, cy + R/2*Math.SQRT1_2, '', 0);
+    if (!compacto) {
+      this.nota(cx - R*.36, cy - R*.36 - 10, 'r');
+      this.nota(rx + R*.2 + 10, cy + R*.2 - 2, 'r/2', 'start');
+    }
+  };
+
+  var desenhos = {
+    topo: function(d, sec, w, h){
+      var titulo = caixa(sec.querySelector('.hero-copy h1'), sec);
+      var botao = caixa(sec.querySelector('.hero-actions .alt-cta'), sec);
+      if (!titulo || !botao) return;
+      var x0 = eixo(w);
+      // O eixo da prancha e a linha que chega ao botão principal.
+      d.eixo(x0, h);
+      d.linha(0, botao.cy, botao.x, botao.cy, 'pr-cta', 0);
+      d.registro(x0, botao.cy);
+      // Módulo coral apoiado na base, a partir da borda do texto.
+      var R = Math.min(h - botao.b - 36, (titulo.w || 400) * .62);
+      if (R > 90) {
+        var cx = titulo.x + R;
+        d.circulo(cx, h, R);
+        d.linha(cx, h - R - 24, cx, h, 'is-guia', 0);
+        d.modulo(cx, h, R, 'no', 'coral', .12);
+      }
+      if (largo.matches) {
+        // Roxo na proporção da marca (metade do coral), preso à margem
+        // direita logo abaixo do menu.
+        var Rr = Math.max(R > 90 ? R / 2 : 80, 72), cyr = 96;
+        d.circulo(w, cyr, Rr);
+        d.modulo(w, cyr, Rr, 'so', 'roxo', .12);
+        d.registro(w - Rr, cyr);
+      } else {
+        // Celular: ao lado dos botões, depois do último item da mesma linha.
+        var naLinha = Array.prototype.map.call(sec.querySelectorAll('.hero-actions > *'), function(e){ return caixa(e, sec); })
+          .filter(function(c){ return Math.abs(c.cy - botao.cy) < 4; });
+        var dir = Math.max.apply(null, naLinha.map(function(c){ return c.r; }));
+        var Rc = Math.min(w - dir - 28, 132);
+        if (Rc > 60) {
+          d.modulo(w, botao.y - 8, Rc, 'so', 'roxo', .12);
+          d.registro(w - Rc, botao.y - 8);
+        }
+      }
+    },
+    conector: function(d, sec, w, h){
+      d.eixo(eixo(w), h);
+    },
+    fechamento: function(d, sec, w, h){
+      var conteudo = caixa(sec.querySelector('.max-w-3xl'), sec);
+      var botao = caixa(sec.querySelector('.alt-cta'), sec);
+      if (!conteudo || !botao) return;
+      var x0 = eixo(w), fim = h - 28;
+      // Aqui a prancha termina: o eixo para na última cruz.
+      d.linha(x0, 0, x0, fim, 'is-guia', 0);
+      d.registro(x0, fim);
+      var margem = w - conteudo.r;
+      var R = Math.min(margem * .78, h * .5);
+      if (R >= 120) {
+        // O símbolo completo à direita; a linha de base sai do eixo, passa
+        // pelo botão e chega ao símbolo.
+        var cx = conteudo.r + margem / 2 + R / 2;
+        d.simbolo(cx, botao.cy, R, w, h);
+        d.linha(x0, botao.cy, cx - R, botao.cy, 'pr-cta', 0);
+        d.registro(x0, botao.cy);
+      } else {
+        // Telas estreitas: o símbolo pequeno embaixo de tudo, como assinatura.
+        var Rm = Math.min(56, (h - conteudo.b - 28) / 1.5);
+        if (Rm >= 28) d.simbolo(w / 2 + Rm / 2, conteudo.b + 12 + Rm, Rm, w, h, true);
+      }
+    }
+  };
+
+  var estado = new Map();
+
+  // Só entram as pranchetas com desenho conhecido; um nome sem desenho fica sem prancha.
+  pranchetas = pranchetas.filter(function(alvo){
+    return typeof desenhos[alvo.getAttribute('data-prancheta')] === 'function' && alvo.parentElement;
+  });
+  if (!pranchetas.length) return;
+
+  function desenhar(alvo, animar){
+    var sec = alvo.parentElement, w = sec.clientWidth, h = sec.clientHeight;
+    if (!w || !h) return;
+    estado.get(alvo).tam = w + 'x' + h;
+    alvo.textContent = '';
+    var nome = alvo.getAttribute('data-prancheta'), desenho = desenhos[nome];
+    if (typeof desenho !== 'function') return;
+    var svg = no('svg', { viewBox:'0 0 ' + w + ' ' + h, width:w, height:h, focusable:'false' }, alvo);
+    var d = new Desenho(svg, nome);
+    desenho(d, sec, w, h);
+    if (animar) revelar(svg);
+  }
+
+  // Primeiro o conteúdo assenta, depois o lápis traça: os traços sólidos se
+  // desenham e os tracejados e aguadas aparecem em seguida.
+  function revelar(svg){
+    if (!movimento.matches || !svg.animate) return;
+    var tracos = svg.querySelectorAll('.pr-linha:not(.is-guia), .pr-contorno');
+    Array.prototype.forEach.call(tracos, function(el, i){
+      var L = el.getTotalLength ? el.getTotalLength() : 0;
+      if (!L) return;
+      el.animate([{ strokeDasharray:L, strokeDashoffset:L }, { strokeDasharray:L, strokeDashoffset:0 }],
+        { duration:900, delay:80 + i*35, easing:'cubic-bezier(.65,0,.35,1)', fill:'backwards' });
+    });
+    Array.prototype.forEach.call(svg.querySelectorAll('.is-guia, .pr-arco, .pr-aguada, .pr-marca, .pr-nota'), function(el, i){
+      el.animate([{ opacity:0 }, { opacity:1 }], { duration:700, delay:300 + (i % 12)*40, easing:'ease-out', fill:'backwards' });
+    });
+  }
+
+  var pendentes = new Set(), quadro = 0;
+  function agendar(alvo){
+    pendentes.add(alvo);
+    if (quadro) return;
+    quadro = requestAnimationFrame(function(){
+      quadro = 0;
+      pendentes.forEach(function(a){
+        var sec = a.parentElement, st = estado.get(a);
+        if (st.visto && st.tam !== sec.clientWidth + 'x' + sec.clientHeight) desenhar(a, false);
+      });
+      pendentes.clear();
+    });
+  }
+
+  var pronto = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  // Com animação, a prancha só aparece quando a seção entra na tela (senão
+  // ela surgiria pronta, sumiria e se redesenharia). Sem animação, já nasce
+  // desenhada.
+  var anima = movimento.matches && 'IntersectionObserver' in window;
+  pronto.then(function(){
+    pranchetas.forEach(function(alvo){
+      estado.set(alvo, { visto:!anima, tam:'' });
+      if (!anima) desenhar(alvo, false);
+    });
+    if ('ResizeObserver' in window) {
+      var ro = new ResizeObserver(function(entradas){
+        entradas.forEach(function(e){
+          var alvo = e.target.querySelector(':scope > [data-prancheta]');
+          if (alvo) agendar(alvo);
+        });
+      });
+      pranchetas.forEach(function(alvo){ ro.observe(alvo.parentElement); });
+    }
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function(entradas){
+        entradas.forEach(function(e){
+          if (!e.isIntersecting) return;
+          var alvo = e.target.querySelector(':scope > [data-prancheta]');
+          var st = alvo && estado.get(alvo);
+          if (!st || st.visto) return;
+          st.visto = true;
+          io.unobserve(e.target);
+          setTimeout(function(){ desenhar(alvo, true); }, movimento.matches ? 450 : 0);
+        });
+      }, { threshold:.2 });
+      pranchetas.forEach(function(alvo){ io.observe(alvo.parentElement); });
+    }
+  });
+})();
+</script>
+<script src="/menu-site.js" defer></script>
+</body>
+</html>

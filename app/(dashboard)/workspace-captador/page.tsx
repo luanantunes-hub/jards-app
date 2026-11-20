@@ -25,11 +25,11 @@ type Pedido = WorkspacePedido;
 const TIPO_LABEL: Record<EscopoTipo, string> = { empresas: "Relacionamento", negociacoes: "Negociação", inscricoes: "Edital" };
 const rotuloOportunidade = (pedido: Pedido) => pedido.oportunidade_etiqueta?.nome ?? TIPO_LABEL[pedido.tipo];
 
-const STATUS_PEDIDO: Record<PedidoStatus, { label: string; cor: string; fundo: string }> = {
-  pendente: { label: "Pendente", cor: "#B07A14", fundo: "#B07A1414" },
-  aguardando_captador: { label: "Responder", cor: "#5F4AA8", fundo: "#5F4AA814" },
-  aprovado: { label: "Aprovado", cor: "#2E8932", fundo: "#2E893214" },
-  recusado: { label: "Recusado", cor: "#D94E4E", fundo: "#D94E4E14" },
+const STATUS_PEDIDO: Record<PedidoStatus, { label: string; cor: string }> = {
+  pendente: { label: "Pendente", cor: "#B07A14" },
+  aguardando_captador: { label: "Responder", cor: "#5F4AA8" },
+  aprovado: { label: "Aprovado", cor: "#2E8932" },
+  recusado: { label: "Recusado", cor: "#D94E4E" },
 };
 
 type AtribuicaoLinha = { id: string; status: string; organizationId: string; empresaNome: string; empresaSite?: string | null; empresaDomainKey?: string | null; workspaceEtapa?: string | null; workspaceFunil?: string | null };
@@ -46,7 +46,7 @@ function normalizarSite(valor: string): string | null {
 function StatusPedidoBadge({ status }: { status: PedidoStatus }) {
   const organizationName = useOrganizationName() || "sua organização";
   const cfg = STATUS_PEDIDO[status];
-  return <span className="shrink-0 rounded px-2 py-1 text-[0.625rem] font-semibold uppercase tracking-wide" style={{ color: cfg.cor, background: cfg.fundo }}>{status === "aguardando_captador" ? `Responder a ${organizationName}` : cfg.label}</span>;
+  return <span className="shrink-0 rounded border bg-white px-2 py-1 text-[0.625rem] font-semibold uppercase tracking-wide" style={{ borderColor: cfg.cor + "47", color: cfg.cor }}>{status === "aguardando_captador" ? `Responder a ${organizationName}` : cfg.label}</span>;
 }
 
 function StatusAtribuicaoBadge({ status }: { status: string }) {
@@ -125,11 +125,11 @@ function NovaOportunidadeSheet({ workspaceId, escopos, organizationId, onClose, 
   }
 
   return <TopSheet titulo="Nova oportunidade" onClose={onClose} footer={close => resultado ? (
-    <button type="button" onClick={close} className="rounded bg-[#171717] px-4 py-2 text-[0.75rem] font-semibold text-white">Fechar</button>
+    <button type="button" onClick={close} className="rounded bg-[#1C0E33] px-4 py-2 text-[0.75rem] font-semibold text-white">Fechar</button>
   ) : <>
     <button type="button" onClick={close} className="text-[0.75rem] text-black/50">Cancelar</button>
     <button type="button" onClick={() => void enviar(close)} disabled={enviando || titulo.trim().length < 2 || nome.trim().length < 2 || !etiqueta || !escopo || !!site.trim() && !siteNormalizado}
-      className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">
+      className="inline-flex items-center gap-1.5 rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition disabled:opacity-40">
       <Send size={12} />{enviando ? "Enviando…" : escopo?.modo === "pedido" ? "Enviar para avaliação" : "Consultar e iniciar"}
     </button>
   </>}>
@@ -206,7 +206,7 @@ function FunilKanban({ etapas, itens, pedidos, draggingId, setDraggingId, overEt
                 </div>
               </div>
               <div className="mt-2.5 flex items-center justify-between border-t border-black/[.06] pt-2">
-                <button type="button" disabled={indice === 0} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice - 1].key); }} className="text-[0.6875rem] font-medium text-black/45 hover:text-black disabled:invisible">← Voltar</button>
+                <button type="button" disabled={indice === 0} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice - 1].key); }} className="text-[0.6875rem] font-medium text-black/45 hover:text-[#282525] disabled:invisible">← Voltar</button>
                 <button type="button" disabled={indice === etapas.length - 1} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice + 1].key); }} className="text-[0.6875rem] font-medium text-[#5F4AA8] hover:underline disabled:invisible">Avançar →</button>
               </div>
             </KanbanCard>;
@@ -230,8 +230,8 @@ function OportunidadeSolta({ item, onIniciar, router }: {
       <CompanyLogo nome={item.empresaNome} domain={item.empresaDomainKey} site={item.empresaSite} size={36} className="shrink-0 border border-black/[.07]"/>
       <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-semibold text-black/80">{item.empresaNome}</span>
       <div className="flex shrink-0 items-center gap-1.5" onClick={event => event.stopPropagation()}>
-        <button type="button" onClick={() => onIniciar(item.id, "negociacoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Negociação</button>
-        <button type="button" onClick={() => onIniciar(item.id, "inscricoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Inscrição</button>
+        <button type="button" onClick={() => onIniciar(item.id, "negociacoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-[#282525]">Negociação</button>
+        <button type="button" onClick={() => onIniciar(item.id, "inscricoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-[#282525]">Inscrição</button>
       </div>
     </div>
   );
@@ -346,9 +346,9 @@ export default function WorkspaceCaptadorPage() {
     <div className="min-h-full">
       <header className="border-b border-black/[.06] bg-white">
         <div className="mx-auto flex max-w-pagina flex-col justify-between gap-5 px-4 pb-8 pt-7 sm:flex-row sm:items-end sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
-          <div><p className="mb-2 text-[0.6875rem] font-medium text-black/40">Workspace do captador</p><h1 className="text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{organizationName}</h1></div>
+          <div><p className="mb-2 text-[0.6875rem] font-medium text-black/40">Workspace do captador</p><h1 className="text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{organizationName}</h1></div>
           {!naoEncontrado && <button type="button" onClick={() => setSheetAberto(true)} disabled={!(escopos ?? []).some(e => e.habilitado && (e.tipo === "negociacoes" || e.tipo === "inscricoes"))}
-            className="inline-flex h-11 items-center gap-2 self-start rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-black transition hover:bg-black/[.04] active:scale-[.98] disabled:opacity-40 sm:self-auto"><Plus size={14}/>Nova oportunidade</button>}
+            className="inline-flex h-11 items-center gap-2 self-start rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] active:scale-[.98] disabled:opacity-40 sm:self-auto"><Plus size={14}/>Nova oportunidade</button>}
         </div>
       </header>
 
@@ -368,7 +368,7 @@ export default function WorkspaceCaptadorPage() {
             {erroEtapa && <p role="alert" className="mb-4 text-[0.75rem] text-[#B64545]">{erroEtapa}</p>}
             {aba === "resumo" && <div className="space-y-6">
               <section className="grid grid-cols-3 gap-px overflow-hidden rounded border border-black/[.08] bg-black/[.08]">
-                {[["Em andamento", atribuicoes.length], ["Sua resposta", esperandoResposta.length + acoesPendentes.length], ["Em análise", aguardandoGestor.length]].map(([label, value]) => <div key={label} className="bg-white px-4 py-4 sm:px-5"><p className="text-[0.6875rem] text-black/40">{label}</p><p className="mt-3 text-[1.5625rem] font-semibold tabular-nums tracking-tight text-[#171717]">{value}</p></div>)}
+                {[["Em andamento", atribuicoes.length], ["Sua resposta", esperandoResposta.length + acoesPendentes.length], ["Em análise", aguardandoGestor.length]].map(([label, value]) => <div key={label} className="bg-white px-4 py-4 sm:px-5"><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p><p className={`mt-3 text-[1.5625rem] font-semibold tabular-nums tracking-tight ${value ? "text-[#282525]" : "text-black/30"}`}>{value}</p></div>)}
               </section>
               <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
                 <div className="min-w-0 space-y-5">

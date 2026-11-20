@@ -16,8 +16,8 @@ test("sugestões a partir da captação e do projeto", () => {
   assert.equal(tituloSugerido(captacao, null), "Prestação de contas — Festival de Inverno");
   assert.equal(tituloSugerido(null, { id: "p", nome: "Circo na Praça", proponente_id: null }), "Prestação de contas — Circo na Praça");
   assert.equal(tituloSugerido(null, null), "");
-  assert.equal(valorInicial(captacao), "250000", "aprovado antes do solicitado");
-  assert.equal(valorInicial({ ...captacao, valor_aprovado: null }), "300000");
+  assert.equal(valorInicial(captacao), "250.000,00", "aprovado antes do solicitado, como o campo mostra");
+  assert.equal(valorInicial({ ...captacao, valor_aprovado: null }), "300.000,00");
   assert.equal(valorInicial(null), "");
 });
 
@@ -27,6 +27,8 @@ test("validação por passo", () => {
   assert.match(validarPasso("regime", VAZIO, null) ?? "", /regime/);
   assert.match(validarPasso("dados", { ...VAZIO, valorAprovado: "-5" }, null) ?? "", /Valor/);
   assert.equal(validarPasso("dados", { ...VAZIO, valorAprovado: "1000.50" }, null), null);
+  assert.equal(validarPasso("dados", { ...VAZIO, valorAprovado: "1.000,50" }, null), null, "o texto da máscara");
+  assert.equal(validarPasso("dados", VAZIO, null), null, "sem valor segue");
   assert.equal(validarPasso("importacao", VAZIO, null), null);
   assert.match(validarPasso("marcos", { ...VAZIO, inicioExecucao: "2026-05-01", fimExecucao: "2026-04-01" }, null) ?? "", /antes do início/);
 });

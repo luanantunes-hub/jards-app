@@ -1,14 +1,20 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, ArrowUpDown, X, ChevronLeft, ChevronRight, ChevronsRight, Download, UserPlus, ChevronUp, ChevronDown, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Search, ArrowUpDown, X, ChevronLeft, ChevronRight, ChevronsRight, Download, UserPlus, ChevronUp, ChevronDown, ThumbsUp, ThumbsDown, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { TituloComFrase } from "@/components/list/TituloComFrase";
 
 const CARDS_PER_PAGE = 12;
+
+const ESTADOS_BR = [
+  "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
+  "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
+];
 
 type SugestaoEdital = {
   id: string;
@@ -136,6 +142,7 @@ export default function EditaisAbertosPage() {
   const [search, setSearch] = useState("");
   const [dSearch, setDSearch] = useState("");
   const [sort, setSort] = useState<SortOpt>("aporte_desc");
+  const [estadoFilter, setEstadoFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [showInscricaoModal, setShowInscricaoModal] = useState(false);
   const [selectedEdital, setSelectedEdital] = useState<EditalAberto | null>(null);
@@ -273,7 +280,7 @@ export default function EditaisAbertosPage() {
   // Reset to page 0 when filter/sort changes
   useEffect(() => {
     setCurrentPage(0);
-  }, [dSearch, sort, statusFilter]);
+  }, [dSearch, sort, statusFilter, estadoFilter]);
 
   // Fetch on mount
   useEffect(() => {
@@ -325,6 +332,11 @@ export default function EditaisAbertosPage() {
       if (statusFilter === "fechados" && dias > 0) return false;
       const modificadoEm = item.data.updated_at ?? item.data.created_at;
       if (statusFilter === "recentes" && (Date.now() - new Date(modificadoEm).getTime()) > TRINTA_DIAS) return false;
+      // O estado é o da sede da empresa. Sugestões da comunidade não trazem estado: saem do filtro.
+      if (estadoFilter) {
+        const uf = item.source === "adm" ? item.data.empresas?.estado?.trim().toUpperCase() : null;
+        if (uf !== estadoFilter) return false;
+      }
       if (!dSearch.trim()) return true;
       const sq = dSearch.toLowerCase();
       const nome = item.source === "adm" ? item.data.empresas?.nome : item.data.empresa_nome;
@@ -399,8 +411,7 @@ export default function EditaisAbertosPage() {
       {/* Header */}
       <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D]">Editais</h1>
+          <TituloComFrase secao="editais" titulo="Editais" />
         </div>
         <PrimaryListAction onClick={() => setShowSugerirForm(v => !v)}><UserPlus size={13} aria-hidden="true" /> Sugerir edital</PrimaryListAction>
       </div>
@@ -411,7 +422,7 @@ export default function EditaisAbertosPage() {
           className="fixed inset-0 z-50 flex"
           onClick={() => setShowSugerirForm(false)}
         >
-          <div className="flex-1" style={{ background: "rgba(0,0,0,.18)" }} />
+          <div className="flex-1 veu" />
           <div
             className="bg-white h-full overflow-y-auto flex flex-col"
             style={{ width: "22.5rem", borderLeft: "1px solid rgba(13,13,13,.08)", boxShadow: "-8px 0 32px rgba(0,0,0,.10)" }}
@@ -423,7 +434,7 @@ export default function EditaisAbertosPage() {
                 <div className="w-8 h-8 rounded flex items-center justify-center" style={{ background: "rgba(13,13,13,.04)" }}>
                   <UserPlus size={14} style={{ color: "#7259B5" }} />
                 </div>
-                <h2 className="text-[0.875rem] font-bold text-black">Sugerir edital</h2>
+                <h2 className="text-[0.875rem] font-bold text-[#282525]">Sugerir edital</h2>
               </div>
               <button
                 type="button"
@@ -526,7 +537,7 @@ export default function EditaisAbertosPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar edital, empresa, estado…"
-            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition"
+            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-[#282525] placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           />
         </div>
@@ -545,9 +556,18 @@ export default function EditaisAbertosPage() {
           emphasized={false}
         />
 
-        {search && (
+        <CustomDropdown
+          value={estadoFilter}
+          onChange={setEstadoFilter}
+          options={[{ value: "", label: "Todos os estados" }, ...ESTADOS_BR.map((uf) => ({ value: uf, label: uf }))]}
+          icon={<MapPin size={13} />}
+          compact
+          emphasized={false}
+        />
+
+        {(search || estadoFilter) && (
           <button
-            onClick={() => setSearch("")}
+            onClick={() => { setSearch(""); setEstadoFilter(""); }}
             className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-black/50 bg-white border rounded hover:bg-black/5 transition"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           >
@@ -615,7 +635,7 @@ export default function EditaisAbertosPage() {
                       </div>
                     )}
                     <div>
-                      <p className="text-[0.9375rem] font-bold text-[#0D0D0D] leading-tight">{nome}</p>
+                      <p className="text-[0.9375rem] font-bold text-[#282525] leading-tight">{nome}</p>
                       {isADM && adm!.empresas?.estado && (
                         <p className="text-[0.6875rem] text-black/35 mt-0.5">{adm!.empresas!.estado}</p>
                       )}
@@ -766,7 +786,7 @@ export default function EditaisAbertosPage() {
                     <button type="button" aria-label="Votar a favor" aria-pressed={meuVoto === 1} onClick={() => handleVotar(s.id, 1)} className="p-0.5 rounded hover:bg-black/5 transition">
                       <ChevronUp size={14} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                     </button>
-                    <span className={`text-[0.6875rem] font-bold tabular-nums ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
+                    <span className={`text-[0.6875rem] font-semibold tabular-nums ${saldo === 0 ? "text-black/30" : "text-[#282525]"}`}>
                       {saldo}
                     </span>
                     <button type="button" aria-label="Votar contra" aria-pressed={meuVoto === -1} onClick={() => handleVotar(s.id, -1)} className="p-0.5 rounded hover:bg-black/5 transition">
@@ -777,7 +797,7 @@ export default function EditaisAbertosPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-0.5">
-                      <p className="text-[0.8125rem] font-bold text-black leading-tight truncate">{s.empresa_nome}</p>
+                      <p className="text-[0.8125rem] font-bold text-[#282525] leading-tight truncate">{s.empresa_nome}</p>
                       {dias !== null && (
                         <span
                           className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex-shrink-0"

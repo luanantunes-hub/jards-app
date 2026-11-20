@@ -6,7 +6,7 @@
 // marco, dia em que caiu e por que foi prorrogado).
 
 import { calcularVencimento, type Vencimento } from "./prazos";
-import { prazoDoRegime, type PrazoRegime, type RegimeNormativo } from "./regimes";
+import { definida, prazoDoRegime, type PrazoRegime, type RegimeNormativo } from "./regimes";
 
 export type MarcosPrestacao = {
   data_fim_execucao?: string | null;
@@ -65,4 +65,31 @@ export function descreverRegra(regra: PrazoRegime): string {
     anos: regra.quantidade === 1 ? "ano" : "anos",
   }[regra.unidade];
   return `${regra.quantidade} ${unidade} após o ${ROTULO_DO_MARCO[regra.marco] ?? regra.marco}`;
+}
+
+// ─── Saldo no encerramento (P9.4) ───────────────────────────────────────────
+
+/** Nome curto do prazo do saldo, pela chave do regime. */
+const ROTULO_DO_PRAZO_DO_SALDO: Record<string, string> = {
+  devolucaoSaldo: "Devolução do saldo (GRU)",
+  transferenciaSaldo: "Transferência do saldo",
+};
+
+export type PrazoDoSaldo = PrazoFinal & { chave: string; rotulo: string };
+
+/**
+ * O prazo do saldo no encerramento (contas.saldo.prazo do regime), contado do
+ * marco: na saúde, saldo e rendimentos da Conta Movimento por GRU em 30 dias
+ * do término (Anexo LXXXVI-A, art. 71); na LIE, o pedido de transferência
+ * para outro projeto. null quando o regime não tem esse prazo ou falta o marco.
+ */
+export function prazoDoSaldo(regime: RegimeNormativo | null, marcos: MarcosPrestacao): PrazoDoSaldo | null {
+  const chave = regime ? definida(regime.contas)?.saldo?.prazo ?? null : null;
+  const regra = chave ? prazoDoRegime(regime, chave) : null;
+  if (!chave || !regra) return null;
+  const coluna = COLUNA_DO_MARCO[regra.marco];
+  const valor = coluna ? marcos[coluna] ?? null : null;
+  if (!valor) return null;
+  const marco = dataDoMarco(regra.marco, valor);
+  return { ...calcularVencimento(marco, regra), regra, marco, chave, rotulo: ROTULO_DO_PRAZO_DO_SALDO[chave] ?? "Destino do saldo" };
 }

@@ -83,7 +83,7 @@ export function MunicipioCombobox({ uf, valor, onChange, id }: {
         onFocus={() => setAberto(true)}
         onBlur={() => setTimeout(() => setAberto(false), 150)}
         onKeyDown={aoTeclar}
-        className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:bg-black/[.02]"
+        className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:bg-black/[.02]"
       />
       {valor.nome.trim() && !semUf && (
         <span className="mt-1 block text-[0.625rem] text-black/40">

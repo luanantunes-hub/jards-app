@@ -8,6 +8,7 @@ import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext"
 import { Select } from "@/components/ui/Select";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { podeRegistrarContato, type VinculosDaAtividade } from "@/lib/vinculo-contato";
 
 function suggestedChannel(tipo: TipoAtividade | null): CanalContato {
   if (tipo === "email" || tipo === "telefone" || tipo === "linkedin") return tipo;
@@ -16,13 +17,14 @@ function suggestedChannel(tipo: TipoAtividade | null): CanalContato {
 }
 
 export function ConcluirAtividadeModal({ atividade, onClose, onCompleted }: {
-  atividade: { id: string; nome: string; tipo: TipoAtividade | null; captacao_id: string | null };
+  atividade: { id: string; nome: string; tipo: TipoAtividade | null } & VinculosDaAtividade;
   onClose: () => void;
   onCompleted: (result: { feita: boolean; data_realizada: string | null }) => void;
 }) {
   const supabase = createClient();
   const { canais, resultados } = useTaxonomiasComerciais();
-  const [houveContato, setHouveContato] = useState(Boolean(atividade.captacao_id && atividade.tipo !== "tarefa"));
+  const podeRegistrar = podeRegistrarContato(atividade);
+  const [houveContato, setHouveContato] = useState(podeRegistrar && atividade.tipo !== "tarefa");
   const [canal, setCanal] = useState<CanalContato>(suggestedChannel(atividade.tipo));
   const [resultado, setResultado] = useState<ResultadoInteracao | "">("");
   const [resumo, setResumo] = useState("");
@@ -51,15 +53,15 @@ export function ConcluirAtividadeModal({ atividade, onClose, onCompleted }: {
     onCompleted({ feita: true, data_realizada: data?.data_realizada ?? new Date().toISOString() });
   }
 
-  return <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" style={{background:"rgba(0,0,0,.45)"}} onClick={onClose}>
-    <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-lg rounded bg-white shadow-2xl" onClick={e=>e.stopPropagation()}>
-      <header className="flex items-center justify-between border-b px-6 py-4" style={{borderColor:"rgba(13,13,13,.08)"}}><div><p id={titleId} className="text-[0.875rem] font-bold text-black">Concluir atividade</p><p className="mt-0.5 text-[0.6875rem] text-black/40">{atividade.nome}</p></div><button type="button" onClick={onClose} aria-label="Fechar" className="text-black/30 hover:text-black/55"><X size={15}/></button></header>
+  return <div className="fixed inset-0 z-[70] flex justify-center veu items-start" onClick={onClose}>
+    <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-desce folha-vidro w-full max-w-lg max-h-[96dvh]" onClick={e=>e.stopPropagation()}>
+      <header className="flex items-center justify-between border-b px-6 py-5 sm:px-8 sm:py-6" style={{borderColor:"rgba(13,13,13,.08)"}}><div><p id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Concluir atividade</p><p className="mt-0.5 text-[0.6875rem] text-black/40">{atividade.nome}</p></div><button type="button" onClick={onClose} aria-label="Fechar" className="text-black/30 hover:text-black/55"><X size={15}/></button></header>
       <div className="space-y-5 p-6">
-        <div><p className="mb-2 text-[0.75rem] font-semibold text-black">Houve contato com a empresa?</p><div className="flex gap-2"><button onClick={()=>setHouveContato(true)} disabled={!atividade.captacao_id} className="rounded border bg-white px-3 py-2 text-[0.75rem] font-medium disabled:opacity-35" style={{color:houveContato?"#7259B5":"rgba(13,13,13,.45)",borderColor:houveContato?"#7259B560":"rgba(13,13,13,.12)"}}>Sim, registrar interação</button><button onClick={()=>setHouveContato(false)} className="rounded border bg-white px-3 py-2 text-[0.75rem] font-medium" style={{color:!houveContato?"#7259B5":"rgba(13,13,13,.45)",borderColor:!houveContato?"#7259B560":"rgba(13,13,13,.12)"}}>Não, apenas concluir</button></div>{!atividade.captacao_id && <p className="mt-2 text-[0.625rem] text-black/35">Vincule a atividade a uma negociação para medir a eficácia do contato.</p>}</div>
+        <div><p className="mb-2 text-[0.75rem] font-semibold text-[#282525]">Houve contato com a empresa?</p><div className="flex gap-2"><button onClick={()=>setHouveContato(true)} disabled={!podeRegistrar} className="rounded border bg-white px-3 py-2 text-[0.75rem] font-medium disabled:opacity-35" style={{color:houveContato?"#7259B5":"rgba(13,13,13,.45)",borderColor:houveContato?"#7259B560":"rgba(13,13,13,.12)"}}>Sim, registrar interação</button><button onClick={()=>setHouveContato(false)} className="rounded border bg-white px-3 py-2 text-[0.75rem] font-medium" style={{color:!houveContato?"#7259B5":"rgba(13,13,13,.45)",borderColor:!houveContato?"#7259B560":"rgba(13,13,13,.12)"}}>Não, apenas concluir</button></div>{!podeRegistrar && <p className="mt-2 text-[0.625rem] text-black/35">Vincule a atividade a uma empresa ou negociação para registrar o contato.</p>}</div>
         {houveContato && <div className="grid grid-cols-2 gap-3"><div><label className="mb-1.5 block text-[0.6875rem] font-semibold">Canal *</label><Select value={canal} onChange={e=>setCanal(e.target.value as CanalContato)} className="w-full rounded border bg-white px-3 py-2.5 text-[0.75rem]" style={{borderColor:"rgba(13,13,13,.15)"}}>{canaisAtivos.map(c=><option key={c.chave} value={c.chave}>{c.label}</option>)}</Select></div><div><label className="mb-1.5 block text-[0.6875rem] font-semibold">Resultado *</label><Dropdown value={resultado} onChange={v=>setResultado(v as ResultadoInteracao | "")} options={resultadosAtivos.map(r=>({value:r.chave,label:r.label}))} placeholder="Selecionar" /></div><div><label className="mb-1.5 block text-[0.6875rem] font-semibold">Quando aconteceu</label><input type="datetime-local" value={ocorreuEm} onChange={e=>setOcorreuEm(e.target.value)} className="w-full rounded border px-3 py-2.5 text-[0.75rem]" style={{borderColor:"rgba(13,13,13,.15)"}}/></div><div><label className="mb-1.5 block text-[0.6875rem] font-semibold">Resumo</label><input value={resumo} onChange={e=>setResumo(e.target.value)} placeholder="O que aconteceu?" className="w-full rounded border px-3 py-2.5 text-[0.75rem]" style={{borderColor:"rgba(13,13,13,.15)"}}/></div></div>}
         {error && <p role="alert" className="text-[0.6875rem] font-medium text-[#D94E4E]">{error}</p>}
       </div>
-      <footer className="flex justify-end gap-3 border-t px-6 py-4" style={{borderColor:"rgba(13,13,13,.08)"}}><button onClick={onClose} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button onClick={save} disabled={saving||(houveContato&&!resultado)} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-semibold text-white hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"><Check size={13}/>{saving?"Salvando…":"Concluir"}</button></footer>
+      <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex justify-end gap-3 border-t px-6 py-4" style={{borderColor:"rgba(13,13,13,.08)"}}><button onClick={onClose} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button onClick={save} disabled={saving||(houveContato&&!resultado)} className="inline-flex items-center gap-1.5 rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed"><Check size={13}/>{saving?"Salvando…":"Concluir"}</button></footer>
     </div>
   </div>;
 }

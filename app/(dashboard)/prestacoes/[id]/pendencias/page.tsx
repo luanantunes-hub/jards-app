@@ -8,7 +8,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowRight, CheckCircle2, ChevronDown } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, CheckCircle2, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { VerificacoesPrestacao } from "@/components/prestacao/VerificacoesPrestacao";
@@ -34,11 +34,12 @@ type Dados = {
 
 const chaveDaLinha = (l: LinhaDaFila) => l.id ?? "sem-item";
 
-function Contagem({ quantidade, valor, cor }: { quantidade: number; valor: number; cor?: string }) {
+function Contagem({ quantidade, valor, alerta }: { quantidade: number; valor: number; alerta?: boolean }) {
   if (!quantidade) return <span className="text-black/25">—</span>;
   return (
-    <span style={cor ? { color: cor } : undefined}>
-      {fmt(valor)} <span className="text-[0.625rem] text-black/40">({quantidade})</span>
+    <span className={alerta ? "inline-flex items-center gap-1 text-black/70" : undefined}>
+      {alerta && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
+      <span>{fmt(valor)} <span className="text-[0.625rem] text-black/40">({quantidade})</span></span>
     </span>
   );
 }
@@ -48,9 +49,19 @@ function Pendencias({ linha }: { linha: LinhaDaFila }) {
   if (!bloqueios && !outras) return <span className="text-black/25">—</span>;
   return (
     <span>
-      {bloqueios > 0 && <span className="font-medium text-[#B23B3B]">{bloqueios} {bloqueios === 1 ? "bloqueio" : "bloqueios"}</span>}
+      {bloqueios > 0 && (
+        <span className="inline-flex items-center gap-1 font-medium tabular-nums text-black/70">
+          <Ban size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />
+          {bloqueios} {bloqueios === 1 ? "bloqueio" : "bloqueios"}
+        </span>
+      )}
       {bloqueios > 0 && outras > 0 && <span className="text-black/30"> · </span>}
-      {outras > 0 && <span className="text-[#B07A14]">{outras} a revisar</span>}
+      {outras > 0 && (
+        <span className="inline-flex items-center gap-1 tabular-nums text-black/70">
+          <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+          {outras} a revisar
+        </span>
+      )}
     </span>
   );
 }
@@ -73,8 +84,11 @@ function DespesasDoItem({ linha, prestacaoId }: { linha: LinhaDaFila; prestacaoI
             {d.pendencias.length > 0 && (
               <ul className="mt-1 space-y-0.5">
                 {d.pendencias.map(v => (
-                  <li key={v.id} className="text-[0.6875rem] leading-4 text-black/60">
-                    <span className={v.severidade === "bloqueio" ? "font-medium text-[#B23B3B]" : "font-medium text-[#B07A14]"}>{tituloDaChecagem(v.check_codigo)}:</span> {v.mensagem}
+                  <li key={v.id} className="flex items-start gap-1 text-[0.6875rem] leading-4 text-black/60">
+                    {v.severidade === "bloqueio"
+                      ? <Ban size={12} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-[#D94A4A]" />
+                      : <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-[#B07A14]" />}
+                    <span><span className="font-medium text-black/75">{tituloDaChecagem(v.check_codigo)}:</span> {v.mensagem}</span>
                   </li>
                 ))}
               </ul>
@@ -152,15 +166,15 @@ export default function PendenciasPage() {
   const semNada = !linhas.length;
 
   return (
-    <div className="space-y-5 px-4 py-6 sm:px-8">
+    <div className="mx-auto max-w-pagina space-y-5 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-[0.875rem] font-semibold text-[#0D0D0D]">Pendências</h2>
+          <h2 className="text-[0.875rem] font-semibold text-[#282525]">Pendências</h2>
           <p className="mt-0.5 text-[0.75rem] text-black/50">
-            {semNada ? "Cadastre o orçamento e envie as despesas: aqui aparece o que falta em cada item." : <>
+            {semNada ? "Cadastre o orçamento e envie as despesas para ver o que falta em cada item." : <>
               <span className="tabular-nums">{resumo.itensComPendencia}</span> {resumo.itensComPendencia === 1 ? "item com pendência" : "itens com pendência"}
               {resumo.aConciliar.quantidade > 0 && <> · <span className="tabular-nums">{fmt(resumo.aConciliar.valor)}</span> sem pagamento conciliado</>}
-              {resumo.bloqueios > 0 && <> · <span className="font-medium text-[#B23B3B]"><span className="tabular-nums">{resumo.bloqueios}</span> {resumo.bloqueios === 1 ? "bloqueio" : "bloqueios"}</span></>}
+              {resumo.bloqueios > 0 && <> · <Ban size={12} strokeWidth={1.75} aria-hidden className="mr-0.5 inline-block align-[-0.125rem] text-[#D94A4A]" /><span className="font-medium text-black/70"><span className="tabular-nums">{resumo.bloqueios}</span> {resumo.bloqueios === 1 ? "bloqueio" : "bloqueios"}</span></>}
             </>}
           </p>
         </div>
@@ -172,7 +186,7 @@ export default function PendenciasPage() {
                 type="button"
                 aria-pressed={soPendentes === opcao.valor}
                 onClick={() => setSoPendentes(opcao.valor)}
-                className={`rounded px-3 py-1.5 text-[0.6875rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${soPendentes === opcao.valor ? "bg-[#684DB0] text-white" : "text-black/55 hover:bg-black/[.04] hover:text-black/80"}`}
+                className={`rounded px-3 py-1.5 text-[0.6875rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${soPendentes === opcao.valor ? "bg-black/[.06] font-medium text-[#282525]" : "text-black/55 hover:bg-black/[.03] hover:text-black/80"}`}
               >
                 {opcao.rotulo}
               </button>
@@ -186,7 +200,8 @@ export default function PendenciasPage() {
       {resumo.debitosSemDespesa.quantidade > 0 && (
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded border bg-white px-4 py-3 text-[0.75rem] text-black/65" style={{ borderColor: "#B23B3B47" }}>
           <span>
-            <span className="font-medium text-[#B23B3B] tabular-nums">{resumo.debitosSemDespesa.quantidade}</span> {resumo.debitosSemDespesa.quantidade === 1 ? "débito do extrato" : "débitos do extrato"} sem despesa
+            <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mr-1 inline-block align-[-0.125rem] text-[#D94A4A]" />
+            <span className="font-semibold text-[#282525] tabular-nums">{resumo.debitosSemDespesa.quantidade}</span> {resumo.debitosSemDespesa.quantidade === 1 ? "débito do extrato" : "débitos do extrato"} sem despesa
             (<span className="tabular-nums">{fmt(resumo.debitosSemDespesa.valor)}</span>): ainda não têm item, por isso ficam fora da fila.
           </span>
           <Link href={`/prestacoes/${id}/conciliacao`} className="inline-flex items-center gap-1 rounded px-1.5 py-1 text-[0.6875rem] text-[#684DB0] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
@@ -200,7 +215,7 @@ export default function PendenciasPage() {
           <h3 id="fila-titulo" className="sr-only">Fila por item</h3>
           {!visiveis.length ? (
             <p className="flex items-center gap-2 px-5 py-4 text-[0.75rem] text-black/55">
-              <CheckCircle2 size={14} className="shrink-0 text-[#2E8932]" aria-hidden /> Nenhum item com pendência.
+              <CheckCircle2 size={14} className="shrink-0 text-black/40" aria-hidden /> Nenhum item com pendência.
             </p>
           ) : (
             <>
@@ -228,9 +243,12 @@ export default function PendenciasPage() {
                             {l.caminho.length > 0 && <p className="text-[0.625rem] text-black/40">{l.caminho.join(" › ")}</p>}
                           </td>
                           <td className={`${NUMERO} text-black/70`}><Contagem {...l.despesas} /></td>
-                          <td className={NUMERO}><Contagem {...l.aConciliar} cor="#B07A14" /></td>
+                          <td className={NUMERO}><Contagem {...l.aConciliar} alerta /></td>
                           <td className="px-3 py-2.5 text-[0.6875rem]"><Pendencias linha={l} /></td>
-                          <td className={`${NUMERO} ${l.saldo !== null && l.saldo < 0 ? "font-medium text-[#B23B3B]" : "text-black/60"}`}>{l.saldo === null ? "—" : fmt(l.saldo)}</td>
+                          <td className={`${NUMERO} ${l.saldo !== null && l.saldo < 0 ? "font-medium text-[#282525]" : "text-black/60"}`}>
+                            {l.saldo !== null && l.saldo < 0 && <AlertTriangle size={12} strokeWidth={1.75} role="img" aria-label="Saldo negativo" className="mr-1 inline-block align-[-0.125rem] text-[#D94A4A]" />}
+                            {l.saldo === null ? "—" : fmt(l.saldo)}
+                          </td>
                           <td className="px-2 py-2.5 text-right">
                             <button
                               type="button"
@@ -270,11 +288,16 @@ export default function PendenciasPage() {
                           <span className="block text-[0.75rem] text-black/80">{l.nome}</span>
                           <span className="block text-[0.6875rem] text-black/55">
                             Despesas <span className="tabular-nums"><Contagem {...l.despesas} /></span>
-                            {l.saldo !== null && <> · Saldo <span className={`tabular-nums ${l.saldo < 0 ? "font-medium text-[#B23B3B]" : ""}`}>{fmt(l.saldo)}</span></>}
+                            {l.saldo !== null && <> · Saldo {l.saldo < 0 && <AlertTriangle size={12} strokeWidth={1.75} role="img" aria-label="Saldo negativo" className="mr-0.5 inline-block align-[-0.125rem] text-[#D94A4A]" />}<span className={`tabular-nums ${l.saldo < 0 ? "font-medium text-[#282525]" : ""}`}>{fmt(l.saldo)}</span></>}
                           </span>
                           {(l.aConciliar.quantidade > 0 || l.pendencias.bloqueios + l.pendencias.outras > 0) && (
                             <span className="block text-[0.6875rem]">
-                              {l.aConciliar.quantidade > 0 && <span className="text-[#B07A14]">A conciliar <span className="tabular-nums">{fmt(l.aConciliar.valor)}</span></span>}
+                              {l.aConciliar.quantidade > 0 && (
+                                <span className="inline-flex items-center gap-1 text-black/55">
+                                  <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                                  <span>A conciliar <span className="tabular-nums">{fmt(l.aConciliar.valor)}</span></span>
+                                </span>
+                              )}
                               {l.aConciliar.quantidade > 0 && l.pendencias.bloqueios + l.pendencias.outras > 0 && <span className="text-black/30"> · </span>}
                               <Pendencias linha={l} />
                             </span>

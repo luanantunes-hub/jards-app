@@ -461,6 +461,8 @@ export interface Notificacao {
 export interface EmpresaCrm {
   id: string;
   account_id: string;
+  /** Tags livres do time (o vocabulário é da organização, compartilhado com contatos e projetos). */
+  tags?: string[];
   organization_id: string | null;
   empresa_pub_id: string | null;   // FK → empresas (opcional)
   nome: string;
@@ -475,6 +477,9 @@ export interface EmpresaCrm {
   potencial_relacionamento: number | null;
   potencial_justificativa: string | null;
   localizacao: string | null;
+  /** Cidade e UF da sede, separadas (um gatilho no banco as mantém em sincronia com `localizacao`). */
+  cidade?: string | null;
+  estado?: string | null;
   cidades_interesse: string[];
   ja_patrocina_cultura: boolean | null;
   patrocina_cultura_com: string | null;
@@ -629,6 +634,27 @@ export type StatusPrestacao =
   | "aprovado"
   | "arquivado";
 
+export type ManifestacaoEsportiva = "formacao" | "toda_vida" | "excelencia";
+
+/** PRONON/PRONAS (P9.5): só o projeto assistencial registra a produção no CMD. */
+export type ModalidadeSaude = "assistencial" | "formacao" | "pesquisa";
+
+/** Registro do descarte dos dados pessoais (P9.5); só a função grava. */
+export interface DescarteDeDadosPessoais {
+  ultimo: {
+    guarda_ate: string;
+    evidencias: number;
+    arquivos: number;
+    beneficiarios: number;
+    envios: number;
+    /** Mensagens das verificações que traziam nome ou dado de saúde (desde a 20261010250000). */
+    verificacoes?: number;
+    por: string;
+    em: string;
+  };
+  vezes: number;
+}
+
 export interface PrestacaoContas {
   id: string;
   /** Null só em prestações antigas sem projeto, captação ou organização única de quem criou. */
@@ -647,11 +673,26 @@ export interface PrestacaoContas {
   identificador_tipo?: string | null;
   fonte_recurso?: string | null;
   proponente_id?: string | null;
+  /** Prestações da mesma obra e do mesmo objeto (ANCINE, P7.4): mesmo valor, mesmo grupo. */
+  obra_grupo?: string | null;
+  /** LIE (P8.4): nível da manifestação esportiva e validade da CRC do proponente. */
+  manifestacao_esportiva?: ManifestacaoEsportiva | null;
+  crc_validade?: string | null;
+  /** PRONON/PRONAS (P9.5): vazio vale assistencial. */
+  modalidade_saude?: ModalidadeSaude | null;
+  /** P9.5: quando os dados pessoais foram descartados, depois da guarda; só a função grava. */
+  dados_pessoais_descartados_em?: string | null;
+  dados_pessoais_descarte?: DescarteDeDadosPessoais | null;
+  /** P8.8: número do processo no órgão (SEI na LIE) e o texto da lei no carimbo das notas. */
+  numero_processo?: string | null;
+  carimbo_lei?: string | null;
   data_aprovacao?: string | null;
   data_liberacao?: string | null;
   data_termo?: string | null;
   data_conclusao_objeto?: string | null;
   data_envio?: string | null;
+  /** P9.1: fim da captação; na saúde, conta o prazo da readequação. */
+  data_fim_captacao?: string | null;
   /** Última verificação do motor de checagens (P2.7); só o servidor grava. */
   verificada_em?: string | null;
   /** Calculado pelo banco a partir do regime e dos marcos. */
@@ -744,6 +785,12 @@ export interface PrestacaoComprovante {
   justificativa?: string | null;
   /** O que a leitura por IA apontou, com códigos do catálogo de checagens (P2.10b). */
   motivos_ia?: MotivoLido[];
+  /** Por onde entrou: a equipe lançou, o proponente enviou pelo espaço dele (P5.4), chegou por e-mail (P5.5) ou o assistente (Claude ou ChatGPT) registrou. */
+  canal?: "equipe" | "proponente" | "email" | "assistente";
+  /** Paga como contrapartida, em dinheiro ou por doação (P7.2); vazio é o recurso do projeto. */
+  contrapartida?: "financeira" | "doacao" | null;
+  /** Data do atesto de recebimento no verso da nota (LIE, P8.8). */
+  atestado_em?: string | null;
   created_at: string;
 }
 // ─── Prestação de contas — Phase 3 ──────────────────────────────────────────
@@ -814,6 +861,8 @@ export interface PrestacaoEvidencia {
   origem_dados: "arquivo" | "informado" | null;
   justificativa: string | null;
   criado_por: string | null;
+  /** Por onde entrou: a equipe lançou, o proponente enviou pelo espaço dele (P5.4) ou o assistente (Claude ou ChatGPT) registrou. */
+  canal?: "equipe" | "proponente" | "assistente";
   created_at: string;
   updated_at: string;
 }
@@ -849,6 +898,41 @@ export interface CotacaoDoBem {
   data?: string | null;
   storage_path?: string | null;
   nome_arquivo?: string | null;
+}
+
+/** Diretamente beneficiado da prestação (P8.5, LIE, aba BENEFICIADOS). */
+export interface PrestacaoBeneficiario {
+  id: string;
+  prestacao_id: string;
+  nome: string;
+  modalidade: string | null;
+  sexo: "feminino" | "masculino" | null;
+  idade: number | null;
+  /** Aluno da rede pública; null quando não informado. */
+  rede_publica: boolean | null;
+  telefone: string | null;
+  endereco: string | null;
+  beneficios: string[];
+  observacoes: string | null;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Produção registrada no CMD do SUS por competência (PRONON/PRONAS, P9.5). */
+export interface PrestacaoProducaoCmd {
+  id: string;
+  prestacao_id: string;
+  /** Primeiro dia do mês: "2026-09-01". */
+  competencia: string;
+  meta_id: string | null;
+  quantidade: number;
+  /** Número do lote ou do registro no CMD. */
+  protocolo: string | null;
+  observacoes: string | null;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 /** Bem permanente adquirido, produzido ou construído (P3.5). */
@@ -915,6 +999,8 @@ export interface PrestacaoEnvioMarcacao {
   id: string;
   prestacao_id: string;
   etapa: "parcial" | "final";
+  /** P9.2: ano da prestação anual (saúde); 0 quando não há. */
+  exercicio?: number;
   tipo: "documento" | "condicao";
   /** Código do documento ou da condição no regime. */
   codigo: string;
@@ -930,6 +1016,8 @@ export interface PrestacaoEnvioArquivo {
   id: string;
   prestacao_id: string;
   etapa: "parcial" | "final";
+  /** P9.2: ano da prestação anual (saúde); 0 quando não há. */
+  exercicio?: number;
   codigo: string;
   storage_path: string;
   nome_arquivo: string;
@@ -977,6 +1065,8 @@ export interface PrestacaoEnvio {
   id: string;
   prestacao_id: string;
   etapa: "final" | "parcial";
+  /** P9.2: ano da prestação anual (saúde); 0 quando não há. A versão conta dentro da etapa e do exercício. */
+  exercicio?: number;
   versao: number;
   enviado_em: string;
   protocolo: string | null;
@@ -991,6 +1081,8 @@ export interface PrestacaoEnvio {
   /** null: até a data do marco do regime (a decisão final, em geral). */
   guarda_ate: string | null;
   situacao: "vigente" | "reaberto";
+  /** P9.5: o retrato teve os dados pessoais trocados no descarte; o hash segue o do envio. */
+  retrato_anonimizado_em?: string | null;
   registrado_por: string | null;
   registrado_em: string;
   reaberto_em: string | null;
@@ -1094,6 +1186,54 @@ export interface PrestacaoLocal {
   status: "previsto" | "realizado" | "nao_realizado" | "outras_fontes";
   /** Até 500 caracteres, o limite do Salic; obrigatória em não realizado e em outras fontes. */
   justificativa: string | null;
+  /** Núcleo da LIE (P8.6): endereço, responsável pelo projeto no núcleo e telefone. */
+  endereco?: string | null;
+  responsavel?: string | null;
+  telefone?: string | null;
+  ordem: number;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Turma da grade semanal de um núcleo (P8.6, LIE, aba GRADE). */
+export interface PrestacaoTurma {
+  id: string;
+  prestacao_id: string;
+  local_id: string | null;
+  nome: string;
+  modalidade: string | null;
+  alunos: number | null;
+  /** 1 (segunda) a 7 (domingo). */
+  dias: number[];
+  /** "HH:MM:SS", como o Postgres devolve time. */
+  hora_inicio: string | null;
+  hora_fim: string | null;
+  equipe: string | null;
+  observacoes: string | null;
+  ordem: number;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Cargo da grade horária dos recursos humanos (P8.7, LIE). */
+export type ContratacaoDoCargo = "clt" | "rpa" | "pj";
+
+export interface PrestacaoCargo {
+  id: string;
+  prestacao_id: string;
+  /** Item do orçamento que paga o cargo. */
+  no_id: string | null;
+  cargo: string;
+  atribuicoes: string | null;
+  quantidade: number;
+  /** Um texto por dia, de segunda (posição 0) a domingo (6); vazio no dia sem trabalho. */
+  horarios: string[];
+  /** Horas por semana; o Postgres devolve numeric como número ou texto. */
+  carga_semanal: number | string | null;
+  contratacao: ContratacaoDoCargo | null;
+  formacao: string | null;
   ordem: number;
   criado_por: string | null;
   created_at: string;
@@ -1121,7 +1261,7 @@ export interface PrestacaoExtratoImportacao {
   id: string;
   prestacao_id: string;
   conta_id: string;
-  formato: "ofx" | "csv" | "pdf" | "agregador";
+  formato: "ofx" | "csv" | "pdf" | "agregador" | "transferegov";
   nome_arquivo: string | null;
   storage_path: string | null;
   hash_arquivo: string | null;
@@ -1778,6 +1918,8 @@ export interface CompromissoCliente {
   plano_ativacao_id: string | null; acao_ativacao_id: string | null; cota_id: string | null;
   proposta_id: string | null; edital_user_id: string | null; contrapartida_ordem: number | null;
   evidencia_obrigatoria: boolean; origem: 'manual' | 'cota' | 'contrato' | 'importacao' | 'proposta';
+  /** Data da produção em que a contrapartida se cumpre (PD9.1). Opcional: só se liga com Captação e Produção. */
+  producao_data_id?: string | null;
   created_at: string; updated_at: string;
 }
 

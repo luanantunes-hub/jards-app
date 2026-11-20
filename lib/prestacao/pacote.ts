@@ -137,11 +137,11 @@ export function padraoDosNomes(regime: RegimeNormativo | null | undefined): Padr
 }
 
 /** Nome do arquivo do pacote. */
-export function nomeDoPacote(tipo: TipoDoPacote, prestacao: DadosDoPacote["prestacao"], etapa: EtapaEnvio, quando: Date): string {
+export function nomeDoPacote(tipo: TipoDoPacote, prestacao: DadosDoPacote["prestacao"], etapa: EtapaEnvio, quando: Date, exercicio = 0): string {
   const id = slug(prestacao.identificador_oficial || prestacao.titulo, 40) || "prestacao";
   const p = (n: number) => zeros(n, 2);
   const carimbo = `${quando.getFullYear()}${p(quando.getMonth() + 1)}${p(quando.getDate())}-${p(quando.getHours())}${p(quando.getMinutes())}`;
-  return `${tipo}-${id}-${etapa}-${carimbo}.zip`;
+  return `${tipo}-${id}-${etapa}${exercicio ? `-${exercicio}` : ""}-${carimbo}.zip`;
 }
 
 export function planoDoPacote(dados: DadosDoPacote): PlanoDoPacote {
@@ -163,7 +163,7 @@ export function planoDoPacote(dados: DadosDoPacote): PlanoDoPacote {
 
   // Documentos do checklist, na ordem do regime.
   checklist.documentos.forEach((doc, i) => {
-    const arquivos = dados.arquivosDoEnvio.filter(a => a.etapa === dados.etapa && a.codigo === doc.codigo);
+    const arquivos = dados.arquivosDoEnvio.filter(a => a.etapa === dados.etapa && (a.exercicio ?? 0) === dados.checklist.exercicio && a.codigo === doc.codigo);
     arquivos.forEach((a, j) => {
       const sufixo = arquivos.length > 1 ? `_${zeros(j + 1, 2)}` : "";
       const { tamanho, problemas } = problemasDe(a.storage_path, a.nome_arquivo, a.mime_type);
@@ -312,6 +312,8 @@ export type Manifesto = {
   prestacao: { titulo: string; identificadorOficial: string | null };
   regime: { codigo: string; versao: number; sistema: string | null } | null;
   etapa: EtapaEnvio;
+  /** P9.2: o ano da prestação anual, quando há. */
+  exercicio?: number | null;
   padrao: PadraoDosNomes;
   /** storagePath: o arquivo guardado de onde veio (o relatório é gerado, não guardado). */
   arquivos: (LinhaDoManifesto & { vinculo: VinculoDoItem | null; storagePath: string | null })[];
@@ -331,8 +333,9 @@ export function manifestoCsv(linhas: readonly LinhaDoManifesto[]): string {
 }
 
 /** O que falta, em texto simples, para o pré-pacote. */
-export function textoDasFaltas(plano: PlanoDoPacote, etapa: EtapaEnvio): string {
-  const linhas = [`O que falta para a ${ROTULO_DA_ETAPA[etapa].toLowerCase()}`, ""];
+export function textoDasFaltas(plano: PlanoDoPacote, etapa: EtapaEnvio, exercicio = 0): string {
+  const rotulo = etapa === "parcial" && exercicio ? `prestação anual de ${exercicio}` : ROTULO_DA_ETAPA[etapa].toLowerCase();
+  const linhas = [`O que falta para a ${rotulo}`, ""];
   if (!plano.faltas.length && !plano.comProblema) linhas.push("Nada: o checklist está completo e os arquivos estão na regra.");
   for (const f of plano.faltas) linhas.push(`- ${f.obrigatorio ? "[obrigatório] " : ""}${f.texto}`);
   const comProblema = plano.itens.filter(i => i.problemas.length);

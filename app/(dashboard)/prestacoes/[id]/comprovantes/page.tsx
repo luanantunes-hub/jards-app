@@ -1,11 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
-import { Upload, FileText, Image, File, FileSpreadsheet, X, CheckCircle, AlertCircle, Clock, ExternalLink, Receipt } from "lucide-react";
+import { Upload, FileText, Image as ImageIcon, File, FileSpreadsheet, X, CheckCircle, AlertCircle, AlertTriangle, Clock, ExternalLink, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoComprovante, TipoComprovante, StatusComprovante } from "@/lib/supabase/types";
 import { useItensDoOrcamento, type ItemDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { Select } from "@/components/ui/Select";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL, lerValorBRL } from "@/lib/valor";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -28,26 +30,29 @@ import { definida } from "@/lib/prestacao/regimes/tipos";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
 import type { PrestacaoPagamento } from "@/lib/supabase/types";
 
+// Tipo de documento é categoria, não estado: grafite neutro. A cor fica no status.
+const TIPO_NEUTRO = "#6B6565";
+
 const TIPO_META: Record<TipoComprovante, { label: string; color: string; icon: React.ReactNode; hint?: string }> = {
-  nfe:             { label: "NF-e",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Emitida em nome do proponente. Para PJ, é o documento principal." },
-  recibo:          { label: "Recibo",            color: "#2D72B0", icon: <FileText size={13} />,      hint: "Usado quando NF não é obrigatória. Deve conter descrição do serviço, valor e assinatura." },
-  contrato:        { label: "Contrato",          color: "#1A8B7A", icon: <File size={13} />,          hint: "Contrato de prestação de serviços ou fornecimento. Necessário para cessão de direitos." },
-  extrato:         { label: "Extrato bancário",  color: "#2D72B0", icon: <FileSpreadsheet size={13} />, hint: "Comprovante do pagamento efetuado (TED/PIX). Deve confirmar a transação." },
-  invoice:         { label: "Invoice",           color: "#1A8B7A", icon: <FileText size={13} />,      hint: "Para prestadores estrangeiros. Se em outro idioma, inclua tradução livre." },
-  cartao_embarque: { label: "Cartão de embarque", color: "#B07A14", icon: <File size={13} />,         hint: "Para passagens aéreas. Inclua também NF da agência com nome, trecho, data e valor." },
-  print_screenshot:{ label: "Print/Screenshot",  color: "#B07A14", icon: <Image size={13} />,         hint: "Para mídia em redes sociais. Inclua NF da plataforma e prints das veiculações." },
-  folha_pagamento: { label: "Folha de pagamento", color: "#2E8932", icon: <FileSpreadsheet size={13} />, hint: "Para remuneração de equipe. Acompanhe com guias de encargos quando houver." },
-  guia_tributo:    { label: "Guia de tributo",   color: "#2E8932", icon: <File size={13} />,          hint: "ISS, INSS, IR — inclua junto ao comprovante de pagamento." },
-  rpa:             { label: "RPA",               color: "#7259B5", icon: <FileText size={13} />,      hint: "Recibo de Pagamento a Autônomo. Para sócios PF prestando serviço ao projeto." },
-  foto:            { label: "Foto",              color: "#B07A14", icon: <Image size={13} />,         hint: "Evidência de execução. Fotos devem mostrar banner/marca do projeto visível." },
-  planilha:        { label: "Planilha",          color: "#2E8932", icon: <FileSpreadsheet size={13} /> },
-  outro:           { label: "Outro",             color: "rgba(13,13,13,.40)", icon: <File size={13} /> },
-  nfse:            { label: "NFS-e",             color: "#7259B5", icon: <FileText size={13} />,      hint: "Nota de serviço em nome do proponente. Confira as retenções (ISS, INSS e IRRF)." },
-  cupom:           { label: "Cupom (NFC-e)",     color: "#2D72B0", icon: <FileText size={13} />,      hint: "Compra no varejo. Alguns regimes só aceitam para valores pequenos." },
-  rpci:            { label: "RPCI",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Recibo de pagamento a contribuinte individual, com INSS retido." },
-  fatura:          { label: "Fatura",            color: "#2D72B0", icon: <FileText size={13} />,      hint: "Cobrança de serviço contínuo (telefone, energia, locação). De PJ, peça a nota fiscal." },
-  apolice:         { label: "Apólice de seguro", color: "#1A8B7A", icon: <File size={13} />,          hint: "Seguro contratado para o projeto, com o período coberto." },
-  nota_debito:     { label: "Nota de débito",    color: "#B07A14", icon: <File size={13} />,          hint: "Reembolso ou repasse sem tributo. Não substitui a nota fiscal de serviço." },
+  nfe:             { label: "NF-e",              color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Emitida em nome do proponente. Para PJ, é o documento principal." },
+  recibo:          { label: "Recibo",            color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Usado quando NF não é obrigatória. Deve conter descrição do serviço, valor e assinatura." },
+  contrato:        { label: "Contrato",          color: TIPO_NEUTRO, icon: <File size={13} />,          hint: "Contrato de prestação de serviços ou fornecimento. Necessário para cessão de direitos." },
+  extrato:         { label: "Extrato bancário",  color: TIPO_NEUTRO, icon: <FileSpreadsheet size={13} />, hint: "Comprovante do pagamento efetuado (TED/PIX). Deve confirmar a transação." },
+  invoice:         { label: "Invoice",           color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Para prestadores estrangeiros. Se em outro idioma, inclua tradução livre." },
+  cartao_embarque: { label: "Cartão de embarque", color: TIPO_NEUTRO, icon: <File size={13} />,         hint: "Para passagens aéreas. Inclua também NF da agência com nome, trecho, data e valor." },
+  print_screenshot:{ label: "Print/Screenshot",  color: TIPO_NEUTRO, icon: <ImageIcon size={13} />,         hint: "Para mídia em redes sociais. Inclua NF da plataforma e prints das veiculações." },
+  folha_pagamento: { label: "Folha de pagamento", color: TIPO_NEUTRO, icon: <FileSpreadsheet size={13} />, hint: "Para remuneração de equipe. Acompanhe com guias de encargos quando houver." },
+  guia_tributo:    { label: "Guia de tributo",   color: TIPO_NEUTRO, icon: <File size={13} />,          hint: "ISS, INSS, IR — inclua junto ao comprovante de pagamento." },
+  rpa:             { label: "RPA",               color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Recibo de Pagamento a Autônomo. Para sócios PF prestando serviço ao projeto." },
+  foto:            { label: "Foto",              color: TIPO_NEUTRO, icon: <ImageIcon size={13} />,         hint: "Evidência de execução. Fotos devem mostrar banner/marca do projeto visível." },
+  planilha:        { label: "Planilha",          color: TIPO_NEUTRO, icon: <FileSpreadsheet size={13} /> },
+  outro:           { label: "Outro",             color: TIPO_NEUTRO, icon: <File size={13} /> },
+  nfse:            { label: "NFS-e",             color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Nota de serviço em nome do proponente. Confira as retenções (ISS, INSS e IRRF)." },
+  cupom:           { label: "Cupom (NFC-e)",     color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Compra no varejo. Alguns regimes só aceitam para valores pequenos." },
+  rpci:            { label: "RPCI",              color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Recibo de pagamento a contribuinte individual, com INSS retido." },
+  fatura:          { label: "Fatura",            color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Cobrança de serviço contínuo (telefone, energia, locação). De PJ, peça a nota fiscal." },
+  apolice:         { label: "Apólice de seguro", color: TIPO_NEUTRO, icon: <File size={13} />,          hint: "Seguro contratado para o projeto, com o período coberto." },
+  nota_debito:     { label: "Nota de débito",    color: TIPO_NEUTRO, icon: <File size={13} />,          hint: "Reembolso ou repasse sem tributo. Não substitui a nota fiscal de serviço." },
 };
 
 const STATUS_META: Record<StatusComprovante, { label: string; color: string; icon: React.ReactNode }> = {
@@ -181,7 +186,7 @@ export default function ComprovantesPage() {
     });
     const campos = sugestao.campos;
     if (opcoes.tipo && campos.tipo in TIPO_META) setTipo(campos.tipo);
-    if (campos.valor_extraido !== null) setValorExtraido(String(campos.valor_extraido));
+    if (campos.valor_extraido !== null) setValorExtraido(formatarValorBRL(campos.valor_extraido));
     if (campos.data_doc) setDataDoc(campos.data_doc);
     if (campos.descricao_servico) setDescricaoServico(campos.descricao_servico);
     if (sugestao.fornecedorId) setFornecedorId(sugestao.fornecedorId);
@@ -189,10 +194,24 @@ export default function ComprovantesPage() {
     setLido({ documento, sugestao: { ...sugestao, avisos: [...(opcoes.avisos ?? []), ...sugestao.avisos] }, motivos: opcoes.motivos ?? [] });
   }
 
-  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
+    if (file) void processarArquivo(file);
+  }
+
+  // Um arquivo arrastado para qualquer ponto da janela abre a área de soltar,
+  // que cobre a tela inteira e recebe o arquivo.
+  const [arrastando, setArrastando] = useState(false);
+  const aceitaArraste = permissoes.editar && !pendingFile;
+  useEffect(() => {
+    if (!aceitaArraste) return;
+    const aoEntrar = (e: DragEvent) => { if (e.dataTransfer?.types.includes("Files")) setArrastando(true); };
+    window.addEventListener("dragenter", aoEntrar);
+    return () => window.removeEventListener("dragenter", aoEntrar);
+  }, [aceitaArraste]);
+
+  async function processarArquivo(file: File) {
     if (!organizationId) {
       setUploadError("A prestação ainda está carregando. Tente de novo em instantes.");
       return;
@@ -303,7 +322,7 @@ export default function ComprovantesPage() {
       origem,
       nome_arquivo: pendingFile.name,
       storage_path: storagePath,
-      valor_extraido: valorExtraido ? Number(valorExtraido) : null,
+      valor_extraido: lerValorBRL(valorExtraido).valor,
       data_doc: dataDoc || null,
       descricao_servico: descricaoServico.trim() || null,
       observacao: observacao.trim() || null,
@@ -398,218 +417,237 @@ export default function ComprovantesPage() {
   }
 
   return (
-    <div className="px-8 py-6 space-y-5">
-      {/* Upload */}
-      <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <p className="text-[0.75rem] font-semibold text-black">Enviar comprovante</p>
+    <div className="mx-auto max-w-pagina space-y-5 px-4 py-6 md:px-8">
+      <input ref={fileRef} type="file" className="hidden" onChange={handleFileSelect} accept="image/*,.pdf,.xml,.xlsx,.xls,.csv" />
+      {arrastando && aceitaArraste && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-white/85 p-6 backdrop-blur-[2px]"
+          onDragOver={e => e.preventDefault()}
+          onDragLeave={() => setArrastando(false)}
+          onDrop={e => {
+            e.preventDefault();
+            setArrastando(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) void processarArquivo(file);
+          }}
+        >
+          <div className="pointer-events-none flex w-full max-w-[28rem] flex-col items-center gap-2 rounded border-2 border-dashed border-black/20 bg-white px-6 py-10 text-center">
+            <Upload size={20} aria-hidden="true" className="text-black/40" />
+            <p className="text-[0.8125rem] font-medium text-[#282525]">Solte para enviar o comprovante</p>
+          </div>
         </div>
-        <div className="p-5">
-          {!pendingFile ? (
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="w-full flex flex-col items-center justify-center gap-2 py-8 rounded border-2 border-dashed transition hover:border-[#7259B5]/40 hover:bg-black/[.04]"
-              style={{ borderColor: "rgba(13,13,13,.12)" }}
-            >
-              <Upload size={20} className="text-black/20" />
-              <p className="text-[0.75rem] text-black/40">Clique para selecionar arquivo</p>
-              <p className="text-[0.625rem] text-black/25">PDF, imagem, planilha, XML…</p>
-            </button>
-          ) : (
-            <div className="space-y-3">
-              {/* Arquivo selecionado */}
-              <div className="flex items-center gap-3 p-3 rounded border" style={{ borderColor: "rgba(13,13,13,.10)", background: "#FAFAFA" }}>
-                <FileText size={16} className="text-[#7259B5] flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[0.75rem] font-medium text-black truncate">{pendingFile.name}</p>
-                  <p className="text-[0.625rem] text-black/35">{(pendingFile.size / 1024).toFixed(1)} KB</p>
-                </div>
-                <button onClick={cancelarUpload} className="p-1 rounded hover:bg-black/5 text-black/30 hover:text-black/55">
-                  <X size={13} />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {/* Tipo */}
-                <div className="col-span-2">
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Tipo de documento</label>
-                  <Select
-                    value={tipo}
-                    onChange={e => setTipo(e.target.value as TipoComprovante)}
-                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  >
-                    <optgroup label="Fiscais">
-                      {TIPOS_FISCAIS.map(k => (
-                        <option key={k} value={k}>{TIPO_META[k].label}</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Complementares">
-                      {TIPOS_COMPLEMENTARES.map(k => (
-                        <option key={k} value={k}>{TIPO_META[k].label}</option>
-                      ))}
-                    </optgroup>
-                  </Select>
-                  {TIPO_META[tipo].hint && (
-                    <p className="text-[0.625rem] mt-1.5 leading-relaxed" style={{ color: "rgba(13,13,13,.38)" }}>
-                      {TIPO_META[tipo].hint}
-                    </p>
-                  )}
+      )}
+      {/* Upload: só para quem edita (o leitor e a prestação sem assinatura só consultam) */}
+      {permissoes.editar && pendingFile && (
+        <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+            <p className="text-[0.75rem] font-semibold text-[#282525]">Enviar comprovante</p>
+          </div>
+          <div className="p-5">
+              <div className="space-y-3">
+                {/* Arquivo selecionado */}
+                <div className="flex items-center gap-3 p-3 rounded border" style={{ borderColor: "rgba(13,13,13,.10)", background: "#FAFAFA" }}>
+                  <FileText size={16} className="text-black/45 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[0.75rem] font-medium text-[#282525] truncate">{pendingFile.name}</p>
+                    <p className="text-[0.625rem] text-black/35">{(pendingFile.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button onClick={cancelarUpload} className="p-1 rounded hover:bg-black/5 text-black/30 hover:text-black/55">
+                    <X size={13} />
+                  </button>
                 </div>
 
-                {/* Origem */}
-                <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Origem</label>
-                  <div className="flex gap-2">
-                    {(["nacional", "internacional"] as const).map(o => (
-                      <button
-                        key={o}
-                        type="button"
-                        onClick={() => setOrigem(o)}
-                        className="flex-1 py-2 rounded border text-[0.6875rem] font-semibold transition capitalize"
-                        style={{
-                          background: origem === o ? "#fff" : "white",
-                          borderColor: origem === o ? "#7259B5" : "rgba(13,13,13,.12)",
-                          color: origem === o ? "#7259B5" : "rgba(13,13,13,.45)",
-                        }}
-                      >
-                        {o === "nacional" ? "Nacional" : "Internacional"}
-                      </button>
-                    ))}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Tipo */}
+                  <div className="col-span-2">
+                    <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Tipo de documento</label>
+                    <Select
+                      value={tipo}
+                      onChange={e => setTipo(e.target.value as TipoComprovante)}
+                      className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
+                      style={{ borderColor: "rgba(13,13,13,.12)" }}
+                    >
+                      <optgroup label="Fiscais">
+                        {TIPOS_FISCAIS.map(k => (
+                          <option key={k} value={k}>{TIPO_META[k].label}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Complementares">
+                        {TIPOS_COMPLEMENTARES.map(k => (
+                          <option key={k} value={k}>{TIPO_META[k].label}</option>
+                        ))}
+                      </optgroup>
+                    </Select>
+                    {TIPO_META[tipo].hint && (
+                      <p className="text-[0.625rem] mt-1.5 leading-relaxed" style={{ color: "rgba(13,13,13,.38)" }}>
+                        {TIPO_META[tipo].hint}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Origem */}
+                  <div>
+                    <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Origem</label>
+                    <div className="flex gap-2">
+                      {(["nacional", "internacional"] as const).map(o => (
+                        <button
+                          key={o}
+                          type="button"
+                          onClick={() => setOrigem(o)}
+                          className="flex-1 py-2 rounded border text-[0.6875rem] font-semibold transition capitalize"
+                          style={{
+                            background: origem === o ? "#fff" : "white",
+                            borderColor: origem === o ? "#7259B5" : "rgba(13,13,13,.12)",
+                            color: origem === o ? "#7259B5" : "rgba(13,13,13,.45)",
+                          }}
+                        >
+                          {o === "nacional" ? "Nacional" : "Internacional"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rubrica */}
+                  <div>
+                    <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Item do orçamento</label>
+                    <Select
+                      value={itemId}
+                      onChange={e => setItemId(e.target.value)}
+                      className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
+                      style={{ borderColor: "rgba(13,13,13,.12)", color: itemId ? "#282525" : "rgba(13,13,13,.35)" }}
+                    >
+                      <option value="">Sem item</option>
+                      {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
+                    </Select>
+                  </div>
+
+                  {/* Valor */}
+                  <div>
+                    <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Valor (R$)</label>
+                    <InputValor
+                      value={valorExtraido}
+                      onChange={setValorExtraido}
+                      placeholder="0,00"
+                      className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
+                      style={{ borderColor: "rgba(13,13,13,.12)" }}
+                    />
+                  </div>
+
+                  {/* Data */}
+                  <div>
+                    <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Data do documento</label>
+                    <input
+                      type="date"
+                      value={dataDoc}
+                      onChange={e => setDataDoc(e.target.value)}
+                      className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
+                      style={{ borderColor: "rgba(13,13,13,.12)" }}
+                    />
                   </div>
                 </div>
 
-                {/* Rubrica */}
+                {ehDespesa(tipo) && (
+                  <div>
+                    <label htmlFor="fornecedor-envio" className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Fornecedor</label>
+                    <FornecedorCombobox id="fornecedor-envio" fornecedores={fornecedores} valor={fornecedorId} onChange={setFornecedorId} />
+                  </div>
+                )}
+
+                {/* Descrição do serviço */}
                 <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Item do orçamento</label>
-                  <Select
-                    value={itemId}
-                    onChange={e => setItemId(e.target.value)}
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">
+                    Descrição do serviço
+                    {tipo === "nfe" && <span className="ml-1 font-normal text-[#D94E4E]/70">(deve corresponder à rubrica aprovada)</span>}
+                  </label>
+                  <input
+                    value={descricaoServico}
+                    onChange={e => setDescricaoServico(e.target.value)}
+                    placeholder={tipo === "cartao_embarque" ? "Passageiros e trechos" : tipo === "invoice" ? "Descrição do serviço prestado (tradução livre)": "Descrição do serviço ou produto"}
                     className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)", color: itemId ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
+                    style={{ borderColor: "rgba(13,13,13,.12)" }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Observação</label>
+                  <input
+                    value={observacao}
+                    onChange={e => setObservacao(e.target.value)}
+                    placeholder="Observação"
+                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
+                    style={{ borderColor: "rgba(13,13,13,.12)" }}
+                  />
+                </div>
+
+                {lido && (
+                  <DocumentoLido
+                    documento={lido.documento}
+                    avisos={lido.sugestao.avisos}
+                    motivos={motivosParaMostrar(lido.motivos, regime)}
+                  />
+                )}
+
+                {/* Erro de upload */}
+                {uploadError && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded border text-[0.6875rem]"
+                    style={{ background: "#fff", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+                    {uploadError}
+                  </div>
+                )}
+
+                {/* Banner IA analisando */}
+                {extraindo && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded border text-[0.6875rem]"
+                    style={{ background: "#fff", borderColor: "#7259B530", color: "#7259B5" }}>
+                    <span className="w-3 h-3 border-2 border-[#7259B5]/30 border-t-[#7259B5] rounded-full animate-spin flex-shrink-0" />
+                    {uploadProgress || "Analisando documento com IA…"}
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 pt-1">
+                  <button
+                    onClick={cancelarUpload}
+                    disabled={uploading}
+                    className="px-3 py-1.5 text-[0.6875rem] text-black/35 hover:text-black/55 transition"
                   >
-                    <option value="">Sem item</option>
-                    {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
-                  </Select>
-                </div>
-
-                {/* Valor */}
-                <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Valor (R$)</label>
-                  <input
-                    type="number"
-                    value={valorExtraido}
-                    onChange={e => setValorExtraido(e.target.value)}
-                    placeholder="0,00"
-                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
-                </div>
-
-                {/* Data */}
-                <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Data do documento</label>
-                  <input
-                    type="date"
-                    value={dataDoc}
-                    onChange={e => setDataDoc(e.target.value)}
-                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleUpload}
+                    disabled={uploading || extraindo}
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-[0.75rem] font-semibold text-white rounded transition hover:opacity-90 disabled:opacity-50"
+                    style={{ background: "#7259B5" }}
+                  >
+                    {uploading
+                      ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Salvando…</>
+                      : <><Upload size={12} /> Enviar</>}
+                  </button>
                 </div>
               </div>
-
-              {ehDespesa(tipo) && (
-                <div>
-                  <label htmlFor="fornecedor-envio" className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Fornecedor</label>
-                  <FornecedorCombobox id="fornecedor-envio" fornecedores={fornecedores} valor={fornecedorId} onChange={setFornecedorId} />
-                </div>
-              )}
-
-              {/* Descrição do serviço */}
-              <div>
-                <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">
-                  Descrição do serviço
-                  {tipo === "nfe" && <span className="ml-1 font-normal text-[#D94E4E]/70">(deve corresponder à rubrica aprovada)</span>}
-                </label>
-                <input
-                  value={descricaoServico}
-                  onChange={e => setDescricaoServico(e.target.value)}
-                  placeholder={tipo === "cartao_embarque" ? "Passageiros e trechos" : tipo === "invoice" ? "Descrição do serviço prestado (tradução livre)": "Descrição do serviço ou produto"}
-                  className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                />
-              </div>
-
-              <div>
-                <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Observação</label>
-                <input
-                  value={observacao}
-                  onChange={e => setObservacao(e.target.value)}
-                  placeholder="Observação"
-                  className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                />
-              </div>
-
-              {lido && (
-                <DocumentoLido
-                  documento={lido.documento}
-                  avisos={lido.sugestao.avisos}
-                  motivos={motivosParaMostrar(lido.motivos, regime)}
-                />
-              )}
-
-              {/* Erro de upload */}
-              {uploadError && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded border text-[0.6875rem]"
-                  style={{ background: "#fff", borderColor: "#D94E4E30", color: "#D94E4E" }}>
-                  {uploadError}
-                </div>
-              )}
-
-              {/* Banner IA analisando */}
-              {extraindo && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded border text-[0.6875rem]"
-                  style={{ background: "#fff", borderColor: "#7259B530", color: "#7259B5" }}>
-                  <span className="w-3 h-3 border-2 border-[#7259B5]/30 border-t-[#7259B5] rounded-full animate-spin flex-shrink-0" />
-                  {uploadProgress || "Analisando documento com IA…"}
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-1">
-                <button
-                  onClick={cancelarUpload}
-                  disabled={uploading}
-                  className="px-3 py-1.5 text-[0.6875rem] text-black/35 hover:text-black/55 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleUpload}
-                  disabled={uploading || extraindo}
-                  className="flex items-center gap-1.5 px-4 py-1.5 text-[0.75rem] font-semibold text-white rounded transition hover:opacity-90 disabled:opacity-50"
-                  style={{ background: "#7259B5" }}
-                >
-                  {uploading
-                    ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Salvando…</>
-                    : <><Upload size={12} /> Enviar</>}
-                </button>
-              </div>
-            </div>
-          )}
-          <input ref={fileRef} type="file" className="hidden" onChange={handleFileSelect} accept="image/*,.pdf,.xml,.xlsx,.xls,.csv" />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Lista */}
       <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <p className="text-[0.75rem] font-semibold text-black">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+          <p className="text-[0.75rem] font-semibold text-[#282525]">
             Documentos enviados
             {comprovantes.length > 0 && <span className="text-black/30 font-normal text-[0.6875rem] ml-1.5">({comprovantes.length})</span>}
           </p>
+          {permissoes.editar && !pendingFile && (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="inline-flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-3.5 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
+            >
+              <Upload size={13} aria-hidden="true" /> Enviar comprovante
+            </button>
+          )}
         </div>
+        {uploadError && !pendingFile && (
+          <p role="alert" className="mx-5 mt-4 rounded border bg-white px-3 py-2 text-[0.6875rem]" style={{ borderColor: "#D94A4A30", color: "#D94A4A" }}>{uploadError}</p>
+        )}
 
         {erroLista && (
           <p role="alert" className="mx-5 mt-4 px-3 py-2 rounded border text-[0.6875rem]"
@@ -664,7 +702,7 @@ export default function ComprovantesPage() {
                       <button
                         onClick={() => getUrl(c.storage_path)}
                         title={c.nome_arquivo}
-                        className="flex min-w-0 max-w-xs items-center gap-1 rounded text-[0.75rem] font-semibold text-black transition hover:text-[#7259B5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                        className="flex min-w-0 max-w-xs items-center gap-1 rounded text-[0.75rem] font-semibold text-[#282525] transition hover:text-[#7259B5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
                       >
                         <span className="truncate">{c.nome_arquivo}</span> <ExternalLink size={10} className="flex-shrink-0 opacity-50" />
                       </button>
@@ -675,33 +713,58 @@ export default function ComprovantesPage() {
                     </div>
                     <div className="flex items-center gap-3 text-[0.625rem] text-black/35 flex-wrap">
                       {permissoes.editar && itens.length > 0 ? (
-                        <Select
-                          value={c.no_id ?? ""}
-                          onChange={e => mudarItem(c, e.target.value)}
-                          aria-label={`Item do orçamento de ${c.nome_arquivo}`}
-                          block={false}
-                          className="max-w-[11rem] truncate rounded border px-1.5 py-0.5 text-[0.625rem] focus:outline-none sm:max-w-[16rem]"
-                          style={{ borderColor: "rgba(13,13,13,.12)", color: rubrica ? "rgba(13,13,13,.65)" : "#B07A14" }}
-                        >
-                          <option value="">{c.no_id ? "Item de outra versão" : "Sem item"}</option>
-                          {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
-                        </Select>
+                        <span className="inline-flex items-center gap-1">
+                          {!rubrica && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
+                          <Select
+                            value={c.no_id ?? ""}
+                            onChange={e => mudarItem(c, e.target.value)}
+                            aria-label={`Item do orçamento de ${c.nome_arquivo}`}
+                            block={false}
+                            className="max-w-[11rem] truncate rounded border px-1.5 py-0.5 text-[0.625rem] focus:outline-none sm:max-w-[16rem]"
+                            style={{ borderColor: "rgba(13,13,13,.12)", color: rubrica ? "rgba(13,13,13,.65)" : "rgba(13,13,13,.55)" }}
+                          >
+                            <option value="">{c.no_id ? "Item de outra versão" : "Sem item"}</option>
+                            {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
+                          </Select>
+                        </span>
                       ) : (
                         <span>{rubrica ? rotuloDoItem(rubrica) : "Sem item"}</span>
                       )}
                       {fornecedorC ? (
                         <span className="max-w-[12rem] truncate text-black/55" title={nomeDoFornecedor(fornecedorC)}>{nomeDoFornecedor(fornecedorC)}</span>
                       ) : ehDespesa(c.tipo) && c.tipo !== "guia_tributo" && c.tipo !== "folha_pagamento" ? (
-                        <span className="text-[#B07A14]">Sem fornecedor</span>
+                        <span className="inline-flex items-center gap-1 text-black/55">
+                          <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                          Sem fornecedor
+                        </span>
                       ) : null}
+                      {c.canal === "proponente" && (
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}>Enviada pelo cliente</span>
+                      )}
+                      {c.canal === "email" && (
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}>Recebida por e-mail</span>
+                      )}
+                      {c.canal === "assistente" && (
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}>Enviada pelo assistente</span>
+                      )}
+                      {c.contrapartida && (
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2825252E", color: "#282525A6" }}>
+                          {c.contrapartida === "doacao" ? "Contrapartida por doação" : "Contrapartida"}
+                        </span>
+                      )}
                       {c.origem === "internacional" && (
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #1A8B7A47", color: "#1A8B7A" }}>Internacional</span>
                       )}
                       {c.valor_extraido !== null && <span className="tabular-nums">{fmt(c.valor_extraido)}</span>}
                       {ehDespesa(c.tipo) && (
-                        pagamentoC.situacao === "pago" ? <span className="text-[#2E8932]">Pago</span>
+                        pagamentoC.situacao === "pago" ? <span>Pago</span>
                           : pagamentoC.situacao === "parcial" ? <span className="tabular-nums">Pago {fmt(pagamentoC.pago)}</span>
-                            : pagamentoC.situacao === "excedido" ? <span className="text-[#B23B3B]">Pago acima do líquido</span>
+                            : pagamentoC.situacao === "excedido" ? (
+                              <span className="inline-flex items-center gap-1 text-black/55">
+                                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />
+                                Pago acima do líquido
+                              </span>
+                            )
                               : <span>A pagar</span>
                       )}
                       {c.data_doc && <span>{fmtDate(c.data_doc)}</span>}

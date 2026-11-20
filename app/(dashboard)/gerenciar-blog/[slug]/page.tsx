@@ -3,9 +3,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   ChevronLeft, Plus, Trash2, GripVertical,
-  Type, AlignLeft, Image as ImageIcon, Quote,
+  Type, AlignLeft, Image as ImageIcon, Quote, TextQuote, Info, ChartColumn,
   Check, AlertCircle,
 } from "lucide-react";
+import { NOMES_INFOGRAFICOS } from "@/lib/blog-infograficos";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -13,7 +14,7 @@ import { Select } from "@/components/ui/Select";
 
 // ─── Block types ────────────────────────────────────────────────────────────
 
-type BlockType = "paragraph" | "heading2" | "heading3" | "image" | "quote";
+type BlockType = "paragraph" | "heading2" | "heading3" | "image" | "quote" | "box" | "destaque" | "infografico";
 
 type Block = {
   id: string;
@@ -22,6 +23,9 @@ type Block = {
   url?: string;
   alt?: string;
   caption?: string;
+  title?: string; // box
+  label?: string; // box: rótulo pequeno acima do título
+  chave?: string; // infografico (feito em código, ver lib/blog-infograficos.ts)
 };
 
 function uid() {
@@ -47,6 +51,9 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   heading3:  "Subtítulo",
   image:     "Imagem",
   quote:     "Citação",
+  box:       "Caixa explicativa",
+  destaque:  "Frase em destaque (repete um trecho do texto)",
+  infografico: "Infográfico",
 };
 
 const BLOCK_ICONS: Record<BlockType, React.ElementType> = {
@@ -55,6 +62,9 @@ const BLOCK_ICONS: Record<BlockType, React.ElementType> = {
   heading3:  Type,
   image:     ImageIcon,
   quote:     Quote,
+  box:       Info,
+  destaque:  TextQuote,
+  infografico: ChartColumn,
 };
 
 function BlockEditor({
@@ -74,7 +84,7 @@ function BlockEditor({
   isFirst: boolean;
   isLast: boolean;
 }) {
-  const inputCls = "w-full bg-transparent outline-none resize-none text-[#0D0D0D] placeholder:text-black/25";
+  const inputCls = "w-full bg-transparent outline-none resize-none text-[#282525] placeholder:text-black/25";
 
   return (
     <div
@@ -142,6 +152,47 @@ function BlockEditor({
             style={{ borderLeft: "3px solid rgba(114,89,181,.4)", paddingLeft: "0.75rem" }}
             onChange={(e) => onChange({ ...block, content: e.target.value })}
           />
+        )}
+        {block.type === "destaque" && (
+          <textarea
+            className={`${inputCls} text-lg font-bold leading-snug`}
+            placeholder="Trecho do texto repetido em destaque..."
+            value={block.content ?? ""}
+            rows={2}
+            onChange={(e) => onChange({ ...block, content: e.target.value })}
+          />
+        )}
+        {block.type === "box" && (
+          <div className="space-y-2 rounded border p-3" style={{ borderColor: "rgba(13,13,13,.1)" }}>
+            <input
+              className={`${inputCls} text-xs uppercase tracking-wide`}
+              placeholder="Rótulo (opcional), ex.: Uma leitura possível"
+              value={block.label ?? ""}
+              onChange={(e) => onChange({ ...block, label: e.target.value })}
+            />
+            <input
+              className={`${inputCls} text-base font-semibold`}
+              placeholder="Título da caixa"
+              value={block.title ?? ""}
+              onChange={(e) => onChange({ ...block, title: e.target.value })}
+            />
+            <textarea
+              className={`${inputCls} text-sm leading-relaxed`}
+              placeholder={"Texto. Linhas começando com \"- \" viram lista; \"Rótulo: texto\" no começo da linha destaca o rótulo."}
+              value={block.content ?? ""}
+              rows={4}
+              onChange={(e) => onChange({ ...block, content: e.target.value })}
+            />
+          </div>
+        )}
+        {block.type === "infografico" && (
+          <div className="flex items-center gap-2 rounded px-3 py-2.5 text-sm text-black/60" style={{ background: "rgba(13,13,13,.04)" }}>
+            <ChartColumn size={14} className="shrink-0 text-black/40" />
+            <span>
+              {NOMES_INFOGRAFICOS[block.chave ?? ""] ?? `Infográfico "${block.chave ?? "sem chave"}"`}
+              <span className="text-black/35"> · feito em código; pode mover ou apagar</span>
+            </span>
+          </div>
         )}
         {block.type === "image" && (
           <div className="space-y-2">
@@ -234,6 +285,12 @@ export default function BlogEditorPage() {
 
       setTitulo(post.titulo ?? "");
       setSlug(post.slug ?? "");
+      // O endereço só acompanha o título enquanto o post é rascunho e ainda usa
+      // o endereço provisório da criação (post-<data>) ou o gerado do título.
+      // Publicado, nunca muda sozinho: trocar o slug derruba os links.
+      const slugAutomatico = post.status !== "publicado"
+        && (/^post-\d+$/.test(post.slug ?? "") || post.slug === slugify(post.titulo ?? ""));
+      setSlugManual(!slugAutomatico);
       setTagsRaw((post.tags ?? []).join(", "));
       setSeoDesc(post.seo_descricao ?? "");
       setImgCapa(post.imagem_capa ?? "");
@@ -332,7 +389,7 @@ export default function BlogEditorPage() {
       >
         <button
           onClick={() => router.push("/gerenciar-blog")}
-          className="flex items-center gap-1.5 text-sm text-black/40 hover:text-[#0D0D0D] transition"
+          className="flex items-center gap-1.5 text-sm text-black/40 hover:text-[#282525] transition"
         >
           <ChevronLeft size={16} /> Blog
         </button>
@@ -396,7 +453,7 @@ export default function BlogEditorPage() {
 
           {/* Title */}
           <input
-            className="w-full text-3xl font-bold text-[#0D0D0D] bg-transparent outline-none placeholder:text-black/20 mb-6"
+            className="w-full text-3xl font-bold text-[#282525] bg-transparent outline-none placeholder:text-black/20 mb-6"
             placeholder="Título do post"
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
@@ -420,7 +477,7 @@ export default function BlogEditorPage() {
 
           {/* Add block */}
           <div className="mt-4 flex flex-wrap gap-2">
-            {(["paragraph", "heading2", "heading3", "image", "quote"] as BlockType[]).map((type) => {
+            {(["paragraph", "heading2", "heading3", "image", "quote", "box", "destaque"] as BlockType[]).map((type) => {
               const Icon = BLOCK_ICONS[type];
               return (
                 <button
@@ -445,7 +502,7 @@ export default function BlogEditorPage() {
           <div>
             <label className="block text-xs font-medium text-black/50 mb-1">Slug</label>
             <div className="flex items-center gap-1">
-              <span className="text-xs text-black/30 flex-shrink-0">/blog/</span>
+              <span className="text-xs text-black/30 flex-shrink-0">/publicacoes/</span>
               <input
                 className={`${inputCls} flex-1`}
                 style={inputStyle}

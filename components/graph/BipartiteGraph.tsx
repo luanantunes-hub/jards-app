@@ -69,7 +69,7 @@ function deterministicColor(s: string) {
 function renderTooltip(tip: HTMLDivElement, card: Card, edges: Edge[]) {
   const fragment = document.createDocumentFragment();
   const title = document.createElement("p");
-  title.style.cssText = "font-size:13px;font-weight:700;color:#0D0D0D;line-height:1.3";
+  title.style.cssText = "font-size:13px;font-weight:700;color:#282525;line-height:1.3";
   title.textContent = card.nome;
   fragment.appendChild(title);
 
@@ -83,20 +83,17 @@ function renderTooltip(tip: HTMLDivElement, card: Card, edges: Edge[]) {
   const connections = document.createElement("div");
   connections.style.cssText = "margin-top:8px;border-top:1px solid rgba(13,13,13,.06);padding-top:8px;display:flex;flex-direction:column;gap:5px";
   edges.forEach(edge => {
-    const color = STATUS_COLOR[edge.status] ?? "rgba(13,13,13,.35)";
     const row = document.createElement("div");
     row.style.cssText = "display:flex;align-items:center;gap:6px";
 
-    const dot = document.createElement("span");
-    dot.style.cssText = `width:6px;height:6px;border-radius:50%;background:${color};flex-shrink:0`;
     const hubName = document.createElement("span");
     hubName.style.cssText = "font-size:11px;color:rgba(13,13,13,.65);flex:1";
     hubName.textContent = edge.hub.nome;
     const status = document.createElement("span");
-    status.style.cssText = `font-size:10px;font-weight:500;color:${color}`;
+    status.style.cssText = "font-size:10px;font-weight:500;color:rgba(13,13,13,.5)";
     status.textContent = edge.status;
 
-    row.append(dot, hubName, status);
+    row.append(hubName, status);
     connections.appendChild(row);
   });
   fragment.appendChild(connections);

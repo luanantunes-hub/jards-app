@@ -10,6 +10,8 @@ import type { StatusPrestacao } from "@/lib/supabase/types";
 import { prazoDaAnalise } from "./alteracoes";
 import { diferencaEmDias } from "./calendario";
 import { grupoNoRegime, tetosDosItens, type ItemResumido } from "./orcamento";
+import { recolhimentoDoEncerramento } from "./devolucoes";
+import { prazoDoSaldo, type MarcosPrestacao } from "./prazo-final";
 import { calcularVencimento } from "./prazos";
 import { definida, prazoDoRegime, type RegimeNormativo } from "./regimes";
 
@@ -198,7 +200,13 @@ const EM_PREPARO: StatusPrestacao[] = ["rascunho", "revisao_interna", "ajuste_so
 
 /** Prazos em aberto da prestação, do mais cedo para o mais tarde. */
 export function prazosDaPrestacao(
-  prestacao: { status: StatusPrestacao; prazo: string | null; data_envio?: string | null },
+  prestacao: {
+    status: StatusPrestacao; prazo: string | null; data_envio?: string | null; prazo_readequacao?: string | null;
+    /** P9.2: as prestações anuais ainda sem envio valendo (anuaisPendentes). */
+    prazos_anuais?: readonly { ano: number; data: string }[];
+    /** P9.4: o prazo do saldo no encerramento, enquanto as guias não estão pagas (prazoDoSaldoEmAberto). */
+    prazo_saldo?: { data: string; rotulo: string } | null;
+  },
   regime: RegimeNormativo | null,
   alteracoesAguardando: readonly { numero: number; solicitada_em: string | null }[],
   hoje: string,
@@ -211,6 +219,16 @@ export function prazosDaPrestacao(
   if (prestacao.status === "enviado" && prestacao.data_envio && analise) {
     prazos.push({ data: calcularVencimento(prestacao.data_envio, analise).data, rotulo: "Análise do órgão", quem: "orgao" });
   }
+  for (const anual of prestacao.prazos_anuais ?? []) {
+    prazos.push({ data: anual.data, rotulo: `Prestação anual de ${anual.ano}`, quem: "proponente" });
+  }
+  if (EM_PREPARO.includes(prestacao.status) && prestacao.prazo_saldo) {
+    prazos.push({ data: prestacao.prazo_saldo.data, rotulo: prestacao.prazo_saldo.rotulo, quem: "proponente" });
+  }
+  // P9.1: a readequação pela captação, quando cabe e ainda não foi pedida (situacaoDaCaptacao).
+  if (prestacao.prazo_readequacao) {
+    prazos.push({ data: prestacao.prazo_readequacao, rotulo: "Pedido de readequação", quem: "proponente" });
+  }
   for (const alteracao of alteracoesAguardando) {
     const data = prazoDaAnalise(regime, alteracao.solicitada_em);
     if (data) prazos.push({ data, rotulo: `Resposta à alteração nº ${alteracao.numero}`, quem: "orgao" });
@@ -218,6 +236,18 @@ export function prazosDaPrestacao(
   return prazos
     .map(prazo => ({ ...prazo, dias: diferencaEmDias(hoje, prazo.data) }))
     .sort((a, b) => a.data.localeCompare(b.data));
+}
+
+/** P9.4: o prazo do saldo do encerramento, enquanto as guias do saldo e dos rendimentos não estão pagas. */
+export function prazoDoSaldoEmAberto(
+  regime: RegimeNormativo | null,
+  prestacao: MarcosPrestacao,
+  devolucoes: Parameters<typeof recolhimentoDoEncerramento>[0],
+): { data: string; rotulo: string } | null {
+  const prazo = prazoDoSaldo(regime, prestacao);
+  if (!prazo) return null;
+  const guias = recolhimentoDoEncerramento(devolucoes);
+  return guias.guias > 0 && guias.aPagar === 0 ? null : { data: prazo.data, rotulo: prazo.rotulo };
 }
 
 /**

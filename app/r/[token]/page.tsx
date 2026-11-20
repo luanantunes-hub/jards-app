@@ -15,6 +15,7 @@ import {
   textoDoPeriodo,
   type RelatorioPublico,
 } from "@/lib/prestacao/relatorio-patrocinador";
+import { formatarValorCompleto } from "@/lib/valor";
 import { AceiteDoRelatorio } from "./AceiteDoRelatorio";
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 const dataBr = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "");
-const reais = (v: unknown) => (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const reais = (v: unknown) => formatarValorCompleto(Number(v) || 0);
 const numero = (v: unknown) => (Number(v) || 0).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 
 async function lerRelatorio(token: string): Promise<RelatorioPublico | null | "erro"> {
@@ -48,7 +49,7 @@ function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#FAFAF9] px-4">
       <div className="max-w-[28rem] rounded-lg border bg-white px-6 py-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <h1 className="text-[1.0625rem] font-semibold text-[#0D0D0D]">{titulo}</h1>
+        <h1 className="text-[1.0625rem] font-semibold text-[#282525]">{titulo}</h1>
         <p className="mt-2 text-[0.8125rem] text-black/55">{texto}</p>
       </div>
     </main>
@@ -58,7 +59,7 @@ function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
 function Secao({ titulo, icone: Icone, children }: { titulo: string; icone: typeof Target; children: React.ReactNode }) {
   return (
     <section className="rounded-lg border bg-white px-5 py-5 md:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-      <h2 className="mb-3 flex items-center gap-2 text-[0.8125rem] font-semibold text-[#0D0D0D]">
+      <h2 className="mb-3 flex items-center gap-2 text-[0.8125rem] font-semibold text-[#282525]">
         <Icone size={14} className="text-black/40" aria-hidden /> {titulo}
       </h2>
       {children}
@@ -95,7 +96,7 @@ export default async function RelatorioDoPatrocinador({ params }: { params: Prom
             <p className="text-[0.75rem] text-black/50">{r.organizacao?.nome ?? ""}</p>
           </div>
           <p className="mt-6 text-[0.625rem] font-semibold uppercase tracking-[.14em] text-black/35">Relatório para {r.patrocinador}</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.02em] text-[#0D0D0D] [text-wrap:balance]">{p.titulo}</h1>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.02em] text-[#282525] [text-wrap:balance]">{p.titulo}</h1>
           <p className="mt-1 text-[0.8125rem] text-black/50">
             {[p.proponente, p.regime, p.identificador_oficial].filter(Boolean).join(" · ")}
           </p>
@@ -108,7 +109,7 @@ export default async function RelatorioDoPatrocinador({ params }: { params: Prom
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Secao titulo="Execução" icone={Target}>
-            <p className="text-[1.375rem] font-bold tabular-nums text-[#0D0D0D]">{reais(r.execucao?.executado)}</p>
+            <p className={`text-[1.375rem] font-semibold tabular-nums ${Number(r.execucao?.executado) ? "text-[#282525]" : "text-black/30"}`}>{reais(r.execucao?.executado)}</p>
             <p className="text-[0.75rem] text-black/50">
               executados{Number(r.execucao?.orcamento) > 0 ? ` de ${reais(r.execucao?.orcamento)} do orçamento` : ""}
               {r.execucao?.despesas ? `, em ${r.execucao.despesas} ${r.execucao.despesas === 1 ? "despesa comprovada" : "despesas comprovadas"}` : ""}
@@ -186,7 +187,7 @@ export default async function RelatorioDoPatrocinador({ params }: { params: Prom
               {ativacoes.map((a, i) => (
                 <li key={i} className="flex items-baseline justify-between gap-3">
                   {a.url ? (
-                    <a href={a.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-w-0 items-center gap-1 text-black/75 underline decoration-black/20 underline-offset-2 hover:text-black">
+                    <a href={a.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-w-0 items-center gap-1 text-black/75 underline decoration-black/20 underline-offset-2 hover:text-[#282525]">
                       <span className="truncate">{a.titulo || "Evidência"}</span> <ExternalLink size={11} aria-hidden />
                     </a>
                   ) : <span className="text-black/75">{a.titulo || "Evidência"}</span>}

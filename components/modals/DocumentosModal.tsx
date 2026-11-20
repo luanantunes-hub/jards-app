@@ -42,11 +42,11 @@ const ICONE_MAP: Record<string, React.ElementType> = {
 };
 const ICONES = Object.keys(ICONE_MAP);
 
-const COR_MAP: Record<string, { bg: string; text: string; border: string }> = {
-  azul:    { bg: "#DBEAFE", text: "#2D72B0", border: "#93C5FD" },
-  pessego: { bg: "#fff", text: "#D94E4E", border: "#D94E4E80" },
-  verde:   { bg: "#fff", text: "#2E8932", border: "#2E893280" },
-  roxo:    { bg: "#fff", text: "#7259B5", border: "#7259B580" },
+const COR_MAP: Record<string, { nome: string; bg: string; text: string; border: string }> = {
+  azul:    { nome: "Azul",    bg: "#fff", text: "#2D72B0", border: "#2D72B080" },
+  pessego: { nome: "Pêssego", bg: "#fff", text: "#D94E4E", border: "#D94E4E80" },
+  verde:   { nome: "Verde",   bg: "#fff", text: "#2E8932", border: "#2E893280" },
+  roxo:    { nome: "Roxo",    bg: "#fff", text: "#7259B5", border: "#7259B580" },
 };
 const CORES = Object.keys(COR_MAP);
 
@@ -148,15 +148,15 @@ function DocForm({
   const corStyle = COR_MAP[cor] ?? COR_MAP.azul;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: "rgba(0,0,0,.5)" }}>
+    <div className="fixed inset-0 z-[60] flex justify-center veu items-start">
       <div role="dialog" aria-modal="true" aria-labelledby={titleId}
-        className="bg-white rounded border w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col shadow-2xl"
+        className="folha-desce folha-vidro w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col"
         style={{ borderColor: "rgba(13,13,13,.12)" }}>
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-2.5">
             <SelectedIcon size={16} className="text-black/40" />
-            <span id={titleId} className="text-[0.8125rem] font-bold text-black">
+            <span id={titleId} className="text-[0.8125rem] text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">
               {doc ? "Editar documento" : "Novo documento"}
             </span>
           </div>
@@ -175,7 +175,7 @@ function DocForm({
               value={titulo}
               onChange={e => setTitulo(e.target.value)}
               placeholder="Ex: Plano de trabalho"
-              className="w-full px-3 py-2.5 text-sm border rounded bg-transparent text-black placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15"
+              className="w-full px-3 py-2.5 text-sm border rounded bg-transparent text-[#282525] placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15"
               style={{ borderColor: "rgba(13,13,13,.15)" }}
             />
           </div>
@@ -212,17 +212,20 @@ function DocForm({
             </label>
             <div className="flex gap-2.5">
               {CORES.map(c => {
-                const { bg, border } = COR_MAP[c];
+                const { nome, text } = COR_MAP[c];
                 return (
                   <button
                     key={c}
+                    type="button"
                     onClick={() => setCor(c)}
+                    aria-label={nome}
+                    aria-pressed={cor === c}
+                    title={nome}
                     className="w-10 h-10 rounded transition"
                     style={{
-                      background: bg,
-                      border: `2px solid ${cor === c ? border.replace("FD", "80").replace("AC", "80") : "transparent"}`,
-                      outline: cor === c ? `2px solid ${border}` : "none",
-                      outlineOffset: 1,
+                      background: text,
+                      outline: cor === c ? `2px solid ${text}` : undefined,
+                      outlineOffset: 2,
                     }}
                   />
                 );
@@ -268,7 +271,7 @@ function DocForm({
           <button
             onClick={handleSave}
             disabled={saving || !titulo.trim()}
-            className="w-full py-2.5 rounded text-sm font-medium text-white bg-[#2E8932] hover:bg-[#26752A] transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full py-2.5 rounded text-sm font-medium text-white acao-salvar transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : null}
             Salvar
@@ -333,9 +336,9 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,.45)" }}>
+      <div className="fixed inset-0 z-50 flex justify-center veu items-start">
         <div role="dialog" aria-modal="true" aria-label="Documentos"
-          className="bg-white rounded border shadow-2xl w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col"
+          className="folha-desce folha-vidro w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col"
           style={{ borderColor: "rgba(13,13,13,.10)" }}>
 
           {/* Header */}
@@ -378,12 +381,12 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
                       key={doc.id}
                       onClick={() => openForm(doc)}
                       className="rounded border p-4 text-left hover:shadow-sm transition relative group"
-                      style={{ background: cs.bg, borderColor: cs.border + "80" }}
+                      style={{ background: cs.bg, borderColor: cs.border }}
                     >
-                      <Icon size={22} className="mb-2" style={{ color: cs.text }} />
-                      <p className="text-[0.75rem] font-bold" style={{ color: cs.text }}>{doc.titulo}</p>
+                      <Icon size={22} className="mb-2" style={{ color: cs.text }} aria-hidden="true" />
+                      <p className="text-[0.75rem] font-semibold text-[#282525]">{doc.titulo}</p>
                       {doc.arquivo_nome && (
-                        <p className="text-[0.625rem] mt-1 truncate" style={{ color: cs.text, opacity: .6 }}>
+                        <p className="text-[0.625rem] mt-1 truncate text-black/45">
                           {doc.arquivo_nome}
                         </p>
                       )}

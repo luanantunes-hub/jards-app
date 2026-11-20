@@ -17,14 +17,16 @@ Princípios:
 
 | Token | Cor | Uso |
 |---|---|---|
-| Tinta | `#0D0D0D` | texto e ações principais |
+| Tinta (grafite quente) | `#282525` | texto; preenchimento escuro só fora do app (landing, páginas públicas, autenticação) |
 | Roxo Jards | `#684DB0` / `#7259B5` | navegação, seleção e identidade |
+| Roxo noite | `#1C0E33` | hero da landing e todo preenchimento escuro dentro do app: botões, item ativo, dicas, selos (hover `#2D1A53`) |
 | Coral Jards | `#D94A4A` | marca, atenção e prioridade alta |
 | Verde | `#2E8932` | salvar, confirmar e sucesso |
 | Azul | `#2D72B0` | informação e estados auxiliares |
 | Âmbar | `#B07A14` | atenção moderada e prioridade média |
 | Teal | `#1A8B7A` | relacionamento e sinais positivos |
 
+- o texto do Jards é o grafite quente `#282525`. Dentro do app (a parte logada, incluindo o admin), todo preenchimento escuro é o roxo noite `#1C0E33`, com hover `#2D1A53`: botões, item ativo do menu, abas e chips selecionados, interruptor ligado, dicas, selos de contagem e avatares. Na landing, nas páginas públicas, na autenticação e na tela de palco, o preenchimento escuro segue em grafite. Gráficos ficam em grafite (roxo não é cor de dado). Não usar `#000`, `#0D0D0D`, `#171717` nem `#1a1a1a` sólidos. Cinzas e bordas continuam em preto com baixa opacidade;
 - fundos são brancos ou neutros levemente tingidos;
 - **nunca tom sobre tom**: texto ou ícone colorido não fica sobre fundo claro da mesma cor (roxo sobre lilás, verde sobre verde-claro). A cor fica no texto, no ícone ou numa borda fina, sobre branco ou cinza neutro (`bg-black/[.04]`); quando precisa de peso, usa preenchimento sólido com texto branco;
 - passar o mouse, item selecionado, dia de hoje e linha arrastada usam cinza neutro, nunca a cor da marca diluída;
@@ -43,10 +45,20 @@ Princípios:
 - tabelas usam cabeçalhos de `0.625rem` (10px na base), peso 500, caixa alta e tracking `.08em`;
 - números financeiros devem usar algarismos tabulares quando comparados em coluna.
 
+## Números e indicadores
+
+- rótulo neutro: `0.625rem`, peso 500, caixa alta, tracking `.08em`, `text-black/45`; nunca colorido nem em negrito;
+- valor em tinta (`#282525`), semibold, algarismos tabulares; valor zerado fica apagado (`text-black/30`);
+- cor só no gráfico (barra, segmento), nunca no rótulo nem no valor. Sem pontos ou quadrados coloridos como marcador: quando o rótulo precisa de apoio visual, usa ícone cinza (`text-black/40`, 12px); só um estado de alerta (em risco, expirado, atrasado) pode colorir o ícone;
+- captação: verde folha (`#3DA86A`, o mesmo dos medidores de meio círculo e do gráfico de Atividades) é confirmado, folha a 35% é em negociação, cinza é o que falta. O verde `#2E8932` fica para salvar e confirmar ações, não para dados. Roxo é navegação, não é cor de dado;
+- exceção: um desfecho escrito em palavra ("Meta atingida") pode levar a cor no texto;
+- valores de resumo, totais, kanban e cartões usam `formatarValorCurto` (`R$ 400.000`, `R$ 1,5 mi`, `R$ 13 bi`), com `formatarValorCompleto` no `title`; campos, propostas, exportações e prestação de contas mostram o valor exato;
+- componentes: `Indicador` e `BarraCaptacao` em `components/ui/IndicadoresFinanceiros.tsx`.
+
 ## Forma e espaçamento
 
 - raio padrão do produto: `rounded` (4px);
-- raios maiores ficam restritos a experiências de marca, autenticação e ilustrações;
+- raios maiores ficam restritos a experiências de marca, autenticação, ilustrações e às folhas (veja "Modais, sheets e menus");
 - alturas usuais de controle: 36–44px;
 - áreas clicáveis devem ter pelo menos 40px quando isoladas;
 - separação entre seções usa espaço, regra fina ou mudança sutil de superfície;
@@ -58,19 +70,29 @@ Princípios:
 
 ### Ação principal de página
 
-Use preto para criar ou iniciar o objeto principal da página:
+Criar ou iniciar o objeto principal da página ("Novo projeto", "Nova data") usa `PrimaryListAction`, de `components/list/ListPagePrimitives.tsx`: roxo noite `#1C0E33`, o mesmo do hero da landing, com texto branco e `h-9`.
+
+- volume discreto: degradê de cima para baixo em torno do roxo noite (`#28164B` → `#1C0E33` → `#160A2A`), uma linha de luz de 1px no topo, uma de sombra na base e uma sombra curta neutra, que descola o botão da página. Sem borda;
+- o botão fica parado: sem animação ao carregar a página e sem movimento no hover, que só clareia um tom, na hora. Ao pressionar, afunda (sombra por dentro);
+- sem contorno em volta. O foco do teclado clareia como o hover e abre um brilho embaixo do botão; o contorno só aparece no modo de alto contraste do sistema;
+- uma ação principal por contexto. Quando há duas lado a lado, a principal é roxo noite e a outra é `SecondaryListAction`: botão branco com borda leve e hover cinza;
+- os outros botões escuros do app (modais, assistentes, páginas de detalhe) são roxo noite liso:
 
 ```tsx
-className="rounded bg-[#0D0D0D] px-4 py-2.5 text-white"
+className="rounded bg-[#1C0E33] px-4 py-2.5 text-white hover:bg-[#2D1A53]"
 ```
+
+- na autenticação e nos links públicos, a ação principal segue em tinta: `bg-[#282525]` com hover `bg-[#3A3535]`.
 
 ### Salvar ou confirmar
 
-Use verde em rodapés de modal, sheets e operações que persistem dados:
+Use verde em rodapés de modal, sheets e operações que persistem dados, com a classe `.acao-salvar` (em `app/globals.css`):
 
 ```tsx
-className="rounded bg-[#2E8932] px-4 py-2.5 text-white hover:bg-[#26752A]"
+className="rounded acao-salvar px-4 py-2.5 text-white"
 ```
+
+Ela dá ao botão o mesmo volume discreto do botão de criar, em verde: verde liso `#2E8932` (sem degradê), linha de luz de 1px no topo, sombra curta tingida de verde, hover amigo (o verde clareia um tom, `#34953A`, de leve e sem pressa), afundar ao pressionar e chapado quando desativado. Sem movimento. Não repita `bg-[#2E8932]` com `hover:bg-[#26752A]` à mão na parte logada; o teste `tests/salvar-com-volume.test.ts` barra.
 
 ### Seleção e navegação
 
@@ -95,6 +117,7 @@ Todos os botões precisam de estado `hover`, `focus-visible`, `disabled` e feedb
 | formulário ou modal simples | `Dropdown` |
 | toolbar compacta | `Select` |
 | ícone, busca, conteúdo rico ou portal | `CustomDropdown` |
+| várias opções de uma lista longa, com busca | `MultiSelectDropdown` |
 | prioridade | `PrioridadeSelect` |
 
 Regras:
@@ -135,9 +158,20 @@ Exceções:
 - status concluído em contexto temporal pode aparecer como label em caixa alta sem borda;
 - status editável usa `StatusDropdown` ou `StatusBadge` interativo;
 - prioridade alta usa ícone e texto vermelhos;
-- controles de identidade visual usam quadrados totalmente preenchidos pela cor, não círculos internos.
+- a identidade visual (ícone de projeto, proponente e captador) é escolhida no `IconePicker`, sem bordas: ícones em cinza; clicar num ícone abre, grudado nele, o mesmo ícone nas cinco cores, e a escolha é feita ali.
 
 ## Modais, sheets e menus
+
+No CRM e na captação, tudo que abre por cima da tela é uma **folha que desce do topo**, no desenho da Nova atividade: pop-ups de cadastro e edição, confirmações, painéis que antes vinham da direita (editar atividade, registros, personalizar painel, painel da empresa). Não há mais pop-up no centro nem painel lateral nesses módulos. A receita é o fundo com `veu` alinhado ao topo (`fixed inset-0 flex items-start justify-center veu`) e a folha com `folha-desce folha-vidro max-h-[96dvh] w-full max-w-[...]`; `folha-desce` faz a entrada vinda de cima (260ms, sem JavaScript, respeita `prefers-reduced-motion`). `TopSheet` é a versão pronta para folhas simples, `BottomSheet` (sobe da base) fica só para o celular. As classes `folha-vidro-centro` e `folha-vidro-direita` seguem em `globals.css` para desenhos que precisem delas, mas o CRM não as usa. Prestação e Produção ainda seguem o desenho antigo.
+
+- cantos de 1,25rem (`--raio-folha`) no lado livre (nos pop-ups, em volta toda); é a exceção aos 4px do produto;
+- superfície de vidro: quase branca, com o fundo desfocado por trás, um fio de luz por dentro e um fio de 1px no lugar da borda (`folha-vidro` e `folha-vidro-cima` em `app/globals.css`);
+- cabeçalho com a etiqueta opcional em letras pequenas (`etiqueta`), título grande em peso extra e o fechar num círculo de vidro; a linha sob o cabeçalho leva um fio de luz embaixo;
+- base das ações num cinza bem claro (`folha-rodape`), separada por uma linha e um fio de luz;
+- sombra funda, escura e neutra: nenhuma cor da marca atrás, na ponta ou na frente da folha (sem sombra roxa, sem lâmina colorida, sem brilho passando);
+- uma alça sobre o véu, na ponta livre, avisa que a folha recolhe.
+
+Regras de todos os modais e folhas:
 
 - cabeçalho fixo com título e fechamento;
 - conteúdo pode rolar, mas o rodapé de ações permanece visível;
@@ -148,7 +182,7 @@ Exceções:
 
 ## Formulários de cadastro
 
-Referência: `NovaCaptacaoModal` e `NovaInscricaoModal`.
+Referência: `NovaCaptacaoModal`, `NovaInscricaoModal` e `NovaAtividadeModal`.
 
 - o essencial vem primeiro, numa lista direta, sem título de seção;
 - campos opcionais ficam em "Mais detalhes", recolhido; ele já abre quando há algo preenchido lá dentro;
@@ -164,16 +198,28 @@ Referência: `NovaCaptacaoModal` e `NovaInscricaoModal`.
 
 Use os primitivos de `components/ui/DetailPagePrimitives.tsx` para manter:
 
-- cabeçalho com identidade e ações;
+- cabeçalho com identidade e ações; a identidade alinha com o título, no topo;
+- descrição e outros textos livres usam `TextoRecolhivel`: poucas linhas (3 no cabeçalho), "Ver mais" só quando o texto passa do limite, parágrafos preservados;
 - barra de informações principais;
 - abas coerentes;
 - conteúdo com largura e espaçamento padronizados;
 - cards laterais apenas quando resumem contexto útil.
 
+## Pacotes de ilustrações
+
+As ilustrações que ficam na frente da frase de cada seção (e do painel) vêm em **pacotes**. Um pacote é um conjunto de desenhos que sempre anda junto: mora em `public/ilustracoes/<id>/`, com arquivos numerados de `01.png` ao total, e o sorteio do dia escolhe sempre dentro de um pacote, sem misturar dois.
+
+- pacote atual: **Tamanduá no dia a dia** (`dia-a-dia`), 15 desenhos só com o tamanduá;
+- o registro fica em `lib/pacotes-de-ilustracoes.ts`; o pacote que aparece é o `PACOTE_ATIVO`;
+- pacote novo: pasta com os desenhos numerados sem buraco, uma entrada no registro e, para ele aparecer, trocar o `PACOTE_ATIVO`. O teste confere pasta, total e que toda pasta é um pacote registrado.
+
 ## Identidade de entidades
 
 - empresas usam `CompanyLogo` com fallback para inicial;
-- projetos usam `ProjectIdentity`;
+- projetos, proponentes e captadores usam `ProjectIdentity`: o ícone aparece solto, só o traço na cor, como no Notion — sem quadrado, degradê, volume ou sombra. Em linhas de tabela, `semFundo` só deixa o traço um pouco menor;
+- cores de identidade: cinco, alegres e que conversam com o roxo do Jards — lavanda `#7C5CD6`, coral `#E8665A`, mel `#DFA024`, folha `#3DA86A` e céu `#3B8BE0` (`PROJECT_ICON_COLORS`). Cores gravadas da paleta antiga são mostradas pela mais parecida (`corDaIdentidade`), sem mudar o banco;
+- as chaves dos ícones ficam gravadas no banco: nunca renomear, só acrescentar;
+- exceção ao "nunca tom sobre tom": nas pastas de projeto, o verso leva o tom claro da cor do ícone e a folha da frente fica quase branca, com o ícone na cor e o texto em tinta
 - projetos, proponentes e captadores podem escolher ícone, logo e cor;
 - imagens precisam de texto alternativo útil;
 - cores não podem ser o único meio de transmitir estado.

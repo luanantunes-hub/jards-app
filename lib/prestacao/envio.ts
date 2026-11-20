@@ -7,7 +7,7 @@
 // orientação, sem marcação.
 //
 // O que os dados respondem vem deles: metas comprovadas, evidências de
-// acessibilidade, peças com amostra, bens, despesas, extratos, saldo pelo último
+// acessibilidade, peças com amostra, bens, beneficiados, grade, grade de RH, eventos, despesas, extratos, saldo pelo último
 // extrato, alterações em aberto, as verificações abertas por assunto e as guias
 // do saldo e dos rendimentos registradas em Devoluções (P4.4). O resto
 // a pessoa resolve: arquivo anexado, "pronto" (ou, na condição, "conferido") e,
@@ -16,7 +16,10 @@
 
 import { CATALOGO_CHECAGENS, dataBr, reais, centavos, type DestinoDaChecagem, type EstadoDaPrestacao } from "./checagens/catalogo";
 import { despesasSemBem } from "./bens";
+import { faltasDaTurma } from "./grade";
+import { faltasDoCargo } from "./grade-rh";
 import { recolhimentoDoEncerramento } from "./devolucoes";
+import { registraCmd, resumoDoCmd } from "./cmd";
 import { coberturaDaMeta } from "./objeto";
 import { definida, type Fonte, type RegimeNormativo } from "./regimes";
 import type { Regra } from "./regimes/tipos";
@@ -30,8 +33,8 @@ export type DestinoDoEnvio = DestinoDaChecagem | "pendencias" | "devolucoes" | "
 
 export const ROTULO_DA_ETAPA: Record<EtapaEnvio, string> = { final: "Prestação final", parcial: "Prestação parcial" };
 
-export type MarcacaoDoChecklist = Pick<PrestacaoEnvioMarcacao, "etapa" | "tipo" | "codigo" | "situacao" | "justificativa" | "marcado_por" | "updated_at">;
-export type ArquivoDoChecklist = Pick<PrestacaoEnvioArquivo, "id" | "etapa" | "codigo" | "storage_path" | "nome_arquivo" | "mime_type" | "tamanho_bytes" | "created_at">;
+export type MarcacaoDoChecklist = Pick<PrestacaoEnvioMarcacao, "etapa" | "exercicio" | "tipo" | "codigo" | "situacao" | "justificativa" | "marcado_por" | "updated_at">;
+export type ArquivoDoChecklist = Pick<PrestacaoEnvioArquivo, "id" | "etapa" | "exercicio" | "codigo" | "storage_path" | "nome_arquivo" | "mime_type" | "tamanho_bytes" | "created_at">;
 export type DevolucaoDoChecklist = Pick<PrestacaoDevolucao, "motivo" | "situacao" | "valor_principal" | "valor_atualizado" | "valor_pago" | "pago_em" | "storage_path">;
 export type ContaDoChecklist = Pick<PrestacaoContaBancaria, "id" | "tipo" | "apelido" | "banco" | "conta" | "data_encerramento"> & {
   extratos: readonly Pick<PrestacaoExtratoImportacao, "periodo_fim" | "saldo_final" | "created_at">[];
@@ -40,6 +43,8 @@ export type ContaDoChecklist = Pick<PrestacaoContaBancaria, "id" | "tipo" | "ape
 export type DadosDoChecklist = {
   regime: RegimeNormativo | null;
   etapa: EtapaEnvio;
+  /** P9.2: o ano da prestação anual (saúde); sem ele, 0. */
+  exercicio?: number;
   estado: EstadoDaPrestacao;
   /** Verificações da prestação; só as abertas pedem algo. */
   verificacoes: readonly { check_codigo: string; status: string }[];
@@ -80,6 +85,8 @@ export type OrientacaoDoEnvio = { codigo: string; descricao: string; fonte: Font
 
 export type ChecklistDeEnvio = {
   etapa: EtapaEnvio;
+  /** P9.2: o ano da prestação anual; 0 sem ela. */
+  exercicio: number;
   /** Etapas que o regime tem (a final sempre; a parcial quando algum documento é dela). */
   etapas: EtapaEnvio[];
   sistema: string | null;
@@ -95,6 +102,9 @@ export type ChecklistDeEnvio = {
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 const hojeDe = (d: Date) => d.toISOString().slice(0, 10);
+/** A marcação ou o arquivo é desta etapa e deste exercício. */
+const daEtapa = (x: { etapa: EtapaEnvio; exercicio?: number | null }, etapa: EtapaEnvio, exercicio: number | undefined) =>
+  x.etapa === etapa && (x.exercicio ?? 0) === (exercicio ?? 0);
 
 /** Etapas do envio no regime: a final e, quando algum documento é dela, a parcial. */
 export function etapasDoRegime(regime: RegimeNormativo | null | undefined): EtapaEnvio[] {
@@ -130,7 +140,9 @@ const objeto: Avaliador = ctx => {
   const evidencias = ctx.estado.evidencias ?? [];
   const comprovadas = metas.filter(m => coberturaDaMeta(m, atividades, evidencias).comprovada).length;
   const semResultado = metas.filter(m => m.realizado === null || m.realizado === undefined).length;
-  const abertas = ctx.abertas(comDestino("objeto", "atividades", "distribuicao"));
+  // A grade de RH (P8.7) também se resolve na aba Atividades, mas é outro documento.
+  const doObjeto = comDestino("objeto", "atividades", "distribuicao");
+  const abertas = ctx.abertas(codigo => doObjeto(codigo) && !CODIGOS_DA_GRADE_RH.has(codigo));
   if (semResultado > 0) return pendente(`${plural(semResultado, "meta está", "metas estão")} sem o resultado informado.`, "objeto");
   if (comprovadas < metas.length) return pendente(`${comprovadas} de ${plural(metas.length, "meta comprovada", "metas comprovadas")} por evidência.`, "objeto");
   if (abertas > 0) return pendente(`${plural(abertas, "pendência aberta", "pendências abertas")} no objeto e na distribuição.`, "objeto");
@@ -183,6 +195,42 @@ const bens: Avaliador = (ctx, { obrigatorio }) => {
   const abertas = ctx.abertas(comDestino("bens"));
   if (abertas) return pendente(`${plural(abertas, "pendência aberta", "pendências abertas")} nos bens.`, "bens");
   return pronto(`${plural(cadastrados.length, "bem", "bens")} com destinação, sem pendência aberta.`);
+};
+
+const beneficiados: Avaliador = ctx => {
+  const lista = ctx.estado.beneficiarios ?? [];
+  if (lista.length === 0) return pendente("Cadastre a relação de beneficiados, com o sexo, a idade e os benefícios de cada um.", "beneficiarios");
+  const abertas = ctx.abertas(comDestino("beneficiarios"));
+  if (abertas) return pendente(`${plural(abertas, "pendência aberta", "pendências abertas")} na relação de beneficiados.`, "beneficiarios");
+  return pronto(`${plural(lista.length, "beneficiado", "beneficiados")} na relação, sem pendência aberta.`);
+};
+
+const grade: Avaliador = ctx => {
+  const turmas = ctx.estado.turmas ?? [];
+  if (turmas.length === 0) return pendente("Cadastre a grade semanal: as turmas de cada núcleo, com dias e horário.", "atividades");
+  const incompletas = turmas.filter(t => faltasDaTurma(t).length).length;
+  if (incompletas) return pendente(`${plural(incompletas, "turma está", "turmas estão")} sem núcleo, dias, horário ou quantidade de alunos.`, "atividades");
+  const nucleos = new Set(turmas.map(t => t.local_id)).size;
+  return pronto(`${plural(turmas.length, "turma", "turmas")} em ${plural(nucleos, "núcleo", "núcleos")}, com dias e horário.`);
+};
+
+const CODIGOS_DA_GRADE_RH = new Set(["RH_SEM_GRADE", "RH_ACIMA_DA_GRADE", "RH_FORMA_DE_CONTRATACAO"]);
+
+const gradeRh: Avaliador = ctx => {
+  const cargos = ctx.estado.cargos ?? [];
+  if (cargos.length === 0) return pendente("Cadastre a grade de RH: os cargos da equipe, com os horários, a carga semanal e a forma de contratação.", "atividades");
+  const incompletos = cargos.filter(c => faltasDoCargo(c).length).length;
+  if (incompletos) return pendente(`${plural(incompletos, "cargo está", "cargos estão")} sem horários, carga semanal ou forma de contratação.`, "atividades");
+  const abertas = ctx.abertas(codigo => CODIGOS_DA_GRADE_RH.has(codigo));
+  if (abertas) return pendente(`${plural(abertas, "pendência aberta", "pendências abertas")} na grade de RH.`, "atividades");
+  const pessoas = cargos.reduce((s, c) => s + c.quantidade, 0);
+  return pronto(`${plural(cargos.length, "cargo", "cargos")} e ${plural(pessoas, "contratado", "contratados")} na grade, sem pendência aberta.`);
+};
+
+const eventos: Avaliador = ctx => {
+  const lista = (ctx.estado.atividades ?? []).filter(a => a.status_realizacao !== "nao_realizado");
+  if (lista.length === 0) return pendente("Cadastre os eventos na aba Atividades, com as datas e o local.", "atividades");
+  return pronto(`${plural(lista.length, "evento", "eventos")} na aba Atividades.`);
 };
 
 const despesas: Avaliador = ctx => {
@@ -285,7 +333,7 @@ const anexos: Avaliador = (ctx, { regra }) => {
   const mb = Number(regra?.parametros?.mb);
   if (!Number.isFinite(mb) || mb <= 0) return null;
   const limite = mb * 1024 * 1024;
-  const doEnvio = ctx.arquivos.filter(a => a.etapa === ctx.etapa);
+  const doEnvio = ctx.arquivos.filter(a => daEtapa(a, ctx.etapa, ctx.exercicio));
   const foraDoFormato = doEnvio.filter(a => !ehPdf(a)).map(a => a.nome_arquivo);
   const grandes = doEnvio.filter(a => (a.tamanho_bytes ?? 0) > limite).map(a => a.nome_arquivo);
   const validas = despesasValidas(ctx);
@@ -302,6 +350,31 @@ const anexos: Avaliador = (ctx, { regra }) => {
   return pronto(`Comprovantes${doEnvio.length ? " e arquivos anexados aqui" : ""} em PDF${doEnvio.length ? `, até ${mb} MB` : ""}.`);
 };
 
+/** P9.2: o parecer de auditoria é do exercício da prestação anual; a pessoa anexa. */
+const auditoria: Avaliador = ctx => ({
+  dica: ctx.exercicio
+    ? `Anexe as demonstrações contábeis de ${ctx.exercicio} com o parecer conclusivo do auditor independente registrado no CRC.`
+    : "Anexe as demonstrações contábeis com o parecer conclusivo do auditor independente registrado no CRC.",
+});
+
+/** P9.3: na saúde, a relação de pagamentos, os rendimentos e as receitas e despesas saem das planilhas da saúde. */
+const daPlanilhaDaSaude = (oQue: string): Avaliador => ctx =>
+  ctx.regime?.area === "saude" ? { dica: `Gere ${oQue} em Envio, Planilhas da saúde, e anexe aqui o arquivo.` } : null;
+
+/** P9.5: as informações lançadas no CMD, pela produção registrada na aba Objeto; formação e pesquisa não registram. */
+const cmd: Avaliador = ctx => {
+  if (ctx.regime?.area !== "saude") return null;
+  if (!registraCmd(ctx.estado.modalidadeSaude)) {
+    return { situacao: "nao_se_aplica", detalhe: "Projeto de formação ou de pesquisa: não há produção médico-assistencial no CMD.", destino: null };
+  }
+  const producao = ctx.estado.producaoCmd ?? [];
+  if (producao.length === 0) return pendente("Registre na aba Objeto a produção lançada no CMD, por competência.", "objeto");
+  const abertas = ctx.abertas(codigo => codigo.startsWith("CMD_"));
+  if (abertas) return pendente(`${plural(abertas, "pendência aberta", "pendências abertas")} na produção do CMD.`, "objeto");
+  const resumo = resumoDoCmd(producao, ctx.estado.metas ?? []);
+  return pronto(`${resumo.total.toLocaleString("pt-BR")} ${resumo.total === 1 ? "registro" : "registros"} no CMD em ${plural(resumo.competencias.length, "competência", "competências")}; anexe aqui o relatório exportado do CMD.`);
+};
+
 /** Documentos que os dados respondem, pelo código no regime. */
 const DOCUMENTOS: Record<string, Avaliador> = {
   relatorio_objeto: objeto,
@@ -315,6 +388,11 @@ const DOCUMENTOS: Record<string, Avaliador> = {
   divulgacao: pecas,
   bens,
   equipamentos: bens,
+  beneficiados,
+  beneficiarios: beneficiados,
+  grade,
+  grade_rh: gradeRh,
+  eventos,
   comprovantes_despesa: despesas,
   documentos_fiscais: despesas,
   extratos,
@@ -323,6 +401,12 @@ const DOCUMENTOS: Record<string, Avaliador> = {
   gru_saldos: recolhimento,
   gru_ou_transferencia: recolhimento,
   gru: recolhimento,
+  auditoria,
+  relacao_pagamentos: daPlanilhaDaSaude("a relação de pagamentos (Planilha II)"),
+  rendimentos: daPlanilhaDaSaude("o demonstrativo de rendimentos (Tabela 1)"),
+  receitas_despesas: daPlanilhaDaSaude("as receitas e despesas (informações compiladas)"),
+  cmd,
+  producao: cmd,
 };
 
 /** Condições do sistema oficial que os dados respondem. */
@@ -342,7 +426,7 @@ const CONDICOES: Record<string, Avaliador> = {
 export function checklistDeEnvio(dados: DadosDoChecklist): ChecklistDeEnvio {
   const { regime, etapa } = dados;
   const vazio = (semChecklist: string): ChecklistDeEnvio => ({
-    etapa, etapas: ["final"], sistema: null, descricao: null, fonte: null, documentos: [], condicoes: [], orientacoes: [],
+    etapa, exercicio: dados.exercicio ?? 0, etapas: ["final"], sistema: null, descricao: null, fonte: null, documentos: [], condicoes: [], orientacoes: [],
     resumo: { total: 0, resolvidos: 0, pendentes: 0, obrigatoriosPendentes: 0 }, semChecklist,
   });
   if (!regime) return vazio("Escolha o regime da prestação para ver o que o envio pede.");
@@ -362,8 +446,8 @@ export function checklistDeEnvio(dados: DadosDoChecklist): ChecklistDeEnvio {
 
   const linha = (tipo: TipoDoItem, codigo: string, descricao: string, obrigatorio: boolean, severidade: Regra["severidade"] | null,
     fonte: Fonte, avaliador: Avaliador | undefined, regra?: Regra): LinhaDoChecklist => {
-    const marcacao = dados.marcacoes.find(m => m.etapa === etapa && m.tipo === tipo && m.codigo === codigo) ?? null;
-    const arquivos = tipo === "documento" ? dados.arquivos.filter(a => a.etapa === etapa && a.codigo === codigo) : [];
+    const marcacao = dados.marcacoes.find(m => daEtapa(m, etapa, dados.exercicio) && m.tipo === tipo && m.codigo === codigo) ?? null;
+    const arquivos = tipo === "documento" ? dados.arquivos.filter(a => daEtapa(a, etapa, dados.exercicio) && a.codigo === codigo) : [];
     const base = { tipo, codigo, descricao, obrigatorio, severidade, fonte, arquivos, aceitaArquivo: tipo === "documento" };
     const resposta = avaliador?.(ctx, { obrigatorio, regra }) ?? null;
     if (resposta && "situacao" in resposta) {
@@ -402,6 +486,7 @@ export function checklistDeEnvio(dados: DadosDoChecklist): ChecklistDeEnvio {
   const pendentes = todas.filter(l => l.situacao === "pendente");
   return {
     etapa,
+    exercicio: dados.exercicio ?? 0,
     etapas: etapasDoRegime(regime),
     sistema: envio.sistema,
     descricao: envio.descricao,

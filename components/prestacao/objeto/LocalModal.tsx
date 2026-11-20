@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
@@ -10,7 +11,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoLocal } from "@/lib/supabase/types";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 
 /** Cria ou edita um local de realização: onde, quando e a situação, como o Salic pede. */
 export function LocalModal({ prestacaoId, local, onClose, onSaved }: {
@@ -33,6 +34,11 @@ export function LocalModal({ prestacaoId, local, onClose, onSaved }: {
   const [fim, setFim] = useState(local?.fim ?? "");
   const [status, setStatus] = useState<StatusLocal>(local?.status ?? "previsto");
   const [justificativa, setJustificativa] = useState(local?.justificativa ?? "");
+  // Núcleo (LIE, aba GRADE): endereço, responsável e telefone. "Mais detalhes" abre quando há algo preenchido.
+  const [endereco, setEndereco] = useState(local?.endereco ?? "");
+  const [responsavel, setResponsavel] = useState(local?.responsavel ?? "");
+  const [telefone, setTelefone] = useState(local?.telefone ?? "");
+  const [maisDetalhes, setMaisDetalhes] = useState(Boolean(local?.endereco || local?.responsavel || local?.telefone));
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -52,6 +58,7 @@ export function LocalModal({ prestacaoId, local, onClose, onSaved }: {
       justificativa: justificativa.trim() || null,
     };
     const problema = erroDoLocal(campos);
+    const doNucleo = { endereco: endereco.trim() || null, responsavel: responsavel.trim() || null, telefone: telefone.trim() || null };
     if (problema) { setErro(problema); return; }
     // Código e coordenadas só valem para o município escolhido da lista, no Brasil.
     const doIbge = brasil && municipio.ibge
@@ -62,8 +69,8 @@ export function LocalModal({ prestacaoId, local, onClose, onSaved }: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas do objeto ainda não estão no tipo Database
     const tabela = (supabase as any).from("prestacao_locais");
     const { error } = local
-      ? await tabela.update({ ...campos, ...doIbge }).eq("id", local.id)
-      : await tabela.insert({ ...campos, ...doIbge, prestacao_id: prestacaoId });
+      ? await tabela.update({ ...campos, ...doIbge, ...doNucleo }).eq("id", local.id)
+      : await tabela.insert({ ...campos, ...doIbge, ...doNucleo, prestacao_id: prestacaoId });
     setSalvando(false);
     if (error) { setErro(mensagemErroPrestacao(error, "Não foi possível salvar o local")); return; }
     onSaved();
@@ -83,7 +90,7 @@ export function LocalModal({ prestacaoId, local, onClose, onSaved }: {
             type="button"
             onClick={salvar}
             disabled={salvando}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
             {local ? "Salvar" : "Criar local"}
@@ -157,11 +164,35 @@ export function LocalModal({ prestacaoId, local, onClose, onSaved }: {
               rows={3}
               maxLength={LIMITE_JUSTIFICATIVA_LOCAL}
               placeholder={status === "outras_fontes" ? "Quem pagou e como" : "Por que não aconteceu"}
-              className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10"
+              className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10"
             />
             <span className="mt-1 block text-right text-[0.625rem] tabular-nums text-black/35">{justificativa.length}/{LIMITE_JUSTIFICATIVA_LOCAL} · limite do Salic</span>
           </label>
         )}
+        <div className="border-t pt-3 sm:col-span-2" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+          <button type="button" onClick={() => setMaisDetalhes(aberto => !aberto)} aria-expanded={maisDetalhes}
+            className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+            <ChevronDown size={13} aria-hidden className={`transition-transform duration-200 motion-reduce:transition-none ${maisDetalhes ? "rotate-180" : ""}`} />
+            Mais detalhes
+          </button>
+          {maisDetalhes && (
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <label className="sm:col-span-2">
+                <span className={ROTULO}>Endereço</span>
+                <input value={endereco} onChange={e => setEndereco(e.target.value)} maxLength={300} placeholder="Rua, número, bairro" className={CAMPO} />
+              </label>
+              <label>
+                <span className={ROTULO}>Responsável no local</span>
+                <input value={responsavel} onChange={e => setResponsavel(e.target.value)} maxLength={200} placeholder="Quem coordena o projeto ali" className={CAMPO} />
+              </label>
+              <label>
+                <span className={ROTULO}>Telefone</span>
+                <input value={telefone} onChange={e => setTelefone(e.target.value)} maxLength={40} inputMode="tel" placeholder="(00) 0000-0000" className={CAMPO} />
+              </label>
+              <p className="text-[0.625rem] text-black/40 sm:col-span-2">Na Lei de Incentivo ao Esporte, o local é o núcleo da grade de atividades.</p>
+            </div>
+          )}
+        </div>
         <details className="sm:col-span-2" open={!brasil}>
           <summary className="cursor-pointer text-[0.6875rem] text-black/45 hover:text-black/65 focus-visible:outline-2 focus-visible:outline-[#7259B5]">Fora do Brasil</summary>
           <label className="mt-2 block">

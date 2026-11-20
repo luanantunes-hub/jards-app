@@ -3,12 +3,13 @@
 import { AlertTriangle, CheckCircle2, FileText, Info, XCircle } from "lucide-react";
 import type { NivelVerificacao, Verificacao } from "@/lib/prestacao/alteracoes";
 
-const NIVEL: Record<NivelVerificacao, { rotulo: string; cor: string; Icone: typeof Info }> = {
-  bloqueio: { rotulo: "Impede", cor: "#B23B3B", Icone: XCircle },
-  formal: { rotulo: "Pedido ao órgão", cor: "#9A6A10", Icone: FileText },
-  alerta: { rotulo: "Atenção", cor: "#9A6A10", Icone: AlertTriangle },
-  ok: { rotulo: "Dispensa pedido", cor: "#2E8932", Icone: CheckCircle2 },
-  info: { rotulo: "Para saber", cor: "#2D72B0", Icone: Info },
+// Só os níveis que pedem atenção colorem o ícone; o rótulo fica sempre neutro.
+const NIVEL: Record<NivelVerificacao, { rotulo: string; corIcone: string; Icone: typeof Info }> = {
+  bloqueio: { rotulo: "Impede", corIcone: "text-[#D94A4A]", Icone: XCircle },
+  formal: { rotulo: "Pedido ao órgão", corIcone: "text-black/40", Icone: FileText },
+  alerta: { rotulo: "Atenção", corIcone: "text-[#B07A14]", Icone: AlertTriangle },
+  ok: { rotulo: "Dispensa pedido", corIcone: "text-black/40", Icone: CheckCircle2 },
+  info: { rotulo: "Para saber", corIcone: "text-black/40", Icone: Info },
 };
 
 const ORDEM: NivelVerificacao[] = ["bloqueio", "formal", "ok", "alerta", "info"];
@@ -19,13 +20,13 @@ export function VerificacoesAlteracao({ verificacoes }: { verificacoes: Verifica
   return (
     <ul className="space-y-2.5">
       {ordenadas.map(v => {
-        const { rotulo, cor, Icone } = NIVEL[v.nivel];
+        const { rotulo, corIcone, Icone } = NIVEL[v.nivel];
         return (
           <li key={v.codigo} className="flex gap-2">
-            <Icone size={13} className="mt-0.5 shrink-0" style={{ color: cor }} aria-hidden />
+            <Icone size={12} strokeWidth={1.75} className={`mt-0.5 shrink-0 ${corIcone}`} aria-hidden />
             <div className="min-w-0">
               <p className="text-[0.6875rem] leading-4 text-black/75">
-                <span className="font-medium" style={{ color: cor }}>{rotulo}. </span>{v.texto}
+                <span className="font-medium">{rotulo}. </span>{v.texto}
               </p>
               {v.fonte && <p className="mt-0.5 text-[0.625rem] leading-4 text-black/40">{v.fonte}</p>}
             </div>

@@ -1,7 +1,7 @@
 "use client";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, Pencil, Shield, UserCheck, Building2, Check, FileStack, Briefcase, MessageCircle } from "lucide-react";
+import { ArrowLeft, Mail, Pencil, Shield, UserCheck, Building2, Check, FileStack, Briefcase, MessageCircle, Lightbulb } from "lucide-react";
 import { CaptadorWorkspaceModal, type EscopoConfig } from "@/components/modals/CaptadorWorkspaceModal";
 import { AtribuicaoConversa, PedidoConversa, listarPedidosWorkspace, type WorkspacePedido } from "@/components/captadores/WorkspaceConversation";
 import { createClient } from "@/lib/supabase/client";
@@ -254,7 +254,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
                     </span>
                   </div>
                 )}
-                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{captador.nome}</h1>
+                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{captador.nome}</h1>
                 <p className="mt-2 text-sm text-black/50">{captador.agencia || "Agência independente"}</p>
               </div>
             </div>
@@ -313,7 +313,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
                     return <button key={a.id} type="button" onClick={() => { setAtribuicaoSelecionada(a.id); setPedidoSelecionado(null); }}
                       className={`block w-full py-3 text-left text-[0.8125rem] transition hover:text-[#5F4AA8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${atribuicaoSelecionada === a.id ? "font-semibold text-[#5F4AA8]" : "text-black/75"}`}>
                       <span className="block">{a.empresa_crm?.nome ?? "Empresa"}</span>
-                      {sugestao && <span className="mt-0.5 inline-flex items-center gap-1 text-[0.6875rem] font-normal text-[#5F4AA8]"><span className="h-1 w-1 rounded-full bg-[#5F4AA8]"/>Sugestão do captador: {sugestao}</span>}
+                      {sugestao && <span className="mt-0.5 inline-flex items-center gap-1 text-[0.6875rem] font-normal text-black/55"><Lightbulb size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40"/>Sugestão do captador: {sugestao}</span>}
                     </button>;
                   })}
                   {atribuicoes.length === 0 && <p className="py-3 text-[0.75rem] text-black/45">Nenhuma atribuição ainda.</p>}
@@ -416,7 +416,7 @@ function AtribuicoesList({ rows }: { rows: AtribuicaoRow[] }) {
               />
               <div className="min-w-0">
                 {a.empresa_crm ? (
-                  <span className="block truncate text-[0.8125rem] font-semibold text-[#0D0D0D]">
+                  <span className="block truncate text-[0.8125rem] font-semibold text-[#282525]">
                     {a.empresa_crm.nome}
                   </span>
                 ) : (

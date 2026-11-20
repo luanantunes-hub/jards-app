@@ -9,7 +9,7 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertCircle, ArrowRight, CheckCircle2, Circle, FileSpreadsheet, FileText, MinusCircle, Package, Paperclip, Receipt, RefreshCw, Send, Trash2, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, Circle, FileSpreadsheet, FileText, MinusCircle, Package, Paperclip, Receipt, RefreshCw, Send, Stamp, Trash2, Undo2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -17,16 +17,20 @@ import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
 import { useEnviosRegistrados } from "@/hooks/useEnviosRegistrados";
 import { EnviosRegistrados } from "@/components/prestacao/envio/EnviosRegistrados";
+import { EtapaDoEnvio } from "@/components/prestacao/envio/EtapaDoEnvio";
+import { exercicioInicial, exerciciosDaAnual, rotuloDaEtapa } from "@/lib/prestacao/exercicios";
+import { exerciciosEnviados } from "@/lib/prestacao/envios";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import {
   checklistDeEnvio,
   erroDaMarcacao,
-  ROTULO_DA_ETAPA,
   type ArquivoDoChecklist,
   type DestinoDoEnvio,
   type EtapaEnvio,
   type LinhaDoChecklist,
 } from "@/lib/prestacao/envio";
+import { regimePedeCarimbo } from "@/lib/prestacao/carimbo";
+import { definida } from "@/lib/prestacao/regimes";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { verificarAgora } from "@/lib/prestacao/verificar-cliente";
 
@@ -45,6 +49,8 @@ const ABAS: Record<DestinoDoEnvio, { rotulo: string; caminho: string }> = {
   distribuicao: { rotulo: "Distribuição", caminho: "/distribuicao" },
   bens: { rotulo: "Bens", caminho: "/bens" },
   divulgacao: { rotulo: "Divulgação", caminho: "/divulgacao" },
+  beneficiarios: { rotulo: "Beneficiários", caminho: "/beneficiarios" },
+  carimbos: { rotulo: "Carimbo e atesto", caminho: "/envio/carimbos" },
   pendencias: { rotulo: "Pendências", caminho: "/pendencias" },
   devolucoes: { rotulo: "Devoluções", caminho: "/envio/devolucoes" },
   pos_envio: { rotulo: "Após o envio", caminho: "/pos-envio" },
@@ -58,7 +64,7 @@ const quando = (iso: string) => new Date(iso).toLocaleString("pt-BR", { day: "2-
 const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] text-black/70 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:text-black/35 active:scale-[.98]";
 
 function IconeDaSituacao({ linha }: { linha: LinhaDoChecklist }) {
-  if (linha.situacao === "pronto") return <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-[#2E8932]" aria-label="Pronto" />;
+  if (linha.situacao === "pronto") return <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-black/40" aria-label="Pronto" />;
   if (linha.situacao === "nao_se_aplica") return <MinusCircle size={15} className="mt-0.5 shrink-0 text-black/35" aria-label="Não se aplica" />;
   return linha.obrigatorio
     ? <AlertCircle size={15} className="mt-0.5 shrink-0 text-[#B07A14]" aria-label="Pendente, obrigatório" />
@@ -83,7 +89,6 @@ function ItemDoChecklist({ linha, acoes }: { linha: LinhaDoChecklist; acoes: Aco
   const daPessoa = linha.origem === "pessoa";
   const pendente = linha.situacao === "pendente";
   const fonte = [linha.fonte.documento, linha.fonte.dispositivo].filter(Boolean).join(", ");
-  const corDoDetalhe = pendente ? (linha.obrigatorio ? "#B07A14" : "rgba(13,13,13,.6)") : "rgba(13,13,13,.5)";
 
   async function salvarMotivo() {
     const problema = erroDaMarcacao(linha, "nao_se_aplica", motivo);
@@ -105,7 +110,7 @@ function ItemDoChecklist({ linha, acoes }: { linha: LinhaDoChecklist; acoes: Aco
               {fonte ? ` · ${fonte}` : ""}
               {linha.origem === "dados" ? " · conferido pelos dados" : ""}
             </p>
-            <p className="mt-1 text-[0.6875rem]" style={{ color: corDoDetalhe }}>{linha.detalhe}</p>
+            <p className={`mt-1 text-[0.6875rem] ${pendente ? "text-black/60" : "text-black/50"}`}>{linha.detalhe}</p>
             {linha.marcacao && linha.situacao !== "pendente" && (
               <p className="mt-0.5 text-[0.625rem] text-black/35">Marcado em {quando(linha.marcacao.updated_at)}</p>
             )}
@@ -205,7 +210,7 @@ function ItemDoChecklist({ linha, acoes }: { linha: LinhaDoChecklist; acoes: Aco
                 type="button"
                 disabled={acoes.ocupado}
                 onClick={salvarMotivo}
-                className="h-9 rounded bg-[#2E8932] px-4 text-[0.6875rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:opacity-60 active:scale-[.98]"
+                className="h-9 rounded acao-salvar px-4 text-[0.6875rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:opacity-60 active:scale-[.98]"
               >
                 Salvar
               </button>
@@ -224,7 +229,7 @@ function Secao({ id, titulo, linhas, acoes }: { id: string; titulo: string; linh
   return (
     <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby={id}>
       <div className="flex items-baseline justify-between gap-3 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <h3 id={id} className="text-[0.75rem] font-semibold text-black">{titulo}</h3>
+        <h3 id={id} className="text-[0.75rem] font-semibold text-[#282525]">{titulo}</h3>
         <span className="text-[0.6875rem] tabular-nums text-black/40">{prontos} de {linhas.length}</span>
       </div>
       <ul className="divide-y divide-black/[.05]">
@@ -243,6 +248,11 @@ export default function EnvioPage() {
   const { dados, erro: erroAoCarregar, recarregar } = useDadosDoEnvio(id);
   const { envios, recarregar: recarregarEnvios } = useEnviosRegistrados(id);
   const [etapaEscolhida, setEtapa] = useState<EtapaEnvio>("final");
+  // P9.2: na saúde, a parcial é a prestação anual de um exercício.
+  const [exercicioEscolhido, setExercicio] = useState<number | null>(null);
+  const exercicios = useMemo(() => (dados ? exerciciosDaAnual(dados.regime, dados.estado.prestacao ?? {}) : []), [dados]);
+  const enviados = useMemo(() => (envios ? exerciciosEnviados(envios) : []), [envios]);
+  const exercicio = etapaEscolhida === "parcial" && exercicios.length ? exercicioEscolhido ?? exercicioInicial(exercicios, enviados) : 0;
   const [ocupado, setOcupado] = useState(false);
   const [verificando, setVerificando] = useState(false);
   const [erro, setErro] = useState("");
@@ -250,8 +260,8 @@ export default function EnvioPage() {
   const checklist = useMemo(() => {
     if (!dados) return null;
     const final = checklistDeEnvio({ ...dados, etapa: "final" });
-    return etapaEscolhida === "final" || !final.etapas.includes(etapaEscolhida) ? final : checklistDeEnvio({ ...dados, etapa: etapaEscolhida });
-  }, [dados, etapaEscolhida]);
+    return etapaEscolhida === "final" || !final.etapas.includes(etapaEscolhida) ? final : checklistDeEnvio({ ...dados, etapa: etapaEscolhida, exercicio });
+  }, [dados, etapaEscolhida, exercicio]);
 
   async function marcar(linha: LinhaDoChecklist, situacao: "pronto" | "nao_se_aplica", justificativa?: string): Promise<string | null> {
     if (!checklist) return null;
@@ -259,9 +269,9 @@ export default function EnvioPage() {
     setErro("");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_envio_checklist ainda não está no tipo Database
     const { error } = await (supabase as any).from("prestacao_envio_checklist").upsert({
-      prestacao_id: id, etapa: checklist.etapa, tipo: linha.tipo, codigo: linha.codigo, situacao,
+      prestacao_id: id, etapa: checklist.etapa, exercicio: checklist.exercicio, tipo: linha.tipo, codigo: linha.codigo, situacao,
       justificativa: situacao === "nao_se_aplica" ? justificativa ?? null : null,
-    }, { onConflict: "prestacao_id,etapa,tipo,codigo" });
+    }, { onConflict: "prestacao_id,etapa,exercicio,tipo,codigo" });
     if (!error) await recarregar();
     setOcupado(false);
     if (!error) return null;
@@ -276,7 +286,7 @@ export default function EnvioPage() {
     setErro("");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_envio_checklist ainda não está no tipo Database
     const { error } = await (supabase as any).from("prestacao_envio_checklist").delete()
-      .eq("prestacao_id", id).eq("etapa", checklist.etapa).eq("tipo", linha.tipo).eq("codigo", linha.codigo);
+      .eq("prestacao_id", id).eq("etapa", checklist.etapa).eq("exercicio", checklist.exercicio).eq("tipo", linha.tipo).eq("codigo", linha.codigo);
     if (error) setErro(mensagemErroPrestacao(error, "Não foi possível desfazer a marcação"));
     else await recarregar();
     setOcupado(false);
@@ -284,7 +294,7 @@ export default function EnvioPage() {
 
   async function anexar(linha: LinhaDoChecklist, arquivos: File[]) {
     if (!checklist) return;
-    if (!organizationId) { setErro("Aguarde: a organização da prestação ainda está carregando."); return; }
+    if (!organizationId) { setErro("Aguarde: a prestação ainda está carregando."); return; }
     const grande = arquivos.find(f => f.size > LIMITE_MB * 1024 * 1024);
     if (grande) { setErro(`"${grande.name}" passa de ${LIMITE_MB} MB.`); return; }
     setOcupado(true);
@@ -295,7 +305,7 @@ export default function EnvioPage() {
       if (envio.error) { setErro(`Não foi possível enviar "${arquivo.name}": ${envio.error.message}`); break; }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_envio_arquivos ainda não está no tipo Database
       const { error } = await (supabase as any).from("prestacao_envio_arquivos").insert({
-        prestacao_id: id, etapa: checklist.etapa, codigo: linha.codigo, storage_path: caminho,
+        prestacao_id: id, etapa: checklist.etapa, exercicio: checklist.exercicio, codigo: linha.codigo, storage_path: caminho,
         nome_arquivo: arquivo.name, mime_type: arquivo.type || null, tamanho_bytes: arquivo.size,
       });
       if (error) {
@@ -346,30 +356,19 @@ export default function EnvioPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Envio</h2>
-          <p className="text-[0.6875rem] text-black/45">
-            O que {checklist?.sistema ? `o ${checklist.sistema}` : "o sistema oficial"} pede para enviar a prestação: documentos e condições, com a fonte de cada um.
-          </p>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Envio</h2>
         </div>
-        {checklist && checklist.etapas.length > 1 && (
-          <div role="radiogroup" aria-label="Etapa do envio" className="flex rounded border bg-white p-0.5" style={BORDA}>
-            {checklist.etapas.map(e => {
-              const ativa = checklist.etapa === e;
-              return (
-                <button
-                  key={e}
-                  type="button"
-                  role="radio"
-                  aria-checked={ativa}
-                  onClick={() => setEtapa(e)}
-                  className="h-8 rounded px-3 text-[0.6875rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5]"
-                  style={ativa ? { background: "#684DB0", color: "#fff" } : { color: "rgba(13,13,13,.6)" }}
-                >
-                  {ROTULO_DA_ETAPA[e]}
-                </button>
-              );
-            })}
-          </div>
+        {checklist && (
+          <EtapaDoEnvio
+            etapas={checklist.etapas}
+            etapa={checklist.etapa}
+            onEtapa={setEtapa}
+            regime={dados?.regime ?? null}
+            exercicios={exercicios}
+            exercicio={exercicio}
+            onExercicio={setExercicio}
+            enviados={enviados}
+          />
         )}
         {dados?.regime && (
           <div className="flex flex-wrap gap-2">
@@ -382,6 +381,26 @@ export default function EnvioPage() {
             {dados.regime.sistemaOficial === "Salic" && (
               <Link href={`/prestacoes/${id}/envio/salic`} className={BOTAO} style={BORDA}>
                 <FileSpreadsheet size={12} aria-hidden /> Espelho do Salic
+              </Link>
+            )}
+            {dados.regime.sistemaOficial?.includes("STR") && (
+              <Link href={`/prestacoes/${id}/envio/str`} className={BOTAO} style={BORDA}>
+                <FileSpreadsheet size={12} aria-hidden /> Planilhas do STR
+              </Link>
+            )}
+            {definida(dados.regime.envio)?.modelos.some(m => m.codigo === "formulario_pcp_pcf") && (
+              <Link href={`/prestacoes/${id}/envio/formulario-lie${checklist?.etapa === "parcial" ? "?etapa=parcial" : ""}`} className={BOTAO} style={BORDA}>
+                <FileSpreadsheet size={12} aria-hidden /> Formulário PCP/PCF
+              </Link>
+            )}
+            {dados.regime.area === "saude" && (
+              <Link href={`/prestacoes/${id}/envio/saude`} className={BOTAO} style={BORDA}>
+                <FileSpreadsheet size={12} aria-hidden /> Planilhas da saúde
+              </Link>
+            )}
+            {regimePedeCarimbo(dados.regime) && (
+              <Link href={`/prestacoes/${id}/envio/carimbos`} className={BOTAO} style={BORDA}>
+                <Stamp size={12} aria-hidden /> Carimbo e atesto
               </Link>
             )}
             <Link href={`/prestacoes/${id}/envio/devolucoes`} className={BOTAO} style={BORDA}>
@@ -424,8 +443,16 @@ export default function EnvioPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-[0.8125rem] text-black/80">
                 {resumo.pendentes === 0
-                  ? <>Tudo pronto para a {ROTULO_DA_ETAPA[checklist.etapa].toLowerCase()}.</>
-                  : <><span className="tabular-nums">{resumo.resolvidos} de {resumo.total}</span> itens prontos{resumo.obrigatoriosPendentes ? <span className="text-[#B07A14]"> · {resumo.obrigatoriosPendentes} {resumo.obrigatoriosPendentes === 1 ? "obrigatório falta" : "obrigatórios faltam"}</span> : null}</>}
+                  ? <>Tudo pronto para a {rotuloDaEtapa(checklist.etapa, dados?.regime, checklist.exercicio).toLowerCase()}.</>
+                  : <><span className="tabular-nums">{resumo.resolvidos} de {resumo.total}</span> itens prontos{resumo.obrigatoriosPendentes ? (
+                      <>
+                        {" · "}
+                        <span className="inline-flex items-center gap-1">
+                          <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />
+                          {resumo.obrigatoriosPendentes} {resumo.obrigatoriosPendentes === 1 ? "obrigatório falta" : "obrigatórios faltam"}
+                        </span>
+                      </>
+                    ) : null}</>}
               </p>
               <div className="flex items-center gap-2">
                 <span className="text-[0.625rem] text-black/40">
@@ -455,7 +482,7 @@ export default function EnvioPage() {
 
           {checklist.orientacoes.length > 0 && (
             <section className="rounded border bg-white px-5 py-4" style={BORDA} aria-labelledby="envio-orientacoes">
-              <h3 id="envio-orientacoes" className="text-[0.75rem] font-semibold text-black">Bom saber</h3>
+              <h3 id="envio-orientacoes" className="text-[0.75rem] font-semibold text-[#282525]">Bom saber</h3>
               <ul className="mt-2 space-y-1.5">
                 {checklist.orientacoes.map(o => (
                   <li key={o.codigo} className="text-[0.6875rem] text-black/60">

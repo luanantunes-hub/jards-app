@@ -3,10 +3,10 @@ import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, Pencil, Plus, RefreshCw, Mail, Phone,
-  Users, Calendar, MoreHorizontal, FileText, ExternalLink,
-  FolderOpen, Star, Clock, Send,
-  X, Upload, Trash2,
+  ArrowLeft, Pencil, RefreshCw, Mail, Phone,
+  Users, Calendar, CalendarClock, MoreHorizontal, FileText, ExternalLink,
+  FolderOpen, Clock,
+  Upload, Trash2,
   LayoutDashboard, MessagesSquare, RotateCw, Tag, Info, Layers,
   ChevronDown, ArrowUp, ArrowDown, Minus, Check,
 } from "lucide-react";
@@ -15,16 +15,19 @@ import { excluirDocumento } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import type { Captacao, Atividade } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
+import { ProjetoResumo } from "@/components/projects/ProjetoResumo";
 import { CotasReferenceTab } from "@/components/CotasReferenceTab";
 import PrioBadge from "@/components/ui/PrioBadge";
 import SharedStatusBadge from "@/components/ui/StatusBadge";
 import { StatusDropdown } from "@/components/ui/StatusDropdown";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
+import { useAutoriaDasNotas } from "@/hooks/useAutoriaDasNotas";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
+import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
 import { RenovarCicloModal } from "@/components/modals/RenovarCicloModal";
 import { RelationshipWorkspace } from "@/components/relationship/RelationshipWorkspace";
+import { SeloAguardandoResposta } from "@/components/email/SeloAguardandoResposta";
 import { ConcluirAtividadeModal } from "@/components/modals/ConcluirAtividadeModal";
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
 import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
@@ -173,23 +176,15 @@ function TimelineEvent({ tipo, titulo, descricao, data, usuario }: {
   usuario?: string | null;
 }) {
   const Icon = TIPO_ICONS[tipo] || MoreHorizontal;
-  const iconColor = tipo === "email" ? "#2D72B0"
-    : tipo === "telefone" ? "#1A8B7A"
-    : tipo === "linkedin" ? "#2D72B0"
-    : tipo === "reuniao" ? "#7259B5"
-    : tipo === "evento" ? "#B07A14"
-    : tipo === "mudanca" ? "#7259B5"
-    : tipo === "nota" ? "#D94E4E"
-    : "rgba(13,13,13,.40)";
 
   return (
     <div className="flex gap-3">
       <div className="flex flex-col items-center">
         <div
-          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ background: "#fff", border: `1px solid ${iconColor}47`, color: iconColor }}
+          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-black/40"
+          style={{ background: "#fff", border: "1px solid rgba(13,13,13,.08)" }}
         >
-          <Icon size={13} />
+          <Icon size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
         </div>
         <div className="w-px flex-1 bg-black/8 my-1" />
       </div>
@@ -198,9 +193,9 @@ function TimelineEvent({ tipo, titulo, descricao, data, usuario }: {
           <span className="text-[0.6875rem] font-semibold text-black/50">{formatDate(data)}</span>
           <span className="text-[0.625rem] text-black/25">{formatRelative(data)}</span>
         </div>
-        <p className="text-[0.8125rem] font-medium text-[#0D0D0D]">{titulo}</p>
+        <p className="text-[0.8125rem] font-medium text-[#282525]">{titulo}</p>
         {descricao && <p className="text-xs text-black/40 mt-0.5">{descricao}</p>}
-        {usuario && <p className="text-[0.625rem] text-black/25 mt-1">{usuario}</p>}
+        {usuario && <p className="text-[0.625rem] text-black/45 mt-1">por {usuario}</p>}
       </div>
     </div>
   );
@@ -216,7 +211,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   const STATUS_META: Record<string, { label: string; cor: string; icone: string }> = Object.fromEntries(etiquetas.map(e => [e.key, e]));
   const { origens, canais, resultados } = useTaxonomiasComerciais();
   const taxonomyLabel = (items: {chave:string;label:string}[], value: string | null | undefined) => items.find(item=>item.chave===value)?.label ?? value?.replaceAll("_"," ") ?? "—";
-  const [sidebarStatusMenu, setSidebarStatusMenu] = useState<{ top: number; left: number } | null>(null);
+  const [sidebarStatusMenu, setSidebarStatusMenu] = useState<{ top: number; left: number; right?: number } | null>(null);
   const [leiMenuPos, setLeiMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [prioMenuPos, setPrioMenuPos] = useState<{ top: number; left: number } | null>(null);
 
@@ -234,15 +229,10 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [propostas, setPropostas] = useState<PropostaDocumento[]>([]);
   const [historico, setHistorico] = useState<(Historico & { user: { full_name: string } | null })[]>([]);
-  const [interacoes, setInteracoes] = useState<{ id: string; tipo: string; canal: string | null; assunto: string; resumo: string | null; resultado: string | null; ocorreu_em: string; contato: { nome: string } | null }[]>([]);
+  const [interacoes, setInteracoes] = useState<{ id: string; tipo: string; canal: string | null; assunto: string; resumo: string | null; resultado: string | null; ocorreu_em: string; created_by: string | null; account_id: string | null; contato: { nome: string } | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNewAtividade, setShowNewAtividade] = useState(false);
-  const [newAtividadeNome, setNewAtividadeNome] = useState("");
-  const [newAtividadeTipo, setNewAtividadeTipo] = useState<string>("reuniao");
-  const [newAtividadeNota, setNewAtividadeNota] = useState("");
-  const [newAtividadeData, setNewAtividadeData] = useState("");
-  const [salvandoAtividade, setSalvandoAtividade] = useState(false);
   const [atividadeConcluir, setAtividadeConcluir] = useState<(Atividade & { contato: { nome: string } | null }) | null>(null);
   const [uploadandoDoc, setUploadandoDoc] = useState(false);
   const [documentoErro, setDocumentoErro] = useState<string | null>(null);
@@ -303,7 +293,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
         .from("atividades")
         .select(`
           id, nome, tipo, prioridade, data_prevista, data_realizada, feita, nota, created_at, captacao_id,
-          contato:contatos!contato_id(nome)
+          contato:contatos!contato_id(nome), responsavel:profiles!responsavel_id(full_name)
         `)
         .eq("captacao_id", id)
         .order("data_prevista", { ascending: true }),
@@ -324,7 +314,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
         .order("created_at", { ascending: false }),
       (supabase as any)
         .from("crm_interacoes")
-        .select("id,tipo,canal,assunto,resumo,resultado,ocorreu_em,contato:contatos(nome)")
+        .select("id,tipo,canal,assunto,resumo,resultado,ocorreu_em,created_by,account_id,contato:contatos(nome)")
         .eq("captacao_id", id)
         .order("ocorreu_em", { ascending: false }),
       (supabase as any)
@@ -376,46 +366,14 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   }, [id, supabase]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  const autoria = useAutoriaDasNotas([...notas, ...interacoes.map(i => ({ account_id: i.created_by ?? i.account_id }))]);
+  const autorDe = (id: string | null | undefined) => (id ? (id === autoria.usuarioId ? "você" : autoria.nomes[id] ?? null) : null);
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("tab") === "relacionamento") setActiveTab("relacionamento");
   }, []);
 
   async function recarregarNotas() {
     try { setNotas(await buscarNotas(supabase, { coluna: "captacao_id", id })); } catch { /* a lista anterior continua na tela */ }
-  }
-
-  async function handleSalvarAtividade() {
-    if (!newAtividadeNome.trim()) return;
-    setSalvandoAtividade(true);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setSalvandoAtividade(false);
-      return;
-    }
-
-    const { error } = await (supabase as any).from("atividades").insert({
-      account_id: user.id,
-      nome: newAtividadeNome.trim(),
-      tipo: newAtividadeTipo,
-      nota: newAtividadeNota.trim() || null,
-      data_prevista: newAtividadeData || null,
-      captacao_id: id,
-      empresa_crm_id: captacao?.empresa_crm_id || null,
-      projeto_id: captacao?.projeto_id || null,
-      feita: false,
-      calendar_sync_requested: ["reuniao", "evento"].includes(newAtividadeTipo),
-    } as any);
-
-    if (!error) {
-      setNewAtividadeNome("");
-      setNewAtividadeTipo("reuniao");
-      setNewAtividadeNota("");
-      setNewAtividadeData("");
-      setShowNewAtividade(false);
-      await fetchData();
-    }
-    setSalvandoAtividade(false);
   }
 
   async function handleToggleAtividade(atividadeId: string, feita: boolean) {
@@ -541,9 +499,9 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
       tipo: "interacao",
       atividade_tipo: interacao.canal ?? interacao.tipo,
       titulo: interacao.assunto,
-      descricao: [taxonomyLabel(resultados, interacao.resultado), interacao.resumo].filter(value=>value&&value!=="—").join(" · ") || null,
+      descricao: [interacao.contato?.nome, taxonomyLabel(resultados, interacao.resultado), interacao.resumo].filter(value=>value&&value!=="—").join(" · ") || null,
       data: interacao.ocorreu_em,
-      usuario: interacao.contato?.nome ?? null,
+      usuario: autorDe(interacao.created_by ?? interacao.account_id),
       created_at: interacao.ocorreu_em,
     })),
     ...atividades.map(a => ({
@@ -552,7 +510,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
       titulo: a.nome,
       descricao: a.nota,
       data: a.data_realizada || a.data_prevista || a.created_at,
-      usuario: null,
+      usuario: (a as { responsavel?: { full_name: string | null } | null }).responsavel?.full_name ?? null,
       created_at: a.data_realizada || a.data_prevista || a.created_at,
     })),
     ...notas.map(n => ({
@@ -561,7 +519,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
       titulo: n.titulo || resumoNota(n.conteudo),
       descricao: n.titulo ? resumoNota(n.conteudo) : null,
       data: n.created_at,
-      usuario: null,
+      usuario: autorDe(n.account_id),
       created_at: n.created_at,
     })),
     ...historico.map(h => ({
@@ -599,7 +557,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             />
             <div className="min-w-0">
               {tituloNegociacao ? (
-                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">
+                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">
                   {tituloNegociacao}
                 </h1>
               ) : (
@@ -637,6 +595,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                     Ver ciclo anterior
                   </Link>
                 )}
+                <SeloAguardandoResposta key={captacao.id} captacaoId={captacao.id} />
               </div>
             </div>
           </div>
@@ -668,17 +627,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             >
               <Pencil size={12} /> Editar
             </button>
-            <button
-              onClick={() => setShowNewAtividade(!showNewAtividade)}
-              className={`flex h-11 items-center gap-2 rounded border px-4 text-[0.75rem] font-medium transition ${
-                showNewAtividade
-                  ? "bg-white border-[#7259B5]/25 text-[#7259B5]"
-                  : "bg-white border-black/[.12] text-black/55 hover:bg-black/[.04]"
-              }`}
-            >
-              {showNewAtividade ? <X size={12} /> : <Plus size={12} />}
-              {showNewAtividade ? "Cancelar" : "Atividade"}
-            </button>
+            <DetailHeaderAction label="Nova atividade" icon={CalendarClock} onClick={() => setShowNewAtividade(true)} />
           </div>
         </div>
       </div></header>
@@ -686,7 +635,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
       {/* Stats Bar */}
       <div className="border-b bg-white" style={{ borderColor: "rgba(13,13,13,.06)" }}><div className="mx-auto grid max-w-pagina grid-cols-2 gap-5 px-4 py-5 sm:grid-cols-3 sm:px-6 lg:px-10">
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Prioridade</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Prioridade</p>
             <button
               type="button"
               onClick={(e) => {
@@ -708,7 +657,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             </button>
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Tipo de patrocínio</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Tipo de patrocínio</p>
             <button
               type="button"
               onClick={(e) => {
@@ -725,10 +674,10 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             </button>
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Agência de captação</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Agência de captação</p>
             {(captacao as any).captador_externo ? (
               <div>
-                <p className="text-[0.8125rem] font-medium text-[#0D0D0D]">{(captacao as any).captador_externo.nome}</p>
+                <p className="text-[0.8125rem] font-medium text-[#282525]">{(captacao as any).captador_externo.nome}</p>
                 {(captacao as any).captador_externo.agencia && (
                   <p className="text-[0.6875rem] text-black/40">{(captacao as any).captador_externo.agencia}</p>
                 )}
@@ -786,43 +735,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 <div className="mb-3">
                   <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">Projeto</h2>
                 </div>
-                <Link
-                  href={captacao.projeto_id ? `/projetos/${captacao.projeto_id}` : "#"}
-                  className={`block rounded border bg-white p-5 transition ${captacao.projeto_id ? "hover:border-[#7259B5]/30 hover:bg-black/[.04]" : "pointer-events-none"}`}
-                  style={{ borderColor: "rgba(13,13,13,.08)" }}
-                >
-                  <div className="flex items-center gap-3">
-                    <ProjectIdentity
-                      nome={captacao.projeto.nome}
-                      tipo={captacao.projeto.identidade_tipo}
-                      valor={captacao.projeto.identidade_valor}
-                      logoUrl={captacao.projeto.identidade_logo_url}
-                      cor={captacao.projeto.identidade_cor}
-                      size="md"
-                    />
-                    <p className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-[#0D0D0D]">{captacao.projeto.nome}</p>
-                  </div>
-                  {captacao.projeto.descricao && (
-                    <p className="mt-3 text-[0.75rem] leading-relaxed text-black/45">{captacao.projeto.descricao}</p>
-                  )}
-                  {(captacao.projeto.proponente_nome || captacao.projeto.valor_alvo) && (
-                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.6875rem] text-black/50">
-                      {captacao.projeto.proponente_nome && (
-                        <span className="inline-flex items-center gap-1.5">
-                          <Users size={11} className="text-black/30" />
-                          {captacao.projeto.proponente_nome}
-                          {captacao.projeto.proponente_cidade && captacao.projeto.proponente_estado ? ` · ${captacao.projeto.proponente_cidade}, ${captacao.projeto.proponente_estado}` : ""}
-                        </span>
-                      )}
-                      {captacao.projeto.valor_alvo && (
-                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#7259B5]">
-                          <Star size={11} className="text-[#7259B5]/60" />
-                          {formatCurrency(captacao.projeto.valor_alvo)} de meta
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </Link>
+                <ProjetoResumo projetoId={captacao.projeto_id} projeto={captacao.projeto} />
               </section>
             )}
 
@@ -836,98 +749,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 <span className="text-[0.6875rem] text-black/25 font-medium">{timelineEvents.length} eventos</span>
               </div>
 
-              {/* Formulário inline de nova atividade */}
-              {showNewAtividade && (
-                <div className="bg-white rounded border p-4 mb-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-7 h-7 rounded-full bg-[#7259B5] flex items-center justify-center">
-                      <Plus size={13} className="text-white" />
-                    </div>
-                    <span className="text-[0.8125rem] font-medium text-[#0D0D0D]">Nova atividade</span>
-                  </div>
-
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={newAtividadeNome}
-                      onChange={e => setNewAtividadeNome(e.target.value)}
-                      placeholder="Nome da atividade..."
-                      className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5] transition"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    />
-
-                    <div className="flex gap-2">
-                      {[
-                        { value: "reuniao", label: "Reunião", Icon: Users },
-                        { value: "email", label: "E-mail", Icon: Mail },
-                        { value: "telefone", label: "Telefone", Icon: Phone },
-                        { value: "linkedin", label: "LinkedIn", Icon: () => (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                          </svg>
-                        )},
-                        { value: "outro", label: "Outro", Icon: MoreHorizontal },
-                      ].map(({ value, label, Icon }) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => setNewAtividadeTipo(value)}
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[0.6875rem] font-medium rounded border transition ${
-                            newAtividadeTipo === value
-                              ? "bg-white text-[#7259B5] border-[#7259B5]/25"
-                              : "bg-white text-black/50 border-black/10 hover:border-black/20"
-                          }`}
-                        >
-                          <Icon size={11} />
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <input
-                        type="date"
-                        value={newAtividadeData}
-                        onChange={e => setNewAtividadeData(e.target.value)}
-                        className="flex-1 px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
-                        style={{ borderColor: "rgba(13,13,13,.12)" }}
-                      />
-                    </div>
-
-                    <textarea
-                      value={newAtividadeNota}
-                      onChange={e => setNewAtividadeNota(e.target.value)}
-                      placeholder="Nota"
-                      rows={2}
-                      className="w-full px-3 py-2 text-[0.75rem] border rounded resize-none focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    />
-
-                    <div className="flex justify-end gap-2 pt-1">
-                      <button
-                        onClick={() => setShowNewAtividade(false)}
-                        className="px-3 py-1.5 text-[0.6875rem] font-medium text-black/40 hover:text-black/60 transition"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={handleSalvarAtividade}
-                        disabled={!newAtividadeNome.trim() || salvandoAtividade}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-[0.6875rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
-                      >
-                        {salvandoAtividade ? (
-                          <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                          <Send size={11} />
-                        )}
-                        Salvar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {timelineEvents.length === 0 && !showNewAtividade ? (
+              {timelineEvents.length === 0 ? (
                 <div className="bg-white rounded border p-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <Clock size={24} className="mx-auto text-black/15 mb-3" />
                   <p className="text-sm text-black/35">Nenhum evento registrado</p>
@@ -975,7 +797,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                         />
                         <Icon size={13} className="text-black/30 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-[0.8125rem] font-medium text-[#0D0D0D] truncate">{atv.nome}</p>
+                          <p className="text-[0.8125rem] font-medium text-[#282525] break-words">{atv.nome}</p>
                           {atv.contato && (
                             <p className="text-[0.6875rem] text-black/35">{atv.contato.nome}</p>
                           )}
@@ -1087,7 +909,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 onClick={(e) => {
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                   setSidebarStatusMenu(
-                    sidebarStatusMenu ? null : { top: rect.bottom + 4, left: rect.left }
+                    sidebarStatusMenu ? null : { top: rect.bottom + 4, left: rect.left, right: rect.right }
                   );
                 }}
                 className="block"
@@ -1186,6 +1008,17 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           onChanged={fetchData}
         />
       )}
+      {showNewAtividade && (
+        <NovaAtividadeModal
+          prefill={{
+            captacao_id: captacao.id,
+            empresa_crm_id: captacao.empresa_crm_id ?? undefined,
+            projeto_id: captacao.projeto_id ?? undefined,
+          }}
+          onClose={() => setShowNewAtividade(false)}
+          onSaved={() => { setShowNewAtividade(false); void fetchData(); }}
+        />
+      )}
       {showEditModal && (
         <NovaCaptacaoModal
           editData={{
@@ -1226,7 +1059,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
         <>
           <div className="fixed inset-0 z-40" onClick={() => setPrioMenuPos(null)} />
           <div
-            className="fixed z-50 overflow-hidden rounded-lg border bg-white shadow-xl"
+            className="fixed z-50 overflow-hidden rounded bg-white border elevacao-1"
             style={{ top: prioMenuPos.top, left: prioMenuPos.left, borderColor: "rgba(13,13,13,.10)", minWidth: "11.25rem" }}
           >
             {(["sem", "alta", "media", "baixa"] as const).map(p => {
@@ -1239,7 +1072,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                   onClick={() => handlePrioridadeChange(p === "sem" ? null : p)}
                   className="flex w-full items-center justify-between px-3 py-2 text-left text-[0.75rem] transition hover:bg-black/[.03]"
                 >
-                  <span className="inline-flex items-center gap-1.5 text-black">
+                  <span className="inline-flex items-center gap-1.5 text-[#282525]">
                     {it ? (
                       <span className="flex h-3 w-3 items-center justify-center rounded text-white" style={{ background: it.color }}>
                         <it.Icon size={8} strokeWidth={2.5} />

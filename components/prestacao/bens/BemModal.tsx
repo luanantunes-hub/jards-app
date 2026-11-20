@@ -4,6 +4,8 @@ import { useMemo, useRef, useState } from "react";
 import { ChevronDown, Paperclip, Plus, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL } from "@/lib/valor";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import {
@@ -22,8 +24,8 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { CotacaoDoBem, PrestacaoBem } from "@/lib/supabase/types";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
-const AREA = "w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const AREA = "w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 const BOTAO_SECUNDARIO = "flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] text-black/65 transition hover:border-black/25 hover:text-black/85 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:opacity-40";
 
 const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -95,13 +97,13 @@ export function BemModal({ prestacaoId, organizationId, bem, inicial, itens, des
   const [descricao, setDescricao] = useState(bem?.descricao ?? inicial?.descricao ?? "");
   const [tipo, setTipo] = useState<TipoBem>(bem?.tipo ?? "equipamento");
   const [quantidade, setQuantidade] = useState(texto(bem?.quantidade ?? 1));
-  const [valor, setValor] = useState(texto(bem?.valor ?? inicial?.valor ?? null));
+  const [valor, setValor] = useState(formatarValorBRL(bem?.valor ?? inicial?.valor ?? null));
   const [noId, setNoId] = useState(bem?.no_id ?? inicial?.no_id ?? "");
   const [despesaId, setDespesaId] = useState(bem?.despesa_id ?? inicial?.despesa_id ?? "");
   const [patrimonio, setPatrimonio] = useState(bem?.numero_patrimonio ?? "");
   const [registro, setRegistro] = useState(bem?.registro_imovel ?? "");
   const [cotacoes, setCotacoes] = useState<CotacaoNoForm[]>((bem?.cotacoes ?? []).map(c => ({
-    fornecedor: c.fornecedor, valor: texto(c.valor), data: c.data ?? "", arquivo: arquivoDe(c.storage_path, c.nome_arquivo),
+    fornecedor: c.fornecedor, valor: formatarValorBRL(c.valor), data: c.data ?? "", arquivo: arquivoDe(c.storage_path, c.nome_arquivo),
   })));
   const [destinacao, setDestinacao] = useState<DestinacaoBem | "">(bem?.destinacao ?? "");
   const [destinacaoDescricao, setDestinacaoDescricao] = useState(bem?.destinacao_descricao ?? "");
@@ -160,7 +162,7 @@ export function BemModal({ prestacaoId, organizationId, bem, inicial, itens, des
     const problema = erroDoBem(campos);
     if (problema) { setErro(problema); return; }
     const arquivosNovos = [...cotacoes.map(c => c.arquivo), ...(doacao ? [termo, aceite] : [])].filter(a => a.novo);
-    if (arquivosNovos.length > 0 && !organizationId) { setErro("Aguarde: a organização da prestação ainda está carregando."); return; }
+    if (arquivosNovos.length > 0 && !organizationId) { setErro("Aguarde: a prestação ainda está carregando."); return; }
     setSalvando(true);
     setErro("");
 
@@ -228,7 +230,7 @@ export function BemModal({ prestacaoId, organizationId, bem, inicial, itens, des
             type="button"
             onClick={salvar}
             disabled={salvando}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
             {bem ? "Salvar" : "Registrar bem"}
@@ -252,7 +254,7 @@ export function BemModal({ prestacaoId, organizationId, bem, inicial, itens, des
           </label>
           <label>
             <span className={ROTULO}>Valor (R$)</span>
-            <input value={valor} onChange={e => setValor(e.target.value)} inputMode="decimal" placeholder={despesa?.valor_extraido != null ? texto(despesa.valor_extraido) : "0,00"} className={`${CAMPO} tabular-nums`} />
+            <InputValor value={valor} onChange={setValor} placeholder={despesa?.valor_extraido != null ? formatarValorBRL(despesa.valor_extraido) : "0,00"} className={`${CAMPO} tabular-nums`} />
           </label>
         </div>
         <div>
@@ -305,7 +307,7 @@ export function BemModal({ prestacaoId, organizationId, bem, inicial, itens, des
                 </label>
                 <label>
                   <span className={ROTULO}>Valor (R$)</span>
-                  <input value={c.valor} onChange={e => mudarCotacao(i, { valor: e.target.value })} inputMode="decimal" className={`${CAMPO} tabular-nums`} />
+                  <InputValor value={c.valor} onChange={valor => mudarCotacao(i, { valor })} placeholder="0,00" className={`${CAMPO} tabular-nums`} />
                 </label>
                 <label>
                   <span className={ROTULO}>Data</span>

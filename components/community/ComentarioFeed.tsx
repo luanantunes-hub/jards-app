@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { ChevronUp, ChevronDown, MessageCircle, Pencil, ClipboardCheck, UserCheck, Sparkles, Layers, TrendingUp, X } from "lucide-react";
+import { Check, ChevronUp, ChevronDown, MessageCircle, Pencil, ClipboardCheck, UserCheck, Sparkles, Layers, TrendingUp, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Comentario, ComentarioTopico } from "@/lib/supabase/types";
@@ -82,7 +82,7 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
       {/* Header */}
       {!embedded && <div className="px-5 py-4 justify-between border-b flex items-center" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         {!embedded && <div>
-          <p className="text-sm font-semibold text-black">
+          <p className="text-sm font-semibold text-[#282525]">
             Experiências{comentarios.length > 0 && <span className="text-black/30 font-normal text-xs ml-1.5">({comentarios.length})</span>}
           </p>
         </div>}
@@ -102,7 +102,7 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
             onClick={() => setFiltro("todos")}
             className={`px-2.5 py-1 rounded text-[0.625rem] font-bold transition border ${
               filtro === "todos"
-                ? "bg-white border-black/20 text-black"
+                ? "bg-white border-black/20 text-[#282525]"
                 : "bg-white border-black/[.08] text-black/40 hover:bg-black/[.04]"
             }`}
           >
@@ -153,7 +153,7 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
                     >
                       <ChevronUp size={14} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                     </button>
-                    <span className={`text-[0.6875rem] font-bold ${c.votos > 0 ? "text-[#2E8932]" : "text-black/25"}`}>
+                    <span className={`text-[0.6875rem] font-semibold tabular-nums ${c.votos === 0 ? "text-black/30" : "text-[#282525]"}`}>
                       {c.votos}
                     </span>
                     <button
@@ -169,8 +169,8 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
                       <span
-                        className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide"
-                        style={{ background: meta.bg, color: meta.color }}
+                        className="rounded border bg-white px-1.5 py-0.5 text-[0.5625rem] font-medium uppercase tracking-wide"
+                        style={{ borderColor: `${meta.color}47`, color: meta.color }}
                       >
                         {meta.label}
                       </span>
@@ -236,12 +236,12 @@ function NovoComentarioModal({
 
   if (saved) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-        <div className="bg-white rounded shadow-2xl w-full max-w-md p-8 text-center" onClick={e => e.stopPropagation()}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center veu" onClick={onClose}>
+        <div className="bg-white rounded w-full max-w-md p-8 text-center border elevacao-3" onClick={e => e.stopPropagation()}>
           <div className="w-10 h-10 rounded flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(13,13,13,.04)" }}>
             <MessageCircle size={18} className="text-[#2E8932]" />
           </div>
-          <h2 className="text-[0.9375rem] font-bold text-[#0D0D0D] mb-1">Obrigado por compartilhar!</h2>
+          <h2 className="text-[0.9375rem] font-bold text-[#282525] mb-1">Obrigado por compartilhar!</h2>
           <p className="text-[0.8125rem] text-black/45">Sua experiência ajuda toda a comunidade.</p>
         </div>
       </div>
@@ -252,11 +252,11 @@ function NovoComentarioModal({
   const ActiveIcon = TOPICO_ICON[topico];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center veu" onClick={onClose}>
+      <div className="bg-white rounded w-full max-w-lg border elevacao-3" onClick={e => e.stopPropagation()}>
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 className="text-[0.875rem] font-semibold text-[#0D0D0D]">Contar experiência</h2>
+          <h2 className="text-[0.875rem] font-semibold text-[#282525]">Contar experiência</h2>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-black/5 transition text-black/35 hover:text-black/55">
             <X size={15} />
           </button>
@@ -276,7 +276,7 @@ function NovoComentarioModal({
                     isSelected ? "" : "hover:bg-black/[.025] hover:border-black/[.12]"
                   }`}
                   style={isSelected
-                    ? { borderColor: m.color, background: m.bg }
+                    ? { borderColor: m.color, background: "rgba(13,13,13,.04)" }
                     : { borderColor: "rgba(13,13,13,.08)" }
                   }
                 >
@@ -287,30 +287,24 @@ function NovoComentarioModal({
                     <Icon size={12} style={{ color: isSelected ? m.color : "rgba(0,0,0,.30)" }} />
                   </div>
                   <div className="flex-1 min-w-0 flex items-baseline gap-2">
-                    <p className="text-[0.75rem] font-medium leading-tight" style={{ color: isSelected ? m.color : "#0D0D0D" }}>
+                    <p className="text-[0.75rem] font-medium leading-tight text-[#282525]">
                       {m.label}
                     </p>
                     <p className="text-[0.625rem] text-black/30 truncate">{m.desc}</p>
                   </div>
                   {/* Indicador de seleção */}
-                  <div
-                    className="w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all"
-                    style={isSelected
-                      ? { borderColor: m.color, background: m.color }
-                      : { borderColor: "rgba(13,13,13,.15)" }
-                    }
-                  >
-                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                    {isSelected && <Check size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#282525]" />}
+                  </span>
                 </button>
               );
             })}
           </div>
 
           {/* Dica contextual */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded mb-4" style={{ background: meta.bg }}>
+          <div className="flex items-center gap-2 px-3 py-2 rounded mb-4 bg-black/[.04]">
             <ActiveIcon size={12} style={{ color: meta.color, flexShrink: 0 }} />
-            <p className="text-[0.625rem] font-medium" style={{ color: meta.color }}>
+            <p className="text-[0.625rem] font-medium text-black/55">
               {topico === "processo_selecao"      && "Como é o processo? É transparente? Costuma dar certo?"}
               {topico === "tomador_decisao"       && "Quem decide? É acessível? Costuma responder?"}
               {topico === "experiencia_patrocinio" && "Como foi a experiência de ser patrocinado por eles?"}

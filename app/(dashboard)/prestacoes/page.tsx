@@ -8,6 +8,7 @@ import type { PrestacaoCarteira, StatusPrestacao } from "@/lib/supabase/types";
 import { NovaPrestacaoModal } from "@/components/modals/NovaPrestacaoModal";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { useAssinaturaPrestacao } from "@/hooks/useAssinaturaPrestacao";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { Select } from "@/components/ui/Select";
 import { itensDaArvore, montarArvore, type NoOrcamento } from "@/lib/prestacao/orcamento";
@@ -19,6 +20,7 @@ import { fetchOrganizationMembers, type OrganizationMemberSummary } from "@/lib/
 import { nomeDoMembro, podeConduzir } from "@/components/prestacao/ResponsavelDaPrestacao";
 import { clientesDaCarteira, execucaoDoCaptado, filtrarCarteira, quadroDaCarteira, resumoDaCarteira, type LinhaDaCarteira } from "@/lib/prestacao/carteira";
 import { LIST_HEADER_CELL, ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type PrestacaoLida = {
   id: string;
@@ -85,6 +87,10 @@ const COLUNAS: ColumnDefinition<string>[] = [
 ];
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+/** Valor de resumo ("R$ 400.000", "R$ 1,5 mi"), com o exato no title. */
+function Valor({ v }: { v: number }) {
+  return <span title={formatarValorCompleto(v)}>{formatarValorCurto(v)}</span>;
+}
 const dataCurta = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 const dataNumerica = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR");
 
@@ -102,14 +108,11 @@ function semAcento(texto: string): string {
   return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function corDaProntidao(percentual: number): string {
-  return percentual >= 80 ? "#2E8932" : percentual >= 50 ? "#B07A14" : "rgba(13,13,13,.45)";
-}
-
-function corDoPrazo(prazo: PrazoDaPrestacao): string {
-  if (prazo.quem === "proponente" && prazo.dias < 0) return "#B23B3B";
-  if (prazo.quem === "proponente" && prazo.dias <= 15) return "#9A6A10";
-  return "rgba(13,13,13,.6)";
+/** Só o prazo do proponente vencido ou perto de vencer é alerta: pinta o ícone, não o texto. */
+function alertaDoPrazo(prazo: PrazoDaPrestacao): string | null {
+  if (prazo.quem === "proponente" && prazo.dias < 0) return "#D94A4A";
+  if (prazo.quem === "proponente" && prazo.dias <= 15) return "#B07A14";
+  return null;
 }
 
 function EtiquetaStatus({ status }: { status: StatusPrestacao }) {
@@ -122,14 +125,13 @@ function EtiquetaStatus({ status }: { status: StatusPrestacao }) {
 }
 
 function BarraProntidao({ prontidao }: { prontidao: Prontidao }) {
-  const cor = corDaProntidao(prontidao.percentual);
   return (
     <div className="min-w-0">
       <div className="flex items-center gap-2">
-        <div className="h-1.5 w-14 overflow-hidden rounded-full bg-black/[.07]" aria-hidden>
-          <div className="h-full rounded-full" style={{ width: `${prontidao.percentual}%`, background: cor }} />
+        <div className="h-1.5 w-14 overflow-hidden rounded bg-black/[.06]" aria-hidden>
+          <div className="h-full bg-[#2E8932]" style={{ width: `${prontidao.percentual}%` }} />
         </div>
-        <span className="text-[0.6875rem] font-medium tabular-nums" style={{ color: cor }}>{prontidao.percentual}%</span>
+        <span className={`text-[0.6875rem] font-semibold tabular-nums ${prontidao.percentual ? "text-[#282525]" : "text-black/30"}`}>{prontidao.percentual}%</span>
       </div>
       <p className="mt-0.5 text-[0.625rem] text-black/40">
         {prontidao.pendencias.length ? `${prontidao.pendencias.length} ${prontidao.pendencias.length === 1 ? "pendência" : "pendências"}` : "Sem pendências"}
@@ -140,21 +142,28 @@ function BarraProntidao({ prontidao }: { prontidao: Prontidao }) {
 
 function PrazoCelula({ prazo }: { prazo: PrazoDaPrestacao | null }) {
   if (!prazo) return <span className="text-[0.6875rem] text-black/25">—</span>;
+  const alerta = alertaDoPrazo(prazo);
   return (
     <div className="min-w-0" title={`${prazo.rotulo}: ${dataCurta(prazo.data)}`}>
-      <p className="truncate text-[0.6875rem] font-medium" style={{ color: corDoPrazo(prazo) }}>{vencimento(prazo.dias)}</p>
+      <p className="flex min-w-0 items-center gap-1 text-[0.6875rem] font-medium text-black/60">
+        {alerta && <Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: alerta }} />}
+        <span className="truncate">{vencimento(prazo.dias)}</span>
+      </p>
       <p className="truncate text-[0.625rem] tabular-nums text-black/40">{dataNumerica(prazo.data)} · {prazo.rotulo}</p>
     </div>
   );
 }
 
-function RiscoCelula({ carteira }: { carteira: Linha["carteira"] }) {
+function RiscoCelula({ carteira, curto = false }: { carteira: Linha["carteira"]; curto?: boolean }) {
   if (!carteira?.achados_em_risco) return <span className="text-[0.75rem] text-black/25">—</span>;
   const achados = `${carteira.achados_em_risco} ${carteira.achados_em_risco === 1 ? "achado aberto" : "achados abertos"}`;
   if (!carteira.valor_em_risco) return <p className="text-[0.6875rem] text-black/50">{achados}</p>;
   return (
     <div className="min-w-0">
-      <p className="text-[0.75rem] tabular-nums text-[#B23B3B]">{fmt(carteira.valor_em_risco)}</p>
+      <p className="flex items-center gap-1 text-[0.75rem] tabular-nums text-[#282525]">
+        <AlertCircle size={12} strokeWidth={1.75} role="img" aria-label="Em risco" className="shrink-0 text-[#D94A4A]" />
+        {curto ? <Valor v={carteira.valor_em_risco} /> : fmt(carteira.valor_em_risco)}
+      </p>
       <p className="text-[0.625rem] text-black/40">{achados}</p>
     </div>
   );
@@ -167,7 +176,10 @@ function CaptadoCelula({ carteira }: { carteira: Linha["carteira"] }) {
   return (
     <div className="min-w-0">
       <p className="text-[0.75rem] tabular-nums text-black/60">{fmt(carteira.captado)}</p>
-      <p className={`text-[0.625rem] tabular-nums ${acima ? "text-[#B23B3B]" : "text-black/40"}`}>{fmt(carteira.executado)} executado · {percentual}%</p>
+      <p className="flex items-center gap-1 text-[0.625rem] tabular-nums text-black/40">
+        {acima && <AlertCircle size={12} strokeWidth={1.75} role="img" aria-label="Acima do captado" className="shrink-0 text-[#D94A4A]" />}
+        <span>{fmt(carteira.executado)} executado · {percentual}%</span>
+      </p>
     </div>
   );
 }
@@ -176,6 +188,9 @@ export default function PrestacoesList() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const organizationId = useOrganizationId();
+  // Sem assinatura o módulo fica só para leitura (P5.6): sem criar prestações.
+  const { assinatura } = useAssinaturaPrestacao(organizationId);
+  const podeCriar = !assinatura?.descricao.somenteLeitura;
   const regimes = useRegimesPublicados();
   const [recarga, setRecarga] = useState(0);
   const [lidas, setLidas] = useState<{ chave: string; prestacoes: PrestacaoLida[]; relacionados: Relacionados } | null>(null);
@@ -317,22 +332,22 @@ export default function PrestacoesList() {
 
   return (
     <div className="flex h-full flex-col">
-      <ListPageHeader
+      <ListPageHeader secao="prestacoes"
         eyebrow="Prestação de contas"
         title="Prestações"
         summary={!loading && (
           <>
             <ListSummary strong={linhas.length}>{linhas.length === 1 ? "prestação" : "prestações"}</ListSummary>
             {emPreparo > 0 && <ListSummary strong={emPreparo}>em preparo</ListSummary>}
-            {envioProximo > 0 && <ListSummary strong={envioProximo} tone="#9A6A10">com envio em até 30 dias</ListSummary>}
-            {vencidas > 0 && <ListSummary strong={vencidas} tone="#B23B3B">{vencidas === 1 ? "vencida" : "vencidas"}</ListSummary>}
-            {resumo.valorEmRisco > 0 && <ListSummary strong={fmt(resumo.valorEmRisco)} tone="#B23B3B">em risco</ListSummary>}
+            {envioProximo > 0 && <ListSummary strong={envioProximo} icone={Clock} alerta="ambar">com envio em até 30 dias</ListSummary>}
+            {vencidas > 0 && <ListSummary strong={vencidas} icone={Clock} alerta="vermelho">{vencidas === 1 ? "vencida" : "vencidas"}</ListSummary>}
+            {resumo.valorEmRisco > 0 && <ListSummary strong={<Valor v={resumo.valorEmRisco} />} alerta="vermelho">em risco</ListSummary>}
             {resumo.clientes > 1 && <ListSummary strong={resumo.clientes}>clientes</ListSummary>}
           </>
         )}
         actions={<>
           <EntityViewSwitcher value={visao} onChange={setVisao} options={VISOES} />
-          <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>
+          {podeCriar && <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}
         </>}
       />
 
@@ -401,10 +416,10 @@ export default function PrestacoesList() {
             <ListEmptyState
               icon={ClipboardCheck}
               title={hasFilter ? "Nenhuma prestação com esses filtros" : "Nenhuma prestação cadastrada"}
-              description={hasFilter ? undefined : "Crie a prestação a partir de um projeto ou de uma negociação aprovada; o Jards calcula o prazo pelo regime."}
+              description={hasFilter ? undefined : "Crie a prestação a partir de um projeto ou de uma negociação aprovada. O prazo sai do regime."}
               filtered={hasFilter}
               onClearFilters={limparFiltros}
-              action={hasFilter ? undefined : <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}
+              action={hasFilter || !podeCriar ? undefined : <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}
             />
           </ListTableSurface>
         ) : visao === "quadro" ? (
@@ -414,16 +429,16 @@ export default function PrestacoesList() {
                 const meta = STATUS_META[coluna.status];
                 const risco = resumoDaCarteira(coluna.linhas).valorEmRisco;
                 return (
-                  <KanbanColumn key={coluna.status} label={meta.label} accent={meta.color} count={loading ? null : coluna.linhas.length} total={risco > 0 ? `${fmt(risco)} em risco` : null} compact>
+                  <KanbanColumn key={coluna.status} label={meta.label} accent={meta.color} count={loading ? null : coluna.linhas.length} total={risco > 0 ? `${formatarValorCurto(risco)} em risco` : null} compact>
                     {coluna.linhas.length === 0 ? <KanbanEmpty label="Nenhuma prestação" /> : coluna.linhas.map(p => (
                       <KanbanCard key={p.id} onClick={() => router.push(`/prestacoes/${p.id}`)}>
-                        <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="line-clamp-2 rounded text-[0.8125rem] font-semibold text-black hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
+                        <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="line-clamp-2 rounded text-[0.8125rem] font-semibold text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
                         <p className="mt-0.5 truncate text-[0.6875rem] text-black/45">{[p.cliente?.nome, nomeDoResponsavel(p.responsavelId)].filter(Boolean).join(" · ") || "Sem cliente"}</p>
                         <div className="mt-3 grid grid-cols-2 gap-3">
                           <PrazoCelula prazo={p.prazoProximo} />
                           <BarraProntidao prontidao={p.prontidao} />
                         </div>
-                        {p.carteira?.achados_em_risco ? <div className="mt-2.5 border-t pt-2.5" style={{ borderColor: "rgba(13,13,13,.06)" }}><RiscoCelula carteira={p.carteira} /></div> : null}
+                        {p.carteira?.achados_em_risco ? <div className="mt-2.5 border-t pt-2.5" style={{ borderColor: "rgba(13,13,13,.06)" }}><RiscoCelula carteira={p.carteira} curto /></div> : null}
                       </KanbanCard>
                     ))}
                   </KanbanColumn>
@@ -442,7 +457,7 @@ export default function PrestacoesList() {
                   <Link href={`/prestacoes/${p.id}`} className="block rounded border bg-white p-4 transition hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-[0.8125rem] font-semibold text-black">{p.titulo}</p>
+                        <p className="text-[0.8125rem] font-semibold text-[#282525]">{p.titulo}</p>
                         <p className="truncate text-[0.6875rem] text-black/40">
                           {[p.cliente?.nome, p.regime?.identificadorOficial && p.identificador_oficial ? `${p.regime.identificadorOficial.rotulo} ${p.identificador_oficial}` : null, p.projeto?.nome].filter(Boolean).join(" · ") || "Sem projeto"}
                         </p>
@@ -491,11 +506,11 @@ export default function PrestacoesList() {
                         style={{ borderBottom: "1px solid rgba(13,13,13,.05)" }}
                       >
                         <td className="px-4 py-3">
-                          <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="line-clamp-1 text-[0.8125rem] font-semibold text-black hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
-                          {p.projeto && <p className="mt-0.5 line-clamp-1 text-[0.625rem] text-black/35">{p.projeto.nome}</p>}
+                          <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="break-words text-[0.8125rem] font-semibold text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
+                          {p.projeto && <p className="mt-0.5 break-words text-[0.625rem] text-black/35">{p.projeto.nome}</p>}
                         </td>
                         <td className="px-4 py-3">
-                          <p className="line-clamp-2 text-[0.6875rem] text-black/60">{p.cliente?.nome ?? <span className="text-black/25">—</span>}</p>
+                          <p className="break-words text-[0.6875rem] text-black/60">{p.cliente?.nome ?? <span className="text-black/25">—</span>}</p>
                         </td>
                         <td className="px-4 py-3 text-[0.6875rem] tabular-nums text-black/60">
                           {p.identificador_oficial
@@ -503,11 +518,11 @@ export default function PrestacoesList() {
                             : <span className="text-black/25">—</span>}
                         </td>
                         <td className="px-4 py-3">
-                          <p className="line-clamp-2 text-[0.6875rem] text-black/60" title={p.regime?.normaReferencia}>{p.regime?.nome ?? <span className="text-black/30">Sem regime</span>}</p>
+                          <p className="break-words text-[0.6875rem] text-black/60" title={p.regime?.normaReferencia}>{p.regime?.nome ?? <span className="text-black/30">Sem regime</span>}</p>
                         </td>
                         <td className="px-4 py-3"><EtiquetaStatus status={p.status} /></td>
                         <td className="px-4 py-3">
-                          <p className="line-clamp-2 text-[0.6875rem] text-black/60">{nomeDoResponsavel(p.responsavelId) ?? <span className="text-black/30">Automático</span>}</p>
+                          <p className="break-words text-[0.6875rem] text-black/60">{nomeDoResponsavel(p.responsavelId) ?? <span className="text-black/30">Automático</span>}</p>
                         </td>
                         <td className="px-4 py-3"><PrazoCelula prazo={p.prazoProximo} /></td>
                         <td className="px-4 py-3"><BarraProntidao prontidao={p.prontidao} /></td>
@@ -523,7 +538,7 @@ export default function PrestacoesList() {
                         </td>
                         <td className="px-4 py-3"><CaptadoCelula carteira={p.carteira} /></td>
                         <td className="px-4 py-3">
-                          <p className="line-clamp-2 text-[0.6875rem] text-black/55">{p.captacao?.titulo ?? <span className="text-black/25">—</span>}</p>
+                          <p className="break-words text-[0.6875rem] text-black/55">{p.captacao?.titulo ?? <span className="text-black/25">—</span>}</p>
                         </td>
                       </tr>
                     );

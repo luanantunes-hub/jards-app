@@ -1,29 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { lerPedidoModulos, respostaErroEquipe } from "@/lib/equipe-modulos";
+import { lerPedidoModulos, mensagemTirarModulosDoExterno, modulosVetadosAoPapel, respostaErroEquipe } from "@/lib/equipe-modulos";
+import { dependenciasDeEquipe } from "@/lib/equipe-servidor";
 
 type Role = "admin" | "captador" | "colaborador" | "leitor";
 
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } },
-  );
-}
-
-async function currentUser() {
-  const cookieStore = await cookies();
-  const client = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } },
-  );
-  const { data: { user } } = await client.auth.getUser();
-  return user;
-}
+const adminClient = () => dependenciasDeEquipe.criarAdmin();
+const currentUser = () => dependenciasDeEquipe.usuarioAtual();
 
 async function authorizeAdmin(organizationId: string, userId: string) {
   const admin = adminClient();
@@ -108,8 +90,10 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ userI
     }
     if (role === undefined) return NextResponse.json({ ok: true });
 
-    if (role === "captador" && (target.modulos_acesso ?? []).includes("prestacao") && !mudaModulos) {
-      return NextResponse.json({ error: "Tire o acesso à prestação de contas antes de tornar a pessoa captador externo." }, { status: 409 });
+    // Captador externo usa só a captação: quem tem outro módulo (prestação, produção) precisa perdê-lo antes.
+    const vetados = mudaModulos ? [] : modulosVetadosAoPapel(role, target.modulos_acesso ?? []);
+    if (vetados.length > 0) {
+      return NextResponse.json({ error: mensagemTirarModulosDoExterno(role, vetados) }, { status: 409 });
     }
     if (targetUserId === user.id && role !== "admin") {
       return NextResponse.json({ error: "Você não pode remover seu próprio acesso administrativo" }, { status: 409 });

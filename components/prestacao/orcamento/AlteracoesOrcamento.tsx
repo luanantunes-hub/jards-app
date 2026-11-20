@@ -19,7 +19,8 @@ import {
   type Minuta,
 } from "@/lib/prestacao/alteracoes";
 import type { NoOrcamento, VersaoOrcamento } from "@/lib/prestacao/orcamento";
-import type { RegimeNormativo } from "@/lib/prestacao/regimes";
+import { definida, type RegimeNormativo } from "@/lib/prestacao/regimes";
+import { estadoDaPrestacao } from "@/lib/prestacao/checagens/estado";
 import { EditorAlteracao, type AlteracaoSalva } from "./EditorAlteracao";
 import { DecisaoAlteracao, type AcaoDeDecisao } from "./DecisaoAlteracao";
 import { MinutaAlteracao } from "./MinutaAlteracao";
@@ -35,6 +36,7 @@ function hojeEmBrasilia(): string {
 export type PrestacaoDaAlteracao = {
   titulo: string;
   identificador_oficial: string | null;
+  numero_processo?: string | null;
   data_liberacao: string | null;
   data_termo?: string | null;
   data_fim_execucao: string | null;
@@ -72,7 +74,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
   const [lidas, setLidas] = useState<{ chave: string; lista: AlteracaoSalva[] } | null>(null);
   const [editor, setEditor] = useState<{ alteracao: AlteracaoSalva | null } | null>(null);
   const [decisao, setDecisao] = useState<{ alteracao: AlteracaoSalva; acao: AcaoDeDecisao } | null>(null);
-  const [minuta, setMinuta] = useState<Minuta | null>(null);
+  const [minuta, setMinuta] = useState<{ minuta: Minuta; alteracao: AlteracaoSalva } | null>(null);
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
   const [erro, setErro] = useState("");
   const chave = `${prestacaoId}:${recarga}`;
@@ -115,8 +117,30 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
     return alt.calculo as unknown as CalculoAlteracao;
   }
 
+  // LIE: a planilha de remanejamento e readequação (Modelo I) vai junto do pedido (P8.3).
+  const modeloDaPlanilha = regime ? definida(regime.envio)?.modelos.find(m => m.codigo === "planilha_remanejamento")?.arquivo ?? null : null;
+
+  async function baixarPlanilha(alt: AlteracaoSalva): Promise<string[]> {
+    if (!modeloDaPlanilha) return [];
+    const [estado, gravacao, resposta] = await Promise.all([
+      estadoDaPrestacao(supabase, prestacaoId),
+      import("@/lib/prestacao/remanejamento-lie"),
+      fetch(`/modelos/${modeloDaPlanilha.replace(/\.xls$/i, ".xlsx")}`),
+    ]);
+    if (!resposta.ok) throw new Error("Não foi possível abrir o modelo da planilha.");
+    const planilha = gravacao.planilhaDeRemanejamento({ estado, projeto: prestacao?.titulo ?? "Projeto", processo: prestacao?.numero_processo, alteracao: alt });
+    const arquivo = await gravacao.gravarPlanilhaDeRemanejamento(new Uint8Array(await resposta.arrayBuffer()), planilha);
+    const url = URL.createObjectURL(new Blob([arquivo as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = gravacao.nomeDaPlanilhaDeRemanejamento(planilha);
+    a.click();
+    URL.revokeObjectURL(url);
+    return planilha.criticas;
+  }
+
   function abrirMinuta(alt: AlteracaoSalva) {
-    setMinuta(minutaDoPedido({
+    setMinuta({ alteracao: alt, minuta: minutaDoPedido({
       prestacaoTitulo: prestacao?.titulo ?? "Projeto",
       identificador: prestacao?.identificador_oficial
         ? { rotulo: regime?.identificadorOficial?.rotulo ?? "Identificador", valor: prestacao.identificador_oficial }
@@ -127,7 +151,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
       justificativa: alt.justificativa ?? "",
       movimentos: alt.movimentos,
       calculo: calculoAtual(alt),
-    }));
+    }) });
   }
 
   function excluir(alt: AlteracaoSalva) {
@@ -155,7 +179,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
     <section aria-labelledby="alteracoes-titulo" className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div>
-          <h2 id="alteracoes-titulo" className="text-[0.75rem] font-semibold text-[#0D0D0D]">Alterações do orçamento</h2>
+          <h2 id="alteracoes-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Alterações do orçamento</h2>
           <p className="text-[0.625rem] text-black/40">Remanejamentos, complementações, reduções e itens novos, com o enquadramento do regime</p>
         </div>
         {permissoes.editar && (
@@ -180,7 +204,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
         </div>
       ) : alteracoes.length === 0 ? (
         <p className="px-5 py-6 text-[0.75rem] leading-5 text-black/45">
-          Nenhuma alteração ainda. Quando um item precisar de mais ou menos dinheiro, monte a alteração aqui: o Jards mostra se ela dispensa autorização ou precisa de pedido ao órgão, com a regra e o artigo.
+          Nenhuma alteração ainda. Monte a alteração quando um item precisar de mais ou menos dinheiro: você vê se precisa de autorização do órgão.
         </p>
       ) : (
         <ul className="divide-y divide-black/[.06]">
@@ -252,7 +276,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
                           disabled={travada}
                           title={travada ? "Corrija o rascunho antes" : undefined}
                           className={principal
-                            ? "flex h-8 items-center gap-1 rounded bg-[#2E8932] px-3 text-[0.6875rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:cursor-not-allowed disabled:opacity-40"
+                            ? "flex h-8 items-center gap-1 rounded acao-salvar px-3 text-[0.6875rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:cursor-not-allowed disabled:opacity-40"
                             : "flex h-8 items-center gap-1 rounded border bg-white px-2.5 text-[0.6875rem] text-black/60 transition hover:border-black/25 hover:text-black/85 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-40"}
                           style={principal ? undefined : { borderColor: "rgba(13,13,13,.14)" }}
                         >
@@ -281,7 +305,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
                               <td className="py-1 text-right tabular-nums text-black/45">{fmt(m.de)}</td>
                               <td className="px-2 py-1 text-center text-black/30">→</td>
                               <td className="py-1 text-right tabular-nums text-black/70">{fmt(m.para)}</td>
-                              <td className={`py-1 pl-3 text-right tabular-nums ${m.para - m.de > 0 ? "text-[#2E8932]" : "text-[#B23B3B]"}`}>{fmtSinal(m.para - m.de)}</td>
+                              <td className={`py-1 pl-3 text-right tabular-nums ${m.para - m.de === 0 ? "text-black/25" : "text-black/70"}`}>{fmtSinal(m.para - m.de)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -317,7 +341,13 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
           onDone={mensagem => { setDecisao(null); onChanged(mensagem); }}
         />
       )}
-      {minuta && <MinutaAlteracao minuta={minuta} onClose={() => setMinuta(null)} />}
+      {minuta && (
+        <MinutaAlteracao
+          minuta={minuta.minuta}
+          onClose={() => setMinuta(null)}
+          planilha={modeloDaPlanilha ? { rotulo: "Planilha de remanejamento", baixar: () => baixarPlanilha(minuta.alteracao) } : undefined}
+        />
+      )}
     </section>
   );
 }

@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import type { RegimeNormativo } from "@/lib/prestacao/regimes";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL } from "@/lib/valor";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { limparCnaesAceitos } from "@/lib/prestacao/cnae";
@@ -75,8 +77,8 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
   const [unidade, setUnidade] = useState(inicial?.unidade ?? "");
   const [quantidade, setQuantidade] = useState(textoDoNumero(inicial?.quantidade));
   const [ocorrencias, setOcorrencias] = useState(textoDoNumero(inicial?.ocorrencias));
-  const [unitario, setUnitario] = useState(textoDoNumero(inicial?.valor_unitario));
-  const [total, setTotal] = useState(textoDoNumero(inicial ? inicial.valor_total : null));
+  const [unitario, setUnitario] = useState(formatarValorBRL(inicial?.valor_unitario));
+  const [total, setTotal] = useState(formatarValorBRL(inicial ? inicial.valor_total : null));
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -125,16 +127,16 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center veu p-4" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[92dvh] w-full max-w-[34rem] flex-col overflow-hidden rounded bg-white shadow-2xl"
+        className="flex max-h-[92dvh] w-full max-w-[34rem] flex-col overflow-hidden rounded bg-white border elevacao-3"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#0D0D0D]">
+          <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#282525]">
             {inicial ? `Editar ${rotuloTipoNo(inicial.tipo).toLowerCase()}` : ehItem ? "Novo item" : `Novo agrupador: ${rotuloTipoNo(tipo).toLowerCase()}`}
           </h2>
           <button type="button" onClick={onClose} aria-label="Fechar" className="rounded p-1.5 text-black/35 transition hover:bg-black/5 hover:text-black/55 focus-visible:outline-2 focus-visible:outline-[#7259B5]">
@@ -240,7 +242,7 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
                 </label>
                 <label className="block">
                   <span className={ROTULO}>Valor unitário</span>
-                  <input inputMode="decimal" value={unitario} onChange={e => setUnitario(e.target.value)} className={`${CAMPO} tabular-nums`} placeholder="R$" />
+                  <InputValor value={unitario} onChange={setUnitario} className={`${CAMPO} tabular-nums`} placeholder="0,00" />
                 </label>
               </div>
               <label className="mt-3 block">
@@ -248,7 +250,7 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
                 {temUnitario ? (
                   <p className="rounded bg-black/[.03] px-3 py-2 text-[0.8125rem] font-medium tabular-nums text-black/70">{fmt(totalCalculado)}</p>
                 ) : (
-                  <input inputMode="decimal" value={total} onChange={e => setTotal(e.target.value)} className={`${CAMPO} tabular-nums`} placeholder="R$ 0,00" />
+                  <InputValor value={total} onChange={setTotal} className={`${CAMPO} tabular-nums`} placeholder="0,00" />
                 )}
               </label>
               {inicial && inicial.valor_remanejado !== 0 && (
@@ -292,7 +294,7 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
             type="button"
             onClick={salvar}
             disabled={salvando}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
             Salvar

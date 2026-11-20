@@ -30,8 +30,7 @@ import type { PrestacaoDistribuicao } from "@/lib/supabase/types";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
-const COR_BLOQUEIO = "#B23B3B";
-const COR_ALERTA = "#B07A14";
+const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 
 type DadosDaPrestacao = {
   regime_id: string | null;
@@ -48,11 +47,12 @@ function Cota({ c }: { c: SituacaoDaCota }) {
   const Icone = c.dentro ? CheckCircle2 : Ban;
   return (
     <div className="rounded border bg-white px-3 py-2.5" style={BORDA}>
-      <p className="text-[0.625rem] text-black/45">{c.rotulo}</p>
-      <p className="mt-0.5 text-[1rem] font-semibold tabular-nums text-black/85">{formatarPercentual(c.percentual)}</p>
+      <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{c.rotulo}</p>
+      <p className={`mt-0.5 text-[1rem] font-semibold tabular-nums ${c.percentual ? "text-[#282525]" : "text-black/30"}`}>{formatarPercentual(c.percentual)}</p>
       <p className="text-[0.625rem] text-black/40">{c.sentido === "max" ? "até" : "ao menos"} {formatarPercentual(c.limite)} · {c.dispositivo}</p>
-      <p className="mt-1 flex items-center gap-1 text-[0.625rem] font-medium" style={{ color: c.dentro ? "#2E8932" : COR_BLOQUEIO }}>
-        <Icone size={11} aria-hidden /> {c.dentro ? "Dentro" : c.sentido === "max" ? "Acima do máximo" : "Abaixo do mínimo"}
+      <p className="mt-1 flex items-center gap-1 text-[0.625rem] text-black/55">
+        <Icone size={12} strokeWidth={1.75} aria-hidden className={`shrink-0 ${c.dentro ? "text-black/40" : "text-[#D94A4A]"}`} />
+        {c.dentro ? "Dentro" : c.sentido === "max" ? "Acima do máximo" : "Abaixo do mínimo"}
       </p>
     </div>
   );
@@ -67,8 +67,8 @@ function Avisos({ achados }: { achados: readonly Achado[] }) {
         const bloqueio = a.severidade === "bloqueio";
         const Icone = bloqueio ? Ban : AlertTriangle;
         return (
-          <li key={a.chave} className="flex items-start gap-1 text-[0.6875rem]" style={{ color: a.justificativa ? "rgba(13,13,13,.45)" : bloqueio ? COR_BLOQUEIO : COR_ALERTA }}>
-            <Icone size={11} className="mt-0.5 shrink-0" aria-hidden />
+          <li key={a.chave} className={`flex items-start gap-1 text-[0.6875rem] ${a.justificativa ? "text-black/45" : "text-black/60"}`}>
+            <Icone size={12} strokeWidth={1.75} className={`mt-0.5 shrink-0 ${a.justificativa ? "text-black/40" : bloqueio ? "text-[#D94A4A]" : "text-[#B07A14]"}`} aria-hidden />
             <span>{a.mensagem}{a.justificativa ? ` Justificativa: ${a.justificativa}` : ""}</span>
           </li>
         );
@@ -111,7 +111,7 @@ function Produto({ resumo, limites, achadosDoProduto, achadosDaLinha, podeEditar
   return (
     <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby={titulo}>
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <h3 id={titulo} className="text-[0.75rem] font-semibold text-black">{resumo.produto}</h3>
+        <h3 id={titulo} className="text-[0.75rem] font-semibold text-[#282525]">{resumo.produto}</h3>
         <p className="text-[0.6875rem] tabular-nums text-black/45">
           {inteiro(resumo.total)} {resumo.base === "realizado" ? "distribuídos e vendidos" : "no plano"}
           {resumo.receita > 0 && <> · receita prevista {reais(resumo.receita)}</>}
@@ -127,19 +127,19 @@ function Produto({ resumo, limites, achadosDoProduto, achadosDaLinha, podeEditar
           )}
           {resumo.vendidos > 0 && (
             <dl className="flex flex-wrap gap-x-6 gap-y-1 text-[0.6875rem]">
-              <div className="flex gap-1.5">
-                <dt className="text-black/40">Meia-entrada</dt>
-                <dd className="tabular-nums text-black/75">
+              <div className="flex items-baseline gap-1.5">
+                <dt className={ROTULO}>Meia-entrada</dt>
+                <dd className="font-semibold tabular-nums text-[#282525]">
                   {inteiro(resumo.meias)} de {inteiro(resumo.vendidos)} vendidos · {formatarPercentual(percentual(resumo.meias, resumo.vendidos))}
-                  {limites?.meiaMin != null && <span className="text-black/40"> (ao menos {formatarPercentual(limites.meiaMin)})</span>}
+                  {limites?.meiaMin != null && <span className="font-normal text-black/40"> (ao menos {formatarPercentual(limites.meiaMin)})</span>}
                 </dd>
               </div>
               {resumo.precoMedio !== null && (
-                <div className="flex gap-1.5">
-                  <dt className="text-black/40">Preço médio da venda livre</dt>
-                  <dd className="tabular-nums text-black/75">
+                <div className="flex items-baseline gap-1.5">
+                  <dt className={ROTULO}>Preço médio da venda livre</dt>
+                  <dd className="font-semibold tabular-nums text-[#282525]">
                     {reais(resumo.precoMedio)}
-                    {limites?.precoMedioMax != null && <span className="text-black/40"> (até {reais(limites.precoMedioMax)})</span>}
+                    {limites?.precoMedioMax != null && <span className="font-normal text-black/40"> (até {reais(limites.precoMedioMax)})</span>}
                   </dd>
                 </div>
               )}
@@ -323,18 +323,13 @@ export default function DistribuicaoPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Distribuição</h2>
-          <p className="text-[0.6875rem] text-black/45">
-            {limites && regime
-              ? `Plano de distribuição por produto, com as cotas do regime (${regime.nome}).`
-              : "Plano de distribuição por produto: o previsto e o que foi distribuído ou vendido."}
-          </p>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Distribuição</h2>
         </div>
         {podeEditar && (
           <button
             type="button"
             onClick={() => setEditando("nova")}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
           >
             <Plus size={13} aria-hidden /> Adicionar ao plano
           </button>
@@ -346,12 +341,15 @@ export default function DistribuicaoPage() {
       {!carregando && linhas.length > 0 && (
         <div className="rounded border bg-white px-5 py-3" style={BORDA}>
           <dl className="flex flex-wrap gap-x-6 gap-y-1 text-[0.6875rem]">
-            <div className="flex gap-1.5"><dt className="text-black/40">Produtos</dt><dd className="tabular-nums text-black/75">{resumos.length}</dd></div>
-            {receitaTotal > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Receita prevista</dt><dd className="tabular-nums text-black/75">{reais(receitaTotal)}</dd></div>}
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Produtos</dt><dd className={`font-semibold tabular-nums ${resumos.length ? "text-[#282525]" : "text-black/30"}`}>{resumos.length}</dd></div>
+            {receitaTotal > 0 && <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Receita prevista</dt><dd className="font-semibold tabular-nums text-[#282525]">{reais(receitaTotal)}</dd></div>}
             {limites && (
-              <div className="flex gap-1.5">
-                <dt className="text-black/40">Cotas fora do limite</dt>
-                <dd className="tabular-nums" style={{ color: foraDasCotas ? COR_BLOQUEIO : "rgba(13,13,13,.75)" }}>{foraDasCotas}</dd>
+              <div className="flex items-center gap-1.5">
+                <dt className={`${ROTULO} inline-flex items-center gap-1`}>
+                  {foraDasCotas > 0 && <Ban size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />}
+                  Cotas fora do limite
+                </dt>
+                <dd className={`font-semibold tabular-nums ${foraDasCotas ? "text-[#282525]" : "text-black/30"}`}>{foraDasCotas}</dd>
               </div>
             )}
           </dl>
@@ -372,8 +370,8 @@ export default function DistribuicaoPage() {
           <p className="mt-2 text-[0.75rem] text-black/55">Nenhum plano de distribuição.</p>
           <p className="mx-auto max-w-[28rem] text-[0.6875rem] text-black/35">
             {podeEditar
-              ? "Cadastre como os ingressos ou produtos serão distribuídos: as cotas gratuitas, o preço popular e a venda, produto a produto."
-              : "Quem edita a prestação cadastra o plano de distribuição."}
+              ? "Cadastre a distribuição dos ingressos ou produtos: cotas gratuitas, preço popular e venda."
+              : "Nenhum plano de distribuição cadastrado."}
           </p>
         </div>
       ) : (

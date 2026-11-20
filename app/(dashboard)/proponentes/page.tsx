@@ -15,6 +15,7 @@ import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/Entity
 import { calculateWeightedScore, CompactDecisionScoreRing } from "@/components/relationship/DecisionScorecard";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type ViewMode = "lista" | "mapa";
 const VIEW_MODES = ["lista", "mapa"] as const;
@@ -101,11 +102,6 @@ const TIPO_COLOR: Record<string, string> = {
   outro:         "#888888",
 };
 
-function fmtMoney(value: number) {
-  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)} mi`;
-  return `R$ ${value.toLocaleString("pt-BR")}`;
-}
-
 function fmtDate(value: string | null) {
   if (!value) return "—";
   const [year, month, day] = value.split("T")[0].split("-");
@@ -130,11 +126,11 @@ function ProponentesMapView({ items, onOpenProponente, onOpenProjeto }: {
               <ProjectIdentity nome={item.nome} tipo={item.identidade_tipo} valor={item.identidade_valor} logoUrl={item.identidade_logo_url} cor={item.identidade_cor} iconOptions={PROPONENTE_ICON_OPTIONS} />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="truncate text-[0.875rem] font-bold text-black">{item.nome}</h2>
+                  <h2 className="truncate text-[0.875rem] font-bold text-[#282525]">{item.nome}</h2>
                   <span className="text-[0.625rem] font-semibold text-black/35">{item.n_projetos} {item.n_projetos === 1 ? "projeto" : "projetos"}</span>
                 </div>
                 <p className="mt-1 text-[0.6875rem] text-black/40">{[item.tipo ? tipoLabels[item.tipo] ?? TIPO_LABEL[item.tipo] ?? item.tipo : null, item.cidade, item.estado].filter(Boolean).join(" / ") || "Sem classificação"}</p>
-                {(target > 0 || guaranteed > 0) && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.625rem] text-black/35"><span>Objetivo <strong className="text-black/60">{fmtMoney(target)}</strong></span><span>Garantido <strong className="text-[#2E8932]">{fmtMoney(guaranteed)}</strong></span></div>}
+                {(target > 0 || guaranteed > 0) && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.625rem] text-black/35"><span>Objetivo <strong className={`font-semibold tabular-nums ${target ? "text-black/70" : "text-black/30"}`} title={formatarValorCompleto(target)}>{formatarValorCurto(target)}</strong></span><span>Garantido <strong className={`font-semibold tabular-nums ${guaranteed ? "text-black/70" : "text-black/30"}`} title={formatarValorCompleto(guaranteed)}>{formatarValorCurto(guaranteed)}</strong></span></div>}
               </div>
             </button>
             <div className="grid gap-2 bg-[#F7F7F5] p-3 sm:grid-cols-2">
@@ -267,7 +263,7 @@ export default function ProponentesPage() {
         />
       )}
 
-      <ListPageHeader eyebrow="Estrutura institucional" title="Proponentes" summary={!loading&&<ListSummary strong={visibleProponentes.length}>proponentes</ListSummary>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo proponente</PrimaryListAction></>}/>
+      <ListPageHeader secao="proponentes" eyebrow="Estrutura institucional" title="Proponentes" summary={!loading&&<ListSummary strong={visibleProponentes.length}>proponentes</ListSummary>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo proponente</PrimaryListAction></>}/>
 
       {!loading && proponentes.length > 0 && <ListToolbar><div className="flex max-w-full flex-col gap-2 lg:flex-row"><SegmentedControl value={tipoFilter} onChange={setTipoFilter} ariaLabel="Filtrar proponentes por tipo" options={[{ value: "todos", label: "Todos os tipos" }, ...etiquetasProponente.map(item => ({ value: item.key, label: item.label }))]}/><SegmentedControl value={quickFilter} onChange={value => setQuickFilter(value as QuickFilter)} ariaLabel="Filtrar proponentes por situação" options={[{ value: "todos", label: "Todos" }, { value: "com_projetos", label: "Com projetos" }, { value: "sem_projetos", label: "Sem projetos" }, { value: "com_captacao", label: "Com captação" }, { value: "sem_atividade", label: "Sem atividade" }]}/></div></ListToolbar>}
 
@@ -336,9 +332,9 @@ export default function ProponentesPage() {
                           {/* Nome */}
                           <td className="px-4 py-3.5 max-w-[15rem]">
                             <div className="flex items-center gap-2.5">
-                              <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} iconOptions={PROPONENTE_ICON_OPTIONS} />
+                              <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} iconOptions={PROPONENTE_ICON_OPTIONS} semFundo />
                               <div className="min-w-0">
-                                <p className="text-[0.8125rem] font-semibold text-black leading-tight line-clamp-1">{p.nome}</p>
+                                <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight break-words">{p.nome}</p>
                                 {p.descricao && (
                                   <p className="text-[0.6875rem] text-black/35 line-clamp-1 mt-0.5">{p.descricao}</p>
                                 )}
@@ -350,7 +346,7 @@ export default function ProponentesPage() {
                           <td className="px-4 py-3.5">
                             <div className="space-y-1">
                               <p className="text-[0.6875rem] font-medium" style={{ color: tipoBg ?? "rgba(13,13,13,.35)" }}>{p.tipo ? tipoMeta?.label ?? TIPO_LABEL[p.tipo] ?? p.tipo : "Sem tipo"}</p>
-                              <p className="truncate text-[0.625rem] text-black/35">{[p.cidade, p.estado].filter(Boolean).join(" · ") || "Sem localização"}</p>
+                              <p className="min-w-0 break-words text-[0.625rem] text-black/35">{[p.cidade, p.estado].filter(Boolean).join(" · ") || "Sem localização"}</p>
                             </div>
                           </td>
 
@@ -363,19 +359,19 @@ export default function ProponentesPage() {
                           {/* Captação */}
                           <td className="px-4 py-3.5">
                             {target > 0 ? <div>
-                              <p className="text-[0.6875rem] font-medium tabular-nums text-black/60"><span className="text-[#2E8932]">{fmtMoney(guaranteed)}</span> de {fmtMoney(target)}</p>
+                              <p className="text-[0.6875rem] font-medium tabular-nums text-black/60"><span title={formatarValorCompleto(guaranteed)}>{formatarValorCurto(guaranteed)}</span> de <span title={formatarValorCompleto(target)}>{formatarValorCurto(target)}</span></p>
                               <div className="mt-2 flex items-center gap-2"><span className="h-1 flex-1 overflow-hidden rounded-full bg-black/[.06]"><span className="block h-full rounded-full bg-[#2E8932]" style={{ width: `${progress}%` }}/></span><span className="w-8 text-right text-[0.59375rem] tabular-nums text-black/35">{progress}%</span></div>
                             </div> : <span className="text-[0.6875rem] text-black/25">Sem meta definida</span>}
                           </td>
 
                           {/* Próximo movimento */}
                           <td className="px-4 py-3.5">
-                            {p.proxima_atividade ? <div className="flex items-start gap-2"><CalendarClock size={12} className="mt-0.5 shrink-0 text-black/25"/><div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60">{p.proxima_atividade.nome}</p><p className="mt-1 text-[0.625rem] tabular-nums text-black/30">{p.proxima_atividade.data_prevista ? fmtDate(p.proxima_atividade.data_prevista) : "Sem data"}</p></div></div> : <span className="text-[0.6875rem] text-[#D94E4E]">Sem atividade</span>}
+                            {p.proxima_atividade ? <div className="flex items-start gap-2"><CalendarClock size={12} className="mt-0.5 shrink-0 text-black/25"/><div className="min-w-0"><p className="min-w-0 break-words text-[0.6875rem] font-medium text-black/60">{p.proxima_atividade.nome}</p><p className="mt-1 text-[0.625rem] tabular-nums text-black/30">{p.proxima_atividade.data_prevista ? fmtDate(p.proxima_atividade.data_prevista) : "Sem data"}</p></div></div> : <span className="text-[0.6875rem] text-black/30">Sem atividade</span>}
                           </td>
 
                           {/* Contato principal */}
                           <td className="px-4 py-3.5">
-                            {p.contato_principal ? <div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60">{p.contato_principal.nome || "Contato sem nome"}</p><p className="mt-1 truncate text-[0.625rem] text-black/30">{p.contato_principal.cargo || p.contato_principal.email || "Sem detalhes"}</p></div> : p.email ? <div className="flex min-w-0 items-center gap-1.5"><Mail size={11} className="shrink-0 text-black/25"/><span className="truncate text-[0.625rem] text-black/40">{p.email}</span></div> : <span className="text-[0.6875rem] text-black/25">Sem contato</span>}
+                            {p.contato_principal ? <div className="min-w-0"><p className="min-w-0 break-words text-[0.6875rem] font-medium text-black/60">{p.contato_principal.nome || "Contato sem nome"}</p><p className="mt-1 min-w-0 break-words text-[0.625rem] text-black/30">{p.contato_principal.cargo || p.contato_principal.email || "Sem detalhes"}</p></div> : p.email ? <div className="flex min-w-0 items-center gap-1.5"><Mail size={11} className="shrink-0 text-black/25"/><span className="min-w-0 break-words text-[0.625rem] text-black/40">{p.email}</span></div> : <span className="text-[0.6875rem] text-black/25">Sem contato</span>}
                           </td>
 
                           {/* Score */}

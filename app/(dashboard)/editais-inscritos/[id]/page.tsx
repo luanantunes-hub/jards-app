@@ -3,22 +3,23 @@ import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, Plus, Pencil, X, Send, ChevronDown, Check,
+  ArrowLeft, Pencil, ChevronDown, Check,
   ArrowUp, ArrowDown, Minus,
   Clock, ExternalLink, FileCheck,
-  Calendar, Users, Mail, Phone, MoreHorizontal, Globe, Star,
+  Calendar, CalendarClock, Users, Mail, Phone, MoreHorizontal, Globe, Star,
   ClipboardList, LayoutDashboard, BriefcaseBusiness, RotateCw, Layers,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { StatusEdital } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
+import { ProjetoResumo } from "@/components/projects/ProjetoResumo";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { StatusDropdown } from "@/components/ui/StatusDropdown";
 import { NovaInscricaoModal, type EditDataInscricao } from "@/components/modals/NovaInscricaoModal";
+import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
 import { RenovarCicloModal } from "@/components/modals/RenovarCicloModal";
 import { RegistrosPanel } from "@/components/modals/RegistrosPanel";
-import { DetailPageContent, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
+import { DetailHeaderAction, DetailPageContent, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PropostaValuePanel } from "@/components/PropostaValuePanel";
 import { CotasReferenceTab } from "@/components/CotasReferenceTab";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
@@ -27,6 +28,7 @@ import { CommercialCycleHistory, type CommercialCycle } from "@/components/comme
 import { NotasDoRegistro } from "@/components/notas/NotasDoRegistro";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { CAMPOS_NOTA, buscarNotas, resumoNota, type NotaRegistro } from "@/lib/notas";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 const RESULTADO_NEGATIVO = new Set(["reprovado", "cancelado"]);
 
@@ -63,7 +65,7 @@ type InscricaoDetalhe = {
   retomada_atividade_id: string | null;
   empresas: { nome: string; logo_url: string | null; site: string | null } | null;
   empresas_crm: { nome: string; domain_key: string | null; site: string | null } | null;
-  projetos_crm: { nome: string; descricao: string | null; identidade_tipo: "padrao" | "icone" | "emoji" | "logo" | null; identidade_valor: string | null; identidade_logo_url: string | null; identidade_cor: string | null } | null;
+  projetos_crm: { nome: string; descricao: string | null; valor_alvo: number | null; proponente_nome: string | null; proponente_cidade: string | null; proponente_estado: string | null; identidade_tipo: "padrao" | "icone" | "emoji" | "logo" | null; identidade_valor: string | null; identidade_logo_url: string | null; identidade_cor: string | null } | null;
 };
 
 type Atividade = {
@@ -117,28 +119,12 @@ const TIPO_ICONS: Record<string, React.ElementType> = {
   outro:    MoreHorizontal,
 };
 
-const TIPO_COLOR: Record<string, string> = {
-  email:    "#7259B5",
-  telefone: "#1A8B7A",
-  reuniao:  "rgba(13,13,13,.45)",
-  linkedin: "#2D72B0",
-  evento:   "#B07A14",
-  outro:    "rgba(13,13,13,.40)",
-};
-
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 
 function fmtDate(d: string | null): string {
   if (!d) return "—";
   const [y, m, day] = d.split("T")[0].split("-");
   return `${day}/${m}/${y}`;
-}
-
-function fmtValor(v: number | null): string {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000)     return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
 }
 
 function daysUntil(d: string | null): number | null {
@@ -189,13 +175,8 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
   const [activeTab, setActiveTab] = useState<"visao-geral" | "cotas" | "conteudo">("visao-geral");
 
   const [showNewAtividade, setShowNewAtividade] = useState(false);
-  const [newNome, setNewNome]     = useState("");
-  const [newTipo, setNewTipo]     = useState("reuniao");
-  const [newData, setNewData]     = useState("");
-  const [newNota, setNewNota]     = useState("");
-  const [salvando, setSalvando]   = useState(false);
 
-  const [sidebarStatusMenu, setSidebarStatusMenu] = useState<{ top: number; left: number } | null>(null);
+  const [sidebarStatusMenu, setSidebarStatusMenu] = useState<{ top: number; left: number; right?: number } | null>(null);
   const [leiMenuPos, setLeiMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [prioMenuPos, setPrioMenuPos] = useState<{ top: number; left: number } | null>(null);
 
@@ -213,7 +194,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
         retomada_programada_em, ciclo_programado, retomada_atividade_id,
         empresas!empresa_pub_id(nome, logo_url, site),
         empresas_crm!empresa_crm_id(nome, domain_key, site),
-        projetos_crm!projeto_id(nome, descricao, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor)
+        projetos_crm!projeto_id(nome, descricao, valor_alvo, proponente_nome, proponente_cidade, proponente_estado, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor)
       `)
       .eq("id", id)
       .single();
@@ -303,33 +284,6 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
     await fetchData();
   }
 
-  async function handleSalvarAtividade() {
-    if (!newNome.trim()) return;
-    setSalvando(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSalvando(false); return; }
-    const { data: orgData } = await (supabase as any)
-      .from("organization_members")
-      .select("organization_id")
-      .eq("user_id", user.id)
-      .limit(1)
-      .single();
-    await (supabase as any).from("atividades").insert({
-      account_id:      user.id,
-      organization_id: orgData?.organization_id ?? null,
-      nome:            newNome.trim(),
-      tipo:            newTipo,
-      data_prevista:   newData || null,
-      nota:            newNota.trim() || null,
-      edital_user_id:  id,
-      empresa_crm_id:  inscricao?.empresa_crm_id ?? null,
-    });
-    setNewNome(""); setNewTipo("reuniao"); setNewData(""); setNewNota("");
-    setShowNewAtividade(false);
-    setSalvando(false);
-    await fetchData();
-  }
-
   async function handleToggleAtividade(atvId: string, feita: boolean) {
     const now = new Date().toISOString().split("T")[0];
     await (supabase as any)
@@ -382,6 +336,13 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
     <div className="min-h-full">
 
       {/* Modals */}
+      {showNewAtividade && (
+        <NovaAtividadeModal
+          prefill={{ edital_user_id: inscricao.id, empresa_crm_id: inscricao.empresa_crm_id ?? undefined }}
+          onClose={() => setShowNewAtividade(false)}
+          onSaved={() => { setShowNewAtividade(false); void fetchData(); }}
+        />
+      )}
       {showEditModal && (
         <NovaInscricaoModal
           editData={{
@@ -443,7 +404,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
         <>
           <div className="fixed inset-0 z-40" onClick={() => setPrioMenuPos(null)} />
           <div
-            className="fixed z-50 overflow-hidden rounded-lg border bg-white shadow-xl"
+            className="fixed z-50 overflow-hidden rounded bg-white border elevacao-1"
             style={{ top: prioMenuPos.top, left: prioMenuPos.left, borderColor: "rgba(13,13,13,.10)", minWidth: "11.25rem" }}
           >
             {(["sem", "alta", "media", "baixa"] as const).map(p => {
@@ -456,7 +417,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                   onClick={() => handlePrioridadeChange(p === "sem" ? null : p)}
                   className="flex w-full items-center justify-between px-3 py-2 text-left text-[0.75rem] transition hover:bg-black/[.03]"
                 >
-                  <span className="inline-flex items-center gap-1.5 text-black">
+                  <span className="inline-flex items-center gap-1.5 text-[#282525]">
                     {it ? (
                       <span className="flex h-3 w-3 items-center justify-center rounded text-white" style={{ background: it.color }}>
                         <it.Icon size={8} strokeWidth={2.5} />
@@ -493,7 +454,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
               size={56}
             />
             <div className="min-w-0">
-              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{titulo}</h1>
+              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{titulo}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.875rem] text-black/45">
                 {projetoNome && (inscricao.empresas_crm?.nome && !inscricao.empresas?.nome ? (
                   <Link href={`/empresas-crm/${inscricao.empresa_crm_id}`} className="text-sm text-black/45 hover:text-[#7259B5] transition">
@@ -548,7 +509,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             ) : RESULTADO_NEGATIVO.has(inscricao.status) ? (
               <button
                 onClick={() => setShowRenovarModal(true)}
-                className="flex h-11 items-center gap-2 rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-black transition hover:bg-black/[.04]"
+                className="flex h-11 items-center gap-2 rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04]"
               >
                 <RotateCw size={12} />
                 {inscricao.retomada_programada_em
@@ -563,17 +524,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
               <Pencil size={12} /> Editar
             </button>
 
-            <button
-              onClick={() => setShowNewAtividade(v => !v)}
-              className={`flex h-11 items-center gap-2 rounded border px-4 text-[0.75rem] font-medium transition ${
-                showNewAtividade
-                  ? "bg-white border-[#7259B5]/25 text-[#7259B5]"
-                  : "bg-white border-black/[.12] text-black/55 hover:bg-black/[.04]"
-              }`}
-            >
-              {showNewAtividade ? <X size={12} /> : <Plus size={12} />}
-              {showNewAtividade ? "Cancelar" : "Atividade"}
-            </button>
+            <DetailHeaderAction label="Nova atividade" icon={CalendarClock} onClick={() => setShowNewAtividade(true)} />
 
           </div>
         </div>
@@ -583,12 +534,12 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
       <div className="border-b bg-white" style={{ borderColor: "rgba(13,13,13,.06)" }}><div className="mx-auto grid max-w-pagina grid-cols-2 gap-5 px-4 py-5 sm:grid-cols-3 sm:px-6 lg:grid-cols-5 lg:px-10 xl:grid-cols-6">
           {!inscricao.projeto_id && (
             <div>
-              <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/30 mb-0.5">Valor</p>
-              <p className="text-[0.9375rem] font-bold text-[#0D0D0D]">{fmtValor(inscricao.valor)}</p>
+              <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Valor</p>
+              <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.valor ? "text-[#282525]" : "text-black/30"}`} title={inscricao.valor ? formatarValorCompleto(inscricao.valor) : undefined}>{inscricao.valor ? formatarValorCurto(inscricao.valor) : "—"}</p>
             </div>
           )}
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Tipo de patrocínio</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Tipo de patrocínio</p>
             <button
               type="button"
               onClick={(event) => {
@@ -605,19 +556,19 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             </button>
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/30 mb-0.5">Fechamento</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Fechamento</p>
             {diasFechamento !== null && diasFechamento >= 0 && diasFechamento < 7 ? (
-              <p className="text-[0.9375rem] font-bold" style={{ color: "#D94E4E" }}>{diasFechamento === 0 ? "Hoje" : `${diasFechamento}d`}</p>
+              <p className="inline-flex items-center gap-1 text-[0.9375rem] font-semibold tabular-nums text-[#282525]"><Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: "#D94A4A" }} />{diasFechamento === 0 ? "Hoje" : `${diasFechamento}d`}</p>
             ) : (
-              <p className="text-[0.9375rem] font-bold text-[#0D0D0D]">{fmtDate(inscricao.data_fechamento)}</p>
+              <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.data_fechamento ? "text-[#282525]" : "text-black/30"}`}>{fmtDate(inscricao.data_fechamento)}</p>
             )}
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/30 mb-0.5">Resultado</p>
-            <p className="text-[0.9375rem] font-bold text-[#0D0D0D]">{fmtDate(inscricao.data_resultado)}</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Resultado</p>
+            <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.data_resultado ? "text-[#282525]" : "text-black/30"}`}>{fmtDate(inscricao.data_resultado)}</p>
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Prioridade</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Prioridade</p>
             <button
               type="button"
               onClick={(event) => {
@@ -639,8 +590,8 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             </button>
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/30 mb-0.5">Atividades</p>
-            <p className="text-[0.9375rem] font-bold text-[#0D0D0D]">
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Atividades</p>
+            <p className={`text-[0.9375rem] font-semibold tabular-nums ${atividades.length ? "text-[#282525]" : "text-black/30"}`}>
               {concluidas.length}<span className="text-black/25 font-medium text-[0.8125rem]">/{atividades.length}</span>
             </p>
           </div>
@@ -695,26 +646,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             {inscricao.projetos_crm && (
               <section>
                 <div className="mb-3"><h2 className="text-[0.6875rem] font-bold uppercase tracking-[.12em] text-black/35">Projeto</h2></div>
-                <Link
-                  href={inscricao.projeto_id ? `/projetos/${inscricao.projeto_id}` : "#"}
-                  className={`block rounded border bg-white p-5 transition ${inscricao.projeto_id ? "hover:border-[#7259B5]/30 hover:bg-black/[.04]" : "pointer-events-none"}`}
-                  style={{ borderColor: "rgba(13,13,13,.08)" }}
-                >
-                  <div className="flex items-center gap-3">
-                    <ProjectIdentity
-                      nome={inscricao.projetos_crm.nome}
-                      tipo={inscricao.projetos_crm.identidade_tipo}
-                      valor={inscricao.projetos_crm.identidade_valor}
-                      logoUrl={inscricao.projetos_crm.identidade_logo_url}
-                      cor={inscricao.projetos_crm.identidade_cor}
-                      size="md"
-                    />
-                    <p className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-[#0D0D0D]">{inscricao.projetos_crm.nome}</p>
-                  </div>
-                  {inscricao.projetos_crm.descricao && (
-                    <p className="mt-3 text-[0.75rem] leading-relaxed text-black/45">{inscricao.projetos_crm.descricao}</p>
-                  )}
-                </Link>
+                <ProjetoResumo projetoId={inscricao.projeto_id} projeto={inscricao.projetos_crm} />
               </section>
             )}
 
@@ -737,80 +669,11 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                 <div className="space-y-2">
                   {propostas.map(proposta => (
                     <div key={proposta.id} className="rounded border border-black/[.08] bg-white p-4">
-                      <div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/[.045] text-black/40"><BriefcaseBusiness size={14} /></span><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-4"><div><p className="text-[0.8125rem] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 text-[0.625rem] text-black/30">{proposta.contrapartidas.length} contrapartida{proposta.contrapartidas.length === 1 ? "" : "s"}</p></div><span className="shrink-0 text-[0.8125rem] font-semibold text-black/65">{fmtValor(proposta.valor_proposto)}</span></div>{proposta.observacoes_comerciais && <p className="mt-3 border-t border-black/[.06] pt-3 text-[0.6875rem] leading-5 text-black/40">{proposta.observacoes_comerciais}</p>}</div></div>
+                      <div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/[.045] text-black/40"><BriefcaseBusiness size={14} /></span><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-4"><div><p className="text-[0.8125rem] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 text-[0.625rem] text-black/30">{proposta.contrapartidas.length} contrapartida{proposta.contrapartidas.length === 1 ? "" : "s"}</p></div><span className="shrink-0 text-[0.8125rem] font-semibold tabular-nums text-black/65">{proposta.valor_proposto ? formatarValorCompleto(proposta.valor_proposto) : "—"}</span></div>{proposta.observacoes_comerciais && <p className="mt-3 border-t border-black/[.06] pt-3 text-[0.6875rem] leading-5 text-black/40">{proposta.observacoes_comerciais}</p>}</div></div>
                     </div>
                   ))}
                 </div>
               </section>
-            )}
-
-            {/* Nova atividade inline */}
-            {showNewAtividade && (
-              <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <p className="text-[0.75rem] font-medium text-black/50 uppercase tracking-wide mb-3">Nova atividade</p>
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    value={newNome}
-                    onChange={e => setNewNome(e.target.value)}
-                    placeholder="Nome da atividade..."
-                    autoFocus
-                    className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5] transition"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
-                  <div className="flex gap-1.5 flex-wrap">
-                    {[
-                      { value: "reuniao",  label: "Reunião",  Icon: Users   },
-                      { value: "email",    label: "E-mail",   Icon: Mail    },
-                      { value: "telefone", label: "Telefone", Icon: Phone   },
-                      { value: "outro",    label: "Outro",    Icon: MoreHorizontal },
-                    ].map(({ value, label, Icon }) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setNewTipo(value)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[0.6875rem] font-medium rounded border transition ${
-                          newTipo === value
-                            ? "bg-white text-[#7259B5] border-[#7259B5]/25"
-                            : "bg-white text-black/50 border-black/10 hover:border-black/20"
-                        }`}
-                      >
-                        <Icon size={11} /> {label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="date"
-                      value={newData}
-                      onChange={e => setNewData(e.target.value)}
-                      className="flex-1 px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    />
-                    <input
-                      type="text"
-                      value={newNota}
-                      onChange={e => setNewNota(e.target.value)}
-                      placeholder="Nota"
-                      className="flex-1 px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <button onClick={() => setShowNewAtividade(false)} className="px-3 py-1.5 text-[0.6875rem] font-medium text-black/40 hover:text-black/60 transition">
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={handleSalvarAtividade}
-                      disabled={!newNome.trim() || salvando}
-                      className="flex items-center gap-1.5 px-4 py-1.5 text-[0.6875rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
-                    >
-                      {salvando ? <span className="w-3 h-3 border-2 border-[#7259B5]/30 border-t-[#7259B5] rounded-full animate-spin" /> : <Send size={11} />}
-                      Salvar
-                    </button>
-                  </div>
-                </div>
-              </div>
             )}
 
             {/* Atividades pendentes */}
@@ -823,7 +686,6 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                 <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   {pendentes.map((atv, i) => {
                     const Icon = TIPO_ICONS[atv.tipo || "outro"] ?? MoreHorizontal;
-                    const color = TIPO_COLOR[atv.tipo || "outro"] ?? "rgba(13,13,13,.40)";
                     return (
                       <div
                         key={atv.id}
@@ -835,11 +697,11 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                           className="w-5 h-5 rounded border-2 border-black/15 hover:border-[#7259B5] hover:bg-black/[.04] flex-shrink-0 transition flex items-center justify-center"
                           title="Marcar como feita"
                         />
-                        <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(13,13,13,.04)" }}>
-                          <Icon size={12} style={{ color }} />
+                        <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-black/40" style={{ background: "rgba(13,13,13,.04)" }}>
+                          <Icon size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[0.8125rem] font-medium text-[#0D0D0D] truncate">{atv.nome}</p>
+                          <p className="text-[0.8125rem] font-medium text-[#282525] break-words">{atv.nome}</p>
                           {atv.nota && <p className="text-[0.6875rem] text-black/30 truncate">{atv.nota}</p>}
                         </div>
                         {atv.data_prevista && (
@@ -859,7 +721,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                 <span className="text-[0.6875rem] text-black/25 font-medium">{timeline.length} eventos</span>
               </div>
 
-              {timeline.length === 0 && !showNewAtividade ? (
+              {timeline.length === 0 ? (
                 <div className="bg-white rounded border p-10 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <Clock size={22} className="mx-auto text-black/12 mb-3" />
                   <p className="text-sm text-black/30 font-medium">Nenhum evento ainda</p>
@@ -872,9 +734,6 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                     const Icon = evt.tipo === "nota"
                       ? Star
                       : (TIPO_ICONS[evt.tipo_atv || "outro"] ?? MoreHorizontal);
-                    const color = evt.tipo === "nota"
-                      ? "#B07A14"
-                      : (TIPO_COLOR[evt.tipo_atv || "outro"] ?? "rgba(13,13,13,.40)");
                     return (
                       <div key={evt.id} className="flex gap-3 relative">
                         {/* Line */}
@@ -882,13 +741,13 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                           <div className="absolute left-[0.8125rem] top-7 bottom-0 w-px bg-black/6" />
                         )}
                         {/* Icon */}
-                        <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 mt-0.5 z-10"
-                          style={{ background: "#fff", border: `1px solid ${color}47` }}>
-                          <Icon size={12} style={{ color }} />
+                        <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 mt-0.5 z-10 text-black/40"
+                          style={{ background: "#fff", border: "1px solid rgba(13,13,13,.08)" }}>
+                          <Icon size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                         </div>
                         {/* Content */}
                         <div className={`flex-1 min-w-0 ${!isLast ? "pb-5" : ""}`}>
-                          <p className={`text-[0.8125rem] font-medium leading-snug ${evt.feita === false ? "text-black/40 line-through" : "text-[#0D0D0D]"}`}>
+                          <p className={`text-[0.8125rem] font-medium leading-snug ${evt.feita === false ? "text-black/40 line-through" : "text-[#282525]"}`}>
                             {evt.titulo}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
@@ -924,7 +783,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
               <button
                 onClick={ev => {
                   const rect = ev.currentTarget.getBoundingClientRect();
-                  setSidebarStatusMenu(sidebarStatusMenu ? null : { top: rect.bottom + 4, left: rect.left });
+                  setSidebarStatusMenu(sidebarStatusMenu ? null : { top: rect.bottom + 4, left: rect.left, right: rect.right });
                 }}
               >
                 <StatusBadge status={inscricao.status} label={getStatusEtiqueta(inscricao.status)?.label} bg={getStatusEtiqueta(inscricao.status)?.cor} iconName={getStatusEtiqueta(inscricao.status)?.icone} withChevron />
@@ -943,7 +802,8 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                 ].map(({ label, value, urgent }) => (
                   <div key={label} className="flex items-center justify-between">
                     <span className="text-[0.6875rem] text-black/35">{label}</span>
-                    <span className="text-[0.75rem] font-medium" style={{ color: urgent ? "#D94E4E" : "rgba(13,13,13,.70)" }}>
+                    <span className="inline-flex items-center gap-1 text-[0.75rem] font-medium tabular-nums text-black/70">
+                      {urgent && <Clock size={12} strokeWidth={1.75} role="img" aria-label="Fecha em menos de 7 dias" className="shrink-0 text-[#D94A4A]" />}
                       {fmtDate(value)}
                     </span>
                   </div>

@@ -91,7 +91,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
+  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-[#282525]">{children}</label>;
 }
 
 /* ─── Mini-form inline para novo contato ─────────────────────────── */
@@ -170,7 +170,7 @@ function NovoContatoInline({
 }
 
 /* ─── Modal principal ─────────────────────────────────────────────── */
-export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, sitePreEmpresa, contatosSugeridos, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
+export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, sitePreEmpresa, contatosSugeridos, contatoPreId, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
   onClose: () => void;
   onSaved: (id?: string) => void;
   empresaPreId?: string;
@@ -180,6 +180,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   sitePreEmpresa?: string;
   /** Responsáveis do patrocinador já liberados para a pessoa (página do patrocinador). */
   contatosSugeridos?: ContatoSugerido[];
+  /** Quem abriu a negociação a partir de um contato específico (já da empresa de `empresaPreId`): vem escolhido. */
+  contatoPreId?: string;
   statusPre?: StatusCaptacao;
   potentialPre?: PotencialFechamento;
   editData?: EditDataCaptacao;
@@ -237,7 +239,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const [supervisorId, setSupervisorId]           = useState<string | null>(editData?.supervisor_id ?? null);
 
   // Contato empresa
-  const [contatoEmpresaId, setContatoEmpresaId]   = useState<string | null>(editData?.contato_empresa_id ?? null);
+  const [contatoEmpresaId, setContatoEmpresaId]   = useState<string | null>(editData?.contato_empresa_id ?? contatoPreId ?? null);
   const [contatosEmpresa, setContatosEmpresa]     = useState<ContatoItem[]>([]);
   const [showNovoContato, setShowNovoContato]     = useState(false);
   // Responsável do patrocinador escolhido; vira contato salvo só ao salvar a negociação.
@@ -685,9 +687,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center"
-      style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex w-full max-w-[47.5rem] flex-col overflow-hidden rounded-b bg-white"
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-vidro flex w-full max-w-[47.5rem] flex-col overflow-hidden"
         style={{ maxHeight: "100vh", boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }} onClick={e => e.stopPropagation()}>
 
         <header className="flex shrink-0 items-center justify-between border-b px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -695,7 +696,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-black/5">
               <Building2 size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="min-w-0 text-[0.9375rem] font-bold text-black">{editData ? "Editar negociação" : "Nova negociação"}</h2>
+            <h2 id={titleId} className="min-w-0 text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">{editData ? "Editar negociação" : "Nova negociação"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar"
             className="flex h-9 w-9 items-center justify-center rounded transition hover:bg-black/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
@@ -713,7 +714,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                 <input type="text" placeholder="Buscar ou criar…" value={empresaSearch} aria-label="Patrocinador"
                   onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }}
                   onFocus={() => setEmpresaOpen(true)} onBlur={() => setTimeout(() => setEmpresaOpen(false), 150)}
-                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
+                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-[#282525] outline-none" />
                 {empresaSearch && <button type="button" aria-label="Limpar patrocinador" onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
               </div>
               {empresaOpen && (empresasFiltradas.length > 0 || (empresaSearch.trim() && !hasExactMatch)) && (
@@ -723,7 +724,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                       event.preventDefault(); setEmpresaId(empresa.id); setEmpresaSearch(empresa.nome); setEmpresaOpen(false);
                       setContatoSugeridoChave(null); empresaTocada.current = true;
                       checkBlindagem(empresa.id); checkExclusividade(empresa.id, projetoId); loadContatosEmpresa(empresa.id, { doPatrocinador: empresa.id === empresaDoPatrocinadorId });
-                    }} className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
+                    }} className="w-full px-3 py-2 text-left text-[0.8125rem] text-[#282525] transition hover:bg-black/[.04]">
                       {empresa.nome}
                     </button>
                   ))}
@@ -791,7 +792,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                 <input type="text" placeholder="Buscar ou criar…" value={projetoSearch} aria-label="Projeto"
                   onChange={e => { setProjetoSearch(e.target.value); setProjetoId(""); setProjetoOpen(true); }}
                   onFocus={() => setProjetoOpen(true)} onBlur={() => setTimeout(() => setProjetoOpen(false), 150)}
-                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
+                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-[#282525] outline-none" />
                 {projetoSearch && <button type="button" aria-label="Limpar projeto" onMouseDown={e => { e.preventDefault(); setProjetoSearch(""); setProjetoId(""); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
               </div>
               {projetoOpen && (projetosFiltrados.length > 0 || (projetoSearch.trim() && !hasExactMatchProjeto)) && (
@@ -801,7 +802,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                       event.preventDefault(); setProjetoId(projeto.id); setProjetoSearch(projeto.nome); setProjetoOpen(false);
                       if (empresaId) checkExclusividade(empresaId, projeto.id);
                     }}
-                      className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
+                      className="w-full px-3 py-2 text-left text-[0.8125rem] text-[#282525] transition hover:bg-black/[.04]">
                       {projeto.nome}
                     </button>
                   ))}
@@ -859,14 +860,14 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
               <div className="flex items-center gap-2 rounded border bg-white px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                 <CalendarDays size={13} className="flex-shrink-0 text-black/35" />
                 <input type="date" value={proximoFollowup} onChange={e => setProximoFollowup(e.target.value)} aria-label="Próximo contato"
-                  className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none" />
+                  className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-[#282525] outline-none" />
               </div>
             </div>
           </div>
 
           <div className="mt-5 border-t pt-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <button type="button" onClick={() => setMaisDetalhes(aberto => !aberto)} aria-expanded={maisDetalhes}
-              className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+              className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
               <ChevronDown size={13} aria-hidden="true" className={`transition-transform duration-200 motion-reduce:transition-none ${maisDetalhes ? "rotate-180" : ""}`} />
               Mais detalhes
             </button>
@@ -882,7 +883,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   <div className="flex items-center gap-2 rounded border bg-white px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                     <CalendarDays size={13} className="flex-shrink-0 text-black/35" />
                     <input type="date" value={previsao} onChange={e => setPrevisao(e.target.value)} aria-label="Previsão de fechamento"
-                      className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none" />
+                      className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-[#282525] outline-none" />
                   </div>
                 </div>
 
@@ -908,7 +909,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                           }}
                             className="border-r px-3 py-1.5 text-[0.625rem] font-semibold last:border-r-0"
                             style={captacaoTipo === tipo
-                              ? { background: "#0D0D0D", color: "white", borderColor: "#0D0D0D" }
+                              ? { background: "#1C0E33", color: "white", borderColor: "#1C0E33" }
                               : { background: "white", color: "rgba(13,13,13,.45)", borderColor: "rgba(13,13,13,.12)" }}>
                             {tipo === "interna" ? "Equipe interna" : "Captador externo"}
                           </button>
@@ -989,12 +990,12 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
           )}
         </main>
 
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           {erro ? <p role="alert" className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
           <div className="ml-auto flex flex-shrink-0 items-center gap-2">
             <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
             <button type="button" onClick={handleSalvar} disabled={saving}
-              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
+              className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
               <Save size={12} /> {saving ? "Salvando…" : editData ? "Salvar" : "Criar negociação"}
             </button>
           </div>

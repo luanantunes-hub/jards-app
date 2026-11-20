@@ -105,7 +105,7 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
   }, [carregar]);
 
   if (loading) return <DetailPageContent><div className="space-y-5 animate-pulse"><div className="h-8 w-1/3 rounded bg-black/[.07]"/><div className="h-16 rounded bg-black/[.04]"/><div className="h-40 rounded bg-black/[.04]"/></div></DetailPageContent>;
-  if (!pedido && !atribuicao) return <DetailPageContent><Link href="/workspace-captador" className="inline-flex items-center gap-2 text-[0.75rem] text-black/50 hover:text-black"><ArrowLeft size={14}/>Oportunidades</Link><p className="mt-8 text-[0.875rem] text-black/65">Oportunidade não encontrada.</p></DetailPageContent>;
+  if (!pedido && !atribuicao) return <DetailPageContent><Link href="/workspace-captador" className="inline-flex items-center gap-2 text-[0.75rem] text-black/50 hover:text-[#282525]"><ArrowLeft size={14}/>Oportunidades</Link><p className="mt-8 text-[0.875rem] text-black/65">Oportunidade não encontrada.</p></DetailPageContent>;
 
   const empresaNome = atribuicao?.empresaNome || pedido?.nome_busca || "Organização";
   const site = atribuicao?.empresaSite || pedido?.empresa_site || atribuicao?.empresaDomainKey || null;
@@ -123,14 +123,14 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
           <div className="flex min-w-0 items-center gap-4">
             <CompanyLogo nome={empresaNome} domain={atribuicao?.empresaDomainKey} site={site} size={56} className="shrink-0 border border-black/[.07]"/>
             <div className="min-w-0">
-              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{empresaNome}</h1>
+              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{empresaNome}</h1>
               {titulo && titulo !== empresaNome && <p className="mt-2 text-[0.8125rem] text-black/55">{titulo}</p>}
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-3 sm:pt-2">
             {atribuicao?.status !== "ativa" && <span className="rounded border border-black/[.12] px-3 py-2 text-[0.75rem] font-medium text-black/70">{status}</span>}
-            {atribuicao?.status === "ativa" && <button type="button" onClick={() => { setTab("acompanhamento"); setAbrirPedidoTrigger(t => t + 1); }} className="rounded border border-black/[.15] px-3 py-2 text-[0.75rem] font-medium text-black/65 transition hover:border-black/30 hover:text-black">Solicitar à organização</button>}
-            {site && <a href={site.startsWith("http") ? site : `https://${site}`} target="_blank" rel="noopener noreferrer" aria-label={`Abrir site de ${empresaNome}`} className="flex h-9 w-9 items-center justify-center rounded border border-black/[.12] text-black/50 transition hover:border-black/30 hover:text-black"><ArrowUpRight size={15}/></a>}
+            {atribuicao?.status === "ativa" && <button type="button" onClick={() => { setTab("acompanhamento"); setAbrirPedidoTrigger(t => t + 1); }} className="rounded border border-black/[.15] px-3 py-2 text-[0.75rem] font-medium text-black/65 transition hover:border-black/30 hover:text-[#282525]">Solicitar à organização</button>}
+            {site && <a href={site.startsWith("http") ? site : `https://${site}`} target="_blank" rel="noopener noreferrer" aria-label={`Abrir site de ${empresaNome}`} className="flex h-9 w-9 items-center justify-center rounded border border-black/[.12] text-black/50 transition hover:border-black/30 hover:text-[#282525]"><ArrowUpRight size={15}/></a>}
           </div>
         </div>
       </div>
@@ -146,7 +146,7 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
         {atribuicao?.status === "ativa" && (pedido?.tipo === "negociacoes" || pedido?.tipo === "inscricoes") && <section className="rounded border border-black/[.08] bg-white px-5 py-4">
           <h2 className="mb-3 text-[0.75rem] font-semibold text-black/60">Andamento <span className="font-normal text-black/35">— sugestão para {organizationName}</span></h2>
           <div className="flex flex-wrap gap-2">{(pedido.tipo === "negociacoes" ? etiquetas : etiquetasInscricao).map(etapa => <button key={etapa.key} type="button" disabled={movendoEtapa} onClick={() => void moverEtapa(etapa.key)} aria-pressed={atribuicao.workspaceEtapa === etapa.key}
-            className={`rounded border px-3 py-2 text-[0.75rem] font-medium transition disabled:opacity-50 ${atribuicao.workspaceEtapa === etapa.key ? "border-[#171717] bg-[#171717] text-white" : "border-black/[.12] text-black/55 hover:border-black/30 hover:text-black"}`}>{etapa.label}</button>)}</div>
+            className={`rounded border px-3 py-2 text-[0.75rem] font-medium transition disabled:opacity-50 ${atribuicao.workspaceEtapa === etapa.key ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/[.12] text-black/55 hover:border-black/30 hover:text-[#282525]"}`}>{etapa.label}</button>)}</div>
           {erroEtapa && <p role="alert" className="mt-2 text-[0.75rem] text-[#B64545]">{erroEtapa}</p>}
         </section>}
         <section className="grid grid-cols-2 gap-px overflow-hidden rounded border border-black/[.08] bg-black/[.08] lg:grid-cols-4">

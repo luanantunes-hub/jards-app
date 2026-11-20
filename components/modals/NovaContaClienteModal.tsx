@@ -121,18 +121,17 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
   const buscaMenuPos = usePortalPosition(buscaBoxRef, busca.trim().length > 0 && opcoes.length > 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center"
-      style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-hidden rounded-b bg-white"
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-vidro flex max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-hidden"
         style={{ boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
         onClick={e => e.stopPropagation()}>
 
-        <header className="flex shrink-0 items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <header className="flex shrink-0 items-center justify-between border-b px-6 py-5 sm:px-7 sm:py-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/5">
               <Users size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Novo cliente</h2>
+            <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Novo cliente</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar"
             className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
@@ -149,7 +148,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
                 style={{ borderColor: "rgba(13,13,13,.15)" }}>
                 <div className="flex items-center gap-2">
                   <Building2 size={13} className="text-black/40 flex-shrink-0" />
-                  <span className="text-[0.8125rem] font-semibold text-black">{empresaSelecionada.nome}</span>
+                  <span className="text-[0.8125rem] font-semibold text-[#282525]">{empresaSelecionada.nome}</span>
                 </div>
                 <button type="button" onClick={() => { setEmpresaSelecionada(null); setBusca(""); setAgenciaId(""); setResponsavelId(""); }}
                   className="text-[0.6875rem] text-black/35 hover:text-black/55 transition">trocar</button>
@@ -163,7 +162,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
                     value={busca}
                     onChange={e => setBusca(e.target.value)}
                     placeholder="Buscar ou criar empresa…"
-                    className="flex-1 text-[0.8125rem] text-black outline-none bg-transparent"
+                    className="flex-1 text-[0.8125rem] text-[#282525] outline-none bg-transparent"
                   />
                 </div>
                 {busca.trim().length > 0 && opcoes.length > 0 && (
@@ -174,7 +173,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
                         className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[0.8125rem] hover:bg-black/[.04] transition">
                         {e.id === "__new__"
                           ? <span className="text-[#7259B5] font-semibold">{e.nome}</span>
-                          : <><Building2 size={12} className="text-black/30 flex-shrink-0" /><span className="text-black">{e.nome}</span></>
+                          : <><Building2 size={12} className="text-black/30 flex-shrink-0" /><span className="text-[#282525]">{e.nome}</span></>
                         }
                       </button>
                     ))}
@@ -186,7 +185,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
 
           {/* Responsável interno */}
           <div className="border-t pt-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-            <label className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] font-semibold text-black">
+            <label className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] font-semibold text-[#282525]">
               <UserRound size={12} className="text-black/35" /> Responsável interno
               <span className="font-normal text-black/30">recomendado</span>
             </label>
@@ -201,18 +200,18 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
           </div>
 
           <div>
-            <label className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] font-semibold text-black"><Handshake size={12} className="text-black/35"/>Agência de captação <span className="text-black/30 font-normal">opcional</span></label>
+            <label className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] font-semibold text-[#282525]"><Handshake size={12} className="text-black/35"/>Agência de captação <span className="text-black/30 font-normal">opcional</span></label>
             <CustomDropdown value={agenciaId} onChange={setAgenciaId} options={[{ value: "", label: "Sem agência vinculada" }, ...agencias.map(agencia => ({ value: agencia.id, label: agencia.nome }))]} compact portalZIndex={100} className="w-full [&>button]:h-10 [&>button]:w-full"/>
           </div>
 
         </main>
 
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           {erro ? <p role="alert" className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
           <div className="ml-auto flex flex-shrink-0 items-center gap-2">
             <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
             <button type="button" onClick={handleSalvar} disabled={saving || !empresaSelecionada}
-              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
+              className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
               <Save size={12} /> {saving ? "Salvando…" : "Criar cliente"}
             </button>
           </div>

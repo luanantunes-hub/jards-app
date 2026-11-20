@@ -15,13 +15,24 @@
 
 import type { Achado, EstadoDaPrestacao, SeveridadeChecagem } from "./catalogo";
 import { checarConciliacao } from "./checar-conciliacao";
+import { checarBeneficiarios } from "./checar-beneficiarios";
+import { checarRecursosHumanos } from "./checar-rh";
+import { checarCarimbo } from "./checar-carimbo";
+import { checarCaptacao } from "./checar-captacao";
+import { checarObras } from "./checar-obras";
+import { checarResultados } from "./checar-resultados";
+import { checarEncerramento } from "./checar-encerramento";
+import { checarContas } from "./checar-contas";
 import { checarDespesas } from "./checar-despesas";
+import { checarEsporte } from "./checar-esporte";
 import { checarConcentracao, checarOrcamento, checarPeriodo } from "./checar-financeiro";
 import { checarEvidencias } from "./checar-evidencias";
 import { checarCobertura, checarObjeto } from "./checar-objeto";
 import { checarDistribuicao } from "./checar-distribuicao";
 import { checarBens } from "./checar-bens";
 import { checarPecas } from "./checar-pecas";
+import { checarCmd } from "./checar-cmd";
+import { checarDadosPessoais } from "./checar-dados-pessoais";
 
 export * from "./catalogo";
 export { captadoDoExtrato } from "./checar-financeiro";
@@ -30,12 +41,23 @@ export { captadoDoExtrato } from "./checar-financeiro";
 export const CHECAGENS: readonly { id: string; titulo: string; executar: (estado: EstadoDaPrestacao) => Achado[] }[] = [
   { id: "despesas", titulo: "Despesas, fornecedores e pagamentos", executar: checarDespesas },
   { id: "conciliacao", titulo: "Conciliação com o extrato", executar: checarConciliacao },
+  { id: "contas", titulo: "Contas: saque, captação e vigência", executar: checarContas },
   { id: "periodo", titulo: "Período dos documentos e liberação", executar: checarPeriodo },
-  { id: "orcamento", titulo: "Saldo dos itens, tetos e alterações", executar: checarOrcamento },
+  { id: "captacao", titulo: "Captação: liberação da execução, readequação e excedente", executar: checarCaptacao },
+  { id: "encerramento", titulo: "Saldo do encerramento: prazo e guia", executar: checarEncerramento },
+  { id: "orcamento", titulo: "Saldo dos itens, tetos, alterações e contrapartida", executar: checarOrcamento },
+  { id: "obras", titulo: "Obras e reformas vedadas", executar: checarObras },
+  { id: "esporte", titulo: "Nível esportivo: elaboração, captação, bolsa e CRC", executar: checarEsporte },
+  { id: "beneficiarios", titulo: "Beneficiados: relação, sexo e rede pública", executar: checarBeneficiarios },
+  { id: "recursos_humanos", titulo: "Grade de RH: cargos, pessoas pagas e forma de contratação", executar: checarRecursosHumanos },
+  { id: "carimbo", titulo: "Carimbo e atesto das notas", executar: checarCarimbo },
   { id: "concentracao", titulo: "Concentração por fornecedor e partes relacionadas", executar: checarConcentracao },
   { id: "objeto", titulo: "Metas e locais do objeto", executar: checarObjeto },
+  { id: "resultados", titulo: "Análise por resultados: metas antes do financeiro", executar: checarResultados },
   { id: "evidencias", titulo: "Evidências: vínculo, data e local da foto", executar: checarEvidencias },
   { id: "cobertura", titulo: "Cobertura das metas e atividades por evidências", executar: checarCobertura },
+  { id: "cmd", titulo: "Produção no CMD: registro, metas e período", executar: checarCmd },
+  { id: "dados_pessoais", titulo: "Dado de saúde nos beneficiados e nas evidências", executar: checarDadosPessoais },
   { id: "distribuicao", titulo: "Plano de distribuição: cotas, preços e realizado", executar: checarDistribuicao },
   { id: "bens", titulo: "Bens permanentes: registro, destinação, cotação e doação", executar: checarBens },
   { id: "pecas", titulo: "Peças de divulgação: aprovação, marcas, defeso e amostra", executar: checarPecas },

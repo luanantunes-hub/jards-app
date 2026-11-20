@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useId, useState } from "react";
-import { X, Save } from "lucide-react";
+import { X, Save, TrendingDown, TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -117,21 +117,20 @@ export function NovoResultadoModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,.45)" }}
+      className="fixed inset-0 z-50 flex justify-center veu items-start"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded w-full flex flex-col border border-black/[.09] shadow-xl overflow-hidden"
+        className="folha-desce folha-vidro w-full flex flex-col overflow-hidden max-h-[96dvh]"
         style={{ maxWidth: "26.25rem", maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 id={titleId} className="text-[0.875rem] font-semibold text-black/80">
+          <h2 id={titleId} className="text-black/80 font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">
             {editData ? "Editar captação" : "Registrar captação"}
           </h2>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.05] transition">
@@ -185,11 +184,14 @@ export function NovoResultadoModal({
                 value={atm(captadoCents)}
                 onKeyDown={atmKey(setCaptadoCents)}
                 onChange={() => {}}
-                className="flex-1 text-[0.875rem] font-semibold outline-none bg-transparent text-black min-w-0"
+                className="flex-1 text-[0.875rem] font-semibold outline-none bg-transparent text-[#282525] min-w-0"
               />
             </div>
             {valueDelta !== null && valueDelta !== 0 && (
-              <p className="mt-1.5 text-[0.625rem] font-medium" style={{ color: valueDelta > 0 ? "#2E8932" : "#D94E4E" }}>
+              <p className="mt-1.5 flex items-center gap-1 text-[0.625rem] font-medium text-black/45">
+                {valueDelta > 0
+                  ? <TrendingUp size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
+                  : <TrendingDown size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />}
                 {valueDelta > 0 ? "+" : ""}{money(valueDelta)} em relação ao valor padrão da cota
               </p>
             )}
@@ -208,7 +210,7 @@ export function NovoResultadoModal({
           <button
             onClick={handleSalvar}
             disabled={saving}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
           </button>

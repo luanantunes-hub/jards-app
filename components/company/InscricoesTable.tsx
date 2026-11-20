@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { Plus, FileStack } from "lucide-react";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 export type EditalRow = {
   id: string;
@@ -23,11 +24,6 @@ const EDITAL_STATUS_LABEL: Record<string, { label: string; color: string }> = {
   cancelado:  { label: "Cancelado",  color: "rgba(13,13,13,.40)" },
 };
 
-function fmtCurrency(value: number | null) {
-  if (value == null) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
-}
-
 function fmtDate(value: string | null) {
   if (!value) return "—";
   return new Date(`${value.split("T")[0]}T12:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -46,7 +42,7 @@ export function InscricoesTable({ rows, onNew }: { rows: EditalRow[]; onNew?: ()
       <header className="flex flex-col gap-4 border-b px-5 py-5 md:flex-row md:items-end md:justify-between md:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div>
           <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/35">Editais</p>
-          <h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-black">Inscrições</h2>
+          <h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-[#282525]">Inscrições</h2>
         </div>
         {onNew && (
           <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded border border-black/[.12] bg-white px-3.5 py-2 text-[0.75rem] font-medium text-black/55 hover:bg-black/[.04]">
@@ -98,7 +94,7 @@ export function InscricoesTable({ rows, onNew }: { rows: EditalRow[]; onNew?: ()
                     <td className="px-5 py-4">
                       <StatusBadge status={row.status} label={s.label} bg={s.color} iconName={s.iconName} size="sm" />
                     </td>
-                    <td className="px-5 py-4 text-[0.75rem] font-semibold tabular-nums text-black/65">{fmtCurrency(row.valor)}</td>
+                    <td title={row.valor != null ? formatarValorCompleto(row.valor) : undefined} className="px-5 py-4 text-[0.75rem] font-semibold tabular-nums text-black/65">{formatarValorCurto(row.valor)}</td>
                     <td className="px-5 py-4 text-[0.6875rem] tabular-nums text-black/45">{fmtDate(row.data_fechamento)}</td>
                     <td className="px-5 py-4 text-[0.6875rem] text-black/45">há {daysSince(row.updated_at)} dias</td>
                   </tr>

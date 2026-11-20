@@ -76,14 +76,14 @@ export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, s
               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void criarNota(); } }}
               placeholder="Título da nota"
               autoFocus
-              className="h-8 flex-1 rounded border px-2.5 text-[0.75rem] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-1 focus:ring-[#7259B5]/10"
+              className="h-8 flex-1 rounded border px-2.5 text-[0.75rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-1 focus:ring-[#7259B5]/10"
               style={{borderColor: erro ? "#D94E4E" : "rgba(13,13,13,.12)"}}
             />
             <button type="button" onClick={() => { setShowNew(false); setErro(null); setNovoTitulo(""); }} className="px-2 text-[0.6875rem] font-medium text-black/35 transition hover:text-black/55">
               Cancelar
             </button>
             <button type="button" onClick={() => void criarNota()} disabled={!novoTitulo.trim() || creating}
-              className="rounded bg-[#2E8932] px-3 text-[0.6875rem] font-bold text-white transition hover:bg-[#26752A] disabled:opacity-40">
+              className="rounded acao-salvar px-3 text-[0.6875rem] font-bold text-white transition disabled:opacity-40">
               Criar
             </button>
           </div>

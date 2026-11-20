@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { CheckCircle2, ChevronsDownUp, ChevronsUpDown, CopyPlus, FolderPlus, Info, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronsDownUp, ChevronsUpDown, CopyPlus, FolderPlus, Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -11,6 +11,8 @@ import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import { tetosComONivel } from "@/lib/prestacao/nivel-esportivo";
+import type { ManifestacaoEsportiva, PrestacaoLocal } from "@/lib/supabase/types";
 import {
   linhasVisiveis,
   montarArvore,
@@ -57,6 +59,9 @@ export default function OrcamentoPage() {
     versoes: VersaoOrcamento[];
     comprovantes: ComprovanteDoOrcamento[];
     pagamentos: PagamentoDoOrcamento[];
+    /** O nível esportivo e os locais mudam o limite de elaboração da LIE (P8.4). */
+    nivel: ManifestacaoEsportiva | null;
+    locais: Pick<PrestacaoLocal, "pais" | "uf" | "status">[];
   } | null>(null);
   const [nosCarregados, setNosCarregados] = useState<{ versaoId: string; nos: NoComOrigem[] } | null>(null);
   const [versaoEscolhida, setVersaoEscolhida] = useState<string | null>(null);
@@ -74,11 +79,12 @@ export default function OrcamentoPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
     const db = supabase as any;
     Promise.all([
-      db.from("prestacoes_contas").select("regime_id, titulo, identificador_oficial, data_liberacao, data_termo, data_fim_execucao").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("regime_id, titulo, identificador_oficial, numero_processo, data_liberacao, data_termo, data_fim_execucao, manifestacao_esportiva").eq("id", id).maybeSingle(),
       db.from("prestacao_orcamento_versoes").select("*").eq("prestacao_id", id).order("created_at"),
       db.from("prestacao_comprovantes").select("id, no_id, status, valor_extraido, valor_liquido").eq("prestacao_id", id),
       db.from("prestacao_pagamentos").select("despesa_id, valor, lancamento_id").eq("prestacao_id", id),
-    ]).then(([prestacao, versoes, comprovantes, pagamentos]) => {
+      db.from("prestacao_locais").select("pais, uf, status").eq("prestacao_id", id),
+    ]).then(([prestacao, versoes, comprovantes, pagamentos, locais]) => {
       if (!ativo) return;
       setBase({
         prestacaoId: id,
@@ -87,6 +93,8 @@ export default function OrcamentoPage() {
         versoes: (versoes.data as VersaoOrcamento[]) ?? [],
         comprovantes: (comprovantes.data as ComprovanteDoOrcamento[]) ?? [],
         pagamentos: (pagamentos.data as PagamentoDoOrcamento[]) ?? [],
+        nivel: prestacao.data?.manifestacao_esportiva ?? null,
+        locais: locais.data ?? [],
       });
       if (versoes.error) setErro(mensagemErroPrestacao(versoes.error, "Não foi possível carregar o orçamento"));
     });
@@ -132,8 +140,11 @@ export default function OrcamentoPage() {
   }, [pagamentos]);
   const linhas = linhasVisiveis(arvore.raizes, fechados);
   const regime = regimes.find(r => r.id === base?.regimeId)?.regime ?? null;
-  const tetos = useMemo(() => tetosPorGrupo(arvore.raizes, regime), [arvore, regime]);
   const bases = useMemo(() => basesDoOrcamento(arvore.raizes, regime), [arvore, regime]);
+  const tetos = useMemo(
+    () => tetosComONivel(tetosPorGrupo(arvore.raizes, regime), bases, { regime, manifestacaoEsportiva: base?.nivel, locais: base?.locais }),
+    [arvore, regime, bases, base],
+  );
   const agrupadores = nos.filter(no => no.tipo !== "item").map(no => no.id);
   const percentual = percentualPago(arvore.total);
   const podeEditar = permissoes.editar;
@@ -198,7 +209,7 @@ export default function OrcamentoPage() {
     setAtivando(false);
     if (error) {
       setErro(error.message?.includes("sem_permissao")
-        ? "Tornar uma versão a que está em uso cabe ao administrador ou ao responsável pela prestação."
+        ? "Só o administrador ou o responsável pela prestação muda a versão em uso."
         : mensagemErroPrestacao(error, "Não foi possível trocar a versão em uso"));
       return;
     }
@@ -266,7 +277,7 @@ export default function OrcamentoPage() {
               type="button"
               onClick={tornarAtiva}
               disabled={ativando}
-              className="flex h-9 items-center gap-1.5 rounded bg-[#2E8932] px-3 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50"
+              className="flex h-9 items-center gap-1.5 rounded acao-salvar px-3 text-[0.75rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50"
             >
               <CheckCircle2 size={13} aria-hidden /> {ativando ? "Trocando…" : "Tornar ativa"}
             </button>
@@ -297,7 +308,7 @@ export default function OrcamentoPage() {
               type="button"
               onClick={() => abrirNovo(null, "item")}
               disabled={carregando}
-              className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-semibold text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:opacity-50"
+              className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:opacity-50"
             >
               <Plus size={13} aria-hidden /> Adicionar item
             </button>
@@ -307,12 +318,12 @@ export default function OrcamentoPage() {
 
       {versao && !versao.ativa && versaoAtiva && (
         <p className="flex items-start gap-2 text-[0.6875rem] leading-4 text-black/50">
-          <Info size={13} className="mt-px shrink-0 text-[#2D72B0]" aria-hidden />
+          <Info size={12} strokeWidth={1.75} className="mt-px shrink-0 text-black/40" aria-hidden />
           Você está vendo uma versão que não está em uso. O orçamento em uso é {nomeDaVersao(versaoAtiva)}; os comprovantes aparecem aqui nos itens copiados dele.
         </p>
       )}
       {!podeEditar && !carregando && (
-        <p className="text-[0.6875rem] text-black/45">Você pode consultar o orçamento. Editar cabe ao administrador ou ao colaborador com a prestação.</p>
+        <p className="text-[0.6875rem] text-black/45">Você só consulta o orçamento.</p>
       )}
 
       {carregando ? (
@@ -329,8 +340,8 @@ export default function OrcamentoPage() {
           <p className="text-[0.875rem] font-medium text-black/60">{versao ? "Nenhum item nesta versão." : "O orçamento ainda não foi cadastrado."}</p>
           <p className="mx-auto mt-1 max-w-[32rem] text-[0.75rem] leading-5 text-black/40">
             {podeEditar
-              ? "Importe o orçamento aprovado (CSV ou PDF) ou adicione os itens. Etapas e produtos agrupam os itens; o grupo de custo de cada item alimenta os tetos do regime."
-              : "Quando o orçamento for cadastrado, ele aparece aqui com o executado de cada item."}
+              ? "Importe o orçamento aprovado (CSV ou PDF) ou adicione os itens."
+              : "Nenhum orçamento cadastrado."}
           </p>
         </div>
       ) : (
@@ -341,15 +352,19 @@ export default function OrcamentoPage() {
                 rotulo: "Vigente",
                 valor: fmt(arvore.total.vigente),
                 nota: arvore.total.remanejado !== 0 ? `Aprovado ${fmt(arvore.total.aprovado)}` : `${arvore.total.itens} itens`,
+                zerado: arvore.total.vigente === 0,
               },
-              { rotulo: "Comprometido", valor: fmt(arvore.total.comprometido), nota: "Despesas ainda sem pagamento conciliado" },
-              { rotulo: "Pago", valor: fmt(arvore.total.pago), nota: "Conciliado com o extrato" },
-              { rotulo: "Saldo", valor: fmt(arvore.total.saldo), nota: "Vigente − comprometido − pago", alerta: arvore.total.saldo < 0 },
-              { rotulo: "% pago", valor: percentual !== null ? `${percentual}%` : "—", nota: "Sobre o vigente" },
+              { rotulo: "Comprometido", valor: fmt(arvore.total.comprometido), nota: "Despesas ainda sem pagamento conciliado", zerado: arvore.total.comprometido === 0 },
+              { rotulo: "Pago", valor: fmt(arvore.total.pago), nota: "Conciliado com o extrato", zerado: arvore.total.pago === 0 },
+              { rotulo: "Saldo", valor: fmt(arvore.total.saldo), nota: "Vigente − comprometido − pago", alerta: arvore.total.saldo < 0, zerado: arvore.total.saldo === 0 },
+              { rotulo: "% pago", valor: percentual !== null ? `${percentual}%` : "—", nota: "Sobre o vigente", zerado: !percentual },
             ].map(cartao => (
               <div key={cartao.rotulo} className={`${CARTAO} p-3`} style={BORDA}>
-                <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35">{cartao.rotulo}</p>
-                <p className={`mt-1 text-[1rem] font-semibold tabular-nums ${cartao.alerta ? "text-[#B23B3B]" : "text-[#0D0D0D]"}`}>{cartao.valor}</p>
+                <p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                  {cartao.alerta && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />}
+                  {cartao.rotulo}
+                </p>
+                <p className={`mt-1 text-[1rem] font-semibold tabular-nums ${cartao.zerado ? "text-black/30" : "text-[#282525]"}`}>{cartao.valor}</p>
                 <p className="mt-0.5 text-[0.625rem] text-black/35">{cartao.nota}</p>
               </div>
             ))}
@@ -357,7 +372,7 @@ export default function OrcamentoPage() {
 
           {semLancamento.quantidade > 0 && (
             <p className="flex items-start gap-2 text-[0.6875rem] leading-4 text-black/50">
-              <Info size={13} className="mt-px shrink-0 text-[#2D72B0]" aria-hidden />
+              <Info size={12} strokeWidth={1.75} className="mt-px shrink-0 text-black/40" aria-hidden />
               <span>
                 {semLancamento.quantidade === 1 ? "1 pagamento registrado" : `${semLancamento.quantidade} pagamentos registrados`} (<span className="tabular-nums">{fmt(semLancamento.valor)}</span>) ainda sem o débito do extrato; {semLancamento.quantidade === 1 ? "ele conta" : "eles contam"} como comprometido até a conciliação.{" "}
                 <Link href={`/prestacoes/${id}/conciliacao`} className="text-[#684DB0] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">Conciliar</Link>
@@ -369,7 +384,7 @@ export default function OrcamentoPage() {
 
           <section aria-labelledby="itens-titulo" className={`${CARTAO} overflow-hidden`} style={BORDA}>
             <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <h2 id="itens-titulo" className="text-[0.75rem] font-semibold text-[#0D0D0D]">Itens do orçamento</h2>
+              <h2 id="itens-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Itens do orçamento</h2>
               {agrupadores.length > 0 && (
                 <button
                   type="button"

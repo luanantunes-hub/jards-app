@@ -90,7 +90,7 @@ test("formulários: diligência, decisão, glosa e recurso", () => {
 });
 
 test("glosa vira devolução com o índice, a guia e o vencimento do regime", () => {
-  const { campos, erro } = devolucaoDaGlosa({ descricao: "Nota sem identificação do projeto", valor: 1500, data_base: "2026-03-01" }, ROUANET, { prazo_devolucao: "2026-11-09" }, "26-9999", "2026-10-21");
+  const { campos, erro } = devolucaoDaGlosa({ descricao: "Nota sem identificação do projeto", valor: 1500, data_base: "2026-03-01" }, ROUANET, { prazo_devolucao: "2026-11-09" }, { identificador_oficial: "26-9999" }, "2026-10-21");
   assert.equal(erro, null);
   assert.deepEqual(campos, {
     motivo: "glosa", descricao: "Glosa: Nota sem identificação do projeto", valor_principal: 1500, indice: "poupanca", data_base: "2026-03-01",
@@ -99,7 +99,7 @@ test("glosa vira devolução com o índice, a guia e o vencimento do regime", ()
   // Sem data-base, a atualização não tem de onde contar.
   assert.match(devolucaoDaGlosa({ descricao: "x", valor: 10, data_base: null }, ROUANET, null, null, "2026-10-21").erro!, /data-base/);
   // ANCINE: SELIC e a guia da primeira fonte.
-  const ancine = devolucaoDaGlosa({ descricao: "x", valor: 10, data_base: "2026-01-01" }, ANCINE, null, "26-1234", "2026-10-21").campos;
+  const ancine = devolucaoDaGlosa({ descricao: "x", valor: 10, data_base: "2026-01-01" }, ANCINE, null, { identificador_oficial: "26-1234" }, "2026-10-21").campos;
   assert.equal(ancine.indice, "selic");
   assert.equal(ancine.gru_codigo, "019401");
 });

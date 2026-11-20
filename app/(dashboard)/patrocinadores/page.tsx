@@ -21,9 +21,17 @@ import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
 import type { Empresa } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
-import { PesquisaEmpresaModal } from "@/components/modals/PesquisaEmpresaModal";
+import { carregarSetores, grafiasDoSetor } from "@/lib/setores";
+import { FiltroMesorregiao } from "@/components/patrocinadores/FiltroMesorregiao";
+import { lerSelecaoDaUrl } from "@/lib/filtro-mesorregiao";
 import { BoasVindasPlanoModal } from "@/components/modals/BoasVindasPlanoModal";
-import { useCreditos } from "@/contexts/CreditosContext";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
+import { TituloComFrase } from "@/components/list/TituloComFrase";
+import { BarraDeSelecao } from "@/components/patrocinadores/BarraDeSelecao";
+import { CabecalhoDeSelecao, CelulaDeSelecao } from "@/components/patrocinadores/CaixasDeSelecao";
+import { useSelecaoDeEmpresas, type SelecaoDeEmpresas } from "@/components/patrocinadores/useSelecaoDeEmpresas";
+import { useOrganizationRole } from "@/contexts/OrganizationContext";
+import { MAX_SELECAO, podeAdicionarAoCrm, type EmpresaDaBase } from "@/lib/patrocinadores-selecao";
 
 type Lei = "esporte" | "ancine" | "saude";
 
@@ -40,7 +48,13 @@ type EmpresaLei = {
   } | null;
 };
 
-function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean }) {
+/** A empresa de uma linha das abas por lei, no formato que a seleção guarda (sem empresa, não há o que marcar). */
+function daLinhaDaLei(linha: EmpresaLei): EmpresaDaBase | null {
+  const e = linha.empresas;
+  return e ? { id: linha.empresa_id, nome: e.nome, setor: e.setor, site: e.site, cidade: e.cidade, estado: e.estado } : null;
+}
+
+function LeiTabContent({ lei, isSuperAdmin, selecao }: { lei: Lei; isSuperAdmin: boolean; selecao: SelecaoDeEmpresas | null }) {
   const router = useRouter();
   const supabase = createClient();
   const [linhas, setLinhas] = useState<EmpresaLei[]>([]);
@@ -54,6 +68,8 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
   const [setor, setSetor] = useState("");
   const [setores, setSetores] = useState<string[]>([]);
   const [incompletas, setIncompletas] = useState(false);
+  const [mesorregioes, setMesorregioes] = useState<number[]>([]);
+  const chaveMesorregioes = mesorregioes.join(",");
 
   useEffect(() => {
     const t = setTimeout(() => setDSearch(search), 300);
@@ -61,13 +77,11 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
   }, [search]);
 
   useEffect(() => {
-    supabase.from("empresas").select("setor").not("setor", "is", null).then(({ data }) => {
-      if (data) setSetores([...new Set((data as { setor: string | null }[]).map((r) => r.setor).filter((s): s is string => !!s))].sort());
-    });
+    carregarSetores(supabase).then(setSetores);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { setPage(0); }, [lei, dSearch, estado, setor, incompletas]);
+  useEffect(() => { setPage(0); }, [lei, dSearch, estado, setor, incompletas, chaveMesorregioes]);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,7 +96,8 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
       const s = dSearch.trim();
       if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`, { foreignTable: "empresas" });
       if (estado) q = q.eq("empresas.estado", estado);
-      if (setor) q = q.eq("empresas.setor", setor);
+      if (mesorregioes.length > 0) q = q.in("empresas.mesorregiao_id", mesorregioes);
+      if (setor) q = q.in("empresas.setor", grafiasDoSetor(setor));
       if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null", { foreignTable: "empresas" });
 
       const { data, count } = await q
@@ -95,10 +110,13 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
     }
     void load();
     return () => { cancelled = true; };
-  }, [lei, page, dSearch, estado, setor, incompletas]);
+  }, [lei, page, dSearch, estado, setor, incompletas, chaveMesorregioes]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  const hasFilters = !!(search || estado || setor || incompletas);
+  const hasFilters = !!(search || estado || setor || incompletas || mesorregioes.length > 0);
+  const colunas = selecao ? 8 : 7;
+  const daPagina = linhas.map(daLinhaDaLei).filter((e): e is EmpresaDaBase => e !== null);
+  const marcadasNaPagina = selecao ? daPagina.filter((e) => selecao.tem(e.id)).length : 0;
 
   return (
     <div className="px-4 pb-8 md:px-8">
@@ -109,7 +127,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar empresa, setor, cidade…"
-            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10 transition"
+            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-[#282525] placeholder-black/30 focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10 transition"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           />
         </div>
@@ -122,6 +140,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
           compact
           emphasized={false}
         />
+        <FiltroMesorregiao lei={lei} estado={estado} selecionadas={mesorregioes} onChange={setMesorregioes} />
         <CustomDropdown
           value={setor}
           onChange={setSetor}
@@ -138,18 +157,24 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
           </FilterButton>
         )}
         {hasFilters && (
-          <FilterButton onClick={() => { setSearch(""); setEstado(""); setSetor(""); setIncompletas(false); }}>
+          <FilterButton onClick={() => { setSearch(""); setEstado(""); setMesorregioes([]); setSetor(""); setIncompletas(false); }}>
             <X size={12} />
             Limpar
           </FilterButton>
         )}
       </div>
 
+      {selecao && (
+        <BarraDeSelecao selecao={selecao} marcadasNaPagina={marcadasNaPagina} totalNaPagina={daPagina.length} onAlternarPagina={() => selecao.alternarPagina(daPagina)} />
+      )}
       <div className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ background: "#F9F9F8" }}>
+              <tr className="h-10" style={{ background: "#F9F9F8" }}>
+                {selecao && (
+                  <CabecalhoDeSelecao marcadasNaPagina={marcadasNaPagina} totalNaPagina={daPagina.length} desabilitada={loading} onAlternar={() => selecao.alternarPagina(daPagina)} />
+                )}
                 {[
                   { label: "Logo", icon: <ImageIcon size={11} weight="bold" /> },
                   { label: "Empresa", icon: <Buildings size={11} weight="bold" /> },
@@ -172,22 +197,34 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
               {loading ? (
                 Array.from({ length: 10 }).map((_, i) => (
                   <tr key={i}>
-                    <td className="px-4 py-3" colSpan={7}><div className="h-6 bg-black/8 rounded animate-pulse" /></td>
+                    <td className="px-4 py-3" colSpan={colunas}><div className="h-6 bg-black/8 rounded animate-pulse" /></td>
                   </tr>
                 ))
               ) : linhas.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-20 text-center text-sm text-black/35">Nenhuma empresa encontrada.</td></tr>
+                <tr><td colSpan={colunas} className="px-4 py-20 text-center text-sm text-black/35">Nenhuma empresa encontrada.</td></tr>
               ) : (
-                linhas.map((l) => (
+                linhas.map((l) => {
+                  const marcavel = daLinhaDaLei(l);
+                  const marcada = selecao?.tem(l.empresa_id) ?? false;
+                  return (
                   <tr
                     key={l.empresa_id}
-                    className="hover:bg-black/[0.025] transition-colors cursor-pointer group"
+                    className={`transition-colors cursor-pointer group ${marcada ? "bg-black/[.04]" : "hover:bg-black/[0.025]"}`}
                     onClick={() => router.push(`/patrocinadores/${l.empresa_id}?lei=${lei}`)}
                   >
+                    {selecao && (
+                      <CelulaDeSelecao
+                        marcada={marcada}
+                        desabilitada={!marcavel || (selecao.noLimite && !marcada)}
+                        nome={l.empresas?.nome ?? "empresa"}
+                        titulo={selecao.noLimite && !marcada ? `Máximo de ${MAX_SELECAO} empresas por vez` : undefined}
+                        onAlternar={() => { if (marcavel) selecao.alternar(marcavel); }}
+                      />
+                    )}
                     <td className="px-4 py-3">
                       <CompanyLogo nome={l.empresas?.nome ?? ""} site={l.empresas?.site} logo_url={l.empresas?.logo_url} size={32} className="rounded border border-black/8" />
                     </td>
-                    <td className="px-4 py-3"><span className="font-semibold text-[#0D0D0D] text-[0.8125rem]">{l.empresas?.nome}</span></td>
+                    <td className="px-4 py-3"><span className="font-semibold text-[#282525] text-[0.8125rem]">{l.empresas?.nome}</span></td>
                     <td className="px-4 py-3">
                       <button
                         className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-150
@@ -205,9 +242,10 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
                     <td className="px-4 py-3 text-black/50 text-[0.78125rem]">{l.empresas?.setor ?? "—"}</td>
                     <td className="px-4 py-3 text-black/50 text-[0.78125rem] font-medium">{l.empresas?.estado ?? "—"}</td>
                     <td className="px-4 py-3 text-black/50 text-[0.78125rem]">{l.empresas?.cidade ?? "—"}</td>
-                    <td className="px-4 py-3"><span className="font-bold text-[#0D0D0D] text-[0.8125rem] tabular-nums">{fmt(l.valor)}</span></td>
+                    <td className="px-4 py-3"><span className="font-semibold text-[#282525] text-[0.8125rem] tabular-nums" title={l.valor ? formatarValorCompleto(l.valor) : undefined}>{l.valor ? formatarValorCurto(l.valor) : "—"}</span></td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -228,13 +266,6 @@ const ESTADOS_BR = [
 type SortCol = "nome" | "aporte_estimado";
 type Trimestre = "T1" | "T2" | "T3" | "T4";
 type PaidPlan = "basico" | "profissional";
-
-const fmt = (v: number | null) => {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(0)}M`;
-  if (v >= 1_000) return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v}`;
-};
 
 function colorFrom(nome: string) {
   const palette = [
@@ -301,11 +332,10 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
   );
 }
 
-function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+function PatrocinadoresContent({ isSuperAdmin, selecao }: { isSuperAdmin: boolean; selecao: SelecaoDeEmpresas | null }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
-  const { solicitarPesquisaEmpresa } = useCreditos();
   const topRef = useRef<HTMLDivElement>(null);
 
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -317,45 +347,15 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const [dSearch, setDSearch] = useState(() => searchParams.get("q") ?? "");
   const [estado, setEstado] = useState(() => searchParams.get("uf") ?? "");
+  const [mesorregioes, setMesorregioes] = useState<number[]>(() => lerSelecaoDaUrl(searchParams.get("meso")));
+  const chaveMesorregioes = mesorregioes.join(",");
   const [setor, setSetor] = useState(() => searchParams.get("setor") ?? "");
   const [trimestre, setTrimestre] = useState<Trimestre | null>(() => (searchParams.get("tri") as Trimestre) ?? null);
   const [incompletas, setIncompletas] = useState(() => searchParams.get("inc") === "1");
   const [sortCol, setSortCol] = useState<SortCol>(() => (searchParams.get("sort") as SortCol) ?? "aporte_estimado");
   const [sortDir, setSortDir] = useState<"asc" | "desc">(() => (searchParams.get("dir") as "asc" | "desc") ?? "desc");
   const [setores, setSetores] = useState<string[]>([]);
-  const [empresaPesquisa, setEmpresaPesquisa] = useState<Empresa | null>(null);
-  const [usuarioNome, setUsuarioNome] = useState("Olá");
-  const [priorizandoPesquisa, setPriorizandoPesquisa] = useState(false);
-  const [pesquisaConcluida, setPesquisaConcluida] = useState(false);
-  const [pesquisaJaSolicitada, setPesquisaJaSolicitada] = useState(false);
-  const [pesquisaErro, setPesquisaErro] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadUserName() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !active) return;
-
-      const { data: profile } = await (supabase as any)
-        .from("profiles")
-        .select("full_name")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!active) return;
-      const fullName = profile?.full_name
-        || user.user_metadata?.full_name
-        || user.user_metadata?.name
-        || "";
-      const firstName = String(fullName).trim().split(/\s+/)[0];
-      if (firstName) setUsuarioNome(firstName);
-    }
-
-    void loadUserName();
-    return () => { active = false; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Sincroniza filtros na URL — pula o primeiro render (estado já vem da URL)
   const didMount = useRef(false);
@@ -364,6 +364,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     const params = new URLSearchParams();
     if (dSearch)   params.set("q", dSearch);
     if (estado)    params.set("uf", estado);
+    if (chaveMesorregioes) params.set("meso", chaveMesorregioes);
     if (setor)     params.set("setor", setor);
     if (trimestre) params.set("tri", trimestre);
     if (incompletas) params.set("inc", "1");
@@ -373,7 +374,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     const qs = params.toString();
     router.replace(`/patrocinadores${qs ? `?${qs}` : ""}`, { scroll: false });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dSearch, estado, setor, trimestre, incompletas, sortCol, sortDir, page]);
+  }, [dSearch, estado, chaveMesorregioes, setor, trimestre, incompletas, sortCol, sortDir, page]);
 
   // Debounce search 300ms
   useEffect(() => {
@@ -383,19 +384,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
   // Load distinct setores for dropdown
   useEffect(() => {
-    supabase
-      .from("empresas")
-      .select("setor")
-      .not("setor", "is", null)
-      .then(({ data }) => {
-        if (data) {
-          const rows = data as Array<{ setor: string | null }>;
-          const unique = [
-            ...new Set(rows.map((r) => r.setor).filter((s): s is string => !!s)),
-          ].sort();
-          setSetores(unique);
-        }
-      });
+    carregarSetores(supabase).then(setSetores);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -416,7 +405,8 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     const s = dSearch.trim();
     if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`);
     if (estado) q = q.eq("estado", estado);
-    if (setor) q = q.eq("setor", setor);
+    if (mesorregioes.length > 0) q = q.in("mesorregiao_id", mesorregioes);
+    if (setor) q = q.in("setor", grafiasDoSetor(setor));
     if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null");
     if (trimestre === "T1") q = q.eq("trimestre_1", true);
     if (trimestre === "T2") q = q.eq("trimestre_2", true);
@@ -448,7 +438,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     fetchData();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dSearch, estado, setor, trimestre, incompletas, sortCol, sortDir]);
+  }, [dSearch, estado, chaveMesorregioes, setor, trimestre, incompletas, sortCol, sortDir]);
 
   async function goToPage(n: number) {
     setLoading(true);
@@ -474,50 +464,22 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   function clearFilters() {
     setSearch("");
     setEstado("");
+    setMesorregioes([]);
     setSetor("");
     setTrimestre(null);
     setIncompletas(false);
   }
 
   function abrirEmpresa(empresa: Empresa) {
-    if (empresa.tem_detalhe) {
-      router.push(`/patrocinadores/${empresa.id}?lei=cultura`);
-      return;
-    }
-
-    setEmpresaPesquisa(empresa);
-    setPesquisaConcluida(false);
-    setPesquisaJaSolicitada(false);
-    setPesquisaErro(null);
+    router.push(`/patrocinadores/${empresa.id}?lei=cultura`);
   }
 
-  function fecharPesquisa() {
-    if (priorizandoPesquisa) return;
-    setEmpresaPesquisa(null);
-    setPesquisaConcluida(false);
-    setPesquisaJaSolicitada(false);
-    setPesquisaErro(null);
-  }
 
-  async function iniciarPesquisa() {
-    if (!empresaPesquisa || priorizandoPesquisa) return;
-
-    setPriorizandoPesquisa(true);
-    setPesquisaErro(null);
-    const resultado = await solicitarPesquisaEmpresa(empresaPesquisa.id);
-    setPriorizandoPesquisa(false);
-
-    if (!resultado.sucesso) {
-      setPesquisaErro(resultado.erro ?? "Não foi possível priorizar esta busca. Tente novamente.");
-      return;
-    }
-
-    setPesquisaJaSolicitada(resultado.jaSolicitada);
-    setPesquisaConcluida(true);
-  }
-
-  const hasFilters = !!(search || estado || setor || trimestre || incompletas);
+  const hasFilters = !!(search || estado || mesorregioes.length > 0 || setor || trimestre || incompletas);
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const colunasDaTabela = selecao ? 8 : 7;
+  const daPagina: EmpresaDaBase[] = empresas.map((e) => ({ id: e.id, nome: e.nome, setor: e.setor, site: e.site, cidade: e.cidade, estado: e.estado }));
+  const marcadasNaPagina = selecao ? daPagina.filter((e) => selecao.tem(e.id)).length : 0;
 
   const SortIcon = ({ col }: { col: SortCol }) =>
     sortCol === col ? (
@@ -547,7 +509,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar empresa, setor, cidade…"
-            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10 transition"
+            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-[#282525] placeholder-black/30 focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10 transition"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           />
         </div>
@@ -562,6 +524,9 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
           compact
           emphasized={false}
         />
+
+        {/* Mesorregião (várias de uma vez): a cidade sede da empresa está num município da mesorregião */}
+        <FiltroMesorregiao lei="cultura" estado={estado} selecionadas={mesorregioes} onChange={setMesorregioes} />
 
         {/* Setor */}
         <CustomDropdown
@@ -600,11 +565,17 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       </div>
 
       {/* Table */}
+      {selecao && (
+        <BarraDeSelecao selecao={selecao} marcadasNaPagina={marcadasNaPagina} totalNaPagina={daPagina.length} onAlternarPagina={() => selecao.alternarPagina(daPagina)} />
+      )}
       <div className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ background: "#F9F9F8" }}>
+              <tr className="h-10" style={{ background: "#F9F9F8" }}>
+                {selecao && (
+                  <CabecalhoDeSelecao marcadasNaPagina={marcadasNaPagina} totalNaPagina={daPagina.length} desabilitada={loading} onAlternar={() => selecao.alternarPagina(daPagina)} />
+                )}
                 {columns.map(({ label, icon, col }) => (
                   <th
                     key={label}
@@ -624,6 +595,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
               {loading ? (
                 Array.from({ length: 10 }).map((_, i) => (
                   <tr key={i}>
+                    {selecao && <td className="w-10" />}
                     <td className="px-4 py-3"><div className="w-8 h-8 rounded bg-black/8 animate-pulse" /></td>
                     <td className="px-4 py-3"><div className="h-3.5 w-44 bg-black/8 rounded animate-pulse" /></td>
                     <td className="px-4 py-3"><div className="w-7 h-7 rounded-full bg-black/8 animate-pulse" /></td>
@@ -635,7 +607,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                 ))
               ) : empresas.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-20 text-center text-sm text-black/35">
+                  <td colSpan={colunasDaTabela} className="px-4 py-20 text-center text-sm text-black/35">
                     Nenhuma empresa encontrada com os filtros selecionados
                   </td>
                 </tr>
@@ -643,12 +615,24 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                 empresas.map((e, i) => {
                   const color = colorFrom(e.nome);
                   const initials = e.nome.slice(0, 2).toUpperCase();
+                  const marcada = selecao?.tem(e.id) ?? false;
                   return (
                     <tr
                       key={e.id}
-                      className="hover:bg-black/[0.025] transition-colors cursor-pointer group"
+                      className={`transition-colors cursor-pointer group ${marcada ? "bg-black/[.04]" : "hover:bg-black/[0.025]"}`}
                       onClick={() => abrirEmpresa(e)}
                     >
+                      {/* Seleção */}
+                      {selecao && (
+                        <CelulaDeSelecao
+                          marcada={marcada}
+                          desabilitada={selecao.noLimite && !marcada}
+                          nome={e.nome}
+                          titulo={selecao.noLimite && !marcada ? `Máximo de ${MAX_SELECAO} empresas por vez` : undefined}
+                          onAlternar={() => selecao.alternar(daPagina[i])}
+                        />
+                      )}
+
                       {/* Logo */}
                       <td className="px-4 py-3">
                         <CompanyLogo
@@ -662,7 +646,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
                       {/* Empresa */}
                       <td className="px-4 py-3">
-                        <span className="font-semibold text-[#0D0D0D] text-[0.8125rem]">{e.nome}</span>
+                        <span className="font-semibold text-[#282525] text-[0.8125rem]">{e.nome}</span>
                       </td>
 
                       {/* Ver */}
@@ -675,7 +659,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                             ev.stopPropagation();
                             abrirEmpresa(e);
                           }}
-                          title={e.tem_detalhe ? "Ver perfil" : "Solicitar pesquisa"}
+                          title="Ver perfil"
                         >
                           <Crosshair size={14} weight="bold" />
                         </button>
@@ -692,8 +676,8 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
                       {/* Investimento */}
                       <td className="px-4 py-3">
-                        <span className="font-bold text-[#0D0D0D] text-[0.8125rem]">
-                          {fmt(e.aporte_estimado)}
+                        <span className="font-semibold text-[#282525] text-[0.8125rem] tabular-nums" title={e.aporte_estimado ? formatarValorCompleto(e.aporte_estimado) : undefined}>
+                          {e.aporte_estimado ? formatarValorCurto(e.aporte_estimado) : "—"}
                         </span>
                       </td>
                     </tr>
@@ -708,18 +692,6 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
         {!loading && <Pagination page={page} totalPages={totalPages} onChange={goToPage} />}
       </div>
 
-      {empresaPesquisa && (
-        <PesquisaEmpresaModal
-          empresaNome={empresaPesquisa.nome}
-          usuarioNome={usuarioNome}
-          loading={priorizandoPesquisa}
-          concluida={pesquisaConcluida}
-          jaSolicitada={pesquisaJaSolicitada}
-          erro={pesquisaErro}
-          onClose={fecharPesquisa}
-          onStart={iniciarPesquisa}
-        />
-      )}
     </div>
   );
 }
@@ -751,6 +723,9 @@ function WelcomeModalGate() {
 export default function PatrocinadoresPage() {
   const [aba, setAba] = useState("cultura");
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  // A marcação mora aqui, e não em cada aba, para seguir quem troca de aba, de página ou de filtro.
+  const marcadas = useSelecaoDeEmpresas();
+  const selecao = podeAdicionarAoCrm(useOrganizationRole()) ? marcadas : null;
 
   useEffect(() => {
     let active = true;
@@ -773,8 +748,7 @@ export default function PatrocinadoresPage() {
     <div className="min-h-full bg-white">
       <div className="flex flex-col gap-4 px-4 pb-5 pt-6 md:px-8 md:pt-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D] [text-wrap:balance]">Encontrar patrocinadores</h1>
+          <TituloComFrase secao="patrocinadores" titulo="Encontrar patrocinadores" />
         </div>
         <SegmentedControl
           value={aba}
@@ -794,12 +768,12 @@ export default function PatrocinadoresPage() {
           página de detalhe) foi migrado pra investimentos_por_lei (lei='cultura'). */}
       {aba === "cultura" && (
         <Suspense fallback={<div className="min-h-[22.5rem] animate-pulse bg-black/[.015]" />}>
-          <PatrocinadoresContent isSuperAdmin={isSuperAdmin} />
+          <PatrocinadoresContent isSuperAdmin={isSuperAdmin} selecao={selecao} />
         </Suspense>
       )}
-      {aba === "esporte" && <LeiTabContent lei="esporte" isSuperAdmin={isSuperAdmin} />}
-      {aba === "cinema" && <LeiTabContent lei="ancine" isSuperAdmin={isSuperAdmin} />}
-      {aba === "saude" && <LeiTabContent lei="saude" isSuperAdmin={isSuperAdmin} />}
+      {aba === "esporte" && <LeiTabContent lei="esporte" isSuperAdmin={isSuperAdmin} selecao={selecao} />}
+      {aba === "cinema" && <LeiTabContent lei="ancine" isSuperAdmin={isSuperAdmin} selecao={selecao} />}
+      {aba === "saude" && <LeiTabContent lei="saude" isSuperAdmin={isSuperAdmin} selecao={selecao} />}
       <Suspense fallback={null}>
         <WelcomeModalGate />
       </Suspense>

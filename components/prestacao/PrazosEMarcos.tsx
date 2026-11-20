@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, Circle, CircleCheck, Clock } from "lucide-react";
 import type { PrestacaoContas } from "@/lib/supabase/types";
 import { quandoVence, type PrazoDaPrestacao } from "@/lib/prestacao/prontidao";
 
@@ -16,10 +16,11 @@ const MARCOS: { campo: keyof PrestacaoContas; rotulo: string }[] = [
   { campo: "data_envio", rotulo: "Envio da prestação" },
 ];
 
-function corDoPrazo(prazo: PrazoDaPrestacao): string {
-  if (prazo.quem === "proponente" && prazo.dias < 0) return "#B23B3B";
-  if (prazo.quem === "proponente" && prazo.dias <= 15) return "#9A6A10";
-  return "rgba(13,13,13,.7)";
+/** Só o prazo do proponente vencido ou perto de vencer é alerta: pinta o ícone, não o texto. */
+function alertaDoPrazo(prazo: PrazoDaPrestacao): string | null {
+  if (prazo.quem === "proponente" && prazo.dias < 0) return "#D94A4A";
+  if (prazo.quem === "proponente" && prazo.dias <= 15) return "#B07A14";
+  return null;
 }
 
 /** Prazos em aberto (do proponente e do órgão), com a contagem regressiva. */
@@ -33,15 +34,19 @@ export function ProximosPrazos({ prazos }: { prazos: PrazoDaPrestacao[] }) {
         <p className="px-4 py-4 text-[0.6875rem] text-black/40">Nenhum prazo em aberto.</p>
       ) : (
         <ul className="divide-y divide-black/[.05] px-4">
-          {prazos.map(prazo => (
-            <li key={`${prazo.rotulo}-${prazo.data}`} className="py-2.5">
-              <p className="text-[0.6875rem] font-medium text-black/70">{prazo.rotulo}</p>
-              <p className="text-[0.6875rem] tabular-nums" style={{ color: corDoPrazo(prazo) }}>
-                {dataCurta(prazo.data)} · {quandoVence(prazo.dias)}
-              </p>
-              <p className="text-[0.625rem] text-black/35">{prazo.quem === "orgao" ? "Cabe ao órgão" : "Cabe ao proponente"}</p>
-            </li>
-          ))}
+          {prazos.map(prazo => {
+            const alerta = alertaDoPrazo(prazo);
+            return (
+              <li key={`${prazo.rotulo}-${prazo.data}`} className="py-2.5">
+                <p className="text-[0.6875rem] font-medium text-black/70">{prazo.rotulo}</p>
+                <p className="flex items-center gap-1 text-[0.6875rem] tabular-nums text-black/70">
+                  {alerta && <Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: alerta }} />}
+                  {dataCurta(prazo.data)} · {quandoVence(prazo.dias)}
+                </p>
+                <p className="text-[0.625rem] text-black/35">{prazo.quem === "orgao" ? "Cabe ao órgão" : "Cabe ao proponente"}</p>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
@@ -52,6 +57,8 @@ export function ProximosPrazos({ prazos }: { prazos: PrazoDaPrestacao[] }) {
 export function MarcosDaPrestacao({ prestacao, hoje }: { prestacao: PrestacaoContas; hoje: string }) {
   const marcos = [
     ...MARCOS.map(m => ({ rotulo: m.rotulo, data: (prestacao[m.campo] as string | null | undefined) ?? null, prazo: false })),
+    // P9.1: o fim da captação só entra quando informado; nem todo regime conta prazo dele.
+    ...(prestacao.data_fim_captacao ? [{ rotulo: "Fim da captação", data: prestacao.data_fim_captacao, prazo: false }] : []),
     { rotulo: "Prazo de envio", data: prestacao.prazo, prazo: true },
   ];
   const preenchidos = marcos.filter(m => m.data).sort((a, b) => (a.data as string).localeCompare(b.data as string));
@@ -62,16 +69,13 @@ export function MarcosDaPrestacao({ prestacao, hoje }: { prestacao: PrestacaoCon
       <ol className="px-4 py-3">
         {preenchidos.map((marco, i) => {
           const passou = (marco.data as string) <= hoje;
+          const Icone = marco.prazo ? CalendarClock : passou ? CircleCheck : Circle;
           return (
             <li key={marco.rotulo} className="relative flex gap-3 pb-3 last:pb-0">
-              {i < preenchidos.length - 1 && <span className="absolute left-[0.28rem] top-3 h-full w-px bg-black/[.08]" aria-hidden />}
-              <span
-                className="relative mt-1 h-2.5 w-2.5 shrink-0 rounded-full border-2"
-                style={{ borderColor: marco.prazo ? "#B07A14" : passou ? "#2E8932" : "rgba(13,13,13,.25)", background: passou && !marco.prazo ? "#2E8932" : "white" }}
-                aria-hidden
-              />
+              {i < preenchidos.length - 1 && <span className="absolute bottom-0 left-1.5 top-4 w-px -translate-x-1/2 bg-black/[.08]" aria-hidden />}
+              <Icone size={12} strokeWidth={1.75} aria-hidden="true" className={`mt-0.5 shrink-0 ${passou || marco.prazo ? "text-black/40" : "text-black/25"}`} />
               <div className="min-w-0">
-                <p className={`text-[0.6875rem] ${marco.prazo ? "font-medium text-[#9A6A10]" : "text-black/70"}`}>{marco.rotulo}</p>
+                <p className={`text-[0.6875rem] text-black/70 ${marco.prazo ? "font-medium" : ""}`}>{marco.rotulo}</p>
                 <p className="text-[0.625rem] tabular-nums text-black/45">{dataCurta(marco.data as string)}{passou ? "" : " · a vir"}</p>
               </div>
             </li>

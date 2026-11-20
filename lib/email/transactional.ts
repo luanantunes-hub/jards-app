@@ -6,6 +6,8 @@ type SendTransactionalEmailInput = {
   html: string;
   text: string;
   idempotencyKey?: string;
+  /** Para onde vai a resposta de quem recebe; sem isto vale TRANSACTIONAL_EMAIL_REPLY_TO, se existir. */
+  replyTo?: string;
 };
 
 export type TransactionalEmailResult =
@@ -54,8 +56,8 @@ export async function sendTransactionalEmail(
         subject: input.subject,
         html: input.html,
         text: input.text,
-        ...(process.env.TRANSACTIONAL_EMAIL_REPLY_TO
-          ? { reply_to: process.env.TRANSACTIONAL_EMAIL_REPLY_TO }
+        ...(input.replyTo || process.env.TRANSACTIONAL_EMAIL_REPLY_TO
+          ? { reply_to: input.replyTo || process.env.TRANSACTIONAL_EMAIL_REPLY_TO }
           : {}),
       }),
       signal: AbortSignal.timeout(10_000),

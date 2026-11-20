@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -13,7 +13,12 @@ function origemDaVisita() {
   return lerOrigem(new URLSearchParams(window.location.search), consentiuMedicao());
 }
 
-export default function CadastroPage() {
+// Quem chega por /cadastro?modulo=prestacao (P5.6) vai, depois da conta
+// criada, direto para assinar a prestação de contas em Meu plano.
+const DESTINO_PRESTACAO = "/meu-plano?assinar=prestacao";
+
+export default function CadastroPage({ searchParams }: { searchParams: Promise<{ modulo?: string | string[] }> }) {
+  const paraPrestacao = use(searchParams).modulo === "prestacao";
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,10 +49,11 @@ export default function CadastroPage() {
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/confirmacao-email`,
+        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(paraPrestacao ? "/confirmacao-email?modulo=prestacao" : "/confirmacao-email")}`,
         data: {
           full_name: fullName.trim(),
           ...(origem ? { origem_cadastro: origem } : {}),
+          ...(paraPrestacao ? { modulo_interesse: "prestacao" } : {}),
         },
       },
     });
@@ -66,7 +72,7 @@ export default function CadastroPage() {
     if (data.user?.identities?.length) await registrarCadastroNoGoogleAds(email);
 
     if (data.session) {
-      window.location.href = "/dashboard";
+      window.location.href = paraPrestacao ? DESTINO_PRESTACAO : "/dashboard";
       return;
     }
 
@@ -81,7 +87,7 @@ export default function CadastroPage() {
     // O Google não recebe dados extras no cadastro; a origem segue pelo
     // endereço de retorno e o callback a grava na conta nova.
     const retorno = new URL("/api/auth/callback", window.location.origin);
-    retorno.searchParams.set("next", "/dashboard?onboarding=1");
+    retorno.searchParams.set("next", paraPrestacao ? DESTINO_PRESTACAO : "/dashboard?onboarding=1");
     anexarOrigem(retorno, origemDaVisita());
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -97,31 +103,37 @@ export default function CadastroPage() {
   return (
     <AuthShell
       eyebrow="Comece com contexto, não do zero"
-      title="Sua captação já nasce organizada."
-      description="Crie seu workspace e conecte projetos, oportunidades, contatos e próximos passos desde o primeiro dia."
+      title={paraPrestacao ? "Sua prestação de contas, do primeiro recibo ao envio." : "Sua captação já nasce organizada."}
+      description={paraPrestacao
+        ? "Despesas, extrato, checagens pela lei do projeto e o pacote de envio no mesmo lugar, para a equipe e para o cliente."
+        : "Crie seu workspace e conecte projetos, oportunidades, contatos e próximos passos desde o primeiro dia."}
     >
       <Image src="/jards-logo.svg" alt="Jards" width={88} height={28} priority className="mb-8 h-7 w-auto lg:hidden" />
 
         {sent ? (
           <section className="py-5 text-center">
             <CheckCircle size={38} className="mx-auto mb-5 text-[#2E8932]" strokeWidth={1.6} />
-            <h1 className="text-2xl font-bold text-[#0D0D0D]">Confirme seu e-mail</h1>
+            <h1 className="text-2xl font-bold text-[#282525]">Confirme seu e-mail</h1>
             <p className="mt-3 text-sm leading-6 text-black/50">
               Enviamos um link de confirmação para <strong className="font-medium text-black/70">{email}</strong>.
               Abra-o para ativar sua conta e acessar o Jards.
             </p>
-            <a href="/login" className="mt-7 inline-flex items-center gap-2 text-sm font-medium text-black/45 transition hover:text-black">
+            <a href="/login" className="mt-7 inline-flex items-center gap-2 text-sm font-medium text-black/45 transition hover:text-[#282525]">
               <ArrowLeft size={14} /> Voltar ao login
             </a>
           </section>
         ) : (
           <>
-            <a href="/login" className="mb-4 inline-flex items-center gap-1.5 text-xs text-black/40 transition hover:text-black">
+            <a href="/login" className="mb-4 inline-flex items-center gap-1.5 text-xs text-black/40 transition hover:text-[#282525]">
               <ArrowLeft size={13} /> Voltar ao login
             </a>
             <p className="mb-2.5 text-[0.6875rem] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Crie seu workspace</p>
-            <h1 className="text-[clamp(2.15rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#0D0D0D]">Comece gratuitamente.</h1>
-            <p className="mb-4 mt-2.5 text-sm leading-6 text-black/50">Configure seu espaço e comece com o contexto organizado.</p>
+            <h1 className="text-[clamp(2.15rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#282525]">{paraPrestacao ? "Prestação de contas." : "Comece gratuitamente."}</h1>
+            <p className="mb-4 mt-2.5 text-sm leading-6 text-black/50">
+              {paraPrestacao
+                ? "Crie a conta e assine o módulo em seguida: R$ 92,80 por mês, com 1 usuário."
+                : "Configure seu espaço e comece com o contexto organizado."}
+            </p>
 
             <button type="button" onClick={handleGoogle} disabled={loading} className="mb-4 flex w-full items-center justify-center gap-2.5 rounded-xl border border-black/12 bg-white py-3 text-sm font-medium text-black/70 transition hover:bg-black/[.04] active:scale-[.99] disabled:opacity-50">
               <GoogleMark /> Cadastrar com Google
@@ -159,7 +171,7 @@ export default function CadastroPage() {
               </button>
             </form>
 
-            <p className="mt-3 text-center text-[0.6875rem] text-black/40">Sem cartão. Seus dados ficam protegidos.</p>
+            <p className="mt-3 text-center text-[0.6875rem] text-black/40">{paraPrestacao ? "O pagamento vem depois da conta criada." : "Sem cartão."} Seus dados ficam protegidos.</p>
 
             <p className="mt-3 text-center text-[0.6875rem] leading-5 text-black/35">
               Ao criar uma conta, você concorda com os nossos{" "}
@@ -169,7 +181,7 @@ export default function CadastroPage() {
             </p>
 
             <p className="mt-2.5 text-center text-xs text-black/40">
-              Já possui uma conta? <a href="/login" className="font-semibold text-black hover:underline">Entrar</a>
+              Já possui uma conta? <a href="/login" className="font-semibold text-[#282525] hover:underline">Entrar</a>
             </p>
           </>
         )}
@@ -188,7 +200,7 @@ function GoogleMark() {
   );
 }
 
-const inputClass = "w-full rounded-xl border border-black/12 bg-white px-4 py-2.5 text-sm text-black placeholder-black/55 transition focus:border-[#684DB0]/55 focus:outline-none focus:ring-2 focus:ring-[#684DB0]/12";
+const inputClass = "w-full rounded-xl border border-black/12 bg-white px-4 py-2.5 text-sm text-[#282525] placeholder-black/55 transition focus:border-[#684DB0]/55 focus:outline-none focus:ring-2 focus:ring-[#684DB0]/12";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

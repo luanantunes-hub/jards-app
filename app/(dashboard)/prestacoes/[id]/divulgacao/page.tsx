@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { AlertTriangle, Ban, ExternalLink, FileText, Megaphone, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Ban, Clock, ExternalLink, FileText, Megaphone, Pencil, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -27,6 +27,8 @@ import type { RegimeNormativo } from "@/lib/prestacao/regimes";
 import type { PrestacaoPeca } from "@/lib/supabase/types";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "inline-flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
+const ALERTA = <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />;
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 const dataBr = (iso: string) => iso.split("-").reverse().join("/");
 const hoje = () => new Date().toISOString().slice(0, 10);
@@ -39,8 +41,8 @@ function Avisos({ achados }: { achados: readonly Achado[] }) {
         const bloqueio = a.severidade === "bloqueio" && !a.justificativa;
         const Icone = bloqueio ? Ban : AlertTriangle;
         return (
-          <li key={a.chave} className="flex items-start gap-1 text-[0.6875rem]" style={{ color: a.justificativa ? "rgba(13,13,13,.45)" : bloqueio ? "#B23B3B" : "#B07A14" }}>
-            <Icone size={11} className="mt-0.5 shrink-0" aria-hidden />
+          <li key={a.chave} className={`flex items-start gap-1 text-[0.6875rem] ${a.justificativa ? "text-black/45" : "text-black/60"}`}>
+            <Icone size={12} strokeWidth={1.75} className={`mt-0.5 shrink-0 ${a.justificativa ? "text-black/40" : bloqueio ? "text-[#D94A4A]" : "text-[#B07A14]"}`} aria-hidden />
             <span>{a.mensagem}{a.justificativa ? ` Justificativa: ${a.justificativa}` : ""}</span>
           </li>
         );
@@ -53,7 +55,12 @@ function Marcas({ p, regime, defesos }: { p: PrestacaoPeca; regime: RegimeNormat
   const esperadas = marcasEsperadas(regime, defesosDaPeca(p, defesos).length > 0);
   if (esperadas.length === 0) return <span className="text-black/60">{p.marcas.length ? p.marcas.length : "—"}</span>;
   const faltam = marcasFaltando(p, esperadas).length;
-  return <span className={faltam ? "text-[#B07A14]" : "text-black/60"}>{esperadas.length - faltam} de {esperadas.length}</span>;
+  return (
+    <span className="inline-flex items-center gap-1 tabular-nums text-black/60">
+      {faltam > 0 && <AlertTriangle size={12} strokeWidth={1.75} role="img" aria-label="Faltam marcas" className="shrink-0 text-[#B07A14]" />}
+      {esperadas.length - faltam} de {esperadas.length}
+    </span>
+  );
 }
 
 function Amostra({ p, onAbrir }: { p: PrestacaoPeca; onAbrir: (p: PrestacaoPeca) => void }) {
@@ -185,14 +192,13 @@ export default function DivulgacaoPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Divulgação</h2>
-          <p className="text-[0.6875rem] text-black/45">Peças de divulgação com as marcas, a aprovação prévia e a amostra para o relatório final.</p>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Divulgação</h2>
         </div>
         {podeEditar && (
           <button
             type="button"
             onClick={() => setEditando("nova")}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
           >
             <Plus size={13} aria-hidden /> Nova peça
           </button>
@@ -207,24 +213,27 @@ export default function DivulgacaoPage() {
           <p><span className="text-black/40">Marcas do regime: </span><span className="text-black/75">{divulgacao.marcas.join(" · ")}</span></p>
           <p><span className="text-black/40">Aprovação prévia: </span><span className="text-black/75">{divulgacao.aprovacaoPrevia.exigida ? divulgacao.aprovacaoPrevia.descricao : "o regime não pede."}</span></p>
           {defesoAtual && divulgacao.defeso && (
-            <p className="text-[#B07A14]">Defeso eleitoral de {dataBr(defesoAtual.inicio)} a {dataBr(defesoAtual.fim)}: {divulgacao.defeso.descricao}</p>
+            <p className="flex items-start gap-1 text-black/60">
+              <Clock size={12} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-[#B07A14]" />
+              <span>Defeso eleitoral de {dataBr(defesoAtual.inicio)} a {dataBr(defesoAtual.fim)}: {divulgacao.defeso.descricao}</span>
+            </p>
           )}
         </div>
       )}
 
       {!carregando && pecas.length > 0 && (
         <dl className="flex flex-wrap gap-x-6 gap-y-1 rounded border bg-white px-5 py-3 text-[0.6875rem]" style={BORDA}>
-          <div className="flex gap-1.5"><dt className="text-black/40">Peças</dt><dd className="tabular-nums text-black/75">{pecas.length}</dd></div>
-          <div className="flex gap-1.5"><dt className="text-black/40">Já circularam</dt><dd className="tabular-nums text-black/75">{placar.circularam}</dd></div>
-          {placar.semAprovacao > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Circularam sem aprovação</dt><dd className="tabular-nums text-[#B07A14]">{placar.semAprovacao}</dd></div>}
-          {placar.comMarcaFaltando > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Com marca a corrigir</dt><dd className="tabular-nums text-[#B07A14]">{placar.comMarcaFaltando}</dd></div>}
-          {placar.semAmostra > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Sem amostra</dt><dd className="tabular-nums text-[#B07A14]">{placar.semAmostra}</dd></div>}
+          <div className="flex items-center gap-1.5"><dt className={ROTULO}>Peças</dt><dd className="font-semibold tabular-nums text-[#282525]">{pecas.length}</dd></div>
+          <div className="flex items-center gap-1.5"><dt className={ROTULO}>Já circularam</dt><dd className={`font-semibold tabular-nums ${placar.circularam ? "text-[#282525]" : "text-black/30"}`}>{placar.circularam}</dd></div>
+          {placar.semAprovacao > 0 && <div className="flex items-center gap-1.5"><dt className={ROTULO}>{ALERTA}Circularam sem aprovação</dt><dd className="font-semibold tabular-nums text-[#282525]">{placar.semAprovacao}</dd></div>}
+          {placar.comMarcaFaltando > 0 && <div className="flex items-center gap-1.5"><dt className={ROTULO}>{ALERTA}Com marca a corrigir</dt><dd className="font-semibold tabular-nums text-[#282525]">{placar.comMarcaFaltando}</dd></div>}
+          {placar.semAmostra > 0 && <div className="flex items-center gap-1.5"><dt className={ROTULO}>{ALERTA}Sem amostra</dt><dd className="font-semibold tabular-nums text-[#282525]">{placar.semAmostra}</dd></div>}
         </dl>
       )}
 
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="pecas-titulo">
         <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="pecas-titulo" className="text-[0.75rem] font-semibold text-black">Peças <span className="font-normal tabular-nums text-black/35">({pecas.length})</span></h3>
+          <h3 id="pecas-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Peças <span className="font-normal tabular-nums text-black/35">({pecas.length})</span></h3>
         </div>
         {carregando ? (
           <div className="space-y-2 p-5">{[0, 1, 2].map(i => <div key={i} className="h-10 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
@@ -234,8 +243,8 @@ export default function DivulgacaoPage() {
             <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma peça cadastrada.</p>
             <p className="mx-auto max-w-[30rem] text-[0.6875rem] text-black/35">
               {podeEditar
-                ? "Cadastre cartazes, posts, vídeos e placas com as marcas que aparecem, a aprovação prévia e a amostra, que entra no relatório final."
-                : "Quem edita a prestação cadastra as peças."}
+                ? "Cadastre cartazes, posts, vídeos e placas, com as marcas, a aprovação prévia e a amostra."
+                : "Nenhuma peça cadastrada."}
             </p>
           </div>
         ) : (
@@ -265,7 +274,12 @@ export default function DivulgacaoPage() {
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem] tabular-nums text-black/60">
                           {periodoDaVeiculacao(p) ?? <span className="text-black/30">—</span>}
-                          {defeso && <span className="block text-[0.625rem] text-[#B07A14]">no defeso</span>}
+                          {defeso && (
+                            <span className="flex items-center gap-1 text-[0.625rem] text-black/45">
+                              <Clock size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                              no defeso
+                            </span>
+                          )}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem] tabular-nums"><Marcas p={p} regime={regime} defesos={defesos} /></td>
                         <td className="min-w-[10rem] px-4 py-3 text-[0.6875rem] text-black/60">{situacaoDaAprovacao(p, regime, hoje()).texto}</td>

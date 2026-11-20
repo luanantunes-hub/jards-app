@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type PanelTab = "relationship" | "negotiations" | "inscricoes";
 
@@ -81,15 +82,6 @@ function fmtDate(value: string | null) {
   });
 }
 
-function fmtMoney(value: number | null) {
-  if (value == null) return null;
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 function StatusPill({ status }: { status: string }) {
   const item = STATUS[status] ?? { label: status.replaceAll("_", " "), color: "#777777" };
   return (
@@ -149,17 +141,17 @@ export function CompanyQuickPanel({ company, onClose }: {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/20" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center veu" onMouseDown={onClose}>
       <aside
         aria-label={`Painel da empresa ${company.nome}`}
-        className="flex h-full w-full max-w-[36.25rem] flex-col border-l border-black/[.08] bg-[#F7F7F5] shadow-2xl"
+        className="folha-desce flex max-h-[96dvh] w-full max-w-[40rem] flex-col overflow-hidden rounded-b-[var(--raio-folha)] bg-[#F7F7F5] shadow-[var(--folha-sombra)]"
         onMouseDown={event => event.stopPropagation()}
       >
         <header className="border-b border-black/[.07] bg-white px-5 pb-4 pt-5 sm:px-6">
           <div className="flex items-start gap-3">
             <CompanyLogo nome={company.nome} domain={company.domain_key} site={company.site} size={44} className="shrink-0 rounded border border-black/[.06]" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[1.0625rem] font-semibold tracking-[-.02em] text-black">{company.nome}</p>
+              <p className="truncate text-[1.0625rem] font-semibold tracking-[-.02em] text-[#282525]">{company.nome}</p>
               <p className="mt-1 truncate text-[0.6875rem] text-black/40">{company.setor || "Setor não informado"}</p>
             </div>
             <button type="button" onClick={onClose} aria-label="Fechar painel" className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/65">
@@ -217,7 +209,7 @@ export function CompanyQuickPanel({ company, onClose }: {
               {negotiations.length ? negotiations.map(item => (
                 <Link key={item.id} href={`/captacoes/${item.id}`} className="group block border-t border-black/[.06] py-3.5 first:border-0 first:pt-0 last:pb-0">
                   <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[0.75rem] font-semibold text-black/75 group-hover:text-[#7259B5]">{item.titulo || "Negociação sem título"}</p><p className="mt-1 truncate text-[0.625rem] text-black/35">{item.projeto?.nome || "Sem projeto"}{item.proxima_prospeccao ? ` · próximo contato ${fmtDate(item.proxima_prospeccao)}` : ""}</p></div><StatusPill status={item.status} /></div>
-                  {fmtMoney(item.valor_solicitado) && <p className="mt-2 text-[0.6875rem] font-semibold tabular-nums text-black/55">{fmtMoney(item.valor_solicitado)}</p>}
+                  {item.valor_solicitado != null && <p title={formatarValorCompleto(item.valor_solicitado)} className="mt-2 text-[0.6875rem] font-semibold tabular-nums text-black/55">{formatarValorCurto(item.valor_solicitado)}</p>}
                 </Link>
               )) : <Empty copy="Nenhuma negociação vinculada." />}
             </PanelSection>
@@ -226,7 +218,7 @@ export function CompanyQuickPanel({ company, onClose }: {
               {registrations.length ? registrations.map(item => (
                 <Link key={item.id} href={`/editais-inscritos/${item.id}`} className="group block border-t border-black/[.06] py-3.5 first:border-0 first:pt-0 last:pb-0">
                   <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[0.75rem] font-semibold text-black/75 group-hover:text-[#7259B5]">{item.projeto?.nome || "Sem projeto"}</p>{item.data_fechamento && <p className="mt-1 truncate text-[0.625rem] text-black/35">encerra {fmtDate(item.data_fechamento)}</p>}</div><StatusPill status={item.status} /></div>
-                  {fmtMoney(item.valor) && <p className="mt-2 text-[0.6875rem] font-semibold tabular-nums text-black/55">{fmtMoney(item.valor)}</p>}
+                  {item.valor != null && <p title={formatarValorCompleto(item.valor)} className="mt-2 text-[0.6875rem] font-semibold tabular-nums text-black/55">{formatarValorCurto(item.valor)}</p>}
                 </Link>
               )) : <Empty copy="Nenhuma inscrição vinculada." />}
             </PanelSection>

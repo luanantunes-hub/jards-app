@@ -29,9 +29,10 @@ test("exclusão de etapa transfere registros antes de removê-la em uma transaç
 
 test("tipos de proponente padrão podem ser editados e removidos por organização", async () => {
   const context = await readFile(path.join(root, "contexts/EtiquetasContext.tsx"), "utf8");
+  const padroes = await readFile(path.join(root, "lib/etiquetas-padrao.ts"), "utf8");
   const config = await readFile(path.join(root, "components/EtiquetasConfig.tsx"), "utf8");
   const migration = await readFile(path.join(root, "supabase/migrations/20260920000003_tipos_proponente_editaveis.sql"), "utf8");
-  assert.match(context, /default-proponente-oscip[^\n]*deletavel: true/);
+  assert.match(padroes, /default-proponente-oscip[^\n]*deletavel: true/);
   assert.match(context, /DEFAULT_ETIQUETAS_PROPONENTE\.filter\(item => !hidden\.has\(`proponente:/);
   assert.match(config, /deletavel: true,\s*\.\.\.patch/);
   assert.match(config, /rpc\("remover_tipo_proponente"/);

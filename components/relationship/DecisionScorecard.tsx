@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Plus, Trash2, X } from "lucide-react";
+import { AlertTriangle, Check, Plus, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -40,13 +40,14 @@ export function calculateWeightedScore(criteria: Pick<DecisionCriterion, "peso" 
   return rated.reduce((sum, item) => sum + item.nota * item.peso, 0) / totalWeight;
 }
 
-function scoreMeta(score: number | null) {
-  if (score === null) return { label: "Sem avaliação", color: "rgba(13,13,13,.30)" };
-  if (score < 2) return { label: "Reavaliar relação", color: "#D94E4E" };
-  if (score < 3) return { label: "Exige atenção", color: "#B07A14" };
-  if (score < 4) return { label: "Vale continuar", color: "#2D72B0" };
-  if (score < 4.6) return { label: "Relação promissora", color: "#7259B5" };
-  return { label: "Relação prioritária", color: "#2E8932" };
+/** Leitura neutra; a cor fica só no arco. Só as faixas baixas levam ícone de alerta. */
+function scoreMeta(score: number | null): { label: string; alerta?: string } {
+  if (score === null) return { label: "Sem avaliação" };
+  if (score < 2) return { label: "Reavaliar relação", alerta: "#D94A4A" };
+  if (score < 3) return { label: "Exige atenção", alerta: "#B07A14" };
+  if (score < 4) return { label: "Vale continuar" };
+  if (score < 4.6) return { label: "Relação promissora" };
+  return { label: "Relação prioritária" };
 }
 
 function ScoreRing({ score }: { score: number | null }) {
@@ -54,7 +55,7 @@ function ScoreRing({ score }: { score: number | null }) {
     <div className="relative h-[7.75rem] w-[7.75rem] shrink-0">
       <SegmentedScoreArc score={score} label={score === null ? "Score sem avaliação" : `Score ${score.toFixed(1)} de 5`} />
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[1.875rem] font-semibold tracking-[-.055em] text-[#1D1D1F]">{score === null ? "N/A" : score.toFixed(1).replace(".", ",")}</span>
+        <span className={`text-[1.875rem] font-semibold tabular-nums tracking-[-.055em] ${score === null ? "text-black/30" : "text-[#282525]"}`}>{score === null ? "N/A" : score.toFixed(1).replace(".", ",")}</span>
         <span className="mt-0.5 text-[0.625rem] font-medium text-black/35">de 5</span>
       </div>
     </div>
@@ -75,7 +76,7 @@ export function CompactDecisionScoreRing({ score }: { score: number | null }) {
         strokeWidth={10}
         label={score === null ? "Score sem avaliação" : `Score ${score.toFixed(1)} de 5`}
       />
-      <span className="absolute inset-0 flex items-center justify-center text-[0.5625rem] font-bold tracking-[-.04em] text-[#1D1D1F]">
+      <span className={`absolute inset-0 flex items-center justify-center text-[0.5625rem] font-semibold tabular-nums tracking-[-.04em] ${score === null ? "text-black/30" : "text-[#282525]"}`}>
         {score === null ? "N/A" : score.toFixed(1).replace(".", ",")}
       </span>
     </div>
@@ -252,7 +253,10 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
         <div className="flex items-center gap-4 rounded border border-black/[.045] bg-white px-4 py-4 shadow-[0_1px_2px_rgba(0,0,0,.025)]">
           <ScoreRing score={score} />
           <div className="min-w-0 flex-1">
-            <p className="text-[0.875rem] font-semibold leading-tight tracking-[-.02em]" style={{ color: scoreState.color }}>{scoreState.label}</p>
+            <p className={`flex items-center gap-1.5 text-[0.875rem] font-semibold leading-tight tracking-[-.02em] ${score === null ? "text-black/30" : "text-black/70"}`}>
+              {scoreState.alerta && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: scoreState.alerta }} />}
+              {scoreState.label}
+            </p>
             <p className="mt-2 text-[0.6875rem] leading-relaxed text-black/45">
               {criteria.length === 0
                 ? "Nenhum critério definido"
@@ -329,7 +333,7 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
             />
             <div className="mt-3 flex items-center justify-end gap-2">
               <button type="button" onClick={() => { setAdding(false); setNewName(""); }} className="inline-flex h-8 items-center gap-1.5 rounded px-3 text-[0.625rem] font-semibold text-black/40 transition hover:bg-black/[.04] hover:text-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 active:scale-[.97]" aria-label="Cancelar"><X size={11} /> Cancelar</button>
-              <button type="button" disabled={!newName.trim() || savingId === "new"} onClick={() => void addCriterion()} className="inline-flex h-8 items-center gap-1.5 rounded bg-[#2E8932] px-3 text-[0.625rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E8932]/30 active:scale-[.97] disabled:opacity-40" aria-label="Salvar critério"><Check size={11} /> Salvar</button>
+              <button type="button" disabled={!newName.trim() || savingId === "new"} onClick={() => void addCriterion()} className="inline-flex h-8 items-center gap-1.5 rounded acao-salvar px-3 text-[0.625rem] font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E8932]/30 active:scale-[.97] disabled:opacity-40" aria-label="Salvar critério"><Check size={11} /> Salvar</button>
             </div>
           </div>
         )}

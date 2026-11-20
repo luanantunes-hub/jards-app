@@ -29,7 +29,8 @@ function CelulaPercentual({ totais }: { totais: Totais }) {
       <span className="hidden h-1.5 w-12 overflow-hidden rounded-full bg-black/[.07] sm:block" aria-hidden>
         <span className="block h-full rounded-full" style={{ width: `${Math.min(percentual, 100)}%`, background: cor }} />
       </span>
-      <span className="text-[0.6875rem]" style={{ color: cor }}>{percentual}%</span>
+      {percentual > 100 && <AlertTriangle size={12} strokeWidth={1.75} role="img" aria-label="Acima do vigente" className="shrink-0 text-[#D94A4A]" />}
+      <span className={`text-[0.6875rem] tabular-nums ${percentual === 0 ? "text-black/30" : "text-black/70"}`}>{percentual}%</span>
     </span>
   );
 }
@@ -39,18 +40,19 @@ function Valores({ totais, forte }: { totais: Totais; forte?: boolean }) {
   return (
     <>
       <td className={`${NUMERO} ${SO_MD} text-black/55 ${peso}`}>{fmt(totais.aprovado)}</td>
-      <td className={`${NUMERO} ${SO_MD} ${totais.remanejado === 0 ? "text-black/25" : "text-[#2D72B0]"} ${peso}`}>
+      <td className={`${NUMERO} ${SO_MD} ${totais.remanejado === 0 ? "text-black/25" : "text-black/55"} ${peso}`}>
         {totais.remanejado === 0 ? "—" : fmtSinal(totais.remanejado)}
       </td>
       <td className={`${NUMERO} text-black/80 ${forte ? "font-semibold" : "font-medium"}`}>{fmt(totais.vigente)}</td>
-      <td className={`${NUMERO} ${SO_MD} ${totais.comprometido ? "text-[#B07A14]" : "text-black/25"} ${peso}`}>
+      <td className={`${NUMERO} ${SO_MD} ${totais.comprometido ? "text-black/55" : "text-black/25"} ${peso}`}>
         {totais.comprometido ? fmt(totais.comprometido) : "—"}
       </td>
       <td className={`${NUMERO} ${totais.pago ? "text-black/70" : "text-black/25"} ${peso}`}>{totais.pago ? fmt(totais.pago) : "—"}</td>
       <td className={`${NUMERO} ${peso}`}>
         {totais.saldo < 0 ? (
-          <span className="inline-flex items-center gap-1 text-[#B23B3B]" title="Comprometido e pago passam do vigente">
-            <AlertTriangle size={11} aria-hidden /> {fmt(totais.saldo)}
+          <span className="inline-flex items-center gap-1 text-[#282525]" title="Comprometido e pago passam do vigente">
+            <AlertTriangle size={12} strokeWidth={1.75} role="img" aria-label="Saldo negativo" className="shrink-0 text-[#D94A4A]" />
+            {fmt(totais.saldo)}
           </span>
         ) : (
           <span className="text-black/60">{fmt(totais.saldo)}</span>
@@ -138,7 +140,7 @@ export function ArvoreOrcamento({ linhas, fechados, onAlternar, total, podeEdita
                       {!agrupador && (no.descricao || linha.grupo || linha.cnaes.length > 0 || no.uf || no.municipio) && (
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.625rem] text-black/40">
                           {linha.grupo && (
-                            <span className={linha.grupoHerdado ? "text-black/35" : "text-[#684DB0]"} title={linha.grupoHerdado ? "Grupo herdado do agrupador" : "Grupo de custo do item"}>
+                            <span className={linha.grupoHerdado ? "text-black/35" : "text-black/60"} title={linha.grupoHerdado ? "Grupo herdado do agrupador" : "Grupo de custo do item"}>
                               {rotuloGrupo(linha.grupo, regime)}
                             </span>
                           )}
@@ -154,7 +156,7 @@ export function ArvoreOrcamento({ linhas, fechados, onAlternar, total, podeEdita
                         </div>
                       )}
                       {agrupador && no.grupo_custo && (
-                        <p className="mt-0.5 text-[0.625rem] text-[#684DB0]">{rotuloGrupo(no.grupo_custo, regime)} para os itens dentro</p>
+                        <p className="mt-0.5 text-[0.625rem] text-black/45">{rotuloGrupo(no.grupo_custo, regime)} para os itens dentro</p>
                       )}
                       {agrupador && linha.cnaesDe?.id === no.id && (
                         <p className="mt-0.5 text-[0.625rem] tabular-nums text-black/45">CNAE {linha.cnaes.map(formatarCodigoCnae).join(", ")} para os itens dentro</p>

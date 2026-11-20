@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertTriangle, ArrowLeft, ExternalLink, FileText, Pencil, Plus, Receipt, RefreshCw, Trash2 } from "lucide-react";
+import { AlertCircle, AlertTriangle, ArrowLeft, Clock, ExternalLink, FileText, Pencil, Plus, Receipt, RefreshCw, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -25,8 +25,9 @@ import {
   camposDaGuia,
   devolucaoDoRegime,
   guiasDoRegime,
+  recolhimentoDoEncerramento,
   reais,
-  referenciaDaGuia,
+  referenciaDaPrestacao,
   ROTULO_DO_INDICE,
   rotuloDoMotivo,
   situacaoDaDevolucao,
@@ -34,10 +35,12 @@ import {
   type TaxaDaPoupanca,
 } from "@/lib/prestacao/devolucoes";
 import { nomeDaConta, ultimoExtrato } from "@/lib/prestacao/envio";
+import { descreverRegra, prazoDoSaldo } from "@/lib/prestacao/prazo-final";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoDevolucao } from "@/lib/supabase/types";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] text-black/70 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:text-black/35 active:scale-[.98]";
 const ICONE = "rounded p-2 text-black/35 transition hover:bg-black/[.05] hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5]";
 const PAGTESOURO = "https://pagtesouro.tesouro.gov.br/portal-gru/#/emissao-gru";
@@ -45,9 +48,10 @@ const PAGTESOURO = "https://pagtesouro.tesouro.gov.br/portal-gru/#/emissao-gru";
 const centavos = (v: unknown) => Math.round((Number(v) || 0) * 100);
 const dataBr = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "");
 const hojeIso = () => new Date().toLocaleDateString("sv-SE");
+const diasAte = (de: string, ate: string) => Math.round((Date.parse(`${ate}T00:00:00Z`) - Date.parse(`${de}T00:00:00Z`)) / 86_400_000);
 const fator = (f: number) => f.toLocaleString("pt-BR", { minimumFractionDigits: 6, maximumFractionDigits: 6 });
 
-type Prestacao = { titulo: string; identificador_oficial: string | null; proponente: { nome: string; cnpj: string | null } | null };
+type Prestacao = { titulo: string; identificador_oficial: string | null; numero_processo: string | null; proponente: { nome: string; cnpj: string | null } | null };
 
 const COR_DA_SITUACAO: Record<SituacaoDaDevolucao["estado"], string> = { paga: "#2E8932", vencida: "#D94A4A", a_pagar: "#B07A14" };
 
@@ -72,7 +76,7 @@ function Atualizacao({ d, podeEditar, atualizando, onAtualizar }: { d: Prestacao
         {d.valor_atualizado !== null && d.atualizado_ate
           ? <>: <span className="tabular-nums text-black/85">{reais(centavos(d.valor_atualizado))}</span> até {dataBr(d.atualizado_ate)}
               {d.indice === "poupanca" && <span className="tabular-nums text-black/40"> · {meses} {meses === 1 ? "mês" : "meses"}, fator {fator(Number(d.fator ?? 1))}</span>}</>
-          : <span className="text-[#B07A14]"> · ainda não atualizado</span>}
+          : <> · <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mr-0.5 inline-block align-[-0.125rem] text-[#B07A14]" />ainda não atualizado</>}
       </p>
       {d.indice === "poupanca" && podeEditar && d.situacao !== "paga" && (
         <button type="button" onClick={onAtualizar} disabled={atualizando} className={BOTAO} style={BORDA}>
@@ -132,7 +136,10 @@ function CartaoDaDevolucao({ d, hoje, podeEditar, atualizando, onGuia, onPagar, 
             <FileText size={12} aria-hidden /> {d.nome_arquivo ?? "Comprovante"}
           </button>
         ) : d.situacao === "paga" && (
-          <span className="text-[0.6875rem] text-[#B07A14]">Sem o comprovante do pagamento</span>
+          <span className="inline-flex items-center gap-1 text-[0.6875rem] text-black/55">
+            <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+            Sem o comprovante do pagamento
+          </span>
         )}
         {podeEditar && (
           <span className="ml-auto flex items-center">
@@ -199,7 +206,7 @@ export default function DevolucoesPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
     const db = supabase as any;
     const [p, d] = await Promise.all([
-      db.from("prestacoes_contas").select("titulo, identificador_oficial, proponente:proponente_id(nome, cnpj)").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("titulo, identificador_oficial, numero_processo, proponente:proponente_id(nome, cnpj)").eq("id", id).maybeSingle(),
       db.from("prestacao_devolucoes").select("*").eq("prestacao_id", id).order("ordem").order("created_at"),
     ]);
     return {
@@ -234,6 +241,9 @@ export default function DevolucoesPage() {
   const podeEditar = permissoes.editar;
   // O formulário nasce com a guia e o índice do regime: só abre depois de tudo carregado.
   const carregado = dados !== null && devolucoes !== null;
+  // P9.4: o prazo do saldo no encerramento (na saúde, a GRU em 30 dias do término) e se as guias dele já estão pagas.
+  const prazoSaldo = prazoDoSaldo(regime, { data_fim_execucao: dados?.estado.prestacao?.data_fim_execucao ?? null });
+  const recolhido = devolucoes ? (() => { const r = recolhimentoDoEncerramento(devolucoes); return r.guias > 0 && r.aPagar === 0; })() : false;
 
   // Saldo pelo último extrato de cada conta: a sugestão da guia do saldo.
   const saldo = useMemo(() => {
@@ -309,7 +319,7 @@ export default function DevolucoesPage() {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Devoluções</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Devoluções</h2>
           <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
             As guias de recolhimento: saldo e rendimentos no encerramento, e o valor irregular depois da análise, atualizado pelo índice do regime. Os campos da guia vão prontos para copiar no PagTesouro.
           </p>
@@ -319,7 +329,7 @@ export default function DevolucoesPage() {
             type="button"
             onClick={() => setEditando({ devolucao: null })}
             disabled={!carregado}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={13} aria-hidden /> Nova devolução
           </button>
@@ -331,13 +341,22 @@ export default function DevolucoesPage() {
       {doRegime && (
         <div className="space-y-1.5 rounded border bg-white px-5 py-4 text-[0.6875rem]" style={BORDA}>
           <p className="text-black/70">{doRegime.descricao}</p>
+          {prazoSaldo && (
+            <p className="flex items-start gap-1 text-black/60">
+              <Clock size={12} strokeWidth={1.75} aria-hidden className={`mt-px shrink-0 ${!recolhido && hoje > prazoSaldo.data ? "text-[#B07A14]" : "text-black/40"}`} />
+              <span>
+                {prazoSaldo.rotulo}: até <span className="tabular-nums">{dataBr(prazoSaldo.data)}</span> ({descreverRegra(prazoSaldo.regra)}).{" "}
+                {recolhido ? "As guias do saldo e dos rendimentos estão pagas." : hoje > prazoSaldo.data ? "O prazo venceu." : `Faltam ${diasAte(hoje, prazoSaldo.data)} dias.`}
+              </span>
+            </p>
+          )}
           <p className="text-black/50">Atualização: {doRegime.atualizacao}</p>
           {guias.length > 0 && (
             <ul className="space-y-0.5 tabular-nums text-black/50">
               {guias.map(g => (
                 <li key={`${g.unidadeGestora}:${g.codigo}`}>
                   UG {g.unidadeGestora}{g.gestao ? ` · gestão ${g.gestao}` : ""} · código {g.codigo} · referência: {g.referencia}
-                  {g.fonte.aConfirmar && <span className="text-[#B07A14]"> · a confirmar com o órgão</span>}
+                  {g.fonte.aConfirmar && <> · <AlertCircle size={12} strokeWidth={1.75} aria-hidden className="mr-0.5 inline-block align-[-0.125rem] text-black/40" />a confirmar com o órgão</>}
                 </li>
               ))}
             </ul>
@@ -377,20 +396,29 @@ export default function DevolucoesPage() {
         <>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded border bg-white px-5 py-4 text-[0.6875rem] md:grid-cols-4" style={BORDA}>
             <div>
-              <dt className="text-black/40">A pagar</dt>
-              <dd className={`text-[0.875rem] tabular-nums ${resumo.aPagar ? "text-[#B07A14]" : "text-black/80"}`}>{reais(resumo.aPagar)}</dd>
+              <dt className={ROTULO}>
+                {resumo.aPagar > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
+                A pagar
+              </dt>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.aPagar ? "text-[#282525]" : "text-black/30"}`}>{reais(resumo.aPagar)}</dd>
             </div>
             <div>
-              <dt className="text-black/40">Pago</dt>
-              <dd className="text-[0.875rem] tabular-nums text-black/80">{reais(resumo.pago)}</dd>
+              <dt className={ROTULO}>Pago</dt>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.pago ? "text-[#282525]" : "text-black/30"}`}>{reais(resumo.pago)}</dd>
             </div>
             <div>
-              <dt className="text-black/40">Vencidas</dt>
-              <dd className={`text-[0.875rem] tabular-nums ${resumo.vencidas ? "text-[#D94A4A]" : "text-black/80"}`}>{resumo.vencidas}</dd>
+              <dt className={ROTULO}>
+                {resumo.vencidas > 0 && <Clock size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />}
+                Vencidas
+              </dt>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.vencidas ? "text-[#282525]" : "text-black/30"}`}>{resumo.vencidas}</dd>
             </div>
             <div>
-              <dt className="text-black/40">Pagas sem comprovante</dt>
-              <dd className={`text-[0.875rem] tabular-nums ${resumo.semComprovante ? "text-[#B07A14]" : "text-black/80"}`}>{resumo.semComprovante}</dd>
+              <dt className={ROTULO}>
+                {resumo.semComprovante > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
+                Pagas sem comprovante
+              </dt>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.semComprovante ? "text-[#282525]" : "text-black/30"}`}>{resumo.semComprovante}</dd>
             </div>
           </dl>
           <ul className="divide-y divide-black/[.05] overflow-hidden rounded border bg-white" style={BORDA} aria-label="Devoluções">
@@ -419,7 +447,7 @@ export default function DevolucoesPage() {
           organizationId={organizationId}
           regime={regime}
           guias={guias}
-          referencia={referenciaDaGuia(prestacao?.identificador_oficial)}
+          referencia={referenciaDaPrestacao(regime, prestacao)}
           devolucao={editando.devolucao}
           inicio={editando.inicio}
           onClose={() => setEditando(null)}

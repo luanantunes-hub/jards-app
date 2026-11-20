@@ -5,6 +5,8 @@ import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Info, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL } from "@/lib/valor";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
 import { FornecedorCombobox } from "@/components/prestacao/despesas/FornecedorCombobox";
 import { PagamentosDaDespesa } from "@/components/prestacao/despesas/PagamentosDaDespesa";
@@ -26,7 +28,7 @@ import {
 } from "@/lib/prestacao/despesas";
 import { formatarDocumento } from "@/lib/prestacao/fornecedores";
 import { citacaoDaFonte, motivosDaIa, motivosParaMostrar } from "@/lib/prestacao/leitura-ia";
-import type { RegimeNormativo } from "@/lib/prestacao/regimes";
+import { definida, regraDoRegime, type RegimeNormativo } from "@/lib/prestacao/regimes";
 import { lerValor } from "@/lib/prestacao/orcamento";
 import { alertasDosPagamentos } from "@/lib/prestacao/pagamentos";
 import type { PagamentosRegime } from "@/lib/prestacao/regimes/tipos";
@@ -40,8 +42,14 @@ const CAMPO = "w-full rounded border border-black/[.12] px-3 py-2 text-[0.8125re
 const SECAO = "mb-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35";
 
 const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const texto = (v: number | null | undefined) => (v === null || v === undefined ? "" : String(v).replace(".", ","));
 const valorOuZero = (t: string) => (t.trim() ? lerValor(t) : 0);
+
+/** De onde sai o dinheiro da despesa (P7.2); vazio é o recurso do projeto. */
+const PAGA_COM = [
+  { value: "", label: "Recurso do projeto" },
+  { value: "financeira", label: "Contrapartida em dinheiro" },
+  { value: "doacao", label: "Contrapartida por doação (bens e serviços)" },
+];
 
 /** Alertas da despesa, os que pedem justificativa primeiro. */
 export function ListaAlertasDespesa({ alertas }: { alertas: readonly AlertaDespesa[] }) {
@@ -131,12 +139,13 @@ export function DespesaModal({ comprovante, tipos, itens, metas = [], bens = [],
   const [identificacao, setIdentificacao] = useState<string>(c.identificacao_projeto ?? "");
   const [fornecedorId, setFornecedorId] = useState<string | null>(c.fornecedor_id ?? null);
   const [itemId, setItemId] = useState(c.no_id ?? "");
-  const [valor, setValor] = useState(texto(c.valor_extraido));
-  const [iss, setIss] = useState(texto(c.iss || null));
-  const [inss, setInss] = useState(texto(c.inss || null));
-  const [irrf, setIrrf] = useState(texto(c.irrf || null));
-  const [outras, setOutras] = useState(texto(c.outras_retencoes || null));
+  const [valor, setValor] = useState(formatarValorBRL(c.valor_extraido));
+  const [iss, setIss] = useState(formatarValorBRL(c.iss || null));
+  const [inss, setInss] = useState(formatarValorBRL(c.inss || null));
+  const [irrf, setIrrf] = useState(formatarValorBRL(c.irrf || null));
+  const [outras, setOutras] = useState(formatarValorBRL(c.outras_retencoes || null));
   const [justificativa, setJustificativa] = useState(c.justificativa ?? "");
+  const [contrapartida, setContrapartida] = useState<string>(c.contrapartida ?? "");
   // O que a leitura por IA apontou; descartar tira da despesa ao salvar.
   const [motivosIa, setMotivosIa] = useState(() => motivosDaIa(c.motivos_ia));
   const [salvando, setSalvando] = useState(false);
@@ -172,6 +181,12 @@ export function DespesaModal({ comprovante, tipos, itens, metas = [], bens = [],
     ...alertasDosPagamentos({ despesa, liquido, fornecedor, pagamentos, regime: regimePagamentos }),
   ];
   const fiscal = ehDespesa(tipo);
+  // O campo aparece quando o regime pede contrapartida (ANCINE) ou a despesa já foi marcada.
+  const pedeContrapartida = Boolean(regraDoRegime(regime, "contrapartida_minima")) || Boolean(c.contrapartida);
+  const vedadaNaContrapartida = regime ? definida(regime.despesas)?.vedadas.find(v => v.codigo === "contrapartida_publica") : undefined;
+  const dicaDaContrapartida = contrapartida === "doacao" ? regraDoRegime(regime, "contrapartida_por_doacao")?.descricao
+    : contrapartida === "financeira" && vedadaNaContrapartida ? `Não vale ${vedadaNaContrapartida.descricao.charAt(0).toLowerCase()}${vedadaNaContrapartida.descricao.slice(1)}.`
+    : null;
   const pedeJustificativa = faltaJustificativa(alertas, justificativa);
 
   async function salvar() {
@@ -197,6 +212,7 @@ export function DespesaModal({ comprovante, tipos, itens, metas = [], bens = [],
         outras_retencoes: despesa.outras_retencoes,
         justificativa: justificativa.trim() || null,
         motivos_ia: motivosIa,
+        contrapartida: contrapartida || null,
       })
       .eq("id", c.id)
       .select("*")
@@ -209,7 +225,7 @@ export function DespesaModal({ comprovante, tipos, itens, metas = [], bens = [],
   const campoValor = (id: string, rotulo: string, v: string, set: (t: string) => void) => (
     <label className="block" htmlFor={`${idBase}-${id}`}>
       <span className={ROTULO}>{rotulo}</span>
-      <input id={`${idBase}-${id}`} inputMode="decimal" value={v} onChange={e => set(e.target.value)} disabled={!podeEditar} className={`${CAMPO} tabular-nums`} placeholder="0,00" />
+      <InputValor id={`${idBase}-${id}`} value={v} onChange={set} disabled={!podeEditar} className={`${CAMPO} tabular-nums`} placeholder="0,00" />
     </label>
   );
 
@@ -225,7 +241,7 @@ export function DespesaModal({ comprovante, tipos, itens, metas = [], bens = [],
           type="button"
           onClick={salvar}
           disabled={salvando}
-          className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transform-none"
+          className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transform-none"
         >
           {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
           Salvar
@@ -394,6 +410,13 @@ export function DespesaModal({ comprovante, tipos, itens, metas = [], bens = [],
         {fiscal && (
           <section aria-labelledby={`${idBase}-pagamentos`}>
             <h3 id={`${idBase}-pagamentos`} className={SECAO}>Pagamentos</h3>
+            {pedeContrapartida && (
+              <div className="mb-3 max-w-[22rem]">
+                <span className={ROTULO}>Paga com</span>
+                <Dropdown value={contrapartida} onChange={setContrapartida} options={PAGA_COM} ariaLabel="Paga com" disabled={!podeEditar} />
+                {dicaDaContrapartida && <p className="mt-1 text-[0.625rem] text-black/45">{dicaDaContrapartida}</p>}
+              </div>
+            )}
             <PagamentosDaDespesa despesaId={c.id} liquido={liquido} fornecedor={fornecedor} pagamentos={pagamentos} podeEditar={podeEditar} onMudou={onPagamentosMudaram} />
           </section>
         )}

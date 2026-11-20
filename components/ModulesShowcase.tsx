@@ -4,8 +4,9 @@ import { useState } from "react";
 import {
   BarChart2, Calendar, Folder, Briefcase, FileText,
   Building2, Users, Globe, Building, UserCheck, Phone,
-  Settings, Bell, LogOut,
+  Settings, Bell, LogOut, Clock,
 } from "lucide-react";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 /* ── helpers ─────────────────────────────────────────────── */
 function Logo({ name, size = 44 }: { name: string; size?: number }) {
@@ -26,14 +27,14 @@ function Logo({ name, size = 44 }: { name: string; size?: number }) {
 }
 
 const LEI: Record<string, [string, string]> = {
-  Rouanet:     ["rgba(114,89,181,.10)", "#7259B5"],
-  Audiovisual: ["rgba(26,139,122,.10)", "#1A8B7A"],
-  Esporte:     ["rgba(45,114,176,.08)", "#2D72B0"],
+  Rouanet:     ["rgba(114,89,181,.28)", "#7259B5"],
+  Audiovisual: ["rgba(26,139,122,.28)", "#1A8B7A"],
+  Esporte:     ["rgba(45,114,176,.28)", "#2D72B0"],
 };
 function LeiBadge({ lei }: { lei: string }) {
-  const [bg, c] = LEI[lei] ?? ["rgba(13,13,13,.06)", "rgba(13,13,13,.45)"];
+  const [borda, c] = LEI[lei] ?? ["rgba(13,13,13,.12)", "rgba(13,13,13,.45)"];
   return (
-    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 4, background: bg, color: c }}>
+    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 4, background: "#fff", border: `1px solid ${borda}`, color: c }}>
       {lei}
     </span>
   );
@@ -45,7 +46,7 @@ function SegBtn({ label, on }: { label: string; on?: boolean }) {
       style={{
         padding: "0 14px", height: 34, display: "flex", alignItems: "center",
         fontSize: 12, fontWeight: 600, cursor: "default", whiteSpace: "nowrap",
-        background: on ? "#0D0D0D" : "#fff",
+        background: on ? "#1C0E33" : "#fff",
         color: on ? "#fff" : "rgba(13,13,13,.45)",
         borderRight: "1px solid rgba(13,13,13,.12)",
       }}
@@ -114,14 +115,14 @@ function Sidebar({ activeNavKey }: { activeNavKey: string | null }) {
       {/* logo */}
       <div style={{ height: 56, display: "flex", alignItems: "center", gap: 9, padding: "0 20px", borderBottom: "1px solid rgba(13,13,13,.07)", flexShrink: 0 }}>
         <svg width="20" height="20" viewBox="0 0 689 689"><path fill="#D94E4E" d="M0,168h194c-2,19-9,38-11,58C170,411,341,548,519,495v194H0V168Z"/><path fill="#7259B5" d="M675,338H355l-4-4V15C548-57,743,141,675,338Z"/></svg>
-        <span style={{ fontFamily: "'Valley Sans', system-ui, sans-serif", fontSize: 16, fontWeight: 700, color: "#0D0D0D" }}>Jards</span>
+        <span style={{ fontFamily: "'Valley Sans', system-ui, sans-serif", fontSize: 16, fontWeight: 700, color: "#282525" }}>Jards</span>
       </div>
       {/* user */}
       <div style={{ padding: 8, borderBottom: "1px solid rgba(13,13,13,.07)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px", borderRadius: 4 }}>
           <div style={{ width: 28, height: 28, borderRadius: 4, background: "#7259B5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>L</div>
           <div>
-            <p style={{ fontSize: 12, fontWeight: 600, color: "#0D0D0D", lineHeight: 1.3 }}>Luana</p>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "#282525", lineHeight: 1.3 }}>Luana</p>
             <p style={{ fontSize: 10, color: "rgba(13,13,13,.35)" }}>Plano Pro</p>
           </div>
         </div>
@@ -134,7 +135,7 @@ function Sidebar({ activeNavKey }: { activeNavKey: string | null }) {
             {g.items.map((it) => {
               const active = it.navKey === activeNavKey;
               return (
-                <div key={it.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 4, fontSize: 13, fontWeight: 500, marginBottom: 2, whiteSpace: "nowrap", background: active ? "#1a1a1a" : "transparent", color: active ? "#fff" : "rgba(13,13,13,.40)", cursor: "default" }}>
+                <div key={it.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 4, fontSize: 13, fontWeight: 500, marginBottom: 2, whiteSpace: "nowrap", background: active ? "#1C0E33" : "transparent", color: active ? "#fff" : "rgba(13,13,13,.40)", cursor: "default" }}>
                   <it.Icon size={15} />
                   {it.label}
                 </div>
@@ -162,7 +163,7 @@ function PageHeader({ eyebrow, title, action }: { eyebrow?: string; title: strin
     <div style={{ flexShrink: 0, padding: "28px 32px 20px", borderBottom: "1px solid rgba(13,13,13,.08)" }}>
       {eyebrow && <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(13,13,13,.30)", marginBottom: 4 }}>{eyebrow}</p>}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-        <h1 style={{ fontFamily: "'Valley Sans', system-ui, sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: "-.025em", color: "#0D0D0D" }}>{title}</h1>
+        <h1 style={{ fontFamily: "'Valley Sans', system-ui, sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: "-.025em", color: "#282525" }}>{title}</h1>
         {action && <OutlineBtn>{action}</OutlineBtn>}
       </div>
     </div>
@@ -179,9 +180,9 @@ const EDITAIS = [
   { co: "Vale",           state: "MG", title: "Fundo Local de Cultura 2025",        urgency: "soon",    ab: "15/07/25", fe: "01/11/25" },
 ];
 const URG_BADGE: Record<string, [string, string, string]> = {
-  urgente: ["rgba(217,78,78,.10)",  "#D94E4E", "Urgente"],
-  soon:    ["rgba(176,122,20,.10)", "#B07A14", "Próximo"],
-  open:    ["rgba(46,137,50,.10)",  "#2E8932", "Aberto"],
+  urgente: ["rgba(217,78,78,.28)",  "#D94E4E", "Urgente"],
+  soon:    ["rgba(176,122,20,.28)", "#B07A14", "Próximo"],
+  open:    ["rgba(46,137,50,.28)",  "#2E8932", "Aberto"],
 };
 
 function EditaisPanel() {
@@ -190,7 +191,7 @@ function EditaisPanel() {
       <PageHeader title="Editais" action="Sugerir edital" />
       <Toolbar>
         <SearchBox placeholder="Buscar edital, empresa, estado…" />
-        <span style={{ fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ color: "#0D0D0D" }}>47</strong> editais</span>
+        <span style={{ fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>47</strong> editais</span>
         <div style={{ marginLeft: "auto", display: "flex", border: "1px solid rgba(13,13,13,.12)", borderRadius: 4, overflow: "hidden" }}>
           <SegBtn label="Abertos" on />
           <SegBtn label="Fechados" />
@@ -199,31 +200,31 @@ function EditaisPanel() {
       <div style={{ flex: 1, overflow: "hidden", padding: "16px 32px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {EDITAIS.map((e) => {
-            const [bg, c, lbl] = URG_BADGE[e.urgency];
+            const [borda, c, lbl] = URG_BADGE[e.urgency];
             return (
               <div key={e.co} style={{ border: "1px solid rgba(13,13,13,.08)", borderRadius: 4, padding: 18, background: "linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)" }}>
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12, gap: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <Logo name={e.co} size={44} />
                     <div>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: "#0D0D0D" }}>{e.co}</p>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: "#282525" }}>{e.co}</p>
                       <p style={{ fontSize: 11, color: "rgba(13,13,13,.35)" }}>{e.state}</p>
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
                     <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".05em", padding: "2px 6px", borderRadius: 4, background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.50)" }}>ADM</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: bg, color: c }}>{lbl}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: "#fff", border: `1px solid ${borda}`, color: c }}>{lbl}</span>
                   </div>
                 </div>
                 <p style={{ fontSize: 12, color: "rgba(13,13,13,.50)", lineHeight: 1.45, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{e.title}</p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 10 }}>
                   <div>
-                    <p style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: ".05em", color: "rgba(13,13,13,.35)", marginBottom: 2 }}>Abertura</p>
+                    <p style={{ fontWeight: 500, textTransform: "uppercase", letterSpacing: ".08em", color: "rgba(13,13,13,.45)", marginBottom: 2 }}>Abertura</p>
                     <p style={{ fontWeight: 500, color: "rgba(13,13,13,.60)" }}>{e.ab}</p>
                   </div>
                   <div>
-                    <p style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: ".05em", color: "rgba(13,13,13,.35)", marginBottom: 2 }}>Fechamento</p>
-                    <p style={{ fontWeight: 700, color: e.urgency !== "open" ? c : "rgba(13,13,13,.60)" }}>{e.fe}</p>
+                    <p style={{ fontWeight: 500, textTransform: "uppercase", letterSpacing: ".08em", color: "rgba(13,13,13,.45)", marginBottom: 2 }}>Fechamento</p>
+                    <p style={{ fontWeight: 500, color: "rgba(13,13,13,.60)" }}>{e.fe}</p>
                   </div>
                 </div>
               </div>
@@ -244,19 +245,19 @@ const STATUS_COLOR: Record<string, { label: string; color: string }> = {
 };
 const KANBAN_COLS = [
   { key: "prospeccao", cards: [
-    { co: "TV Cultura",  title: "Captação Rouanet — Série Documental",  lei: "Rouanet",    val: "R$ 80k",  cap: "R" },
-    { co: "Sabesp",      title: "Programa Ambiental e Arte 2025",       lei: "Rouanet",    val: "R$ 120k", cap: "M" },
+    { co: "TV Cultura",  title: "Captação Rouanet — Série Documental",  lei: "Rouanet",    val: 80000,  cap: "R" },
+    { co: "Sabesp",      title: "Programa Ambiental e Arte 2025",       lei: "Rouanet",    val: 120000, cap: "M" },
   ]},
   { key: "primeiro_contato", cards: [
-    { co: "Porto Seguro", title: "Patrocínio Lei Esporte — Atletismo",   lei: "Esporte",    val: "R$ 90k",  cap: "F", dt: "22/09" },
-    { co: "Embraer",      title: "Arte e Inovação — Projeto Cultural",   lei: "Rouanet",    val: "R$ 160k", cap: "R" },
+    { co: "Porto Seguro", title: "Patrocínio Lei Esporte — Atletismo",   lei: "Esporte",    val: 90000,  cap: "F", dt: "22/09" },
+    { co: "Embraer",      title: "Arte e Inovação — Projeto Cultural",   lei: "Rouanet",    val: 160000, cap: "R" },
   ]},
   { key: "proposta_enviada", cards: [
-    { co: "Itaú BBA",   title: "Rouanet 2025 — Ciclo de Shows Nacionais", lei: "Rouanet",    val: "R$ 200k", cap: "L", dt: "30/09" },
-    { co: "Petrobras",  title: "Documentário Audiovisual 2025",            lei: "Audiovisual",val: "R$ 280k", cap: "M" },
+    { co: "Itaú BBA",   title: "Rouanet 2025 — Ciclo de Shows Nacionais", lei: "Rouanet",    val: 200000, cap: "L", dt: "30/09" },
+    { co: "Petrobras",  title: "Documentário Audiovisual 2025",            lei: "Audiovisual",val: 280000, cap: "M" },
   ]},
   { key: "em_negociacao", cards: [
-    { co: "Ambev",      title: "Rouanet — Turnê Nacional Música Brasileira", lei: "Rouanet", val: "R$ 350k", cap: "R", dt: "12/09" },
+    { co: "Ambev",      title: "Rouanet — Turnê Nacional Música Brasileira", lei: "Rouanet", val: 350000, cap: "R", dt: "12/09" },
   ]},
 ];
 
@@ -276,7 +277,7 @@ function NegociacoesPanel() {
           return (
             <div key={col.key} style={{ display: "flex", flexDirection: "column", gap: 8, overflow: "hidden" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 8, borderBottom: `2px solid ${color}` }}>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color }}>{label}</span>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: "rgba(13,13,13,.75)" }}>{label}</span>
                 <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 7px", borderRadius: 100, background: "rgba(13,13,13,.08)", color: "rgba(13,13,13,.50)" }}>{col.cards.length}</span>
               </div>
               {col.cards.map((c) => (
@@ -288,14 +289,18 @@ function NegociacoesPanel() {
                     </div>
                     <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#7259B5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700, color: "#fff" }}>{c.cap}</div>
                   </div>
-                  <p style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.35, letterSpacing: "-.01em", color: "rgba(13,13,13,.85)", marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.title}</p>
+                  <p style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.35, letterSpacing: "-.01em", color: "rgba(40,37,37,.85)", marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.title}</p>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <LeiBadge lei={c.lei} />
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(13,13,13,.65)" }}>{c.val}</span>
+                    <span title={formatarValorCompleto(c.val)} style={{ fontSize: 12, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>{formatarValorCurto(c.val)}</span>
                   </div>
                   {"dt" in c && c.dt && (
-                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(13,13,13,.06)", display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 500, color: "#B07A14" }}>
-                      <span>Próx. contato</span><span>📅 {c.dt}</span>
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(13,13,13,.06)", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10, fontWeight: 500 }}>
+                      <span style={{ color: "rgba(13,13,13,.45)" }}>Próx. contato</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontVariantNumeric: "tabular-nums", color: "rgba(13,13,13,.6)" }}>
+                        <Calendar size={12} strokeWidth={1.75} color="rgba(13,13,13,.4)" aria-hidden="true" />
+                        {c.dt}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -310,14 +315,14 @@ function NegociacoesPanel() {
 
 /* ── ATIVIDADES ──────────────────────────────────────────── */
 const ATIVS = [
-  { done: false, nome: "Enviar proposta Rouanet atualizada", tipo: "Email",   neg: "Captação Itaú BBA",   co: "Itaú BBA",    prazo: "hoje",   prio: ["rgba(217,78,78,.10)", "#D94E4E",   "Alta"]  },
-  { done: false, nome: "Reunião de alinhamento do projeto",  tipo: "Reunião", neg: "Ambev — Turnê",       co: "Ambev",       prazo: "amanhã", prio: ["rgba(176,122,20,.10)", "#B07A14", "Média"] },
-  { done: true,  nome: "Follow-up sobre edital Rouanet",     tipo: "Ligação", neg: "Petrobras Audio",     co: "Petrobras",   prazo: "ontem",  prio: ["rgba(13,13,13,.06)", "rgba(13,13,13,.45)", "Baixa"] },
-  { done: false, nome: "Conectar com dir. de patrocínio",    tipo: "LinkedIn",neg: "Prosp. Porto Seg.",   co: "Porto Seguro",prazo: "seg",    prio: ["rgba(176,122,20,.10)", "#B07A14", "Média"] },
-  { done: true,  nome: "Confirmar reunião presencial",        tipo: "Email",   neg: "Proposta Embraer",    co: "Embraer",     prazo: "ontem",  prio: ["rgba(217,78,78,.10)", "#D94E4E",   "Alta"]  },
-  { done: false, nome: "Preparar relatório de atividades",   tipo: "Tarefa",  neg: "—",                   co: "Interno",     prazo: "sexta",  prio: ["rgba(13,13,13,.06)", "rgba(13,13,13,.45)", "Baixa"] },
+  { done: false, nome: "Enviar proposta Rouanet atualizada", tipo: "Email",   neg: "Captação Itaú BBA",   co: "Itaú BBA",    prazo: "hoje",   prio: ["rgba(217,78,78,.28)", "#D94E4E",   "Alta"]  },
+  { done: false, nome: "Reunião de alinhamento do projeto",  tipo: "Reunião", neg: "Ambev — Turnê",       co: "Ambev",       prazo: "amanhã", prio: ["rgba(176,122,20,.28)", "#B07A14", "Média"] },
+  { done: true,  nome: "Follow-up sobre edital Rouanet",     tipo: "Ligação", neg: "Petrobras Audio",     co: "Petrobras",   prazo: "ontem",  prio: ["rgba(13,13,13,.12)", "rgba(13,13,13,.45)", "Baixa"] },
+  { done: false, nome: "Conectar com dir. de patrocínio",    tipo: "LinkedIn",neg: "Prosp. Porto Seg.",   co: "Porto Seguro",prazo: "seg",    prio: ["rgba(176,122,20,.28)", "#B07A14", "Média"] },
+  { done: true,  nome: "Confirmar reunião presencial",        tipo: "Email",   neg: "Proposta Embraer",    co: "Embraer",     prazo: "ontem",  prio: ["rgba(217,78,78,.28)", "#D94E4E",   "Alta"]  },
+  { done: false, nome: "Preparar relatório de atividades",   tipo: "Tarefa",  neg: "—",                   co: "Interno",     prazo: "sexta",  prio: ["rgba(13,13,13,.12)", "rgba(13,13,13,.45)", "Baixa"] },
 ] as const;
-const DEADLINE_COLOR: Record<string, string> = { hoje: "#B07A14", amanhã: "rgba(13,13,13,.55)", sexta: "rgba(13,13,13,.55)", seg: "rgba(13,13,13,.55)", ontem: "rgba(13,13,13,.35)" };
+const DEADLINE_COLOR: Record<string, string> = { hoje: "rgba(13,13,13,.55)", amanhã: "rgba(13,13,13,.55)", sexta: "rgba(13,13,13,.55)", seg: "rgba(13,13,13,.55)", ontem: "rgba(13,13,13,.35)" };
 const TH = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35 bg-[#F9F9F8] px-3.5 py-2.5 text-left whitespace-nowrap";
 
 function AtividadesPanel() {
@@ -365,9 +370,14 @@ function AtividadesPanel() {
                     <span style={{ fontSize: 11.5, fontWeight: 500, color: "rgba(13,13,13,.60)" }}>{a.co}</span>
                   </div>
                 </td>
-                <td style={{ padding: "11px 14px", fontSize: 11.5, fontWeight: 500, color: DEADLINE_COLOR[a.prazo] ?? "rgba(13,13,13,.50)", whiteSpace: "nowrap" }}>{a.prazo}</td>
+                <td style={{ padding: "11px 14px", fontSize: 11.5, fontWeight: 500, color: DEADLINE_COLOR[a.prazo] ?? "rgba(13,13,13,.50)", whiteSpace: "nowrap" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
+                    {a.prazo === "hoje" && <Clock size={12} strokeWidth={1.75} color="#B07A14" aria-hidden="true" />}
+                    {a.prazo}
+                  </span>
+                </td>
                 <td style={{ padding: "11px 14px" }}>
-                  <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 100, background: a.prio[0], color: a.prio[1] }}>{a.prio[2]}</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 100, background: "#fff", border: `1px solid ${a.prio[0]}`, color: a.prio[1] }}>{a.prio[2]}</span>
                 </td>
                 <td style={{ padding: "11px 14px", fontSize: 11.5, color: "rgba(13,13,13,.55)" }}>Luana M.</td>
               </tr>
@@ -398,7 +408,7 @@ function PatrocinadoresPanel() {
         <div style={{ display: "flex", border: "1px solid rgba(13,13,13,.12)", borderRadius: 4, overflow: "hidden" }}>
           <SegBtn label="Todos" on /><SegBtn label="Rouanet" /><SegBtn label="Esporte" /><SegBtn label="Audiovisual" />
         </div>
-        <span style={{ marginLeft: "auto", fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ color: "#0D0D0D" }}>312</strong> empresas</span>
+        <span style={{ marginLeft: "auto", fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>312</strong> empresas</span>
       </Toolbar>
       <div style={{ flex: 1, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -416,15 +426,15 @@ function PatrocinadoresPanel() {
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <Logo name={s.co} size={32} />
                     <div>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: "#0D0D0D" }}>{s.co}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "#282525" }}>{s.co}</p>
                       <p style={{ fontSize: 11, color: "rgba(13,13,13,.40)" }}>{s.sec}</p>
                     </div>
                   </div>
                 </td>
                 <td style={{ padding: "13px 14px" }}><LeiBadge lei={s.lei} /></td>
-                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 700, color: "#0D0D0D" }}>{s.editais}</td>
-                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 700, color: "#0D0D0D" }}>{s.negs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>negociações</span></td>
-                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 700, color: "#0D0D0D" }}>{s.inscs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>inscrições</span></td>
+                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>{s.editais}</td>
+                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>{s.negs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>negociações</span></td>
+                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>{s.inscs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>inscrições</span></td>
               </tr>
             ))}
           </tbody>

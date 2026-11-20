@@ -49,7 +49,7 @@ export function SugestaoContatoList({ empresaId }: Props) {
       {/* Header */}
       <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div>
-          <p className="text-sm font-semibold text-black">
+          <p className="text-sm font-semibold text-[#282525]">
             Contatos sugeridos{sugestoes.length > 0 && <span className="text-black/30 font-normal text-xs ml-1.5">({sugestoes.length})</span>}
           </p>
         </div>
@@ -99,7 +99,7 @@ export function SugestaoContatoList({ empresaId }: Props) {
                     >
                       <ChevronUp size={14} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                     </button>
-                    <span className={`text-[0.75rem] font-bold tabular-nums ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
+                    <span className={`text-[0.75rem] font-semibold tabular-nums ${saldo === 0 ? "text-black/30" : "text-[#282525]"}`}>
                       {saldo}
                     </span>
                     <button
@@ -113,7 +113,7 @@ export function SugestaoContatoList({ empresaId }: Props) {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-[0.75rem] font-semibold text-black">{s.nome}</p>
+                      <p className="text-[0.75rem] font-semibold text-[#282525]">{s.nome}</p>
                       {isPromovido && (
                         <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5" style={{ background: "#fff", border: "1px solid #2E893247", color: "#2E8932" }}>
                           <Check size={9} /> Adicionado
@@ -122,7 +122,7 @@ export function SugestaoContatoList({ empresaId }: Props) {
                     </div>
                     {s.cargo && <p className="text-[0.6875rem] text-black/45">{s.cargo}</p>}
                     {s.email && (
-                      <a href={`mailto:${s.email}`} className="text-[0.625rem] text-black/60 hover:text-black transition">
+                      <a href={`mailto:${s.email}`} className="text-[0.625rem] text-black/60 hover:text-[#282525] transition">
                         {s.email}
                       </a>
                     )}

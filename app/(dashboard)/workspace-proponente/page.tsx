@@ -6,6 +6,9 @@ import Link from "next/link";
 import { Calendar, FolderOpen, TrendingUp, Zap, FileText, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
+import { PrestacoesDoProponente } from "@/components/prestacao/proponente/PrestacoesDoProponente";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
+import { BarraCaptacao } from "@/components/ui/IndicadoresFinanceiros";
 
 type ProjetoResumo = {
   id: string;
@@ -32,12 +35,6 @@ const FASES: Record<string, { label: string; color: string; Icon: typeof Calenda
   prestacao:    { label: "Prestação",    color: "#B07A14", Icon: FileText },
   concluido:    { label: "Concluído",    color: "#2E8932", Icon: Check },
 };
-
-function fmtValor(v: number | null): string {
-  if (v == null) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
-}
 
 export default function WorkspaceProponenteListPage() {
   const [projetos, setProjetos] = useState<ProjetoResumo[]>([]);
@@ -77,7 +74,7 @@ export default function WorkspaceProponenteListPage() {
     <div className="min-h-full">
       <div className="border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-8 pt-8 sm:px-6 lg:px-10 lg:pt-10">
-          <h1 className="text-[1.75rem] font-semibold leading-[1.04] tracking-[-.04em] text-[#0D0D0D] sm:text-[2rem]">Meus projetos</h1>
+          <h1 className="text-[1.75rem] font-semibold leading-[1.04] tracking-[-.04em] text-[#282525] sm:text-[2rem]">Meus projetos</h1>
           <p className="mt-2 text-[0.875rem] text-black/45">
             {proponentesUnicos > 1 ? `Projetos de ${proponentesUnicos} proponentes vinculados a você.` : "Acompanhe o andamento das negociações e inscrições de cada projeto."}
           </p>
@@ -86,6 +83,7 @@ export default function WorkspaceProponenteListPage() {
 
       <main className="mx-auto w-full max-w-pagina px-4 py-8 sm:px-6 lg:px-10">
         {erro && <p role="alert" className="mb-4 text-[0.75rem] font-medium text-[#D94E4E]">{erro}</p>}
+        <PrestacoesDoProponente />
 
         {projetos.length === 0 ? (
           <div className="rounded border px-6 py-14 text-center" style={{ borderColor: "rgba(13,13,13,.10)", borderStyle: "dashed" }}>
@@ -111,18 +109,16 @@ export default function WorkspaceProponenteListPage() {
                       <faseMeta.Icon size={10} />{faseMeta.label}
                     </span>
                   </div>
-                  <p className="mt-3 truncate text-[0.875rem] font-semibold text-black/80 group-hover:text-black">{projeto.nome}</p>
+                  <p className="mt-3 truncate text-[0.875rem] font-semibold text-black/80 group-hover:text-[#282525]">{projeto.nome}</p>
                   {proponentesUnicos > 1 && <p className="mt-0.5 truncate text-[0.6875rem] text-black/35">{projeto.proponenteNome}</p>}
 
                   {projeto.valorAlvo ? (
                     <div className="mt-4">
                       <div className="mb-1.5 flex items-center justify-between">
-                        <span className="text-[0.6875rem] text-black/40">{fmtValor(projeto.valorGarantido)} de {fmtValor(projeto.valorAlvo)}</span>
-                        <span className="text-[0.6875rem] font-bold text-black/50">{progress}%</span>
+                        <span className="text-[0.6875rem] tabular-nums text-black/40"><span title={formatarValorCompleto(projeto.valorGarantido)}>{formatarValorCurto(projeto.valorGarantido)}</span> de <span title={formatarValorCompleto(projeto.valorAlvo)}>{formatarValorCurto(projeto.valorAlvo)}</span></span>
+                        <span className="text-[0.6875rem] font-medium tabular-nums text-black/50">{progress}%</span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded bg-black/[.06]">
-                        <div className="h-full rounded bg-[#2E8932] transition-all" style={{ width: `${progress}%` }} />
-                      </div>
+                      <BarraCaptacao confirmado={projeto.valorGarantido} meta={projeto.valorAlvo} className="h-1.5" />
                     </div>
                   ) : <div className="mt-4 h-1.5" />}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarClock, Check, Clock, Mail, MessageCircleQuestion, Pencil, Plus, RefreshCw, RotateCcw, Save, StickyNote, X } from "lucide-react";
+import { AlertCircle, CalendarClock, Check, Clock, Mail, MessageCircleQuestion, Pencil, Plus, RefreshCw, RotateCcw, Save, StickyNote, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
@@ -9,10 +9,13 @@ import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { Select } from "@/components/ui/Select";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { NotasRelacionais } from "@/components/relationship/NotasRelacionais";
+import { LinhaDeConversa } from "@/components/relationship/LinhaDeConversa";
+import { ConversaDeEmail } from "@/components/relationship/ConversaDeEmail";
+import { agruparConversas, COLUNAS_DO_EMAIL_DE_CONVERSA, type EmailDeConversa } from "@/lib/email/conversas";
 
 type Contact = { id: string; nome: string; cargo: string | null };
 type Member = { id: string; nome: string };
-type Interaction = { id: string; tipo: string; canal: string | null; direcao: "entrada" | "saida" | null; assunto: string; resumo: string | null; resultado: string | null; ocorreu_em: string; email_id: string | null; contato: { nome: string } | null };
+type Interaction = { id: string; tipo: string; canal: string | null; direcao: "entrada" | "saida" | null; assunto: string; resumo: string | null; resultado: string | null; ocorreu_em: string; email_id: string | null; contato: { nome: string } | null; created_by: string | null; account_id: string | null };
 type Followup = {
   id: string; titulo: string; motivo: string | null; canal: string; previsto_para: string;
   status: "pendente" | "concluido" | "cancelado"; tentativa: number; workflow: string | null;
@@ -70,6 +73,9 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
   const [notaFormOpen, setNotaFormOpen] = useState(false);
   const [filter, setFilter] = useState<FollowupFilter>("pendentes");
   const [interactions, setInteractions] = useState<Interaction[]>([]);
+  const [emails, setEmails] = useState<EmailDeConversa[]>([]);
+  const [chaveAberta, setChaveAberta] = useState<string | null>(null);
+  const [meuId, setMeuId] = useState<string | null>(null);
   const [followups, setFollowups] = useState<Followup[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -101,20 +107,30 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
       else if (proponenteId) query = query.eq("proponente_id", proponenteId);
       return query;
     };
-    const [i, f, q, memberResult] = await Promise.all([
-      scope("crm_interacoes", "id,tipo,canal,direcao,assunto,resumo,resultado,ocorreu_em,email_id,contato:contatos(nome)").order("ocorreu_em", { ascending: false }),
+    // Os e-mails sincronizados só têm empresa e negociação: nas outras páginas (conta de patrocínio, proponente) não há e-mails.
+    const escopoDeEmail = captacaoId
+      ? { coluna: "captacao_id", valor: captacaoId }
+      : contaPatrocinioId ? null : empresaCrmId ? { coluna: "empresa_crm_id", valor: empresaCrmId } : null;
+    const [i, f, q, memberResult, e] = await Promise.all([
+      scope("crm_interacoes", "id,tipo,canal,direcao,assunto,resumo,resultado,ocorreu_em,email_id,created_by,account_id,contato:contatos(nome)").order("ocorreu_em", { ascending: false }),
       scope("crm_followups", "id,titulo,motivo,canal,previsto_para,status,tentativa,workflow,contato_id,responsavel_id,concluido_em,resultado,contato:contatos(nome),responsavel:profiles!responsavel_id(full_name)").order("previsto_para"),
       scope("crm_duvidas", "id,tipo,titulo,resposta,status,contato:contatos(nome)").order("created_at", { ascending: false }),
       fetchOrganizationMembers(organizationId)
         .then(data => ({ data, error: null as Error | null }))
         .catch(error => ({ data: [], error: error instanceof Error ? error : new Error("Falha ao carregar equipe") })),
+      escopoDeEmail
+        ? (supabase as any).from("emails").select(COLUNAS_DO_EMAIL_DE_CONVERSA).eq(escopoDeEmail.coluna, escopoDeEmail.valor).order("sent_at", { ascending: false }).limit(300)
+        : Promise.resolve({ data: [] as EmailDeConversa[], error: null }),
     ]);
     const firstError = i.error ?? f.error ?? q.error ?? memberResult.error;
     setError(firstError?.message ?? null); setInteractions(i.data ?? []); setFollowups(f.data ?? []); setQuestions(q.data ?? []);
+    // Sem acesso aos e-mails (ou sem e-mails), a aba segue só com as interações registradas.
+    setEmails(e.error ? [] : e.data ?? []);
     setMembers(memberResult.data.filter(item => item.papel !== "captador").map(item => ({ id: item.user_id, nome: item.full_name || item.email || "Membro da equipe" })));
     setLoading(false);
   }, [captacaoId, contaPatrocinioId, empresaCrmId, organizationId, proponenteId, supabase]);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void supabase.auth.getUser().then(({ data }) => setMeuId(data.user?.id ?? null)); }, [supabase]);
   useEffect(() => {
     if (emailSyncStarted.current) return;
     emailSyncStarted.current = true;
@@ -204,16 +220,33 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
   const visible = followups.filter(item => filter === "todos" || (filter === "pendentes" && item.status === "pendente") || (filter === "concluidos" && item.status === "concluido") || (filter === "cancelados" && item.status === "cancelado"));
   const overdue = pending.filter(item => new Date(item.previsto_para).getTime() < Date.now()).length;
   const lastInteraction = interactions[0]?.ocorreu_em;
+  // Quem da equipe registrou o contato (o e-mail sincronizado fica em nome de quem sincronizou).
+  const autorDe = (item: Interaction) => {
+    const id = item.created_by ?? item.account_id;
+    return id ? members.find(member => member.id === id)?.nome ?? null : null;
+  };
   const coldDays = lastInteraction ? Math.floor((Date.now() - new Date(lastInteraction).getTime()) / 86_400_000) : null;
   const workflows = mode === "customer_success" ? CUSTOMER_SUCCESS_WORKFLOWS : WORKFLOWS;
+  // Linha do tempo da aba Interações: cada conversa de e-mail ocupa um item só (o fio inteiro), no lugar das mensagens soltas.
+  const conversas = useMemo(() => agruparConversas(emails), [emails]);
+  const linhaDoTempo = useMemo(() => {
+    const idsDosEmails = new Set(emails.map(item => item.id));
+    return [
+      ...interactions.filter(item => !item.email_id || !idsDosEmails.has(item.email_id)).map(item => ({ tipo: "interacao" as const, quando: new Date(item.ocorreu_em).getTime(), item })),
+      ...conversas.map(conversa => ({ tipo: "conversa" as const, quando: conversa.ultimaEm ?? 0, conversa })),
+    ].sort((a, b) => b.quando - a.quando);
+  }, [conversas, emails, interactions]);
+  const conversaAberta = chaveAberta ? conversas.find(conversa => conversa.chave === chaveAberta) ?? null : null;
+
+  const linhaDeInteracao = (item: Interaction) => <div key={item.id} className="px-5 py-4"><div className="flex items-start justify-between gap-4"><div className="min-w-0"><div className="flex items-center gap-2">{item.email_id && <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-black/[.04] text-black/45" title="Sincronizado do e-mail"><Mail size={10}/></span>}<p className="truncate text-[0.8125rem] font-semibold text-[#282525]">{item.assunto}</p></div></div><span className="flex-shrink-0 text-[0.6875rem] text-black/30">{dateLabel(item.ocorreu_em)}</span></div>{item.resumo && <p className="mt-2 whitespace-pre-line text-[0.75rem] leading-relaxed text-black/50">{item.resumo}</p>}<p className="mt-1 text-[0.625rem] text-black/30">{item.contato?.nome ?? "Empresa"} · {channelLabel(item.canal ?? item.tipo)}{item.direcao ? ` · ${item.direcao === "entrada" ? "Recebido" : "Enviado"}` : ""}{item.resultado ? ` · ${resultLabel(item.resultado)}` : ""}{autorDe(item) ? ` · por ${autorDe(item)}` : ""}</p></div>;
 
   return <div className="space-y-5">
     <div className="grid gap-px overflow-hidden rounded border bg-black/[.06] sm:grid-cols-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-      <Metric label="Próximas ações" value={String(pending.length)} tone="#7259B5" /><Metric label="Atrasadas" value={String(overdue)} tone={overdue ? "#D94E4E" : "#2E8932"} /><Metric label="Última interação" value={coldDays === null ? "Sem histórico" : coldDays === 0 ? "Hoje" : `${coldDays} dias`} tone={coldDays !== null && coldDays >= 14 ? "#B07A14" : "#1A8B7A"} />
+      <Metric label="Próximas ações" value={String(pending.length)} vazio={!pending.length} /><Metric label="Atrasadas" value={String(overdue)} vazio={!overdue} alerta={overdue ? { icone: AlertCircle, cor: "#D94A4A" } : undefined} /><Metric label="Última interação" value={coldDays === null ? "Sem histórico" : coldDays === 0 ? "Hoje" : `${coldDays} dias`} vazio={coldDays === null} alerta={coldDays !== null && coldDays >= 14 ? { icone: Clock, cor: "#B07A14" } : undefined} />
     </div>
 
     <div className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-      <header className="flex flex-col gap-4 border-b px-5 py-4 md:flex-row md:items-center md:justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}><div><p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/30">{mode === "customer_success" ? "Governança da parceria" : "Memória relacional"}</p><h2 className="mt-1 text-[1rem] font-bold text-black">Relacionamento</h2></div><div className="flex flex-wrap gap-2">{section === "interacoes" && <Action onClick={() => setForm("interacao")} label="Registrar interação" />}{section === "duvidas" && <Action onClick={() => setForm("duvida")} label="Dúvida ou objeção" />}{section === "followups" && <Action onClick={() => setForm("followup")} label="Novo follow-up" primary />}{section === "notas" && <Action onClick={() => setNotaFormOpen(true)} label="Nova nota" />}</div></header>
+      <header className="flex flex-col gap-4 border-b px-5 py-4 md:flex-row md:items-center md:justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}><div><p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/30">{mode === "customer_success" ? "Governança da parceria" : "Memória relacional"}</p><h2 className="mt-1 text-[1rem] font-bold text-[#282525]">Relacionamento</h2></div><div className="flex flex-wrap gap-2">{section === "interacoes" && <Action onClick={() => setForm("interacao")} label="Registrar interação" />}{section === "duvidas" && <Action onClick={() => setForm("duvida")} label="Dúvida ou objeção" />}{section === "followups" && <Action onClick={() => setForm("followup")} label="Novo follow-up" primary />}{section === "notas" && <Action onClick={() => setNotaFormOpen(true)} label="Nova nota" />}</div></header>
       <nav className="flex gap-5 border-b px-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>{([['followups','Próximas ações',Clock],['interacoes','Interações',RefreshCw],['duvidas','Dúvidas e objeções',MessageCircleQuestion],['notas','Notas',StickyNote]] as const).map(([id,label,Icon]) => <button key={id} onClick={() => setSection(id)} className="relative flex h-11 items-center gap-1.5 text-[0.75rem] font-medium" style={{ color: section === id ? "#7259B5" : "rgba(13,13,13,.4)" }}><Icon size={12}/>{label}{section === id && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#7259B5]"/>}</button>)}</nav>
       {section === "followups" && <div className="flex flex-wrap gap-1.5 border-b px-5 py-2.5" style={{ borderColor: "rgba(13,13,13,.06)" }}>{([['pendentes','Pendentes'],['concluidos','Concluídos'],['cancelados','Cancelados'],['todos','Todos']] as const).map(([id,label]) => <button key={id} onClick={() => setFilter(id)} className={`rounded border px-2.5 py-1 text-[0.625rem] font-medium bg-white transition ${filter === id ? "border-[#7259B5]/40 text-[#7259B5]" : "border-transparent text-black/40 hover:bg-black/[.04]"}`}>{label}</button>)}</div>}
 
@@ -222,8 +255,8 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
       {error && !form && !finishing && <p className="m-5 rounded border border-[#D94E4E]/20 px-3 py-2 text-xs text-[#D94E4E]">{error}</p>}
       {section === "notas" ? <NotasRelacionais empresaCrmId={empresaCrmId} proponenteId={proponenteId} showNew={notaFormOpen} setShowNew={setNotaFormOpen} /> : (
         <div className="divide-y divide-black/[.06]">
-          {loading ? <p className="px-5 py-12 text-center text-xs text-black/30">Carregando…</p> : section === "followups" ? visible.map(item => <FollowupRow key={item.id} item={item} channelLabel={channelLabel} saving={saving} onFinish={() => setFinishing(item)} onEdit={() => editFollowup(item)} onCancel={() => void updateStatus(item, "cancelado")} onReopen={() => void updateStatus(item, "pendente")} />) : section === "interacoes" ? interactions.map(item => <div key={item.id} className="px-5 py-4"><div className="flex items-start justify-between gap-4"><div className="min-w-0"><div className="flex items-center gap-2">{item.email_id && <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-black/[.04] text-[#2D72B0]" title="Sincronizado do e-mail"><Mail size={10}/></span>}<p className="truncate text-[0.8125rem] font-semibold text-black">{item.assunto}</p></div></div><span className="flex-shrink-0 text-[0.6875rem] text-black/30">{dateLabel(item.ocorreu_em)}</span></div>{item.resumo && <p className="mt-2 whitespace-pre-line text-[0.75rem] leading-relaxed text-black/50">{item.resumo}</p>}<p className="mt-1 text-[0.625rem] text-black/30">{item.contato?.nome ?? "Empresa"} · {channelLabel(item.canal ?? item.tipo)}{item.direcao ? ` · ${item.direcao === "entrada" ? "Recebido" : "Enviado"}` : ""}{item.resultado ? ` · ${resultLabel(item.resultado)}` : ""}</p></div>) : questions.map(item => <div key={item.id} className="px-5 py-4"><div className="flex items-center gap-2"><span className="rounded border px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase" style={{ color: item.tipo === "objecao" ? "#D94E4E" : "#2D72B0", borderColor: item.tipo === "objecao" ? "#D94E4E40" : "#2D72B040" }}>{item.tipo}</span><p className="text-[0.8125rem] font-semibold text-black">{item.titulo}</p></div>{item.resposta && <p className="mt-2 text-[0.75rem] text-black/50">{item.resposta}</p>}</div>)}
-          {!loading && ((section === "followups" && !visible.length) || (section === "interacoes" && !interactions.length) || (section === "duvidas" && !questions.length)) && <div className="px-5 py-14 text-center"><p className="text-sm font-medium text-black/30">Nada registrado aqui ainda</p></div>}
+          {loading ? <p className="px-5 py-12 text-center text-xs text-black/30">Carregando…</p> : section === "followups" ? visible.map(item => <FollowupRow key={item.id} item={item} channelLabel={channelLabel} saving={saving} onFinish={() => setFinishing(item)} onEdit={() => editFollowup(item)} onCancel={() => void updateStatus(item, "cancelado")} onReopen={() => void updateStatus(item, "pendente")} />) : section === "interacoes" ? linhaDoTempo.map(linha => linha.tipo === "conversa" ? <LinhaDeConversa key={linha.conversa.chave} conversa={linha.conversa} data={dateLabel(new Date(linha.quando).toISOString())} contatos={linha.conversa.contatoIds.map(id => contacts.find(contato => contato.id === id)?.nome).filter((nome): nome is string => Boolean(nome))} canal={channelLabel("email")} autor={members.find(member => member.id === linha.conversa.donoIds[0])?.nome ?? null} onAbrir={() => setChaveAberta(linha.conversa.chave)} /> : linhaDeInteracao(linha.item)) : questions.map(item => <div key={item.id} className="px-5 py-4"><div className="flex items-center gap-2"><span className="rounded border px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase" style={{ color: item.tipo === "objecao" ? "#D94E4E" : "#2D72B0", borderColor: item.tipo === "objecao" ? "#D94E4E40" : "#2D72B040" }}>{item.tipo}</span><p className="text-[0.8125rem] font-semibold text-[#282525]">{item.titulo}</p></div>{item.resposta && <p className="mt-2 text-[0.75rem] text-black/50">{item.resposta}</p>}</div>)}
+          {!loading && ((section === "followups" && !visible.length) || (section === "interacoes" && !linhaDoTempo.length) || (section === "duvidas" && !questions.length)) && <div className="px-5 py-14 text-center"><p className="text-sm font-medium text-black/30">Nada registrado aqui ainda</p></div>}
         </div>
       )}
     </div>
@@ -238,7 +271,7 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
             className="rounded border bg-white p-3 text-left transition hover:bg-black/[.04] disabled:opacity-40"
             style={{ borderColor: "rgba(13,13,13,.09)" }}
           >
-            <p className="text-[0.75rem] font-semibold text-black">{runningWorkflow === def.id ? "Criando…" : def.label}</p>
+            <p className="text-[0.75rem] font-semibold text-[#282525]">{runningWorkflow === def.id ? "Criando…" : def.label}</p>
           </button>
         ))}
       </div>
@@ -252,15 +285,17 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
         onConfirm={contactIdChosen => { const def = pendingWorkflow; setPendingWorkflow(null); void runWorkflow(def, contactIdChosen); }}
       />
     )}
+    {conversaAberta && <ConversaDeEmail conversa={conversaAberta} meuId={meuId} contatos={contacts.map(({ id, nome }) => ({ id, nome }))} membros={members} onClose={() => setChaveAberta(null)} onMudou={() => void load()} />}
   </div>;
 }
 
 function FollowupRow({ item, channelLabel, saving, onFinish, onEdit, onCancel, onReopen }: { item: Followup; channelLabel: (value: string) => string; saving: boolean; onFinish: () => void; onEdit: () => void; onCancel: () => void; onReopen: () => void }) {
   const pending = item.status === "pendente";
-  return <div className="flex items-center gap-3 px-5 py-4">{pending ? <button disabled={saving} onClick={onFinish} title="Concluir" className="flex h-6 w-6 items-center justify-center rounded border border-black/12 text-black/20 hover:border-[#2E8932] hover:text-[#2E8932]"><Check size={12}/></button> : <span className={`flex h-6 w-6 items-center justify-center rounded ${item.status === "concluido" ? "bg-black/[.04] text-[#2E8932]" : "bg-black/[.04] text-black/25"}`}>{item.status === "concluido" ? <Check size={12}/> : <X size={12}/>}</span>}<div className="min-w-0 flex-1"><p className={`text-[0.8125rem] font-semibold ${pending ? "text-black" : "text-black/40"}`}>{item.titulo}</p><p className="mt-0.5 text-[0.6875rem] text-black/35">{item.contato?.nome ?? "Sem contato definido"} · {channelLabel(item.canal)} · {item.responsavel?.full_name ?? "Sem responsável"} · tentativa {item.tentativa}</p>{item.resultado && <p className="mt-0.5 text-[0.625rem] text-black/30">Resultado: {item.resultado.replaceAll("_", " ")}</p>}</div><span className="hidden text-[0.6875rem] font-medium sm:block" style={{ color: pending && new Date(item.previsto_para).getTime() < Date.now() ? "#D94E4E" : "rgba(13,13,13,.4)" }}>{dateLabel(item.previsto_para)}</span><div className="flex items-center gap-1">{pending ? <><button onClick={onEdit} title="Editar" className="rounded p-1.5 text-black/25 hover:bg-black/[.04] hover:text-black/55"><Pencil size={12}/></button><button onClick={onCancel} title="Cancelar" className="rounded p-1.5 text-black/25 hover:bg-black/[.04] hover:text-[#D94E4E]"><X size={13}/></button></> : <button onClick={onReopen} title="Reabrir" className="rounded p-1.5 text-black/25 hover:bg-black/[.04] hover:text-[#7259B5]"><RotateCcw size={12}/></button>}</div></div>;
+  return <div className="flex items-center gap-3 px-5 py-4">{pending ? <button disabled={saving} onClick={onFinish} title="Concluir" className="flex h-6 w-6 items-center justify-center rounded border border-black/12 text-black/20 hover:border-[#2E8932] hover:text-[#2E8932]"><Check size={12}/></button> : <span className={`flex h-6 w-6 items-center justify-center rounded ${item.status === "concluido" ? "bg-black/[.04] text-[#2E8932]" : "bg-black/[.04] text-black/25"}`}>{item.status === "concluido" ? <Check size={12}/> : <X size={12}/>}</span>}<div className="min-w-0 flex-1"><p className={`text-[0.8125rem] font-semibold ${pending ? "text-[#282525]" : "text-black/40"}`}>{item.titulo}</p><p className="mt-0.5 text-[0.6875rem] text-black/35">{item.contato?.nome ?? "Sem contato definido"} · {channelLabel(item.canal)} · {item.responsavel?.full_name ?? "Sem responsável"} · tentativa {item.tentativa}</p>{item.resultado && <p className="mt-0.5 text-[0.625rem] text-black/30">Resultado: {item.resultado.replaceAll("_", " ")}</p>}</div><span className="hidden text-[0.6875rem] font-medium sm:block" style={{ color: pending && new Date(item.previsto_para).getTime() < Date.now() ? "#D94E4E" : "rgba(13,13,13,.4)" }}>{dateLabel(item.previsto_para)}</span><div className="flex items-center gap-1">{pending ? <><button onClick={onEdit} title="Editar" className="rounded p-1.5 text-black/25 hover:bg-black/[.04] hover:text-black/55"><Pencil size={12}/></button><button onClick={onCancel} title="Cancelar" className="rounded p-1.5 text-black/25 hover:bg-black/[.04] hover:text-[#D94E4E]"><X size={13}/></button></> : <button onClick={onReopen} title="Reabrir" className="rounded p-1.5 text-black/25 hover:bg-black/[.04] hover:text-[#7259B5]"><RotateCcw size={12}/></button>}</div></div>;
 }
 
-function Metric({ label, value, tone }: { label: string; value: string; tone: string }) { return <div className="flex min-h-28 flex-col justify-center bg-white px-5 py-4"><p className="text-[0.625rem] font-medium text-black/30">{label}</p><p className="mt-2 text-[1.125rem] font-semibold tracking-[-.02em]" style={{ color: tone }}>{value}</p></div>; }
+/** Só um alerta (atraso, contato esfriando) pinta o ícone; rótulo e valor ficam neutros. */
+function Metric({ label, value, vazio = false, alerta }: { label: string; value: string; vazio?: boolean; alerta?: { icone: typeof Clock; cor: "#D94A4A" | "#B07A14" } }) { return <div className="flex min-h-28 flex-col justify-center bg-white px-5 py-4"><p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{alerta && <alerta.icone size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: alerta.cor }} />}{label}</p><p className={`mt-2 text-[1.125rem] font-semibold tracking-[-.02em] tabular-nums ${vazio ? "text-black/30" : "text-[#282525]"}`}>{value}</p></div>; }
 function Action({ label, onClick, primary = false }: { label: string; onClick: () => void; primary?: boolean }) { return <button onClick={onClick} className="rounded border bg-white px-3 py-2 text-[0.75rem] font-medium transition hover:bg-black/[.04]" style={{ color: primary ? "#7259B5" : "rgba(13,13,13,.6)", borderColor: primary ? "#7259B540" : "rgba(13,13,13,.1)" }}><Plus size={11} className="mr-1.5 inline"/>{label}</button>; }
 
 type Taxonomy = { chave: string; label: string; ativo: boolean };
@@ -269,25 +304,25 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="text-[0.5625rem] font-bold uppercase tracking-widest text-black/30 mb-1.5">{children}</p>;
 }
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
+  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-[#282525]">{children}</label>;
 }
 
-const fieldClass = "w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition focus:border-black/30";
+const fieldClass = "w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-black/30";
 const fieldStyle = { borderColor: "rgba(13,13,13,.15)" } as const;
 
 function WorkflowContactPicker({ def, contacts, saving, onCancel, onConfirm }: { def: WorkflowDef; contacts: Contact[]; saving: boolean; onCancel: () => void; onConfirm: (contactId: string | null) => void }) {
   const [contactId, setContactId] = useState("");
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center" style={{ background: "rgba(0,0,0,.45)" }} onClick={onCancel}>
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={onCancel}>
       <div
-        className="flex w-full max-w-[30rem] flex-col overflow-hidden rounded-b bg-white"
+        className="flex w-full max-w-[30rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
         style={{ boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
         onClick={e => e.stopPropagation()}
       >
         <header className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/5"><CalendarClock size={16} className="text-black/50" /></div>
-            <h2 className="text-[0.9375rem] font-bold text-black">{def.label}</h2>
+            <h2 className="text-[0.9375rem] font-bold text-[#282525]">{def.label}</h2>
           </div>
           <button type="button" onClick={onCancel} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
             <X size={15} className="text-black/40" />
@@ -311,7 +346,7 @@ function WorkflowContactPicker({ def, contacts, saving, onCancel, onConfirm }: {
 
         <footer className="flex items-center justify-end gap-2 border-t px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button onClick={onCancel} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
-          <button disabled={saving} onClick={() => onConfirm(contactId || null)} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60">
+          <button disabled={saving} onClick={() => onConfirm(contactId || null)} className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:opacity-60">
             <Save size={12} /> {saving ? "Criando…" : "Confirmar"}
           </button>
         </footer>
@@ -325,16 +360,16 @@ function EntryForm(props: { kind: FormKind; editing: boolean; title:string; deta
   const titleText = props.editing ? "Editar follow-up" : props.kind === "followup" ? "Novo follow-up" : props.kind === "interacao" ? "Registrar interação" : "Nova dúvida ou objeção";
   const Icon = props.kind === "followup" ? CalendarClock : props.kind === "interacao" ? RefreshCw : MessageCircleQuestion;
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center" style={{ background: "rgba(0,0,0,.45)" }} onClick={props.onCancel}>
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={props.onCancel}>
       <div
-        className="flex w-full max-w-[30rem] flex-col overflow-hidden rounded-b bg-white"
+        className="flex w-full max-w-[30rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
         style={{ boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
         onClick={e => e.stopPropagation()}
       >
         <header className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/5"><Icon size={16} className="text-black/50" /></div>
-            <h2 className="text-[0.9375rem] font-bold text-black">{titleText}</h2>
+            <h2 className="text-[0.9375rem] font-bold text-[#282525]">{titleText}</h2>
           </div>
           <button type="button" onClick={props.onCancel} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
             <X size={15} className="text-black/40" />
@@ -413,7 +448,7 @@ function EntryForm(props: { kind: FormKind; editing: boolean; title:string; deta
           {props.error ? <p className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{props.error}</p> : <div />}
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <button onClick={props.onCancel} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
-            <button disabled={!props.title.trim()||props.saving} onClick={props.onSave} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60">
+            <button disabled={!props.title.trim()||props.saving} onClick={props.onSave} className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:opacity-60">
               <Save size={12} /> {props.saving ? "Salvando…" : "Salvar"}
             </button>
           </div>

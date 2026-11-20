@@ -132,10 +132,10 @@ export function NovoPlanoAtivacaoModal({ organizationId, initialContaId = "", in
     onSaved(data as string);
   }
 
-  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/25 p-0 sm:items-center sm:p-6">
-    <div role="dialog" aria-modal="true" aria-labelledby="activation-modal-title" className="max-h-[94vh] w-full overflow-y-auto rounded-t bg-white sm:max-w-[45rem] sm:rounded">
+  return <div className="fixed inset-0 z-50 flex justify-center veu items-start">
+    <div role="dialog" aria-modal="true" aria-labelledby="activation-modal-title" className="folha-desce folha-vidro max-h-[94vh] w-full overflow-y-auto sm:max-w-[45rem]">
       <header className="sticky top-0 z-10 border-b bg-white px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <div className="flex items-start justify-between gap-4"><div><p className="text-[0.625rem] font-medium uppercase tracking-[.12em] text-black/30">Patrocínio</p><h2 id="activation-modal-title" className="mt-1 text-[1.1875rem] font-semibold tracking-[-.02em] text-black">Novo plano de ativação</h2></div><button type="button" onClick={onClose} className="text-black/30 hover:text-black/55" aria-label="Fechar"><X size={17}/></button></div>
+        <div className="flex items-start justify-between gap-4"><div><p className="text-[0.625rem] font-medium uppercase tracking-[.12em] text-black/30">Patrocínio</p><h2 id="activation-modal-title" className="mt-1 text-[1.1875rem] font-semibold tracking-[-.02em] text-[#282525]">Novo plano de ativação</h2></div><button type="button" onClick={onClose} className="text-black/30 hover:text-black/55" aria-label="Fechar"><X size={17}/></button></div>
         <div className="mt-4 grid grid-cols-3 gap-2">{STEPS.map((label, index) => <div key={label}><div className="h-1 rounded bg-black/[.06]"><div className="h-full rounded bg-[#7259B5] transition-all" style={{ width: index <= step ? "100%" : "0%" }}/></div><p className="mt-1.5 text-[0.625rem] font-medium" style={{ color: index === step ? "#7259B5" : "rgba(13,13,13,.3)" }}>{label}</p></div>)}</div>
       </header>
 
@@ -165,9 +165,9 @@ export function NovoPlanoAtivacaoModal({ organizationId, initialContaId = "", in
         </>}
       </div>
 
-      <footer className="sticky bottom-0 flex items-center justify-between gap-3 border-t bg-white px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+      <footer className="folha-rodape rounded-b-[var(--raio-folha)] sticky bottom-0 flex items-center justify-between gap-3 border-t bg-white px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <button type="button" onClick={step === 0 ? onClose : () => setStep(value => value - 1)} className="inline-flex items-center gap-1.5 text-[0.75rem] font-medium text-black/35 hover:text-black/55">{step > 0 && <ArrowLeft size={12}/>} {step === 0 ? "Cancelar" : "Voltar"}</button>
-        {step < STEPS.length - 1 ? <button type="button" disabled={!canAdvance || loading} onClick={() => setStep(value => value + 1)} className="inline-flex h-10 items-center gap-2 rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-black/70 hover:bg-black/[.04] disabled:opacity-35">Avançar <ArrowRight size={12}/></button> : <button type="button" disabled={saving || !canAdvance} onClick={() => void save()} className="inline-flex h-10 items-center gap-2 rounded bg-[#2E8932] px-4 text-[0.75rem] font-semibold text-white hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"><Check size={13}/>{saving ? "Salvando…" : "Criar plano"}</button>}
+        {step < STEPS.length - 1 ? <button type="button" disabled={!canAdvance || loading} onClick={() => setStep(value => value + 1)} className="inline-flex h-10 items-center gap-2 rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-black/70 hover:bg-black/[.04] disabled:opacity-35">Avançar <ArrowRight size={12}/></button> : <button type="button" disabled={saving || !canAdvance} onClick={() => void save()} className="inline-flex h-10 items-center gap-2 rounded acao-salvar px-4 text-[0.75rem] font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed"><Check size={13}/>{saving ? "Salvando…" : "Criar plano"}</button>}
       </footer>
     </div>
   </div>;

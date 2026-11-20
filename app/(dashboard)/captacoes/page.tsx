@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, ArrowUpRight, BriefcaseBusiness, Calendar, List, Columns2, Scale, Trash2, Search, Clock3, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Plus, ArrowUpRight, BriefcaseBusiness, Building2, Calendar, List, Columns2, Scale, Trash2, Search, Clock3, Tag, ChevronUp, ChevronDown, ChevronsUpDown, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -18,12 +18,16 @@ import { PotentialKanban, type PotencialFechamento } from "@/components/kanban/P
 import { KanbanBoard, KanbanCard, KanbanColumn, KanbanEmpty, KanbanSkeleton } from "@/components/kanban/KanbanPrimitives";
 import { useIncrementalReveal, RevealSentinel } from "@/components/kanban/useIncrementalReveal";
 import { SegmentedControl } from "@/components/ui/FilterControls";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { FiltrosDoFunil } from "@/components/list/FiltrosDoFunil";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
+import { opcoesDoFiltro, passaNoFiltro, TODOS, type Marcador } from "@/lib/filtros-do-funil";
 import { ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { escalaUi } from "@/lib/escala-ui";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { DESFECHOS_NEGOCIACAO, ehDesfecho } from "@/lib/etapas";
 import { FecharNegocioSheet, useRecusarNegociacao } from "@/components/captacoes/FechamentoNegociacao";
 
@@ -61,7 +65,6 @@ type CaptacaoRow = {
 };
 
 type ViewMode = "kanban" | "list" | "potential";
-type PipelineFilter = "todas" | "abertas" | "fechadas" | "recentes";
 type AtividadeIndicador = { nome: string; atrasada: boolean; dias: number; responsavel: string | null };
 
 // COLUNAS agora vem do EtiquetasContext (ver abaixo no componente)
@@ -86,10 +89,7 @@ const CAPTACOES_SELECT_LEGACY = CAPTACOES_SELECT
   .replace(",\n  captador_externo:captadores!captador_externo_id(nome, agencia)", "");
 
 function fmtValor(v: number | null): string {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000)     return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v}`;
+  return v ? formatarValorCurto(v) : "—";
 }
 
 function fmtShortDate(d: string | null): string {
@@ -191,13 +191,21 @@ export default function CaptacoesPage() {
   const [atividadesPorCaptacao, setAtividadesPorCaptacao] = useState<Record<string, AtividadeIndicador>>({});
   const [loading, setLoading]     = useState(true);
   const [view, setView]           = useState<ViewMode>("list");
-  const [pipelineFilter, setPipelineFilter] = useState<PipelineFilter>("todas");
+  const [filtroEtapa, setFiltroEtapa] = useState<string>(TODOS);
   const [cicloFiltro, setCicloFiltro] = useState<string>("atual");
   const [cicloMenuPos, setCicloMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [search, setSearch] = useState("");
-  const [recentCutoff, setRecentCutoff] = useState<number | null>(null);
+  // O link "Ver na lista" da página da pessoa da equipe chega com ?responsavel=.
+  const [filtroResponsavel, setFiltroResponsavel] = useState(
+    () => {
+      const doEndereco = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("responsavel");
+      return doEndereco ? `membro:${doEndereco}` : TODOS;
+    },
+  );
+  const [filtroLei, setFiltroLei] = useState(TODOS);
+  const [filtroProjeto, setFiltroProjeto] = useState(TODOS);
   const [showModal, setShowModal]           = useState(false);
   const [preStatus, setPreStatus]           = useState<StatusCaptacao>("prospeccao");
   const [editingRecord, setEditingRecord]   = useState<CaptacaoRow | null>(null);
@@ -331,10 +339,6 @@ export default function CaptacoesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
-  useEffect(() => {
-    setRecentCutoff(Date.now() - 30 * 86_400_000);
-  }, []);
-
   // Ciclos antigos: uma renovação cria um NOVO registro apontando pro anterior via
   // ciclo_anterior_id — "é o ciclo atual" = nenhum outro registro carregado aponta pra ele.
   // Anos disponíveis vêm sempre dos próprios dados carregados — nunca uma lista fixa,
@@ -347,15 +351,43 @@ export default function CaptacoesPage() {
     ? captacoes.filter(c => !idsComRenovacaoMaisNova.has(c.id))
     : captacoes.filter(c => c.ciclo_ano === Number(cicloFiltro));
 
-  const closedStatuses = new Set<StatusCaptacao>(["aprovado", "recusado"]);
-  const filteredCaptacoes = captacoesVisiveis.filter(c => {
-    const isClosed = closedStatuses.has(c.status);
-    const isRecent = recentCutoff !== null && new Date(c.created_at).getTime() >= recentCutoff;
-    const matchesFilter = pipelineFilter === "todas" || (pipelineFilter === "abertas" && !isClosed) || (pipelineFilter === "fechadas" && isClosed) || (pipelineFilter === "recentes" && isRecent);
-    const term = search.trim().toLocaleLowerCase("pt-BR");
-    const matchesSearch = !term || [c.titulo, c.empresa_pub?.nome, c.empresa_crm?.nome, c.projeto?.nome, c.lei].some(value => value?.toLocaleLowerCase("pt-BR").includes(term));
-    return matchesFilter && matchesSearch;
-  });
+  // Busca, responsável, tipo de patrocínio e projeto valem nas três visões. A
+  // etapa do funil só na lista e no potencial: no kanban
+  // as colunas já são as etapas, e o filtro só esvaziaria colunas.
+  const pessoasDaNegociacao = (c: CaptacaoRow): Marcador[] => [
+    ...[c.captador_id, c.supervisor_id].filter((id): id is string => Boolean(id))
+      .map(id => ({ valor: `membro:${id}`, nome: membros[id]?.nome ?? "Sem nome" })),
+    ...(c.captador_externo_id ? [{ valor: `agencia:${c.captador_externo_id}`, nome: `${c.captador_externo?.nome ?? "Agência"} (agência)` }] : []),
+  ];
+  const leiDaNegociacao = (c: CaptacaoRow): Marcador[] => c.lei ? [{ valor: c.lei, nome: leiMap[c.lei]?.label ?? c.lei }] : [];
+  const projetoDaNegociacao = (c: CaptacaoRow): Marcador[] => c.projeto_id ? [{ valor: c.projeto_id, nome: c.projeto?.nome ?? "Projeto sem nome" }] : [];
+  const opcoesResponsavel = opcoesDoFiltro(captacoesVisiveis, pessoasDaNegociacao, "Sem responsável");
+  const opcoesLei = opcoesDoFiltro(captacoesVisiveis, leiDaNegociacao, "Sem tipo de patrocínio");
+  const opcoesProjeto = opcoesDoFiltro(captacoesVisiveis, projetoDaNegociacao, "Sem projeto");
+
+  const term = search.trim().toLocaleLowerCase("pt-BR");
+  const captacoesNosFiltros = captacoesVisiveis.filter(c =>
+    (!term || [c.titulo, c.empresa_pub?.nome, c.empresa_crm?.nome, c.projeto?.nome, c.lei].some(value => value?.toLocaleLowerCase("pt-BR").includes(term)))
+    && passaNoFiltro(c, filtroResponsavel, pessoasDaNegociacao)
+    && passaNoFiltro(c, filtroLei, leiDaNegociacao)
+    && passaNoFiltro(c, filtroProjeto, projetoDaNegociacao));
+
+  // As opções são as etapas do funil da organização, na ordem configurada.
+  const filtraEtapa = view !== "kanban";
+  const opcoesEtapa = [
+    { value: TODOS, label: "Todas as etapas" },
+    ...COLUNAS.map(col => ({ value: col.status, label: `${col.label} (${captacoesNosFiltros.filter(c => c.status === col.status).length})` })),
+  ];
+  const filteredCaptacoes = !filtraEtapa || filtroEtapa === TODOS
+    ? captacoesNosFiltros
+    : captacoesNosFiltros.filter(c => c.status === filtroEtapa);
+
+  const filtrosAtivos = Boolean(term) || cicloFiltro !== "atual" || (filtraEtapa && filtroEtapa !== TODOS)
+    || filtroResponsavel !== TODOS || filtroLei !== TODOS || filtroProjeto !== TODOS;
+  function limparFiltros() {
+    setSearch(""); setFiltroEtapa(TODOS); setCicloFiltro("atual");
+    setFiltroResponsavel(TODOS); setFiltroLei(TODOS); setFiltroProjeto(TODOS);
+  }
 
   function toggleSort(key: string) {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -434,7 +466,7 @@ export default function CaptacoesPage() {
                 </span>
                 <div
                   role="tooltip"
-                  className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[11.875rem] rounded bg-[#0D0D0D] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
+                  className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[11.875rem] rounded bg-[#1C0E33] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
                 >
                   <p className="font-semibold">{atividade.nome}</p>
                   <p className={atividade.atrasada ? "text-[#F0B24D]" : "text-white/55"}>
@@ -456,18 +488,18 @@ export default function CaptacoesPage() {
               {lei.label}
             </span>
           ) : <span />}
-          <span className="text-[0.75rem] font-semibold tabular-nums text-black/65">{fmtValor(c.valor_solicitado)}</span>
+          <span className="text-[0.75rem] font-semibold tabular-nums text-black/65" title={c.valor_solicitado ? formatarValorCompleto(c.valor_solicitado) : undefined}>{fmtValor(c.valor_solicitado)}</span>
         </div>
         {typeof valuePct === "number" && (
           <div className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-black/[.07]">
-            <div className="h-full rounded-full bg-[#2E8932]" style={{ width: `${valuePct}%` }} />
+            <div className="h-full rounded-full bg-black/30" style={{ width: `${valuePct}%` }} />
           </div>
         )}
         {c.proxima_prospeccao && (
-          <div className="mt-3 flex items-center justify-between border-t pt-2.5 text-[0.625rem] font-medium" style={{ borderColor: "rgba(13,13,13,.06)", color: "#B07A14" }}>
-            <span>Próximo contato</span>
-            <span className="flex items-center gap-1 tabular-nums">
-            <Calendar size={10} />
+          <div className="mt-3 flex items-center justify-between border-t pt-2.5 text-[0.625rem] font-medium" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+            <span className="text-black/45">Próximo contato</span>
+            <span className="flex items-center gap-1 tabular-nums text-black/60">
+            <Calendar size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
             {fmtShortDate(c.proxima_prospeccao)}
             </span>
           </div>
@@ -521,7 +553,7 @@ export default function CaptacoesPage() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setCicloMenuPos(null)} />
           <div
-            className="fixed z-50 min-w-[10rem] overflow-hidden rounded border bg-white shadow-xl"
+            className="fixed z-50 min-w-[10rem] overflow-hidden rounded bg-white border elevacao-1"
             style={{ top: cicloMenuPos.top, left: cicloMenuPos.left, borderColor: "rgba(13,13,13,.12)" }}
           >
             {([
@@ -568,12 +600,12 @@ export default function CaptacoesPage() {
           onSaved={refetch}
         />
       )}
-      <ListPageHeader
+      <ListPageHeader secao="negociacoes"
         eyebrow="Pipeline comercial"
         title="Negociações"
         summary={!loading && <>
           <ListSummary strong={filteredCaptacoes.length}>de {captacoes.length}</ListSummary>
-          <ListSummary strong={fmtValor(pipelineTotal)} tone="#2E8932">no pipeline</ListSummary>
+          <ListSummary strong={<span title={pipelineTotal ? formatarValorCompleto(pipelineTotal) : undefined}>{fmtValor(pipelineTotal)}</span>}>no pipeline</ListSummary>
         </>}
         actions={<>
           <ViewToggle view={view} onChange={setView} />
@@ -597,18 +629,29 @@ export default function CaptacoesPage() {
             {cicloFiltro === "atual" ? "Ciclo atual" : cicloFiltro === "todos" ? "Todos os ciclos" : `Ciclo ${cicloFiltro}`}
             <ChevronDown size={11} className="opacity-40" aria-hidden="true" />
           </button>
-          <span className="mx-0.5 h-5 w-px shrink-0 bg-black/10" aria-hidden="true"/>
-          <SegmentedControl
-            value={pipelineFilter}
-            onChange={setPipelineFilter}
-            ariaLabel="Filtrar negociações"
-            options={[
-              { value: "todas",    label: "Todas" },
-              { value: "abertas",  label: "Abertas",  icon: Clock3 },
-              { value: "fechadas", label: "Fechadas", icon: CheckCircle2 },
-              { value: "recentes", label: "Recentes", icon: Calendar },
-            ] as const}
+          {filtraEtapa && (
+            <>
+              <span className="mx-0.5 h-5 w-px shrink-0 bg-black/10" aria-hidden="true"/>
+              <CustomDropdown
+                value={filtroEtapa}
+                onChange={setFiltroEtapa}
+                options={opcoesEtapa}
+                icon={<Tag size={13} />}
+                compact
+                emphasized={false}
+              />
+            </>
+          )}
+          <FiltrosDoFunil
+            responsavel={{ valor: filtroResponsavel, opcoes: opcoesResponsavel, onChange: setFiltroResponsavel }}
+            lei={{ valor: filtroLei, opcoes: opcoesLei, onChange: setFiltroLei }}
+            projeto={{ valor: filtroProjeto, opcoes: opcoesProjeto, onChange: setFiltroProjeto }}
           />
+          {filtrosAtivos && (
+            <button type="button" onClick={limparFiltros} className="flex h-9 shrink-0 items-center gap-1.5 rounded px-2.5 text-[0.75rem] font-medium text-black/50 transition hover:bg-black/[.04] hover:text-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+              <X size={12} aria-hidden="true" /> Limpar filtros
+            </button>
+          )}
       </ListToolbar>
 
       {/* ── Kanban view ── */}
@@ -638,7 +681,9 @@ export default function CaptacoesPage() {
                         ? Array.from({ length: 2 }).map((_, i) => <KanbanSkeleton key={i} />)
                         : null
                     ) : cards.length === 0 ? (
-                      <KanbanEmpty label="Nenhuma negociação" actionLabel="Adicionar primeira" onAction={ehDesfecho(status, DESFECHOS_NEGOCIACAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}/>
+                      filtrosAtivos
+                        ? <KanbanEmpty label="Nada com esses filtros" />
+                        : <KanbanEmpty label="Nenhuma negociação" actionLabel="Adicionar primeira" onAction={ehDesfecho(status, DESFECHOS_NEGOCIACAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}/>
                     ) : (
                       <>
                         {cards.slice(0, getVisible(status)).map((c) => renderCard(c, false, { onDragStart: () => setDraggingId(c.id), onDragEnd: () => { setDraggingId(null); setDragOverStatus(null); } }))}
@@ -726,7 +771,7 @@ export default function CaptacoesPage() {
                             icon={Search}
                             title="Nenhuma negociação corresponde aos filtros"
                             filtered
-                            onClearFilters={() => { setSearch(""); setPipelineFilter("todas"); }}
+                            onClearFilters={limparFiltros}
                           />
                         )}
                       </td>
@@ -763,7 +808,7 @@ export default function CaptacoesPage() {
                           <td className="px-4 py-3.5">
                             {c.projeto?.nome ? (
                               <span className="flex items-center gap-1.5 text-[0.78125rem] text-black/50">
-                                <ProjectIdentity nome={c.projeto.nome} tipo={c.projeto.identidade_tipo} valor={c.projeto.identidade_valor} logoUrl={c.projeto.identidade_logo_url} cor={c.projeto.identidade_cor} size="sm" />
+                                <ProjectIdentity nome={c.projeto.nome} tipo={c.projeto.identidade_tipo} valor={c.projeto.identidade_valor} logoUrl={c.projeto.identidade_logo_url} cor={c.projeto.identidade_cor} size="sm" semFundo />
                                 {c.projeto.nome}
                               </span>
                             ) : (
@@ -810,7 +855,7 @@ export default function CaptacoesPage() {
 
                           {/* Valor */}
                           <td className="px-4 py-3.5 whitespace-nowrap">
-                            <span className="font-bold tabular-nums text-[0.8125rem] text-black/70">{fmtValor(c.valor_solicitado)}</span>
+                            <span className="font-semibold tabular-nums text-[0.8125rem] text-black/70" title={c.valor_solicitado ? formatarValorCompleto(c.valor_solicitado) : undefined}>{fmtValor(c.valor_solicitado)}</span>
                           </td>
 
                           {/* Prioridade */}
@@ -833,8 +878,9 @@ export default function CaptacoesPage() {
                           <td className="px-4 py-3.5">
                             {c.captador_externo?.nome ? (
                               <span className="font-medium text-[0.78125rem] text-black/60">
-                                <span className="line-clamp-1 truncate">{c.captador_externo.nome}</span>
-                                <span className="block text-[0.625rem] font-semibold uppercase tracking-wider" style={{ color: "#2D72B0" }}>
+                                <span className="break-words min-w-0">{c.captador_externo.nome}</span>
+                                <span className="flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                                  <Building2 size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                                   Agência
                                 </span>
                               </span>
@@ -844,8 +890,8 @@ export default function CaptacoesPage() {
                           {/* Próx. contato */}
                           <td className="px-4 py-3.5 whitespace-nowrap">
                             {c.proxima_prospeccao ? (
-                              <span className="flex items-center gap-1 text-[0.6875rem] text-amber-700 font-semibold">
-                                <Calendar size={10} />
+                              <span className="flex items-center gap-1 text-[0.6875rem] font-medium tabular-nums text-black/55">
+                                <Calendar size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                                 {fmtShortDate(c.proxima_prospeccao)}
                               </span>
                             ) : <span className="text-black/20 text-xs">—</span>}

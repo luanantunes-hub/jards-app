@@ -22,7 +22,7 @@ export default function PropostaLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className={`${googleSans.variable} min-h-screen bg-[#0D0D0D]`} style={{ fontFamily: "var(--font-google-sans), system-ui, sans-serif" }}>
+    <div className={`${googleSans.variable} min-h-screen bg-[#282525]`} style={{ fontFamily: "var(--font-google-sans), system-ui, sans-serif" }}>
       {children}
     </div>
   );

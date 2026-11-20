@@ -63,7 +63,7 @@ export function conteudoDoRelatorio(e: EntradaDoRelatorio): BlocoDoRelatorio[] {
       ["Proponente", e.proponente ? [e.proponente.nome, e.proponente.documento].filter(Boolean).join(", ") : "Não informado"],
       ["Regime", regime ? `${regime.nome} (versão ${regime.versao})` : "Sem regime"],
       ["Sistema de destino", checklist.sistema ?? regime?.sistemaOficial ?? "Não definido"],
-      ["Etapa", ROTULO_DA_ETAPA[dados.etapa]],
+      ["Etapa", dados.etapa === "parcial" && checklist.exercicio ? `Prestação anual de ${checklist.exercicio}` : ROTULO_DA_ETAPA[dados.etapa]],
       ["Gerado em", quando(e.geradoEm)],
     ],
   });

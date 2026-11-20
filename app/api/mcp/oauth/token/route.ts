@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateApiKey, hashApiKey } from "@/lib/mcp/auth";
+import { escopoComModulos, normalizarModulosDaChave, type ModuloMcp } from "@/lib/mcp/modulos";
 import {
   OAUTH_ACCESS_TOKEN_TTL_MS,
   OAUTH_REFRESH_TOKEN_TTL_MS,
@@ -10,6 +11,9 @@ import {
   verifyPkce,
   verifyPkceS256,
 } from "@/lib/mcp/oauth";
+
+/** A resposta com tokens nunca pode ficar em cache (RFC 6749, seção 5.1). */
+const SEM_CACHE = { "Cache-Control": "no-store", Pragma: "no-cache" };
 
 /** Aceita form-urlencoded (padrão OAuth) ou JSON, e client_secret no body OU em Basic auth. */
 async function readParams(req: NextRequest): Promise<Record<string, string>> {
@@ -30,8 +34,18 @@ async function readParams(req: NextRequest): Promise<Record<string, string>> {
   return out;
 }
 
-/** Cria um access token (linha em mcp_api_keys) + refresh token para um usuário/escopo. */
-async function issueTokens(admin: ReturnType<typeof createAdminClient>, userId: string, clientId: string, scope: "read" | "write", label: string) {
+/**
+ * Cria um access token (linha em mcp_api_keys) + refresh token para um usuário/escopo. Os módulos são os que a pessoa
+ * autorizou: a renovação repete os mesmos, nunca ganha um novo.
+ */
+async function issueTokens(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  clientId: string,
+  scope: "read" | "write",
+  modulos: ModuloMcp[],
+  label: string
+) {
   const { raw: rawAccess, hash: accessHash, prefix } = generateApiKey();
   const { data: keyRow, error: keyError } = await admin
     .from("mcp_api_keys")
@@ -41,6 +55,7 @@ async function issueTokens(admin: ReturnType<typeof createAdminClient>, userId: 
       key_prefix: prefix,
       label,
       scope,
+      modulos,
       source: "oauth",
       oauth_client_id: clientId,
       expires_at: new Date(Date.now() + OAUTH_ACCESS_TOKEN_TTL_MS).toISOString(),
@@ -55,6 +70,7 @@ async function issueTokens(admin: ReturnType<typeof createAdminClient>, userId: 
     user_id: userId,
     client_id: clientId,
     scope,
+    modulos,
     access_key_id: keyRow.id,
     expires_at: new Date(Date.now() + OAUTH_REFRESH_TOKEN_TTL_MS).toISOString(),
   });
@@ -65,7 +81,7 @@ async function issueTokens(admin: ReturnType<typeof createAdminClient>, userId: 
     token_type: "bearer",
     expires_in: Math.floor(OAUTH_ACCESS_TOKEN_TTL_MS / 1000),
     refresh_token: rawRefresh,
-    scope,
+    scope: escopoComModulos(scope, modulos),
   };
 }
 
@@ -127,8 +143,8 @@ export async function POST(req: NextRequest) {
     if (markError || !marked || marked.length === 0) return NextResponse.json({ error: "invalid_grant" }, { status: 400 });
 
     try {
-      const tokens = await issueTokens(admin, codeRow.user_id, clientId, codeRow.scope, label);
-      return NextResponse.json(tokens);
+      const tokens = await issueTokens(admin, codeRow.user_id, clientId, codeRow.scope, normalizarModulosDaChave(codeRow.modulos), label);
+      return NextResponse.json(tokens, { headers: SEM_CACHE });
     } catch {
       return NextResponse.json({ error: "server_error" }, { status: 500 });
     }
@@ -161,8 +177,8 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      const tokens = await issueTokens(admin, tokenRow.user_id, clientId, tokenRow.scope, label);
-      return NextResponse.json(tokens);
+      const tokens = await issueTokens(admin, tokenRow.user_id, clientId, tokenRow.scope, normalizarModulosDaChave(tokenRow.modulos), label);
+      return NextResponse.json(tokens, { headers: SEM_CACHE });
     } catch {
       return NextResponse.json({ error: "server_error" }, { status: 500 });
     }

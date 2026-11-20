@@ -57,18 +57,18 @@ export function AceiteDoRelatorio({ token, patrocinador, aceite }: {
 
   return (
     <section className="rounded-lg border bg-white px-5 py-5 md:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }} aria-labelledby="aceite-titulo">
-      <h2 id="aceite-titulo" className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Aceite do relatório</h2>
+      <h2 id="aceite-titulo" className="text-[0.8125rem] font-semibold text-[#282525]">Aceite do relatório</h2>
       <p className="mt-1 text-[0.75rem] text-black/55">Se as informações estão de acordo, registre o aceite em nome de {patrocinador}. Quem enviou o relatório recebe a confirmação.</p>
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="mb-1 block text-[0.625rem] font-medium text-black/45">Seu nome</span>
           <input value={nome} onChange={e => setNome(e.target.value)} maxLength={200} autoComplete="name"
-            className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+            className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
         </label>
         <label className="block sm:col-span-2">
           <span className="mb-1 block text-[0.625rem] font-medium text-black/45">Comentário (opcional)</span>
           <textarea value={comentario} onChange={e => setComentario(e.target.value)} rows={3} maxLength={2000}
-            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.8125rem] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.8125rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
         </label>
       </div>
       {erro && <p role="alert" className="mt-3 text-[0.75rem] text-[#B23B3B]">{erro}</p>}

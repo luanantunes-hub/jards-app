@@ -45,6 +45,22 @@ test("só se registra callback do Claude ou loopback", () => {
   assert.equal(isRegistrableRedirectUri("http://localhost/" + "a".repeat(400)), false);
 });
 
+test("o conector MCP do ChatGPT registra só os callbacks oficiais do chatgpt.com", () => {
+  assert.equal(isRegistrableRedirectUri("https://chatgpt.com/connector/oauth/abc123_DEF-9"), true);
+  assert.equal(isRegistrableRedirectUri("https://chatgpt.com/connector_platform_oauth_redirect"), true);
+
+  assert.equal(isRegistrableRedirectUri("https://chatgpt.com.evil.example/connector/oauth/abc123"), false);
+  assert.equal(isRegistrableRedirectUri("https://evil.example/connector/oauth/abc123"), false);
+  assert.equal(isRegistrableRedirectUri("http://chatgpt.com/connector/oauth/abc123"), false);
+  assert.equal(isRegistrableRedirectUri("https://chatgpt.com/connector/oauth/"), false);
+  assert.equal(isRegistrableRedirectUri("https://chatgpt.com/connector/oauth/abc/../../x"), false);
+  assert.equal(isRegistrableRedirectUri("https://chatgpt.com/connector/oauth/abc123?next=https://evil.example"), false);
+  assert.equal(isRegistrableRedirectUri("https://chatgpt.com/connector/oauth/abc123#frag"), false);
+  assert.equal(isRegistrableRedirectUri("https://chatgpt.com/outro/caminho"), false);
+  // O callback das Custom GPT (/aip/.../oauth/callback) continua só no cliente fixo, nunca no registro dinâmico.
+  assert.equal(isRegistrableRedirectUri("https://chatgpt.com/aip/g-abc123/oauth/callback"), false);
+});
+
 test("o callback do pedido precisa ser o registrado; em loopback a porta é livre", () => {
   const registrados = ["https://claude.ai/api/mcp/auth_callback", "http://localhost:8765/callback"];
   assert.equal(redirectUriMatchesRegistered(registrados, "https://claude.ai/api/mcp/auth_callback"), true);

@@ -9,7 +9,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoContaBancaria } from "@/lib/supabase/types";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 
 /** Cria ou edita uma conta bancária da prestação. */
 export function ContaBancariaModal({ prestacaoId, conta, onClose, onSaved }: {
@@ -61,7 +61,7 @@ export function ContaBancariaModal({ prestacaoId, conta, onClose, onSaved }: {
             type="button"
             onClick={salvar}
             disabled={salvando}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
             Salvar

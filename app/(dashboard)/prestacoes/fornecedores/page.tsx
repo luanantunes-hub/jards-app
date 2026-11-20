@@ -110,7 +110,7 @@ export default function FornecedoresPage() {
   function excluir(fornecedor: PrestacaoFornecedor) {
     confirmDelete({
       title: "Excluir fornecedor?",
-      description: `"${nomeDoFornecedor(fornecedor)}" sai do cadastro da organização, com os comprovantes guardados.`,
+      description: `"${nomeDoFornecedor(fornecedor)}" sai do cadastro, com os comprovantes guardados.`,
       onConfirm: async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela ainda não está no tipo Database
         const tabela = (nome: string) => (supabase as any).from(nome);
@@ -136,10 +136,10 @@ export default function FornecedoresPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <ListPageHeader
+      <ListPageHeader secao="fornecedores"
         eyebrow="Prestação de contas"
         title="Fornecedores"
-        description="Cadastro da organização, com a situação na Receita e as sanções consultadas no TCU."
+        description="Situação na Receita e sanções consultadas no TCU."
         summary={!carregando && (
           <>
             <ListSummary strong={linhas.length}>{linhas.length === 1 ? "fornecedor" : "fornecedores"}</ListSummary>
@@ -174,7 +174,7 @@ export default function FornecedoresPage() {
             <ListEmptyState
               icon={Store}
               title={hasFilter ? "Nenhum fornecedor com esses filtros" : "Nenhum fornecedor cadastrado"}
-              description={hasFilter ? undefined : "Cadastre o CNPJ e o Jards consulta a situação na Receita e as sanções no TCU, na CGU e no CNJ."}
+              description={hasFilter ? undefined : "Cadastre o CNPJ para consultar a situação na Receita e as sanções no TCU, na CGU e no CNJ."}
               filtered={hasFilter}
               onClearFilters={() => { setFiltro("todos"); setBusca(""); }}
               action={hasFilter || !podeEditar ? undefined : <PrimaryListAction onClick={() => setEditando("novo")}><Plus size={13} aria-hidden="true" />Novo fornecedor</PrimaryListAction>}
@@ -194,7 +194,7 @@ export default function FornecedoresPage() {
                     className="block w-full rounded border bg-white p-4 text-left transition hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
                     style={{ borderColor: "rgba(13,13,13,.08)" }}
                   >
-                    <p className="text-[0.8125rem] font-semibold text-black">{l.nomeExibido}</p>
+                    <p className="text-[0.8125rem] font-semibold text-[#282525]">{l.nomeExibido}</p>
                     <p className="truncate text-[0.6875rem] tabular-nums text-black/40">
                       {[rotuloTipo(l.tipo_pessoa), formatarDocumento(l.documento, { mascararCpf: true })].filter(Boolean).join(" · ")}
                     </p>
@@ -236,11 +236,11 @@ export default function FornecedoresPage() {
                         <button
                           type="button"
                           onClick={event => { event.stopPropagation(); setAviso(""); setAberto(l); }}
-                          className="line-clamp-1 text-left text-[0.8125rem] font-semibold text-black hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                          className="break-words text-left text-[0.8125rem] font-semibold text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
                         >
                           {l.nomeExibido}
                         </button>
-                        {l.nome && l.razao_social && <p className="mt-0.5 line-clamp-1 text-[0.625rem] text-black/35">{l.razao_social}</p>}
+                        {l.nome && l.razao_social && <p className="mt-0.5 break-words text-[0.625rem] text-black/35">{l.razao_social}</p>}
                         {l.parte_relacionada && <p className="mt-0.5 text-[0.625rem] text-[#684DB0]">Parte relacionada</p>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem] tabular-nums text-black/60">{formatarDocumento(l.documento, { mascararCpf: true }) || <span className="text-black/25">—</span>}</td>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Camera, MapPin, Pencil, Plus, Target, Trash2 } from "lucide-react";
+import { AlertTriangle, Camera, MapPin, Pencil, Plus, Target, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -11,17 +11,23 @@ import { MetaModal, type AgrupadorParaMeta } from "@/components/prestacao/objeto
 import { LocalModal } from "@/components/prestacao/objeto/LocalModal";
 import { EvidenciaModal } from "@/components/prestacao/objeto/EvidenciaModal";
 import { ListaEvidencias } from "@/components/prestacao/objeto/ListaEvidencias";
+import { ProducaoNoCmd } from "@/components/prestacao/objeto/ProducaoNoCmd";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { registraCmd } from "@/lib/prestacao/cmd";
+import { regraDoRegime } from "@/lib/prestacao/regimes";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { checarEvidencias } from "@/lib/prestacao/checagens/checar-evidencias";
+import { checarDadosPessoais } from "@/lib/prestacao/checagens/checar-dados-pessoais";
 import type { Achado } from "@/lib/prestacao/checagens";
 import { TIPOS_NO } from "@/lib/prestacao/orcamento";
 import { coberturaDaMeta, metaDoItem, periodoDoLocal, quantidade, resumoDaMeta, rotuloDoLocal, STATUS_LOCAL, type CoberturaDaMeta, type ResumoDaMeta, type SituacaoDaMeta } from "@/lib/prestacao/objeto";
 import { useItensDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
-import type { PrestacaoAtividade, PrestacaoEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
+import type { ModalidadeSaude, PrestacaoAtividade, PrestacaoEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 
 const SITUACAO: Record<SituacaoDaMeta, { rotulo: string; cor: string }> = {
@@ -33,6 +39,8 @@ const SITUACAO: Record<SituacaoDaMeta, { rotulo: string; cor: string }> = {
 
 type AtividadeDoObjeto = Pick<PrestacaoAtividade, "id" | "titulo" | "data_realizacao" | "data_inicio" | "data_fim" | "meta_id" | "local_id" | "status_realizacao" | "publico_atingido">;
 type Execucao = { data_inicio_execucao: string | null; data_fim_execucao: string | null };
+/** O regime e a modalidade da saúde (P9.5) dizem se há produção no CMD e o aviso de dado de paciente. */
+type DoRegime = { regime_id: string | null; modalidade_saude: ModalidadeSaude | null };
 
 /** Etiqueta informativa: borda leve, fundo branco e a cor no texto. */
 function Etiqueta({ rotulo, cor }: { rotulo: string; cor: string }) {
@@ -63,8 +71,14 @@ function Atividades({ resumo }: { resumo: ResumoDaMeta }) {
 }
 
 function Cobertura({ cobertura }: { cobertura: CoberturaDaMeta }) {
-  if (cobertura.comprovada) return <span className="text-[#2E8932]">{cobertura.texto}</span>;
-  return <span className={cobertura.evidencias === 0 ? "text-black/35" : "text-[#B07A14]"}>{cobertura.texto}</span>;
+  if (cobertura.comprovada) return <span className="text-black/60">{cobertura.texto}</span>;
+  if (cobertura.evidencias === 0) return <span className="text-black/35">{cobertura.texto}</span>;
+  return (
+    <span className="inline-flex items-center gap-1 text-black/60">
+      <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+      {cobertura.texto}
+    </span>
+  );
 }
 
 /** O que a meta custou: despesas dos itens abaixo do agrupador dela; sem agrupador, não há como saber. */
@@ -92,6 +106,11 @@ export default function ObjetoPage() {
   const [agrupadores, setAgrupadores] = useState<AgrupadorParaMeta[]>([]);
   const [evidencias, setEvidencias] = useState<PrestacaoEvidencia[]>([]);
   const [execucao, setExecucao] = useState<Execucao>({ data_inicio_execucao: null, data_fim_execucao: null });
+  const [doRegime, setDoRegime] = useState<DoRegime>({ regime_id: null, modalidade_saude: null });
+  const regimes = useRegimesPublicados();
+  const regime = regimes.find(r => r.id === doRegime.regime_id)?.regime ?? null;
+  const mostraCmd = Boolean(regraDoRegime(regime, "cmd")) && registraCmd(doRegime.modalidade_saude);
+  const saude = Boolean(regraDoRegime(regime, "dados_de_pacientes"));
   const [editandoEvidencia, setEditandoEvidencia] = useState<PrestacaoEvidencia | "nova" | null>(null);
   const organizationId = usePrestacaoOrganizacao(id);
   const [despesas, setDespesas] = useState<{ id: string; no_id: string | null; valor_extraido: number | null; status: string }[]>([]);
@@ -112,7 +131,7 @@ export default function ObjetoPage() {
       db.from("prestacao_orcamento_nos").select("id, nome, tipo, ordem, versao:prestacao_orcamento_versoes!inner(ativa)")
         .eq("prestacao_id", id).neq("tipo", "item").eq("versao.ativa", true).order("ordem"),
       db.from("prestacao_evidencias").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
-      db.from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao, regime_id, modalidade_saude").eq("id", id).maybeSingle(),
       // Despesas (P3.3): a meta a que cada uma serve vem do item, pelo agrupador da meta.
       db.from("prestacao_comprovantes").select("id, no_id, valor_extraido, status, tipo").eq("prestacao_id", id),
     ]);
@@ -124,6 +143,7 @@ export default function ObjetoPage() {
       atividades: (a.data ?? []) as AtividadeDoObjeto[],
       evidencias: (e.data ?? []) as PrestacaoEvidencia[],
       execucao: { data_inicio_execucao: p.data?.data_inicio_execucao ?? null, data_fim_execucao: p.data?.data_fim_execucao ?? null } as Execucao,
+      doRegime: { regime_id: p.data?.regime_id ?? null, modalidade_saude: p.data?.modalidade_saude ?? null } as DoRegime,
       despesas: (c.data ?? []) as { id: string; no_id: string | null; valor_extraido: number | null; status: string }[],
       agrupadores: ((n.data ?? []) as { id: string; nome: string; tipo: string }[]).map(no => ({
         id: no.id,
@@ -140,6 +160,7 @@ export default function ObjetoPage() {
     setAgrupadores(dados.agrupadores);
     setEvidencias(dados.evidencias);
     setExecucao(dados.execucao);
+    setDoRegime(dados.doRegime);
     setDespesas(dados.despesas);
     setCarregando(false);
     // Link das verificações: ?meta=<id> ou ?local=<id> abre o cadastro, só na primeira leitura.
@@ -192,14 +213,16 @@ export default function ObjetoPage() {
 
   // A conferência das evidências, a mesma do motor, para mostrar em cada linha.
   const alertasDasEvidencias = useMemo(() => {
-    const achados = checarEvidencias({
+    const estado = {
       regime: null, despesas: [], fornecedores: [], documentosDosFornecedores: [], itens: [], pagamentos: [], lancamentos: [],
       prestacao: execucao, atividades, locais, evidencias,
-    });
+    };
+    // Saúde (P9.5): o documento clínico nas evidências também alerta.
+    const achados = [...checarEvidencias(estado), ...(saude ? checarDadosPessoais({ ...estado, regime }).filter(a => a.entidade.tipo === "evidencia") : [])];
     const porEvidencia = new Map<string, Achado[]>();
     for (const a of achados) if (a.entidade.id) porEvidencia.set(a.entidade.id, [...(porEvidencia.get(a.entidade.id) ?? []), a]);
     return porEvidencia;
-  }, [execucao, atividades, locais, evidencias]);
+  }, [execucao, atividades, locais, evidencias, saude, regime]);
 
   function vinculosDaEvidencia(e: PrestacaoEvidencia): string {
     return [
@@ -273,8 +296,7 @@ export default function ObjetoPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Objeto</h2>
-          <p className="text-[0.6875rem] text-black/45">Metas propostas × resultados e locais de realização, como o relatório do objeto pede.</p>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Objeto</h2>
         </div>
         {podeEditar && (
           <div className="flex flex-wrap items-center gap-2">
@@ -289,7 +311,7 @@ export default function ObjetoPage() {
             <button
               type="button"
               onClick={() => setEditandoMeta("nova")}
-              className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+              className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
             >
               <Plus size={13} aria-hidden /> Nova meta
             </button>
@@ -301,14 +323,20 @@ export default function ObjetoPage() {
 
       {!carregando && (metas.length > 0 || locais.length > 0) && (
         <dl className="flex flex-wrap gap-x-6 gap-y-1 rounded border bg-white px-5 py-3 text-[0.6875rem]" style={BORDA}>
-          <div className="flex gap-1.5"><dt className="text-black/40">Metas com resultado</dt><dd className="tabular-nums text-black/75">{placar.comResultado} de {metas.length}</dd></div>
+          <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Metas com resultado</dt><dd className={`font-semibold tabular-nums ${placar.comResultado ? "text-[#282525]" : "text-black/30"}`}>{placar.comResultado} de {metas.length}</dd></div>
           {placar.semJustificativa > 0 && (
-            <div className="flex gap-1.5"><dt className="text-black/40">Abaixo do previsto sem justificativa</dt><dd className="tabular-nums text-[#B07A14]">{placar.semJustificativa}</dd></div>
+            <div className="flex items-center gap-1.5">
+              <dt className={`${ROTULO} inline-flex items-center gap-1`}>
+                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                Abaixo do previsto sem justificativa
+              </dt>
+              <dd className="font-semibold tabular-nums text-[#282525]">{placar.semJustificativa}</dd>
+            </div>
           )}
           {placar.porStatus.length > 0 && (
-            <div className="flex gap-1.5">
-              <dt className="text-black/40">Locais</dt>
-              <dd className="tabular-nums text-black/75">{placar.porStatus.map(s => `${s.quantos} ${s.rotulo.toLowerCase()}`).join(" · ")}</dd>
+            <div className="flex items-baseline gap-1.5">
+              <dt className={ROTULO}>Locais</dt>
+              <dd className="font-semibold tabular-nums text-[#282525]">{placar.porStatus.map(s => `${s.quantos} ${s.rotulo.toLowerCase()}`).join(" · ")}</dd>
             </div>
           )}
         </dl>
@@ -317,7 +345,7 @@ export default function ObjetoPage() {
       {/* Metas */}
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="metas-titulo">
         <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="metas-titulo" className="text-[0.75rem] font-semibold text-black">Metas <span className="font-normal tabular-nums text-black/35">({metas.length})</span></h3>
+          <h3 id="metas-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Metas <span className="font-normal tabular-nums text-black/35">({metas.length})</span></h3>
         </div>
         {carregando ? (
           <div className="space-y-2 p-5">{[0, 1, 2].map(i => <div key={i} className="h-10 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
@@ -325,7 +353,7 @@ export default function ObjetoPage() {
           <div className="px-5 py-8 text-center">
             <Target size={20} className="mx-auto text-black/20" aria-hidden />
             <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma meta cadastrada.</p>
-            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre as metas aprovadas com o previsto; o realizado entra quando houver resultado." : "Quem edita a prestação cadastra as metas."}</p>
+            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre as metas aprovadas com o previsto; o realizado entra depois." : "Nenhuma meta cadastrada."}</p>
           </div>
         ) : (
           <>
@@ -355,7 +383,12 @@ export default function ObjetoPage() {
                       <td className="whitespace-nowrap px-4 py-3 text-right text-black/70"><Resultado meta={meta} resumo={resumo} /></td>
                       <td className="px-4 py-3">
                         <Etiqueta {...SITUACAO[resumo.situacao]} />
-                        {resumo.faltaJustificativa && <p className="mt-1 whitespace-nowrap text-[0.625rem] text-[#B07A14]">Falta a justificativa</p>}
+                        {resumo.faltaJustificativa && (
+                          <p className="mt-1 flex items-center gap-1 whitespace-nowrap text-[0.625rem] text-black/45">
+                            <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                            Falta a justificativa
+                          </p>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem] text-black/60"><Atividades resumo={resumo} /></td>
                       <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem]"><Cobertura cobertura={coberturas.get(meta.id)!} /></td>
@@ -394,7 +427,12 @@ export default function ObjetoPage() {
                     </dl>
                     <div className="flex flex-wrap items-center gap-2">
                       <Etiqueta {...SITUACAO[resumo.situacao]} />
-                      {resumo.faltaJustificativa && <span className="text-[0.625rem] text-[#B07A14]">Falta a justificativa</span>}
+                      {resumo.faltaJustificativa && (
+                        <span className="inline-flex items-center gap-1 text-[0.625rem] text-black/45">
+                          <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                          Falta a justificativa
+                        </span>
+                      )}
                     </div>
                   </li>
                 );
@@ -404,10 +442,14 @@ export default function ObjetoPage() {
         )}
       </section>
 
+      {mostraCmd && !carregando && (
+        <ProducaoNoCmd prestacaoId={id} regime={regime} modalidade={doRegime.modalidade_saude} metas={metas} execucao={execucao} podeEditar={podeEditar} />
+      )}
+
       {/* Locais */}
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="locais-titulo">
         <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="locais-titulo" className="text-[0.75rem] font-semibold text-black">Locais de realização <span className="font-normal tabular-nums text-black/35">({locais.length})</span></h3>
+          <h3 id="locais-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Locais de realização <span className="font-normal tabular-nums text-black/35">({locais.length})</span></h3>
         </div>
         {carregando ? (
           <div className="space-y-2 p-5">{[0, 1].map(i => <div key={i} className="h-10 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
@@ -415,7 +457,7 @@ export default function ObjetoPage() {
           <div className="px-5 py-8 text-center">
             <MapPin size={20} className="mx-auto text-black/20" aria-hidden />
             <p className="mt-2 text-[0.75rem] text-black/55">Nenhum local cadastrado.</p>
-            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre os municípios aprovados; depois diga em cada um se o projeto aconteceu." : "Quem edita a prestação cadastra os locais."}</p>
+            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre os municípios aprovados e marque onde o projeto aconteceu." : "Nenhum local cadastrado."}</p>
           </div>
         ) : (
           <ul className="divide-y divide-black/[.05]">
@@ -451,9 +493,14 @@ export default function ObjetoPage() {
       {/* Evidências */}
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="evidencias-titulo">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="evidencias-titulo" className="text-[0.75rem] font-semibold text-black">
+          <h3 id="evidencias-titulo" className="text-[0.75rem] font-semibold text-[#282525]">
             Evidências <span className="font-normal tabular-nums text-black/35">({evidencias.length})</span>
-            {alertasDasEvidencias.size > 0 && <span className="ml-2 font-normal text-[#B07A14]">{alertasDasEvidencias.size} com alerta</span>}
+            {alertasDasEvidencias.size > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 align-middle font-normal text-black/45">
+                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                {alertasDasEvidencias.size} com alerta
+              </span>
+            )}
           </h3>
           {podeEditar && (
             <button
@@ -480,7 +527,7 @@ export default function ObjetoPage() {
               <div className="px-5 py-8 text-center">
                 <Camera size={20} className="mx-auto text-black/20" aria-hidden />
                 <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma evidência.</p>
-                <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Fotos, vídeos, listas de presença e matérias que comprovam a realização. Da foto, a data e o local são lidos sozinhos." : "Quem edita a prestação envia as evidências."}</p>
+                <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Envie fotos, vídeos, listas de presença e matérias. A data e o local da foto são lidos sozinhos." : "Nenhuma evidência enviada."}</p>
               </div>
             }
           />
@@ -509,6 +556,7 @@ export default function ObjetoPage() {
           metas={metas}
           locais={locais}
           execucao={execucao}
+          saude={saude}
           onClose={() => setEditandoEvidencia(null)}
           onSaved={salvou}
         />

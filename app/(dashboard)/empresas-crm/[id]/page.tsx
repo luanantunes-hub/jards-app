@@ -3,6 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowUpRight,
   Award,
@@ -37,17 +38,14 @@ import { RelationshipWorkspace } from "@/components/relationship/RelationshipWor
 import { RelationshipScoreGauge } from "@/components/ui/RelationshipScoreGauge";
 import { NegotiationsTable, type CaptacaoRow } from "@/components/company/NegotiationsTable";
 import { InscricoesTable, type EditalRow } from "@/components/company/InscricoesTable";
+import { TagsDoRegistro } from "@/components/ui/Tags";
 import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
 import type { EmpresaCrm } from "@/lib/supabase/types";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 const CLOSED_STATUSES = new Set(["aprovado", "recusado", "ganha", "perdida"]);
 const EDITAL_CLOSED_STATUSES = new Set(["aprovado", "reprovado", "cancelado"]);
-
-function fmtCurrency(value: number | null) {
-  if (value == null) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
-}
 
 function fmtDate(value: string | null) {
   if (!value) return "—";
@@ -76,7 +74,7 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
   const [atribuicao, setAtribuicao] = useState<AtribuicaoRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [pageTab, setPageTab] = useState<PageTab>("overview");
-  const [timelineSources, setTimelineSources] = useState(["atividades", "notas", "historico_captações", "inscricoes"]);
+  const [timelineSources, setTimelineSources] = useState(["atividades", "notas", "historico_captações", "inscricoes", "interacoes"]);
   const [showOpenAccount, setShowOpenAccount] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showEditLocalizacao, setShowEditLocalizacao] = useState(false);
@@ -151,13 +149,17 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
       <Link href="/empresas-crm" className="mb-7 inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/40 transition hover:text-black/65"><ArrowLeft size={14}/>Empresas</Link>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <CompanyLogo nome={empresa.nome} site={empresa.domain_key} size={56} className="rounded"/>
+          <CompanyLogo nome={empresa.nome} domain={empresa.domain_key} site={empresa.site} size={56} className="rounded"/>
           <div className="min-w-0">
             {empresa.setor && <p className="mb-1.5 text-[0.75rem] text-black/45">{empresa.setor}</p>}
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{empresa.nome}</h1>
-              {empresa.domain_key && <a href={empresa.domain_key.startsWith("http") ? empresa.domain_key : `https://${empresa.domain_key}`} target="_blank" rel="noopener noreferrer" className="text-black/25 hover:text-[#7259B5] transition" title={empresa.domain_key}><Globe size={16}/></a>}
+              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{empresa.nome}</h1>
+              {(empresa.domain_key || empresa.site) && (() => {
+                const site = empresa.domain_key || empresa.site!;
+                return <a href={site.startsWith("http") ? site : `https://${site}`} target="_blank" rel="noopener noreferrer" className="text-black/25 hover:text-[#7259B5] transition" title={site}><Globe size={16}/></a>;
+              })()}
             </div>
+            <div className="mt-2.5"><TagsDoRegistro tabela="empresas_crm" id={empresa.id} tags={empresa.tags} onSalvo={tags => setEmpresa(atual => atual ? { ...atual, tags } : atual)}/></div>
           </div>
         </div>
         <div className="flex shrink-0 flex-col gap-3 lg:items-end">
@@ -199,10 +201,10 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
 function CommercialOverview({empresa,companyId,contacts,negotiations,projects,notices,clientAccount,atribuicao,pipelineValue,nextStep,nextOpening,nextContactDate,openOpportunitiesCount,staleCount,timelineSources,setTimelineSources,onNewNegotiation,onGoToRelationship,onDataChanged,onEditLocalizacao}:{empresa:EmpresaCrm;companyId:string;contacts:ContactRow[];negotiations:CaptacaoRow[];projects:ProjectRow[];notices:EditalRow[];clientAccount:ClientLink|null;atribuicao:AtribuicaoRow|null;pipelineValue:number;nextStep:{kind:"negociacao"|"followup";id:string;titulo:string;data:string;projetoNome?:string|null}|null;nextOpening:EditalRow|null;nextContactDate:string|null;openOpportunitiesCount:number;staleCount:number;timelineSources:string[];setTimelineSources:React.Dispatch<React.SetStateAction<string[]>>;onNewNegotiation:()=>void;onGoToRelationship:()=>void;onDataChanged:()=>void;onEditLocalizacao:()=>void}) {
   return <div className="space-y-5">
     <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-      <Metric label="Oportunidades abertas" value={String(openOpportunitiesCount)} color="#7259B5"/>
-      <Metric label="Valor no pipeline" value={fmtCurrency(pipelineValue)} color="#2D72B0"/>
-      <Metric label="Próximo contato" value={nextContactDate ? fmtDate(nextContactDate) : "Não definido"} color={nextContactDate?'#1A8B7A':'#B07A14'}/>
-      <Metric label="Sem avanço há 14 dias" value={String(staleCount)} color={staleCount?'#D94E4E':'#2E8932'}/>
+      <Metric label="Oportunidades abertas" value={String(openOpportunitiesCount)} vazio={!openOpportunitiesCount}/>
+      <Metric label="Valor no pipeline" value={formatarValorCurto(pipelineValue)} title={formatarValorCompleto(pipelineValue)} vazio={!pipelineValue}/>
+      <Metric label="Próximo contato" value={nextContactDate ? fmtDate(nextContactDate) : "Não definido"} vazio={!nextContactDate}/>
+      <Metric label="Sem avanço há 14 dias" value={String(staleCount)} vazio={!staleCount} alerta={staleCount > 0}/>
     </section>
 
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
@@ -237,7 +239,7 @@ function CommercialOverview({empresa,companyId,contacts,negotiations,projects,no
         <PerfilComercialSection empresa={empresa} atribuicao={atribuicao} onAtribuicaoSaved={onDataChanged} onEditLocalizacao={onEditLocalizacao}/>
 
         <section className="overflow-hidden rounded border bg-white" style={{borderColor:"rgba(13,13,13,.08)"}}>
-          <header className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between" style={{borderColor:"rgba(13,13,13,.07)"}}><div><p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/35">Histórico comercial</p><h2 className="mt-1 text-[0.9375rem] font-semibold text-black/75">Movimento da empresa</h2></div><div className="flex flex-wrap gap-1">{[{value:"atividades",label:"Atividades"},{value:"notas",label:"Notas"},{value:"historico_captações",label:"Mudanças"},{value:"inscricoes",label:"Inscrições"}].map(option => <button key={option.value} onClick={() => setTimelineSources(previous => previous.includes(option.value) ? previous.filter(item => item !== option.value) : [...previous, option.value])} className="rounded border bg-white px-2.5 py-1.5 text-[0.6875rem] font-medium transition hover:bg-black/[.04]" style={{color:timelineSources.includes(option.value)?'#7259B5':'rgba(13,13,13,.4)',borderColor:timelineSources.includes(option.value)?'#7259B540':'transparent'}}>{option.label}</button>)}</div></header>
+          <header className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between" style={{borderColor:"rgba(13,13,13,.07)"}}><div><p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/35">Histórico comercial</p><h2 className="mt-1 text-[0.9375rem] font-semibold text-black/75">Movimento da empresa</h2></div><div className="flex flex-wrap gap-1">{[{value:"atividades",label:"Atividades"},{value:"notas",label:"Notas"},{value:"historico_captações",label:"Mudanças"},{value:"inscricoes",label:"Inscrições"},{value:"interacoes",label:"Interações"}].map(option => <button key={option.value} onClick={() => setTimelineSources(previous => previous.includes(option.value) ? previous.filter(item => item !== option.value) : [...previous, option.value])} className="rounded border bg-white px-2.5 py-1.5 text-[0.6875rem] font-medium transition hover:bg-black/[.04]" style={{color:timelineSources.includes(option.value)?'#7259B5':'rgba(13,13,13,.4)',borderColor:timelineSources.includes(option.value)?'#7259B540':'transparent'}}>{option.label}</button>)}</div></header>
           <div className="p-5"><CompanyTimeline empresaCrmId={companyId} sources={timelineSources} showHeader={false} embedded/></div>
         </section>
       </div>
@@ -573,7 +575,7 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
   );
 }
 
-function Metric({label,value,color}:{label:string;value:string;color:string}) { return <div className="rounded border bg-black/[.025] px-4 py-4" style={{borderColor:"rgba(13,13,13,.07)"}}><p className="text-[0.625rem] font-medium text-black/35">{label}</p><p className="mt-1.5 text-[1.375rem] font-semibold tabular-nums" style={{color}}>{value}</p></div>; }
+function Metric({label,value,title,vazio=false,alerta=false}:{label:string;value:string;title?:string;vazio?:boolean;alerta?:boolean}) { return <div className="rounded border bg-black/[.025] px-4 py-4" style={{borderColor:"rgba(13,13,13,.07)"}}><p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{alerta && <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]"/>}{label}</p><p title={title} className={`mt-1.5 break-words text-[1.375rem] font-semibold tabular-nums ${vazio ? "text-black/30" : "text-[#282525]"}`}>{value}</p></div>; }
 function NextStepRow({label,title,subtitle,actionLabel,onAction,href}:{label:string;title:string;subtitle:string;actionLabel:string;onAction?:()=>void;href?:string}) {
   const action = href
     ? <Link href={href} className="inline-flex shrink-0 items-center gap-1.5 rounded border border-[#7259B5]/25 bg-white px-3 py-1.5 text-[0.6875rem] font-medium text-[#7259B5] hover:bg-black/[.04]">{actionLabel}<ArrowUpRight size={11}/></Link>

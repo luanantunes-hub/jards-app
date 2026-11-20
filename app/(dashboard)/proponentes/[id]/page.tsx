@@ -26,6 +26,8 @@ import { RelationshipWorkspace } from "@/components/relationship/RelationshipWor
 import { NegotiationsTable, type CaptacaoRow } from "@/components/company/NegotiationsTable";
 import { InscricoesTable, type EditalRow } from "@/components/company/InscricoesTable";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type ProponenteDetail = {
   id: string;
@@ -127,12 +129,6 @@ const FASE_COLOR: Record<string, { bg: string; text: string }> = {
   concluido:    { bg: "#fff",          text: "#2E8932" },
 };
 
-const CAPTADOR_STATUS_COLOR: Record<string, string> = {
-  ativo:     "#2E8932",
-  encerrado: "rgba(13,13,13,.35)",
-  suspenso:  "#B07A14",
-};
-
 const AREA_PT: Record<string, string> = {
   musica: "Música", audiovisual: "Audiovisual", artes_cenicas: "Artes Cênicas",
   artes_visuais: "Artes Visuais", artes_integradas: "Artes Integradas",
@@ -141,9 +137,7 @@ const AREA_PT: Record<string, string> = {
 };
 
 function fmtValor(v: number | null) {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
+  return v ? formatarValorCurto(v) : "—";
 }
 function fmtDate(d: string) {
   const [y, m, day] = d.split("T")[0].split("-");
@@ -385,7 +379,7 @@ export default function ProponenteDetailPage() {
                 triggerLabel="Alterar identidade do proponente"
               />
               <div className="min-w-0">
-                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{proponente.nome}</h1>
+                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{proponente.nome}</h1>
                 {proponente.maturidade && (() => {
                   const item = etiquetasMaturidadeProponente.find(etiqueta => etiqueta.key === proponente.maturidade);
                   return item ? <span className="mt-2 inline-flex rounded border px-2 py-1 text-[0.625rem] font-semibold" style={{ color: item.cor, borderColor: `${item.cor}55` }}>Maturidade: {item.label}</span> : null;
@@ -483,11 +477,11 @@ export default function ProponenteDetailPage() {
                   <p className="text-[0.75rem] text-black/25 italic">Sem informações de contato</p>
                 )}
               </div>
-              {proponente.descricao && (
+              {proponente.descricao?.trim() && (
                 <>
                   <div className="my-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}/>
                   <div className="flex items-start gap-1.5"><FileText size={12} className="text-black/25 mt-0.5 flex-shrink-0"/>
-                    <p className="text-[0.75rem] text-black/55 leading-relaxed">{proponente.descricao}</p>
+                    <TextoRecolhivel texto={proponente.descricao.trim()} linhas={5} className="min-w-0 text-[0.75rem] text-black/55 leading-relaxed" />
                   </div>
                 </>
               )}
@@ -545,9 +539,9 @@ export default function ProponenteDetailPage() {
                   {captadores.map(cp => (
                     <div key={cp.id} className="px-5 py-3 group">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-[0.8125rem] font-semibold text-black leading-tight truncate">{cp.captador?.nome ?? "—"}</p>
+                        <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight truncate">{cp.captador?.nome ?? "—"}</p>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-[0.5625rem] font-bold uppercase tracking-wide" style={{ color: CAPTADOR_STATUS_COLOR[cp.status] }}>{cp.status}</span>
+                          <span className="text-[0.625rem] font-medium capitalize text-black/45">{cp.status}</span>
                           {cp.status === "ativo" && (
                             <button onClick={() => handleDesvincular(cp.id)} className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 text-black/20 hover:text-[#D94E4E] transition">
                               <X size={11}/>
@@ -570,16 +564,16 @@ export default function ProponenteDetailPage() {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { icon: FolderOpen, label: "Projetos",  value: projetos.length.toString(), sub: "total" },
-                { icon: TrendingUp, label: "Ativos",    value: ativos.toString(),          sub: "em andamento" },
-                { icon: TrendingUp, label: "Garantido", value: fmtValor(totalGarant),      sub: "valor garantido" },
-              ].map(({ icon: Icon, label, value, sub }) => (
+                { icon: FolderOpen, label: "Projetos",  value: projetos.length.toString(), sub: "total",           vazio: projetos.length === 0, title: undefined },
+                { icon: TrendingUp, label: "Ativos",    value: ativos.toString(),          sub: "em andamento",    vazio: ativos === 0,          title: undefined },
+                { icon: TrendingUp, label: "Garantido", value: fmtValor(totalGarant),      sub: "valor garantido", vazio: !totalGarant,          title: totalGarant ? formatarValorCompleto(totalGarant) : undefined },
+              ].map(({ icon: Icon, label, value, sub, vazio, title }) => (
                 <div key={label} className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <div className="flex items-center gap-1.5 mb-2">
                     <Icon size={13} className="text-black/25"/>
-                    <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-wider">{label}</p>
+                    <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p>
                   </div>
-                  <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none">{value}</p>
+                  <p title={title} className={`text-[1.375rem] font-semibold tabular-nums leading-none ${vazio ? "text-black/30" : "text-[#282525]"}`}>{value}</p>
                   <p className="text-[0.6875rem] text-black/30 mt-0.5">{sub}</p>
                 </div>
               ))}
@@ -600,7 +594,7 @@ export default function ProponenteDetailPage() {
                         <span className="text-[0.6875rem] font-bold text-black/30">{(c.nome ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase()}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[0.8125rem] font-semibold text-black leading-tight">{c.nome ?? "—"}</p>
+                        <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight">{c.nome ?? "—"}</p>
                         {c.cargo && <p className="text-[0.6875rem] text-black/35">{c.cargo}</p>}
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
@@ -635,7 +629,7 @@ function SectionHeading({ eyebrow, title, count }: { eyebrow: string; title: str
     <header className="flex items-end justify-between gap-4 border-b px-5 py-5 md:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
       <div>
         <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/35">{eyebrow}</p>
-        <h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-black">{title}</h2>
+        <h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-[#282525]">{title}</h2>
       </div>
       <span className="text-[0.6875rem] tabular-nums text-black/30">{count} {count === 1 ? "registro" : "registros"}</span>
     </header>
@@ -664,11 +658,11 @@ function ProjetosView({ projetos, onOpen }: {
                 const fase = FASE_COLOR[project.fase] ?? FASE_COLOR.planejamento;
                 return (
                   <tr key={project.id} onClick={() => onOpen(project.id)} className="group cursor-pointer transition hover:bg-black/[.018]">
-                    <td className="max-w-[16.25rem] px-5 py-4"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{project.nome}</p>{project.mecanismo && <p className="mt-0.5 truncate text-[0.625rem] text-black/30">{project.mecanismo}</p>}</td>
-                    <td className="px-5 py-4"><span className="rounded px-1.5 py-0.5 text-[0.625rem] font-medium" style={{ background: fase.bg, color: fase.text }}>{FASE_LABEL[project.fase]}</span></td>
-                    <td className="max-w-[13.125rem] px-5 py-4"><div className="flex flex-wrap gap-1">{project.areas_culturais.slice(0, 2).map(area => <span key={area} className="rounded border border-[#7259B5]/30 bg-white px-1.5 py-0.5 text-[0.5625rem] font-medium text-[#7259B5]">{AREA_PT[area] ?? area}</span>)}{project.areas_culturais.length > 2 && <span className="text-[0.5625rem] text-black/30">+{project.areas_culturais.length - 2}</span>}{!project.areas_culturais.length && <span className="text-black/20">—</span>}</div></td>
-                    <td className="px-5 py-4 text-[0.75rem] tabular-nums text-black/50">{fmtValor(project.valor_alvo)}</td>
-                    <td className="px-5 py-4 text-[0.75rem] font-medium tabular-nums text-[#2E8932]">{project.valor_garantido > 0 ? fmtValor(project.valor_garantido) : <span className="font-normal text-black/20">—</span>}</td>
+                    <td className="max-w-[16.25rem] px-5 py-4"><p className="min-w-0 break-words text-[0.8125rem] font-semibold text-black/75">{project.nome}</p>{project.mecanismo && <p className="mt-0.5 min-w-0 break-words text-[0.625rem] text-black/30">{project.mecanismo}</p>}</td>
+                    <td className="px-5 py-4"><span className="rounded border bg-white px-1.5 py-0.5 text-[0.625rem] font-medium" style={{ borderColor: fase.text.startsWith("#") ? `${fase.text}47` : "rgba(13,13,13,.12)", color: fase.text }}>{FASE_LABEL[project.fase]}</span></td>
+                    <td className="max-w-[13.125rem] px-5 py-4"><div className="flex flex-wrap gap-1">{project.areas_culturais.slice(0, 2).map(area => <span key={area} className="rounded border border-black/[.10] bg-white px-1.5 py-0.5 text-[0.5625rem] font-medium text-black/55">{AREA_PT[area] ?? area}</span>)}{project.areas_culturais.length > 2 && <span className="text-[0.5625rem] text-black/30">+{project.areas_culturais.length - 2}</span>}{!project.areas_culturais.length && <span className="text-black/20">—</span>}</div></td>
+                    <td className="px-5 py-4 text-[0.75rem] tabular-nums text-black/50" title={project.valor_alvo ? formatarValorCompleto(project.valor_alvo) : undefined}>{fmtValor(project.valor_alvo)}</td>
+                    <td className="px-5 py-4 text-[0.75rem] font-medium tabular-nums text-[#282525]" title={project.valor_garantido > 0 ? formatarValorCompleto(project.valor_garantido) : undefined}>{project.valor_garantido > 0 ? fmtValor(project.valor_garantido) : <span className="font-normal text-black/20">—</span>}</td>
                   </tr>
                 );
               })}
@@ -722,7 +716,7 @@ function ClientesView({ clientes }: { clientes: ClienteRow[] }) {
                   <tr key={cliente.id} className="transition hover:bg-black/[.018]">
                     <td className="px-5 py-4"><Link href={href} className="flex items-center gap-3"><CompanyLogo nome={cliente.nome} domain={cliente.domain_key} site={cliente.site} size={34} className="shrink-0 rounded"/><span><span className="block text-[0.8125rem] font-semibold text-black/75">{cliente.nome}</span>{cliente.setor && <span className="mt-0.5 block text-[0.625rem] text-black/30">{cliente.setor}</span>}</span></Link></td>
                     <td className="px-5 py-4"><div className="flex flex-wrap gap-1">{cliente.projetos.slice(0, 2).map(project => <Link key={project.id} href={`/projetos/${project.id}`} className="rounded bg-black/[.045] px-2 py-1 text-[0.625rem] text-black/45 transition hover:text-[#7259B5]">{project.nome}</Link>)}{cliente.projetos.length > 2 && <span className="px-1 py-1 text-[0.625rem] text-black/25">+{cliente.projetos.length - 2}</span>}</div></td>
-                    <td className="px-5 py-4 text-[0.75rem] font-semibold tabular-nums text-[#2E8932]">{fmtValor(cliente.valor)}</td>
+                    <td className={`px-5 py-4 text-[0.75rem] font-semibold tabular-nums ${cliente.valor ? "text-[#282525]" : "text-black/30"}`} title={cliente.valor ? formatarValorCompleto(cliente.valor) : undefined}>{fmtValor(cliente.valor)}</td>
                     <td className="px-5 py-4 text-[0.6875rem] tabular-nums text-black/40">{fmtDate(cliente.ultima_venda)}</td>
                   </tr>
                 );

@@ -44,7 +44,7 @@ export function NotasDoRegistro({ escopo, organizationId, notas, onChanged, cont
         <button
           type="button"
           onClick={() => setEditando("nova")}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] font-medium text-black/70 transition hover:bg-black/[.03] hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98]"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] font-medium text-black/70 transition hover:bg-black/[.03] hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98]"
           style={{ borderColor: "rgba(13,13,13,.12)" }}
         >
           <Plus size={13} aria-hidden="true" /> Nova nota
@@ -67,7 +67,7 @@ export function NotasDoRegistro({ escopo, organizationId, notas, onChanged, cont
             const autor = autorDaNota(nota, usuarioId, nomes);
             const corpo = (
               <>
-                {nota.titulo && <p className="mb-1 text-[0.8125rem] font-semibold text-[#0D0D0D]">{nota.titulo}</p>}
+                {nota.titulo && <p className="mb-1 text-[0.8125rem] font-semibold text-[#282525]">{nota.titulo}</p>}
                 <p className="line-clamp-4 whitespace-pre-line text-[0.8125rem] leading-relaxed text-black/70">{nota.conteudo}</p>
                 <p className="mt-1.5 text-[0.6875rem] text-black/30">{autor ? `${autor} · ` : ""}{quando(nota.created_at)}</p>
               </>
@@ -184,7 +184,7 @@ function NotaSheet({ nota, escopo, organizationId, contexto, onClose, onChanged 
             type="button"
             onClick={() => void salvar(close)}
             disabled={!pronta || semMudanca || salvando}
-            className="min-h-10 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-40"
+            className="min-h-10 rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-40"
           >
             {salvando ? "Salvando…" : "Salvar nota"}
           </button>
@@ -199,7 +199,7 @@ function NotaSheet({ nota, escopo, organizationId, contexto, onClose, onChanged 
             value={titulo}
             onChange={event => setTitulo(event.target.value)}
             maxLength={120}
-            className="h-10 w-full rounded border bg-white px-3 text-[0.8125rem] text-[#0D0D0D] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/15"
+            className="h-10 w-full rounded border bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/15"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           />
         </div>
@@ -211,7 +211,7 @@ function NotaSheet({ nota, escopo, organizationId, contexto, onClose, onChanged 
             onChange={event => { setConteudo(event.target.value); setErro(null); }}
             autoFocus
             rows={7}
-            className="w-full resize-y rounded border bg-white px-3 py-2.5 text-[0.8125rem] leading-relaxed text-[#0D0D0D] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/15"
+            className="w-full resize-y rounded border bg-white px-3 py-2.5 text-[0.8125rem] leading-relaxed text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/15"
             style={{ borderColor: "rgba(13,13,13,.12)", minHeight: "9rem" }}
           />
         </div>

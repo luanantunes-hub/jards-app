@@ -20,6 +20,7 @@ import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
 import type { PrestacaoBem } from "@/lib/supabase/types";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 
 type DadosDaPrestacao = { regime_id: string | null; data_inicio_execucao: string | null; data_fim_execucao: string | null };
@@ -32,8 +33,8 @@ function Avisos({ achados }: { achados: readonly Achado[] }) {
   return (
     <ul className="mt-1 space-y-0.5">
       {achados.map(a => (
-        <li key={a.chave} className="flex items-start gap-1 text-[0.6875rem]" style={{ color: a.justificativa ? "rgba(13,13,13,.45)" : "#B07A14" }}>
-          <AlertTriangle size={11} className="mt-0.5 shrink-0" aria-hidden />
+        <li key={a.chave} className={`flex items-start gap-1 text-[0.6875rem] ${a.justificativa ? "text-black/45" : "text-black/60"}`}>
+          <AlertTriangle size={12} strokeWidth={1.75} className={`mt-0.5 shrink-0 ${a.justificativa ? "text-black/40" : "text-[#B07A14]"}`} aria-hidden />
           <span>{a.mensagem}{a.justificativa ? ` Justificativa: ${a.justificativa}` : ""}</span>
         </li>
       ))}
@@ -180,14 +181,13 @@ export default function BensPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Bens</h2>
-          <p className="text-[0.6875rem] text-black/45">Bens permanentes adquiridos, produzidos ou construídos, com as cotações e a destinação.</p>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Bens</h2>
         </div>
         {podeEditar && (
           <button
             type="button"
             onClick={() => setEditando({ bem: null })}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
           >
             <Plus size={13} aria-hidden /> Registrar bem
           </button>
@@ -198,10 +198,18 @@ export default function BensPage() {
 
       {!carregando && (bens.length > 0 || itensDeBem.size > 0) && (
         <dl className="flex flex-wrap gap-x-6 gap-y-1 rounded border bg-white px-5 py-3 text-[0.6875rem]" style={BORDA}>
-          <div className="flex gap-1.5"><dt className="text-black/40">Bens</dt><dd className="tabular-nums text-black/75">{bens.length}</dd></div>
-          <div className="flex gap-1.5"><dt className="text-black/40">Itens de bem no orçamento</dt><dd className="tabular-nums text-black/75">{itensDeBem.size}</dd></div>
-          {totalDoacao > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Doados</dt><dd className="tabular-nums text-black/75">{totalDoacao}</dd></div>}
-          {semDestinacao > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Sem destinação</dt><dd className="tabular-nums text-[#B07A14]">{semDestinacao}</dd></div>}
+          <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Bens</dt><dd className={`font-semibold tabular-nums ${bens.length ? "text-[#282525]" : "text-black/30"}`}>{bens.length}</dd></div>
+          <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Itens de bem no orçamento</dt><dd className={`font-semibold tabular-nums ${itensDeBem.size ? "text-[#282525]" : "text-black/30"}`}>{itensDeBem.size}</dd></div>
+          {totalDoacao > 0 && <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Doados</dt><dd className="font-semibold tabular-nums text-[#282525]">{totalDoacao}</dd></div>}
+          {semDestinacao > 0 && (
+            <div className="flex items-center gap-1.5">
+              <dt className={`${ROTULO} inline-flex items-center gap-1`}>
+                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                Sem destinação
+              </dt>
+              <dd className="font-semibold tabular-nums text-[#282525]">{semDestinacao}</dd>
+            </div>
+          )}
         </dl>
       )}
 
@@ -209,7 +217,7 @@ export default function BensPage() {
       {!carregando && pendentes.length > 0 && (
         <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="pendentes-titulo">
           <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-            <h3 id="pendentes-titulo" className="text-[0.75rem] font-semibold text-black">Despesas de bem sem o bem <span className="font-normal tabular-nums text-black/35">({pendentes.length})</span></h3>
+            <h3 id="pendentes-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Despesas de bem sem o bem <span className="font-normal tabular-nums text-black/35">({pendentes.length})</span></h3>
             <p className="text-[0.6875rem] text-black/45">Os itens marcados como bem permanente pedem o bem registrado, com a destinação.</p>
           </div>
           <ul className="divide-y divide-black/[.05]">
@@ -240,7 +248,7 @@ export default function BensPage() {
 
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="bens-titulo">
         <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="bens-titulo" className="text-[0.75rem] font-semibold text-black">Relação de bens <span className="font-normal tabular-nums text-black/35">({bens.length})</span></h3>
+          <h3 id="bens-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Relação de bens <span className="font-normal tabular-nums text-black/35">({bens.length})</span></h3>
         </div>
         {carregando ? (
           <div className="space-y-2 p-5">{[0, 1, 2].map(i => <div key={i} className="h-10 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
@@ -282,7 +290,7 @@ export default function BensPage() {
                         </td>
                         <td className="min-w-[10rem] px-4 py-3 text-[0.6875rem] text-black/60">
                           {b.no_id ? nomeDoItem.get(b.no_id) ?? "Item de outra versão" : <span className="text-black/30">Sem item</span>}
-                          {d && <span className="block truncate text-black/40">{d.nome_arquivo ?? "Despesa"}</span>}
+                          {d && <span className="block min-w-0 break-words text-black/40">{d.nome_arquivo ?? "Despesa"}</span>}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-black/70">{valor !== null && valor !== undefined ? reais(Number(valor)) : <span className="text-black/30">—</span>}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem] text-black/60"><Cotacoes b={b} /></td>

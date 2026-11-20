@@ -76,6 +76,12 @@ export function ListaEvidencias({ evidencias, vinculos, alertas, podeEditar, onE
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="truncate text-[0.75rem] font-medium text-black/80">{nome}</p>
                   <span className="rounded border bg-white px-1.5 py-px text-[0.5625rem] font-medium text-black/55" style={{ borderColor: "rgba(13,13,13,.14)" }}>{rotuloDoTipo(e.tipo)}</span>
+                  {e.canal === "proponente" && (
+                    <span className="rounded border bg-white px-1.5 py-px text-[0.5625rem] font-medium" style={{ borderColor: "#2D72B047", color: "#2D72B0" }}>Enviada pelo cliente</span>
+                  )}
+                  {e.canal === "assistente" && (
+                    <span className="rounded border bg-white px-1.5 py-px text-[0.5625rem] font-medium" style={{ borderColor: "#2D72B047", color: "#2D72B0" }}>Enviada pelo assistente</span>
+                  )}
                 </div>
                 <p className="mt-0.5 text-[0.625rem] text-black/45">{vinculos(e) || "Sem vínculo"}</p>
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[0.625rem] text-black/40">

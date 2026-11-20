@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AdminNav from "./AdminNav";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
@@ -15,7 +15,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile?.jards_super_admin) redirect("/dashboard");
+  // Quem não é superadmin não pode nem ver que este workspace existe:
+  // abrir /admin pelo link devolve erro 404 (não redireciona para o app).
+  if (profile?.jards_super_admin !== true) notFound();
 
   return (
     <div className="min-h-screen" style={{ background: "#FAFAFA" }}>

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
 import { numeroDigitado } from "@/lib/prestacao/objeto";
 import {
@@ -52,7 +53,7 @@ function useGravar(tabela: string) {
     linha: Record<string, unknown>;
     padrao: string;
   }): Promise<boolean> {
-    if (Object.values(p.arquivos).some(a => a.novo) && !p.organizationId) { setErro("Aguarde: a organização da prestação ainda está carregando."); return false; }
+    if (Object.values(p.arquivos).some(a => a.novo) && !p.organizationId) { setErro("Aguarde: a prestação ainda está carregando."); return false; }
     setSalvando(true);
     setErro("");
     const enviados: string[] = [];
@@ -272,7 +273,7 @@ export function DecisaoModal({ prestacaoId, organizationId, decisao, regime, env
         </label>
         <label>
           <span className={ROTULO}>Valor glosado (R$)</span>
-          <input value={valorGlosado} onChange={e => setValorGlosado(e.target.value)} inputMode="decimal" placeholder="0,00" className={`${CAMPO} tabular-nums`} />
+          <InputValor value={valorGlosado} onChange={setValorGlosado} placeholder="0,00" className={`${CAMPO} tabular-nums`} />
         </label>
         <CampoArquivo rotulo="Documento da decisão" arquivo={documento} onChange={setDocumento} onAbrir={abrir} />
         <label className="sm:col-span-2">
@@ -345,7 +346,7 @@ export function GlosaModal({ prestacaoId, organizationId, glosa, decisoes, despe
         </label>
         <label>
           <span className={ROTULO}>Valor (R$)</span>
-          <input value={valor} onChange={e => setValor(e.target.value)} inputMode="decimal" placeholder="0,00" className={`${CAMPO} tabular-nums`} />
+          <InputValor value={valor} onChange={setValor} placeholder="0,00" className={`${CAMPO} tabular-nums`} />
         </label>
         <label>
           <span className={ROTULO}>Data-base da atualização</span>

@@ -2,11 +2,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Plus, FilePenLine, X, List, Columns2, Calendar, Files, ClipboardList, StickyNote, Scale, Trash2, Clock3, ArrowUpRight, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Search, Plus, FilePenLine, X, List, Columns2, Calendar, Files, ClipboardList, StickyNote, Scale, Trash2, Clock, Clock3, ArrowUpRight, ChevronUp, ChevronDown, ChevronsUpDown, Building2, Users, Tag } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { FiltrosDoFunil } from "@/components/list/FiltrosDoFunil";
+import { opcoesDoFiltro, passaNoFiltro, TODOS, type Marcador } from "@/lib/filtros-do-funil";
 import type { StatusEdital } from "@/lib/supabase/types";
 import { NovaInscricaoModal, type EditDataInscricao } from "@/components/modals/NovaInscricaoModal";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -26,6 +29,7 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { getInscricaoTiming } from "@/lib/inscricoes/timing";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { escalaUi } from "@/lib/escala-ui";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { DESFECHOS_INSCRICAO, ehDesfecho } from "@/lib/etapas";
 
 type EditalInscrito = {
@@ -106,10 +110,7 @@ function fmtShortDate(d: string | null): string {
 }
 
 function fmtValor(v: number | null): string {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(0)}M`;
-  if (v >= 1_000)     return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v}`;
+  return v ? formatarValorCurto(v) : "—";
 }
 
 // A inscrição é identificada por empresa e projeto — não há mais um nome próprio.
@@ -181,7 +182,7 @@ export default function EditaisInscritosPage() {
     { label: etiqueta.label, bg: "#fff", text: etiqueta.cor, accent: etiqueta.cor, iconName: etiqueta.icone },
   ])) as Record<StatusEdital, { label: string; bg: string; text: string; accent: string; iconName: string }>;
   const statusFilterOptions: { value: StatusEdital | "todos"; label: string }[] = [
-    { value: "todos", label: "Todos" },
+    { value: "todos", label: "Todos os status" },
     ...etiquetasInscricao.map((etiqueta) => ({ value: etiqueta.key as StatusEdital, label: etiqueta.label })),
   ];
 
@@ -198,6 +199,9 @@ export default function EditaisInscritosPage() {
   const [search, setSearch]             = useState("");
   const [dSearch, setDSearch]           = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusEdital | "todos">("todos");
+  const [filtroResponsavel, setFiltroResponsavel] = useState(TODOS);
+  const [filtroLei, setFiltroLei] = useState(TODOS);
+  const [filtroProjeto, setFiltroProjeto] = useState(TODOS);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [cicloFiltro, setCicloFiltro] = useState<string>("atual");
@@ -323,8 +327,23 @@ export default function EditaisInscritosPage() {
     ? editais.filter(e => !idsComRenovacaoMaisNova.has(e.id))
     : editais.filter(e => e.ciclo_ano === Number(cicloFiltro));
 
-  const filtered = editaisVisiveis.filter((e) => {
-    if (statusFilter !== "todos" && e.status !== statusFilter) return false;
+  // Busca, responsável, tipo de patrocínio e projeto valem nas três visões. O
+  // status só na lista e no potencial: no kanban as colunas já são os status.
+  const responsavelDaInscricao = (e: EditalInscrito): Marcador[] => {
+    const chave = e.responsavel_id ?? e.responsavel_nome;
+    if (!chave) return [];
+    const agencia = e.responsavel_tipo === "agencia";
+    return [{ valor: `${agencia ? "agencia" : "membro"}:${chave}`, nome: `${e.responsavel_nome ?? "Sem nome"}${agencia ? " (agência)" : ""}` }];
+  };
+  const leiDaInscricao = (e: EditalInscrito): Marcador[] => e.lei ? [{ valor: e.lei, nome: leiOptions.find(option => option.status === e.lei)?.label ?? e.lei }] : [];
+  const projetoDaInscricao = (e: EditalInscrito): Marcador[] => e.projeto_id ? [{ valor: e.projeto_id, nome: e.projetos_crm?.nome ?? "Projeto sem nome" }] : [];
+  const opcoesResponsavel = opcoesDoFiltro(editaisVisiveis, responsavelDaInscricao, "Sem responsável");
+  const opcoesLei = opcoesDoFiltro(editaisVisiveis, leiDaInscricao, "Sem tipo de patrocínio");
+  const opcoesProjeto = opcoesDoFiltro(editaisVisiveis, projetoDaInscricao, "Sem projeto");
+
+  const nosFiltros = editaisVisiveis.filter((e) => {
+    if (!passaNoFiltro(e, filtroResponsavel, responsavelDaInscricao) || !passaNoFiltro(e, filtroLei, leiDaInscricao)
+      || !passaNoFiltro(e, filtroProjeto, projetoDaInscricao)) return false;
     if (!dSearch.trim()) return true;
     const s       = dSearch.toLowerCase();
     const empresa = e.empresas_crm?.nome ?? e.empresas?.nome ?? "";
@@ -333,6 +352,15 @@ export default function EditaisInscritosPage() {
     const lei = leiOptions.find(option => option.status === e.lei)?.label ?? e.lei ?? "";
     return empresa.toLowerCase().includes(s) || projeto.toLowerCase().includes(s) || responsavel.toLowerCase().includes(s) || lei.toLowerCase().includes(s);
   });
+  const filtraStatus = view !== "kanban";
+  const filtered = filtraStatus && statusFilter !== "todos" ? nosFiltros.filter(e => e.status === statusFilter) : nosFiltros;
+
+  const filtrosAtivos = Boolean(search) || cicloFiltro !== "atual" || (filtraStatus && statusFilter !== "todos")
+    || filtroResponsavel !== TODOS || filtroLei !== TODOS || filtroProjeto !== TODOS;
+  function limparFiltros() {
+    setSearch(""); setStatusFilter("todos"); setCicloFiltro("atual");
+    setFiltroResponsavel(TODOS); setFiltroLei(TODOS); setFiltroProjeto(TODOS);
+  }
 
   function toggleSort(key: string) {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -362,12 +390,12 @@ export default function EditaisInscritosPage() {
   }) : filtered;
 
   const byStatus = Object.fromEntries(
-    kanbanCols.map((st) => [st, editaisVisiveis.filter((e) => e.status === st)])
+    kanbanCols.map((st) => [st, filtered.filter((e) => e.status === st)])
   ) as Record<StatusEdital, EditalInscrito[]>;
 
   const countByStatus = (st: StatusEdital) => editais.filter((e) => e.status === st).length;
   const stats = [
-    { label: "Total",      value: editais.length,              color: "#0D0D0D"  },
+    { label: "Total",      value: editais.length,              color: "#282525"  },
     { label: "Aprovados",  value: countByStatus("aprovado"),   color: "#2E8932"  },
     { label: "Em análise", value: countByStatus("em_analise"), color: "#B07A14"  },
     { label: "Inscritos",  value: countByStatus("inscrito"),   color: "#2D72B0"  },
@@ -405,7 +433,7 @@ export default function EditaisInscritosPage() {
               </span>
               <div
                 role="tooltip"
-                className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[11.875rem] rounded bg-[#0D0D0D] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
+                className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[11.875rem] rounded bg-[#1C0E33] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
               >
                 <p className="font-semibold">{atividade.nome}</p>
                 <p className={atividade.atrasada ? "text-[#F0B24D]" : "text-white/55"}>
@@ -418,16 +446,16 @@ export default function EditaisInscritosPage() {
             </div>
           )}
         </div>
-        <p className="text-[0.8125rem] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{projeto}</p>
+        <p className="text-[0.8125rem] font-semibold text-[#282525] leading-snug mb-2.5 line-clamp-2">{projeto}</p>
         <div className="flex items-center justify-between">
           {e.data_fechamento ? (
             <span className="flex items-center gap-1 text-[0.625rem] text-black/40 font-semibold"><Calendar size={9} />{fmtShortDate(e.data_fechamento)}</span>
           ) : <span />}
-          {e.valor != null && <span className="text-xs font-bold text-black/65">{fmtValor(e.valor)}</span>}
+          {e.valor != null && <span className="text-xs font-semibold tabular-nums text-black/65" title={e.valor ? formatarValorCompleto(e.valor) : undefined}>{fmtValor(e.valor)}</span>}
         </div>
         {typeof valuePct === "number" && (
           <div className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-black/[.07]">
-            <div className="h-full rounded-full bg-[#2E8932]" style={{ width: `${valuePct}%` }} />
+            <div className="h-full rounded-full bg-black/30" style={{ width: `${valuePct}%` }} />
           </div>
         )}
       </KanbanCard>
@@ -470,7 +498,7 @@ export default function EditaisInscritosPage() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setCicloMenuPos(null)} />
           <div
-            className="fixed z-50 min-w-[10rem] overflow-hidden rounded border bg-white shadow-xl"
+            className="fixed z-50 min-w-[10rem] overflow-hidden rounded bg-white border elevacao-1"
             style={{ top: cicloMenuPos.top, left: cicloMenuPos.left, borderColor: "rgba(13,13,13,.12)" }}
           >
             {([
@@ -552,7 +580,7 @@ export default function EditaisInscritosPage() {
         />
       )}
 
-      <ListPageHeader eyebrow="Operação de editais" title="Inscrições" summary={!loading&&<><ListSummary strong={filtered.length}>registros</ListSummary><ListSummary strong={countByStatus('aprovado')} tone="#2E8932">aprovados</ListSummary><ListSummary strong={countByStatus('em_analise')} tone="#B07A14">em análise</ListSummary></>} actions={<><ViewToggle view={view} onChange={setView}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Nova inscrição</PrimaryListAction></>}/>
+      <ListPageHeader secao="inscricoes" eyebrow="Operação de editais" title="Inscrições" summary={!loading&&<><ListSummary strong={filtered.length}>registros</ListSummary><ListSummary strong={countByStatus('aprovado')}>aprovados</ListSummary><ListSummary strong={countByStatus('em_analise')}>em análise</ListSummary></>} actions={<><ViewToggle view={view} onChange={setView}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Nova inscrição</PrimaryListAction></>}/>
 
       <div className="flex shrink-0 flex-col gap-3 border-b bg-white px-4 py-3 md:px-8 lg:flex-row lg:items-center" style={{borderColor:"rgba(13,13,13,.06)"}}>
         <ListSearch value={search} onChange={setSearch} placeholder="Buscar empresa ou projeto"/>
@@ -569,11 +597,28 @@ export default function EditaisInscritosPage() {
             {cicloFiltro === "atual" ? "Ciclo atual" : cicloFiltro === "todos" ? "Todos os ciclos" : `Ciclo ${cicloFiltro}`}
             <ChevronDown size={11} className="opacity-40" />
           </button>
-          <span className="mx-0.5 h-5 w-px shrink-0 bg-black/10" aria-hidden="true"/>
-          <SegmentedControl value={statusFilter} onChange={setStatusFilter} ariaLabel="Filtrar inscrições por status" options={statusFilterOptions} />
-          {(search || statusFilter !== "todos" || cicloFiltro !== "atual") && (
-            <button onClick={() => { setSearch(""); setStatusFilter("todos"); setCicloFiltro("atual"); }} className="flex h-9 shrink-0 items-center gap-1.5 rounded border border-black/[.12] bg-white px-3 text-xs font-semibold text-black/50 transition hover:bg-black/[.04]">
-              <X size={12} /> Limpar
+          {filtraStatus && (
+            <>
+              <span className="mx-0.5 h-5 w-px shrink-0 bg-black/10" aria-hidden="true"/>
+              {/* Um menu, não uma barra de botões: as etiquetas são da organização e, muitas, a barra rolava por dentro */}
+              <CustomDropdown
+                value={statusFilter}
+                onChange={(v) => setStatusFilter(v as StatusEdital | "todos")}
+                options={statusFilterOptions}
+                icon={<Tag size={13} />}
+                compact
+                emphasized={false}
+              />
+            </>
+          )}
+          <FiltrosDoFunil
+            responsavel={{ valor: filtroResponsavel, opcoes: opcoesResponsavel, onChange: setFiltroResponsavel }}
+            lei={{ valor: filtroLei, opcoes: opcoesLei, onChange: setFiltroLei }}
+            projeto={{ valor: filtroProjeto, opcoes: opcoesProjeto, onChange: setFiltroProjeto }}
+          />
+          {filtrosAtivos && (
+            <button type="button" onClick={limparFiltros} className="flex h-9 shrink-0 items-center gap-1.5 rounded px-2.5 text-[0.75rem] font-medium text-black/50 transition hover:bg-black/[.04] hover:text-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+              <X size={12} aria-hidden="true" /> Limpar filtros
             </button>
           )}
         </div>
@@ -625,7 +670,7 @@ export default function EditaisInscritosPage() {
                   ) : filteredSorted.length === 0 ? (
                     <tr><td colSpan={15}>{editaisVisiveis.length === 0
                       ? <ListEmptyState icon={FilePenLine} title="Nenhuma inscrição neste ciclo" description="Acompanhe aqui os editais em que seus projetos estão inscritos, do interesse ao resultado." action={<PrimaryListAction onClick={() => setShowModal(true)}><Plus size={13} aria-hidden="true" /> Nova inscrição</PrimaryListAction>} />
-                      : <ListEmptyState icon={Search} title="Nenhuma inscrição corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setStatusFilter("todos"); }} />}</td></tr>
+                      : <ListEmptyState icon={Search} title="Nenhuma inscrição corresponde aos filtros" filtered onClearFilters={limparFiltros} />}</td></tr>
                   ) : (
                     filteredSorted.map((e, i) => {
                       const sc      = statusConfig[e.status] ?? statusConfig.inscrito;
@@ -645,7 +690,7 @@ export default function EditaisInscritosPage() {
                           <td className="px-5 py-3.5 text-black/50 text-[0.78125rem] max-w-[13.75rem]">
                             {e.projetos_crm ? (
                               <div className="flex items-center gap-1.5">
-                                <ProjectIdentity nome={e.projetos_crm.nome} tipo={e.projetos_crm.identidade_tipo} valor={e.projetos_crm.identidade_valor} logoUrl={e.projetos_crm.identidade_logo_url} cor={e.projetos_crm.identidade_cor} size="sm" />
+                                <ProjectIdentity nome={e.projetos_crm.nome} tipo={e.projetos_crm.identidade_tipo} valor={e.projetos_crm.identidade_valor} logoUrl={e.projetos_crm.identidade_logo_url} cor={e.projetos_crm.identidade_cor} size="sm" semFundo />
                                 <span>{projeto}</span>
                               </div>
                             ) : <span>{projeto}</span>}
@@ -679,8 +724,11 @@ export default function EditaisInscritosPage() {
                           <td className="px-5 py-3.5 max-w-[10.625rem]">
                             {e.responsavel_nome ? (
                               <span className="font-medium text-[0.78125rem] text-black/60">
-                                <span className="line-clamp-1 truncate">{e.responsavel_nome}</span>
-                                <span className="block text-[0.625rem] font-semibold uppercase tracking-wider" style={{ color: e.responsavel_tipo === "agencia" ? "#2D72B0" : "#1A8B7A" }}>
+                                <span className="break-words min-w-0">{e.responsavel_nome}</span>
+                                <span className="flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                                  {e.responsavel_tipo === "agencia"
+                                    ? <Building2 size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
+                                    : <Users size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />}
                                   {e.responsavel_tipo === "agencia" ? "Agência" : "Equipe"}
                                 </span>
                               </span>
@@ -692,10 +740,15 @@ export default function EditaisInscritosPage() {
                           <td className="px-5 py-3.5 whitespace-nowrap">
                             <span className="block text-xs tabular-nums text-black/40">{fmtDate(e.updated_at)}</span>
                             <span
-                              className="mt-1 block max-w-[9.375rem] whitespace-normal text-[0.5625rem] font-semibold uppercase leading-tight tracking-[.06em]"
-                              style={{ color: timing.color }}
+                              className="mt-1 flex max-w-[9.375rem] items-start gap-1 whitespace-normal text-[0.625rem] font-medium leading-tight text-black/55"
                               title={timing.detail}
                             >
+                              <Clock
+                                size={12}
+                                strokeWidth={1.75}
+                                aria-hidden
+                                className={`shrink-0 ${timing.label === "Prazo perdido" || timing.label === "Prazo perdido há muito tempo" || timing.label === "Resultado atrasado" ? "text-[#D94A4A]" : timing.label === "Esfriando" || timing.label === "Sem retorno" ? "text-[#B07A14]" : "text-black/40"}`}
+                              />
                               {timing.label}
                             </span>
                           </td>
@@ -706,14 +759,15 @@ export default function EditaisInscritosPage() {
                               const urgente = dias !== null && dias >= 0 && dias < 7;
                               const passado = dias !== null && dias < 0;
                               return (
-                                <span className={`text-xs font-${urgente ? "bold" : "normal"}`} style={{ color: urgente ? "#D94E4E" : passado ? "rgba(13,13,13,.25)" : "rgba(13,13,13,.40)" }}>
+                                <span className={`inline-flex items-center gap-1 text-xs font-medium tabular-nums ${passado ? "text-black/25" : "text-black/55"}`}>
+                                  {urgente && <Clock size={12} strokeWidth={1.75} role="img" aria-label="Fecha em menos de 7 dias" className="shrink-0 text-[#D94A4A]" />}
                                   {urgente ? `${dias}d` : fmtDate(e.data_fechamento)}
                                 </span>
                               );
                             })()}
                           </td>
                           <td className="px-5 py-3.5 text-black/40 text-xs whitespace-nowrap">{fmtDate(e.data_resultado)}</td>
-                          <td className="px-5 py-3.5 font-bold text-black/70 text-[0.8125rem] whitespace-nowrap">{fmtValor(e.valor)}</td>
+                          <td className="px-5 py-3.5 font-semibold tabular-nums text-black/70 text-[0.8125rem] whitespace-nowrap" title={e.valor ? formatarValorCompleto(e.valor) : undefined}>{fmtValor(e.valor)}</td>
                           <td className="px-5 py-3.5"><PrioBadge prio={e.prioridade} size="md" /></td>
 
                           {/* Documentos */}
@@ -817,7 +871,9 @@ export default function EditaisInscritosPage() {
                         ? Array.from({ length: 2 }).map((_, i) => <KanbanSkeleton key={i} />)
                         : null
                     ) : cards.length === 0 ? (
-                      <KanbanEmpty label="Nenhuma inscrição" actionLabel="Adicionar primeira" onAction={ehDesfecho(status, DESFECHOS_INSCRICAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}/>
+                      filtrosAtivos
+                        ? <KanbanEmpty label="Nada com esses filtros" />
+                        : <KanbanEmpty label="Nenhuma inscrição" actionLabel="Adicionar primeira" onAction={ehDesfecho(status, DESFECHOS_INSCRICAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}/>
                     ) : (
                       cards.slice(0, getVisible(status)).map((e) => {
                         const projeto = e.projetos_crm?.nome ?? "Sem projeto";
@@ -847,7 +903,7 @@ export default function EditaisInscritosPage() {
                             </div>
 
                             {/* Projeto */}
-                            <p className="text-[0.8125rem] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{projeto}</p>
+                            <p className="text-[0.8125rem] font-semibold text-[#282525] leading-snug mb-2.5 line-clamp-2">{projeto}</p>
 
                             {/* Footer */}
                             <div className="flex items-center justify-between">
@@ -859,7 +915,7 @@ export default function EditaisInscritosPage() {
                               ) : <span />}
                               <div className="flex items-center gap-1.5">
                                 <PrioBadge prio={e.prioridade} size="sm" />
-                                <span className="text-xs font-bold text-black/65">{fmtValor(e.valor)}</span>
+                                <span className="text-xs font-semibold tabular-nums text-black/65" title={e.valor ? formatarValorCompleto(e.valor) : undefined}>{fmtValor(e.valor)}</span>
                               </div>
                             </div>
                           </KanbanCard>

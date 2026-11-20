@@ -24,7 +24,7 @@ import {
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 const SITUACAO: Record<SituacaoDoLink, { rotulo: string; cor: string }> = {
   aceito: { rotulo: "Aceito", cor: "#2E8932" },
   ativo: { rotulo: "Ativo", cor: "#2D72B0" },
@@ -84,7 +84,7 @@ function NovoLinkModal({ prestacaoId, empresas, onClose, onCriado }: {
   const rodape = endereco ? (
     <>
       <span />
-      <button type="button" onClick={onClose} className="rounded bg-[#0D0D0D] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D]">Concluir</button>
+      <button type="button" onClick={onClose} className="rounded bg-[#1C0E33] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]">Concluir</button>
     </>
   ) : (
     <>
@@ -92,7 +92,7 @@ function NovoLinkModal({ prestacaoId, empresas, onClose, onCriado }: {
       <div className="flex items-center gap-4">
         <button type="button" onClick={onClose} className="rounded px-2 py-2 text-[0.8125rem] text-black/45 transition hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5]">Cancelar</button>
         <button type="button" onClick={criar} disabled={salvando}
-          className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40">
+          className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40">
           {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
           Criar link
         </button>
@@ -106,7 +106,7 @@ function NovoLinkModal({ prestacaoId, empresas, onClose, onCriado }: {
         <div className="space-y-3 py-4">
           <CampoParaCopiar rotulo="Endereço do relatório" valor={endereco} />
           <p className="px-6 text-[0.6875rem] text-[#B07A14]">O endereço aparece só agora: copie e envie ao patrocinador. Se perder, revogue este link e crie outro.</p>
-          <a href={endereco} target="_blank" rel="noopener noreferrer" className="mx-6 inline-flex items-center gap-1 rounded text-[0.75rem] text-black/65 underline decoration-black/20 underline-offset-2 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+          <a href={endereco} target="_blank" rel="noopener noreferrer" className="mx-6 inline-flex items-center gap-1 rounded text-[0.75rem] text-black/65 underline decoration-black/20 underline-offset-2 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
             Ver como o patrocinador vê <ExternalLink size={11} aria-hidden />
           </a>
         </div>
@@ -140,7 +140,7 @@ function NovoLinkModal({ prestacaoId, empresas, onClose, onCriado }: {
           <label className="sm:col-span-2">
             <span className={ROTULO}>Mensagem (opcional)</span>
             <textarea value={mensagem} onChange={e => setMensagem(e.target.value)} rows={3} maxLength={2000}
-              className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+              className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
           </label>
           {erro && <p role="alert" className="text-[0.6875rem] text-[#B23B3B] sm:col-span-2">{erro}</p>}
         </div>

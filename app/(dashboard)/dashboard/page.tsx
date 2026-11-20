@@ -2,13 +2,17 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-  TrendingUp, CheckCircle2, Percent, ListChecks, AlertTriangle,
+  TrendingUp, Percent, ListChecks, AlertTriangle,
   Mail, Phone, Users, Calendar, MoreHorizontal, CheckSquare,
   ArrowRight, ArrowUpRight, Clock, CircleDollarSign, List, Filter,
+  FileText, PhoneCall, type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PotencialFechamento, StatusCaptacao, TipoAtividade } from "@/lib/supabase/types";
 import { DashboardCustomizer } from "@/components/dashboard/DashboardCustomizer";
+import { SaudacaoPainel } from "@/components/dashboard/SaudacaoPainel";
+import { QuemMeDeveResposta } from "@/components/dashboard/QuemMeDeveResposta";
+import { IlustracaoDaSecao } from "@/components/list/TituloComFrase";
 import { PrimeirosPassos } from "@/components/onboarding/PrimeirosPassos";
 import { useDashboardPreferences } from "@/components/dashboard/useDashboardPreferences";
 import type { DashboardModuleId } from "@/components/dashboard/dashboardModules";
@@ -16,6 +20,9 @@ import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext"
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import { escalaUi } from "@/lib/escala-ui";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
+import { ICONE_CAPTACAO, MARCA_CAPTACAO } from "@/components/ui/IndicadoresFinanceiros";
+import { BarraEmBlocos } from "@/components/ui/BarraEmBlocos";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -24,7 +31,7 @@ type FunnelStage = {
   label: string;
   count: number;
   valor: number;
-  color: string;
+  barra: string;
 };
 
 type StagnantCap = {
@@ -77,12 +84,15 @@ type ChannelMetric = {
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const STAGE_ORDER: Array<{ status: StatusCaptacao; label: string; color: string }> = [
-  { status: "prospeccao",       label: "Prospecção",       color: "rgba(13,13,13,.35)" },
-  { status: "primeiro_contato", label: "1º contato",       color: "rgba(13,13,13,.40)" },
-  { status: "proposta_enviada", label: "Proposta enviada", color: "#7259B5" },
-  { status: "em_negociacao",    label: "Em negociação",    color: "#7259B5" },
-  { status: "renovacao",        label: "Renovação",        color: "#2D72B0" },
+// Cor só no dado de captação: em negociação é verde a 35%; os demais estágios em aberto ficam em cinza.
+const BARRA_ESTAGIO_ABERTO = "bg-black/[.22]";
+
+const STAGE_ORDER: Array<{ status: StatusCaptacao; label: string; barra: string }> = [
+  { status: "prospeccao",       label: "Prospecção",       barra: BARRA_ESTAGIO_ABERTO },
+  { status: "primeiro_contato", label: "1º contato",       barra: BARRA_ESTAGIO_ABERTO },
+  { status: "proposta_enviada", label: "Proposta enviada", barra: BARRA_ESTAGIO_ABERTO },
+  { status: "em_negociacao",    label: "Em negociação",    barra: MARCA_CAPTACAO.negociacao },
+  { status: "renovacao",        label: "Renovação",        barra: BARRA_ESTAGIO_ABERTO },
 ];
 
 const STATUS_LABEL: Record<StatusCaptacao, string> = {
@@ -112,12 +122,6 @@ const POTENCIAL_PESO: Record<PotencialFechamento, number> = {
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-
-function fmtValor(v: number): string {
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
-  if (v >= 1_000)     return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
-}
 
 function timeAgo(iso: string): string {
   const diff  = Date.now() - new Date(iso).getTime();
@@ -156,6 +160,27 @@ function KpiSkeleton() {
       <div className="h-2.5 w-16 bg-black/8 rounded mb-4" />
       <div className="h-7 w-24 bg-black/8 rounded mb-2" />
       <div className="h-2.5 w-20 bg-black/8 rounded" />
+    </div>
+  );
+}
+
+/** Rótulo neutro com ícone cinza e valor em tinta; zerado fica apagado. */
+function KpiCard({ rotulo, Icon, valor, vazio, title, detalhe }: {
+  rotulo: string;
+  Icon: LucideIcon;
+  valor: string;
+  vazio: boolean;
+  title?: string;
+  detalhe?: string;
+}) {
+  return (
+    <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+      <p className="mb-3 flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+        <Icon size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
+        {rotulo}
+      </p>
+      <p title={title} className={`text-[1.375rem] font-semibold tabular-nums tracking-[-.02em] leading-none mb-1 ${vazio ? "text-black/30" : "text-[#282525]"}`}>{valor}</p>
+      {detalhe && <p className="text-[0.6875rem] text-black/35">{detalhe}</p>}
     </div>
   );
 }
@@ -255,7 +280,7 @@ function ChannelFunnelChart({ metrics, canais }: { metrics: ChannelMetric[]; can
         ))}
         {ordered.map((metric, channelIndex) => {
           const option = canais.find(item => item.chave === metric.canal);
-          return <path key={metric.canal} d={pathForChannel(channelIndex)} fill={option?.cor ?? "#7259B5"} opacity={0.85} />;
+          return <path key={metric.canal} d={pathForChannel(channelIndex)} fill={option?.cor ?? "rgba(13,13,13,.35)"} opacity={0.85} />;
         })}
         {FUNNEL_STAGES.map((stage, i) => {
           const total = stageTotals[i];
@@ -265,9 +290,9 @@ function ChannelFunnelChart({ metrics, canais }: { metrics: ChannelMetric[]; can
           const anchor = isLast ? "middle" : "start";
           return (
             <g key={stage.key}>
-              <text x={textX} y={28} textAnchor={anchor} fontSize={22} className="font-bold" fill="#0D0D0D">{total}</text>
+              <text x={textX} y={28} textAnchor={anchor} fontSize={22} className="font-semibold" style={{ fontVariantNumeric: "tabular-nums" }} fill="#282525">{total}</text>
               <text x={textX} y={48} textAnchor={anchor} fontSize={13} fill="rgba(13,13,13,.5)">{stage.label}</text>
-              <text x={textX} y={65} textAnchor={anchor} fontSize={13} className="font-bold" fill="rgba(13,13,13,.7)">{pct}%</text>
+              <text x={textX} y={65} textAnchor={anchor} fontSize={13} className="font-semibold" style={{ fontVariantNumeric: "tabular-nums" }} fill="rgba(13,13,13,.7)">{pct}%</text>
             </g>
           );
         })}
@@ -277,7 +302,7 @@ function ChannelFunnelChart({ metrics, canais }: { metrics: ChannelMetric[]; can
           const option = canais.find(item => item.chave === metric.canal);
           return (
             <div key={metric.canal} className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: option?.cor ?? "#7259B5" }} />
+              <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ background: option?.cor ?? "rgba(13,13,13,.35)" }} />
               <span className="text-[0.6875rem] font-medium text-black/55">{option?.label ?? metric.canal.replaceAll("_", " ")}</span>
             </div>
           );
@@ -491,9 +516,9 @@ export default function DashboardPage() {
         });
       }
       setFunnel(
-        STAGE_ORDER.map(({ status, label, color }) => {
+        STAGE_ORDER.map(({ status, label, barra }) => {
           const d = stageMap.get(status) ?? { count: 0, valor: 0 };
-          return { status, label, count: d.count, valor: d.valor, color };
+          return { status, label, count: d.count, valor: d.valor, barra };
         })
       );
 
@@ -562,7 +587,7 @@ export default function DashboardPage() {
           tipo: "followup" as const,
           titulo: item.empresa_crm?.nome ?? item.titulo ?? "Follow-up",
           sub: item.captacao
-            ? `${STATUS_LABEL[item.captacao.status]}${item.captacao.valor_solicitado ? " · " + fmtValor(item.captacao.valor_solicitado) : ""}`
+            ? `${STATUS_LABEL[item.captacao.status]}${item.captacao.valor_solicitado ? " · " + formatarValorCurto(item.captacao.valor_solicitado) : ""}`
             : "Relacionamento",
         }));
 
@@ -600,14 +625,15 @@ export default function DashboardPage() {
   const maxFunnelValor  = Math.max(...funnel.map(s => s.valor), 1);
   const globalMax       = Math.max(maxFunnelValor, aprovadoValor);
   const aprovadoBarPct  = Math.round((aprovadoValor / globalMax) * 100);
-  const prioridades = [
+  // Só estado de alerta (vencido, prazo perto, em risco) colore o ícone; o número fica em tinta.
+  const prioridades: Array<{ label: string; detail: string; value: number; href: string; Icon: LucideIcon; color: string | null }> = [
     {
       label: "Follow-ups vencidos",
       detail: followupsVencidos === 1 ? "1 contato pede retorno" : `${followupsVencidos} contatos pedem retorno`,
       value: followupsVencidos,
       href: "/captacoes",
       Icon: Clock,
-      color: followupsVencidos > 0 ? "#D94E4E" : "#2E8932",
+      color: "#D94E4E",
     },
     {
       label: "Tarefas em aberto",
@@ -615,7 +641,7 @@ export default function DashboardPage() {
       value: pendentes,
       href: "/atividades",
       Icon: ListChecks,
-      color: pendentes > 0 ? "#B07A14" : "#2E8932",
+      color: null,
     },
     {
       label: "Editais próximos",
@@ -623,7 +649,7 @@ export default function DashboardPage() {
       value: editaisUrgentes,
       href: "/editais-abertos",
       Icon: Calendar,
-      color: editaisUrgentes > 0 ? "#D94E4E" : "#2E8932",
+      color: "#D94E4E",
     },
     {
       label: "Negociações em risco",
@@ -631,7 +657,7 @@ export default function DashboardPage() {
       value: stagnant.length,
       href: "/captacoes",
       Icon: AlertTriangle,
-      color: stagnant.length > 0 ? "#B07A14" : "#2E8932",
+      color: "#B07A14",
     },
   ];
   const modulePosition = (id: DashboardModuleId) => dashboardPreferences.preferences.find((item) => item.id === id)?.position ?? 99;
@@ -641,66 +667,33 @@ export default function DashboardPage() {
 
       {/* Header */}
       <div className="mb-7 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Gerenciamento</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D]">Visão geral</h1>
+        <div className="flex items-center gap-4">
+          <IlustracaoDaSecao arquivo="painel" />
+          <div className="min-w-0">
+            <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Visão geral</p>
+            <SaudacaoPainel />
+          </div>
         </div>
         <DashboardCustomizer open={customizerOpen} onOpenChange={setCustomizerOpen} preferences={dashboardPreferences.preferences} onToggle={dashboardPreferences.toggle} onMove={dashboardPreferences.move} onReset={dashboardPreferences.reset} />
       </div>
 
       <PrimeirosPassos />
 
-      <div className="flex flex-col">
+      {/* O espaço entre os blocos vem do gap, não da margem de cada bloco: a pessoa reordena
+          os blocos em Personalizar módulos, e a distância fica a mesma em qualquer ordem. */}
+      <div className="flex flex-col gap-4">
 
       {/* KPIs */}
-      {dashboardPreferences.isEnabled("kpis") && <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 mb-5" style={{ order: modulePosition("kpis") }}>
+      {dashboardPreferences.isEnabled("kpis") && <div className="grid grid-cols-2 xl:grid-cols-5 gap-3" style={{ order: modulePosition("kpis") }}>
         {loading
           ? Array.from({ length: 5 }).map((_, i) => <KpiSkeleton key={i} />)
           : (
             <>
-              <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Pipeline</p>
-                  <TrendingUp size={14} className="text-[#7259B5]" />
-                </div>
-                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(pipeline)}</p>
-                <p className="text-[0.6875rem] text-black/35">{pipelineCount} em andamento</p>
-              </div>
-
-              <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Ponderado</p>
-                  <CircleDollarSign size={14} className="text-[#7259B5]" />
-                </div>
-                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(pipelinePonderado)}</p>
-              </div>
-
-              <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Aprovado</p>
-                  <CheckCircle2 size={14} className="text-[#2E8932]" />
-                </div>
-                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(aprovadoValor)}</p>
-                <p className="text-[0.6875rem] text-black/35">{aprovadoCount} patrocínios</p>
-              </div>
-
-              <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Conversão</p>
-                  <Percent size={14} className="text-[#7259B5]" />
-                </div>
-                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">
-                  {conversao !== null ? `${conversao}%` : "—"}
-                </p>
-              </div>
-
-              <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Pendentes</p>
-                  <ListChecks size={14} className="text-black/45" />
-                </div>
-                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{pendentes}</p>
-              </div>
+              <KpiCard rotulo="Pipeline" Icon={TrendingUp} valor={formatarValorCurto(pipeline)} title={formatarValorCompleto(pipeline)} vazio={!pipeline} detalhe={`${pipelineCount} em andamento`} />
+              <KpiCard rotulo="Ponderado" Icon={CircleDollarSign} valor={formatarValorCurto(pipelinePonderado)} title={formatarValorCompleto(pipelinePonderado)} vazio={!pipelinePonderado} />
+              <KpiCard rotulo="Aprovado" Icon={ICONE_CAPTACAO.confirmado} valor={formatarValorCurto(aprovadoValor)} title={formatarValorCompleto(aprovadoValor)} vazio={!aprovadoValor} detalhe={`${aprovadoCount} patrocínios`} />
+              <KpiCard rotulo="Conversão" Icon={Percent} valor={conversao !== null ? `${conversao}%` : "—"} vazio={!conversao} />
+              <KpiCard rotulo="Pendentes" Icon={ListChecks} valor={String(pendentes)} vazio={!pendentes} />
             </>
           )
         }
@@ -708,11 +701,11 @@ export default function DashboardPage() {
 
       {/* Prioridades do dia: regras operacionais transparentes e acionáveis */}
       {dashboardPreferences.isEnabled("priorities") && (loading ? <div style={{ order: modulePosition("priorities") }}><BlockSkeleton h={132} /></div> : (
-        <section className="mb-4 overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("priorities") }}>
+        <section className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("priorities") }}>
           <div className="flex items-center justify-between border-b px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
               <p className="text-[0.625rem] font-bold uppercase tracking-[.09em] text-black/30">Foco</p>
-              <h2 className="mt-0.5 text-[0.8125rem] font-semibold text-[#0D0D0D]">Prioridades do dia</h2>
+              <h2 className="mt-0.5 text-[0.8125rem] font-semibold text-[#282525]">Prioridades do dia</h2>
             </div>
             <p className="hidden text-[0.625rem] text-black/30 sm:block">Ordenadas por urgência operacional</p>
           </div>
@@ -726,13 +719,16 @@ export default function DashboardPage() {
                 } ${index === 2 ? "sm:border-l-0 xl:border-l" : ""}`}
                 style={{ borderColor: "rgba(13,13,13,.06)" }}
               >
-                <div className="flex h-9 w-9 flex-none items-center justify-center rounded border bg-white" style={{ borderColor: `${color}38`, color }}>
-                  <Icon size={15} />
+                <div
+                  className={`flex h-9 w-9 flex-none items-center justify-center rounded border bg-white ${value > 0 && color ? "" : "border-black/[.08] text-black/40"}`}
+                  style={value > 0 && color ? { borderColor: `${color}38`, color } : undefined}
+                >
+                  <Icon size={15} aria-hidden="true" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-[0.75rem] font-semibold text-black/70">{label}</p>
-                    <span className="text-[0.9375rem] font-bold tabular-nums" style={{ color }}>{value}</span>
+                    <span className={`text-[0.9375rem] font-semibold tabular-nums ${value > 0 ? "text-[#282525]" : "text-black/30"}`}>{value}</span>
                   </div>
                   <p className="mt-1 truncate text-[0.625rem] text-black/32">{value > 0 ? detail : "Nenhuma ação necessária"}</p>
                 </div>
@@ -743,8 +739,11 @@ export default function DashboardPage() {
         </section>
       ))}
 
+      {/* Quem me deve resposta: só aparece para quem tem e-mails sincronizados */}
+      {dashboardPreferences.isEnabled("awaitingReplies") && <QuemMeDeveResposta ordem={modulePosition("awaitingReplies")} />}
+
       {/* Funil + Estagnadas */}
-      {(dashboardPreferences.isEnabled("funnel") || dashboardPreferences.isEnabled("risks")) && <div className={`grid gap-4 mb-4 ${dashboardPreferences.isEnabled("funnel") && dashboardPreferences.isEnabled("risks") ? "xl:grid-cols-[1fr_18.75rem]" : "grid-cols-1"}`} style={{ order: Math.min(modulePosition("funnel"), modulePosition("risks")) }}>
+      {(dashboardPreferences.isEnabled("funnel") || dashboardPreferences.isEnabled("risks")) && <div className={`grid gap-4 ${dashboardPreferences.isEnabled("funnel") && dashboardPreferences.isEnabled("risks") ? "xl:grid-cols-[1fr_18.75rem]" : "grid-cols-1"}`} style={{ order: Math.min(modulePosition("funnel"), modulePosition("risks")) }}>
 
         {/* Funil */}
         {dashboardPreferences.isEnabled("funnel") && (loading ? <BlockSkeleton h={250} /> : (
@@ -752,18 +751,18 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <div>
                 <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Pipeline</p>
-                <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Distribuição por estágio</p>
+                <p className="text-[0.8125rem] font-semibold text-[#282525]">Distribuição por estágio</p>
               </div>
               <Link
                 href="/captacoes"
-                className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-black transition"
+                className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-[#282525] transition"
               >
                 Ver kanban <ArrowRight size={11} />
               </Link>
             </div>
 
             <div className="px-6 py-5 flex flex-col gap-3.5">
-              {funnel.map(({ status, label, count, valor, color }) => {
+              {funnel.map(({ status, label, count, valor, barra }) => {
                 const pct = Math.round((valor / globalMax) * 100);
                 const tempo = tempoPorEstagio[status];
                 return (
@@ -771,49 +770,41 @@ export default function DashboardPage() {
                     <span className="text-[0.6875rem] text-black/45 w-[8.25rem] flex-shrink-0 whitespace-nowrap">
                       {label}
                     </span>
-                    <div className="flex-1 h-[0.3125rem] rounded-full" style={{ background: "rgba(13,13,13,.05)" }}>
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${pct}%`,
-                          background: color,
-                          opacity: status === "em_negociacao" ? 1 : 0.6,
-                        }}
-                      />
-                    </div>
+                    <div className="flex-1"><BarraEmBlocos total={24} className="h-2.5" segmentos={[{ percentual: pct, className: barra }]} /></div>
                     <span
-                      className="text-[0.6875rem] text-black/30 w-[2.625rem] text-right flex-shrink-0 tabular-nums"
+                      className="hidden sm:inline text-[0.6875rem] text-black/30 w-[2.625rem] text-right flex-shrink-0 tabular-nums"
                       title={tempo ? `Tempo mediano neste estágio · ${tempo.amostras} ${tempo.amostras === 1 ? "passagem" : "passagens"}` : "Ainda sem passagens concluídas por este estágio"}
                     >
                       {tempo ? `~${fmtDias(tempo.mediana_dias)}` : "—"}
                     </span>
                     <span className="text-[0.6875rem] text-black/25 w-5 text-right flex-shrink-0">{count}</span>
-                    <span className="text-[0.6875rem] font-semibold text-black/55 w-[3.625rem] text-right flex-shrink-0">
-                      {valor > 0 ? fmtValor(valor) : "—"}
+                    <span
+                      title={valor > 0 ? formatarValorCompleto(valor) : undefined}
+                      className={`truncate text-[0.6875rem] font-semibold tabular-nums w-[4.25rem] text-right flex-shrink-0 ${valor > 0 ? "text-[#282525]" : "text-black/30"}`}
+                    >
+                      {valor > 0 ? formatarValorCurto(valor) : "—"}
                     </span>
                   </div>
                 );
               })}
 
               <div className="border-t mt-1 pt-3.5 flex items-center gap-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <span className="text-[0.6875rem] font-semibold w-[8.25rem] flex-shrink-0 whitespace-nowrap text-[#2E8932]">
+                <span className="text-[0.6875rem] font-medium text-black/60 w-[8.25rem] flex-shrink-0 whitespace-nowrap">
                   Aprovado
                 </span>
-                <div className="flex-1 h-[0.3125rem] rounded-full" style={{ background: "rgba(13,13,13,.06)" }}>
-                  <div
-                    className="h-full rounded-full"
-                    style={{ width: `${aprovadoBarPct}%`, background: "#2E8932", opacity: 0.7 }}
-                  />
-                </div>
-                <span className="w-[2.625rem] flex-shrink-0" aria-hidden="true" />
+                <div className="flex-1"><BarraEmBlocos total={24} className="h-2.5" segmentos={[{ percentual: aprovadoBarPct, className: MARCA_CAPTACAO.confirmado }]} /></div>
+                <span className="hidden sm:inline w-[2.625rem] flex-shrink-0" aria-hidden="true" />
                 <span className="text-[0.6875rem] text-black/25 w-5 text-right flex-shrink-0">{aprovadoCount}</span>
-                <span className="text-[0.6875rem] font-semibold w-[3.625rem] text-right flex-shrink-0 text-[#2E8932]">
-                  {aprovadoValor > 0 ? fmtValor(aprovadoValor) : "—"}
+                <span
+                  title={aprovadoValor > 0 ? formatarValorCompleto(aprovadoValor) : undefined}
+                  className={`truncate text-[0.6875rem] font-semibold tabular-nums w-[4.25rem] text-right flex-shrink-0 ${aprovadoValor > 0 ? "text-[#282525]" : "text-black/30"}`}
+                >
+                  {aprovadoValor > 0 ? formatarValorCurto(aprovadoValor) : "—"}
                 </span>
               </div>
 
               {Object.keys(tempoPorEstagio).length > 0 && (
-                <p className="text-[0.625rem] text-black/30">
+                <p className="hidden sm:block text-[0.625rem] text-black/30">
                   ~ dias: tempo mediano que as negociações passam em cada estágio
                 </p>
               )}
@@ -826,7 +817,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Atenção</p>
-              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Negociações estagnadas</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Negociações estagnadas</p>
             </div>
 
             {stagnant.length === 0 ? (
@@ -845,16 +836,13 @@ export default function DashboardPage() {
                         className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
                         style={{ background: "rgba(13,13,13,.04)" }}
                       >
-                        <Clock size={13} style={{ color: urgente ? "#D94E4E" : "#B07A14" }} />
+                        <Clock size={13} aria-hidden="true" style={{ color: urgente ? "#D94E4E" : "#B07A14" }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[0.75rem] font-semibold text-[#0D0D0D] truncate">{c.empresa}</p>
+                        <p className="text-[0.75rem] font-semibold text-[#282525] truncate">{c.empresa}</p>
                         <p className="text-[0.625rem] text-black/35 mt-0.5">{STATUS_LABEL[c.status]}</p>
                       </div>
-                      <span
-                        className="text-[0.6875rem] font-bold flex-shrink-0"
-                        style={{ color: urgente ? "#D94E4E" : "#B07A14" }}
-                      >
+                      <span className="text-[0.6875rem] font-semibold tabular-nums text-[#282525] flex-shrink-0">
                         {c.diasSemAtividade}d
                       </span>
                     </Link>
@@ -874,7 +862,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">CRM</p>
-              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Atividades recentes</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Atividades recentes</p>
             </div>
 
             {atividades.length === 0 ? (
@@ -892,10 +880,10 @@ export default function DashboardPage() {
                           className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
                           style={{ background: "rgba(13,13,13,.04)" }}
                         >
-                          <Icon size={12} style={{ color: tc.color }} />
+                          <Icon size={12} className="text-black/45" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[0.75rem] font-semibold text-black/75 truncate">{a.nome}</p>
+                          <p className="text-[0.75rem] font-semibold text-black/75 break-words">{a.nome}</p>
                           {entity && (
                             a.empresa_crm?.nome && !a.contato?.nome && !a.captacao?.titulo ? (
                               <Link href={`/empresas-crm/${a.empresa_crm_id}`} className="text-[0.625rem] text-black/35 mt-0.5 truncate block hover:text-[#7259B5] transition">
@@ -916,7 +904,7 @@ export default function DashboardPage() {
                 <div className="px-5 py-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                   <Link
                     href="/atividades"
-                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-black transition"
+                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-[#282525] transition"
                   >
                     Ver todas <ArrowUpRight size={11} />
                   </Link>
@@ -931,7 +919,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Calendário</p>
-              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Próximos 30 dias</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Próximos 30 dias</p>
             </div>
 
             {eventos.length === 0 ? (
@@ -942,22 +930,24 @@ export default function DashboardPage() {
                   {eventos.map((ev) => {
                     const { mes, dia } = fmtEventDate(ev.data);
                     const isEdital     = ev.tipo === "edital";
-                    const badge = isEdital ? { text: "#D94E4E" } : { text: "#7259B5" };
-                    const dayColor = daysUntil(ev.data) <= 5 ? "#D94E4E" : "#0D0D0D";
+                    const TipoIcone    = isEdital ? FileText : PhoneCall;
+                    // Prazo em até 5 dias é alerta: só o ícone ganha cor, o dia fica em tinta.
+                    const prazoProximo = daysUntil(ev.data) <= 5;
                     return (
                       <div key={ev.id} className="px-5 py-3.5 flex items-start gap-3">
                         <div className="w-9 text-center flex-shrink-0">
-                          <p className="text-[0.5625rem] font-bold text-black/25 uppercase tracking-[.06em]">{mes}</p>
-                          <p className="text-[1.125rem] font-bold leading-tight" style={{ color: dayColor }}>{dia}</p>
+                          <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{mes}</p>
+                          <p className="text-[1.125rem] font-semibold leading-tight tabular-nums text-[#282525]">{dia}</p>
                         </div>
                         <div className="flex-1 min-w-0 pt-0.5">
-                          <span
-                            className="mb-1.5 inline-block rounded border bg-transparent px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase tracking-[.05em]"
-                            style={{ borderColor: `${badge.text}59`, color: badge.text }}
-                          >
+                          <span className="mb-1.5 inline-flex items-center gap-1 rounded border border-black/[.12] bg-white px-1.5 py-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/55">
+                            <TipoIcone size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                             {isEdital ? "Edital" : "Follow-up"}
                           </span>
-                          <p className="text-[0.75rem] font-semibold text-[#0D0D0D] truncate">{ev.titulo}</p>
+                          <p className="flex items-center gap-1 text-[0.75rem] font-semibold text-[#282525]">
+                            {prazoProximo && <Clock size={12} strokeWidth={1.75} role="img" aria-label="Prazo em até 5 dias" className="shrink-0 text-[#D94A4A]" />}
+                            <span className="min-w-0 truncate">{ev.titulo}</span>
+                          </p>
                           <p className="text-[0.6875rem] text-black/35 mt-0.5">{ev.sub}</p>
                         </div>
                       </div>
@@ -967,7 +957,7 @@ export default function DashboardPage() {
                 <div className="px-5 py-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                   <Link
                     href="/atividades"
-                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-black transition"
+                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-[#282525] transition"
                   >
                     Abrir calendário <ArrowUpRight size={11} />
                   </Link>
@@ -980,12 +970,12 @@ export default function DashboardPage() {
       </div>}
 
       {/* Eficácia dos canais */}
-      {dashboardPreferences.isEnabled("channelEffectiveness") && (loading ? <div className="mt-4" style={{ order: modulePosition("channelEffectiveness") }}><BlockSkeleton h={220} /></div> : (
-        <div className="mt-4 bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("channelEffectiveness") }}>
+      {dashboardPreferences.isEnabled("channelEffectiveness") && (loading ? <div style={{ order: modulePosition("channelEffectiveness") }}><BlockSkeleton h={220} /></div> : (
+        <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("channelEffectiveness") }}>
           <div className="flex items-center justify-between gap-4 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Aquisição</p>
-              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Eficácia dos canais</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Eficácia dos canais</p>
             </div>
             {channelMetrics.length > 0 && (
               <SegmentedControl
@@ -1008,11 +998,11 @@ export default function DashboardPage() {
           ) : (
             <>
               <div className="hidden sm:grid grid-cols-[1fr_repeat(4,5.5rem)] gap-4 px-5 py-2 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25">Canal</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Resposta</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Reunião</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Proposta</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Conversão</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Canal</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center">Resposta</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center">Reunião</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center">Proposta</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Conversão</span>
               </div>
               <div className="divide-y divide-black/[.06]">
                 {channelMetrics.map(metric => {
@@ -1024,27 +1014,27 @@ export default function DashboardPage() {
                   return (
                     <div key={metric.canal} className="grid grid-cols-2 sm:grid-cols-[1fr_repeat(4,5.5rem)] items-center gap-3 sm:gap-4 px-5 py-3.5">
                       <div className="col-span-2 sm:col-span-1 min-w-0">
-                        <p className="truncate text-[0.75rem] font-semibold text-[#0D0D0D]">{option?.label ?? metric.canal.replaceAll("_", " ")}</p>
+                        <p className="truncate text-[0.75rem] font-semibold text-[#282525]">{option?.label ?? metric.canal.replaceAll("_", " ")}</p>
                         <p className="mt-0.5 text-[0.625rem] text-black/30">
                           {metric.interacoes} interações · {metric.negociacoes} negociações
-                          {metric.interacoes < 5 && <span className="text-[#D94E4E]"> · amostra pequena</span>}
+                          {metric.interacoes < 5 && <span> · amostra pequena</span>}
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Resposta</p>
-                        <p className="text-[0.8125rem] font-semibold text-black/65">{responseRate}%</p>
+                        <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Resposta</p>
+                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${responseRate ? "text-[#282525]" : "text-black/30"}`}>{responseRate}%</p>
                       </div>
                       <div className="text-center">
-                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Reunião</p>
-                        <p className="text-[0.8125rem] font-semibold text-black/65">{meetingRate}%</p>
+                        <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Reunião</p>
+                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${meetingRate ? "text-[#282525]" : "text-black/30"}`}>{meetingRate}%</p>
                       </div>
                       <div className="text-center">
-                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Proposta</p>
-                        <p className="text-[0.8125rem] font-semibold text-black/65">{proposalRate}%</p>
+                        <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Proposta</p>
+                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${proposalRate ? "text-[#282525]" : "text-black/30"}`}>{proposalRate}%</p>
                       </div>
                       <div className="text-center sm:border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Conversão</p>
-                        <p className="text-[0.9375rem] font-bold text-[#7259B5]">{winRate === null ? "—" : `${winRate}%`}</p>
+                        <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Conversão</p>
+                        <p className={`text-[0.9375rem] font-semibold tabular-nums ${winRate ? "text-[#282525]" : "text-black/30"}`}>{winRate === null ? "—" : `${winRate}%`}</p>
                       </div>
                     </div>
                   );
@@ -1056,12 +1046,12 @@ export default function DashboardPage() {
       ))}
 
       {/* Velocidade por captador */}
-      {dashboardPreferences.isEnabled("captadoresRanking") && (velocidadeLoading ? <div className="mt-4" style={{ order: modulePosition("captadoresRanking") }}><BlockSkeleton h={220} /></div> : (
-        <div className="mt-4 bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("captadoresRanking") }}>
+      {dashboardPreferences.isEnabled("captadoresRanking") && (velocidadeLoading ? <div style={{ order: modulePosition("captadoresRanking") }}><BlockSkeleton h={220} /></div> : (
+        <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("captadoresRanking") }}>
           <div className="flex items-center justify-between gap-4 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Velocidade</p>
-              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Velocidade por captador</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Velocidade por captador</p>
             </div>
             <SegmentedControl
               ariaLabel="Tipo de captador"
@@ -1083,31 +1073,31 @@ export default function DashboardPage() {
           ) : (
             <>
               <div className="hidden sm:grid grid-cols-[1fr_repeat(3,6.5rem)] gap-4 px-5 py-2 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25">Captador</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Ciclos fechados</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Tempo mediano</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Aprovação</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Captador</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center">Ciclos fechados</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center">Tempo mediano</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Aprovação</span>
               </div>
               <div className="divide-y divide-black/[.06]">
                 {ranking[rankingView].map((item) => (
                   <div key={item.captador_id} className="grid grid-cols-3 sm:grid-cols-[1fr_repeat(3,6.5rem)] items-center gap-3 sm:gap-4 px-5 py-3.5">
                     <div className="col-span-3 sm:col-span-1 min-w-0">
-                      <p className="truncate text-[0.75rem] font-semibold text-[#0D0D0D]">{item.nome}</p>
+                      <p className="truncate text-[0.75rem] font-semibold text-[#282525]">{item.nome}</p>
                       {item.ciclos_fechados < 5 && (
-                        <p className="mt-0.5 text-[0.625rem] text-[#D94E4E]">amostra pequena</p>
+                        <p className="mt-0.5 text-[0.625rem] text-black/35">amostra pequena</p>
                       )}
                     </div>
                     <div className="text-center">
-                      <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Ciclos</p>
-                      <p className="text-[0.8125rem] font-semibold text-black/65 tabular-nums">{item.ciclos_fechados}</p>
+                      <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Ciclos</p>
+                      <p className={`text-[0.8125rem] font-semibold tabular-nums ${item.ciclos_fechados ? "text-[#282525]" : "text-black/30"}`}>{item.ciclos_fechados}</p>
                     </div>
                     <div className="text-center">
-                      <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Tempo</p>
-                      <p className="text-[0.8125rem] font-semibold text-black/65 tabular-nums">{fmtDias(item.mediana_dias)}</p>
+                      <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Tempo</p>
+                      <p className={`text-[0.8125rem] font-semibold tabular-nums ${item.mediana_dias ? "text-[#282525]" : "text-black/30"}`}>{fmtDias(item.mediana_dias)}</p>
                     </div>
                     <div className="text-center sm:border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                      <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Aprovação</p>
-                      <p className="text-[0.9375rem] font-bold text-[#7259B5] tabular-nums">{Math.round(item.taxa_aprovacao * 100)}%</p>
+                      <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Aprovação</p>
+                      <p className={`text-[0.9375rem] font-semibold tabular-nums ${Math.round(item.taxa_aprovacao * 100) ? "text-[#282525]" : "text-black/30"}`}>{Math.round(item.taxa_aprovacao * 100)}%</p>
                     </div>
                   </div>
                 ))}

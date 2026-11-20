@@ -190,7 +190,7 @@ export function CalendarConnections() {
             <opts.Icon />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[0.8125rem] font-semibold text-black">{opts.title}</p>
+            <p className="text-[0.8125rem] font-semibold text-[#282525]">{opts.title}</p>
             {c ? (
               <p className="text-[0.6875rem] text-black/40 truncate mt-0.5">
                 {c.provider_account_email ?? "Conta conectada"}
@@ -257,7 +257,10 @@ export function CalendarConnections() {
                 onChange={(e) => toggleSync(opts.provider, e.target.checked)}
                 className="rounded border-black/20"
               />
-              <span className="text-[0.75rem] text-black/60">Sincronização ativa</span>
+              <span className="text-[0.75rem] text-black/60">
+                Sincronização ativa
+                <span className="text-black/40"> · as atividades do Jards vão para a agenda e as reuniões da agenda vêm para o Jards</span>
+              </span>
             </label>
 
             {c.last_error && (
@@ -273,7 +276,7 @@ export function CalendarConnections() {
     <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
       <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <CalendarDays size={14} className="text-black/30" />
-        <span className="text-[0.75rem] font-bold text-black">Calendários</span>
+        <span className="text-[0.75rem] font-bold text-[#282525]">Calendários</span>
       </div>
 
       <div className="p-6 space-y-4">

@@ -72,10 +72,11 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
   if (captacao.status === "aprovado" || captacao.status === "recusado") {
     const ganho = captacao.status === "aprovado";
     return (
-      <div className="flex h-11 items-center gap-2 rounded border px-4" style={{ borderColor: ganho ? "#2E893240" : "#D94E4E40", background: "#fff" }}>
-        {ganho && <Check size={13} className="text-[#2E8932]" aria-hidden="true" />}
-        <span className="text-[0.75rem] font-bold tabular-nums" style={{ color: ganho ? "#2E8932" : "#B23A3A" }}>
-          {ganho ? `Negócio fechado · ${moeda(captacao.valor_aprovado ?? captacao.valor_solicitado)}` : "Negociação recusada"}
+      <div className="flex h-11 items-center gap-2 rounded border px-4" style={{ borderColor: "rgba(13,13,13,.12)", background: "#fff" }}>
+        {ganho && <Check size={13} className="text-black/40" aria-hidden="true" />}
+        <span className="text-[0.75rem]">
+          <span className="font-medium text-black/70">{ganho ? "Negócio fechado" : "Negociação recusada"}</span>
+          {ganho && <> · <span className="font-semibold tabular-nums text-[#282525]">{moeda(captacao.valor_aprovado ?? captacao.valor_solicitado)}</span></>}
         </span>
       </div>
     );
@@ -98,10 +99,10 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
           aria-label={`${comProjeto ? "Proposta" : "Valor"}: ${valor != null ? moeda(valor) : "definir valor"}. Editar`}
         >
           <span>
-            <span className="block max-w-[11rem] truncate text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">
+            <span className="block max-w-[11rem] truncate text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
               {comProjeto ? "Proposta" : "Valor"}{cota && <span className="font-normal normal-case tracking-normal"> · {cota.nome}</span>}
             </span>
-            <span className={`block text-[0.75rem] font-bold tabular-nums ${valor != null ? "text-[#B07A14]" : "text-black/40"}`}>{valor != null ? moeda(valor) : "Definir valor"}</span>
+            <span className={`block text-[0.75rem] font-semibold tabular-nums ${valor != null ? "text-[#282525]" : "text-black/40"}`}>{valor != null ? moeda(valor) : "Definir valor"}</span>
           </span>
           <Pencil size={11} className="text-black/25" aria-hidden="true" />
         </button>
@@ -118,7 +119,7 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
       <button
         type="button"
         onClick={() => setFechando(true)}
-        className="flex h-11 items-center gap-2 rounded bg-[#2E8932] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98]"
+        className="flex h-11 items-center gap-2 rounded acao-salvar px-4 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98]"
       >
         <Check size={13} aria-hidden="true" /> Fechar negócio
       </button>
@@ -214,7 +215,7 @@ function ValorSheet({ db, captacao, empresaNome, comProjeto, cotas, cotaAtual, o
             Cancelar
           </button>
           <button type="button" onClick={() => void salvar(close)} disabled={salvando}
-            className="min-h-10 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-40">
+            className="min-h-10 rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-40">
             {salvando ? "Salvando…" : "Salvar"}
           </button>
         </>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  BarChart3, Check, ChevronDown, ClipboardCheck, Gauge, Handshake, Pencil, Plus,
+  AlertTriangle, BarChart3, Check, ChevronDown, ClipboardCheck, Gauge, Handshake, Pencil, Plus,
   RefreshCw, Trash2, Users, WalletCards, X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -53,18 +53,27 @@ export function calculateOverallScore(scorecards: Array<Pick<Scorecard, "peso" |
   return weight ? rated.reduce((sum, item) => sum + (item.score ?? 0) * item.card.peso, 0) / weight : null;
 }
 
-function scoreMeta(score: number | null) {
-  if (score === null) return { label: "Sem leitura", color: "rgba(13,13,13,.30)" };
-  if (score < 2.2) return { label: "Risco", color: "#D94E4E" };
-  if (score < 3.2) return { label: "Atenção", color: "#B07A14" };
-  if (score < 4.2) return { label: "Estável", color: "#2D72B0" };
-  return { label: "Saudável", color: "#2E8932" };
+/** Leitura neutra; só Risco e Atenção pintam o ícone de alerta. */
+function scoreMeta(score: number | null): { label: string; alerta?: string } {
+  if (score === null) return { label: "Sem leitura" };
+  if (score < 2.2) return { label: "Risco", alerta: "#D94A4A" };
+  if (score < 3.2) return { label: "Atenção", alerta: "#B07A14" };
+  if (score < 4.2) return { label: "Estável" };
+  return { label: "Saudável" };
+}
+
+function ScoreReading({ score, className = "" }: { score: number | null; className?: string }) {
+  const meta = scoreMeta(score);
+  return <span className={`flex items-center gap-1 text-[0.625rem] font-medium ${score === null ? "text-black/30" : "text-black/55"} ${className}`}>
+    {meta.alerta && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{color:meta.alerta}}/>}
+    {meta.label}
+  </span>;
 }
 
 function ScoreRing({ score, size = 70 }: { score: number | null; size?: number }) {
   return <div className="relative shrink-0" style={{ width: size, height: size }}>
     <SegmentedScoreArc score={score} viewBoxSize={100} radius={43} strokeWidth={8} label={score === null ? "Sem avaliação" : `Nota ${score.toFixed(1)} de 5`} />
-    <span className="absolute inset-0 flex items-center justify-center text-[0.9375rem] font-semibold tabular-nums tracking-[-.04em] text-black/70">{score === null ? "—" : score.toFixed(1).replace(".", ",")}</span>
+    <span className={`absolute inset-0 flex items-center justify-center text-[0.9375rem] font-semibold tabular-nums tracking-[-.04em] ${score === null ? "text-black/30" : "text-[#282525]"}`}>{score === null ? "—" : score.toFixed(1).replace(".", ",")}</span>
   </div>;
 }
 
@@ -80,7 +89,7 @@ function InternalIconPicker({ value, color, onChange }: { value: string; color: 
     </button>
     {open && <>
       <button type="button" aria-label="Fechar seletor de ícone" className="fixed inset-0 z-10 cursor-default" onClick={() => setOpen(false)}/>
-      <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[13rem] rounded border border-black/[.09] bg-white p-2 shadow-[0_14px_36px_rgba(13,13,13,.13)]">
+      <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[13rem] rounded bg-white p-2 border elevacao-1">
         <div className="grid grid-cols-4 gap-1.5">
           {(Object.keys(ICONS) as Array<keyof typeof ICONS>).map(key => {
             const Icon = ICONS[key]; const active = key === selectedKey;
@@ -106,7 +115,7 @@ function InternalColorPicker({ value, onChange }: { value: string; onChange: (va
     </button>
     {open && <>
       <button type="button" aria-label="Fechar seletor de cor" className="fixed inset-0 z-10 cursor-default" onClick={() => setOpen(false)}/>
-      <div className="absolute right-0 top-[calc(100%+6px)] z-20 w-[11.5rem] rounded border border-black/[.09] bg-white p-3 shadow-[0_14px_36px_rgba(13,13,13,.13)]">
+      <div className="absolute right-0 top-[calc(100%+6px)] z-20 w-[11.5rem] rounded bg-white p-3 border elevacao-1">
         <div className="grid grid-cols-4 gap-2">
           {SCORECARD_COLORS.map(color => <button key={color} type="button" title={color} aria-label={`Usar cor ${color}`} aria-pressed={value.toUpperCase() === color} onClick={() => {onChange(color);setOpen(false);}} className={`flex h-8 items-center justify-center rounded border transition active:scale-[.96] ${value.toUpperCase() === color ? "border-black/25 ring-2 ring-black/10" : "border-black/[.05] hover:scale-105"}`} style={{background:color}}>{value.toUpperCase() === color && <Check size={11} className="text-white" strokeWidth={3}/>}</button>)}
         </div>
@@ -222,10 +231,10 @@ export function PartnershipHealthScorecards({ contaId, organizationId, onScoreCh
 
   return <div className="space-y-3">
     <div className="grid gap-px overflow-hidden rounded border border-black/[.07] bg-black/[.07] md:grid-cols-2 xl:grid-cols-3">{cards.map(card => {
-      const score = calculateScore(card.criterios); const meta = scoreMeta(score); const Icon = ICONS[card.icone as keyof typeof ICONS] ?? Gauge; const rated = card.criterios.filter(item => item.nota !== null).length;
+      const score = calculateScore(card.criterios); const Icon = ICONS[card.icone as keyof typeof ICONS] ?? Gauge; const rated = card.criterios.filter(item => item.nota !== null).length;
       return <button key={card.id} type="button" onClick={() => setEditingId(card.id)} className="group flex min-h-[7rem] min-w-0 items-center gap-3 bg-white px-4 py-4 text-left transition hover:bg-[#FAFAFB] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7259B5]/30">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center" style={{color:card.cor}}><Icon size={17}/></span>
-        <span className="min-w-0 flex-1"><span className="block truncate text-[0.8125rem] font-semibold text-black/70">{card.nome}</span><span className="mt-1 block text-[0.625rem] font-medium" style={{color:meta.color}}>{meta.label}</span><span className="mt-2 block text-[0.5625rem] text-black/25">{card.criterios.length ? `${rated} de ${card.criterios.length} critérios avaliados` : "Configurar critérios"}</span></span>
+        <span className="min-w-0 flex-1"><span className="block truncate text-[0.8125rem] font-semibold text-black/70">{card.nome}</span><ScoreReading score={score} className="mt-1"/><span className="mt-2 block text-[0.5625rem] text-black/25">{card.criterios.length ? `${rated} de ${card.criterios.length} critérios avaliados` : "Configurar critérios"}</span></span>
         <ScoreRing score={score} size={48}/>
         <Pencil size={11} className="shrink-0 text-black/0 transition group-hover:text-black/25"/>
       </button>;
@@ -233,9 +242,9 @@ export function PartnershipHealthScorecards({ contaId, organizationId, onScoreCh
     {error && !editingCard && <p className="rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[0.625rem] text-[#B23A3A]">{error}</p>}
 
     {editingCard && (() => {
-      const score = calculateScore(editingCard.criterios); const meta = scoreMeta(score); const Icon = ICONS[editingCard.icone as keyof typeof ICONS] ?? Gauge;
-      return <div className="fixed inset-0 z-[70] flex flex-col items-center bg-black/40" onMouseDown={() => { setEditingId(null); setCriterionFor(null); }}>
-        <section className="flex max-h-[88vh] w-full max-w-[38.75rem] flex-col overflow-hidden rounded-b bg-white shadow-[0_18px_60px_rgba(13,13,13,.18)]" onMouseDown={event => event.stopPropagation()}>
+      const score = calculateScore(editingCard.criterios); const Icon = ICONS[editingCard.icone as keyof typeof ICONS] ?? Gauge;
+      return <div className="fixed inset-0 z-[70] flex flex-col items-center veu" onMouseDown={() => { setEditingId(null); setCriterionFor(null); }}>
+        <section className="flex max-h-[88vh] w-full max-w-[38.75rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2" onMouseDown={event => event.stopPropagation()}>
           <header className="flex items-center gap-3 border-b border-black/[.07] px-5 py-4 sm:px-6"><span className="flex h-9 w-9 items-center justify-center" style={{color:editingCard.cor}}><Icon size={17}/></span><div className="min-w-0 flex-1"><p className="text-[0.625rem] font-medium text-black/30">Avaliar dimensão</p><h2 className="mt-0.5 truncate text-[0.9375rem] font-semibold text-black/80">{editingCard.nome}</h2></div><ScoreRing score={score} size={46}/><button type="button" onClick={() => { setEditingId(null); setCriterionFor(null); }} className="flex h-8 w-8 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60" aria-label="Fechar"><X size={15}/></button></header>
 
           <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
@@ -246,14 +255,14 @@ export function PartnershipHealthScorecards({ contaId, organizationId, onScoreCh
               <div className="sm:col-span-3"><span className="mb-1.5 block text-[0.5625rem] font-medium text-black/30">Peso na saúde geral</span><Segments values={[1,2,3]} selected={editingCard.peso} suffix="×" onSelect={value => void updateCard(editingCard.id, {peso:value as 1|2|3})}/></div>
             </div>
 
-            <div className="mb-3 mt-5 flex items-center justify-between"><div><h3 className="text-[0.8125rem] font-semibold text-black/70">Critérios</h3><p className="mt-0.5 text-[0.625rem] text-black/30">A nota da dimensão é a média ponderada dos critérios.</p></div><span className="text-[0.625rem] font-medium" style={{color:meta.color}}>{meta.label}</span></div>
-            {editingCard.criterios.length ? <div className="divide-y divide-black/[.06] overflow-hidden rounded border border-black/[.07]">{editingCard.criterios.map(criterion=><div key={criterion.id} className="bg-white p-3.5"><div className="flex items-center gap-2"><input defaultValue={criterion.nome} onBlur={event => {const nome=event.target.value.trim();if(nome&&nome!==criterion.nome)void updateCriterion(editingCard.id,criterion.id,{nome});}} className="min-w-0 flex-1 bg-transparent text-[0.6875rem] font-semibold text-black/60 outline-none focus:text-black"/><button type="button" onClick={()=>void removeCriterion(editingCard.id,criterion.id)} className="flex h-7 w-7 items-center justify-center rounded text-black/15 transition hover:bg-black/[.04] hover:text-[#D94E4E]" aria-label={`Excluir ${criterion.nome}`}><Trash2 size={11}/></button></div><div className="mt-3 flex flex-wrap items-end justify-between gap-3"><div><span className="mb-1 block text-[0.5rem] font-medium text-black/25">Peso</span><Segments values={[1,2,3]} selected={criterion.peso} suffix="×" onSelect={value=>void updateCriterion(editingCard.id,criterion.id,{peso:value as 1|2|3})}/></div><div><span className="mb-1 block text-[0.5rem] font-medium text-black/25">Nota</span><Segments values={[1,2,3,4,5]} selected={criterion.nota} onSelect={value=>void updateCriterion(editingCard.id,criterion.id,{nota:value as 1|2|3|4|5})}/></div></div></div>)}</div> : <div className="rounded border border-dashed border-black/10 py-7 text-center"><p className="text-[0.6875rem] text-black/30">Nenhum critério configurado.</p>{editingCard.dimensao_base&&<button type="button" disabled={saving} onClick={()=>void addSuggestedCriteria(editingCard)} className="mt-2 rounded border border-black/[.09] bg-white px-3 py-2 text-[0.625rem] font-semibold text-black/50 transition hover:bg-black/[.035] disabled:opacity-40">Usar critérios sugeridos</button>}</div>}
+            <div className="mb-3 mt-5 flex items-center justify-between"><div><h3 className="text-[0.8125rem] font-semibold text-black/70">Critérios</h3><p className="mt-0.5 text-[0.625rem] text-black/30">A nota da dimensão é a média ponderada dos critérios.</p></div><ScoreReading score={score}/></div>
+            {editingCard.criterios.length ? <div className="divide-y divide-black/[.06] overflow-hidden rounded border border-black/[.07]">{editingCard.criterios.map(criterion=><div key={criterion.id} className="bg-white p-3.5"><div className="flex items-center gap-2"><input defaultValue={criterion.nome} onBlur={event => {const nome=event.target.value.trim();if(nome&&nome!==criterion.nome)void updateCriterion(editingCard.id,criterion.id,{nome});}} className="min-w-0 flex-1 bg-transparent text-[0.6875rem] font-semibold text-black/60 outline-none focus:text-[#282525]"/><button type="button" onClick={()=>void removeCriterion(editingCard.id,criterion.id)} className="flex h-7 w-7 items-center justify-center rounded text-black/15 transition hover:bg-black/[.04] hover:text-[#D94E4E]" aria-label={`Excluir ${criterion.nome}`}><Trash2 size={11}/></button></div><div className="mt-3 flex flex-wrap items-end justify-between gap-3"><div><span className="mb-1 block text-[0.5rem] font-medium text-black/25">Peso</span><Segments values={[1,2,3]} selected={criterion.peso} suffix="×" onSelect={value=>void updateCriterion(editingCard.id,criterion.id,{peso:value as 1|2|3})}/></div><div><span className="mb-1 block text-[0.5rem] font-medium text-black/25">Nota</span><Segments values={[1,2,3,4,5]} selected={criterion.nota} onSelect={value=>void updateCriterion(editingCard.id,criterion.id,{nota:value as 1|2|3|4|5})}/></div></div></div>)}</div> : <div className="rounded border border-dashed border-black/10 py-7 text-center"><p className="text-[0.6875rem] text-black/30">Nenhum critério configurado.</p>{editingCard.dimensao_base&&<button type="button" disabled={saving} onClick={()=>void addSuggestedCriteria(editingCard)} className="mt-2 rounded border border-black/[.09] bg-white px-3 py-2 text-[0.625rem] font-semibold text-black/50 transition hover:bg-black/[.035] disabled:opacity-40">Usar critérios sugeridos</button>}</div>}
 
             {criterionFor===editingCard.id?<div className="mt-3 flex gap-2"><input autoFocus value={newCriterionName} onChange={event=>setNewCriterionName(event.target.value)} onKeyDown={event=>{if(event.key==="Enter")void addCriterion(editingCard.id);if(event.key==="Escape")setCriterionFor(null);}} placeholder="Nome do critério" className="h-9 min-w-0 flex-1 rounded border border-black/10 px-3 text-[0.6875rem] outline-none focus:border-[#7259B5]/40"/><button type="button" onClick={()=>void addCriterion(editingCard.id)} className="flex h-9 w-9 items-center justify-center rounded bg-[#2E8932] text-white"><Check size={12}/></button><button type="button" onClick={()=>setCriterionFor(null)} className="flex h-9 w-9 items-center justify-center rounded text-black/30 hover:bg-black/[.04]"><X size={12}/></button></div>:<button type="button" onClick={()=>{setCriterionFor(editingCard.id);setNewCriterionName("");}} className="mt-3 inline-flex h-9 items-center gap-1.5 rounded border border-black/10 bg-white px-3 text-[0.625rem] font-semibold text-black/50 transition hover:bg-black/[.035]"><Plus size={11}/>Adicionar critério</button>}
             {error&&<p className="mt-3 rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[0.625rem] text-[#B23A3A]">{error}</p>}
           </div>
 
-          <footer className="flex items-center justify-end border-t border-black/[.07] px-5 py-4 sm:px-6"><button type="button" onClick={()=>{setEditingId(null);setCriterionFor(null);}} className="rounded bg-[#2E8932] px-4 py-2 text-[0.6875rem] font-semibold text-white transition hover:bg-[#26752A] active:translate-y-px">Concluir</button></footer>
+          <footer className="flex items-center justify-end border-t border-black/[.07] px-5 py-4 sm:px-6"><button type="button" onClick={()=>{setEditingId(null);setCriterionFor(null);}} className="rounded acao-salvar px-4 py-2 text-[0.6875rem] font-semibold text-white transition active:translate-y-px">Concluir</button></footer>
         </section>
       </div>;
     })()}

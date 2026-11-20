@@ -10,14 +10,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertTriangle, ArrowLeft, ArrowRight, FileArchive, Package } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, FileArchive, Package } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
 import { useEnviosRegistrados } from "@/hooks/useEnviosRegistrados";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { RegistrarEnvio } from "@/components/prestacao/envio/RegistrarEnvio";
-import { envioVigente } from "@/lib/prestacao/envios";
-import { checklistDeEnvio, etapasDoRegime, nomeDaConta, ROTULO_DA_ETAPA, type EtapaEnvio } from "@/lib/prestacao/envio";
+import { envioVigente, exerciciosEnviados } from "@/lib/prestacao/envios";
+import { exercicioInicial, exerciciosDaAnual } from "@/lib/prestacao/exercicios";
+import { EtapaDoEnvio } from "@/components/prestacao/envio/EtapaDoEnvio";
+import { checklistDeEnvio, etapasDoRegime, nomeDaConta, type EtapaEnvio } from "@/lib/prestacao/envio";
 import {
   manifestoCsv,
   nomeDoPacote,
@@ -38,6 +40,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { partesDoZip, type ArquivoDoZip } from "@/lib/zip";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] text-black/70 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:text-black/35 active:scale-[.98]";
 const PADRAO: Record<PadraoDosNomes, string> = {
@@ -92,10 +95,11 @@ export default function PacotePage() {
   const { dados, erro: erroDoEnvio, recarregar: recarregarEnvio } = useDadosDoEnvio(id);
   const permissoes = usePermissoesPrestacao(id);
   const { envios, recarregar: recarregarEnvios } = useEnviosRegistrados(id);
-  const [ultimoPacote, setUltimoPacote] = useState<{ etapa: EtapaEnvio; manifesto: Manifesto } | null>(null);
+  const [ultimoPacote, setUltimoPacote] = useState<{ etapa: EtapaEnvio; exercicio: number; manifesto: Manifesto } | null>(null);
   const [extras, setExtras] = useState<Extras | null>(null);
   const [erro, setErro] = useState("");
   const [etapaEscolhida, setEtapa] = useState<EtapaEnvio>("final");
+  const [exercicioEscolhido, setExercicio] = useState<number | null>(null);
   const [progresso, setProgresso] = useState<{ texto: string; feito: number; total: number } | null>(null);
   const [gerado, setGerado] = useState<string | null>(null);
 
@@ -148,6 +152,10 @@ export default function PacotePage() {
 
   const etapas = useMemo(() => etapasDoRegime(dados?.regime), [dados]);
   const etapa = etapas.includes(etapaEscolhida) ? etapaEscolhida : "final";
+  // P9.2: na saúde, a parcial é a prestação anual de um exercício.
+  const exercicios = useMemo(() => (dados ? exerciciosDaAnual(dados.regime, dados.estado.prestacao ?? {}) : []), [dados]);
+  const enviados = useMemo(() => (envios ? exerciciosEnviados(envios) : []), [envios]);
+  const exercicio = etapa === "parcial" && exercicios.length ? exercicioEscolhido ?? exercicioInicial(exercicios, enviados) : 0;
 
   const dadosDoPacote = useMemo<DadosDoPacote | null>(() => {
     if (!dados || !extras?.prestacao) return null;
@@ -155,7 +163,7 @@ export default function PacotePage() {
     return {
       regime: dados.regime,
       etapa,
-      checklist: checklistDeEnvio({ ...dados, etapa }),
+      checklist: checklistDeEnvio({ ...dados, etapa, exercicio }),
       estado: dados.estado,
       prestacao: { titulo: extras.prestacao.titulo, identificador_oficial: extras.prestacao.identificador_oficial },
       arquivosDasDespesas: extras.despesas,
@@ -164,7 +172,7 @@ export default function PacotePage() {
       extratos: extras.extratos.map(e => ({ ...e, conta: contas.get(e.conta_id) ?? "Conta" })),
       metadados: extras.metadados,
     };
-  }, [dados, extras, etapa]);
+  }, [dados, extras, etapa, exercicio]);
   const plano = useMemo(() => (dadosDoPacote ? planoDoPacote(dadosDoPacote) : null), [dadosDoPacote]);
 
   async function gerar(tipo: TipoDoPacote) {
@@ -208,6 +216,7 @@ export default function PacotePage() {
         prestacao: { titulo: extras.prestacao.titulo, identificadorOficial: extras.prestacao.identificador_oficial },
         regime: dadosDoPacote.regime ? { codigo: dadosDoPacote.regime.codigo, versao: dadosDoPacote.regime.versao, sistema: dadosDoPacote.regime.sistemaOficial } : null,
         etapa,
+        exercicio: exercicio || null,
         padrao: plano.padrao,
         arquivos: todas.map(l => {
           const item = plano.itens.find(i => i.caminho === l.arquivo);
@@ -220,13 +229,13 @@ export default function PacotePage() {
         { nome: "relatorio-da-prestacao.pdf", dados: pdf, data: geradoEm },
         { nome: "manifesto.csv", dados: texto.encode("\uFEFF" + manifestoCsv(todas)), data: geradoEm },
         { nome: "manifesto.json", dados: texto.encode(JSON.stringify(manifesto, null, 2)), data: geradoEm },
-        ...(tipo === "pre-pacote" ? [{ nome: "o-que-falta.txt", dados: texto.encode(textoDasFaltas(plano, etapa)), data: geradoEm }] : []),
+        ...(tipo === "pre-pacote" ? [{ nome: "o-que-falta.txt", dados: texto.encode(textoDasFaltas(plano, etapa, exercicio)), data: geradoEm }] : []),
         ...arquivos,
       ]);
-      const nome = nomeDoPacote(tipo, dadosDoPacote.prestacao, etapa, geradoEm);
+      const nome = nomeDoPacote(tipo, dadosDoPacote.prestacao, etapa, geradoEm, exercicio);
       baixar(new Blob(zip as BlobPart[], { type: "application/zip" }), nome);
       setGerado(`${nome}: ${linhas.length + 1} ${linhas.length ? "arquivos" : "arquivo"}, com o manifesto${tipo === "pre-pacote" ? " e o que falta" : ""}.`);
-      if (tipo === "pacote") setUltimoPacote({ etapa, manifesto });
+      if (tipo === "pacote") setUltimoPacote({ etapa, exercicio, manifesto });
     } catch (x) {
       setErro(x instanceof Error ? x.message : "Não foi possível gerar o pacote.");
     }
@@ -236,8 +245,8 @@ export default function PacotePage() {
   const erroGeral = erro || erroDoEnvio;
   const ocupado = progresso !== null;
   const sistema = dadosDoPacote?.checklist.sistema;
-  const vigente = envios ? envioVigente(envios, etapa) : null;
-  const pacoteDaEtapa = ultimoPacote?.etapa === etapa ? ultimoPacote.manifesto : null;
+  const vigente = envios ? envioVigente(envios, etapa, exercicio) : null;
+  const pacoteDaEtapa = ultimoPacote?.etapa === etapa && ultimoPacote.exercicio === exercicio ? ultimoPacote.manifesto : null;
 
   return (
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
@@ -246,28 +255,21 @@ export default function PacotePage() {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Pacote do envio</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Pacote do envio</h2>
           <p className="max-w-[46rem] text-[0.6875rem] text-black/45">
             Os documentos do checklist e os comprovantes num arquivo .zip, renomeados no padrão {sistema ? `do ${sistema}` : "do sistema de destino"}, com o manifesto (tamanho e SHA-256 de cada arquivo) e o relatório da prestação em PDF. O pré-pacote sai a qualquer momento e mostra o que falta.
           </p>
         </div>
-        {etapas.length > 1 && (
-          <div role="radiogroup" aria-label="Etapa do envio" className="flex rounded border bg-white p-0.5" style={BORDA}>
-            {etapas.map(e => (
-              <button
-                key={e}
-                type="button"
-                role="radio"
-                aria-checked={etapa === e}
-                onClick={() => setEtapa(e)}
-                className="h-8 rounded px-3 text-[0.6875rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5]"
-                style={etapa === e ? { background: "#684DB0", color: "#fff" } : { color: "rgba(13,13,13,.6)" }}
-              >
-                {ROTULO_DA_ETAPA[e]}
-              </button>
-            ))}
-          </div>
-        )}
+        <EtapaDoEnvio
+          etapas={etapas}
+          etapa={etapa}
+          onEtapa={setEtapa}
+          regime={dados?.regime ?? null}
+          exercicios={exercicios}
+          exercicio={exercicio}
+          onExercicio={setExercicio}
+          enviados={enviados}
+        />
       </div>
 
       {erroGeral && <p role="alert" className="rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#D94A4A40" }}>{erroGeral}</p>}
@@ -278,20 +280,23 @@ export default function PacotePage() {
           <div className="space-y-3 rounded border bg-white px-5 py-4" style={BORDA}>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[0.6875rem] md:grid-cols-4">
               <div>
-                <dt className="text-black/40">Arquivos</dt>
-                <dd className="text-[0.875rem] tabular-nums text-black/80">{plano.itens.length} <span className="text-[0.6875rem] text-black/40">+ relatório e manifesto</span></dd>
+                <dt className={ROTULO}>Arquivos</dt>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.itens.length ? "text-[#282525]" : "text-black/30"}`}>{plano.itens.length} <span className="text-[0.6875rem] font-normal text-black/40">+ relatório e manifesto</span></dd>
               </div>
               <div>
-                <dt className="text-black/40">Tamanho</dt>
-                <dd className="text-[0.875rem] tabular-nums text-black/80">{tamanho(plano.tamanhoTotal)}</dd>
+                <dt className={ROTULO}>Tamanho</dt>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.tamanhoTotal ? "text-[#282525]" : "text-black/30"}`}>{tamanho(plano.tamanhoTotal)}</dd>
               </div>
               <div>
-                <dt className="text-black/40">Fora da regra</dt>
-                <dd className={`text-[0.875rem] tabular-nums ${plano.comProblema ? "text-[#B07A14]" : "text-black/80"}`}>{plano.comProblema}</dd>
+                <dt className={ROTULO}>
+                  {plano.comProblema > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
+                  Fora da regra
+                </dt>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.comProblema ? "text-[#282525]" : "text-black/30"}`}>{plano.comProblema}</dd>
               </div>
               <div>
-                <dt className="text-black/40">Nomes</dt>
-                <dd className="text-[0.75rem] text-black/80">{PADRAO[plano.padrao]}</dd>
+                <dt className={ROTULO}>Nomes</dt>
+                <dd className="mt-0.5 text-[0.75rem] text-black/70">{PADRAO[plano.padrao]}</dd>
               </div>
             </dl>
             {plano.regra && <p className="text-[0.6875rem] text-black/50">Regra do regime: {plano.regra.descricao} <span className="text-black/35">({[plano.regra.fonte.documento, plano.regra.fonte.dispositivo].filter(Boolean).join(", ")})</span></p>}
@@ -300,7 +305,7 @@ export default function PacotePage() {
                 type="button"
                 onClick={() => gerar("pacote")}
                 disabled={!plano.podeGerarPacote || ocupado}
-                className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Package size={13} aria-hidden /> Gerar pacote
               </button>
@@ -315,8 +320,18 @@ export default function PacotePage() {
                   {progresso.texto}…
                 </span>
               )}
-              {!progresso && plano.motivo && <p className="text-[0.6875rem] text-[#B07A14]">Pacote ainda não: {plano.motivo} O pré-pacote sai agora, com o que falta.</p>}
-              {!progresso && gerado && <p role="status" className="text-[0.6875rem] text-[#2E8932]">Gerado: {gerado}</p>}
+              {!progresso && plano.motivo && (
+                <p className="flex items-start gap-1 text-[0.6875rem] text-black/55">
+                  <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-[#B07A14]" />
+                  <span>Pacote ainda não: {plano.motivo} O pré-pacote sai agora, com o que falta.</span>
+                </p>
+              )}
+              {!progresso && gerado && (
+                <p role="status" className="flex items-center gap-1 text-[0.6875rem] text-black/55">
+                  <CheckCircle2 size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
+                  Gerado: {gerado}
+                </p>
+              )}
             </div>
           </div>
 
@@ -324,6 +339,7 @@ export default function PacotePage() {
             <RegistrarEnvio
               prestacaoId={id}
               etapa={etapa}
+              exercicio={exercicio}
               sistema={sistema ?? null}
               manifesto={pacoteDaEtapa}
               podeRegistrar={permissoes.decidir}
@@ -335,15 +351,16 @@ export default function PacotePage() {
           {plano.faltas.length > 0 && (
             <section className="rounded border bg-white px-5 py-4" style={BORDA} aria-labelledby="faltas">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 id="faltas" className="text-[0.75rem] font-semibold text-black">O que falta</h3>
+                <h3 id="faltas" className="text-[0.75rem] font-semibold text-[#282525]">O que falta</h3>
                 <Link href={`/prestacoes/${id}/envio`} className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-[#684DB0] hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                   Resolver no checklist <ArrowRight size={11} aria-hidden />
                 </Link>
               </div>
               <ul className="mt-2 space-y-1 text-[0.6875rem]">
                 {plano.faltas.map(f => (
-                  <li key={f.texto} className={f.obrigatorio ? "text-[#B07A14]" : "text-black/60"}>
-                    {f.obrigatorio && <span className="font-medium">Obrigatório · </span>}{f.texto}
+                  <li key={f.texto} className="flex items-start gap-1 text-black/60">
+                    {f.obrigatorio && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-[#B07A14]" />}
+                    <span>{f.obrigatorio && <span className="font-medium text-black/75">Obrigatório · </span>}{f.texto}</span>
                   </li>
                 ))}
               </ul>
@@ -353,7 +370,7 @@ export default function PacotePage() {
           {plano.itens.length === 0 ? (
             <div className="rounded border bg-white px-5 py-10 text-center" style={BORDA}>
               <Package size={22} className="mx-auto text-black/20" aria-hidden />
-              <p className="mx-auto mt-2 max-w-[30rem] text-[0.75rem] text-black/55">Nenhum arquivo ainda. Anexe os documentos no checklist e os comprovantes das despesas; o pré-pacote já sai com o relatório e o que falta.</p>
+              <p className="mx-auto mt-2 max-w-[30rem] text-[0.75rem] text-black/55">Nenhum arquivo ainda. Anexe os documentos do checklist e os comprovantes das despesas.</p>
             </div>
           ) : (
             <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-label="Arquivos do pacote">
@@ -373,10 +390,10 @@ export default function PacotePage() {
                         <td className="break-all px-4 py-2.5 tabular-nums text-black/80">{i.caminho}</td>
                         <td className="px-4 py-2.5 text-black/60">
                           {i.origem}
-                          {i.problemas.length > 0 && <p className="mt-0.5 flex items-start gap-1 text-[0.6875rem] text-[#B07A14]"><AlertTriangle size={11} className="mt-0.5 shrink-0" aria-hidden />{i.problemas.join(" ")}</p>}
+                          {i.problemas.length > 0 && <p className="mt-0.5 flex items-start gap-1 text-[0.6875rem] text-black/55"><AlertTriangle size={12} strokeWidth={1.75} className="mt-0.5 shrink-0 text-[#B07A14]" aria-hidden />{i.problemas.join(" ")}</p>}
                         </td>
                         <td className="whitespace-nowrap px-4 py-2.5 text-right tabular-nums text-black/60">{tamanho(i.tamanho)}</td>
-                        <td className="px-4 py-2.5 text-[0.6875rem]">{i.problemas.length ? <span className="text-[#B07A14]">Revisar</span> : <span className="text-black/35">Ok</span>}</td>
+                        <td className="px-4 py-2.5 text-[0.6875rem]">{i.problemas.length ? <span className="inline-flex items-center gap-1 text-black/60"><AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />Revisar</span> : <span className="text-black/35">Ok</span>}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -390,7 +407,7 @@ export default function PacotePage() {
                       <span className="shrink-0 tabular-nums text-black/50">{tamanho(i.tamanho)}</span>
                     </div>
                     <p className="text-[0.6875rem] text-black/55">{i.origem}</p>
-                    {i.problemas.length > 0 && <p className="flex items-start gap-1 text-[0.6875rem] text-[#B07A14]"><AlertTriangle size={11} className="mt-0.5 shrink-0" aria-hidden />{i.problemas.join(" ")}</p>}
+                    {i.problemas.length > 0 && <p className="flex items-start gap-1 text-[0.6875rem] text-black/55"><AlertTriangle size={12} strokeWidth={1.75} className="mt-0.5 shrink-0 text-[#B07A14]" aria-hidden />{i.problemas.join(" ")}</p>}
                   </li>
                 ))}
               </ul>

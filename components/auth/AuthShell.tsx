@@ -27,7 +27,7 @@ export function AuthShell({ children, eyebrow, title, description, asideContent,
           ) : (
             <>
               <p className="mb-5 mt-6 shrink-0 text-[0.6875rem] font-semibold uppercase tracking-[.14em] text-black/40">{eyebrow}</p>
-              <h2 className="max-w-[13ch] shrink-0 text-[clamp(2.8rem,4.6vw,5.2rem)] font-bold leading-[.96] tracking-[-.05em] text-[#0D0D0D]">
+              <h2 className="max-w-[13ch] shrink-0 text-[clamp(2.8rem,4.6vw,5.2rem)] font-bold leading-[.96] tracking-[-.05em] text-[#282525]">
                 {title}
               </h2>
               <p className="mt-4 max-w-md shrink-0 text-[0.9375rem] leading-7 text-black/48">{description}</p>

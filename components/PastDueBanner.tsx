@@ -7,7 +7,9 @@ export function PastDueBanner() {
   const { assinatura } = useCreditos();
   const [loading, setLoading] = useState(false);
 
-  if (!assinatura || assinatura.status !== "past_due") return null;
+  // O aviso e o botão do portal são de quem paga: o status agora é o da organização,
+  // e o portal (/api/stripe/portal) abre a cobrança do próprio perfil.
+  if (!assinatura || !assinatura.ehPagador || assinatura.status !== "past_due") return null;
 
   const dentroDaCarencia = assinatura.diasRestantesCarencia !== null;
 

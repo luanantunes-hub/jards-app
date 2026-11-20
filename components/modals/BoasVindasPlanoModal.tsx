@@ -13,8 +13,8 @@ type Props = {
 };
 
 const PLAN_LABELS: Record<Plano, string> = {
-  basico: "Básico",
-  profissional: "Profissional",
+  basico: "Starter",
+  profissional: "Pro",
 };
 
 export function BoasVindasPlanoModal({ plano, onClose }: Props) {
@@ -37,7 +37,7 @@ export function BoasVindasPlanoModal({ plano, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/30 p-0 backdrop-blur-[2px] sm:items-center sm:p-6"
+      className="fixed inset-0 z-[80] flex items-end justify-center veu p-0 sm:items-center sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="welcome-plan-title"
@@ -45,7 +45,7 @@ export function BoasVindasPlanoModal({ plano, onClose }: Props) {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <section className="relative grid max-h-[96dvh] w-full overflow-y-auto rounded-t bg-white shadow-[0_24px_80px_rgba(13,13,13,.18)] sm:max-w-3xl sm:grid-cols-[.92fr_1.08fr] sm:rounded">
+      <section className="relative grid max-h-[96dvh] w-full overflow-y-auto rounded-t bg-white sm:max-w-3xl sm:grid-cols-[.92fr_1.08fr] sm:rounded border elevacao-3">
         <button
           type="button"
           onClick={onClose}
@@ -70,7 +70,7 @@ export function BoasVindasPlanoModal({ plano, onClose }: Props) {
           <p className="mb-3 text-[0.6875rem] font-bold uppercase tracking-[.13em] text-[#2E8932]">
             Plano {PLAN_LABELS[plano]} confirmado
           </p>
-          <h2 id="welcome-plan-title" className="max-w-sm text-[1.875rem] font-bold leading-[1.08] tracking-[-.035em] text-[#0D0D0D] sm:text-[2.25rem]">
+          <h2 id="welcome-plan-title" className="max-w-sm text-[1.875rem] font-bold leading-[1.08] tracking-[-.035em] text-[#282525] sm:text-[2.25rem]">
             Que bom ter você com a gente.
           </h2>
           <p className="mt-4 max-w-sm text-sm leading-6 text-black/50">
@@ -84,7 +84,7 @@ export function BoasVindasPlanoModal({ plano, onClose }: Props) {
             ref={actionRef}
             type="button"
             onClick={onClose}
-            className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded bg-[#2E8932] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#26752A] focus:outline-none focus:ring-2 focus:ring-[#2E8932]/30 focus:ring-offset-2 active:scale-[.99] sm:w-fit"
+            className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded acao-salvar px-5 py-3 text-sm font-bold text-white transition focus:outline-none focus:ring-2 focus:ring-[#2E8932]/30 focus:ring-offset-2 active:scale-[.99] sm:w-fit"
           >
             Explorar patrocinadores
             <ArrowRight size={15} weight="bold" />

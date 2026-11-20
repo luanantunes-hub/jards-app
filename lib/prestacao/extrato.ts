@@ -60,7 +60,7 @@ export type ExtratoLido = {
   avisos: string[];
 };
 
-function semAcento(texto: string): string {
+export function semAcento(texto: string): string {
   return texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 

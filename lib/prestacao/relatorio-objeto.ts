@@ -64,7 +64,7 @@ export type RascunhoDoRelatorio = {
 export type DadosDoRelatorio = {
   regime: RegimeNormativo | null;
   estado: EstadoDaPrestacao;
-  prestacao: { titulo: string; identificador_oficial: string | null; proponente: { nome: string; cnpj: string | null } | null };
+  prestacao: { titulo: string; identificador_oficial: string | null; numero_processo?: string | null; proponente: { nome: string; cnpj: string | null } | null };
   /** Conteúdo guardado por seção (chave de prestacao_relatorio.secao). */
   guardados: Readonly<Record<string, string>>;
   /** Checklist de envio (aceite de obra, documentos do RCO); sem ele, essas partes viram lacuna. */
@@ -388,7 +388,9 @@ function rascunhoRco(d: DadosDoRelatorio): SecaoDoRelatorio[] {
       tabela: {
         colunas: ["Campo", "Valor"],
         linhas: [
-          [[t("Processo nº")], d.prestacao.identificador_oficial ? [dado(d.prestacao.identificador_oficial, { aba: "visao_geral" })] : [lacuna("número do processo", { aba: "visao_geral" })]],
+          // O processo no SEI fica nos dados oficiais (P8.8); o identificador oficial da LIE é o nº do projeto no SLI.
+          [[t("Processo nº")], d.prestacao.numero_processo ? [dado(d.prestacao.numero_processo, { aba: "visao_geral" })] : [lacuna("número do processo no SEI", { aba: "visao_geral" })]],
+          [[t("SLIE/SLI")], d.prestacao.identificador_oficial ? [dado(d.prestacao.identificador_oficial, { aba: "visao_geral" })] : [lacuna("número do projeto no SLI", { aba: "visao_geral" })]],
           [[t("Projeto")], [dado(d.prestacao.titulo, { aba: "visao_geral" })]],
           [[t("Proponente")], proponente ? [dado(proponente.nome, { aba: "visao_geral" })] : [lacuna("proponente", { aba: "visao_geral" })]],
           [[t("CNPJ")], proponente?.cnpj ? [dado(limparDocumento(proponente.cnpj), { aba: "visao_geral" })] : [lacuna("CNPJ do proponente", { aba: "visao_geral" })]],
@@ -411,7 +413,8 @@ function rascunhoRco(d: DadosDoRelatorio): SecaoDoRelatorio[] {
       paragrafos: alteracoes.length
         ? alteracoes.map(a => {
           const fonte: FonteDoDado = { aba: "orcamento" };
-          return [dado(`${rotuloTipoAlteracao(a.tipo ?? "remanejamento")} nº ${a.numero}`, fonte), ...(a.decidida_em ? [t(", aprovada em "), dado(dataBr(a.decidida_em)!, fonte)] : []), t(". "),
+          // "Alteração" concorda com o particípio, seja remanejamento, complementação, redução ou inclusão.
+          return [dado(`Alteração nº ${a.numero} (${rotuloTipoAlteracao(a.tipo ?? "remanejamento").toLowerCase()})`, fonte), ...(a.decidida_em ? [t(", aprovada em "), dado(dataBr(a.decidida_em)!, fonte)] : []), t(". "),
             a.justificativa?.trim() ? dado(a.justificativa.trim(), fonte) : lacuna("justificativa da alteração", fonte)];
         })
         : [[t("Nenhuma alteração do orçamento aprovada.")]],

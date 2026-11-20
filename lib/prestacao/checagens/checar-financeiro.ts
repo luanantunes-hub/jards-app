@@ -16,7 +16,9 @@
 import { ehDespesa } from "../despesas";
 import { basesDoOrcamento, itensDaArvore, montarArvore, ROTULO_DA_BASE, tetosPorGrupo } from "../orcamento";
 import { limparDocumento } from "../fornecedores";
-import { definida } from "../regimes";
+import { limiteDeElaboracao } from "../nivel-esportivo";
+import { definida, regraDoRegime } from "../regimes";
+import { execucaoTerminou } from "../objeto";
 import type { BaseCalculo, LimiteConcentracao } from "../regimes/tipos";
 import { rotuloDaForma } from "../pagamentos";
 import {
@@ -120,8 +122,11 @@ export function checarOrcamento(estado: EstadoDaPrestacao): Achado[] {
 
     const captado = captadoDoExtrato(estado);
     const tetos = regime ? definida(regime.orcamento)?.tetos ?? [] : [];
+    // Com o nível esportivo na prestação, o limite de elaboração e captação é o do nível (checar-esporte.ts, P8.4).
+    const elaboracaoPeloNivel = limiteDeElaboracao(estado) !== null;
     for (const t of tetosPorGrupo(arvore.raizes, regime, { valor_captado: captado ? captado / 100 : null })) {
       if (!t.excedido || !t.limite || t.limite.maximo === null) continue;
+      if (elaboracaoPeloNivel && t.grupo === "elaboracao") continue;
       const regra = tetos.find(r => r.descricao === t.limite!.descricao);
       achados.push(novoAchado(regime, {
         codigo: "TETO_GRUPO_CUSTO", severidade: t.limite.severidade, entidade: { tipo: "prestacao", id: null }, ref: t.grupo ?? "sem_grupo",
@@ -141,7 +146,69 @@ export function checarOrcamento(estado: EstadoDaPrestacao): Achado[] {
       dados: { numero: a.numero, solicitada_em: a.solicitada_em },
     }));
   }
-  return achados;
+  return [...achados, ...checarContrapartida(estado)];
+}
+
+// ─── Contrapartida (P7.2) ───────────────────────────────────────────────────
+
+export type ContrapartidaDaPrestacao = {
+  percentual: number;
+  /** Em centavos: o orçamento global vigente, o mínimo e o que as despesas comprovam. */
+  orcamento: number;
+  minimo: number;
+  financeira: number;
+  doacao: number;
+  comprovada: number;
+};
+
+/**
+ * O mínimo de contrapartida do regime (regra contrapartida_minima) sobre o
+ * orçamento global vigente e o que as despesas marcadas como contrapartida
+ * comprovam. Null quando o regime não pede contrapartida ou falta orçamento.
+ */
+export function contrapartidaDaPrestacao(estado: Pick<EstadoDaPrestacao, "regime" | "despesas" | "nos">): ContrapartidaDaPrestacao | null {
+  const regra = regraDoRegime(estado.regime, "contrapartida_minima");
+  const percentual = Number(regra?.parametros?.percentual);
+  if (!regra || !(percentual > 0) || !estado.nos?.length) return null;
+  const orcamento = centavos(basesDoOrcamento(montarArvore(estado.nos, []).raizes, estado.regime).valorTotalProjeto);
+  const soma = (tipo: "financeira" | "doacao") => estado.despesas
+    .filter(d => valida(d) && d.contrapartida === tipo).reduce((s, d) => s + centavos(d.valor_extraido), 0);
+  const financeira = soma("financeira");
+  const doacao = soma("doacao");
+  return { percentual, orcamento, minimo: Math.ceil((orcamento * percentual) / 100), financeira, doacao, comprovada: financeira + doacao };
+}
+
+export function checarContrapartida(estado: EstadoDaPrestacao): Achado[] {
+  const { regime } = estado;
+  const regra = regraDoRegime(regime, "contrapartida_minima");
+  // Sem despesa ainda, não há o que comparar.
+  if (!regra || !estado.despesas.some(valida)) return [];
+  const conta = contrapartidaDaPrestacao(estado);
+  if (!conta) {
+    if (estado.nos?.length) return [];
+    return [novoAchado(regime, {
+      codigo: "CONTRAPARTIDA_MINIMA", severidade: "info", resultado: "nao_calculavel", entidade: { tipo: "prestacao", id: null }, ref: "sem_orcamento",
+      mensagem: "Cadastre o orçamento para conferir a contrapartida mínima.",
+    })];
+  }
+  if (conta.comprovada >= conta.minimo) return [];
+
+  // Na execução ainda dá para completar; depois do fim, falta de contrapartida impede o envio.
+  const fim = estado.prestacao?.data_fim_execucao ?? null;
+  const terminou = execucaoTerminou(fim, estado.hoje ?? new Date());
+  const minimo = `${reais(conta.minimo)} (${conta.percentual}% do orçamento global de ${reais(conta.orcamento)})`;
+  const partes = [conta.financeira && `${reais(conta.financeira)} em dinheiro`, conta.doacao && `${reais(conta.doacao)} por doação`].filter(Boolean);
+  const comprovada = conta.comprovada
+    ? `Contrapartida comprovada: ${reais(conta.comprovada)}${partes.length > 1 ? ` (${partes.join(" e ")})` : ""}, abaixo do mínimo de ${minimo}; faltam ${reais(conta.minimo - conta.comprovada)}.`
+    : `Nenhuma despesa marcada como contrapartida; o mínimo é ${minimo}.`;
+  return [novoAchado(regime, {
+    codigo: "CONTRAPARTIDA_MINIMA",
+    severidade: terminou ? regra.severidade : "alerta",
+    entidade: { tipo: "prestacao", id: null },
+    ref: "minimo",
+    mensagem: `${comprovada} Marque em "Paga com" as despesas pagas como contrapartida${!terminou && fim ? `; a execução vai até ${dataBr(fim)}` : ""}.`,
+    dados: { percentual: conta.percentual, orcamento: conta.orcamento / 100, minimo: conta.minimo / 100, financeira: conta.financeira / 100, doacao: conta.doacao / 100, falta: (conta.minimo - conta.comprovada) / 100 },
+  })];
 }
 
 // ─── Concentração ───────────────────────────────────────────────────────────
@@ -169,10 +236,15 @@ export function checarConcentracao(estado: EstadoDaPrestacao): Achado[] {
   if (!limites.length) return [];
 
   const fornecedores = new Map(estado.fornecedores.map(f => [f.id, f]));
-  const despesas = estado.despesas.filter(d => valida(d) && d.fornecedor_id && fornecedores.has(d.fornecedor_id) && centavos(d.valor_extraido) > 0);
-  if (!despesas.length) return [];
+  const comFornecedor = (d: DespesaDoEstado) => valida(d) && Boolean(d.fornecedor_id) && fornecedores.has(d.fornecedor_id!) && centavos(d.valor_extraido) > 0;
+  const despesas = estado.despesas.filter(comFornecedor);
+  // P7.4: na mesma obra (ANCINE), o limite sobre o executado soma as despesas de todas as prestações.
+  const obra = estado.obra?.prestacoes.length ? estado.obra : null;
+  const despesasDaObra = obra ? obra.despesas.filter(comFornecedor) : [];
+  if (!despesas.length && !despesasDaObra.length) return [];
 
   const executado = estado.despesas.filter(valida).reduce((s, d) => s + centavos(d.valor_extraido), 0);
+  const executadoDaObra = executado + (obra ? obra.despesas.filter(valida).reduce((s, d) => s + centavos(d.valor_extraido), 0) : 0);
   const captado = captadoDoExtrato(estado);
   const doOrcamento = estado.nos?.length ? basesDoOrcamento(montarArvore(estado.nos, []).raizes, regime) : null;
   const valorDaBase = (base: BaseCalculo): number | null => {
@@ -188,9 +260,11 @@ export function checarConcentracao(estado: EstadoDaPrestacao): Achado[] {
   for (const limite of limites) {
     // O limite de proponente pessoa física ou MEI depende do tipo do proponente, que a prestação ainda não guarda.
     if (limite.escopo === "proponente_pf_mei") continue;
-    const grupos = agrupar(limite, despesas, fornecedores);
+    const somaObra = Boolean(obra) && limite.base === "valor_executado";
+    const grupos = agrupar(limite, somaObra ? [...despesas, ...despesasDaObra] : despesas, fornecedores);
     if (!grupos.length) continue;
-    const base = valorDaBase(limite.base);
+    const base = somaObra ? executadoDaObra || null : valorDaBase(limite.base);
+    const daObra = somaObra ? ` Soma as ${obra!.prestacoes.length + 1} prestações da mesma obra.` : "";
     const primeira = limite.faixas[0];
     if (!base) {
       achados.push(novoAchado(regime, {
@@ -208,8 +282,8 @@ export function checarConcentracao(estado: EstadoDaPrestacao): Achado[] {
       const excecoes = limite.excecoes.length ? ` Se for exceção da norma (${limite.excecoes.map(e => e.descricao.toLowerCase()).join("; ")}), dispense com o motivo.` : "";
       achados.push(novoAchado(regime, {
         codigo, severidade: faixa.severidade, entidade: { tipo: "prestacao", id: null }, ref: `${limite.codigo}:${grupo.chave}`,
-        mensagem: `${grupo.nome}: ${reais(grupo.soma)} em despesas, ${percentual.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% ${ROTULO_DA_BASE[limite.base]} (${reais(base)}); o limite é ${faixa.percentual}%. ${faixa.consequencia}.${excecoes}`,
-        dados: { fornecedor: grupo.nome, soma: grupo.soma / 100, base: base / 100, percentual: Math.round(percentual * 10) / 10, limite: faixa.percentual },
+        mensagem: `${grupo.nome}: ${reais(grupo.soma)} em despesas, ${percentual.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% ${ROTULO_DA_BASE[limite.base]} (${reais(base)}); o limite é ${faixa.percentual}%. ${faixa.consequencia}.${daObra}${excecoes}`,
+        dados: { fornecedor: grupo.nome, soma: grupo.soma / 100, base: base / 100, percentual: Math.round(percentual * 10) / 10, limite: faixa.percentual, ...(somaObra ? { prestacoes_da_obra: obra!.prestacoes.length + 1 } : {}) },
         fonte: { ...limite.fonte },
       }));
     }

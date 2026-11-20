@@ -63,15 +63,15 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full overflow-hidden rounded bg-white shadow-2xl" style={{ maxWidth: "27.5rem" }} onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex justify-center veu items-start" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-desce folha-vidro w-full overflow-hidden max-h-[96dvh]" style={{ maxWidth: "27.5rem" }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-black/[.05] text-black">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-black/[.05] text-[#282525]">
               <Link2 size={15} />
             </div>
             <div className="min-w-0">
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Site do projeto</h2>
+              <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Site do projeto</h2>
             </div>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 shrink-0 items-center justify-center rounded transition hover:bg-black/[.06]">
@@ -86,7 +86,7 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
             </div>
           )}
           <div className="flex items-start gap-2 rounded bg-black/[.04] px-3 py-2.5">
-            <p className="min-w-0 flex-1 text-[0.8125rem] font-medium leading-snug text-black">{projetoNome}</p>
+            <p className="min-w-0 flex-1 text-[0.8125rem] font-medium leading-snug text-[#282525]">{projetoNome}</p>
             <button
               type="button"
               onClick={handleCopiar}
@@ -108,7 +108,7 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
                 onChange={e => { setUrl(e.target.value); setErro(null); }}
                 onKeyDown={e => { if (e.key === "Enter") handleSalvar(); }}
                 placeholder="https://www.exemplo.com.br"
-                className="h-11 w-full bg-transparent text-[0.875rem] text-black outline-none"
+                className="h-11 w-full bg-transparent text-[0.875rem] text-[#282525] outline-none"
               />
             </div>
           </label>
@@ -123,7 +123,7 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
             <button
               onClick={handleSalvar}
               disabled={saving}
-              className="rounded bg-[#2E8932] px-5 py-2 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="rounded acao-salvar px-5 py-2 text-[0.75rem] font-medium text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saving ? "Salvando…" : "Salvar"}
             </button>

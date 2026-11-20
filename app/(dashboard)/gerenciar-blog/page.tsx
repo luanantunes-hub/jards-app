@@ -76,10 +76,10 @@ export default function BlogAdminPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <ListPageHeader
+      <ListPageHeader secao="publicacoes"
         eyebrow="Conteúdo"
-        title="Blog"
-        summary={isAdmin && !loading && <><ListSummary strong={publicados} tone="#2E8932">{publicados === 1 ? "publicado" : "publicados"}</ListSummary><ListSummary strong={posts.length - publicados}>{posts.length - publicados === 1 ? "rascunho" : "rascunhos"}</ListSummary></>}
+        title="Publicações"
+        summary={isAdmin && !loading && <><ListSummary strong={publicados}>{publicados === 1 ? "publicado" : "publicados"}</ListSummary><ListSummary strong={posts.length - publicados}>{posts.length - publicados === 1 ? "rascunho" : "rascunhos"}</ListSummary></>}
         actions={<PrimaryListAction onClick={() => void handleNew()} disabled={creating || !isAdmin}><Plus size={13} aria-hidden="true" />{creating ? "Criando…" : "Novo post"}</PrimaryListAction>}
       />
       <ListContent>
@@ -126,7 +126,7 @@ export default function BlogAdminPage() {
                           </span>
                         )}
                       </div>
-                      <p className="truncate text-sm font-semibold text-[#0D0D0D]">{post.titulo || "Sem título"}</p>
+                      <p className="truncate text-sm font-semibold text-[#282525]">{post.titulo || "Sem título"}</p>
                       <p className="mt-0.5 text-xs text-black/35">/{post.slug}</p>
                     </div>
                     <div className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-[0.6875rem] tabular-nums text-black/30">

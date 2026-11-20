@@ -20,7 +20,7 @@ type DeliveryRow = CompromissoCliente & {
 };
 
 const STATUS = {
-  pendente: { label: "Pendente", color: "#7259B5" },
+  pendente: { label: "Pendente", color: "#282525" },
   em_andamento: { label: "Em andamento", color: "#2D72B0" },
   entregue: { label: "Entregue", color: "#B07A14" },
   aprovado: { label: "Aprovada", color: "#2E8932" },
@@ -138,7 +138,7 @@ export function DeliveriesPanel({ organizationId, accountId, contaId, projetoId,
 
   return <section className="overflow-hidden rounded border border-black/[.08] bg-white">
     <header className="flex flex-col gap-4 border-b border-black/[.07] px-5 py-5 sm:flex-row sm:items-end sm:justify-between md:px-6">
-      <div><p className="text-[0.6875rem] font-medium text-black/35">Execução da parceria</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-black">Entregas</h2></div>
+      <div><p className="text-[0.6875rem] font-medium text-black/35">Execução da parceria</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-[#282525]">Entregas</h2></div>
       {canWrite && <button type="button" onClick={() => setShowCreate(true)} className="inline-flex h-10 items-center gap-2 self-start rounded border border-[#7259B5]/30 bg-white px-4 text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] active:scale-[.98] sm:self-auto"><Plus size={13}/>Nova entrega</button>}
     </header>
     <div className="flex flex-col gap-3 border-b border-black/[.06] px-5 py-3 sm:flex-row sm:items-center sm:justify-between md:px-6">
@@ -170,8 +170,8 @@ function DeliveryListItem({ item, canWrite, updating, onComplete }: { item: Deli
     </button>
     <Link href={`/entregas/${item.id}`} className="grid min-w-0 flex-1 gap-3 sm:grid-cols-[minmax(0,1fr)_9.375rem_7.5rem_1.125rem] sm:items-center">
       <div className="min-w-0"><p className={`truncate text-[0.8125rem] font-semibold ${completed ? "text-black/45" : "text-black/75"}`}>{item.titulo}</p><p className="mt-1 truncate text-[0.625rem] text-black/30">{accountName || "Cliente"}{item.projeto?.nome ? ` · ${item.projeto.nome}` : ""}{item.contrato ? ` · ${item.contrato.titulo || item.contrato.numero || "Contrato"}` : ""}</p></div>
-      <div><p className="text-[0.625rem] text-black/25">Status</p><p className="mt-1 text-[0.6875rem] font-medium" style={{color:meta.color}}>{meta.label}</p></div>
-      <div><p className="text-[0.625rem] text-black/25">Prazo</p><p className="mt-1 flex items-center gap-1 text-[0.6875rem] font-medium" style={{color:late?"#D94E4E":"rgba(13,13,13,.52)"}}><CalendarDays size={11}/>{item.prazo ? new Date(`${item.prazo}T12:00:00`).toLocaleDateString("pt-BR") : "Sem prazo"}</p></div>
+      <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Status</p><span className="mt-1 inline-block rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium" style={{ borderColor: meta.color + "47", color: meta.color }}>{meta.label}</span></div>
+      <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Prazo</p><p className="mt-1 flex items-center gap-1 text-[0.6875rem] font-medium text-black/50"><CalendarDays size={12} strokeWidth={1.75} className="shrink-0" style={{ color: late ? "#D94A4A" : "rgba(13,13,13,.4)" }} {...(late ? { role: "img", "aria-label": "Atrasada" } : { "aria-hidden": true })}/>{item.prazo ? new Date(`${item.prazo}T12:00:00`).toLocaleDateString("pt-BR") : "Sem prazo"}</p></div>
       <ArrowUpRight size={14} className="text-black/20 transition group-hover:text-[#7259B5]"/>
     </Link>
   </article>;
@@ -186,7 +186,7 @@ function DeliveryForm({ accounts, contaId, contracts, projects, projetoId, membe
   const [evidenceRequired, setEvidenceRequired] = useState("true");
   const dropdownClass = "w-full [&>button]:h-10 [&>button]:w-full";
 
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}><form className="w-full max-w-xl overflow-hidden rounded border border-black/[.09] bg-white shadow-[0_24px_70px_rgba(13,13,13,.16)]" onClick={event => event.stopPropagation()} onSubmit={event => { event.preventDefault(); onSubmit(Object.fromEntries(new FormData(event.currentTarget))); }}>
+  return <div className="fixed inset-0 z-50 flex items-center justify-center veu p-4" onClick={onClose}><form className="w-full max-w-xl overflow-hidden rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()} onSubmit={event => { event.preventDefault(); onSubmit(Object.fromEntries(new FormData(event.currentTarget))); }}>
     <header className="flex items-center justify-between border-b border-black/[.07] px-5 py-4"><div><p className="text-[0.625rem] text-black/30">Execução</p><h3 className="mt-0.5 text-[0.9375rem] font-semibold text-black/80">Nova entrega</h3></div><button type="button" onClick={onClose} className="rounded p-1.5 text-black/30 hover:bg-black/[.04] hover:text-black/55"><X size={15}/></button></header>
     <div className="grid gap-4 p-5 sm:grid-cols-2">
       <label className="sm:col-span-2"><Label>Título</Label><input name="titulo" required autoFocus placeholder="O que precisa ser entregue?" className={fieldClass}/></label>
@@ -200,7 +200,7 @@ function DeliveryForm({ accounts, contaId, contracts, projects, projetoId, membe
       <label className="sm:col-span-2"><Label>Orientações</Label><textarea name="observacoes" rows={3} placeholder="Critério de aceite, formato ou contexto" className={`${fieldClass} h-auto resize-none py-2.5`}/></label>
       {error && <p className="sm:col-span-2 text-[0.6875rem] text-[#D94E4E]">{error}</p>}
     </div>
-    <footer className="flex justify-end gap-3 border-t border-black/[.07] px-5 py-4"><button type="button" onClick={onClose} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button disabled={saving} className="rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></footer>
+    <footer className="flex justify-end gap-3 border-t border-black/[.07] px-5 py-4"><button type="button" onClick={onClose} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button disabled={saving} className="rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></footer>
   </form></div>;
 }
 

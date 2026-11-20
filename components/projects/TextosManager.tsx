@@ -267,9 +267,9 @@ export function TextosManager({ projetoId }: { projetoId: string }) {
       </div>
 
       {sheetOpen && (
-        <div className="fixed inset-0 z-50" style={{ background: sheetVisible ? "rgba(0,0,0,.38)" : "rgba(0,0,0,0)", transition: "background 260ms ease" }} onClick={closeSheet}>
+        <div className={`fixed inset-0 z-50 veu ${sheetVisible ? "" : "veu-oculto"}`} onClick={closeSheet}>
           <div
-            className="absolute left-1/2 top-0 overflow-hidden rounded-b bg-white"
+            className="absolute left-1/2 top-0 overflow-hidden folha-vidro"
             style={{ width: "70%", transform: sheetVisible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(-100%)", transition: "transform 260ms cubic-bezier(.32,.72,0,1)", maxHeight: "67vh" }}
             onClick={event => event.stopPropagation()}
           >
@@ -295,9 +295,9 @@ export function TextosManager({ projetoId }: { projetoId: string }) {
               </div>
               {error && <div className="flex items-start gap-2 text-[0.6875rem] text-[#D94E4E]"><AlertCircle size={12} className="mt-0.5 shrink-0" />{error}</div>}
             </div>
-            <div className="flex items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+            <div className="folha-rodape flex items-center justify-end gap-3 border-t px-6 py-4">
               <button onClick={closeSheet} className="text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
-              <button onClick={() => void saveSheet()} disabled={!novaPergunta.trim() || creating} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-35">
+              <button onClick={() => void saveSheet()} disabled={!novaPergunta.trim() || creating} className="inline-flex items-center gap-1.5 rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition active:scale-[.98] disabled:opacity-35">
                 {creating && <Loader2 size={12} className="animate-spin" />} Salvar
               </button>
             </div>

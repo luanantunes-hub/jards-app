@@ -2,19 +2,26 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronDown, ChevronRight, AlertCircle, ArrowRight } from "lucide-react";
+import { ChevronDown, ChevronRight, AlertCircle, ArrowRight, Circle, CircleCheck, CircleDot, Lock } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
+import { BarraCaptacao } from "@/components/ui/IndicadoresFinanceiros";
+import { formatarValorCompleto } from "@/lib/valor";
 import type { PrestacaoContas, StatusPrestacao } from "@/lib/supabase/types";
 import { useItensDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { executadoPorItem, percentualExecutado, totalExecutado, type ComprovanteParaExecucao } from "@/lib/prestacao/execucao";
 import { mensagemErroPrestacao, proximosBloqueados, proximosStatus } from "@/lib/prestacao/status";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
+import { DadosDaAncine } from "@/components/prestacao/DadosDaAncine";
+import { DadosDoTransferegov } from "@/components/prestacao/DadosDoTransferegov";
+import { MesmaObra } from "@/components/prestacao/MesmaObra";
 import { PrazoPrestacao } from "@/components/prestacao/PrazoPrestacao";
 import { RegimeDadosOficiais } from "@/components/prestacao/RegimeDadosOficiais";
+import { DadosPessoaisDaPrestacao } from "@/components/prestacao/DadosPessoaisDaPrestacao";
+import { regraDoRegime } from "@/lib/prestacao/regimes";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
-import { avaliarProntidao, prazosDaPrestacao } from "@/lib/prestacao/prontidao";
+import { avaliarProntidao, prazoDoSaldoEmAberto, prazosDaPrestacao } from "@/lib/prestacao/prontidao";
 import { coberturaDaMeta } from "@/lib/prestacao/objeto";
 import { ProntidaoPrestacao } from "@/components/prestacao/ProntidaoPrestacao";
 import { VerificacoesPrestacao } from "@/components/prestacao/VerificacoesPrestacao";
@@ -24,6 +31,15 @@ import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
 import { checklistDeEnvio } from "@/lib/prestacao/envio";
 import { ResponsavelDaPrestacao } from "@/components/prestacao/ResponsavelDaPrestacao";
 import { LinksDoPatrocinador } from "@/components/prestacao/LinksDoPatrocinador";
+import { ConvidadosDaPrestacao } from "@/components/prestacao/ConvidadosDaPrestacao";
+import { CapturaPorEmail } from "@/components/prestacao/CapturaPorEmail";
+import { AcoesDoAssistente } from "@/components/prestacao/AcoesDoAssistente";
+import { VersaoNovaDoRegime } from "@/components/prestacao/VersaoNovaDoRegime";
+import { CaptacaoDaPrestacao } from "@/components/prestacao/CaptacaoDaPrestacao";
+import { situacaoDaCaptacao } from "@/lib/prestacao/captacao";
+import { anuaisPendentes, exerciciosDaAnual } from "@/lib/prestacao/exercicios";
+import { exerciciosEnviados } from "@/lib/prestacao/envios";
+import { useEnviosRegistrados } from "@/hooks/useEnviosRegistrados";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -52,12 +68,8 @@ const STATUS_META: Record<StatusPrestacao, { label: string; color: string; bg: s
   arquivado:        { label: "Arquivado",          color: "rgba(13,13,13,.35)", bg: "rgba(13,13,13,.05)"  },
 };
 
-const fmt = (v: number | null) => {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v}`;
-};
+// Prestação de contas mostra o valor exato, com centavos.
+const fmt = (v: number | null) => (v ? formatarValorCompleto(v) : "—");
 
 const fmtDate = (d: string | null) =>
   d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
@@ -73,12 +85,22 @@ export default function PrestacaoDetalhe() {
   const { itens } = useItensDoOrcamento(id);
   const [atividadesCount, setAtividadesCount] = useState(0);
   const [comprovantes, setComprovantes] = useState<ComprovanteParaExecucao[]>([]);
-  const [alteracoesAguardando, setAlteracoesAguardando] = useState<{ numero: number; solicitada_em: string | null }[]>([]);
+  const [alteracoes, setAlteracoes] = useState<{ numero: number; solicitada_em: string | null; tipo: string | null; status: string }[]>([]);
+  const alteracoesAguardando = useMemo(() => alteracoes.filter(a => a.status === "solicitada"), [alteracoes]);
+  // P9.1: aportes do extrato (visão da carteira), para a captação diante da liberação.
+  const [captado, setCaptado] = useState(0);
   // Bloqueios abertos nas verificações (null até a primeira leitura).
   const [bloqueiosAbertos, setBloqueiosAbertos] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
+  const [aviso, setAviso] = useState("");
   const [avancarOpen, setAvancarOpen] = useState(false);
+  // Onde o layout reserva as ações do cabeçalho.
+  const [slotAcoes, setSlotAcoes] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    const quadro = requestAnimationFrame(() => setSlotAcoes(document.getElementById("prestacao-acoes")));
+    return () => cancelAnimationFrame(quadro);
+  }, []);
   const avancarBoxRef = useRef<HTMLDivElement>(null);
   const [avancarMenuPos, setAvancarMenuPos] = useState<{ right: number; top: number } | null>(null);
   useEffect(() => {
@@ -103,6 +125,8 @@ export default function PrestacaoDetalhe() {
   const [objeto, setObjeto] = useState<{ metas: number; comprovadas: number } | undefined>(undefined);
   const permissoes = usePermissoesPrestacao(id);
   const regimes = useRegimesPublicados();
+  // P9.2: as prestações anuais já enviadas saem dos próximos prazos.
+  const { envios } = useEnviosRegistrados(id);
   // Checklist de envio da etapa final (P4.1), para a prontidão.
   const { dados: dadosDoEnvio } = useDadosDoEnvio(id);
   const resumoDoEnvio = useMemo(() => {
@@ -122,6 +146,7 @@ export default function PrestacaoDetalhe() {
       { data: metasData },
       { data: atividadesData },
       { data: evidenciasData },
+      { data: carteiraData },
     ] = await Promise.all([
       (supabase as any)
         .from("prestacoes_contas")
@@ -144,9 +169,8 @@ export default function PrestacaoDetalhe() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_alteracoes ainda não está no tipo Database
       (supabase as any)
         .from("prestacao_alteracoes")
-        .select("numero, solicitada_em")
-        .eq("prestacao_id", id)
-        .eq("status", "solicitada"),
+        .select("numero, solicitada_em, tipo, status")
+        .eq("prestacao_id", id),
       // Bloqueios abertos nas verificações: impedem o envio.
       (supabase as any)
         .from("prestacao_verificacoes")
@@ -158,6 +182,8 @@ export default function PrestacaoDetalhe() {
       (supabase as any).from("prestacao_metas").select("id").eq("prestacao_id", id),
       (supabase as any).from("prestacao_atividades").select("id, meta_id, status_realizacao").eq("prestacao_id", id),
       (supabase as any).from("prestacao_evidencias").select("atividade_id, meta_id").eq("prestacao_id", id),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- a visão da carteira ainda não está no tipo Database
+      (supabase as any).from("prestacao_carteira").select("captado").eq("prestacao_id", id).maybeSingle(),
     ]);
 
     setPrestacao(data as PrestacaoDetalhe);
@@ -165,7 +191,8 @@ export default function PrestacaoDetalhe() {
 
     setAtividadesCount(atCount ?? 0);
     setComprovantes((compData as ComprovanteParaExecucao[]) ?? []);
-    setAlteracoesAguardando(alteracoesData ?? []);
+    setAlteracoes(alteracoesData ?? []);
+    setCaptado(Number(carteiraData?.captado) || 0);
     setBloqueiosAbertos(bloqueiosCount ?? 0);
     const metasLidas = (metasData ?? []) as { id: string }[];
     setObjeto(metasData ? {
@@ -253,6 +280,8 @@ export default function PrestacaoDetalhe() {
 
   // Prontidão e prazos (P1.9).
   const regime = regimes.find(r => r.id === prestacao.regime_id)?.regime ?? null;
+  // P9.5: na saúde, o cartão dos dados pessoais aparece desde o começo.
+  const saude = Boolean(regraDoRegime(regime, "dados_de_pacientes"));
   const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
   const prontidao = avaliarProntidao({
     regime,
@@ -266,7 +295,18 @@ export default function PrestacaoDetalhe() {
     verificacoes: bloqueiosAbertos === null ? undefined : { verificada: Boolean(prestacao.verificada_em), bloqueios: bloqueiosAbertos },
     envio: resumoDoEnvio,
   });
-  const prazos = prazosDaPrestacao(prestacao, regime, alteracoesAguardando, hoje);
+  const captacao = situacaoDaCaptacao(regime, {
+    captado: Math.round(captado * 100),
+    aprovado: prestacao.valor_aprovado ? Math.round(Number(prestacao.valor_aprovado) * 100) : null,
+    orcamentoVigente: itens.length ? Math.round(totalAprovado * 100) : null,
+    alteracoes,
+    dataFimCaptacao: prestacao.data_fim_captacao ?? null,
+  });
+  const prazoReadequacao = captacao && !captacao.readequacaoPedida ? captacao.prazoDaReadequacao : null;
+  const prazosAnuais = anuaisPendentes(exerciciosDaAnual(regime, prestacao, hoje), envios ? exerciciosEnviados(envios) : []);
+  // P9.4: o prazo do saldo no encerramento, até as guias do saldo estarem pagas.
+  const prazoSaldo = dadosDoEnvio ? prazoDoSaldoEmAberto(regime, prestacao, dadosDoEnvio.devolucoes ?? []) : null;
+  const prazos = prazosDaPrestacao({ ...prestacao, prazo_readequacao: prazoReadequacao, prazos_anuais: prazosAnuais, prazo_saldo: prazoSaldo }, regime, alteracoesAguardando, hoje);
 
   // Alerta de prazo (60 dias após data_fim_execucao, ou campo prazo)
   const vencida = prestacao.prazo && new Date(prestacao.prazo) < new Date()
@@ -283,26 +323,22 @@ export default function PrestacaoDetalhe() {
 
   return (
     <div className="mx-auto max-w-pagina px-4 py-6 md:px-8">
-      {/* Avançar status */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="text-[0.6875rem] text-black/40">
-          {prestacao.captacao && <span>Negociação: {prestacao.captacao.titulo ?? "—"}</span>}
-          {prestacao.projeto && <span className="ml-2">· Projeto: {prestacao.projeto.nome}</span>}
-        </div>
+      {/* Avançar status: desenhado nas ações do cabeçalho da prestação (layout). */}
+      {slotAcoes && createPortal(<>
 
         {proximos.length + travados.length > 0 && (
           <div className="relative flex-shrink-0" ref={avancarBoxRef}>
             <button
               onClick={() => setAvancarOpen(!avancarOpen)}
               aria-expanded={avancarOpen}
-              className="flex items-center gap-2 rounded bg-[#0D0D0D] px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+              className="flex items-center gap-2 rounded bg-[#1C0E33] px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
             >
               Avançar status <ChevronDown size={13} aria-hidden />
             </button>
 
             {avancarOpen && avancarMenuPos && createPortal(
               <div
-                className="fixed bg-white rounded border shadow-lg z-20"
+                className="fixed bg-white rounded z-20 border elevacao-1"
                 style={{ right: avancarMenuPos.right, top: avancarMenuPos.top, borderColor: "rgba(13,13,13,.10)", minWidth: "15rem" }}
               >
                 <div className="p-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
@@ -323,10 +359,7 @@ export default function PrestacaoDetalhe() {
                     className="w-full flex items-center gap-2 px-4 py-3 text-left text-[0.75rem] font-medium hover:bg-black/[.03] transition border-b last:border-0"
                     style={{ borderColor: "rgba(13,13,13,.05)" }}
                   >
-                    <span
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ background: STATUS_META[s].color }}
-                    />
+                    <ArrowRight size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
                     {STATUS_META[s].label}
                   </button>
                 ))}
@@ -336,7 +369,7 @@ export default function PrestacaoDetalhe() {
                     className="flex items-start gap-2 px-4 py-3 text-[0.75rem] text-black/45 border-b last:border-0"
                     style={{ borderColor: "rgba(13,13,13,.05)" }}
                   >
-                    <span className="mt-1 w-2 h-2 rounded-full flex-shrink-0 bg-black/15" />
+                    <Lock size={12} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0 text-black/40" />
                     <span>
                       {STATUS_META[s].label}
                       <span className="block text-[0.625rem] text-[#B23B3B]">
@@ -359,7 +392,7 @@ export default function PrestacaoDetalhe() {
                     className="flex items-start gap-2 px-4 py-3 text-[0.75rem] text-black/35 border-b last:border-0"
                     style={{ borderColor: "rgba(13,13,13,.05)" }}
                   >
-                    <span className="mt-1 w-2 h-2 rounded-full flex-shrink-0 bg-black/15" />
+                    <Lock size={12} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0 text-black/40" />
                     <span>
                       {STATUS_META[s].label}
                       <span className="block text-[0.625rem]">Cabe ao administrador ou ao responsável pela prestação.</span>
@@ -376,7 +409,7 @@ export default function PrestacaoDetalhe() {
             Próximo passo: {bloqueados.map(s => STATUS_META[s].label.toLowerCase()).join(" ou ")}. Cabe ao administrador ou ao responsável pela prestação.
           </p>
         )}
-      </div>
+      </>, slotAcoes)}
 
       {erro && (
         <p role="alert" className="mb-4 px-4 py-3 rounded border text-[0.75rem]"
@@ -384,6 +417,27 @@ export default function PrestacaoDetalhe() {
           {erro}
         </p>
       )}
+
+      {aviso && (
+        <p role="status" className="mb-4 px-4 py-3 rounded border text-[0.75rem]"
+          style={{ background: "#fff", borderColor: "#2E893240", color: "#2E8932" }}>
+          {aviso}
+        </p>
+      )}
+
+      {/* Versão nova do regime (P6.4) */}
+      <VersaoNovaDoRegime
+        prestacao={prestacao}
+        regimes={regimes}
+        podeDecidir={permissoes.decidir}
+        onPassou={async mensagem => {
+          setAviso(mensagem);
+          setErro("");
+          await fetch();
+          // As checagens seguem o regime: refaz com a versão nova.
+          pedirVerificacao(id);
+        }}
+      />
 
       {/* Alerta de prazo próximo */}
       {prazoAlerta && (
@@ -409,6 +463,10 @@ export default function PrestacaoDetalhe() {
 
           <VerificacoesPrestacao prestacaoId={id} permissoes={permissoes} resumo />
 
+          {captacao && (
+            <CaptacaoDaPrestacao situacao={captacao} prestacaoId={id} fimDaCaptacao={prestacao.data_fim_captacao ?? null} podeEditar={permissoes.editar} />
+          )}
+
           {/* Painel de comprovação financeira */}
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {/* Header */}
@@ -416,18 +474,18 @@ export default function PrestacaoDetalhe() {
               <p className="text-[0.6875rem] font-semibold text-black/50 mb-3">Comprovação financeira</p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30 mb-1">Aprovado</p>
-                  <p className="text-[1.0625rem] font-bold text-black/80">{fmt(totalAprovado)}</p>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Aprovado</p>
+                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalAprovado ? "text-[#282525]" : "text-black/30"}`}>{fmt(totalAprovado)}</p>
                 </div>
                 <div>
-                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wide mb-1" style={{ color: "#2E893280" }}>Comprovado</p>
-                  <p className="text-[1.0625rem] font-bold" style={{ color: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "#7259B5" }}>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Comprovado</p>
+                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalComprovado ? "text-[#282525]" : "text-black/30"}`}>
                     {fmt(totalComprovado)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30 mb-1">A comprovar</p>
-                  <p className="text-[1.0625rem] font-bold" style={{ color: totalAComprovar > 0 ? "#D94E4E" : "#2E8932" }}>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">A comprovar</p>
+                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalAComprovar > 0 ? "text-[#282525]" : "text-black/30"}`}>
                     {totalAComprovar > 0 ? fmt(totalAComprovar) : "—"}
                   </p>
                 </div>
@@ -437,20 +495,10 @@ export default function PrestacaoDetalhe() {
             {/* Barra de progresso */}
             <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[0.625rem] text-black/35">Percentual comprovado</p>
-                <span className="text-[0.6875rem] font-bold tabular-nums" style={{
-                  color: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "rgba(13,13,13,.4)"
-                }}>{pct}%</span>
+                <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Percentual comprovado</p>
+                <span className={`text-[0.6875rem] font-semibold tabular-nums ${pct ? "text-[#282525]" : "text-black/30"}`}>{pct}%</span>
               </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(13,13,13,.07)" }}>
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(pct, 100)}%`,
-                    background: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "#7259B5",
-                  }}
-                />
-              </div>
+              <BarraCaptacao confirmado={totalComprovado} meta={totalAprovado} className="h-1.5" />
             </div>
 
             {/* Breakdown por rubrica */}
@@ -475,20 +523,10 @@ export default function PrestacaoDetalhe() {
                             <p className="text-[0.6875rem] font-medium text-black/70 truncate" title={item.caminho.length ? `${item.caminho.join(" › ")} › ${item.nome}` : item.nome}>{item.nome}</p>
                             <div className="flex items-center gap-3 flex-shrink-0 ml-4">
                               <span className="text-[0.625rem] text-black/35 tabular-nums">{fmt(itemExecutado)} / {fmt(item.vigente)}</span>
-                              <span className="text-[0.625rem] font-semibold tabular-nums" style={{
-                                color: itemPct >= 90 ? "#2E8932" : itemPct >= 50 ? "#B07A14" : "rgba(13,13,13,.35)"
-                              }}>{itemPct}%</span>
+                              <span className={`text-[0.625rem] font-semibold tabular-nums ${itemPct ? "text-[#282525]" : "text-black/30"}`}>{itemPct}%</span>
                             </div>
                           </div>
-                          <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(13,13,13,.06)" }}>
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${Math.min(itemPct, 100)}%`,
-                                background: itemPct >= 90 ? "#2E8932" : itemPct >= 50 ? "#B07A14" : "#7259B5",
-                              }}
-                            />
-                          </div>
+                          <BarraCaptacao confirmado={itemExecutado} meta={item.vigente} className="h-1" />
                         </div>
                       );
                     })}
@@ -540,6 +578,17 @@ export default function PrestacaoDetalhe() {
             </div>
           </div>
 
+          {/* Mesma obra (P7.4): ANCINE, ou quando a prestação já está num grupo. */}
+          {(regimes.find(r => r.id === prestacao.regime_id)?.regime?.sistemaOficial?.includes("STR") || prestacao.obra_grupo) && (
+            <MesmaObra prestacao={prestacao} podeEditar={permissoes.editar} onMudou={fetch} />
+          )}
+          {/* Dados públicos do projeto na ANCINE (P7.5). */}
+          {regimes.find(r => r.id === prestacao.regime_id)?.regime?.sistemaOficial?.includes("STR") && <DadosDaAncine prestacaoId={prestacao.id} />}
+          {/* Dados da parceria no Transferegov (P9.4): Pronon e Pronas/PCD. */}
+          {regimes.find(r => r.id === prestacao.regime_id)?.regime?.sistemaOficial?.includes("Transferegov") && (
+            <DadosDoTransferegov prestacao={prestacao} podeEditar={permissoes.editar} onSalvar={salvarCampos} />
+          )}
+
           <div id="dados-oficiais" className="scroll-mt-4">
             <RegimeDadosOficiais
               prestacao={prestacao}
@@ -566,30 +615,39 @@ export default function PrestacaoDetalhe() {
           <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-3">Status atual</p>
             <div className="flex items-center gap-2">
-              {STATUS_ORDER.map((s, i) => (
-                <div key={s} className="flex items-center gap-1">
-                  <div
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{
-                      background: s === prestacao.status
-                        ? STATUS_META[s].color
-                        : STATUS_ORDER.indexOf(prestacao.status) > i
-                        ? "#2E8932"
-                        : "rgba(13,13,13,.12)",
-                    }}
-                  />
-                  {i < STATUS_ORDER.length - 1 && (
-                    <div className="w-3 h-px" style={{ background: "rgba(13,13,13,.10)" }} />
-                  )}
-                </div>
-              ))}
+              {STATUS_ORDER.map((s, i) => {
+                const Icone = s === prestacao.status ? CircleDot : STATUS_ORDER.indexOf(prestacao.status) > i ? CircleCheck : Circle;
+                const tom = s === prestacao.status ? "text-[#282525]" : STATUS_ORDER.indexOf(prestacao.status) > i ? "text-black/40" : "text-black/20";
+                return (
+                  <div key={s} className="flex items-center gap-1">
+                    <Icone size={12} strokeWidth={1.75} aria-hidden="true" className={`shrink-0 ${tom}`} />
+                    {i < STATUS_ORDER.length - 1 && (
+                      <div className="w-3 h-px" style={{ background: "rgba(13,13,13,.10)" }} />
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <p className="text-[0.6875rem] font-semibold mt-2" style={{ color: meta.color }}>{meta.label}</p>
+            <p className="text-[0.6875rem] font-semibold text-[#282525] mt-2">{meta.label}</p>
           </div>
 
           <ProximosPrazos prazos={prazos} />
           <MarcosDaPrestacao prestacao={prestacao} hoje={hoje} />
           <LinksDoPatrocinador prestacaoId={id} captacaoId={prestacao.captacao_id} projetoId={prestacao.projeto_id} podeEditar={permissoes.editar} />
+          <ConvidadosDaPrestacao prestacaoId={id} podeEditar={permissoes.editar} />
+          <CapturaPorEmail prestacaoId={id} podeEditar={permissoes.editar} />
+          <AcoesDoAssistente prestacaoId={id} podeEditar={permissoes.editar} />
+          {/* P9.5: guarda e descarte dos dados pessoais; na saúde sempre, nos outros regimes depois da final. */}
+          {(saude || envios?.some(e => e.etapa === "final") || prestacao.dados_pessoais_descartados_em) && (
+            <DadosPessoaisDaPrestacao
+              prestacao={prestacao}
+              regime={regime?.nome ?? null}
+              saude={saude}
+              envios={envios}
+              podeDecidir={permissoes.decidir}
+              onMudou={fetch}
+            />
+          )}
 
           {/* Histórico */}
           <div className="bg-white rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -603,13 +661,10 @@ export default function PrestacaoDetalhe() {
                 <div className="space-y-3">
                   {log.map(entry => (
                     <div key={entry.id} className="flex gap-2.5">
-                      <div
-                        className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5"
-                        style={{ background: STATUS_META[entry.status_novo].color }}
-                      />
+                      <ArrowRight size={12} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0 text-black/40" />
                       <div>
                         <p className="text-[0.6875rem] font-medium text-black/70">
-                          → {STATUS_META[entry.status_novo].label}
+                          {STATUS_META[entry.status_novo].label}
                         </p>
                         {entry.comentario && (
                           <p className="text-[0.625rem] text-black/40 mt-0.5 italic">"{entry.comentario}"</p>

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, CalendarDays, FileCheck2, FileText, Handshake, Paperclip, Plus, Upload, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 export type ClientContract = { id: string; numero: string | null; titulo: string | null; valor: number; status: string; data_inicio: string | null; data_fim: string | null; proxima_renovacao: string | null };
 export type ClientAgencyParticipation = {
@@ -26,7 +27,6 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   vigente: { label: "Vigente", color: "#2E8932" }, encerrado: { label: "Encerrado", color: "#777777" }, renovado: { label: "Renovado", color: "#1A8B7A" },
 };
 
-function money(value: number) { return value ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value) : "Não informado"; }
 function date(value: string | null) { return value ? new Date(`${value.split("T")[0]}T12:00:00`).toLocaleDateString("pt-BR") : "—"; }
 
 export function ClientContractsView({ contaId, organizationId, accountId, contracts, participations, actionRequestNonce = 0, onSaved }: Props) {
@@ -103,7 +103,7 @@ export function ClientContractsView({ contaId, organizationId, accountId, contra
 
   return <section className="overflow-hidden rounded border border-black/[.08] bg-white">
     <header className="flex flex-col gap-4 border-b border-black/[.07] px-5 py-5 sm:flex-row sm:items-end sm:justify-between md:px-6">
-      <div><p className="text-[0.6875rem] font-medium text-black/35">Documentos e vigências</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-black">Contratos</h2></div>
+      <div><p className="text-[0.6875rem] font-medium text-black/35">Documentos e vigências</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-[#282525]">Contratos</h2></div>
       <button onClick={() => setShowForm(true)} className="inline-flex h-10 items-center gap-2 self-start rounded border border-[#7259B5]/30 bg-white px-4 text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] sm:self-auto"><Plus size={13}/>Adicionar contrato</button>
     </header>
 
@@ -114,15 +114,15 @@ export function ClientContractsView({ contaId, organizationId, accountId, contra
         const agency = participations.find(item => item.contrato_id === contract.id && item.status === "ativa");
         return <Link key={contract.id} href={`/contratos/${contract.id}`} className="group grid gap-3 py-4 transition hover:bg-black/[.018] sm:grid-cols-[minmax(0,1.5fr)_6.875rem_7.5rem_8.75rem_8.75rem_1.125rem] sm:items-center sm:px-2">
           <div className="flex min-w-0 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-black/[.045] text-black/35">{attached.length ? <FileCheck2 size={17}/> : <FileText size={17}/>}</span><div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{contract.titulo || "Contrato"}</p><p className="mt-1 flex items-center gap-1 text-[0.625rem] text-black/30"><Paperclip size={10}/>{attached.length ? `${attached.length} arquivo${attached.length === 1 ? "" : "s"}` : "Sem arquivo"}{contract.numero ? ` · ${contract.numero}` : ""}</p></div></div>
-          <div><p className="text-[0.625rem] text-black/25">Situação</p><p className="mt-1 text-[0.6875rem] font-medium" style={{ color: meta.color }}>{meta.label}</p></div>
-          <div><p className="text-[0.625rem] text-black/25">Valor</p><p className="mt-1 text-[0.6875rem] font-semibold tabular-nums text-black/60">{money(contract.valor)}</p></div>
-          <div><p className="text-[0.625rem] text-black/25">Vigência</p><p className="mt-1 flex items-center gap-1 text-[0.6875rem] text-black/45"><CalendarDays size={11}/>{contract.data_inicio || contract.data_fim ? `${date(contract.data_inicio)} — ${date(contract.data_fim)}` : "Não informada"}</p></div>
-          <div><p className="text-[0.625rem] text-black/25">Agência</p><p className="mt-1 flex items-center gap-1 truncate text-[0.6875rem] font-medium text-black/50"><Handshake size={11}/>{agency?.captador?.nome ?? "Sem agência"}</p></div>
+          <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Situação</p><div className="mt-1 flex"><span className="rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium" style={{ borderColor: meta.color.startsWith("#") ? `${meta.color}47` : "rgba(13,13,13,.12)", color: meta.color }}>{meta.label}</span></div></div>
+          <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Valor</p><p title={contract.valor ? formatarValorCompleto(contract.valor) : undefined} className={`mt-1 truncate text-[0.6875rem] font-semibold tabular-nums ${contract.valor ? "text-[#282525]" : "text-black/30"}`}>{contract.valor ? formatarValorCurto(contract.valor) : "Não informado"}</p></div>
+          <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Vigência</p><p className="mt-1 flex items-center gap-1 text-[0.6875rem] text-black/45"><CalendarDays size={11}/>{contract.data_inicio || contract.data_fim ? `${date(contract.data_inicio)} — ${date(contract.data_fim)}` : "Não informada"}</p></div>
+          <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Agência</p><p className="mt-1 flex items-center gap-1 truncate text-[0.6875rem] font-medium text-black/50"><Handshake size={11}/>{agency?.captador?.nome ?? "Sem agência"}</p></div>
           <ArrowUpRight size={14} className="text-black/20 transition group-hover:text-[#7259B5]"/>
         </Link>;
       })}</div>}
 
-    {showForm && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeForm}><form onSubmit={save} onClick={event => event.stopPropagation()} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded border border-black/[.09] bg-white shadow-[0_24px_70px_rgba(13,13,13,.16)]">
+    {showForm && <div className="fixed inset-0 z-50 flex items-center justify-center veu p-4" onClick={closeForm}><form onSubmit={save} onClick={event => event.stopPropagation()} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded bg-white border elevacao-3">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/[.07] bg-white px-5 py-4"><div><p className="text-[0.625rem] text-black/30">Novo contrato</p><h3 className="mt-0.5 text-[0.9375rem] font-semibold text-black/80">Anexar contrato</h3></div><button type="button" onClick={closeForm} className="rounded p-1.5 text-black/30 hover:bg-black/[.04]"><X size={15}/></button></header>
       <div className="space-y-4 p-5">
         <label><Label>Arquivo</Label><button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-24 w-full items-center justify-center gap-2 rounded border border-dashed border-black/[.14] bg-black/[.012] px-5 text-[0.75rem] font-medium text-black/40 transition hover:bg-black/[.03]"><Upload size={16}/>{file ? file.name : "Selecionar contrato"}</button><input ref={fileRef} type="file" className="hidden" onChange={event => { const selected = event.target.files?.[0]; if (selected) chooseFile(selected); }}/><p className="mt-1.5 text-[0.625rem] text-black/25">PDF, DOCX ou outro formato, até 50 MB</p></label>
@@ -133,7 +133,7 @@ export function ClientContractsView({ contaId, organizationId, accountId, contra
         {showDetails && <div className="grid gap-4 border-t border-black/[.06] pt-4 sm:grid-cols-2"><label><Label>Número ou referência</Label><input name="numero" className={fieldClass}/></label><label><Label>Data de assinatura</Label><input name="data_assinatura" type="date" className={fieldClass}/></label><label><Label>Início da vigência</Label><input name="data_inicio" type="date" className={fieldClass}/></label><label><Label>Fim da vigência</Label><input name="data_fim" type="date" className={fieldClass}/></label><label><Label>Próxima renovação</Label><input name="proxima_renovacao" type="date" className={fieldClass}/></label><div><Label>Renovação automática</Label><input type="hidden" name="renovacao_automatica" value={automaticRenewal}/><CustomDropdown value={automaticRenewal} onChange={setAutomaticRenewal} options={[{value:"false",label:"Não"},{value:"true",label:"Sim"}]} compact portalZIndex={100} className="w-full [&>button]:h-10 [&>button]:w-full"/></div><label className="sm:col-span-2"><Label>Observações</Label><textarea name="notas" rows={3} className={`${fieldClass} h-auto resize-none py-2.5`}/></label></div>}
         {error && <p className="rounded border border-[#D94E4E]/20 bg-white px-3 py-2 text-[0.6875rem] text-[#D94E4E]">{error}</p>}
       </div>
-      <footer className="sticky bottom-0 flex justify-end gap-3 border-t border-black/[.07] bg-white px-5 py-4"><button type="button" onClick={closeForm} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button disabled={saving || !file || !title.trim()} className="rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></footer>
+      <footer className="sticky bottom-0 flex justify-end gap-3 border-t border-black/[.07] bg-white px-5 py-4"><button type="button" onClick={closeForm} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button disabled={saving || !file || !title.trim()} className="rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></footer>
     </form></div>}
   </section>;
 }

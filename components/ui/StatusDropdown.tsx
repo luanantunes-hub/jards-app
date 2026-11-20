@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { STATUS_BADGE } from "@/components/ui/StatusBadge";
+import { CINZA_ETIQUETA, corDeEtiqueta } from "@/lib/etiquetas-padrao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import * as Icons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -20,7 +21,8 @@ export type StatusDropdownCreateInput = { label: string; bg: string; iconName: s
 type Props = {
   options: string[] | Option[];
   current: string;
-  position: { top: number; left: number };
+  /** `right` é a borda direita do gatilho: sem espaço à direita, o menu abre alinhado a ela. */
+  position: { top: number; left: number; right?: number };
   onSelect: (status: string) => void;
   onClose: () => void;
   title?: string;
@@ -39,11 +41,24 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
   const [newIcon, setNewIcon] = useState(CREATE_ICONS[0]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [left, setLeft] = useState(position.left);
+
+  // Mede o menu antes de pintar: se passar da borda direita, abre para o outro lado.
+  useLayoutEffect(() => {
+    const largura = menuRef.current?.offsetWidth ?? 0;
+    const margem = 12;
+    const limite = window.innerWidth - margem;
+    let proximo = position.left;
+    if (position.left + largura > limite) proximo = position.right != null ? position.right - largura : limite - largura;
+    setLeft(Math.max(margem, proximo));
+  }, [position.left, position.right, creating]);
+
   const resolved = options.map(o => {
     const key = typeof o === "string" ? o : o.status;
     const badge = STATUS_BADGE[key];
     const label    = (typeof o === "object" && o.label)    || badge?.label || key;
-    const bg       = (typeof o === "object" && o.bg)       || badge?.bg    || "#888888";
+    const bg       = corDeEtiqueta(typeof o === "object" ? o.bg : undefined) || badge?.bg || CINZA_ETIQUETA;
     const iconName = (typeof o === "object" && o.iconName) || null;
     const Icon: LucideIcon | undefined =
       (typeof o === "object" && o.icon) ||
@@ -67,10 +82,11 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
-        className="fixed z-50 overflow-x-hidden overflow-y-auto rounded border bg-white shadow-xl"
+        ref={menuRef}
+        className="fixed z-50 overflow-x-hidden overflow-y-auto rounded bg-white border elevacao-1"
         style={{
           top: Math.max(12, Math.min(position.top, window.innerHeight - 532 * escalaUi())),
-          left: position.left,
+          left,
           borderColor: "rgba(13,13,13,.10)",
           minWidth: "17.5rem",
           maxWidth: "20rem",
@@ -100,8 +116,9 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
                 <button
                   type="button"
                   onClick={() => { onSelect(status); onClose(); }}
-                  className="relative flex h-full min-h-[4.375rem] w-full flex-col items-center justify-center gap-1.5 rounded px-1 py-2.5 text-white transition"
-                  style={{ background: bg, opacity: isActive ? 1 : 0.58, outline: isActive ? `2px solid ${bg}` : "none", outlineOffset: isActive ? 2 : 0 }}
+                  aria-pressed={isActive}
+                  className={`relative flex h-full min-h-[4.375rem] w-full flex-col items-center justify-center gap-1.5 rounded px-1 py-2.5 text-white transition-opacity duration-200 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none ${isActive ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+                  style={{ background: bg, outline: isActive ? `2px solid ${bg}` : undefined, outlineOffset: isActive ? 2 : undefined, outlineColor: isActive ? undefined : bg }}
                 >
                   {Icon && <Icon size={14} strokeWidth={2.5} />}
                   <span className="text-center text-[0.5625rem] font-bold uppercase leading-tight tracking-wide">{label}</span>
@@ -133,13 +150,13 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
           <div className="border-t border-black/[.07] p-3">
             <input autoFocus value={newLabel} onChange={event => setNewLabel(event.target.value)} onKeyDown={event => { if (event.key === "Enter") void createOption(); }} placeholder="Nome da lei" className="h-9 w-full rounded border border-black/10 bg-white px-3 text-[0.75rem] outline-none placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/10" />
             <div className="mt-2.5 flex items-center justify-between gap-3">
-              <div className="flex gap-1">{CREATE_COLORS.map(color => <button key={color} type="button" title={color} onClick={() => setNewColor(color)} className="flex h-6 w-6 items-center justify-center rounded border" style={{ background: color, borderColor: newColor === color ? "#0D0D0D" : "transparent" }}>{newColor === color && <Icons.Check size={10} color="white"/>}</button>)}</div>
+              <div className="flex gap-1">{CREATE_COLORS.map(color => <button key={color} type="button" title={color} onClick={() => setNewColor(color)} className="flex h-6 w-6 items-center justify-center rounded border" style={{ background: color, borderColor: newColor === color ? "#282525" : "transparent" }}>{newColor === color && <Icons.Check size={10} color="white"/>}</button>)}</div>
             </div>
             <div className="mt-2 flex gap-1">{CREATE_ICONS.map(iconName => { const Icon = (Icons as any)[iconName] as LucideIcon; return <button key={iconName} type="button" title={iconName} onClick={() => setNewIcon(iconName)} className={`flex h-7 w-7 items-center justify-center rounded border ${newIcon === iconName ? "border-[#7259B5]/45 bg-white text-[#7259B5]" : "border-black/[.07] text-black/35 hover:bg-black/[.03]"}`}><Icon size={12}/></button>; })}</div>
             {error && <p className="mt-2 text-[0.625rem] font-medium text-[#C84242]">{error}</p>}
             <div className="mt-3 flex items-center justify-end gap-2">
               <button type="button" onClick={() => { setCreating(false); setError(null); }} className="h-8 px-2 text-[0.6875rem] font-medium text-black/35 hover:text-black/60">Cancelar</button>
-              <button type="button" disabled={!newLabel.trim() || saving} onClick={() => void createOption()} className="h-8 rounded bg-[#2E8932] px-3 text-[0.6875rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-35">{saving ? "Salvando…" : "Salvar"}</button>
+              <button type="button" disabled={!newLabel.trim() || saving} onClick={() => void createOption()} className="h-8 rounded acao-salvar px-3 text-[0.6875rem] font-semibold text-white transition disabled:opacity-35">{saving ? "Salvando…" : "Salvar"}</button>
             </div>
           </div>
         )}

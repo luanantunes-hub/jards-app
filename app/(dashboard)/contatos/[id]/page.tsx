@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, BadgeCheck, BriefcaseBusiness, Building2, CalendarClock, Check, ChevronDown,
-  CircleDollarSign, CircleHelp, Frown, Mail, Meh, MessageCircle, Phone, Radio, ShieldCheck,
+  CircleCheck, CircleDollarSign, CircleHelp, Frown, Mail, Meh, MessageCircle, Phone, Radio, ShieldCheck,
   Smile, Users, CheckSquare, MoreHorizontal, Calendar, MessageSquare, Pencil,
   Handshake, Sparkles, UserRound,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { TagsDoRegistro } from "@/components/ui/Tags";
 import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
 import { DetailHeaderAction, DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
@@ -19,6 +20,7 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { StatusCaptacao } from "@/lib/supabase/types";
 import { escalaUi } from "@/lib/escala-ui";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 function LinkedinIcon({ size = 14 }: { size?: number }) {
   return (
@@ -33,6 +35,7 @@ function LinkedinIcon({ size = 14 }: { size?: number }) {
 
 type Contato = {
   id: string;
+  tags?: string[];
   nome: string | null;
   cargo: string | null;
   email: string | null;
@@ -82,7 +85,7 @@ type SelectOption = { value: string; label: string; icon: React.ElementType; col
 
 const PAPEL_OPTS: SelectOption[] = [
   { value: "",               label: "Não definido",  icon: CircleHelp,  color: "rgba(13,13,13,.35)" },
-  { value: "decision_maker", label: "Decision maker", icon: CircleDollarSign, color: "#0D0D0D" },
+  { value: "decision_maker", label: "Decision maker", icon: CircleDollarSign, color: "#282525" },
   { value: "champion",       label: "Champion",       icon: BadgeCheck,  color: "#7259B5" },
   { value: "influencer",     label: "Influencer",     icon: Radio,       color: "#7259B5" },
   { value: "gatekeeper",     label: "Gatekeeper",     icon: ShieldCheck, color: "#7259B5" },
@@ -135,26 +138,11 @@ const TIPO_ICON: Record<string, React.ElementType> = {
   outro:    MoreHorizontal,
 };
 
-const TIPO_COLOR: Record<string, string> = {
-  email:    "#2D72B0",
-  telefone: "#1A8B7A",
-  linkedin: "#2D72B0",
-  reuniao:  "rgba(13,13,13,.45)",
-  evento:   "#B07A14",
-  tarefa:   "#7259B5",
-  outro:    "rgba(13,13,13,.40)",
-};
-
 /* ─── Helpers ─────────────────────────────────────────────────────────── */
 
 function daysSince(dateStr: string | null): number | null {
   if (!dateStr) return null;
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
-}
-
-function fmtCurrency(v: number | null): string {
-  if (!v) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
 }
 
 function fmtDate(d: string | null): string {
@@ -163,11 +151,10 @@ function fmtDate(d: string | null): string {
   return `${day}/${m}/${y}`;
 }
 
-function interacaoColor(days: number | null): string {
-  if (days === null) return "rgba(13,13,13,.4)";
-  if (days <= 14) return "#1A8B7A";
-  if (days <= 30) return "#B07A14";
-  return "#D94E4E";
+/** Só o atraso pinta o ícone: âmbar depois de 14 dias, vermelho depois de 30. */
+function interacaoAlerta(days: number | null): string | undefined {
+  if (days === null || days <= 14) return undefined;
+  return days <= 30 ? "#B07A14" : "#D94A4A";
 }
 
 /* ─── Inline edit components ─────────────────────────────────────────── */
@@ -311,7 +298,7 @@ function InlineSelect({
         onClick={toggle}
         aria-haspopup="listbox"
         aria-expanded={Boolean(menuPos)}
-        className="group inline-flex min-h-9 w-full max-w-full items-center gap-2 rounded border border-transparent bg-transparent px-2.5 py-2 text-[0.8125rem] font-semibold text-[#0D0D0D] transition-[background-color,border-color,transform] duration-150 hover:border-black/[.10] hover:bg-black/[.018] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+        className="group inline-flex min-h-9 w-full max-w-full items-center gap-2 rounded border border-transparent bg-transparent px-2.5 py-2 text-[0.8125rem] font-semibold text-[#282525] transition-[background-color,border-color,transform] duration-150 hover:border-black/[.10] hover:bg-black/[.018] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
       >
         <span className="flex h-5 w-5 shrink-0 items-center justify-center text-black/65"><CurrentIcon size={14} strokeWidth={1.9} /></span>
         <span className="min-w-0 flex-1 truncate text-left">{current?.label ?? "—"}</span>
@@ -321,7 +308,7 @@ function InlineSelect({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setMenuPos(null)} />
           <div
-            className="fixed z-50 min-w-[10rem] overflow-hidden rounded border bg-white py-1 shadow-xl"
+            className="fixed z-50 min-w-[10rem] overflow-hidden rounded bg-white py-1 border elevacao-1"
             style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width, borderColor: "rgba(13,13,13,.12)" }}
             role="listbox"
           >
@@ -333,7 +320,7 @@ function InlineSelect({
                   type="button"
                   onClick={() => handleSelect(o.value)}
                   className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[0.75rem] transition hover:bg-black/[.04]"
-                  style={{ fontWeight: selected ? 700 : 500, color: o.value ? "#0D0D0D" : "rgba(13,13,13,.4)" }}
+                  style={{ fontWeight: selected ? 700 : 500, color: o.value ? "#282525" : "rgba(13,13,13,.4)" }}
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center text-black/60"><Icon size={13}/></span>
                   <span className="min-w-0 flex-1 truncate">{o.label}</span>
@@ -395,8 +382,8 @@ function InlineBars({
         })}
       </div>
       <div className="flex min-w-0 items-baseline justify-between gap-2">
-        <p className="truncate text-[0.6875rem] font-semibold" style={{ color: displayValue == null ? "rgba(13,13,13,.32)" : color }}>{reading}</p>
-        <p className="shrink-0 text-[0.875rem] font-semibold tabular-nums tracking-[-.02em] text-black/65">{displayValue ?? "—"}<span className="ml-0.5 text-[0.625rem] font-medium text-black/25">/{max}</span></p>
+        <p className={`truncate text-[0.6875rem] font-medium ${displayValue == null ? "text-black/30" : "text-black/55"}`}>{reading}</p>
+        <p className={`shrink-0 text-[0.875rem] font-semibold tabular-nums tracking-[-.02em] ${displayValue == null ? "text-black/30" : "text-[#282525]"}`}>{displayValue ?? "—"}<span className="ml-0.5 text-[0.625rem] font-medium text-black/25">/{max}</span></p>
       </div>
     </div>
   );
@@ -427,7 +414,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
     const [cRes, aRes, capRes] = await Promise.all([
       (supabase as any)
         .from("contatos")
-        .select("id, nome, cargo, email, telefone, telefone_2, linkedin_url, score, origem, notas, ultima_interacao, created_at, updated_at, papel_decisao, influencia, sentimento, forca_relacao, canal_preferido, ativo_na_empresa, empresa_crm_id, empresa_crm:empresas_crm!empresa_crm_id(id, nome, domain_key, site)")
+        .select("id, tags, nome, cargo, email, telefone, telefone_2, linkedin_url, score, origem, notas, ultima_interacao, created_at, updated_at, papel_decisao, influencia, sentimento, forca_relacao, canal_preferido, ativo_na_empresa, empresa_crm_id, empresa_crm:empresas_crm!empresa_crm_id(id, nome, domain_key, site)")
         .eq("id", id)
         .single(),
       (supabase as any)
@@ -525,7 +512,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
               </div>
 
               <div className="min-w-0">
-                <h1 className="text-[1.75rem] font-semibold leading-[1.06] tracking-[-.04em] text-[#0D0D0D] sm:text-[2.125rem]">
+                <h1 className="text-[1.75rem] font-semibold leading-[1.06] tracking-[-.04em] text-[#282525] sm:text-[2.125rem]">
                   <InlineText
                     value={contato.nome}
                     onSave={v => saveField("nome", v)}
@@ -549,6 +536,9 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                       </Link>
                     </>
                   )}
+                </div>
+                <div className="mt-2.5">
+                  <TagsDoRegistro tabela="contatos" id={contato.id} tags={contato.tags} onSalvo={tags => setContato(atual => atual ? { ...atual, tags } : atual)} />
                 </div>
               </div>
             </div>
@@ -582,35 +572,35 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
           <div className="mt-7 grid grid-cols-1 gap-px overflow-hidden rounded border bg-black/[.045] sm:grid-cols-2 lg:grid-cols-[1.1fr_1.15fr_1.15fr_1fr_1fr_1fr]" style={{ borderColor: "rgba(13,13,13,.055)" }}>
             {/* Papel */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Papel na decisão</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Papel na decisão</p>
               <InlineSelect value={contato.papel_decisao} opts={PAPEL_OPTS} onSave={v => saveField("papel_decisao", v)} />
             </div>
             {/* Influência */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="flex items-center gap-1.5 text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35"><Radio size={11} strokeWidth={1.9} />Influência</p>
-              <InlineBars value={contato.influencia} max={5} color="#7259B5" kind="influencia" onSave={v => saveField("influencia", v)} />
+              <p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45"><Radio size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />Influência</p>
+              <InlineBars value={contato.influencia} max={5} color="rgba(13,13,13,.7)" kind="influencia" onSave={v => saveField("influencia", v)} />
             </div>
             {/* Força */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="flex items-center gap-1.5 text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35"><Handshake size={11} strokeWidth={1.9} />Força da relação</p>
+              <p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45"><Handshake size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />Força da relação</p>
               <InlineBars value={contato.forca_relacao} max={5} color="#1A8B7A" kind="relacao" onSave={v => saveField("forca_relacao", v)} />
             </div>
             {/* Sentimento */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Sentimento</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Sentimento</p>
               <InlineSelect value={contato.sentimento} opts={SENTIMENTO_OPTS} onSave={v => saveField("sentimento", v)} />
             </div>
             {/* Última interação */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Última interação</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Última interação</p>
               <div className="group flex min-h-9 items-center gap-2 rounded border border-transparent bg-transparent px-2.5 py-2 transition hover:border-black/[.10] hover:bg-black/[.018]">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center" style={{ color: interacaoColor(dias) }}><CalendarClock size={14} strokeWidth={1.9} /></span>
-                <p className="truncate text-[0.8125rem] font-semibold" style={{ color: interacaoColor(dias) }}>{interacaoText}</p>
+                <span className={`flex h-5 w-5 shrink-0 items-center justify-center ${interacaoAlerta(dias) ? "" : "text-black/40"}`} style={interacaoAlerta(dias) ? { color: interacaoAlerta(dias) } : undefined}><CalendarClock size={14} strokeWidth={1.9} aria-hidden="true" /></span>
+                <p className={`truncate text-[0.8125rem] font-semibold tabular-nums ${dias === null ? "text-black/30" : "text-[#282525]"}`}>{interacaoText}</p>
               </div>
             </div>
             {/* Canal preferido */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Canal preferido</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Canal preferido</p>
               <InlineSelect value={contato.canal_preferido} opts={CANAL_OPTS} onSave={v => saveField("canal_preferido", v)} />
             </div>
           </div>
@@ -640,7 +630,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
               </div>
               <div className="grid gap-px sm:grid-cols-2 xl:grid-cols-4">
                 <div className="min-h-[5.75rem] min-w-0 bg-white px-5 py-4">
-                  <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Empresa</p>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Empresa</p>
                   <div className="mt-2">
                     <CustomDropdown
                       value={contato.empresa_crm_id ?? ""}
@@ -664,7 +654,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                       <Icon size={15} />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">{label}</p>
+                      <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p>
                       <InlineText
                         value={value}
                         onSave={nextValue => saveField(field, nextValue)}
@@ -675,13 +665,13 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                   </div>
                 ))}
                 <div className="min-h-[6.75rem] min-w-0 bg-white px-5 py-4">
-                  <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Origem</p>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Origem</p>
                   <div className="mt-2">
                     <InlineSelect value={contato.origem} opts={ORIGEM_OPTS} onSave={value => saveField("origem", value)} />
                   </div>
                 </div>
                 <div className="min-h-[6.75rem] min-w-0 bg-white px-5 py-4">
-                  <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Notas de contato</p>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Notas de contato</p>
                   <InlineTextarea value={contato.notas} onSave={value => saveField("notas", value)} />
                 </div>
                 <div className="flex min-h-[6.75rem] min-w-0 items-start gap-3 bg-white px-5 py-4">
@@ -689,7 +679,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                     <CalendarClock size={15} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Registro</p>
+                    <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Registro</p>
                     <div className="mt-2 space-y-1.5 text-[0.6875rem] text-black/40">
                       <p className="flex items-center justify-between gap-2"><span>Adicionado</span><strong className="font-semibold tabular-nums text-black/65">{fmtDate(contato.created_at)}</strong></p>
                       <p className="flex items-center justify-between gap-2"><span>Atualizado</span><strong className="font-semibold tabular-nums text-black/65">{fmtDate(contato.updated_at)}</strong></p>
@@ -711,21 +701,20 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                 <div className="relative border-l ml-3 space-y-0" style={{ borderColor: "rgba(13,13,13,.10)" }}>
                   {atividades.map(a => {
                     const TipoIcon  = (a.tipo ? TIPO_ICON[a.tipo] : null) ?? MessageSquare;
-                    const tipoColor = a.tipo ? (TIPO_COLOR[a.tipo] ?? "rgba(13,13,13,.4)") : "rgba(13,13,13,.4)";
                     const dataStr   = a.data_realizada ?? a.data_prevista;
                     return (
                       <div key={a.id} className="relative flex gap-4 pb-5 pl-6">
                         <div className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white shadow-sm" style={{ background: "#fff" }}>
-                          <TipoIcon size={11} style={{ color: tipoColor }} />
+                          <TipoIcon size={12} strokeWidth={1.75} aria-hidden="true" className="text-black/40" />
                         </div>
                         <div className="min-w-0 flex-1 rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                           <div className="flex flex-wrap items-start justify-between gap-2">
-                            <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">{a.nome}</p>
+                            <p className="text-[0.8125rem] font-semibold text-[#282525]">{a.nome}</p>
                             <span className="shrink-0 text-[0.6875rem] text-black/35">{fmtDate(dataStr)}</span>
                           </div>
                           {a.resultado && <p className="mt-1 text-[0.75rem] text-black/55 line-clamp-2">{a.resultado}</p>}
                           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.625rem] text-black/35">
-                            {a.feita && <span className="font-semibold text-[#1A8B7A]">Concluída</span>}
+                            {a.feita && <span className="inline-flex items-center gap-1 font-medium text-black/55"><CircleCheck size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />Concluída</span>}
                             {a.responsavel?.full_name && <span>{a.responsavel.full_name}</span>}
                             {a.captacao?.titulo && (
                               <Link href={`/captacoes/${a.captacao.id}`} className="text-[#7259B5] hover:underline">{a.captacao.titulo}</Link>
@@ -754,7 +743,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                           className="block rounded border px-3 py-2.5 transition hover:border-[#7259B5]/30 hover:bg-black/[.04]"
                           style={{ borderColor: "rgba(13,13,13,.09)" }}>
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-[0.75rem] font-semibold text-[#0D0D0D] leading-snug">{c.titulo ?? c.projeto?.nome}</p>
+                            <p className="text-[0.75rem] font-semibold text-[#282525] leading-snug">{c.titulo ?? c.projeto?.nome}</p>
                             <StatusBadge
                               status={c.status}
                               label={etiqueta?.label ?? cfg.label}
@@ -765,7 +754,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                           </div>
                           <div className="mt-0.5 flex items-center gap-2 text-[0.625rem] text-black/35">
                             {c.empresa_crm?.nome && <span>{c.empresa_crm.nome}</span>}
-                            {c.valor_solicitado && <span>· {fmtCurrency(c.valor_solicitado)}</span>}
+                            {c.valor_solicitado && <span className="tabular-nums" title={formatarValorCompleto(c.valor_solicitado)}>· {formatarValorCurto(c.valor_solicitado)}</span>}
                           </div>
                         </Link>
                       );
@@ -823,10 +812,10 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                           className="group cursor-pointer transition hover:bg-black/[.025] focus-visible:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/15"
                         >
                           <td className="px-5 py-3.5">
-                            <span className="text-[0.8125rem] font-semibold text-[#0D0D0D]">{nome}</span>
+                            <span className="text-[0.8125rem] font-semibold text-[#282525]">{nome}</span>
                           </td>
                           <td className="px-5 py-3.5 text-[0.78125rem] text-black/55">{c.empresa_crm?.nome ?? "—"}</td>
-                          <td className="px-5 py-3.5 text-[0.78125rem] text-black/55 tabular-nums">{fmtCurrency(c.valor_solicitado)}</td>
+                          <td className="px-5 py-3.5 text-[0.78125rem] text-black/55 tabular-nums" title={c.valor_solicitado ? formatarValorCompleto(c.valor_solicitado) : undefined}>{c.valor_solicitado ? formatarValorCurto(c.valor_solicitado) : "—"}</td>
                           <td className="px-5 py-3.5">
                             <StatusBadge
                               status={c.status}

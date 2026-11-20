@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import type { PotencialFechamento as PotencialFechamentoType } from "@/lib/supabase/types";
 import { KanbanBoard, KanbanColumn, KanbanEmpty, KanbanSkeleton } from "@/components/kanban/KanbanPrimitives";
+import { formatarValorCurto } from "@/lib/valor";
 
 export type PotencialFechamento = PotencialFechamentoType;
 
@@ -25,12 +26,6 @@ const COLUMNS: Column[] = [
   { value: "medio", label: "Médio", accent: "#B07A14", iconName: "Minus", weight: 0.6 },
   { value: "alto", label: "Alto", accent: "#2E8932", iconName: "ArrowUp", weight: 0.85 },
 ];
-
-function formatValue(value: number): string {
-  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `R$ ${value.toLocaleString("pt-BR")}`;
-  return `R$ ${value.toLocaleString("pt-BR")}`;
-}
 
 /**
  * Reusable inverted potential board. The data model remains domain-owned:
@@ -70,8 +65,8 @@ export function PotentialKanban<T extends PotentialKanbanItem>({
               key={column.value}
               label={column.label}
               count={loading ? null : cards.length}
-              total={!loading && valuedCards.length ? formatValue(total) : null}
-              forecast={!loading && valuedCards.length ? formatValue(weighted) : null}
+              total={!loading && valuedCards.length ? formatarValorCurto(total) : null}
+              forecast={!loading && valuedCards.length ? formatarValorCurto(weighted) : null}
               accent={column.accent}
               iconName={column.iconName}
               compact

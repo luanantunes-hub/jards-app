@@ -368,7 +368,7 @@
     /* ── Reveal ── */
     section[id] { scroll-margin-top:96px; }
     :focus-visible { outline:3px solid rgba(104,77,176,.45); outline-offset:3px; }
-    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#0D0D0D; color:#fff; font-size:13px; font-weight:500; transition:transform .18s ease; }
+    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#282525; color:#fff; font-size:13px; font-weight:500; transition:transform .18s ease; }
     .skip-link:focus { transform:translateY(0); }
     .reveal { opacity:1; transform:none; }
     html.js .reveal { opacity:0; transform:translateY(20px); transition:opacity .55s ease,transform .55s ease; }
@@ -622,7 +622,7 @@
     .art-desktop-frame::after { position:absolute; right:-4.5%; bottom:-11px; left:-4.5%; height:19px; border:1px solid #94979b; border-top-color:#f3f4f5; border-radius:2px 2px 50% 50% / 2px 2px 12px 12px; background:linear-gradient(90deg,rgba(52,56,62,.6),transparent 5% 95%,rgba(52,56,62,.6)),linear-gradient(180deg,#e7e8ea 0%,#c8cbcf 30%,#aaadb2 54%,#797d83 82%,#575b61 100%); box-shadow:inset 0 1px 0 #fff,0 2px 2px rgba(36,38,43,.22),0 12px 15px -8px rgba(36,38,43,.3); content:""; }
     .art-laptop-notch { position:absolute; z-index:2; bottom:0; left:42%; width:16%; height:8px; border-radius:0 0 9px 9px; background:linear-gradient(90deg,#90949a,#b9bdc2 12% 88%,#90949a); box-shadow:inset 0 2px 3px rgba(32,35,39,.3),0 1px 0 rgba(255,255,255,.6); pointer-events:none; }
     .art-workspace { position:relative; z-index:1; width:100%; overflow:hidden; border:1px solid rgba(40,37,37,.13); border-radius:9px 9px 3px 3px; background:#fff; text-align:left; }
-    .art-float { position:absolute; z-index:4; overflow:hidden; border:1px solid rgba(40,37,37,.12); border-radius:12px; background:rgba(255,255,255,.96); box-shadow:0 22px 58px rgba(52,42,78,.17),0 5px 16px rgba(40,37,37,.09); text-align:left; }
+    .art-float { position:absolute; z-index:4; overflow:hidden; border:1px solid rgba(40,37,37,.12); border-radius:4px; background:rgba(255,255,255,.96); box-shadow:0 22px 58px rgba(52,42,78,.17),0 5px 16px rgba(40,37,37,.09); text-align:left; }
     .art-report-card { z-index:1; top:20px; left:2.2%; width:270px; padding:17px 18px 15px; }
     .art-report-head { display:flex; align-items:center; gap:8px; padding-bottom:12px; border-bottom:1px solid rgba(40,37,37,.09); font-size:11px; font-weight:700; }
     .art-report-icon { display:grid; width:22px; height:22px; place-items:center; border:1px solid rgba(104,77,176,.28); border-radius:50%; color:#684DB0; font-size:11px; }
@@ -767,8 +767,8 @@
     /* ── Alternativa: tokens ── */
     :root {
       --accent-gradient: linear-gradient(90deg,#7B35E8 0%,#B875FF 38%,#9145F5 68%,#684DB0 100%);
-      --alt-ink: #0D0D0D;
-      --alt-ink-hover: #2B2828;
+      --alt-ink: #282525;
+      --alt-ink-hover: #3A3535;
       --alt-purple: #684DB0;
       --alt-purple-focus: #7259B5;
       --alt-purple-on-dark: #CFC3F0;
@@ -904,19 +904,20 @@
     .lei-card-btn { position:relative; display:flex; flex:1; align-items:center; gap:14px; width:100%; padding:14px 16px 14px 14px; border:0; border-bottom:1px solid rgba(13,13,13,.12); border-radius:0; background:transparent; color:rgba(13,13,13,.6); text-align:left; cursor:pointer; transition:background-color .18s ease, color .18s ease; }
     .lei-card-btn:hover { background:rgba(255,255,255,.6); color:var(--alt-ink); }
     .lei-card-btn.is-active { background:#fff; color:var(--alt-ink); }
-    .lei-card-btn::before { content:''; position:absolute; top:50%; left:-24px; width:24px; height:1px; background:repeating-linear-gradient(90deg, var(--lei-cor) 0 3px, transparent 3px 7px); transform:scaleX(0); transform-origin:right center; transition:transform .3s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    .lei-card-btn::before { content:''; position:absolute; top:50%; left:-24px; width:24px; height:1px; background:repeating-linear-gradient(90deg, #9A9AA4 0 3px, transparent 3px 7px); transform:scaleX(0); transform-origin:right center; transition:transform .3s cubic-bezier(.4,0,.2,1); pointer-events:none; }
     .lei-card-btn::after { content:''; position:absolute; top:calc(50% - 4px); left:-28px; width:9px; height:9px; opacity:0; pointer-events:none; transition:opacity .2s ease .2s;
       background:linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 1px 100% no-repeat,
                  linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 100% 1px no-repeat; }
     .lei-card-btn.is-active::before { transform:scaleX(1); }
     .lei-card-btn.is-active::after { opacity:1; }
     .lei-card-btn:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:-2px; }
-    .lei-icone { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:36px; height:36px; border:1px solid rgba(13,13,13,.14); border-radius:4px; background:#fff; color:rgba(13,13,13,.58); font-size:19px; transition:background-color .18s ease, border-color .18s ease, color .18s ease; }
-    .lei-card-btn:hover .lei-icone { border-color:var(--lei-cor); color:var(--lei-cor); }
-    .lei-card-btn.is-active .lei-icone { border-color:var(--lei-cor); background:var(--lei-cor); color:#fff; }
+    .lei-icone { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:52px; height:52px; }
+    .lei-icone img { display:block; width:100%; height:100%; object-fit:contain; opacity:.62; filter:grayscale(.55); transition:opacity .18s ease, filter .18s ease, transform .24s ease; }
+    .lei-card-btn:hover .lei-icone img { opacity:.9; filter:none; }
+    .lei-card-btn.is-active .lei-icone img { opacity:1; filter:none; }
     .lei-nome { font-size:17px; font-weight:500; line-height:1.3; letter-spacing:-.01em; }
-    .lei-progresso { position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--lei-cor); transform:scaleX(0); transform-origin:left center; transition:transform .6s cubic-bezier(.4,0,.2,1); pointer-events:none; }
-    @media (prefers-reduced-motion: reduce) { .lei-icone, .lei-card-btn::before, .lei-card-btn::after, .lei-progresso { transition:none; } }
+    .lei-progresso { position:absolute; left:0; right:0; bottom:-1px; height:2px; background:#9A9AA4; transform:scaleX(0); transform-origin:left center; transition:transform .6s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    @media (prefers-reduced-motion: reduce) { .lei-icone img, .lei-card-btn::before, .lei-card-btn::after, .lei-progresso { transition:none; } }
     @media (min-width:768px) { .leis-seletor.alt-scroll-x { overflow:visible; -webkit-mask-image:none; mask-image:none; } }
     @media (max-width:767px) {
       .leis-legenda-topo, .leis-registro { display:none; }
@@ -925,7 +926,7 @@
       .lei-card-btn:hover, .lei-card-btn.is-active { background:none; color:var(--alt-ink); }
       .lei-card-btn::before, .lei-card-btn::after { display:none; }
       .lei-progresso { bottom:0; }
-      .lei-icone { width:26px; height:26px; font-size:14px; }
+      .lei-icone { width:34px; height:34px; }
       .lei-nome { font-size:14px; font-weight:500; white-space:nowrap; }
     }
 
@@ -1037,6 +1038,7 @@
     .recurso--cheio .recurso-icone { background:rgba(255,255,255,.16); }
     @media (prefers-reduced-motion: reduce) { .recurso, .recurso:hover { transition:none; transform:none; } }
   </style>
+  <link rel="stylesheet" href="/menu-site.css" />
 </head>
 <body>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -1044,21 +1046,50 @@
 <!-- ════════════════════════ NAV ════════════════════════ -->
 <header class="fixed inset-x-0 top-0 z-50">
   <div class="landing-nav-shell max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
-    <a href="#top" aria-label="Voltar ao início"><img src="/assets/jards-logo.svg" alt="Jards" class="h-7" /></a>
+    <a href="/" aria-label="Jards, página inicial"><img src="/assets/jards-logo.svg" alt="Jards" class="h-7" /></a>
 
-    <nav class="hidden md:flex items-center gap-8">
-      <a href="#leis" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Leis</a>
-      <a href="#patrocinador" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Patrocinador</a>
-      <a href="#comparativo" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Comparativo</a>
-      <a href="#editais" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Editais</a>
+    <nav class="menu-site" aria-label="Principal">
+      <div class="menu-site__grupo" data-menu-grupo>
+        <button type="button" class="menu-site__gatilho" data-menu-gatilho aria-expanded="false" aria-controls="menuProduto">Produto <i class="ph ph-caret-down menu-site__seta" aria-hidden="true"></i></button>
+        <div class="menu-site__painel" id="menuProduto" style="--colunas:2">
+          <div class="menu-site__coluna">
+            <p class="menu-site__secao">Captação de recursos</p>
+            <a class="menu-site__item" href="/incentivadores" aria-current="page"><span class="menu-site__titulo">Inteligência</span><span class="menu-site__desc">Quem incentiva cada lei, empresa por empresa, e os editais abertos.</span></a>
+            <a class="menu-site__item" href="/crm"><span class="menu-site__titulo">CRM</span><span class="menu-site__desc">Empresas, negociações, propostas e prazos, até a renovação.</span></a>
+          </div>
+          <div class="menu-site__coluna">
+            <p class="menu-site__secao">Prestação de contas</p>
+            <a class="menu-site__item" href="/prestacao-de-contas"><span class="menu-site__titulo">Prestação de contas</span><span class="menu-site__desc">Orçamento, extrato, comprovantes e envio, conferidos pelas regras de cada lei.</span></a>
+          </div>
+        </div>
+      </div>
+      <a class="menu-site__link" href="/precos">Preços</a>
+      <a class="menu-site__link" href="/publicacoes">Publicações</a>
     </nav>
 
     <div class="flex items-center gap-1 md:gap-3">
-      <a href="/login" data-app-path="/login" class="alt-nav-login"><span class="md:hidden">Entrar</span><span class="hidden md:inline">Fazer login</span></a>
+      <a href="/login" data-app-path="/login" class="alt-nav-login menu-site__login"><span class="md:hidden">Entrar</span><span class="hidden md:inline">Fazer login</span></a>
       <a href="/cadastro" data-app-path="/cadastro" class="alt-cta alt-cta--header">
         Começar grátis
         <i class="ph ph-arrow-right" aria-hidden="true"></i>
       </a>
+      <button type="button" class="menu-site__botao-celular" data-menu-celular aria-expanded="false" aria-controls="menuCelular" aria-label="Abrir menu"><i class="ph ph-list" aria-hidden="true"></i></button>
+    </div>
+  </div>
+  <div class="menu-celular" id="menuCelular" hidden>
+    <div class="menu-celular__secao">
+      <span class="menu-celular__rotulo">Captação de recursos</span>
+      <a class="menu-celular__link" href="/incentivadores" aria-current="page">Inteligência</a>
+      <a class="menu-celular__link" href="/crm">CRM</a>
+    </div>
+    <div class="menu-celular__secao">
+      <span class="menu-celular__rotulo">Prestação de contas</span>
+      <a class="menu-celular__link" href="/prestacao-de-contas">Prestação de contas</a>
+    </div>
+    <div class="menu-celular__secao">
+      <a class="menu-celular__link" href="/precos">Preços</a>
+      <a class="menu-celular__link" href="/publicacoes">Publicações</a>
+      <a class="menu-celular__link" href="/login" data-app-path="/login">Fazer login</a>
     </div>
   </div>
 </header>
@@ -1067,7 +1098,6 @@
 
 <!-- ════════════════════════ HERO ════════════════════════ -->
 <section id="top" class="landing-hero">
-  <div class="prancheta" data-prancheta="topo" aria-hidden="true"></div>
   <div class="hero-layout">
     <div class="hero-copy">
       <p class="alt-kicker mb-6">Além do VERSALIC, do SALIC e do painel do Esporte</p>
@@ -1086,23 +1116,23 @@
       <!-- Leis cobertas: coluna ao lado da tabela no desktop, abas roláveis acima dela no celular -->
       <div class="leis-seletor alt-scroll-x reveal" role="group" aria-label="Lei de incentivo">
         <div class="leis-legenda-topo" aria-hidden="true"><span>Lei</span><span class="leis-contador"><span class="leis-contador-atual">01</span><span>/ 04</span></span></div>
-        <button type="button" class="lei-card-btn is-active" style="--lei-cor:#684DB0" data-lei="cultura" aria-pressed="true" onclick="selecionarLei('cultura',this)">
-          <span class="lei-icone"><i class="ph ph-piano-keys" aria-hidden="true"></i></span>
+        <button type="button" class="lei-card-btn is-active" style="--lei-cor:#D94A4A" data-lei="cultura" aria-pressed="true" onclick="selecionarLei('cultura',this)">
+          <span class="lei-icone"><img src="/illustrations/leis/cultura.png?v=2" alt="" width="192" height="192" loading="lazy"></span>
           <span class="lei-nome font-display">Cultura</span>
           <span class="lei-progresso" aria-hidden="true"></span>
         </button>
-        <button type="button" class="lei-card-btn" style="--lei-cor:#2D72B0" data-lei="esporte" aria-pressed="false" onclick="selecionarLei('esporte',this)">
-          <span class="lei-icone"><i class="ph ph-soccer-ball" aria-hidden="true"></i></span>
+        <button type="button" class="lei-card-btn" style="--lei-cor:#E5482B" data-lei="esporte" aria-pressed="false" onclick="selecionarLei('esporte',this)">
+          <span class="lei-icone"><img src="/illustrations/leis/esporte.png?v=2" alt="" width="192" height="192" loading="lazy"></span>
           <span class="lei-nome font-display">Esporte</span>
           <span class="lei-progresso" aria-hidden="true"></span>
         </button>
-        <button type="button" class="lei-card-btn" style="--lei-cor:#D94A4A" data-lei="audiovisual" aria-pressed="false" onclick="selecionarLei('audiovisual',this)">
-          <span class="lei-icone"><i class="ph ph-film-slate" aria-hidden="true"></i></span>
+        <button type="button" class="lei-card-btn" style="--lei-cor:#D6336C" data-lei="audiovisual" aria-pressed="false" onclick="selecionarLei('audiovisual',this)">
+          <span class="lei-icone"><img src="/illustrations/leis/audiovisual.png?v=3" alt="" width="192" height="192" loading="lazy"></span>
           <span class="lei-nome font-display">Audiovisual</span>
           <span class="lei-progresso" aria-hidden="true"></span>
         </button>
-        <button type="button" class="lei-card-btn" style="--lei-cor:#1A8B7A" data-lei="saude" aria-pressed="false" onclick="selecionarLei('saude',this)">
-          <span class="lei-icone"><i class="ph ph-stethoscope" aria-hidden="true"></i></span>
+        <button type="button" class="lei-card-btn" style="--lei-cor:#B23A3A" data-lei="saude" aria-pressed="false" onclick="selecionarLei('saude',this)">
+          <span class="lei-icone"><img src="/illustrations/leis/saude.png?v=2" alt="" width="192" height="192" loading="lazy"></span>
           <span class="lei-nome font-display">Saúde</span>
           <span class="lei-progresso" aria-hidden="true"></span>
         </button>
@@ -1118,7 +1148,7 @@
         <div id="leis-lista-rows" class="relative" style="z-index:1"></div>
         <div id="leis-perfil" class="lp-perfil" aria-hidden="true"></div>
         <div id="leis-cursor" class="lp-cursor" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2v15.5l4.1-3.9 2.7 6.2 2.9-1.3-2.7-6H15.5z" fill="#0D0D0D" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          <svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2v15.5l4.1-3.9 2.7 6.2 2.9-1.3-2.7-6H15.5z" fill="#282525" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
         </div>
       </div>
 
@@ -1144,28 +1174,28 @@
       <p class="text-black/55 text-[15px] leading-relaxed mt-5 max-w-xl">Empresas com aportes registrados na base do Jards e quanto foi incentivado em cada ano, a partir dos dados públicos de cada lei.</p>
     </div>
     <div class="bento-leis reveal">
-      <article class="bento-lei bento-lei--grande" style="--lei-cor:#684DB0">
+      <article class="bento-lei bento-lei--grande" style="--lei-cor:#D94A4A">
         <p class="bento-lei-topo"><i class="ph ph-piano-keys" aria-hidden="true"></i>Lei Rouanet</p>
         <div class="bento-spark" aria-hidden="true"><svg viewBox="0 0 240 56"><defs><linearGradient id="spark-cultura" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset="1" stop-color="#fff" stop-opacity=".02"/></linearGradient></defs><path d="M0.0 50.0 C20.0 49.6 40.0 49.9 60.0 48.8 C80.0 47.7 100.0 48.7 120.0 43.3 C140.0 37.9 160.0 20.8 180.0 14.9 C200.0 9.0 220.0 10.3 240.0 8.0 L240 56 L0 56 Z" fill="url(#spark-cultura)"/><path d="M0.0 50.0 C20.0 49.6 40.0 49.9 60.0 48.8 C80.0 47.7 100.0 48.7 120.0 43.3 C140.0 37.9 160.0 20.8 180.0 14.9 C200.0 9.0 220.0 10.3 240.0 8.0" fill="none" stroke="rgba(255,255,255,.92)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bento-spark-ponto" style="left:100.00%;top:14.29%"></span></div>
         <p class="bento-lei-num"><span data-contar="1829" data-casas="0">1.829</span></p>
         <p class="bento-lei-rotulo">empresas incentivadoras na base</p>
         <p class="bento-lei-total"><span>Em 2025: <strong>R$ <span data-contar="3.4" data-casas="1">3,4</span> bi</strong></span><span class="bento-lei-var">+<span data-contar="10" data-casas="0">10</span>% sobre 2024</span></p>
       </article>
-      <article class="bento-lei bento-lei--larga" style="--lei-cor:#2D72B0">
+      <article class="bento-lei bento-lei--larga" style="--lei-cor:#E5482B">
         <p class="bento-lei-topo"><i class="ph ph-soccer-ball" aria-hidden="true"></i>Esporte</p>
         <div class="bento-spark" aria-hidden="true"><svg viewBox="0 0 240 56"><defs><linearGradient id="spark-esporte" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset="1" stop-color="#fff" stop-opacity=".02"/></linearGradient></defs><path d="M0.0 50.0 C20.0 49.2 40.0 49.9 60.0 47.1 C80.0 44.3 100.0 34.2 120.0 29.7 C140.0 25.1 160.0 23.4 180.0 19.8 C200.0 16.2 220.0 11.9 240.0 8.0 L240 56 L0 56 Z" fill="url(#spark-esporte)"/><path d="M0.0 50.0 C20.0 49.2 40.0 49.9 60.0 47.1 C80.0 44.3 100.0 34.2 120.0 29.7 C140.0 25.1 160.0 23.4 180.0 19.8 C200.0 16.2 220.0 11.9 240.0 8.0" fill="none" stroke="rgba(255,255,255,.92)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bento-spark-ponto" style="left:100.00%;top:14.29%"></span></div>
         <p class="bento-lei-num"><span data-contar="896" data-casas="0">896</span></p>
         <p class="bento-lei-rotulo">empresas incentivadoras na base</p>
         <p class="bento-lei-total"><span>Em 2025: <strong>R$ <span data-contar="1.2" data-casas="1">1,2</span> bi</strong></span><span class="bento-lei-var">+<span data-contar="25" data-casas="0">25</span>% sobre 2024</span></p>
       </article>
-      <article class="bento-lei " style="--lei-cor:#1A8B7A">
+      <article class="bento-lei " style="--lei-cor:#B23A3A">
         <p class="bento-lei-topo"><i class="ph ph-stethoscope" aria-hidden="true"></i>Saúde</p>
         <div class="bento-spark" aria-hidden="true"><svg viewBox="0 0 240 56"><defs><linearGradient id="spark-saude" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset="1" stop-color="#fff" stop-opacity=".02"/></linearGradient></defs><path d="M0.0 8.0 C80.0 22.0 160.0 36.0 240.0 50.0 L240 56 L0 56 Z" fill="url(#spark-saude)"/><path d="M0.0 8.0 C80.0 22.0 160.0 36.0 240.0 50.0" fill="none" stroke="rgba(255,255,255,.92)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bento-spark-ponto" style="left:100.00%;top:89.29%"></span></div>
         <p class="bento-lei-num"><span data-contar="489" data-casas="0">489</span></p>
         <p class="bento-lei-rotulo">empresas incentivadoras na base</p>
         <p class="bento-lei-total"><span>Em 2025: <strong>R$ <span data-contar="376" data-casas="0">376</span> mi</strong></span><span class="bento-lei-var">−<span data-contar="13" data-casas="0">13</span>% sobre 2024</span></p>
       </article>
-      <article class="bento-lei " style="--lei-cor:#D94A4A">
+      <article class="bento-lei " style="--lei-cor:#D6336C">
         <p class="bento-lei-topo"><i class="ph ph-film-slate" aria-hidden="true"></i>Audiovisual</p>
         <div class="bento-spark" aria-hidden="true"><svg viewBox="0 0 240 56"><defs><linearGradient id="spark-audiovisual" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset="1" stop-color="#fff" stop-opacity=".02"/></linearGradient></defs><path d="M0.0 50.0 C20.0 37.0 40.0 10.9 60.0 10.9 C80.0 10.9 100.0 16.6 120.0 20.4 C140.0 24.1 160.0 33.4 180.0 33.4 C200.0 33.4 220.0 16.5 240.0 8.0 L240 56 L0 56 Z" fill="url(#spark-audiovisual)"/><path d="M0.0 50.0 C20.0 37.0 40.0 10.9 60.0 10.9 C80.0 10.9 100.0 16.6 120.0 20.4 C140.0 24.1 160.0 33.4 180.0 33.4 C200.0 33.4 220.0 16.5 240.0 8.0" fill="none" stroke="rgba(255,255,255,.92)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bento-spark-ponto" style="left:100.00%;top:14.29%"></span></div>
         <p class="bento-lei-num"><span data-contar="83" data-casas="0">83</span></p>
@@ -1217,10 +1247,10 @@
   var LOGODEV_TOKEN = 'pk_A2QRZaI_S5urxuYmsI6baQ';
   var EMPRESAS_POR_LEI = {"cultura": [{"nome": "Petrobras", "dominio": "petrobras.com.br", "setor": "Petróleo", "uf": "RJ", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [34.3, 17.1, 58.0, 170.5, 318.6], "valorM": 318.6}, {"nome": "Vale", "dominio": "vale.com", "setor": "Mineração", "uf": "RJ", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [366.3, 280.0, 215.2, 277.9, 250.7], "valorM": 250.7}, {"nome": "Itaú", "dominio": "itau.com.br", "setor": "Financeiro", "uf": "SP", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [39.5, 61.6, 88.3, 152.8, 155.7], "valorM": 155.7}, {"nome": "Nubank", "dominio": "nubank.com.br", "setor": "Financeiro", "uf": "SP", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [14.0, 31.0, 64.8, 169.9, 152.1], "valorM": 152.1}, {"nome": "Bradesco", "dominio": "bradesco.com.br", "setor": "Financeiro", "uf": "SP", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [37.3, 37.2, 74.9, 66.6, 76.0], "valorM": 76.0}], "esporte": [{"nome": "Vale", "dominio": "vale.com", "setor": "Mineração", "uf": "RJ", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [104.8, 70.8, 111.4, 88.9, 191.2], "valorM": 191.2}, {"nome": "Nubank", "dominio": "nubank.com.br", "setor": "Financeiro", "uf": "SP", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [3.3, 7.5, 29.2, 59.9, 69.1], "valorM": 69.1}, {"nome": "Itaú", "dominio": "itau.com.br", "setor": "Financeiro", "uf": "SP", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [4.5, 9.4, 20.9, 44.6, 49.6], "valorM": 49.6}, {"nome": "Shell", "dominio": "shell.com.br", "setor": "Petróleo", "uf": "RJ", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [2.0, 18.4, 27.4, 42.2, 32.2], "valorM": 32.2}, {"nome": "Petrobras", "dominio": "petrobras.com.br", "setor": "Petróleo", "uf": "RJ", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [4.8, 3.4, 9.8, 15.5, 29.5], "valorM": 29.5}], "audiovisual": [{"nome": "Disney", "dominio": "disney.com.br", "setor": "Mídia e entretenimento", "uf": "SP", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [2.8, 7.6, 10.7, 6.7, 128.2], "valorM": 128.2}, {"nome": "Globo", "dominio": "globo.com", "setor": "Mídia e entretenimento", "uf": "SP", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [36.4, 151.7, 118.2, 39.9, 89.3], "valorM": 89.3}, {"nome": "TNT Sports", "dominio": "tntsports.com.br", "setor": "Mídia e entretenimento", "uf": "RJ", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [8.3, 21.9, 16.2, 16.5, 29.9], "valorM": 29.9}, {"nome": "Universal Pictures", "dominio": "universalpictures.com", "setor": "Mídia e entretenimento", "uf": "SP", "anos": ["2021", "2022", "2023", "2024", "2025"], "serie": [3.5, 10.2, 9.0, 42.4, 26.5], "valorM": 26.5}, {"nome": "Nubank", "dominio": "nubank.com.br", "setor": "Financeiro", "uf": "SP", "anos": ["2023", "2024", "2025"], "serie": [13.5, 14.9, 10.4], "valorM": 10.4}], "saude": [{"nome": "Vale", "dominio": "vale.com", "setor": "Mineração", "uf": "RJ", "anos": ["2024", "2025"], "serie": [89.4, 56.7], "valorM": 56.7}, {"nome": "Nubank", "dominio": "nubank.com.br", "setor": "Financeiro", "uf": "SP", "anos": ["2024", "2025"], "serie": [58.0, 36.0], "valorM": 36.0}, {"nome": "Itaú", "dominio": "itau.com.br", "setor": "Financeiro", "uf": "SP", "anos": ["2024", "2025"], "serie": [59.0, 29.6], "valorM": 29.6}, {"nome": "BTG Pactual", "dominio": "btgpactual.com", "setor": "Financeiro", "uf": "SP", "anos": ["2024", "2025"], "serie": [7.7, 17.2], "valorM": 17.2}, {"nome": "Bradesco", "dominio": "bradesco.com.br", "setor": "Financeiro", "uf": "SP", "anos": ["2024", "2025"], "serie": [15.4, 13.0], "valorM": 13.0}]};
   var META_LEI = {
-    cultura: {label:'Rouanet', cor:'#684DB0'},
-    esporte: {label:'Esporte', cor:'#2D72B0'},
-    audiovisual: {label:'Audiovisual', cor:'#D94A4A'},
-    saude: {label:'Saúde', cor:'#1A8B7A'}
+    cultura: {label:'Rouanet', cor:'#D94A4A'},
+    esporte: {label:'Esporte', cor:'#E5482B'},
+    audiovisual: {label:'Audiovisual', cor:'#D6336C'},
+    saude: {label:'Saúde', cor:'#B23A3A'}
   };
   var PADROES_SERIE = [[.16,.18,.17,.22,.27],[.12,.16,.19,.25,.28],[.17,.19,.21,.20,.23]];
   var ANOS = ['2020','2021','2022','2023','2024'];
@@ -1273,12 +1303,12 @@
         '<div class="flex items-center gap-3 min-w-0">' +
           '<div class="lp-row-logo w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="' + logoUrl(e.dominio, 64) + '" alt="" class="w-full h-full object-contain" /></div>' +
           '<div class="min-w-0">' +
-            '<p class="lp-row-nome font-semibold text-[#0D0D0D] text-[13px] truncate">' + e.nome + '</p>' +
+            '<p class="lp-row-nome font-semibold text-[#282525] text-[13px] truncate">' + e.nome + '</p>' +
             '<p class="text-black/40 text-[11px]">' + e.setor + ' · ' + e.uf + '</p>' +
           '</div>' +
         '</div>' +
         '<div class="text-right flex-shrink-0">' +
-          '<p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">' + fmtValor(e.valorM) + '</p>' +
+          '<p class="font-bold text-[#282525] text-[13px] tabular-nums">' + fmtValor(e.valorM) + '</p>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -1311,7 +1341,7 @@
         '<div class="flex items-center gap-3 min-w-0">' +
           '<div class="lp-perfil-logo w-12 h-12 rounded border border-black/8 bg-white p-1 flex-shrink-0 flex items-center justify-center"><img src="' + logoUrl(e.dominio, 128) + '" alt="" class="w-full h-full object-contain" /></div>' +
           '<div data-p class="min-w-0">' +
-            '<div class="flex items-center gap-2"><p class="font-bold text-[#0D0D0D] text-[20px] leading-tight truncate">' + e.nome + '</p><i class="ph ph-globe text-[13px] text-black/25"></i></div>' +
+            '<div class="flex items-center gap-2"><p class="font-bold text-[#282525] text-[20px] leading-tight truncate">' + e.nome + '</p><i class="ph ph-globe text-[13px] text-black/25"></i></div>' +
             '<p class="text-[11px] text-black/40 mt-0.5">Em 2025: <span class="font-bold text-black/70">' + fmtValor(e.valorM) + '</span></p>' +
           '</div>' +
         '</div>' +
@@ -1359,10 +1389,10 @@
     var base = (pad.t + ph).toFixed(1);
     var area = d + ' L ' + pts[pts.length - 1].x.toFixed(1) + ' ' + base + ' L ' + pts[0].x.toFixed(1) + ' ' + base + ' Z';
     caixa.innerHTML = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block">' +
-      '<defs><linearGradient id="lpArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0D0D0D" stop-opacity=".12"/><stop offset="100%" stop-color="#0D0D0D" stop-opacity=".01"/></linearGradient></defs>' +
+      '<defs><linearGradient id="lpArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#282525" stop-opacity=".12"/><stop offset="100%" stop-color="#282525" stop-opacity=".01"/></linearGradient></defs>' +
       '<path class="lp-g-area" d="' + area + '" fill="url(#lpArea)"/>' +
-      '<path class="lp-g-linha" d="' + d + '" fill="none" stroke="#0D0D0D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
-      pts.map(function(pt){ return '<circle class="lp-g-ponto" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="#fff" stroke="#0D0D0D" stroke-width="1.8" style="transform-box:fill-box;transform-origin:center"/>'; }).join('') +
+      '<path class="lp-g-linha" d="' + d + '" fill="none" stroke="#282525" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+      pts.map(function(pt){ return '<circle class="lp-g-ponto" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="#fff" stroke="#282525" stroke-width="1.8" style="transform-box:fill-box;transform-origin:center"/>'; }).join('') +
       pts.map(function(pt, i){ return '<text x="' + pt.x.toFixed(1) + '" y="' + (h - 7) + '" text-anchor="middle" font-size="9" font-weight="600" fill="rgba(13,13,13,.3)" font-family="Google Sans, system-ui, sans-serif">' + (e.anos || ANOS)[i] + '</text>'; }).join('') +
     '</svg>';
     var linha = caixa.querySelector('.lp-g-linha');
@@ -1629,7 +1659,7 @@
   .fx-lista .ph { flex:0 0 auto; margin-top:2px; font-size:17px; color:var(--fx-cor,#684DB0); }
   .fx-copia .alt-cta { margin-top:30px; }
   /* janela do app */
-  .app-frame { position:relative; overflow:hidden; background:#fff; border:1px solid rgba(13,13,13,.08); border-radius:4px; box-shadow:0 22px 44px -12px rgba(52,42,78,.18),0 6px 14px -6px rgba(52,42,78,.10); font-size:12px; color:#0D0D0D; }
+  .app-frame { position:relative; overflow:hidden; background:#fff; border:1px solid rgba(13,13,13,.08); border-radius:4px; box-shadow:0 22px 44px -12px rgba(52,42,78,.18),0 6px 14px -6px rgba(52,42,78,.10); font-size:12px; color:#282525; }
   .app-barra { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(13,13,13,.07); background:#F9F9F8; font-size:11px; color:rgba(13,13,13,.4); }
   .app-barra img { width:14px; height:14px; }
   .app-barra b { color:rgba(13,13,13,.75); font-weight:600; }
@@ -1654,7 +1684,7 @@
   .id-topo .mk-logo { width:46px; height:46px; }
   .id-nome { font-size:19px; font-weight:700; line-height:1.1; }
   .id-sub { margin-top:3px; font-size:11px; color:rgba(13,13,13,.45); }
-  .id-sub b { color:rgba(13,13,13,.8); }
+  .id-sub b { color:rgba(40,37,37,.8); }
   .id-comparar { margin-left:auto; display:inline-flex; align-items:center; gap:5px; padding:6px 10px; border:1px solid rgba(13,13,13,.12); border-radius:4px; font-size:10.5px; font-weight:700; }
   .id-tags { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 14px; padding-bottom:14px; border-bottom:1px solid rgba(13,13,13,.08); }
   .id-grade { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:10px; }
@@ -1707,7 +1737,7 @@
   .id-noticia-linhas i { display:block; height:6px; border-radius:4px; background:linear-gradient(90deg,rgba(13,13,13,.10),rgba(13,13,13,.05),rgba(13,13,13,.10)); background-size:200% 100%; animation:mk-brilho 1.6s linear infinite; }
   .id-noticia time { font-size:9px; color:rgba(13,13,13,.35); white-space:nowrap; }
   @keyframes mk-brilho { from { background-position:200% 0; } to { background-position:-200% 0; } }
-  .mock-credito { position:absolute; z-index:10; padding:3px 8px; border-radius:4px; background:#0D0D0D; color:#fff; font-size:10px; font-weight:700; pointer-events:none; opacity:0; }
+  .mock-credito { position:absolute; z-index:10; padding:3px 8px; border-radius:4px; background:#282525; color:#fff; font-size:10px; font-weight:700; pointer-events:none; opacity:0; }
   .mock-credito.is-voando { animation:mk-credito 1.1s ease-out forwards; }
   @keyframes mk-credito { 0% { opacity:0; transform:translateY(4px); } 20% { opacity:1; } 100% { opacity:0; transform:translateY(-26px); } }
 
@@ -1717,14 +1747,14 @@
   .cp-acoes { display:flex; align-items:center; gap:10px; margin-top:12px; }
   .cp-busca { position:relative; flex:1; max-width:250px; display:flex; align-items:center; gap:7px; padding:8px 10px; border:1px solid rgba(13,13,13,.12); border-radius:4px; font-size:11px; color:rgba(13,13,13,.3); }
   .cp-busca.is-foco { border-color:rgba(13,13,13,.3); box-shadow:0 0 0 2px rgba(13,13,13,.06); }
-  .cp-digitado { color:#0D0D0D; }
+  .cp-digitado { color:#282525; }
   .cp-digitado:not(:empty) + .cp-placeholder { display:none; }
-  .cp-menu { position:absolute; left:-1px; right:-1px; top:calc(100% + 4px); z-index:5; display:flex; align-items:center; gap:8px; padding:8px 10px; background:#fff; border:1px solid rgba(13,13,13,.1); border-radius:4px; box-shadow:0 10px 24px rgba(13,13,13,.10); color:#0D0D0D; font-size:11px; opacity:0; transform:translateY(-4px); transition:opacity .2s ease, transform .2s ease; pointer-events:none; }
+  .cp-menu { position:absolute; left:-1px; right:-1px; top:calc(100% + 4px); z-index:5; display:flex; align-items:center; gap:8px; padding:8px 10px; background:#fff; border:1px solid rgba(13,13,13,.1); border-radius:4px; box-shadow:0 10px 24px rgba(13,13,13,.10); color:#282525; font-size:11px; opacity:0; transform:translateY(-4px); transition:opacity .2s ease, transform .2s ease; pointer-events:none; }
   .cp-menu.is-aberto { opacity:1; transform:none; }
   .cp-menu .mk-logo { width:20px; height:20px; padding:2px; }
   .cp-visao { margin-left:auto; display:flex; border:1px solid rgba(13,13,13,.12); border-radius:4px; overflow:hidden; font-size:10px; font-weight:700; }
   .cp-visao span { padding:6px 10px; color:rgba(13,13,13,.45); }
-  .cp-visao span.is-ativa { background:#0D0D0D; color:#fff; }
+  .cp-visao span.is-ativa { background:#282525; color:#fff; }
   .cp-chips { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:8px; }
   .cp-chip { display:flex; align-items:center; gap:7px; font-size:11px; font-weight:500; color:rgba(13,13,13,.75); transition:opacity .35s ease, transform .35s ease; }
   .cp-chip .mk-logo { width:24px; height:24px; }
@@ -1745,7 +1775,7 @@
   .cp-trilho i { display:block; height:100%; width:var(--p); border-radius:99px; background:var(--c); transform-origin:left; transform:scaleX(0); transition:transform .7s cubic-bezier(.2,.8,.2,1); }
   .cp-linha.is-cheia .cp-trilho i { transform:scaleX(1); }
   .cp-valor { text-align:right; }
-  .cp-valor strong { display:block; font-size:13.5px; font-weight:600; line-height:1; font-variant-numeric:tabular-nums; color:rgba(13,13,13,.85); }
+  .cp-valor strong { display:block; font-size:13.5px; font-weight:600; line-height:1; font-variant-numeric:tabular-nums; color:rgba(40,37,37,.85); }
   .cp-pot { display:none; justify-content:flex-end; align-items:center; gap:3px; margin-top:4px; font-size:9.5px; font-weight:700; white-space:nowrap; }
   .cp-pot.is-mais { color:#2E8932; }
   .cp-pot.is-teto { color:#B07A14; }
@@ -1756,19 +1786,19 @@
   .cp-total-itens { display:flex; flex-wrap:wrap; gap:4px 14px; }
   .cp-total-item { display:inline-flex; align-items:baseline; gap:5px; font-size:10px; color:rgba(13,13,13,.5); transition:opacity .35s ease; }
   .cp-total-item i { width:7px; height:7px; border-radius:2px; background:var(--c); }
-  .cp-total-item b { font-size:12px; color:rgba(13,13,13,.9); font-variant-numeric:tabular-nums; }
+  .cp-total-item b { font-size:12px; color:rgba(40,37,37,.9); font-variant-numeric:tabular-nums; }
   .cp-total-item.is-oculto { opacity:0; }
 
   /* Editais */
   .ed-corpo { padding:16px 16px 18px; }
   .ed-topo { display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
   .ed-titulo { margin-top:2px; font-size:19px; font-weight:700; letter-spacing:-.025em; }
-  .ed-sugerir { display:inline-flex; align-items:center; gap:5px; padding:7px 10px; border-radius:4px; background:#0D0D0D; color:#fff; font-size:10px; font-weight:700; }
+  .ed-sugerir { display:inline-flex; align-items:center; gap:5px; padding:7px 10px; border-radius:4px; background:#282525; color:#fff; font-size:10px; font-weight:700; }
   .ed-filtros { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:12px 0 14px; }
   .ed-busca { flex:1; min-width:150px; display:flex; align-items:center; gap:6px; padding:7px 10px; border:1px solid rgba(13,13,13,.12); border-radius:4px; font-size:10.5px; color:rgba(13,13,13,.3); }
   .ed-status { display:flex; border:1px solid rgba(13,13,13,.12); border-radius:4px; overflow:hidden; font-size:10px; font-weight:700; }
   .ed-status span { padding:6px 9px; color:rgba(13,13,13,.45); }
-  .ed-status span.is-ativa { background:#0D0D0D; color:#fff; }
+  .ed-status span.is-ativa { background:#282525; color:#fff; }
   .ed-ordem { display:inline-flex; align-items:center; gap:4px; padding:6px 9px; border:1px solid rgba(13,13,13,.12); border-radius:4px; font-size:10px; font-weight:600; color:rgba(13,13,13,.55); }
   .ed-grade { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
   @container (max-width: 430px) { .ed-grade { grid-template-columns:minmax(0,1fr); } .ed-card:nth-child(n+3) { display:none; } }
@@ -1832,9 +1862,9 @@
           <div class="id-tags">
             <span class="mk-tag"><em>Setor</em>Mineração</span>
             <span class="mk-tag"><em>Sede</em>Rio de Janeiro, RJ</span>
-            <span class="mk-lei" style="--c:#684DB0">Rouanet</span>
-            <span class="mk-lei" style="--c:#2D72B0">Esporte</span>
-            <span class="mk-lei" style="--c:#1A8B7A">Saúde</span>
+            <span class="mk-lei" style="--c:#D94A4A">Rouanet</span>
+            <span class="mk-lei" style="--c:#E5482B">Esporte</span>
+            <span class="mk-lei" style="--c:#B23A3A">Saúde</span>
           </div>
           <div class="id-grade">
             <div class="mk-painel">
@@ -1849,10 +1879,10 @@
                   <div class="id-pdf"><span class="id-pdf-icone">PDF</span><div><p>Relatório de Sustentabilidade Vale 2025</p><small>Para entender as prioridades da empresa antes de propor</small></div><i class="ph ph-download-simple" aria-hidden="true"></i></div>
                 </div>
                 <div class="id-aba" data-conteudo="projetos">
-                  <div class="id-proj" style="--d:.05s"><span>Academia do Skate</span><span class="mk-lei" style="--c:#2D72B0">Esporte</span></div>
-                  <div class="id-proj" style="--d:.15s"><span>A Turma em Cena Chegou - 25 Anos</span><span class="mk-lei" style="--c:#684DB0">Rouanet</span></div>
-                  <div class="id-proj" style="--d:.25s"><span>A Conspiração do Silêncio</span><span class="mk-lei" style="--c:#D94A4A">Audiovisual</span></div>
-                  <div class="id-proj" style="--d:.35s"><span>+ Esporte Belo Oriente</span><span class="mk-lei" style="--c:#2D72B0">Esporte</span></div>
+                  <div class="id-proj" style="--d:.05s"><span>Academia do Skate</span><span class="mk-lei" style="--c:#E5482B">Esporte</span></div>
+                  <div class="id-proj" style="--d:.15s"><span>A Turma em Cena Chegou - 25 Anos</span><span class="mk-lei" style="--c:#D94A4A">Rouanet</span></div>
+                  <div class="id-proj" style="--d:.25s"><span>A Conspiração do Silêncio</span><span class="mk-lei" style="--c:#D6336C">Audiovisual</span></div>
+                  <div class="id-proj" style="--d:.35s"><span>+ Esporte Belo Oriente</span><span class="mk-lei" style="--c:#E5482B">Esporte</span></div>
                   <p class="id-proj-mais">e mais 409 projetos patrocinados</p>
                 </div>
               </div>
@@ -1872,7 +1902,7 @@
             </div>
           </div>
         </div>
-        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#0D0D0D" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#282525" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
         <span class="mock-credito">−1 crédito</span>
       </div>
     </div>
@@ -1908,7 +1938,7 @@
           <div class="cp-lei"><span class="mk-rotulo">Cultura</span><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/vale.com?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Vale</span><span class="cp-trilho"><i style="--p:78.7%;--c:#0EA5E9"></i></span><span class="cp-valor"><strong>R$ 250,7M</strong><span class="cp-pot is-teto"><span><i class="ph ph-lock-simple" aria-hidden="true"></i>No teto</span></span></span></div><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/petrobras.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Petrobras</span><span class="cp-trilho"><i style="--p:100.0%;--c:#F59E0B"></i></span><span class="cp-valor"><strong>R$ 318,6M</strong><span class="cp-pot is-teto"><span><i class="ph ph-lock-simple" aria-hidden="true"></i>No teto</span></span></span></div><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/nubank.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Nubank</span><span class="cp-trilho"><i style="--p:47.7%;--c:#1D4ED8"></i></span><span class="cp-valor"><strong>R$ 152,1M</strong><span class="cp-pot is-teto"><span><i class="ph ph-lock-simple" aria-hidden="true"></i>No teto</span></span></span></div><div class="cp-linha is-oculta" data-nova="1"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/bradesco.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Bradesco</span><span class="cp-trilho"><i style="--p:23.9%;--c:#E11D48"></i></span><span class="cp-valor"><strong>R$ 76,0M</strong><span class="cp-pot is-teto"><span><i class="ph ph-lock-simple" aria-hidden="true"></i>No teto</span></span></span></div></div><div class="cp-lei"><span class="mk-rotulo">Esporte</span><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/vale.com?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Vale</span><span class="cp-trilho"><i style="--p:100.0%;--c:#0EA5E9"></i></span><span class="cp-valor"><strong>R$ 191,2M</strong><span class="cp-pot is-teto"><span><i class="ph ph-lock-simple" aria-hidden="true"></i>No teto</span></span></span></div><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/petrobras.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Petrobras</span><span class="cp-trilho"><i style="--p:15.4%;--c:#F59E0B"></i></span><span class="cp-valor"><strong>R$ 29,5M</strong><span class="cp-pot is-mais"><span><i class="ph ph-lock-simple-open" aria-hidden="true"></i>+R$ 132,0M</span><small>Potencial</small></span></span></div><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/nubank.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Nubank</span><span class="cp-trilho"><i style="--p:36.1%;--c:#1D4ED8"></i></span><span class="cp-valor"><strong>R$ 69,1M</strong><span class="cp-pot is-mais"><span><i class="ph ph-lock-simple-open" aria-hidden="true"></i>+R$ 12,2M</span><small>Potencial</small></span></span></div><div class="cp-linha is-oculta" data-nova="1"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/bradesco.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Bradesco</span><span class="cp-trilho"><i style="--p:9.3%;--c:#E11D48"></i></span><span class="cp-valor"><strong>R$ 17,8M</strong><span class="cp-pot is-mais"><span><i class="ph ph-lock-simple-open" aria-hidden="true"></i>+R$ 20,2M</span><small>Potencial</small></span></span></div></div>
           <div class="cp-total"><span class="mk-rotulo">Total 2025</span><div class="cp-total-itens"><span class="cp-total-item" style="--c:#0EA5E9"><i></i>Vale<b>R$ 498,6M</b></span><span class="cp-total-item" style="--c:#F59E0B"><i></i>Petrobras<b>R$ 352,4M</b></span><span class="cp-total-item" style="--c:#1D4ED8"><i></i>Nubank<b>R$ 267,6M</b></span><span class="cp-total-item is-oculto" data-nova="1" style="--c:#E11D48"><i></i>Bradesco<b>R$ 106,8M</b></span></div></div>
         </div>
-        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#0D0D0D" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#282525" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
       </div>
     </div>
   </div>
@@ -1954,7 +1984,7 @@
   <div class="ed-rodape"><div class="ed-votos"><span class="ed-voto ed-voto--sim" data-base="0"><i class="ph ph-thumbs-up" aria-hidden="true"></i><span class="ed-n"></span></span><span class="ed-voto"><i class="ph ph-thumbs-down" aria-hidden="true"></i></span></div><div class="ed-btns"><span class="ed-btn"><i class="ph ph-download-simple" aria-hidden="true"></i>Exportar</span><span class="ed-btn ed-btn--acessar">Acessar<i class="ph ph-caret-right" aria-hidden="true"></i></span></div></div>
 </article></div>
         </div>
-        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#0D0D0D" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#282525" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
       </div>
     </div>
   </div>
@@ -2153,7 +2183,6 @@
 
 <!-- ════════════════════════ TECNOLOGIA E PROXIMIDADE ════════════════════════ -->
 <section id="contato" class="bg-white pr-host px-6">
-  <div class="prancheta" data-prancheta="orelhoes" aria-hidden="true"></div>
   <div class="section-space max-w-6xl mx-auto product-story">
     <div class="alt-operacao-grid">
       <div class="reveal">
@@ -2195,7 +2224,7 @@
       </details>
       <details>
         <summary>O que os créditos liberam?<i class="ph ph-plus" aria-hidden="true"></i></summary>
-        <p>Os contatos e o histórico detalhado de uma empresa. Cada empresa liberada usa 1 crédito por mês, e os créditos vêm nos planos pagos.</p>
+        <p>Os contatos de quem decide numa empresa. Cada empresa usa 1 crédito, uma única vez, e fica liberada para toda a equipe. Os créditos vêm nos planos pagos; gráficos e histórico de aportes ficam abertos em todos os planos.</p>
       </details>
     </div>
   </div>
@@ -2203,7 +2232,6 @@
 
 <!-- ════════════════════════ CTA FINAL ════════════════════════ -->
 <section class="closing-cta section-space px-6" aria-labelledby="fechamento-titulo">
-  <div class="prancheta" data-prancheta="fechamento" aria-hidden="true"></div>
   <div class="max-w-3xl mx-auto text-center reveal">
     <p class="alt-kicker">Comece pela empresa certa</p>
     <h2 id="fechamento-titulo" class="alt-h2 alt-h2--section font-display text-[#282525] mb-5">
@@ -2215,7 +2243,7 @@
       <i class="ph ph-arrow-right" aria-hidden="true"></i>
     </a>
     <p class="text-black/35 text-sm mt-4">Sem cartão de crédito. Configure em poucos minutos.</p>
-    <p class="fechamento-precos">Grátis para sempre. Planos pagos a partir de R$ 62,90 por mês. <a href="/#precos">Ver os planos</a></p>
+    <p class="fechamento-precos">Grátis para sempre. Planos pagos a partir de R$ 62,90 por mês. <a href="/precos">Ver os planos</a></p>
   </div>
 </section>
 
@@ -2234,11 +2262,11 @@
       <nav aria-label="Navegação do rodapé">
         <p class="footer-column-title">Navegue</p>
         <div class="footer-nav">
-          <a href="/#bi">Plataforma</a>
-          <a href="/#produto-tabs">Produto</a>
-          <a href="/#operacao">Parcerias</a>
-          <a href="/#precos">Preços</a>
-          <a href="/blog" data-app-path="/blog">Blog</a>
+          <a href="/incentivadores">Inteligência</a>
+          <a href="/crm">CRM</a>
+          <a href="/prestacao-de-contas">Prestação de contas</a>
+          <a href="/precos">Preços</a>
+          <a href="/publicacoes" data-app-path="/publicacoes">Publicações</a>
         </div>
       </nav>
 
@@ -2628,5 +2656,42 @@
   });
 })();
 </script>
+<a
+  href="https://wa.me/5515997160914?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20Jards%20e%20queria%20saber%20mais."
+  target="_blank"
+  rel="noopener noreferrer"
+  class="whatsapp-float"
+  aria-label="Falar no WhatsApp"
+  title="Falar no WhatsApp"
+>
+  <svg viewBox="0 0 448 512" aria-hidden="true"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 110.7L1.9 480l117.7-30.9c32 17.5 68 26.8 104.9 26.8h.1c122.4 0 222-99.6 222-222 0-59.3-23.2-115-65.7-156.8zM223.9 438.2c-32.7 0-64.6-8.8-92.5-25.5l-6.6-3.9-69.8 18.3 18.6-68-4.3-7c-18.3-29.1-27.9-62.7-27.9-97.1 0-100.4 81.7-182.1 182.2-182.1 48.7 0 94.4 19 128.9 53.5 34.5 34.5 54.6 80.2 54.5 128.9 0 100.4-83.3 182-182.1 182zm102.4-136.4c-5.6-2.8-33.1-16.3-38.2-18.2-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18.2-17.6 22-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.4-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.6 19.2-19.6 46.5 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 38.5 58.7 93.2 80 46.5 18.1 55.9 14.5 66 13.6 10.1-.9 32.6-13.3 37.2-26.3 4.6-12.9 4.6-24 3.2-26.3-1.3-2.5-5-3.9-10.6-6.7z"/></svg>
+</a>
+<style>
+  .whatsapp-float {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: #2E8932;
+    box-shadow: 0 4px 16px rgba(40,37,37,.22);
+    transition: transform .18s ease, background-color .18s ease;
+  }
+  .whatsapp-float:hover { background: #26752A; transform: scale(1.06); }
+  .whatsapp-float:focus-visible { outline: 2px solid #2E8932; outline-offset: 3px; }
+  .whatsapp-float svg { width: 1.75rem; height: 1.75rem; fill: #fff; }
+  @media (prefers-reduced-motion: reduce) {
+    .whatsapp-float { transition: none; }
+  }
+  @media (max-width: 480px) {
+    .whatsapp-float { right: 1rem; bottom: 1rem; width: 3.25rem; height: 3.25rem; }
+  }
+</style>
+<script src="/menu-site.js" defer></script>
 </body>
 </html>

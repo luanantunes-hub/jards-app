@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowRight, FileText, MessageSquareWarning, Pencil, Plus, Reply, Trash2, Undo2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, Clock, FileText, MessageSquareWarning, Pencil, Plus, Reply, Trash2, Undo2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -38,6 +38,7 @@ import { definida } from "@/lib/prestacao/regimes";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoDecisao, PrestacaoDevolucao, PrestacaoDiligencia, PrestacaoGlosa, PrestacaoRecurso, ResultadoDaDecisao } from "@/lib/supabase/types";
 
+const ROTULO = "flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const NEUTRO = "#6B6B6B";
 const COR_DA_DILIGENCIA: Record<EstadoDoRegistro, string> = { aberta: "#B07A14", vencida: "#D94A4A", respondida: "#2E8932", encerrada: NEUTRO };
 const COR_DO_RESULTADO: Record<ResultadoDaDecisao, string> = { aprovada: "#2E8932", aprovada_ressalvas: "#B07A14", aprovada_parcialmente: "#B07A14", reprovada: "#D94A4A" };
@@ -51,6 +52,7 @@ type Lidos = {
   recursos: PrestacaoRecurso[];
   devolucoes: DevolucaoDaLista[];
   identificadorOficial: string | null;
+  numeroProcesso: string | null;
 };
 type Editando =
   | { tipo: "diligencia"; linha: PrestacaoDiligencia | null; inicio?: { recebidaEm?: string; descricao?: string; responder?: boolean; preditiva?: boolean } }
@@ -66,7 +68,7 @@ function Secao({ titulo, descricao, acao, children }: { titulo: string; descrica
     <section className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-[0.8125rem] font-semibold text-[#0D0D0D]">{titulo}</h3>
+          <h3 className="text-[0.8125rem] font-semibold text-[#282525]">{titulo}</h3>
           <p className="max-w-[44rem] text-[0.6875rem] text-black/45">{descricao}</p>
         </div>
         {acao}
@@ -130,7 +132,7 @@ export default function PosEnvioPage() {
       db.from("prestacao_glosas").select("*").eq("prestacao_id", id).order("created_at"),
       db.from("prestacao_recursos").select("*").eq("prestacao_id", id).order("protocolado_em", { ascending: false }),
       db.from("prestacao_devolucoes").select("id, situacao, valor_principal, valor_atualizado, vencimento, pago_em, valor_pago").eq("prestacao_id", id),
-      db.from("prestacoes_contas").select("identificador_oficial").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("identificador_oficial, numero_processo").eq("id", id).maybeSingle(),
     ]);
     const falha = dil.error ?? dec.error ?? glo.error ?? rec.error ?? dev.error ?? p.error;
     if (falha) return { lidos: null, erro: mensagemErroPrestacao(falha, "Não foi possível carregar o que veio depois do envio") };
@@ -143,6 +145,7 @@ export default function PosEnvioPage() {
         recursos: rec.data ?? [],
         devolucoes: dev.data ?? [],
         identificadorOficial: p.data?.identificador_oficial ?? null,
+        numeroProcesso: p.data?.numero_processo ?? null,
       },
     };
   }, [id, supabase]);
@@ -227,7 +230,7 @@ export default function PosEnvioPage() {
 
   async function gerarDevolucao(g: PrestacaoGlosa) {
     const decisao = g.decisao_id ? decisaoPorId.get(g.decisao_id) : null;
-    const { campos, erro: problema } = devolucaoDaGlosa(g, regime, decisao, lidos?.identificadorOficial, hoje);
+    const { campos, erro: problema } = devolucaoDaGlosa(g, regime, decisao, { identificador_oficial: lidos?.identificadorOficial, numero_processo: lidos?.numeroProcesso }, hoje);
     if (problema) { setErro(problema); return; }
     setGerando(g.id);
     setErro("");
@@ -250,10 +253,8 @@ export default function PosEnvioPage() {
   return (
     <div className="mx-auto max-w-pagina space-y-6 px-4 py-6 md:px-8">
       <div className="min-w-0">
-        <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Após o envio</h2>
-        <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
-          Diligências, decisões, glosas e recursos. O prazo de cada um vem do regime e vira atividade, com aviso, para quem cuida da prestação.{guardaPelaDecisao ? " A decisão sobre as contas marca o início da guarda do que foi enviado." : ""}
-        </p>
+        <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Após o envio</h2>
+        {guardaPelaDecisao && <p className="max-w-[44rem] text-[0.6875rem] text-black/45">A decisão sobre as contas marca o início da guarda do que foi enviado.</p>}
       </div>
 
       {erro && <p role="alert" className="rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#D94A4A40" }}>{erro}</p>}
@@ -264,26 +265,31 @@ export default function PosEnvioPage() {
         <>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded border bg-white px-5 py-4 text-[0.6875rem] md:grid-cols-4" style={BORDA}>
             <div className="min-w-0">
-              <dt className="text-black/40">Envio que vale</dt>
-              <dd className="text-[0.8125rem] text-black/80">
+              <dt className={ROTULO}>Envio que vale</dt>
+              <dd className="mt-0.5 text-[0.8125rem] text-black/70">
                 {envioAtual ? <>{tituloDoEnvio(envioAtual)} <span className="tabular-nums text-black/50">em {dataBr(envioAtual.enviado_em)}</span></> : <span className="text-black/45">Nenhum registrado</span>}
               </dd>
             </div>
             <div className="min-w-0">
-              <dt className="text-black/40">Análise do órgão</dt>
-              <dd className="text-[0.8125rem] tabular-nums text-black/80">{analise ? `Até ${dataBr(analise.data)}` : <span className="text-black/45">Sem prazo no regime</span>}</dd>
+              <dt className={ROTULO}>Análise do órgão</dt>
+              <dd className="mt-0.5 text-[0.8125rem] tabular-nums">{analise ? <span className="font-semibold text-[#282525]">Até {dataBr(analise.data)}</span> : <span className="text-black/45">Sem prazo no regime</span>}</dd>
             </div>
             <div>
-              <dt className="text-black/40">Diligências abertas</dt>
-              <dd className={`text-[0.8125rem] tabular-nums ${contas.vencidas ? "text-[#D94A4A]" : contas.abertas ? "text-[#B07A14]" : "text-black/80"}`}>
+              <dt className={ROTULO}>
+                {contas.vencidas > 0
+                  ? <Clock size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />
+                  : contas.abertas > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
+                Diligências abertas
+              </dt>
+              <dd className={`mt-0.5 text-[0.8125rem] font-semibold tabular-nums ${contas.abertas ? "text-[#282525]" : "text-black/30"}`}>
                 {contas.abertas}{contas.vencidas ? `, ${contas.vencidas} vencida${contas.vencidas === 1 ? "" : "s"}` : ""}
               </dd>
             </div>
             <div>
-              <dt className="text-black/40">Glosado</dt>
-              <dd className="text-[0.8125rem] tabular-nums text-black/80">
+              <dt className={ROTULO}>Glosado</dt>
+              <dd className={`mt-0.5 text-[0.8125rem] font-semibold tabular-nums ${contas.glosas.mantido ? "text-[#282525]" : "text-black/30"}`}>
                 {reais(contas.glosas.mantido / 100)}
-                {contas.glosas.mantido > 0 && <span className="text-black/45"> · recolhido {reais(contas.glosas.recolhido / 100)}</span>}
+                {contas.glosas.mantido > 0 && <span className="font-normal text-black/45"> · recolhido {reais(contas.glosas.recolhido / 100)}</span>}
               </dd>
             </div>
           </dl>
@@ -291,7 +297,7 @@ export default function PosEnvioPage() {
           {!envioAtual && (
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.6875rem] text-black/50">
               O registro do envio guarda o que foi enviado e dá o marco dos prazos.
-              <Link href={`/prestacoes/${id}/envio/pacote`} className="inline-flex items-center gap-1 rounded text-black/70 underline decoration-black/20 underline-offset-2 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+              <Link href={`/prestacoes/${id}/envio/pacote`} className="inline-flex items-center gap-1 rounded text-black/70 underline decoration-black/20 underline-offset-2 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                 Registrar no pacote <ArrowRight size={11} aria-hidden />
               </Link>
             </p>
@@ -315,11 +321,11 @@ export default function PosEnvioPage() {
 
           <Secao
             titulo="Diligências"
-            descricao="O que o órgão pede depois do envio. Diligência aberta impede registrar um novo envio."
+            descricao="Pedidos do órgão depois do envio. Com diligência aberta, não dá para registrar novo envio."
             acao={podeEditar && <BotaoNovo onClick={() => setEditando({ tipo: "diligencia", linha: null })}>Nova diligência</BotaoNovo>}
           >
             {lidos.diligencias.length === 0 ? (
-              <Vazio>Nenhuma diligência registrada. Quando o órgão pedir algo, registre aqui: o prazo do regime vira atividade com aviso.</Vazio>
+              <Vazio>Nenhuma diligência registrada. Registre o pedido do órgão: o prazo vira atividade com aviso.</Vazio>
             ) : (
               <ul className="divide-y divide-black/[.05] overflow-hidden rounded border bg-white" style={BORDA} aria-label="Diligências">
                 {lidos.diligencias.map(d => {
@@ -370,7 +376,7 @@ export default function PosEnvioPage() {
 
           <Secao
             titulo="Decisões"
-            descricao="O resultado da análise das contas e do recurso, sempre com o documento. Os prazos de recurso e de devolução contam da ciência."
+            descricao="Resultado da análise das contas e do recurso, com o documento. Os prazos contam da ciência."
             acao={podeEditar && <BotaoNovo onClick={() => setEditando({ tipo: "decisao", linha: null })}>Registrar decisão</BotaoNovo>}
           >
             {lidos.decisoes.length === 0 ? (
@@ -425,7 +431,7 @@ export default function PosEnvioPage() {
 
           <Secao
             titulo="Glosas"
-            descricao="O valor que o órgão não aceitou. A glosa mantida vira devolução, atualizada pelo índice do regime a partir da data-base."
+            descricao="Valor que o órgão não aceitou. A glosa mantida vira devolução, atualizada pelo índice do regime."
             acao={podeEditar && <BotaoNovo onClick={() => setEditando({ tipo: "glosa", linha: null })}>Nova glosa</BotaoNovo>}
           >
             {lidos.glosas.length === 0 ? (
@@ -488,7 +494,7 @@ export default function PosEnvioPage() {
 
           <Secao
             titulo="Recursos"
-            descricao="Contra a decisão que não aprovou as contas por inteiro, dentro do prazo do regime."
+            descricao="Contra a decisão que não aprovou as contas por inteiro, no prazo do regime."
             acao={podeEditar && (
               <BotaoNovo onClick={() => setEditando({ tipo: "recurso", linha: null })} disabled={recorriveis.length === 0} title={recorriveis.length === 0 ? "Registre antes a decisão que será recorrida" : undefined}>
                 Registrar recurso
@@ -509,7 +515,7 @@ export default function PosEnvioPage() {
                           <p className="font-medium text-black/85">Recurso contra a {decisao ? decisaoDe(decisao).replace(/^D/, "d") : "decisão"}</p>
                           <p className="text-[0.6875rem] tabular-nums text-black/40">
                             Protocolado em {dataBr(r.protocolado_em)}
-                            {noPrazo === false && <span className="text-[#D94A4A]"> · depois do prazo ({dataBr(decisao?.prazo_recurso)})</span>}
+                            {noPrazo === false && <> · <Clock size={12} strokeWidth={1.75} aria-hidden className="mr-0.5 inline-block align-[-0.125rem] text-[#D94A4A]" />depois do prazo ({dataBr(decisao?.prazo_recurso)})</>}
                             {r.decidido_em ? ` · decidido em ${dataBr(r.decidido_em)}` : ""}
                           </p>
                           {r.pedido && <p className="mt-1 whitespace-pre-line text-[0.6875rem] text-black/60">{r.pedido}</p>}

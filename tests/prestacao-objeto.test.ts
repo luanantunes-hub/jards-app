@@ -74,6 +74,7 @@ test("meta: situação, percentual e o que as atividades ligadas mostram", () =>
 
 test("número digitado: milhar com ponto, decimal com vírgula", () => {
   assert.deepEqual(["1.500", "1500", "2,5", "2.5", "1.234,5", "", "abc"].map(numeroDigitado), [1500, 1500, 2.5, 2.5, 1234.5, null, NaN]);
+  assert.equal(numeroDigitado("1.234,"), 1234, "vírgula da máscara ainda sem os centavos");
 });
 
 test("execução termina no dia seguinte ao fim", () => {

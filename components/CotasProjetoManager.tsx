@@ -1,11 +1,13 @@
 "use client";
 import { useState } from "react";
-import { X, Plus, Minus, GripVertical, Pencil, Trash2, Building2 } from "lucide-react";
+import { X, Plus, Minus, GripVertical, Pencil, Trash2, Building2, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import type { CotaPatrocinio, StatusCotaPatrocinio, VendaPatrocinio } from "@/lib/supabase/types";
-import { formatCotaValor, formatMoney } from "@/lib/cotas";
+import { formatCotaValor } from "@/lib/cotas";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
+import { BarraCaptacao } from "@/components/ui/IndicadoresFinanceiros";
 
 export type VendaPatrocinioComEmpresa = VendaPatrocinio & {
   empresa_crm: { nome: string } | null;
@@ -204,11 +206,11 @@ export function CotasProjetoManager({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-[0.8125rem] font-semibold text-black">{cota.nome}</p>
-                    {cota.modelo === "produto" && <span className="text-[0.625rem] font-medium text-[#7259B5]">{cota.produto_nome}</span>}
+                    <p className="text-[0.8125rem] font-semibold text-[#282525]">{cota.nome}</p>
+                    {cota.modelo === "produto" && <span className="text-[0.625rem] font-medium text-black/45">{cota.produto_nome}</span>}
                     <span
-                      className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full"
-                      style={{ background: "#fff", border: `1px solid ${st.color}47`, color: st.color }}
+                      className="rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium"
+                      style={{ borderColor: st.color.startsWith("#") ? `${st.color}47` : "rgba(13,13,13,.12)", color: st.color }}
                     >
                       {st.label}
                     </span>
@@ -221,7 +223,7 @@ export function CotasProjetoManager({
                 </div>
 
                 <div className="flex flex-col items-end flex-shrink-0 gap-0.5">
-                  <span className="text-[0.8125rem] font-bold text-black/60">{formatCotaValor(cota)}</span>
+                  <span className="text-[0.8125rem] font-semibold tabular-nums text-[#282525]">{formatCotaValor(cota)}</span>
                   {cota.unidades_ilimitadas ? (
                     <span className="text-[0.625rem] text-black/30 tabular-nums">Ilimitada · {cota.unidades_vendidas ?? 0} vendida(s)</span>
                   ) : (cota.unidades ?? 1) > 1 && (
@@ -255,7 +257,7 @@ export function CotasProjetoManager({
                   <div className="flex flex-wrap gap-x-4 gap-y-1.5">
                     {vendasDaCota.map(venda => (
                       <span key={venda.id} className="inline-flex items-center gap-1.5 text-[0.625rem] font-medium text-black/45">
-                        <Building2 size={10} className="text-[#2E8932]" />
+                        <Building2 size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
                         {venda.empresa_crm?.nome || venda.empresa_pub?.nome || "Empresa compradora"}
                         <span className="text-black/25">·</span>
                         <span className="tabular-nums">{venda.valor_vendido.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
@@ -274,17 +276,17 @@ export function CotasProjetoManager({
       {cotas.length > 0 && (
         <div className="rounded border p-4 space-y-3" style={{ borderColor: "rgba(13,13,13,.08)", background: "rgba(13,13,13,.018)" }}>
           <div className="grid grid-cols-3 gap-3">
-            <div>
-              <p className="text-[0.625rem] font-semibold uppercase tracking-[.08em] text-black/35 mb-1">Vendido</p>
-              <p className="text-[0.9375rem] font-semibold text-black/75 tabular-nums">{formatMoney(valorContratado)}</p>
+            <div className="min-w-0">
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Vendido</p>
+              <p title={formatarValorCompleto(valorContratado)} className={`truncate text-[0.9375rem] font-semibold tabular-nums ${valorContratado ? "text-[#282525]" : "text-black/30"}`}>{formatarValorCurto(valorContratado)}</p>
             </div>
-            <div>
-              <p className="text-[0.625rem] font-semibold uppercase tracking-[.08em] text-[#2E8932]/70 mb-1">Disponíveis</p>
-              <p className="text-[0.9375rem] font-semibold tabular-nums" style={{ color: "#2E8932" }}>{disponiveis}{unlimitedCount > 0 ? " + ilimitadas" : ""}</p>
+            <div className="min-w-0">
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Disponíveis</p>
+              <p className={`text-[0.9375rem] font-semibold tabular-nums ${disponiveis || unlimitedCount > 0 ? "text-[#282525]" : "text-black/30"}`}>{disponiveis}{unlimitedCount > 0 ? " + ilimitadas" : ""}</p>
             </div>
-            <div>
-              <p className="text-[0.625rem] font-semibold uppercase tracking-[.08em] text-black/35 mb-1">Vendidas</p>
-              <p className="text-[0.9375rem] font-semibold text-black/60 tabular-nums">{vendidas}</p>
+            <div className="min-w-0">
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Vendidas</p>
+              <p className={`text-[0.9375rem] font-semibold tabular-nums ${vendidas ? "text-[#282525]" : "text-black/30"}`}>{vendidas}</p>
             </div>
           </div>
           {valorTotal && valorTotal > 0 && (() => {
@@ -292,15 +294,10 @@ export function CotasProjetoManager({
             const over = valorContratado > valorTotal;
             return (
               <div className="pt-1 border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <div className="h-1.5 overflow-hidden rounded bg-black/[.07]">
-                  <div
-                    className="h-full rounded transition-all"
-                    style={{ width: `${pct}%`, background: over ? "#D94E4E" : pct === 100 ? "#2E8932" : "#7259B5" }}
-                  />
-                </div>
-                <p className="mt-1.5 text-[0.625rem] text-black/35">
-                  {pct}% do alvo contratado nestas cotas
-                  {over && <span className="ml-1 font-semibold text-[#B07A14]">— acima da meta atual</span>}
+                <BarraCaptacao confirmado={valorContratado} meta={valorTotal} className="h-1.5" />
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[0.625rem] text-black/35">
+                  <span className="tabular-nums">{pct}% do alvo contratado nestas cotas</span>
+                  {over && <span className="inline-flex items-center gap-1 font-medium text-black/55"><AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />acima da meta atual</span>}
                 </p>
               </div>
             );
@@ -321,7 +318,7 @@ export function CotasProjetoManager({
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <h2 className="text-[0.9375rem] font-bold text-black">{editing ? "Editar cota" : "Nova cota"}</h2>
+              <h2 className="text-[0.9375rem] font-bold text-[#282525]">{editing ? "Editar cota" : "Nova cota"}</h2>
               <button onClick={() => setShowForm(false)} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
                 <X size={15} className="text-black/40" />
               </button>
@@ -335,18 +332,18 @@ export function CotasProjetoManager({
               )}
 
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Nome da cota</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Nome da cota</label>
                 <input
                   value={form.nome}
                   onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
                   placeholder="Ex: Cota Ouro, Cota Master..."
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
 
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Organização da cota</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Organização da cota</label>
                 <div className="grid grid-cols-2 gap-2">
                   {([ ["nivel", "Nível de patrocínio"], ["produto", "Produto do projeto"] ] as const).map(([value, label]) => (
                     <button key={value} type="button" onClick={() => setForm(f => ({ ...f, modelo: value }))}
@@ -356,11 +353,11 @@ export function CotasProjetoManager({
                   ))}
                 </div>
                 {form.modelo === "produto" && <input value={form.produtoNome} onChange={e => setForm(f => ({ ...f, produtoNome: e.target.value }))}
-                  placeholder="Ex: Palco principal, série, atividade…" className="mt-2 w-full rounded border border-black/15 px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5]" />}
+                  placeholder="Ex: Palco principal, série, atividade…" className="mt-2 w-full rounded border border-black/15 px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5]" />}
               </div>
 
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Valor de referência</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Valor de referência</label>
                 <div className="mb-2 flex gap-2">
                   {([ ["fixo", "Valor fixo"], ["faixa", "Faixa de valores"] ] as const).map(([value, label]) => (
                     <button key={value} type="button" onClick={() => setForm(f => ({ ...f, precoTipo: value }))}
@@ -377,7 +374,7 @@ export function CotasProjetoManager({
                     onChange={() => {}}
                     onKeyDown={atmKey(setCents => setForm(f => ({ ...f, valorCents: setCents(f.valorCents) })))}
                     placeholder="0,00"
-                    className="w-full text-[0.8125rem] text-black outline-none bg-transparent"
+                    className="w-full text-[0.8125rem] text-[#282525] outline-none bg-transparent"
                   />
                 </div>
                 {form.precoTipo === "faixa" && <>
@@ -386,14 +383,14 @@ export function CotasProjetoManager({
                     <span className="text-[0.8125rem] text-black/40">R$</span>
                     <input value={atm(form.valorMaximoCents)} onChange={() => {}}
                       onKeyDown={atmKey(setCents => setForm(f => ({ ...f, valorMaximoCents: setCents(f.valorMaximoCents) })))}
-                      placeholder="0,00" className="w-full bg-transparent text-[0.8125rem] text-black outline-none" />
+                      placeholder="0,00" className="w-full bg-transparent text-[0.8125rem] text-[#282525] outline-none" />
                   </div>
                 </>}
                 <p className="mt-1.5 text-[0.625rem] text-black/35">O valor da proposta pode ser ajustado sem alterar esta referência.</p>
               </div>
 
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Unidades disponíveis</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Unidades disponíveis</label>
                 <div className="mb-2 flex gap-2">
                   <button type="button" onClick={() => setForm(f => ({ ...f, unidadesIlimitadas: false }))}
                     className={`rounded border px-3 py-2 text-[0.6875rem] font-semibold ${!form.unidadesIlimitadas ? "border-[#7259B5] text-[#7259B5]" : "border-black/15 text-black/45"}`}>Quantidade definida</button>
@@ -425,7 +422,7 @@ export function CotasProjetoManager({
               </div>
 
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">
                   Contrapartidas <span className="text-black/30 font-normal">(uma por linha)</span>
                 </label>
                 <textarea
@@ -433,7 +430,7 @@ export function CotasProjetoManager({
                   onChange={e => setForm(f => ({ ...f, contrapartidas: e.target.value }))}
                   placeholder={"Logo em materiais\nReceivers no evento\nPost nas redes sociais"}
                   rows={4}
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition resize-none"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition resize-none"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
@@ -449,7 +446,7 @@ export function CotasProjetoManager({
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-4 py-2 text-xs font-semibold bg-[#2E8932] text-white border border-[#2E8932] rounded hover:bg-[#26752A] transition disabled:opacity-40"
+                className="px-4 py-2 text-xs font-semibold acao-salvar text-white border border-[#2E8932] rounded transition disabled:opacity-40"
               >
                 {saving ? "Salvando…" : editing ? "Salvar" : "Criar cota"}
               </button>

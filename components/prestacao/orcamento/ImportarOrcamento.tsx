@@ -185,7 +185,7 @@ export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garan
               type="button"
               onClick={verPrevia}
               disabled={mapa.nome === "" || mapa.valor === ""}
-              className="rounded bg-[#0D0D0D] px-4 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded bg-[#1C0E33] px-4 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Ver prévia
             </button>
@@ -219,8 +219,8 @@ export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garan
                   <tbody>
                     {exemplo.map((linha, i) => (
                       <tr key={i} className="border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
-                        <td className="max-w-[12rem] truncate px-3 py-1.5 text-black/70">{linha[Number(mapa.nome)] || "—"}</td>
-                        {mapa.etapa !== "" && <td className="max-w-[8rem] truncate px-3 py-1.5 text-black/45">{linha[Number(mapa.etapa)] || "—"}</td>}
+                        <td className="max-w-[12rem] min-w-0 break-words px-3 py-1.5 text-black/70">{linha[Number(mapa.nome)] || "—"}</td>
+                        {mapa.etapa !== "" && <td className="max-w-[8rem] min-w-0 break-words px-3 py-1.5 text-black/45">{linha[Number(mapa.etapa)] || "—"}</td>}
                         {mapa.valor !== "" && <td className="px-3 py-1.5 text-right tabular-nums text-black/70">{linha[Number(mapa.valor)] || "—"}</td>}
                       </tr>
                     ))}
@@ -246,7 +246,7 @@ export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garan
                 type="button"
                 onClick={importar}
                 disabled={gravando}
-                className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {gravando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
                 Importar

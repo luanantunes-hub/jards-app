@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, ClipboardCheck, HeartPulse, Plus, RefreshCw, X } from "lucide-react";
+import { Check, ClipboardCheck, Clock, HeartPulse, Plus, RefreshCw, X } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { CompromissoCliente, PrevisaoRenovacao } from "@/lib/supabase/types";
@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/Select";
 import { PartnershipHealthScorecards } from "@/components/customer-success/PartnershipHealthScorecards";
 import { RenewalPlanningSheet, type RenewalPlan } from "@/components/customer-success/RenewalPlanningSheet";
 import { OUTCOME_LABELS } from "@/lib/customer-success/renewalDecisionTree";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type Contract = { id: string; titulo: string | null; numero: string | null; valor: number; proxima_renovacao: string | null; status: string };
 type Project = { id: string; nome: string };
@@ -84,7 +85,7 @@ export function PartnershipWorkspace({ contaId, organizationId, accountId, contr
   return <section className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
     <header className="border-b px-5 py-5 md:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div><p className="text-[0.6875rem] font-medium text-black/35">{sectionMeta.eyebrow}</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-black">{sectionMeta.title}</h2></div>
+        <div><p className="text-[0.6875rem] font-medium text-black/35">{sectionMeta.eyebrow}</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-[#282525]">{sectionMeta.title}</h2></div>
         <div className="flex flex-wrap gap-2">
           {section === "deliveries" ? <WorkspaceAction label="Registrar entrega" onClick={() => setForm("commitment")} accent /> : section === "renewal" ? <WorkspaceAction label="Planejar renovação" onClick={() => { setRenewalContractId(null); setRenewalSheetOpen(true); }} accent /> : null}
         </div>
@@ -101,9 +102,9 @@ export function PartnershipWorkspace({ contaId, organizationId, accountId, contr
 
 function WorkspaceAction({label,onClick,accent=false}:{label:string;onClick:()=>void;accent?:boolean}) { return <button onClick={onClick} className="rounded border bg-white px-3.5 py-2 text-[0.75rem] font-medium transition hover:bg-black/[.04] active:translate-y-px" style={{color:accent?'#7259B5':'rgba(13,13,13,.58)',borderColor:accent?'#7259B540':'rgba(13,13,13,.11)'}}><Plus size={12} className="mr-1.5 inline"/>{label}</button>; }
 
-function CommitmentsView({items,onFinish}:{items:CompromissoCliente[];onFinish:(i:CompromissoCliente)=>void}) { if(!items.length)return <Empty icon={ClipboardCheck} title="Nenhum compromisso registrado" copy="Conecte contrato, projeto, prazo e evidência para que promessas não se percam."/>;return <div className="divide-y divide-black/[.06]">{items.map(item=>{const late=item.prazo&&new Date(item.prazo)<new Date()&&!['entregue','aprovado','cancelado'].includes(item.status);return <div key={item.id} className="flex items-center gap-3 py-4"><button onClick={()=>onFinish(item)} className="flex h-7 w-7 items-center justify-center rounded border text-black/20 hover:border-[#2E8932] hover:text-[#2E8932]" style={{borderColor:'rgba(13,13,13,.12)'}}><Check size={13}/></button><div className="min-w-0 flex-1"><p className="text-[0.8125rem] font-semibold text-black/75">{item.titulo}</p><p className="mt-1 text-[0.6875rem] text-black/35">{item.categoria.replaceAll('_',' ')} · {item.status.replaceAll('_',' ')}</p></div><span className="text-[0.6875rem] font-medium" style={{color:late?'#D94E4E':'rgba(13,13,13,.4)'}}>{item.prazo?new Date(item.prazo+'T12:00').toLocaleDateString('pt-BR'):'Sem prazo'}</span></div>})}</div>; }
+function CommitmentsView({items,onFinish}:{items:CompromissoCliente[];onFinish:(i:CompromissoCliente)=>void}) { if(!items.length)return <Empty icon={ClipboardCheck} title="Nenhum compromisso registrado" copy="Conecte contrato, projeto, prazo e evidência para que promessas não se percam."/>;return <div className="divide-y divide-black/[.06]">{items.map(item=>{const late=item.prazo&&new Date(item.prazo)<new Date()&&!['entregue','aprovado','cancelado'].includes(item.status);return <div key={item.id} className="flex items-center gap-3 py-4"><button onClick={()=>onFinish(item)} className="flex h-7 w-7 items-center justify-center rounded border text-black/20 hover:border-[#2E8932] hover:text-[#2E8932]" style={{borderColor:'rgba(13,13,13,.12)'}}><Check size={13}/></button><div className="min-w-0 flex-1"><p className="text-[0.8125rem] font-semibold text-black/75">{item.titulo}</p><p className="mt-1 text-[0.6875rem] text-black/35">{item.categoria.replaceAll('_',' ')} · {item.status.replaceAll('_',' ')}</p></div><span className="flex shrink-0 items-center gap-1 text-[0.6875rem] font-medium text-black/50">{late&&<Clock size={12} strokeWidth={1.75} role="img" aria-label="Atrasado" className="shrink-0 text-[#D94A4A]"/>}{item.prazo?new Date(item.prazo+'T12:00').toLocaleDateString('pt-BR'):'Sem prazo'}</span></div>})}</div>; }
 const RENEWAL_STATUS: Record<RenewalPlan["status"], { label: string; color: string }> = {
-  programada: { label: "Programada", color: "#7259B5" },
+  programada: { label: "Programada", color: "#282525" },
   em_negociacao: { label: "Em negociação", color: "#2563A8" },
   aprovada: { label: "Aprovada", color: "#2E8932" },
   recusada: { label: "Recusada", color: "#B54444" },
@@ -122,7 +123,7 @@ function formatDate(value: string | null | undefined) {
 
 function formatCurrency(value: number | null | undefined) {
   if (value == null) return "Não informado";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
+  return formatarValorCurto(value);
 }
 
 function RenewalView({ contracts, renewals, plans, onPlan }: { contracts: Contract[]; renewals: PrevisaoRenovacao[]; plans: RenewalPlan[]; onPlan: (contractId: string) => void }) {
@@ -135,17 +136,17 @@ function RenewalView({ contracts, renewals, plans, onPlan }: { contracts: Contra
     const startDate = plan?.iniciar_negociacao_em ?? legacy?.data_esperada ?? contract.proxima_renovacao;
     return <article key={contract.id} className="grid items-center gap-4 py-4 md:grid-cols-[minmax(0,1fr)_6.875rem_8.125rem_6.875rem_auto]">
       <div className="min-w-0"><div className="flex min-w-0 items-center gap-2"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{contract.titulo || contract.numero || "Contrato"}</p>{status && <span className="shrink-0 rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={{ color: status.color, borderColor: `${status.color}47` }}>{status.label}</span>}</div><p className="mt-1 text-[0.6875rem] text-black/35">{plan ? `${RENEWAL_SCENARIO[plan.cenario]} · iniciar em ${formatDate(startDate)}` : "Renovação ainda não planejada"}</p></div>
-      <Metric label="Valor esperado" value={formatCurrency(expectedValue)} /><Metric label="Início" value={formatDate(startDate)} /><Metric label="Decisão" value={plan?.diagnostico ? OUTCOME_LABELS[plan.diagnostico] : "Não avaliada"} />
+      <Metric label="Valor esperado" value={formatCurrency(expectedValue)} title={expectedValue == null ? undefined : formatarValorCompleto(expectedValue)} /><Metric label="Início" value={formatDate(startDate)} /><Metric label="Decisão" value={plan?.diagnostico ? OUTCOME_LABELS[plan.diagnostico] : "Não avaliada"} />
       <div className="flex justify-end">{plan?.captacao_id ? <Link href={`/captacoes/${plan.captacao_id}`} className="rounded border border-black/[.12] bg-white px-3 py-2 text-[0.6875rem] font-semibold text-black/60 transition hover:bg-black/[.04]">Abrir negociação</Link> : <button type="button" onClick={() => onPlan(contract.id)} className="rounded border border-black/[.12] bg-white px-3 py-2 text-[0.6875rem] font-semibold text-black/60 transition hover:bg-black/[.04]">{plan ? "Editar plano" : "Planejar"}</button>}</div>
     </article>;
   })}</div>;
 }
 
-function Metric({ label, value }: { label: string; value: string }) { return <div><p className="text-[0.625rem] font-medium text-black/30">{label}</p><p className="mt-1 truncate text-[0.75rem] font-semibold text-black/60">{value}</p></div>; }
+function Metric({ label, value, title }: { label: string; value: string; title?: string }) { return <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p><p title={title} className="mt-1 truncate text-[0.75rem] font-semibold tabular-nums text-[#282525]">{value}</p></div>; }
 function Empty({icon:Icon,title,copy}:{icon:any;title:string;copy:string}) { return <div className="py-16 text-center"><Icon size={22} className="mx-auto text-black/15"/><p className="mt-4 text-[0.875rem] font-semibold text-black/45">{title}</p><p className="mx-auto mt-2 max-w-md text-[0.75rem] leading-relaxed text-black/30">{copy}</p></div>; }
 
 function QuickForm({contracts,projects,saving,onClose,onSubmit}:{contracts:Contract[];projects:Project[];saving:boolean;onClose:()=>void;onSubmit:(k:'commitment',d:Record<string,FormDataEntryValue>)=>void}) { return <form onSubmit={e=>{e.preventDefault();onSubmit('commitment',Object.fromEntries(new FormData(e.currentTarget)) as any)}} className="border-b bg-black/[.015] px-5 py-5 md:px-6" style={{borderColor:'rgba(13,13,13,.07)'}}><div className="mb-4 flex items-center justify-between"><p className="text-[0.8125rem] font-semibold text-black/65">Novo compromisso</p><button type="button" onClick={onClose} className="text-black/30 hover:text-black/55"><X size={14}/></button></div><div className="grid gap-3 md:grid-cols-2">
     <><Field name="titulo" placeholder="O que foi prometido?" required/><FieldSelect name="categoria" options={['marca_comunicacao','hospitalidade','relatorio','ativacao','conteudo','colaboradores','impacto','compliance','financeiro','outro']}/><Field name="prazo" type="date"/><FieldSelect name="contrato_id" options={contracts.map(c=>[c.id,c.titulo||c.numero||'Contrato'])}/><FieldSelect name="projeto_id" options={projects.map(p=>[p.id,p.nome])}/><Field name="observacoes" placeholder="Contexto ou evidência esperada"/></>
-  </div><div className="mt-4 flex justify-end gap-3"><button type="button" onClick={onClose} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button disabled={saving} className="rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white hover:bg-[#26752A] disabled:opacity-40">{saving?'Salvando…':'Salvar'}</button></div></form>; }
+  </div><div className="mt-4 flex justify-end gap-3"><button type="button" onClick={onClose} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55">Cancelar</button><button disabled={saving} className="rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white disabled:opacity-40">{saving?'Salvando…':'Salvar'}</button></div></form>; }
 function Field(props:any){return <input {...props} className="rounded border bg-white px-3 py-2.5 text-[0.75rem] outline-none focus:border-[#7259B5]" style={{borderColor:'rgba(13,13,13,.12)'}}/>} 
 function FieldSelect({name,options}:{name:string;options:any[]}){return <Select name={name} className="rounded border bg-white px-3 py-2.5 text-[0.75rem] outline-none" style={{borderColor:'rgba(13,13,13,.12)'}}>{options.map((o:any)=>{const [v,l]=Array.isArray(o)?o:[o,o.replaceAll('_',' ')];return <option key={v} value={v}>{l}</option>})}</Select>}

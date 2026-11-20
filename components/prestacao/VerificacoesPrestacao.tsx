@@ -4,7 +4,8 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, Ban, CheckCircle2, ChevronDown, Info, RefreshCw, RotateCcw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { destinoDaChecagem, pendenciasPorSeveridade, tituloDaChecagem, type DestinoDaChecagem } from "@/lib/prestacao/checagens";
+import { pendenciasPorSeveridade, tituloDaChecagem } from "@/lib/prestacao/checagens";
+import { destinoDaVerificacao } from "@/lib/prestacao/destino-da-verificacao";
 import { mensagemErroPrestacao, type PermissoesPrestacao } from "@/lib/prestacao/status";
 import { EVENTO_VERIFICADA, verificarAgora } from "@/lib/prestacao/verificar-cliente";
 import type { PrestacaoVerificacao } from "@/lib/supabase/types";
@@ -13,56 +14,14 @@ import type { PrestacaoVerificacao } from "@/lib/supabase/types";
 const VALIDADE_MS = 10 * 60 * 1000;
 
 const SEVERIDADE = {
-  bloqueio: { rotulo: "Bloqueia o envio", cor: "#B23B3B", icone: Ban },
+  bloqueio: { rotulo: "Bloqueia o envio", cor: "#D94A4A", icone: Ban },
   alerta: { rotulo: "Revisar ou justificar", cor: "#B07A14", icone: AlertTriangle },
   justificativa: { rotulo: "Pede justificativa", cor: "#B07A14", icone: AlertTriangle },
-  info: { rotulo: "Aviso", cor: "#2D72B0", icone: Info },
+  info: { rotulo: "Aviso", cor: "rgba(13,13,13,.4)", icone: Info },
 } as const;
 
 const ORDEM: Record<PrestacaoVerificacao["severidade"], number> = { bloqueio: 0, alerta: 1, justificativa: 1, info: 2 };
 const LIMITE = 8;
-
-const DESTINOS: Record<DestinoDaChecagem, { caminho: string; rotulo: string }> = {
-  visao_geral: { caminho: "#dados-oficiais", rotulo: "Preencher dados" },
-  orcamento: { caminho: "/orcamento", rotulo: "Abrir orçamento" },
-  comprovantes: { caminho: "/comprovantes", rotulo: "Abrir despesas" },
-  extrato: { caminho: "/extrato", rotulo: "Abrir extrato" },
-  conciliacao: { caminho: "/conciliacao", rotulo: "Conciliar" },
-  objeto: { caminho: "/objeto", rotulo: "Abrir objeto" },
-  atividades: { caminho: "/atividades", rotulo: "Abrir atividades" },
-  distribuicao: { caminho: "/distribuicao", rotulo: "Abrir distribuição" },
-  bens: { caminho: "/bens", rotulo: "Abrir bens" },
-  divulgacao: { caminho: "/divulgacao", rotulo: "Abrir divulgação" },
-};
-
-function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; rotulo: string } {
-  const qual = destinoDaChecagem(v.check_codigo);
-  // O achado de uma despesa abre a própria despesa na aba de comprovantes.
-  if (qual === "comprovantes" && v.entidade_tipo === "despesa" && v.entidade_id) {
-    return { href: `/prestacoes/${prestacaoId}/comprovantes?despesa=${v.entidade_id}`, rotulo: "Abrir despesa" };
-  }
-  // O achado de uma meta, de um local ou de uma evidência abre o cadastro na aba Objeto.
-  if (qual === "objeto" && (v.entidade_tipo === "meta" || v.entidade_tipo === "local" || v.entidade_tipo === "evidencia") && v.entidade_id) {
-    const rotulo = { meta: "Abrir meta", local: "Abrir local", evidencia: "Abrir evidência" }[v.entidade_tipo];
-    return { href: `/prestacoes/${prestacaoId}/objeto?${v.entidade_tipo}=${v.entidade_id}`, rotulo };
-  }
-  // O achado de uma linha da distribuição abre a linha.
-  if (qual === "distribuicao" && v.entidade_tipo === "distribuicao" && v.entidade_id) {
-    return { href: `/prestacoes/${prestacaoId}/distribuicao?linha=${v.entidade_id}`, rotulo: "Abrir linha" };
-  }
-  // O bem abre o cadastro; a despesa sem bem abre o cadastro de um bem novo para ela.
-  if (qual === "bens" && v.entidade_tipo === "bem" && v.entidade_id) {
-    return { href: `/prestacoes/${prestacaoId}/bens?bem=${v.entidade_id}`, rotulo: "Abrir bem" };
-  }
-  if (qual === "bens" && v.entidade_tipo === "despesa" && v.entidade_id) {
-    return { href: `/prestacoes/${prestacaoId}/bens?despesa=${v.entidade_id}`, rotulo: "Registrar o bem" };
-  }
-  if (qual === "divulgacao" && v.entidade_tipo === "peca" && v.entidade_id) {
-    return { href: `/prestacoes/${prestacaoId}/divulgacao?peca=${v.entidade_id}`, rotulo: "Abrir peça" };
-  }
-  const { caminho, rotulo } = DESTINOS[qual];
-  return { href: caminho.startsWith("#") ? caminho : `/prestacoes/${prestacaoId}${caminho}`, rotulo };
-}
 
 function quando(iso: string | null): string {
   if (!iso) return "ainda não verificada";
@@ -86,7 +45,7 @@ function Item({ v, prestacaoId, permissoes, onDecidir, emEdicao, onEditar }: {
   const meta = SEVERIDADE[v.severidade];
   const Icone = meta.icone;
   const decidida = v.status === "justificada" || v.status === "dispensada";
-  const ir = destino(prestacaoId, v);
+  const ir = destinoDaVerificacao(prestacaoId, v);
   const sobre = typeof v.dados?.despesa === "string" ? v.dados.despesa : null;
 
   async function salvar() {
@@ -143,7 +102,7 @@ function Item({ v, prestacaoId, permissoes, onDecidir, emEdicao, onEditar }: {
                   type="button"
                   onClick={salvar}
                   disabled={salvando}
-                  className="rounded bg-[#2E8932] px-3 py-1.5 text-[0.6875rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-wait disabled:opacity-60 motion-reduce:transform-none"
+                  className="rounded acao-salvar px-3 py-1.5 text-[0.6875rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-wait disabled:opacity-60 motion-reduce:transform-none"
                 >
                   {salvando ? "Salvando…" : "Salvar"}
                 </button>
@@ -312,11 +271,19 @@ export function VerificacoesPrestacao({ prestacaoId, permissoes, resumo = false 
     <section aria-labelledby="verificacoes-titulo" className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="min-w-0">
-          <h2 id="verificacoes-titulo" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40">Verificações</h2>
+          <h2 id="verificacoes-titulo" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Verificações</h2>
           <p className="mt-1 text-[0.75rem] text-black/65" aria-live="polite">
             {!carregado ? "Carregando…" : (
               <>
-                {contagem.bloqueio > 0 && <span className="font-medium text-[#B23B3B] tabular-nums">{contagem.bloqueio} {contagem.bloqueio === 1 ? "bloqueia" : "bloqueiam"} o envio · </span>}
+                {contagem.bloqueio > 0 && (
+                  <>
+                    <span className="inline-flex items-center gap-1 font-medium tabular-nums text-black/70">
+                      <Ban size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />
+                      {contagem.bloqueio} {contagem.bloqueio === 1 ? "bloqueia" : "bloqueiam"} o envio
+                    </span>
+                    {" · "}
+                  </>
+                )}
                 <span className="tabular-nums">{contagem.alerta + contagem.justificativa}</span> a revisar ou justificar
                 {avisos.length > 0 && <span className="text-black/45"> · <span className="tabular-nums">{avisos.length}</span> {avisos.length === 1 ? "aviso" : "avisos"}</span>}
               </>
@@ -339,7 +306,7 @@ export function VerificacoesPrestacao({ prestacaoId, permissoes, resumo = false 
 
       {carregado && !abertas.length && !decididas.length && (
         <p className="flex items-center gap-2 px-5 py-4 text-[0.75rem] text-black/55">
-          <CheckCircle2 size={14} className="shrink-0 text-[#2E8932]" aria-hidden />
+          <CheckCircle2 size={14} className="shrink-0 text-black/40" aria-hidden />
           {dados?.verificadaEm ? "Nenhuma pendência nas checagens." : "Ainda sem verificação."}
         </p>
       )}

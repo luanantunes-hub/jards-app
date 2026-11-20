@@ -1,7 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
+import { SEGMENTS as GAUGE_SEGMENTS_DO_DETALHE } from "@/components/ui/RelationshipScoreGauge";
 import { useRouter } from "next/navigation";
-import { Building2, Trash2, List, Grid2X2, TrendingUp, UsersRound, Plus, Search, Shield, UserCheck } from "lucide-react";
+import { Building2, Trash2, List, Plus, Search, Shield, UserCheck, CalendarClock, Tag } from "lucide-react";
+import { FILTRO_SEM_TAG, TagsDaLinha, VisaoPorTags } from "@/components/ui/Tags";
+import { temAlgumaTag } from "@/lib/tags";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
 import { NovoClienteModal } from "@/components/modals/NovoClienteModal";
 import { createClient } from "@/lib/supabase/client";
@@ -15,12 +19,16 @@ import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, L
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
+import { useFiltroResponsavel } from "@/hooks/useFiltroResponsavel";
+import { FiltroResponsavel } from "@/components/list/FiltroResponsavel";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
-type ViewMode = "lista" | "matriz";
-const VIEW_MODES = ["lista", "matriz"] as const;
+// Lista ou Tags (um cartão por tag; clicar abre a lista filtrada pela tag).
+type ViewMode = "lista" | "tags";
+const VIEW_MODES = ["lista", "tags"] as const;
 const VIEW_OPTIONS = [
   { value: "lista", label: "Lista", icon: List },
-  { value: "matriz", label: "Matriz", icon: Grid2X2 },
+  { value: "tags", label: "Tags", icon: Tag },
 ] as const;
 
 type EmpresaViewRow = EmpresaCrm & {
@@ -34,6 +42,8 @@ type EmpresaViewRow = EmpresaCrm & {
   ultimoContatoDias: number | null;
   proximoFollowup: string | null;
   responsavelNome: string | null;
+  /** Quem responde pela empresa: o responsável dela e os das negociações com ela. */
+  donos: string[];
   atribuicao: { captadorNome: string; tipo: string } | null;
 };
 
@@ -42,6 +52,8 @@ type CaptacaoMetricRow = {
   status: string;
   valor_solicitado: number | null;
   projeto_id: string | null;
+  captador_id: string | null;
+  supervisor_id: string | null;
 };
 
 const TIPO_ETIQUETA: Record<string, { label: string; color: string }> = {
@@ -59,6 +71,7 @@ const EMPRESAS_COLUMNS = [
   { id: "empresa",          label: "Empresa",            width: "minmax(13.75rem,1.5fr)", hideable: false },
   { id: "localizacao",      label: "Localização",        width: "minmax(5.625rem,.7fr)",   hideable: true },
   { id: "setor",            label: "Setor",              width: "minmax(5.625rem,.7fr)",   hideable: true },
+  { id: "tags",             label: "Tags",               width: "minmax(7.5rem,.8fr)",     hideable: true },
   { id: "tipo",             label: "Tipo",               width: "6.875rem",               hideable: false },
   { id: "negociacoes",      label: "Negociações",        width: "9.6875rem",               hideable: true },
   { id: "valor_convertido", label: "Convertido",         width: "7.5rem",               hideable: true },
@@ -82,19 +95,8 @@ function fmtDate(d: string | null): string {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
-function fmtMoney(value: number) {
-  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)} mi`;
-  if (value >= 1_000) return `R$ ${(value / 1_000).toFixed(0)} mil`;
-  return `R$ ${value.toLocaleString("pt-BR")}`;
-}
-
-const GAUGE_SEGMENTS = [
-  { from: 180, to: 148, color: "rgba(114,89,181,.35)" },
-  { from: 144, to: 112, color: "rgba(114,89,181,.50)" },
-  { from: 108, to: 76,  color: "rgba(114,89,181,.65)" },
-  { from: 72,  to: 40,  color: "rgba(114,89,181,.80)" },
-  { from: 36,  to: 4,   color: "#7259B5" },
-];
+/** A mesma escala do RelationshipScoreGauge, que mostra este dado no detalhe da empresa. */
+const GAUGE_SEGMENTS = GAUGE_SEGMENTS_DO_DETALHE;
 function gaugePoint(angle: number, radius: number) {
   const rad = (angle * Math.PI) / 180;
   return { x: 80 + radius * Math.cos(rad), y: 68 - radius * Math.sin(rad) };
@@ -122,78 +124,41 @@ function PotencialGauge({ score }: { score: number | null }) {
           stroke={value >= i * 20 ? seg.color : "rgba(13,13,13,.075)"} strokeWidth="17" />
       ))}
       <path d={`M ${nL.x} ${nL.y} L ${tip.x} ${tip.y} L ${nR.x} ${nR.y} Z`}
-        fill="white" stroke="#0D0D0D" strokeWidth="2" strokeLinejoin="round" />
-      <circle cx="80" cy="68" r="7" fill="white" stroke="#0D0D0D" strokeWidth="2.25" />
-      <circle cx="80" cy="68" r="2.25" fill="#0D0D0D" />
+        fill="white" stroke="#282525" strokeWidth="2" strokeLinejoin="round" />
+      <circle cx="80" cy="68" r="7" fill="white" stroke="#282525" strokeWidth="2.25" />
+      <circle cx="80" cy="68" r="2.25" fill="#282525" />
     </svg>
   );
 }
 
-function CompanyMatrixView({ empresas, onOpen }: { empresas: EmpresaViewRow[]; onOpen: (id: string) => void }) {
-  const positiveValues = empresas.map(item => item.activePipelineValue).filter(value => value > 0).sort((a, b) => a - b);
-  const median = positiveValues.length ? positiveValues[Math.floor(positiveValues.length / 2)] : 0;
-  const quadrants = [
-    { key: "high-high", title: "Priorizar",          subtitle: "Relação forte, oportunidade alta",         highRelation: true,  highValue: true,  tone: "#2E8932" },
-    { key: "low-high",  title: "Desenvolver relação", subtitle: "Relação em construção, oportunidade alta", highRelation: false, highValue: true,  tone: "#B07A14" },
-    { key: "high-low",  title: "Cultivar",            subtitle: "Relação forte, oportunidade menor",        highRelation: true,  highValue: false, tone: "#2D72B0" },
-    { key: "low-low",   title: "Monitorar",           subtitle: "Relação e oportunidade menores",           highRelation: false, highValue: false, tone: "#6B7280" },
-  ];
-
-  return (
-    <div className="relative rounded border border-black/[.08] bg-white p-3 md:p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
-        <div className="flex items-center gap-2 text-[0.625rem] text-black/35"><UsersRound size={12}/><span>Força do relacionamento</span></div>
-        <div className="flex items-center gap-2 text-[0.625rem] text-black/35"><TrendingUp size={12}/><span>Valor das negociações ativas</span></div>
-      </div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {quadrants.map(quadrant => {
-          const items = empresas.filter(item => {
-            const relationHigh = Number(item.potencial_relacionamento ?? 50) >= 60;
-            const valueHigh = median > 0 && item.activePipelineValue >= median;
-            return relationHigh === quadrant.highRelation && valueHigh === quadrant.highValue;
-          });
-          const total = items.reduce((sum, item) => sum + item.activePipelineValue, 0);
-          return (
-            <section key={quadrant.key} className="min-h-[15rem] rounded border border-black/[.07] bg-[#F8F8F6] p-3.5">
-              <header className="mb-3 flex items-start justify-between gap-3">
-                <div><h2 className="text-[0.75rem] font-bold" style={{ color: quadrant.tone }}>{quadrant.title}</h2><p className="mt-0.5 text-[0.625rem] text-black/30">{quadrant.subtitle}</p></div>
-                <div className="text-right"><p className="text-[0.625rem] font-semibold tabular-nums text-black/45">{items.length} {items.length === 1 ? "empresa" : "empresas"}</p>{total > 0 && <p className="mt-0.5 text-[0.5625rem] tabular-nums text-black/30">{fmtMoney(total)}</p>}</div>
-              </header>
-              {items.length === 0 ? (
-                <div className="flex min-h-[10rem] items-center justify-center rounded border border-dashed border-black/10 text-[0.6875rem] text-black/25">Nenhuma empresa neste quadrante</div>
-              ) : (
-                <div className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-3">
-                  {items.map(item => (
-                    <button key={item.id} type="button" onClick={() => onOpen(item.id)} className="flex min-w-0 items-center gap-2.5 rounded border border-black/[.07] bg-white p-2.5 text-left transition hover:border-black/20 hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
-                      <CompanyLogo nome={item.nome} domain={item.domain_key} site={item.site} size={item.activeNegotiations > 2 ? 36 : 30} className="shrink-0 border border-black/[.06]"/>
-                      <div className="min-w-0"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{item.nome}</p><p className="mt-0.5 text-[0.59375rem] text-black/30">{item.activeNegotiations} {item.activeNegotiations === 1 ? "negociação" : "negociações"}{item.activePipelineValue > 0 ? `, ${fmtMoney(item.activePipelineValue)}` : ""}</p>{item.potencial_relacionamento == null && <p className="mt-0.5 text-[0.5625rem] text-[#B07A14]">Relação não avaliada</p>}</div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </section>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export default function EmpresasCrmPage() {
   const router = useRouter();
   const supabase = createClient();
   const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
+  const responsavel = useFiltroResponsavel(organizationId);
 
   const [empresas, setEmpresas] = useState<EmpresaViewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dSearch, setDSearch] = useState("");
   const [tipoFilter, setTipoFilter] = useState<string>("todos");
+  // O fim da seleção em lote dos patrocinadores chega com ?tag=. A lista só aparece depois de carregar no
+  // navegador, então ler o endereço aqui não descasa a hidratação.
+  const [tagFilter, setTagFilter] = useState(() => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("tag")) ?? "todas");
   const [showNovoProspect, setShowNovoProspect] = useState(false);
   const [showNovoCliente, setShowNovoCliente] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [viewMode, setViewMode] = usePersistedViewMode<ViewMode>("jards:empresas:view", VIEW_MODES, "lista");
+  // Chegar com ?tag= ou ?responsavel= (o fim da seleção em lote dos patrocinadores) abre a LISTA, mesmo para quem
+  // costuma ver as tags em cartões. A preferência fica guardada e volta quando a pessoa troca o modo aqui.
+  const [chegouComFiltro, setChegouComFiltro] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const endereco = new URLSearchParams(window.location.search);
+    return endereco.has("tag") || endereco.has("responsavel");
+  });
+  const modo: ViewMode = chegouComFiltro ? "lista" : viewMode;
 
   function handleDelete(id: string, nome: string) {
     confirmDelete({
@@ -224,7 +189,7 @@ export default function EmpresasCrmPage() {
         { data: interacoes },
       ] = await Promise.all([
         supabase.from("empresas_crm").select("*").order("created_at", { ascending: false }),
-        supabase.from("captacoes").select("empresa_crm_id, status, valor_solicitado, projeto_id"),
+        supabase.from("captacoes").select("empresa_crm_id, status, valor_solicitado, projeto_id, captador_id, supervisor_id"),
         (supabase as any).from("atribuicoes").select("empresa_crm_id, tipo, captadores!captador_user_id(nome)").eq("status", "ativa"),
         supabase.from("editais_user").select("empresa_crm_id, valor").not("empresa_crm_id", "is", null),
         supabase.from("contatos").select("empresa_crm_id").not("empresa_crm_id", "is", null),
@@ -241,8 +206,12 @@ export default function EmpresasCrmPage() {
         const metrics = new Map<string, { value: number; count: number }>();
         const convertedMap = new Map<string, number>();
         const projectsMap = new Map<string, Set<string>>();
+        const donosMap = new Map<string, Set<string>>();
         for (const captacao of (captacoes ?? []) as unknown as CaptacaoMetricRow[]) {
           if (!captacao.empresa_crm_id) continue;
+          const donos = donosMap.get(captacao.empresa_crm_id) ?? new Set<string>();
+          for (const dono of [captacao.captador_id, captacao.supervisor_id]) if (dono) donos.add(dono);
+          donosMap.set(captacao.empresa_crm_id, donos);
           if (!terminalStatuses.has(captacao.status)) {
             const current = metrics.get(captacao.empresa_crm_id) ?? { value: 0, count: 0 };
             current.value += Number(captacao.valor_solicitado ?? 0);
@@ -310,6 +279,7 @@ export default function EmpresasCrmPage() {
             proximoFollowup: followupMap.get(item.id) ?? null,
             ultimoContatoDias,
             responsavelNome: item.responsavel_interno_id ? (memberMap.get(item.responsavel_interno_id) ?? null) : null,
+            donos: [...(donosMap.get(item.id) ?? []), ...(item.responsavel_interno_id ? [item.responsavel_interno_id] : [])],
             atribuicao: atribuicaoMap.get(item.id) ?? null,
           };
         }));
@@ -322,6 +292,9 @@ export default function EmpresasCrmPage() {
 
   const filtered = empresas.filter((e) => {
     if (tipoFilter !== "todos" && e.tipo !== tipoFilter) return false;
+    if (!responsavel.casa(e.donos)) return false;
+    if (tagFilter === FILTRO_SEM_TAG) { if (e.tags?.length) return false; }
+    else if (tagFilter !== "todas" && !temAlgumaTag(e.tags, [tagFilter])) return false;
     if (!dSearch.trim()) return true;
     const s = dSearch.toLowerCase();
     return (
@@ -332,31 +305,21 @@ export default function EmpresasCrmPage() {
   });
 
   const COL_COUNT = EMPRESAS_COLUMNS.length;
+  // tags que aparecem nas empresas carregadas, para o filtro
+  const tagsDasEmpresas = [...new Set(empresas.flatMap(e => e.tags ?? []))].sort((a, b) => a.localeCompare(b, "pt-BR"));
 
   return (
     <div className="flex h-full flex-col">
-      <ListPageHeader
+      <ListPageHeader secao="empresas"
         eyebrow="Inteligência de contas"
         title="Empresas"
         summary={!loading && <ListSummary strong={filtered.length}>{filtered.length === 1 ? "empresa" : "empresas"}</ListSummary>}
         actions={
           <div className="flex items-center gap-2">
-            {tipoFilter === "cliente_ativo" ? (
-              <button
-                onClick={() => setShowNovoCliente(true)}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-black rounded hover:bg-black/5 transition"
-              >
-                <Plus size={13} /> Novo cliente
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowNovoProspect(true)}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-black rounded hover:bg-black/5 transition"
-              >
-                <Plus size={13} /> Novo prospect
-              </button>
-            )}
-            <EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/>
+            <EntityViewSwitcher value={modo} onChange={novo => { setChegouComFiltro(false); if (novo === "tags") setTagFilter("todas"); setViewMode(novo); }} options={VIEW_OPTIONS}/>
+            {tipoFilter === "cliente_ativo"
+              ? <PrimaryListAction onClick={() => setShowNovoCliente(true)}><Plus size={13} aria-hidden="true" /> Novo cliente</PrimaryListAction>
+              : <PrimaryListAction onClick={() => setShowNovoProspect(true)}><Plus size={13} aria-hidden="true" /> Novo prospect</PrimaryListAction>}
           </div>
         }
       />
@@ -373,10 +336,31 @@ export default function EmpresasCrmPage() {
             { value: "ex_cliente",    label: "Ex-Clientes" },
           ] as const}
         />
+        <FiltroResponsavel membros={responsavel.membros} meuId={responsavel.meuId} value={responsavel.filtro} onChange={responsavel.setFiltro} sempre rotuloDeTodos="Todos os responsáveis" />
+        {tagsDasEmpresas.length > 0 && (
+          <CustomDropdown
+            value={tagFilter}
+            onChange={setTagFilter}
+            options={[{ value: "todas", label: "Todas as tags" }, ...tagsDasEmpresas.map(tag => ({ value: tag, label: tag })), { value: FILTRO_SEM_TAG, label: "Sem tag" }]}
+            icon={<Tag size={13} />}
+            compact
+            emphasized={false}
+          />
+        )}
       </ListToolbar>
 
-      <ListContent className="md:pr-0">{viewMode === "matriz" ? (
-        <CompanyMatrixView empresas={filtered} onOpen={id => router.push(`/empresas-crm/${id}`)}/>
+      <ListContent className="md:pr-0">{modo === "tags" ? (
+        <div className="md:pr-8">
+          <VisaoPorTags
+            itens={filtered}
+            carregando={loading}
+            singular="empresa"
+            plural="empresas"
+            nomeDe={e => e.nome}
+            avatarDe={e => <CompanyLogo nome={e.nome} domain={e.domain_key} site={e.site} size={24} className="rounded-full" />}
+            onAbrir={tag => { setTagFilter(tag); setViewMode("lista"); }}
+          />
+        </div>
       ) : (
         <ListTableSurface className="rounded-r-none border-r-0">
           <ManagedTable storageKey="empresas-crm-v6" definitions={EMPRESAS_COLUMNS} className="w-full">
@@ -385,6 +369,7 @@ export default function EmpresasCrmPage() {
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Empresa</th>
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Localização</th>
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Setor</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Tags</th>
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Tipo</th>
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Negociações</th>
                 <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Convertido</th>
@@ -418,7 +403,7 @@ export default function EmpresasCrmPage() {
                   <td colSpan={COL_COUNT}>
                     {empresas.length === 0
                       ? <ListEmptyState icon={Building2} title="Nenhuma empresa cadastrada" description="Adicione empresas que você está prospectando ou explore a base de patrocinadores." action={<PrimaryListAction onClick={() => setShowNovoProspect(true)}><Plus size={13} aria-hidden="true" /> Novo prospect</PrimaryListAction>} />
-                      : <ListEmptyState icon={Search} title="Nenhuma empresa corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setTipoFilter("todos"); }} />}
+                      : <ListEmptyState icon={Search} title="Nenhuma empresa corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setTipoFilter("todos"); setTagFilter("todas"); responsavel.setFiltro("todos"); }} />}
                   </td>
                 </tr>
               ) : (
@@ -433,7 +418,7 @@ export default function EmpresasCrmPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <CompanyLogo nome={e.nome} domain={e.domain_key} size={28} className="flex-shrink-0" />
-                        <span className="text-[0.8125rem] font-semibold text-[#0D0D0D] truncate block">
+                        <span className="text-[0.8125rem] font-semibold text-[#282525] min-w-0 break-words block">
                           {e.nome}
                         </span>
                       </div>
@@ -447,6 +432,11 @@ export default function EmpresasCrmPage() {
                     {/* Setor */}
                     <td className="px-5 py-3.5 text-black/50 text-[0.78125rem]">
                       {e.setor || "—"}
+                    </td>
+
+                    {/* Tags */}
+                    <td className="px-5 py-3.5">
+                      <TagsDaLinha tags={e.tags} />
                     </td>
 
                     {/* Tipo */}
@@ -473,7 +463,7 @@ export default function EmpresasCrmPage() {
                           <span className="text-[0.8125rem] font-semibold tabular-nums text-black/70">{e.activeNegotiations}</span>
                           <span className="text-[0.6875rem] text-black/35"> {e.activeNegotiations === 1 ? "negociação" : "negociações"}</span>
                           {e.activePipelineValue > 0 && (
-                            <p className="mt-0.5 text-[0.6875rem] text-black/40 tabular-nums">{fmtMoney(e.activePipelineValue)}</p>
+                            <p className="mt-0.5 text-[0.6875rem] text-black/40 tabular-nums" title={formatarValorCompleto(e.activePipelineValue)}>{formatarValorCurto(e.activePipelineValue)}</p>
                           )}
                         </div>
                       ) : (
@@ -483,8 +473,8 @@ export default function EmpresasCrmPage() {
 
                     {/* Convertido */}
                     <td className="px-5 py-3.5">
-                      <span className={`text-[0.75rem] font-semibold tabular-nums ${e.convertedValue > 0 ? "text-[#2E8932]" : "text-black/25"}`}>
-                        {fmtMoney(e.convertedValue)}
+                      <span className={`text-[0.75rem] font-semibold tabular-nums ${e.convertedValue > 0 ? "text-[#282525]" : "text-black/30"}`} title={e.convertedValue > 0 ? formatarValorCompleto(e.convertedValue) : undefined}>
+                        {formatarValorCurto(e.convertedValue)}
                       </span>
                     </td>
 
@@ -500,7 +490,7 @@ export default function EmpresasCrmPage() {
                         const ExcIcon = exc.icon;
                         return (
                           <div className="min-w-0">
-                            <p className="text-[0.75rem] font-medium text-black/70 truncate max-w-[8.125rem]">{e.atribuicao.captadorNome}</p>
+                            <p className="text-[0.75rem] font-medium text-black/70 min-w-0 break-words">{e.atribuicao.captadorNome}</p>
                             <span className="mt-1 inline-flex w-fit items-center gap-1 rounded px-2 py-0.5 text-[0.625rem] font-semibold text-white" style={{ background: exc.bg }}>
                               <ExcIcon size={10} />{exc.label}
                             </span>
@@ -517,8 +507,15 @@ export default function EmpresasCrmPage() {
                         const d = new Date(e.proximoFollowup);
                         const isOverdue = d < new Date();
                         return (
-                          <span className={`text-[0.75rem] tabular-nums ${isOverdue ? "text-[#D94E4E] font-medium" : "text-black/50"}`}>
-                            {fmtDate(e.proximoFollowup)}
+                          <span className="inline-flex items-center gap-1.5">
+                            {isOverdue && (
+                              <span role="img" className="shrink-0" title="Follow-up atrasado" aria-label="Follow-up atrasado">
+                                <CalendarClock size={12} strokeWidth={1.75} aria-hidden="true" className="text-[#D94A4A]" />
+                              </span>
+                            )}
+                            <span className={`text-[0.75rem] tabular-nums ${isOverdue ? "font-medium text-[#282525]" : "text-black/50"}`}>
+                              {fmtDate(e.proximoFollowup)}
+                            </span>
                           </span>
                         );
                       })() : (
@@ -530,9 +527,14 @@ export default function EmpresasCrmPage() {
                     <td className="px-5 py-3.5">
                       {e.ultimoContatoDias !== null ? (() => {
                         const d = e.ultimoContatoDias!;
-                        const color = d <= 14 ? "#2E8932" : d <= 30 ? "#B07A14" : "#D94E4E";
+                        const alerta = d > 30 ? "#D94A4A" : d > 14 ? "#B07A14" : undefined;
                         const label = d === 0 ? "Hoje" : d === 1 ? "1 dia" : `${d} dias`;
-                        return <span className="text-[0.75rem] font-medium tabular-nums" style={{ color }}>{label}</span>;
+                        return (
+                          <span className="inline-flex items-center gap-1.5">
+                            {alerta && <CalendarClock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: alerta }} />}
+                            <span className="text-[0.75rem] font-medium tabular-nums text-black/60">{label}</span>
+                          </span>
+                        );
                       })() : (
                         <span className="text-black/20 text-xs">—</span>
                       )}
@@ -557,7 +559,7 @@ export default function EmpresasCrmPage() {
                           <span className="text-[0.8125rem] font-semibold tabular-nums text-black/70">{e.inscricoesCount}</span>
                           <span className="text-[0.6875rem] text-black/35"> {e.inscricoesCount === 1 ? "edital" : "editais"}</span>
                           {e.inscricoesValue > 0 && (
-                            <p className="mt-0.5 text-[0.6875rem] text-black/40 tabular-nums">{fmtMoney(e.inscricoesValue)}</p>
+                            <p className="mt-0.5 text-[0.6875rem] text-black/40 tabular-nums" title={formatarValorCompleto(e.inscricoesValue)}>{formatarValorCurto(e.inscricoesValue)}</p>
                           )}
                         </div>
                       ) : (
@@ -596,7 +598,7 @@ export default function EmpresasCrmPage() {
                     {/* Responsável */}
                     <td className="px-5 py-3.5">
                       {e.responsavelNome ? (
-                        <span className="text-[0.75rem] text-black/55 truncate block max-w-[8.125rem]">
+                        <span className="text-[0.75rem] text-black/55 min-w-0 break-words block">
                           {e.responsavelNome.split(" ")[0]}
                         </span>
                       ) : (

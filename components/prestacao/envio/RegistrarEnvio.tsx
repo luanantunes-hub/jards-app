@@ -10,7 +10,7 @@ import type { Manifesto } from "@/lib/prestacao/pacote";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
 const dataBr = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
 const hojeIso = () => new Date().toLocaleDateString("sv-SE");
@@ -20,9 +20,11 @@ const hojeIso = () => new Date().toLocaleDateString("sv-SE");
  * o protocolo e o manifesto do pacote. O banco grava o retrato e trava o que
  * foi enviado.
  */
-export function RegistrarEnvio({ prestacaoId, etapa, sistema, manifesto, podeRegistrar, vigente, onRegistrado }: {
+export function RegistrarEnvio({ prestacaoId, etapa, exercicio = 0, sistema, manifesto, podeRegistrar, vigente, onRegistrado }: {
   prestacaoId: string;
   etapa: EtapaEnvio;
+  /** P9.2: o ano da prestação anual; 0 sem ela. */
+  exercicio?: number;
   sistema: string | null;
   /** O manifesto do pacote gerado agora; sem ele, só o aviso do envio que vale. */
   manifesto: Manifesto | null;
@@ -51,6 +53,7 @@ export function RegistrarEnvio({ prestacaoId, etapa, sistema, manifesto, podeReg
       p_protocolo: protocolo.trim() || null,
       p_manifesto: manifesto,
       p_comentario: comentario.trim() || null,
+      p_exercicio: exercicio,
     });
     setSalvando(false);
     if (error) { setErro(mensagemErroPrestacao(error, "Não foi possível registrar o envio")); return; }
@@ -80,7 +83,7 @@ export function RegistrarEnvio({ prestacaoId, etapa, sistema, manifesto, podeReg
   return (
     <section className="space-y-3 rounded border bg-white px-5 py-4" style={BORDA} aria-labelledby="registrar-envio">
       <div>
-        <h3 id="registrar-envio" className="text-[0.75rem] font-semibold text-black">Registrar o envio</h3>
+        <h3 id="registrar-envio" className="text-[0.75rem] font-semibold text-[#282525]">Registrar o envio</h3>
         <p className="max-w-[46rem] text-[0.6875rem] text-black/50">
           Depois de enviar {destino}, registre aqui. O Jards guarda um retrato do que foi enviado, com o manifesto deste pacote, e trava o que foi enviado: nada muda enquanto o envio vale, e nada sai pelo prazo de guarda do regime.
         </p>
@@ -106,7 +109,7 @@ export function RegistrarEnvio({ prestacaoId, etapa, sistema, manifesto, podeReg
               type="button"
               onClick={registrar}
               disabled={salvando}
-              className="flex h-9 items-center gap-1.5 rounded bg-[#2E8932] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 items-center gap-1.5 rounded acao-salvar px-4 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
               <Lock size={12} aria-hidden /> Registrar envio

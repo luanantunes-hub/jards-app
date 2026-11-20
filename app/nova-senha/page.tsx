@@ -54,7 +54,7 @@ export default function NovaSenhaPage() {
               <CheckCircle size={48} className="text-green-500" />
             </div>
             <h1
-              className="font-bold text-[#0D0D0D] mb-2"
+              className="font-bold text-[#282525] mb-2"
               style={{ fontSize: "1.5rem" }}
             >
               Senha atualizada!
@@ -64,7 +64,7 @@ export default function NovaSenhaPage() {
         ) : (
           <>
             <h1
-              className="font-bold text-[#0D0D0D] mb-1"
+              className="font-bold text-[#282525] mb-1"
               style={{ fontSize: "1.75rem" }}
             >
               Nova senha
@@ -84,7 +84,7 @@ export default function NovaSenhaPage() {
                     placeholder="••••••••"
                     required
                     autoComplete="new-password"
-                    className="w-full px-4 py-3 rounded border border-black/12 bg-white text-sm text-black placeholder-black/25 focus:outline-none focus:ring-2 focus:ring-black/20 transition pr-11"
+                    className="w-full px-4 py-3 rounded border border-black/12 bg-white text-sm text-[#282525] placeholder-black/25 focus:outline-none focus:ring-2 focus:ring-black/20 transition pr-11"
                   />
                   <button
                     type="button"
@@ -107,7 +107,7 @@ export default function NovaSenhaPage() {
                   placeholder="••••••••"
                   required
                   autoComplete="new-password"
-                  className="w-full px-4 py-3 rounded border border-black/12 bg-white text-sm text-black placeholder-black/25 focus:outline-none focus:ring-2 focus:ring-black/20 transition"
+                  className="w-full px-4 py-3 rounded border border-black/12 bg-white text-sm text-[#282525] placeholder-black/25 focus:outline-none focus:ring-2 focus:ring-black/20 transition"
                 />
               </div>
 
@@ -120,7 +120,7 @@ export default function NovaSenhaPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-[#0D0D0D] hover:bg-black/80 disabled:opacity-50 text-white font-bold text-sm rounded py-3.5 transition"
+                className="w-full flex items-center justify-center gap-2 bg-[#282525] hover:bg-[#3A3535] disabled:opacity-50 text-white font-bold text-sm rounded py-3.5 transition"
               >
                 {loading ? (
                   <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

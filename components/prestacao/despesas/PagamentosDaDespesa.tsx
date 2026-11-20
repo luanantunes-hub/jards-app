@@ -1,10 +1,12 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL } from "@/lib/valor";
 import { formatarDocumento, limparDocumento } from "@/lib/prestacao/fornecedores";
 import { lerValor } from "@/lib/prestacao/orcamento";
 import { FORMAS_PAGAMENTO, rotuloDaForma, situacaoDosPagamentos } from "@/lib/prestacao/pagamentos";
@@ -40,7 +42,7 @@ export function PagamentosDaDespesa({ despesaId, liquido, fornecedor, pagamentos
   const [erro, setErro] = useState("");
 
   const ordenados = [...pagamentos].sort((a, b) => a.data.localeCompare(b.data) || a.created_at.localeCompare(b.created_at));
-  const valorSugerido = falta !== null && falta > 0 ? String(falta).replace(".", ",") : "";
+  const valorSugerido = falta !== null && falta > 0 ? formatarValorBRL(falta) : "";
   const favorecidoSugerido = fornecedor?.documento ? formatarDocumento(fornecedor.documento) : "";
 
   async function registrar() {
@@ -86,8 +88,13 @@ export function PagamentosDaDespesa({ despesaId, liquido, fornecedor, pagamentos
       <p className="mb-2 text-[0.75rem] text-black/55">
         {situacao === "sem_pagamento" && (liquido !== null ? <>Nada pago ainda de <span className="tabular-nums">{reais(liquido)}</span>.</> : "Nada pago ainda.")}
         {situacao === "parcial" && <>Pago <span className="tabular-nums text-black/80">{reais(pago)}</span>{falta !== null && <>; faltam <span className="tabular-nums">{reais(falta)}</span></>}.</>}
-        {situacao === "pago" && <span className="text-[#2E8932]">Pago: <span className="tabular-nums">{reais(pago)}</span>.</span>}
-        {situacao === "excedido" && <span className="text-[#B23B3B]">Pago <span className="tabular-nums">{reais(pago)}</span>, acima do líquido.</span>}
+        {situacao === "pago" && <span>Pago: <span className="tabular-nums text-black/80">{reais(pago)}</span>.</span>}
+        {situacao === "excedido" && (
+          <span>
+            <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mr-1 inline-block align-[-0.125rem] text-[#D94A4A]" />
+            Pago <span className="tabular-nums text-black/80">{reais(pago)}</span>, acima do líquido.
+          </span>
+        )}
       </p>
 
       {ordenados.length > 0 && (
@@ -99,7 +106,7 @@ export function PagamentosDaDespesa({ despesaId, liquido, fornecedor, pagamentos
                 {rotuloDaForma(p.forma)}
                 {p.numero_documento && <span className="text-black/40"> · nº {p.numero_documento}</span>}
                 {p.favorecido_documento && <span className="text-black/40"> · para {formatarDocumento(p.favorecido_documento)}</span>}
-                {p.lancamento_id && <span className="text-[#2E8932]"> · conciliado</span>}
+                {p.lancamento_id && <span className="text-black/40"> · conciliado</span>}
               </span>
               <span className="shrink-0 tabular-nums text-black/80">{reais(Number(p.valor))}</span>
               {podeEditar && (
@@ -126,7 +133,7 @@ export function PagamentosDaDespesa({ despesaId, liquido, fornecedor, pagamentos
             </label>
             <label className="block" htmlFor={`${idBase}-valor`}>
               <span className={ROTULO}>Valor</span>
-              <input id={`${idBase}-valor`} inputMode="decimal" value={valor} onChange={e => setValor(e.target.value)} placeholder={valorSugerido || "0,00"} className={`${CAMPO} tabular-nums`} />
+              <InputValor id={`${idBase}-valor`} value={valor} onChange={setValor} placeholder={valorSugerido || "0,00"} className={`${CAMPO} tabular-nums`} />
             </label>
             <label className="block" htmlFor={`${idBase}-numero`}>
               <span className={ROTULO}>Nº do documento (igual ao extrato)</span>
@@ -141,7 +148,7 @@ export function PagamentosDaDespesa({ despesaId, liquido, fornecedor, pagamentos
                 type="button"
                 onClick={registrar}
                 disabled={salvando}
-                className="flex h-[2.375rem] w-full items-center justify-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] font-medium text-black/75 transition hover:border-black/25 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:cursor-wait disabled:text-black/35 motion-reduce:transform-none"
+                className="flex h-[2.375rem] w-full items-center justify-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] font-medium text-black/75 transition hover:border-black/25 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:cursor-wait disabled:text-black/35 motion-reduce:transform-none"
                 style={{ borderColor: "rgba(13,13,13,.16)" }}
               >
                 <Plus size={13} aria-hidden /> {salvando ? "Registrando…" : "Adicionar"}

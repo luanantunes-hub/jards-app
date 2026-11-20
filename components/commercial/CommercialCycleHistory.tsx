@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarClock, Check, RotateCw, X } from "lucide-react";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 export type CommercialCycle = {
   id: string;
@@ -24,11 +25,6 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value));
 }
 
-function formatMoney(value: number | null) {
-  if (value == null) return null;
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
-}
-
 const STATUS_LABEL: Record<string, string> = {
   recusado: "Recusado",
   reprovado: "Reprovado",
@@ -47,7 +43,7 @@ export function CommercialCycleHistory({ cycles }: { cycles: CommercialCycle[] }
       <div className="overflow-hidden rounded border border-black/[.08] bg-white">
         {cycles.map(cycle => {
           const Icon = cycle.estado === "programado" ? CalendarClock : cycle.estado === "reaberto" ? RotateCw : X;
-          const amount = formatMoney(cycle.valor_aprovado ?? cycle.valor_solicitado);
+          const amount = cycle.valor_aprovado ?? cycle.valor_solicitado;
           return (
             <div key={cycle.id} className="flex items-start gap-3 border-b border-black/[.06] px-4 py-3.5 last:border-b-0">
               <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center text-black/35">
@@ -63,7 +59,7 @@ export function CommercialCycleHistory({ cycles }: { cycles: CommercialCycle[] }
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-[0.625rem] text-black/35">
                   <span className="inline-flex items-center gap-1"><Check size={10} />{STATUS_LABEL[cycle.status_final] ?? cycle.status_final}</span>
                   <span>Encerrado em {formatDate(cycle.encerrado_em)}</span>
-                  {amount && <span>{amount}</span>}
+                  {amount != null && <span title={formatarValorCompleto(amount)} className="tabular-nums">{formatarValorCurto(amount)}</span>}
                   <span>Próximo ciclo {cycle.proximo_ciclo_ano}</span>
                 </div>
                 {cycle.nota && <p className="mt-2 text-[0.6875rem] leading-5 text-black/45">{cycle.nota}</p>}

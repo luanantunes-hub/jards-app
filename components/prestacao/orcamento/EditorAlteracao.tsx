@@ -1,9 +1,11 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { Plus, Search, Trash2, X } from "lucide-react";
+import { FileText, Plus, Search, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL } from "@/lib/valor";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import {
@@ -56,7 +58,7 @@ export type AlteracaoSalva = {
 type ItemNovo = { chave: number; nome: string; parent_id: string; grupo_custo: string; valor: string };
 
 function texto(valor: number): string {
-  return String(valor).replace(".", ",");
+  return formatarValorBRL(valor);
 }
 
 /**
@@ -143,17 +145,17 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center veu p-2 sm:p-4" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex h-[96dvh] w-full max-w-[72rem] flex-col overflow-hidden rounded bg-white shadow-2xl"
+        className="flex h-[96dvh] w-full max-w-[72rem] flex-col overflow-hidden rounded bg-white border elevacao-3"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div>
-            <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#0D0D0D]">
+            <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#282525]">
               {alteracao ? `Alteração nº ${alteracao.numero}` : "Nova alteração do orçamento"}
             </h2>
             <p className="text-[0.6875rem] text-black/40">Digite o novo valor vigente só dos itens que mudam. Nada muda no orçamento até a alteração ser aplicada.</p>
@@ -200,16 +202,15 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                         </td>
                         <td className="whitespace-nowrap px-3 py-2 text-right text-[0.75rem] tabular-nums text-black/55">{fmt(linha.totais.vigente)}</td>
                         <td className="w-[9.5rem] px-3 py-2">
-                          <input
-                            inputMode="decimal"
+                          <InputValor
                             aria-label={`Novo valor de ${linha.no.nome}`}
                             value={valores[linha.no.id] ?? ""}
                             placeholder="Sem mudança"
-                            onChange={e => setValores({ ...valores, [linha.no.id]: e.target.value })}
+                            onChange={valor => setValores({ ...valores, [linha.no.id]: valor })}
                             className={`${CAMPO} text-right tabular-nums`}
                           />
                         </td>
-                        <td className={`whitespace-nowrap px-3 py-2 text-right text-[0.75rem] tabular-nums ${diferenca > 0 ? "text-[#2E8932]" : diferenca < 0 ? "text-[#B23B3B]" : "text-black/25"}`}>
+                        <td className={`whitespace-nowrap px-3 py-2 text-right text-[0.75rem] tabular-nums ${diferenca ? "text-black/70" : "text-black/25"}`}>
                           {diferenca ? fmtSinal(diferenca) : "—"}
                         </td>
                       </tr>
@@ -250,7 +251,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                   </div>
                   <label className="block">
                     <span className={ROTULO}>Valor</span>
-                    <input inputMode="decimal" value={novo.valor} onChange={e => setNovos(novos.map(n => n.chave === novo.chave ? { ...n, valor: e.target.value } : n))} className={`${CAMPO} text-right tabular-nums`} placeholder="R$ 0,00" />
+                    <InputValor value={novo.valor} onChange={valor => setNovos(novos.map(n => n.chave === novo.chave ? { ...n, valor } : n))} className={`${CAMPO} text-right tabular-nums`} placeholder="0,00" />
                   </label>
                   <button type="button" onClick={() => setNovos(novos.filter(n => n.chave !== novo.chave))} aria-label="Tirar o item novo" className="h-9 rounded px-2 text-black/30 transition hover:bg-black/[.04] hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
                     <Trash2 size={13} />
@@ -270,10 +271,11 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
           {/* Cálculo */}
           <aside className="space-y-4 border-t bg-[#FAFAF9] px-5 py-4 lg:overflow-y-auto lg:border-l lg:border-t-0" style={{ borderColor: "rgba(13,13,13,.07)" }} aria-label="Cálculo da alteração">
             <div>
-              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35">Tipo</p>
-              <p className="text-[0.875rem] font-semibold text-[#0D0D0D]">{movimentos.length ? rotuloTipoAlteracao(calculo.tipo) : "—"}</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Tipo</p>
+              <p className="text-[0.875rem] font-semibold text-[#282525]">{movimentos.length ? rotuloTipoAlteracao(calculo.tipo) : "—"}</p>
               {calculo.classificacao ? (
-                <p className={`mt-0.5 text-[0.75rem] ${calculo.classificacao === "formal" ? "text-[#9A6A10]" : "text-[#2E8932]"}`}>
+                <p className="mt-0.5 flex items-center gap-1 text-[0.75rem] text-black/55">
+                  {calculo.classificacao === "formal" && <FileText size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />}
                   {calculo.classificacao === "formal" ? "Precisa de pedido ao órgão" : "Administrativa: aplica sem pedido"}
                 </p>
               ) : movimentos.length > 0 && (
@@ -308,7 +310,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                   </>
                 )}
                 <dt className="text-black/45">Diferença</dt>
-                <dd className={`text-right tabular-nums ${calculo.diferenca > 0 ? "text-[#2E8932]" : calculo.diferenca < 0 ? "text-[#B23B3B]" : "text-black/60"}`}>{calculo.diferenca ? fmtSinal(calculo.diferenca) : "Sem mudança"}</dd>
+                <dd className={`text-right tabular-nums ${calculo.diferenca ? "text-black/75" : "text-black/45"}`}>{calculo.diferenca ? fmtSinal(calculo.diferenca) : "Sem mudança"}</dd>
                 <dt className="text-black/45">Movido entre itens</dt>
                 <dd className="text-right tabular-nums text-black/75">{fmt(calculo.movido)}</dd>
               </dl>
@@ -317,7 +319,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
             {calculo.tipo === "complementacao" && movimentos.length > 0 && (
               <label className="block">
                 <span className={ROTULO}>Valor captado até agora</span>
-                <input inputMode="decimal" value={captado} onChange={e => setCaptado(e.target.value)} className={`${CAMPO} tabular-nums`} placeholder="R$ 0,00" />
+                <InputValor value={captado} onChange={setCaptado} className={`${CAMPO} tabular-nums`} placeholder="0,00" />
               </label>
             )}
 
@@ -347,7 +349,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
               type="button"
               onClick={salvar}
               disabled={salvando}
-              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
               Salvar rascunho

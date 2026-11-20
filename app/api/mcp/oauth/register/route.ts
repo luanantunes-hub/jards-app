@@ -10,8 +10,8 @@ function erro(error: string, description: string) {
 }
 
 /**
- * Registro dinâmico de cliente (RFC 7591) para assistentes que falam MCP, como o Claude.
- * Só clientes públicos (sem segredo, PKCE) e só com callback do Claude ou loopback: o
+ * Registro dinâmico de cliente (RFC 7591) para assistentes que falam MCP, como o Claude e o ChatGPT.
+ * Só clientes públicos (sem segredo, PKCE) e só com callback do Claude, do ChatGPT ou loopback: o
  * redirect_uri é o que impede o código de autorização de ir parar em outro lugar.
  */
 export async function POST(req: NextRequest) {
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     return erro("invalid_redirect_uri", "redirect_uris deve ter de 1 a 5 endereços.");
   }
   if (!redirect_uris.every((uri) => typeof uri === "string" && isRegistrableRedirectUri(uri))) {
-    return erro("invalid_redirect_uri", "Só são aceitos o callback do Claude ou endereços de loopback (http://localhost).");
+    return erro("invalid_redirect_uri", "Só são aceitos o callback do Claude, o do ChatGPT ou endereços de loopback (http://localhost).");
   }
   if (token_endpoint_auth_method !== undefined && token_endpoint_auth_method !== "none") {
     return erro("invalid_client_metadata", "Só há suporte a clientes públicos (token_endpoint_auth_method=none).");
