@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ExternalLink, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, ExternalLink, GripVertical, Plus, Trash2 } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
@@ -9,6 +9,8 @@ import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { partesNoFuso } from "@/lib/ticketeria/eventos";
+import { copiaDeUmaPagina, duplicarBloco, enderecoDaPrevia, moverBloco } from "@/lib/ticketeria/editor-site";
+import { PreviaDoSite } from "@/components/ticketeria/PreviaDoSite";
 import { blocosDoJson, lerBloco, lerSeo, ordemDasPaginas, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
 import { AcrescentarBlocoSheet, BlocoNovoSheet, TIPOS_DAS_FOLHAS_NOVAS } from "@/components/ticketeria/BlocosNovosSheet";
 
@@ -220,6 +222,10 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
   const [folha, setFolha] = useState<{ tipo: "bloco"; indice: number | null; tipoDeBloco: TipoDeBloco } | { tipo: "pagina" } | { tipo: "escolher" } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
+  const [arrastando, setArrastando] = useState<number | null>(null);
+  const [sobre, setSobre] = useState<number | null>(null);
+  // A prévia ao lado já vem aberta em tela larga; em tela estreita, fechada (um botão a abre embaixo).
+  const [mostrarPrevia, setMostrarPrevia] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches);
   const recarregar = () => setVersao(atual => atual + 1);
 
   useEffect(() => {
@@ -252,6 +258,34 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
     const lista = [...atual.blocos];
     [lista[indice], lista[destino]] = [lista[destino], lista[indice]];
     setErro(await gravar(lista));
+  }
+
+  /** Arrastar: leva o bloco de `de` para `para` e grava. */
+  async function reordenar(de: number, para: number) {
+    if (!atual || de === para) return;
+    setErro(await gravar(moverBloco(atual.blocos, de, para)));
+  }
+
+  /** Duplicar: uma cópia do bloco logo depois dele. */
+  async function duplicar(indice: number) {
+    if (!atual) return;
+    const lista = duplicarBloco(atual.blocos, indice);
+    if (!lista) { setErro("A página já tem 60 blocos, o máximo."); return; }
+    setErro(await gravar(lista));
+  }
+
+  /** Duplicar a página: uma nova, em rascunho, com os mesmos blocos, a descrição e a imagem de compartilhamento. */
+  async function duplicarPagina() {
+    if (!atual || !paginas) return;
+    setErro(null);
+    const copia = copiaDeUmaPagina(atual.titulo, paginas);
+    const { error } = await clienteDaTicketeria(createClient()).from("ticketeria_site_paginas").insert({
+      organization_id: organizationId, site_id: siteId, slug: copia.slug, titulo: copia.titulo, ordem: Math.min(1000, Math.max(0, ...paginas.map(pagina => pagina.ordem)) + 1),
+      blocos: atual.blocos, descricao: atual.descricao, imagem_url: atual.imagem_url,
+    });
+    if (error) { setErro(error.code === "42501" ? "Você não pode criar páginas neste site." : "Não foi possível duplicar a página. Tente de novo."); return; }
+    setSlug(copia.slug);
+    recarregar();
   }
 
   async function publicar() {
@@ -293,10 +327,13 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
             ))}
           </div>
           {atual && (
-            <div>
+            <div className={mostrarPrevia ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_440px] lg:items-start" : ""}>
+              <div className="min-w-0">
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <p className="mr-auto text-[0.75rem] text-black/55">{atual.publicada_em === null ? "Ainda não publicada." : publicadaIgual ? "Publicada, sem mudanças." : "Há mudanças que ainda não estão no ar."}</p>
-                <a href={`/previa-site/${siteId}${atual.slug === "inicio" ? "" : `/${atual.slug}`}`} target="_blank" rel="noopener noreferrer" className={BOTAO}><ExternalLink size={13} aria-hidden="true" /> Ver a prévia</a>
+                <button type="button" onClick={() => setMostrarPrevia(valor => !valor)} aria-pressed={mostrarPrevia} className={BOTAO}>{mostrarPrevia ? "Ocultar a prévia" : "Mostrar a prévia"}</button>
+                <a href={enderecoDaPrevia(siteId, atual.slug)} target="_blank" rel="noopener noreferrer" className={BOTAO}><ExternalLink size={13} aria-hidden="true" /> Ver a prévia</a>
+                {podeEditar && <button type="button" onClick={() => void duplicarPagina()} className={BOTAO}>Duplicar a página</button>}
                 {podeEditar && <button type="button" onClick={() => void publicar()} disabled={publicadaIgual} className="inline-flex h-9 items-center rounded-xl acao-salvar px-3.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">Publicar esta página</button>}
                 {podeEditar && atual.slug !== "inicio" && <button type="button" onClick={apagarPagina} className={BOTAO}>Apagar a página</button>}
               </div>
@@ -305,7 +342,16 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
               ) : (
                 <ol className="divide-y divide-black/[.06] overflow-hidden rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   {atual.blocos.map((bloco, indice) => (
-                    <li key={indice} className="flex items-center gap-2 px-3 py-2">
+                    <li
+                      key={indice}
+                      draggable={podeEditar}
+                      onDragStart={event => { setArrastando(indice); event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", String(indice)); }}
+                      onDragOver={event => { if (arrastando !== null) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; if (sobre !== indice) setSobre(indice); } }}
+                      onDrop={event => { event.preventDefault(); if (arrastando !== null) void reordenar(arrastando, indice); setArrastando(null); setSobre(null); }}
+                      onDragEnd={() => { setArrastando(null); setSobre(null); }}
+                      className={`flex items-center gap-2 px-3 py-2 ${arrastando === indice ? "bg-black/[.04] opacity-60" : ""} ${sobre === indice && arrastando !== null && arrastando !== indice ? "shadow-[inset_0_2px_0_#7259B5]" : ""}`}
+                    >
+                      {podeEditar && <span aria-hidden="true" title="Arraste para mudar a ordem" className="flex h-8 w-5 shrink-0 cursor-grab items-center justify-center text-black/30 active:cursor-grabbing"><GripVertical size={14} /></span>}
                       <button type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "bloco", indice, tipoDeBloco: bloco.tipo })} className="min-w-0 flex-1 rounded-xl px-1 py-1 text-left transition enabled:hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                         <span className="block text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">{ROTULO_DO_TIPO_DE_BLOCO[bloco.tipo]}</span>
                         <span className="block truncate text-[0.8125rem] text-[#282525]">{resumoDoBloco(bloco, espacos, eventos)}</span>
@@ -314,6 +360,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
                         <span className="flex shrink-0 items-center">
                           <button type="button" onClick={() => void mover(indice, -1)} disabled={indice === 0} aria-label="Subir o bloco" className="flex h-8 w-8 items-center justify-center rounded-xl text-black/45 hover:bg-black/[.05] disabled:opacity-30"><ArrowUp size={14} aria-hidden="true" /></button>
                           <button type="button" onClick={() => void mover(indice, 1)} disabled={indice === atual.blocos.length - 1} aria-label="Descer o bloco" className="flex h-8 w-8 items-center justify-center rounded-xl text-black/45 hover:bg-black/[.05] disabled:opacity-30"><ArrowDown size={14} aria-hidden="true" /></button>
+                          <button type="button" onClick={() => void duplicar(indice)} disabled={atual.blocos.length >= 60} aria-label="Duplicar o bloco" title="Duplicar o bloco" className="flex h-8 w-8 items-center justify-center rounded-xl text-black/45 hover:bg-black/[.05] disabled:opacity-30"><Copy size={14} aria-hidden="true" /></button>
                           <button type="button" onClick={() => void gravar(atual.blocos.filter((_, i) => i !== indice)).then(setErro)} aria-label="Tirar o bloco" className="flex h-8 w-8 items-center justify-center rounded-xl text-black/35 hover:bg-black/[.05] hover:text-[#B23B3B]"><Trash2 size={14} aria-hidden="true" /></button>
                         </span>
                       )}
@@ -327,6 +374,8 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
                   <button type="button" onClick={() => setFolha({ tipo: "escolher" })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Acrescentar bloco</button>
                 </div>
               )}
+              </div>
+              {mostrarPrevia && <PreviaDoSite siteId={siteId} slug={atual.slug} versao={versao} />}
             </div>
           )}
         </>
