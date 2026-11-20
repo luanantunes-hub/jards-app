@@ -17,10 +17,13 @@ test("a barra de seleção tem só o tamanho do que cabe nela, não a largura da
   assert.ok(!caixa.includes("inset-x-0") && !caixa.includes("right-0"), "sem esticar de ponta a ponta do cabeçalho");
 });
 
-test("\"Criar tag\" é branco e \"Atribuir responsável\" é o roxo noite do app (.acao-principal)", () => {
-  assert.match(barra, /const BOTAO = "[^"]*\bbg-white\b/, "o botão comum da barra é branco");
-  assert.match(barra, /const BOTAO_PRINCIPAL = "[^"]*\bacao-principal\b[^"]*"/, "a ação principal usa a classe do roxo noite");
-  assert.match(barra, /const BOTAO_PRINCIPAL = "[^"]*\btext-white\b/);
-  assert.ok(botao("Criar tag").includes("className={BOTAO}"), "Criar tag fica branco");
-  assert.ok(botao("Atribuir responsável").includes("className={BOTAO_PRINCIPAL}"), "Atribuir responsável fica no roxo noite");
+test("a barra de seleção é toda no roxo noite e os dois botões são iguais e vazados", () => {
+  const caixa = barra.slice(barra.indexOf('role="toolbar"'), barra.indexOf("{marcando ? ("));
+  assert.ok(caixa.includes("bg-[#1C0E33]"), "a barra de seleção é o roxo noite do app");
+  assert.match(barra, /const BOTAO = "[^"]*\bborder-white\/30\b[^"]*\btext-white\b/, "botão vazado: borda clara e texto branco");
+  assert.ok(!/const BOTAO = "([^"]*\s)?bg-/.test(barra), "o botão não tem preenchimento próprio (só o véu claro do hover)");
+  // As duas ações têm o mesmo peso: um branco e um roxo lado a lado sugeriam uma ação principal que não existe.
+  assert.ok(botao("Criar tag").includes("className={BOTAO}"));
+  assert.ok(botao("Atribuir responsável").includes("className={BOTAO}"), "os dois botões têm o mesmo estilo");
+  assert.ok(!barra.includes("acao-principal"), "nenhum botão cheio em roxo dentro da barra");
 });
