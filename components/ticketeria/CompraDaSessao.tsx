@@ -39,7 +39,20 @@ function faltam(iso: string, agora: number): string {
   return m >= 1 ? `${m} ${m === 1 ? "minuto" : "minutos"}` : `${s} segundos`;
 }
 
-export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
+/** Confere um código de cupom para a sessão no servidor: o cupom que vale, ou a frase do que deu errado. */
+async function conferirCupomNoServidor(sessao: string, codigo: string): Promise<{ cupom: CupomConferido } | { erro: string }> {
+  try {
+    const r = await fetch("/api/ticketeria/compra/cupom", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessao_id: sessao, codigo }) });
+    const d = (await r.json().catch(() => ({}))) as Partial<CupomConferido> & { mensagem?: string };
+    if (r.status === 200 && typeof d.codigo === "string" && (d.tipo === "percentual" || d.tipo === "valor") && typeof d.valor === "number") return { cupom: { codigo: d.codigo, tipo: d.tipo, valor: d.valor, ingresso_id: d.ingresso_id ?? null } };
+    return { erro: d.mensagem ?? (r.status === 429 ? "Muitas tentativas. Espere um instante." : "Não foi possível conferir o cupom agora. Tente de novo.") };
+  } catch {
+    return { erro: "Sem conexão. Tente de novo." };
+  }
+}
+
+/** `cupomInicial`: o cupom que veio no link (`?cupom=`), já no formato do banco; a compra o confere ao abrir e o aplica sozinha. */
+export function CompraDaSessao({ vitrine, cupomInicial = null }: { vitrine: VitrineDaSessao; cupomInicial?: string | null }) {
   const { sessao_id: sessao, site, evento, ingressos, parcelas_max: parcelasMax } = vitrine;
   const router = useRouter();
   const [passo, setPasso] = useState<Passo>("escolher");
@@ -61,7 +74,7 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
   const [cupomAberto, setCupomAberto] = useState(false);
   const [codigoDoCupom, setCodigoDoCupom] = useState("");
   const [cupomErro, setCupomErro] = useState<string | null>(null);
-  const [aplicandoCupom, setAplicandoCupom] = useState(false);
+  const [aplicandoCupom, setAplicandoCupom] = useState(cupomInicial !== null);
   // A lista de espera de um ingresso esgotado: qual ingresso, quem entra, quantos ingressos quer e o erro.
   const [esperaIngresso, setEsperaIngresso] = useState<string | null>(null);
   const [esperaValores, setEsperaValores] = useState({ nome: "", email: "" });
@@ -199,20 +212,27 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     if (!codigoDoCupomValido(codigo)) { setCupomErro("Esse cupom não existe ou não está mais valendo."); return; }
     setCupomErro(null);
     setAplicandoCupom(true);
-    try {
-      const r = await fetch("/api/ticketeria/compra/cupom", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessao_id: sessao, codigo }) });
-      const d = (await r.json().catch(() => ({}))) as Partial<CupomConferido> & { mensagem?: string };
-      if (r.status === 200 && typeof d.codigo === "string" && (d.tipo === "percentual" || d.tipo === "valor") && typeof d.valor === "number") {
-        setCupom({ codigo: d.codigo, tipo: d.tipo, valor: d.valor, ingresso_id: d.ingresso_id ?? null });
-        setCodigoDoCupom("");
-        setCupomAberto(false);
-      } else setCupomErro(d.mensagem ?? (r.status === 429 ? "Muitas tentativas. Espere um instante." : "Não foi possível conferir o cupom agora. Tente de novo."));
-    } catch {
-      setCupomErro("Sem conexão. Tente de novo.");
-    } finally {
-      setAplicandoCupom(false);
-    }
+    const r = await conferirCupomNoServidor(sessao, codigo);
+    if ("cupom" in r) {
+      setCupom(r.cupom);
+      setCodigoDoCupom("");
+      setCupomAberto(false);
+    } else setCupomErro(r.erro);
+    setAplicandoCupom(false);
   }, [codigoDoCupom, sessao]);
+
+  // O cupom do link: confere ao abrir a página e aplica; se não vale, abre o campo com o código e a frase do motivo.
+  useEffect(() => {
+    if (!cupomInicial) return;
+    let vivo = true;
+    void conferirCupomNoServidor(sessao, cupomInicial).then(r => {
+      if (!vivo) return;
+      if ("cupom" in r) setCupom(r.cupom);
+      else { setCodigoDoCupom(cupomInicial); setCupomAberto(true); setCupomErro(r.erro); }
+      setAplicandoCupom(false);
+    });
+    return () => { vivo = false; };
+  }, [cupomInicial, sessao]);
 
   const cupomParaMostrar = cupom ? { codigo: cupom.codigo, descricao: `${descontoEmTexto(cupom.tipo, cupom.valor)}${cupom.ingresso_id ? ` · só em ${ingressos.find(i => i.id === cupom.ingresso_id)?.nome ?? "um ingresso"}` : ""}`, desconto_centavos: desconto } : null;
   const resumoDoDesconto = cupom && desconto > 0 ? { codigo: cupom.codigo, centavos: desconto } : undefined;

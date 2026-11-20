@@ -14,7 +14,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // O site muda a cada publicação: nunca vem pronto do cache da rota.
 export const dynamic = "force-dynamic";
 
-type Parametros = { params: Promise<{ host: string; pagina?: string[] }> };
+type Parametros = { params: Promise<{ host: string; pagina?: string[] }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 /** A página do evento (/e/<slug>) em vez de uma página do site. */
 const ehEvento = (pagina?: string[]) => pagina?.length === 2 && pagina[0] === "e";
@@ -74,7 +74,7 @@ export default async function SiteDaPessoa(entrada: Parametros) {
   if (ehEvento((await entrada.params).pagina)) {
     const dados = await carregarEvento(entrada);
     if (!dados) notFound();
-    return <EventoDoSiteView dados={dados} host={hostDoPedido(decodeURIComponent((await entrada.params).host))} />;
+    return <EventoDoSiteView dados={dados} host={hostDoPedido(decodeURIComponent((await entrada.params).host))} busca={await entrada.searchParams} />;
   }
   const site = await carregar(entrada);
   if (!site) notFound();
