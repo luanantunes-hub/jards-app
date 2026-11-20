@@ -47,7 +47,7 @@ export function canalDoGasto(canal: string): string {
   return c;
 }
 
-const rotuloDoCanalDeGasto = (canal: string): string => (canal === "meta-ads" ? "Meta Ads" : canal === "google-ads" ? "Google Ads" : rotuloDoCanal(canal));
+export const rotuloDoCanalDeGasto = (canal: string): string => (canal === "meta-ads" ? "Meta Ads" : canal === "google-ads" ? "Google Ads" : rotuloDoCanal(canal));
 
 /** O gasto de cada ação repartido igualmente pelos dias dela (a ação de um dia só fica inteira nesse dia). */
 function gastoDasAcoes(acoes: AcaoParaGasto[]): GastoDiario[] {

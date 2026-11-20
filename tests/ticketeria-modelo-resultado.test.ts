@@ -1,0 +1,83 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { compararComOsLinks, confiancaDoResultado, gastoQuaseConstante, lerResultadoDoModelo, temMargemGrande } from "../lib/ticketeria/modelo-resultado";
+
+const bom = () => ({
+  motor: "pymc-marketing", versao_motor: "1.5.0", semanas: 59, diagnosticos: { r_hat_maximo: 1.01, divergencias: 0, ess_minimo: 650 },
+  base: { porcento: 41.234, baixo: 33, alto: 49.5 },
+  canais: [
+    { canal: "meta-ads", porcento: 27, baixo: 16.1, alto: 38.4, ingressos: 612, gasto_centavos: 780000, custo_por_ingresso_centavos: 1275, saturacao_gasto_centavos: 30000, gasto_constante: false, curva: [{ gasto_centavos: 0, ingressos: 0 }, { gasto_centavos: 15000, ingressos: 9.5 }] },
+    { canal: "google-ads", porcento: 9, baixo: 0.5, alto: 18, ingressos: 204, gasto_centavos: 210000, custo_por_ingresso_centavos: 1029, saturacao_gasto_centavos: null, gasto_constante: true, curva: [] },
+    { canal: "instagram", porcento: 14, baixo: 5, alto: 23, ingressos: 318, gasto_centavos: 0, custo_por_ingresso_centavos: null },
+    { canal: "email", porcento: 9, baixo: 3, alto: 15, ingressos: 204, gasto_centavos: 0, custo_por_ingresso_centavos: null, curva: [] },
+  ],
+});
+
+test("a confiança: pelas semanas e pelo diagnóstico (ajuste que não convergiu vale como baixa)", () => {
+  const limpo = { r_hat_maximo: 1.01, divergencias: 0, ess_minimo: 800 };
+  assert.equal(confiancaDoResultado(51, limpo), "baixa");
+  assert.equal(confiancaDoResultado(52, limpo), "media");
+  assert.equal(confiancaDoResultado(103, limpo), "media");
+  assert.equal(confiancaDoResultado(104, limpo), "boa");
+  assert.equal(confiancaDoResultado(200, { ...limpo, r_hat_maximo: 1.2 }), "baixa", "r-hat alto");
+  assert.equal(confiancaDoResultado(200, { ...limpo, divergencias: 3 }), "baixa", "divergências");
+  assert.equal(confiancaDoResultado(200, { ...limpo, r_hat_maximo: 1.05 }), "boa", "r-hat no limite ainda vale");
+});
+
+test("margem grande: o intervalo mais largo que a própria contribuição; gasto quase constante", () => {
+  assert.equal(temMargemGrande(27, 16.1, 38.4), false, "22 pontos de largura para 27%");
+  assert.equal(temMargemGrande(9, 0.5, 18), true, "17,5 de largura para 9%");
+  assert.equal(temMargemGrande(2, 0, 4), false, "até 5 pontos nunca é margem grande");
+  assert.equal(gastoQuaseConstante(0.1), true);
+  assert.equal(gastoQuaseConstante(0.25), false);
+});
+
+test("o resultado do job: conferido, arredondado, com confiança e avisos calculados aqui", () => {
+  const r = lerResultadoDoModelo(bom());
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  assert.equal(r.resultado.confianca, "media", "59 semanas, diagnóstico limpo");
+  assert.deepEqual(r.resultado.base, { porcento: 41.23, baixo: 33, alto: 49.5 });
+  assert.deepEqual(r.resultado.canais.map(c => [c.canal, c.margem_grande, c.gasto_constante]), [["meta-ads", false, false], ["google-ads", true, true], ["instagram", true, false], ["email", true, false]]);
+  assert.deepEqual(r.resultado.canais[2].curva, [], "curva ausente vira lista vazia");
+  assert.equal(r.resultado.canais[0].curva.length, 2);
+  const mentiroso = lerResultadoDoModelo({ ...bom(), confianca: "boa", canais: bom().canais.map(c => ({ ...c, margem_grande: false })) });
+  assert.ok(mentiroso.ok && mentiroso.resultado.confianca === "media" && mentiroso.resultado.canais[1].margem_grande === true, "o job não decide a confiança nem os avisos de margem");
+});
+
+test("o resultado torto é recusado: semanas, diagnóstico, base, canais, curva e soma", () => {
+  const ruim = (m: (o: ReturnType<typeof bom>) => unknown) => { const o = bom(); return lerResultadoDoModelo(m(o)); };
+  const problema = (r: ReturnType<typeof lerResultadoDoModelo>) => (r.ok ? "ok" : r.problema);
+  assert.equal(problema(lerResultadoDoModelo(null)), "motor");
+  assert.equal(problema(ruim(o => ({ ...o, motor: "x;drop" }))), "motor");
+  assert.equal(problema(ruim(o => ({ ...o, semanas: 10 }))), "semanas");
+  assert.equal(problema(ruim(o => ({ ...o, semanas: 59.5 }))), "semanas");
+  assert.equal(problema(ruim(o => ({ ...o, diagnosticos: { r_hat_maximo: "1", divergencias: 0, ess_minimo: 1 } }))), "diagnosticos");
+  assert.equal(problema(ruim(o => ({ ...o, base: { porcento: 101, baixo: 0, alto: 1 } }))), "base");
+  assert.equal(problema(ruim(o => ({ ...o, base: { porcento: 40, baixo: 50, alto: 30 } }))), "base");
+  assert.equal(problema(ruim(o => ({ ...o, canais: [] }))), "canais");
+  assert.equal(problema(ruim(o => ({ ...o, canais: Array.from({ length: 21 }, (_, i) => ({ ...o.canais[0], canal: `c${i}` })) }))), "canais");
+  assert.equal(problema(ruim(o => ({ ...o, canais: [{ ...o.canais[0], canal: "Canal Torto!" }] }))), "canal");
+  assert.equal(problema(ruim(o => ({ ...o, canais: [o.canais[0], o.canais[0]] }))), "canal", "canal repetido");
+  assert.equal(problema(ruim(o => ({ ...o, canais: [{ ...o.canais[0], baixo: 40, alto: 30 }] }))), "canal");
+  assert.equal(problema(ruim(o => ({ ...o, canais: [{ ...o.canais[0], ingressos: -1 }] }))), "canal");
+  assert.equal(problema(ruim(o => ({ ...o, canais: [{ ...o.canais[0], custo_por_ingresso_centavos: "5" }] }))), "canal");
+  assert.equal(problema(ruim(o => ({ ...o, canais: [{ ...o.canais[0], curva: Array.from({ length: 41 }, (_, i) => ({ gasto_centavos: i, ingressos: i })) }] }))), "curva");
+  assert.equal(problema(ruim(o => ({ ...o, canais: [{ ...o.canais[0], curva: [{ gasto_centavos: -1, ingressos: 1 }] }] }))), "curva");
+  assert.equal(problema(ruim(o => ({ ...o, base: { porcento: 5, baixo: 1, alto: 9 }, canais: [{ ...o.canais[0], porcento: 10 }] }))), "soma", "o total tem de fechar perto de 100%");
+});
+
+test("o modelo ao lado dos links: canais com link comparam, anúncios pagos vão juntos, sem link fica sem número", () => {
+  const r = lerResultadoDoModelo(bom());
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  const c = compararComOsLinks(r.resultado.canais, { instagram: 22, email: 13, whatsapp: 10, "anuncio-pago": 27, "sem-origem": 28 });
+  assert.deepEqual(c.linhas.map(l => [l.canal, l.modelo, l.links]), [["meta-ads", 27, null], ["google-ads", 9, null], ["instagram", 14, 22], ["email", 9, 13]]);
+  assert.deepEqual(c.anuncios, { modelo: 36, links: 27 });
+  const semLinks = compararComOsLinks(r.resultado.canais, {});
+  assert.equal(semLinks.linhas[2].links, null, "sem venda por link: sem número");
+  assert.deepEqual(semLinks.anuncios, { modelo: 36, links: null });
+  assert.equal(compararComOsLinks([r.resultado.canais[2]], { instagram: 5 }).anuncios, null, "sem canal de anúncio, sem linha de anúncios");
+  assert.equal(c.linhas[1].custoPorIngressoCentavos, 1029);
+  assert.equal(c.linhas[1].margemGrande, true);
+});
