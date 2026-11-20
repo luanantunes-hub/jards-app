@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ErroDaCompra, PARCELAMENTO_LIBERADO, documentoValido, iniciarCompra, lerCorpoDaCompra, situacaoParaOComprador, type PortasDaCompra } from "../lib/ticketeria/pagamento/compra";
 import type { Cobranca, PedidoParaCobrar, ProvedorDePagamento } from "../lib/ticketeria/pagamento/provedor";
+import { VERSAO_DAS_NOVIDADES } from "../lib/ticketeria/novidades";
 import { VERSAO_DOS_TERMOS_DE_COMPRA } from "../lib/ticketeria/termos-de-compra";
 
 const SESSAO = "0d760000-0000-4000-8000-000000000081";
@@ -22,7 +23,7 @@ test("CPF e CNPJ: só com os dígitos verificadores certos", () => {
 test("o corpo da compra: lido, aparado e conferido", () => {
   const r = lerCorpoDaCompra(bom);
   assert.ok(r.ok);
-  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: "pix", parcelas: 1, cupom: null, lugares: [], origem: null });
+  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: "pix", parcelas: 1, cupom: null, lugares: [], origem: null, novidades: null });
   const ruim = (mudanca: object) => lerCorpoDaCompra({ ...bom, ...mudanca });
   for (const [mudanca, problema] of [
     [{ sessao_id: "x" }, "sessão"], [{ itens: [] }, "ingressos"], [{ itens: "x" }, "ingressos"],
@@ -252,4 +253,39 @@ test("a origem da compra: lida do corpo, aparada, guardada no pedido, e nunca ba
   assert.equal(compra.situacao, "aguardando_pagamento", "falhar em guardar a origem não derruba a compra");
   assert.equal(quebrada.chamadas.erros.length, 1, "mas o erro fica no registro");
   assert.equal(quebrada.chamadas.cobrancas.length, 1, "e a cobrança nasce");
+});
+
+test("o aceite de novidades: começa desmarcado, só vale com a marca, guarda o WhatsApp só com a marca, e nunca barra a venda", async () => {
+  const sem = lerCorpoDaCompra(bom);
+  assert.ok(sem.ok);
+  if (sem.ok) assert.equal(sem.corpo.novidades, null, "sem a marca, nada é guardado");
+  for (const marca of ["true", 1, "sim", null, undefined]) {
+    const r = lerCorpoDaCompra({ ...bom, novidades: marca, whatsapp: "(15) 99712-4410" });
+    assert.ok(r.ok);
+    if (r.ok) assert.equal(r.corpo.novidades, null, `só true vale: ${String(marca)}`);
+  }
+  const com = lerCorpoDaCompra({ ...bom, novidades: true, whatsapp: "(15) 99712-4410" });
+  assert.ok(com.ok);
+  if (!com.ok) return;
+  assert.deepEqual(com.corpo.novidades, { versao: VERSAO_DAS_NOVIDADES, whatsapp: "5515997124410" });
+  const semNumero = lerCorpoDaCompra({ ...bom, novidades: true, whatsapp: "  " });
+  assert.ok(semNumero.ok);
+  if (semNumero.ok) assert.deepEqual(semNumero.corpo.novidades, { versao: VERSAO_DAS_NOVIDADES, whatsapp: null });
+  const ruim = lerCorpoDaCompra({ ...bom, novidades: true, whatsapp: "123" });
+  assert.equal(ruim.ok, false);
+  if (!ruim.ok) assert.ok(ruim.problemas.includes("WhatsApp"));
+  const numeroSemMarca = lerCorpoDaCompra({ ...bom, novidades: false, whatsapp: "123" });
+  assert.ok(numeroSemMarca.ok, "número solto sem a marca é ignorado");
+
+  const gravadas: [string, unknown][] = [];
+  const { portas } = montar({ async registrarNovidades(pedido, n) { gravadas.push([pedido, n]); } });
+  await iniciarCompra(com.corpo, portas);
+  assert.deepEqual(gravadas, [["0d760000-0000-4000-8000-0000000000e1", com.corpo.novidades]]);
+  if (sem.ok) { gravadas.length = 0; await iniciarCompra(sem.corpo, portas); assert.equal(gravadas.length, 0, "sem a marca, não chama o banco"); }
+
+  const quebrada = montar({ async registrarNovidades() { throw new Error("banco fora do ar"); } });
+  const compra = await iniciarCompra(com.corpo, quebrada.portas);
+  assert.equal(compra.situacao, "aguardando_pagamento", "falhar em guardar o aceite não derruba a compra");
+  assert.equal(quebrada.chamadas.erros.length, 1);
+  assert.equal(quebrada.chamadas.cobrancas.length, 1);
 });

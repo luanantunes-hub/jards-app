@@ -145,6 +145,10 @@ export function portasDaCompraDoSupabase(admin: SupabaseClient<Database>, config
       const { error } = await ticketeria.rpc("fn_ticketeria_registrar_origem", { p_pedido: pedido, p_canal: origem.canal, p_acao: origem.acao, p_referencia: origem.referencia, p_utm: origem.utm as Json | null });
       if (error) throw new Error(error.message);
     },
+    async registrarNovidades(pedido, novidades) {
+      const { error } = await ticketeria.rpc("fn_ticketeria_registrar_novidades", { p_pedido: pedido, p_versao: novidades.versao, p_whatsapp: novidades.whatsapp });
+      if (error) throw new Error(error.message);
+    },
     async definirMeio(pedido, meio, parcelas) {
       const { error } = await ticketeria.rpc("fn_ticketeria_definir_meio", { p_pedido: pedido, p_meio: meio, p_parcelas: parcelas });
       if (!error) return;

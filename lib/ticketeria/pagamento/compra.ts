@@ -9,6 +9,7 @@ import { mensagemDoErroDaReserva, type PedidoReservado } from "@/lib/ticketeria/
 import type { ProvedorDePagamento } from "@/lib/ticketeria/pagamento/provedor";
 import { VERSAO_DOS_TERMOS_DE_COMPRA } from "@/lib/ticketeria/termos-de-compra";
 import { codigoDoCupomValido, normalizarCodigo } from "@/lib/ticketeria/cupom";
+import { VERSAO_DAS_NOVIDADES, lerWhatsapp, type NovidadesDaCompra } from "@/lib/ticketeria/novidades";
 import { lerOrigem, type OrigemDaCompra } from "@/lib/ticketeria/origem";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -28,7 +29,8 @@ export type ItemDaCompra = { ingresso_id: string; quantidade: number };
 export type LugaresDoIngresso = { ingresso_id: string; assentos: { fileira: string; numero: number }[] };
 /** `termos` é a versão dos Termos de compra que o comprador aceitou: precisa ser a atual (lib/ticketeria/termos-de-compra.ts). `cupom` é o código do cupom de desconto, em maiúsculas, ou null. */
 export type CorpoDaCompra = { sessao_id: string; itens: ItemDaCompra[]; nome: string; email: string; documento: string; termos: string; meio: MeioDaCompra; parcelas: number; cupom: string | null; lugares: LugaresDoIngresso[];
-  /** De qual link de divulgação a pessoa veio (canal, ação, utm), ou null. Só rótulo: nunca barra a compra. */ origem: OrigemDaCompra | null };
+  /** De qual link de divulgação a pessoa veio (canal, ação, utm), ou null. Só rótulo: nunca barra a compra. */ origem: OrigemDaCompra | null;
+  /** O aceite de novidades do produtor (caixa desmarcada de início) e, se informado, o WhatsApp. null: a pessoa não aceitou, e nada é guardado. */ novidades: NovidadesDaCompra | null };
 
 /** CPF (11) ou CNPJ (14) com os dígitos verificadores certos; só os números. */
 export function documentoValido(bruto: string): boolean {
@@ -109,10 +111,13 @@ export function lerCorpoDaCompra(entrada: unknown): LeituraDaCompra {
   const semCupom = e.cupom === undefined || e.cupom === null || (typeof e.cupom === "string" && e.cupom.trim() === "");
   const cupom = semCupom ? null : normalizarCodigo(e.cupom);
   if (!semCupom && (cupom === null || !codigoDoCupomValido(cupom))) problemas.push("cupom");
+  const aceitouNovidades = e.novidades === true;
+  const whatsapp = aceitouNovidades && typeof e.whatsapp === "string" && e.whatsapp.trim() !== "" ? lerWhatsapp(e.whatsapp) : null;
+  if (aceitouNovidades && typeof e.whatsapp === "string" && e.whatsapp.trim() !== "" && whatsapp === null) problemas.push("WhatsApp");
   const lugares = lerLugares(e.lugares, itens);
   if (lugares === null) problemas.push("lugares");
   if (problemas.length > 0) return { ok: false, problemas };
-  return { ok: true, corpo: { sessao_id: sessao.toLowerCase(), itens, nome, email, documento, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: meio as MeioDaCompra, parcelas: parcelas as number, cupom, lugares: lugares ?? [], origem: lerOrigem(e.origem) } };
+  return { ok: true, corpo: { sessao_id: sessao.toLowerCase(), itens, nome, email, documento, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: meio as MeioDaCompra, parcelas: parcelas as number, cupom, lugares: lugares ?? [], origem: lerOrigem(e.origem), novidades: aceitouNovidades ? { versao: VERSAO_DAS_NOVIDADES, whatsapp } : null } };
 }
 
 /** O que o comprador precisa entender quando a compra não segue. */
@@ -132,6 +137,8 @@ export type PortasDaCompra = {
   registrarAceite(pedido: string, versao: string): Promise<void>;
   /** fn_ticketeria_registrar_origem: guarda no pedido de qual link de divulgação a compra veio. Melhor esforço: falhar aqui NUNCA falha a compra. */
   registrarOrigem?(pedido: string, origem: OrigemDaCompra): Promise<void>;
+  /** fn_ticketeria_registrar_novidades: guarda o aceite de novidades (versão do texto e hora) e o WhatsApp, se informado. Melhor esforço: falhar aqui NUNCA falha a compra. */
+  registrarNovidades?(pedido: string, novidades: NovidadesDaCompra): Promise<void>;
   /** fn_ticketeria_definir_meio. Meio ou parcelas que a loja não oferece (ou que o custo não deixa) saem como ErroDaCompra("meio_indisponivel"). */
   definirMeio(pedido: string, meio: MeioDaCompra, parcelas: number | null): Promise<void>;
   /** O provedor que abre a cobrança na subconta (com a chave dela). */
@@ -160,6 +167,9 @@ export async function iniciarCompra(corpo: CorpoDaCompra, portas: PortasDaCompra
   }
   const pedido = await portas.reservar(corpo, MINUTOS_DE_RESERVA);
   await portas.registrarAceite(pedido.pedido_id, corpo.termos);
+  if (corpo.novidades) {
+    try { await portas.registrarNovidades?.(pedido.pedido_id, corpo.novidades); } catch (erro) { portas.registrarErro?.(erro); }
+  }
   if (corpo.origem) {
     try { await portas.registrarOrigem?.(pedido.pedido_id, corpo.origem); } catch (erro) { portas.registrarErro?.(erro); }
   }

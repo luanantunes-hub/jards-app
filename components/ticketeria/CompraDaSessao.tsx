@@ -7,6 +7,7 @@ import { TelaEscolherLugares } from "@/components/ticketeria/AssentosView";
 import { TelaListaDeEspera, TelaNaListaDeEspera } from "@/components/ticketeria/ListaDeEsperaView";
 import { lerCorpoDaEspera } from "@/lib/ticketeria/espera";
 import { alternarEscolha, comCorredor, comEscolhidos, lerMapaDaSessao, rotuloDoLugar, type LugarEscolhido, type MapaDaSessao } from "@/lib/ticketeria/mapa";
+import { mascararWhatsapp } from "@/lib/ticketeria/novidades";
 import { origemDaPagina } from "@/lib/ticketeria/origem";
 import { lerCorpoDaCompra } from "@/lib/ticketeria/pagamento/compra";
 import { codigoDoCupomValido, descontoEmTexto, descontoNasFaixas, normalizarCodigo, type CupomConferido } from "@/lib/ticketeria/cupom";
@@ -45,6 +46,9 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
   const [valores, setValores] = useState({ nome: "", email: "", documento: "" });
   const [aceito, setAceito] = useState(false);
+  // O aceite de novidades do produtor começa desmarcado; o WhatsApp é opcional e só vale com a caixa marcada.
+  const [novidades, setNovidades] = useState(false);
+  const [whatsapp, setWhatsapp] = useState("");
   const [meio, setMeio] = useState<"pix" | "cartao">("pix");
   const [parcelas, setParcelas] = useState(1);
   const [erro, setErro] = useState<string | null>(null);
@@ -109,7 +113,7 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
   const gerarPix = useCallback(async () => {
     setErro(null);
     if (!aceito) { setErro("Aceite os Termos de compra para continuar."); return; }
-    const leitura = lerCorpoDaCompra({ sessao_id: sessao, itens: Object.entries(quantidades).filter(([, q]) => q > 0).map(([ingresso_id, quantidade]) => ({ ingresso_id, quantidade })), ...valores, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio, parcelas: meio === "cartao" ? parcelas : 1, cupom: cupom?.codigo ?? null,
+    const leitura = lerCorpoDaCompra({ sessao_id: sessao, itens: Object.entries(quantidades).filter(([, q]) => q > 0).map(([ingresso_id, quantidade]) => ({ ingresso_id, quantidade })), ...valores, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio, parcelas: meio === "cartao" ? parcelas : 1, cupom: cupom?.codigo ?? null, novidades, whatsapp: novidades ? whatsapp : "",
       lugares: ingressos.filter(i => i.numerado && (quantidades[i.id] ?? 0) > 0).map(i => ({ ingresso_id: i.id, assentos: lugares[i.id] ?? [] })),
       // De qual link de divulgação a pessoa veio (?canal=, ?acao=, utm_* e o site de onde chegou). Só rótulo, lido do endereço no momento da compra; nada fica guardado no navegador.
       origem: origemDaPagina(window.location.search, document.referrer, window.location.hostname) });
@@ -143,7 +147,7 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     } finally {
       setTrabalhando(false);
     }
-  }, [sessao, quantidades, valores, aceito, meio, parcelas, cupom, lugares, ingressos, router]);
+  }, [sessao, quantidades, valores, aceito, novidades, whatsapp, meio, parcelas, cupom, lugares, ingressos, router]);
 
   const entrarNaEspera = useCallback(async () => {
     setEsperaErro(null);
@@ -245,7 +249,7 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     return <TelaPagarPix site={site} evento={evento} pedido={{ codigo: pedido.codigo, total_centavos: pedido.total_centavos, pix_copia_e_cola: pedido.pix_copia_e_cola, reservado_ate: horaDe(pedido.reservado_ate), restante: faltam(pedido.reservado_ate, agora) }} onCopiar={() => void copiar()} copiado={copiado} />;
   }
   if (passo === "dados") {
-    return <TelaDados site={site} evento={evento} resumo={{ linhas, total_centavos: total, desconto: resumoDoDesconto }} valores={valores} erro={erro} trabalhando={trabalhando} aceito={aceito} onAceitar={setAceito} meio={meio} onMeio={setMeio} parcelasMax={parcelasMax} parcelas={parcelas} onParcelas={setParcelas}
+    return <TelaDados site={site} evento={evento} resumo={{ linhas, total_centavos: total, desconto: resumoDoDesconto }} valores={valores} erro={erro} trabalhando={trabalhando} aceito={aceito} onAceitar={setAceito} novidades={novidades} onNovidades={setNovidades} whatsapp={whatsapp} onWhatsapp={v => setWhatsapp(mascararWhatsapp(v))} meio={meio} onMeio={setMeio} parcelasMax={parcelasMax} parcelas={parcelas} onParcelas={setParcelas}
       onMudar={(campo, valor) => setValores(v => ({ ...v, [campo]: campo === "documento" ? mascararDocumento(valor) : valor }))}
       onVoltar={() => { setErro(null); setPasso("escolher"); }} onGerarPix={() => void gerarPix()} />;
   }
