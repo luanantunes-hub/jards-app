@@ -46,6 +46,7 @@ import {
   Sparkles,
   ArrowLeft,
   ArrowLeftRight,
+  Home,
   Menu,
   Store,
   DoorOpen,
@@ -197,7 +198,8 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
     {
       section: "Ticketeria",
       items: [
-        { label: "Eventos", href: "/ingressos", icon: Ticket },
+        { label: "Página inicial", href: "/ingressos", icon: Home },
+        { label: "Eventos", href: "/ingressos/eventos", icon: Ticket },
         { label: "Locais", href: "/ingressos/locais", icon: MapPin },
         { label: "Site", href: "/ingressos/site", icon: Globe },
         { label: "Vendas", href: "/ingressos/vendas", icon: Receipt },
