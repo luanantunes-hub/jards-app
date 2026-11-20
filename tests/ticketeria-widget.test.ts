@@ -80,7 +80,7 @@ test("o script não usa eval nem innerHTML (só cria o iframe)", () => {
 });
 
 const sessao = (extra: Partial<SessaoNaApi> = {}): SessaoNaApi => ({ id: "s1", inicio: "2026-12-12T23:00:00Z", quando: "Sábado, 12 de dezembro, às 20h", local: "Teatro Municipal, São Paulo/SP", estado: "aberta", a_partir_de_centavos: 5000, poucos: false, url: "https://app.jards.com.br/comprar/s1", ...extra });
-const lista = (sessoes: SessaoNaApi[], cor = "#282525"): ListaDeEventosNaApi => ({ versao: 1, loja: { nome: "Cia" }, tema: { titulo: "Cia", cor }, eventos: [{ id: "e1", titulo: "Hamlet", descricao: null, classificacao: "14 anos", imagem: null, sessoes }] });
+const lista = (sessoes: SessaoNaApi[], cor = "#282525"): ListaDeEventosNaApi => ({ versao: 1, loja: { nome: "Cia" }, tema: { titulo: "Cia", cor }, eventos: [{ id: "e1", slug: "hamlet", titulo: "Hamlet", descricao: null, classificacao: "14 anos", imagem: null, sessoes }] });
 
 test("a lista embutida: data, local, preço e Comprar em outra aba; poucos, esgotado e indisponível", () => {
   const html = renderToStaticMarkup(createElement(IngressosEmbutidos, { lista: lista([sessao(), sessao({ id: "s2", poucos: true }), sessao({ id: "s3", estado: "esgotada" }), sessao({ id: "s4", estado: "vendas_pausadas" })]) }));

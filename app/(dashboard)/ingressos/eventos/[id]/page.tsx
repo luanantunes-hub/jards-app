@@ -10,13 +10,14 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { podeEditarATicketeria } from "@/lib/ticketeria/permissoes";
 import type { ClassificacaoIndicativa, SituacaoDoEvento } from "@/lib/ticketeria/estados";
 import { ROTULO_DA_CLASSIFICACAO, ROTULO_DA_SITUACAO_DO_EVENTO, mensagemDoErroDoEvento, partesNoFuso, quandoDaSessao, situacaoDaSessao } from "@/lib/ticketeria/eventos";
+import { PaginaDoEventoNoSite } from "@/components/ticketeria/PaginaDoEventoNoSite";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { CatalogoDoEvento } from "@/components/ticketeria/CatalogoDoEvento";
 import { LinkDeVenda } from "@/components/ticketeria/LinkDeVenda";
 import { Aviso, EventoSheet, LocalSheet, SessaoSheet, type EventoEditavel, type LocalDaSessao, type SessaoEditavel } from "@/components/ticketeria/FolhasDosEventos";
 
-type Evento = EventoEditavel & { situacao: SituacaoDoEvento };
+type Evento = EventoEditavel & { situacao: SituacaoDoEvento; loja_id: string; slug: string };
 type Sessao = SessaoEditavel & { cancelada_em: string | null };
 type Folha = { tipo: "evento" } | { tipo: "sessao"; sessao?: Sessao } | { tipo: "local" };
 
@@ -48,7 +49,7 @@ export default function EventoPage() {
     void (async () => {
       const ticketeria = clienteDaTicketeria(createClient());
       const [ev, se, lo] = await Promise.all([
-        ticketeria.from("ticketeria_eventos").select("id, titulo, descricao, imagem_url, classificacao, situacao").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
+        ticketeria.from("ticketeria_eventos").select("id, loja_id, slug, titulo, descricao, imagem_url, classificacao, situacao").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
         ticketeria.from("ticketeria_sessoes").select("id, local_id, inicio, fim, abertura_portas, cancelada_em").eq("evento_id", id).order("inicio"),
         ticketeria.from("ticketeria_locais").select("id, nome, fuso, arquivado").eq("organization_id", organizationId).order("nome"),
       ]);
@@ -136,6 +137,7 @@ export default function EventoPage() {
         </div>
       </header>
       <DetailPageContent>
+        <PaginaDoEventoNoSite lojaId={evento.loja_id} slug={evento.slug} publicado={evento.situacao === "publicado"} />
         {erro && <div className="mb-4"><Aviso texto={erro} /></div>}
         {evento.situacao === "publicado" && <p className="mb-6 max-w-2xl text-[0.75rem] text-black/55">Publicado: o catálogo de ingressos está montado abaixo; a venda e o pagamento entram nas próximas etapas.</p>}
         <section aria-labelledby="sessoes-do-evento">

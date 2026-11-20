@@ -19,7 +19,7 @@ test("os grupos do seletor cobrem todos os tipos, cada um uma vez, e cada tipo t
   assert.equal(new Set(nosGrupos).size, nosGrupos.length);
   assert.deepEqual(GRUPOS_DE_BLOCOS.map(g => g.titulo), ["Conteúdo", "Mídia e local", "Venda e confiança"]);
   for (const t of TIPOS_DE_BLOCO) assert.ok(ROTULO_DO_TIPO_DE_BLOCO[t].length > 0, t);
-  assert.equal(TIPOS_DE_BLOCO.length, 15);
+  assert.equal(TIPOS_DE_BLOCO.length, 16);
 });
 
 test("capa: título obrigatório, imagem https opcional, botão com texto e endereço juntos", () => {
@@ -167,7 +167,7 @@ test("o seletor Acrescentar bloco: três grupos, programação e ingressos só q
 
 test("as folhas dos blocos novos montam com os campos desenhados", () => {
   const folha = (tipo: Parameters<typeof BlocoNovoSheet>[0]["tipo"], bloco?: Bloco) => renderToStaticMarkup(createElement(BlocoNovoSheet, { tipo, bloco, organizationId: "o1", onClose: () => {}, onSalvar: async () => null }));
-  assert.deepEqual([...TIPOS_DAS_FOLHAS_NOVAS].sort(), ["capa", "colunas", "contagem", "faq", "galeria", "mapa", "patrocinadores", "video"]);
+  assert.deepEqual([...TIPOS_DAS_FOLHAS_NOVAS].sort(), ["agenda", "capa", "colunas", "contagem", "faq", "galeria", "mapa", "patrocinadores", "video"]);
   const capa = folha("capa");
   for (const t of ["Novo bloco: Capa", "Título", "Subtítulo (opcional)", "Imagem de fundo (https://…, opcional)", "Botão: texto (opcional)", "Botão: para onde leva", "Acrescentar", "Cancelar"]) assert.ok(capa.includes(t), t);
   for (const [tipo, textos] of [["colunas", ["Esquerda", "Direita", "uma em cima da outra"]], ["galeria", ["Imagem 1", "Imagem 2", "Outra imagem", "2 a 12"]], ["video", ["Endereço do vídeo (YouTube ou Vimeo)", "Só YouTube e Vimeo"]], ["mapa", ["Endereço", "mapa do Google"]], ["contagem", ["Dia do fim", "Hora", "Frase depois que acabar", "Brasília"]], ["faq", ["Pergunta 1", "Outra pergunta"]], ["patrocinadores", ["Patrocinador 1", "Outro patrocinador", "Site (https://…, opcional)"]]] as const) {

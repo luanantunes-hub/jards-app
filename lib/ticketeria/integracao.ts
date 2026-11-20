@@ -25,6 +25,10 @@ export type SessaoNaApi = {
   /** Quando começa, por extenso, no fuso do local ("Sábado, 12 de dezembro, às 20h"). */
   quando: string;
   local: string;
+  /** O nome do local e a cidade e o estado, separados (para o Google e para quem quer mostrar só o nome). */
+  local_nome?: string;
+  cidade?: string | null;
+  uf?: string | null;
   estado: EstadoPublicoDaSessao;
   /** O menor preço à venda hoje, em centavos; nulo se não há ingresso à venda. */
   a_partir_de_centavos: number | null;
@@ -34,7 +38,7 @@ export type SessaoNaApi = {
   url: string;
 };
 
-export type EventoNaApi = { id: string; titulo: string; descricao: string | null; classificacao: string | null; imagem: string | null; sessoes: SessaoNaApi[] };
+export type EventoNaApi = { id: string; slug: string; titulo: string; descricao: string | null; classificacao: string | null; imagem: string | null; sessoes: SessaoNaApi[] };
 
 export type ListaDeEventosNaApi = { versao: number; loja: { nome: string }; tema: { titulo: string; cor: string }; eventos: EventoNaApi[] };
 

@@ -355,6 +355,7 @@ export type BancoDaTicketeria = {
           organization_id: string;
           loja_id: string;
           titulo: string;
+          slug: string;
           descricao: string | null;
           imagem_url: string | null;
           classificacao: ClassificacaoIndicativa | null;
@@ -368,6 +369,7 @@ export type BancoDaTicketeria = {
           organization_id: string;
           loja_id: string;
           titulo: string;
+          slug?: string;
           descricao?: string | null;
           imagem_url?: string | null;
           classificacao?: ClassificacaoIndicativa | null;
@@ -381,6 +383,7 @@ export type BancoDaTicketeria = {
           organization_id?: string;
           loja_id?: string;
           titulo?: string;
+          slug?: string;
           descricao?: string | null;
           imagem_url?: string | null;
           classificacao?: ClassificacaoIndicativa | null;

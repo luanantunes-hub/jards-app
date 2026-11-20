@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Clock, Columns2, HelpCircle, Image as IconeImagem, ImagePlus, LayoutGrid, MapPin, MousePointerClick, Phone, Play, Store, Ticket, Type, AlignLeft, CalendarDays, Plus, Trash2, type LucideIcon } from "lucide-react";
+import { CalendarClock, Clock, Columns2, HelpCircle, Image as IconeImagem, ImagePlus, LayoutGrid, MapPin, MousePointerClick, Phone, Play, Store, Ticket, Type, AlignLeft, CalendarDays, Plus, Trash2, type LucideIcon } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Aviso, AREA, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 import { CampoDeImagem } from "@/components/ticketeria/CampoDeImagem";
@@ -15,14 +15,14 @@ const FUSO = "America/Sao_Paulo";
 const LINK = "rounded-xl text-[0.75rem] text-black/55 underline-offset-2 transition hover:text-black/75 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 
 /** Os tipos que esta folha edita (os outros têm folha própria em EditorDoSite.tsx). */
-export const TIPOS_DAS_FOLHAS_NOVAS: readonly TipoDeBloco[] = ["capa", "colunas", "galeria", "video", "mapa", "contagem", "faq", "patrocinadores"];
+export const TIPOS_DAS_FOLHAS_NOVAS: readonly TipoDeBloco[] = ["capa", "colunas", "galeria", "video", "mapa", "contagem", "faq", "patrocinadores", "agenda"];
 
 const ICONE_DO_TIPO: Record<TipoDeBloco, LucideIcon> = {
   capa: IconeImagem, titulo: Type, texto: AlignLeft, colunas: Columns2, imagem: ImagePlus, galeria: LayoutGrid, video: Play, mapa: MapPin, contato: Phone,
-  ingressos: Ticket, botao: MousePointerClick, contagem: Clock, faq: HelpCircle, patrocinadores: Store, programacao: CalendarDays,
+  ingressos: Ticket, agenda: CalendarClock, botao: MousePointerClick, contagem: Clock, faq: HelpCircle, patrocinadores: Store, programacao: CalendarDays,
 };
 
-const NOME_CURTO: Partial<Record<TipoDeBloco, string>> = { programacao: "Programação", botao: "Botão", contagem: "Contagem", faq: "Perguntas" };
+const NOME_CURTO: Partial<Record<TipoDeBloco, string>> = { agenda: "Agenda", programacao: "Programação", botao: "Botão", contagem: "Contagem", faq: "Perguntas" };
 
 /** A folha "Acrescentar bloco": os blocos em grupos, cada um com seu ícone. Programação só aparece com espaço da Produção, e ingressos só com evento na loja. */
 export function AcrescentarBlocoSheet({ temEspacos, temEventos, onEscolher, onClose }: { temEspacos: boolean; temEventos: boolean; onEscolher: (tipo: TipoDeBloco) => void; onClose: () => void }) {
@@ -30,7 +30,7 @@ export function AcrescentarBlocoSheet({ temEspacos, temEventos, onEscolher, onCl
     <TopSheet titulo="Acrescentar bloco" onClose={onClose} footer={fechar => <button type="button" onClick={fechar} className="rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>}>
       <div className="space-y-4">
         {GRUPOS_DE_BLOCOS.map(grupo => {
-          const tipos = grupo.tipos.filter(t => (t !== "programacao" || temEspacos) && (t !== "ingressos" || temEventos));
+          const tipos = grupo.tipos.filter(t => (t !== "programacao" || temEspacos) && ((t !== "ingressos" && t !== "agenda") || temEventos));
           if (tipos.length === 0) return null;
           return (
             <section key={grupo.titulo} aria-label={grupo.titulo}>
@@ -115,6 +115,7 @@ export function BlocoNovoSheet({ bloco, tipo, organizationId, onClose, onSalvar 
       case "contagem": return { tipo, titulo, depois, ate: instanteNoFuso(dia, hora, FUSO) ?? "" };
       case "faq": return { tipo, titulo, itens: perguntas };
       case "patrocinadores": return { tipo, titulo, itens: patrocinadores };
+      case "agenda": return { tipo, titulo };
       default: return { tipo };
     }
   }
@@ -213,6 +214,12 @@ export function BlocoNovoSheet({ bloco, tipo, organizationId, onClose, onSalvar 
               ))}
             </ul>
             {perguntas.length < 20 && <button type="button" onClick={() => setPerguntas([...perguntas, { pergunta: "", resposta: "" }])} disabled={salvando} className={`inline-flex items-center gap-1 ${LINK}`}><Plus size={12} aria-hidden="true" /> Outra pergunta</button>}
+          </>
+        )}
+        {tipo === "agenda" && (
+          <>
+            <div><label className={ROTULO} htmlFor={`${id}-titulo`}>Título (opcional, como “Em cartaz”)</label><input id={`${id}-titulo`} autoFocus className={CAMPO} value={titulo} onChange={e => setTitulo(e.target.value)} maxLength={120} disabled={salvando} /></div>
+            <p className="text-[0.75rem] text-black/55">Mostra os eventos publicados da loja que ainda têm sessão por vir, cada um com a próxima sessão, o preço e o link para a página do evento. A lista se atualiza sozinha.</p>
           </>
         )}
         {tipo === "patrocinadores" && (
