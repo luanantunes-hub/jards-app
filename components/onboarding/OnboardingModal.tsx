@@ -6,6 +6,7 @@ import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { EVENTO_PERFIL_CONCLUIDO } from "@/lib/onboarding/primeiros-passos";
+import { ConfigurandoAmbiente } from "./ConfigurandoAmbiente";
 
 type Props = {
   user: User;
@@ -73,6 +74,8 @@ export function OnboardingModal({ user, organizationId, onComplete }: Props) {
   const [goal, setGoal] = useState("");
   const [source, setSource] = useState("");
   const [askSource, setAskSource] = useState(false);
+  // Os exemplos da conta nova levam um instante para ficar prontos: a tela "Configurando o ambiente" cobre a espera.
+  const [configurando, setConfigurando] = useState<{ pronto: boolean; recarregar: boolean } | null>(null);
 
   // Só o id e o nome da conta entram nas dependências: o objeto `user` muda de identidade a cada aviso de login do navegador
   // (voltar à aba, por exemplo) e refazia as duas consultas sem necessidade.
@@ -99,6 +102,19 @@ export function OnboardingModal({ user, organizationId, onComplete }: Props) {
       setLoading(false);
     });
   }, [organizationId, userId, nomeDaConta]);
+
+  if (configurando) {
+    return (
+      <ConfigurandoAmbiente
+        pronto={configurando.pronto}
+        onTerminar={() => {
+          // A tela da Captação já carregou vazia: recarrega para mostrar o que acabou de ser criado.
+          if (configurando.recarregar) window.location.reload();
+          else { setConfigurando(null); setVisible(false); }
+        }}
+      />
+    );
+  }
 
   if (loading || !visible) return null;
 
@@ -137,9 +153,32 @@ export function OnboardingModal({ user, organizationId, onComplete }: Props) {
       return;
     }
 
-    setVisible(false);
     onComplete(name.trim());
     window.dispatchEvent(new Event(EVENTO_PERFIL_CONCLUIDO));
+    await prepararExemplos(organizationId);
+  }
+
+  /** Pede ao servidor os exemplos da conta nova. Só mostra a tela de espera se a resposta demorar (é o caso de quem recebe). */
+  async function prepararExemplos(organizationIdAtual: string) {
+    const resposta: Promise<boolean> = fetch("/api/exemplos/semear", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ organizationId: organizationIdAtual }),
+      signal: AbortSignal.timeout(25_000),
+    })
+      .then(res => (res.ok ? res.json() : { semeado: false }))
+      .then(corpo => corpo?.semeado === true)
+      .catch(() => false);
+
+    const demorou = await Promise.race([resposta.then(() => false), new Promise<boolean>(resolve => setTimeout(() => resolve(true), 400))]);
+    if (!demorou) {
+      setVisible(false);
+      if (await resposta) window.location.reload();
+      return;
+    }
+    setConfigurando({ pronto: false, recarregar: false });
+    const semeado = await resposta;
+    setConfigurando({ pronto: true, recarregar: semeado });
   }
 
   return (
