@@ -41,6 +41,8 @@ export type EstadoDaVitrine = "aberta" | "sessao_encerrada" | "sessao_cancelada"
 export type VitrineDaSessao = {
   estado: EstadoDaVitrine;
   sessao_id: string;
+  /** Até quantas parcelas no cartão a loja oferece (1 = só à vista), já limitado pelo que a plataforma libera. */
+  parcelas_max: number;
   site: { titulo: string; cor: string };
   evento: { titulo: string; descricao: string | null; classificacao: string | null; quando: string; local: string };
   ingressos: IngressoDaVitrine[];

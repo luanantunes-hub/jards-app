@@ -22,6 +22,10 @@ export class ProvedorDeMentira implements ProvedorDePagamento {
     return { ref: `mentira_${pedido.id}`, pix_copia_e_cola: `PIX-DE-MENTIRA:${pedido.codigo}:${pedido.total_centavos}`, url: null, expira_em: pedido.expira_em };
   }
 
+  async criarCobrancaCartao(pedido: Parameters<ProvedorDePagamento["criarCobranca"]>[0] & { parcelas: number }): Promise<{ ref: string; url: string; expira_em: string }> {
+    return { ref: `mentira_${pedido.id}`, url: `https://pagamento.exemplo.invalid/${pedido.codigo}`, expira_em: pedido.expira_em };
+  }
+
   async estornar(ref: string, valorCentavos: number): Promise<{ ok: boolean; motivo?: string }> {
     this.estornos.push({ ref, valor: valorCentavos });
     return { ok: true };

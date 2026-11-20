@@ -132,9 +132,11 @@ export function portasDaCompraDoSupabase(admin: SupabaseClient<Database>, config
       const { error } = await ticketeria.rpc("fn_ticketeria_registrar_aceite", { p_pedido: pedido, p_versao: versao });
       if (error) throw new Error(error.message);
     },
-    async definirMeioPix(pedido) {
-      const { error } = await ticketeria.rpc("fn_ticketeria_definir_meio", { p_pedido: pedido, p_meio: "pix", p_parcelas: null });
-      if (error) throw new Error(error.message);
+    async definirMeio(pedido, meio, parcelas) {
+      const { error } = await ticketeria.rpc("fn_ticketeria_definir_meio", { p_pedido: pedido, p_meio: meio, p_parcelas: parcelas });
+      if (!error) return;
+      if (error.message.includes("meio_indisponivel") || error.message.includes("parcelas_indisponiveis")) throw new ErroDaCompra("meio_indisponivel", "Esta forma de pagamento não está disponível para esta compra. Escolha o Pix.");
+      throw new Error(error.message);
     },
     provedor: config.provedor,
     carteiraDoJards: config.carteiraDoJards,

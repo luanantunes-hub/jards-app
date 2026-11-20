@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ErroDaCompra, documentoValido, iniciarCompra, lerCorpoDaCompra, situacaoParaOComprador, type PortasDaCompra } from "../lib/ticketeria/pagamento/compra";
+import { ErroDaCompra, PARCELAMENTO_LIBERADO, documentoValido, iniciarCompra, lerCorpoDaCompra, situacaoParaOComprador, type PortasDaCompra } from "../lib/ticketeria/pagamento/compra";
 import type { Cobranca, PedidoParaCobrar, ProvedorDePagamento } from "../lib/ticketeria/pagamento/provedor";
 import { VERSAO_DOS_TERMOS_DE_COMPRA } from "../lib/ticketeria/termos-de-compra";
 
@@ -22,7 +22,7 @@ test("CPF e CNPJ: só com os dígitos verificadores certos", () => {
 test("o corpo da compra: lido, aparado e conferido", () => {
   const r = lerCorpoDaCompra(bom);
   assert.ok(r.ok);
-  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA });
+  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: "pix", parcelas: 1 });
   const ruim = (mudanca: object) => lerCorpoDaCompra({ ...bom, ...mudanca });
   for (const [mudanca, problema] of [
     [{ sessao_id: "x" }, "sessão"], [{ itens: [] }, "ingressos"], [{ itens: "x" }, "ingressos"],
@@ -49,7 +49,7 @@ function montar(sobre: Partial<PortasDaCompra> = {}, reserva: Partial<{ situacao
       return { pedido_id: "0d760000-0000-4000-8000-0000000000e1", codigo: "ABCD2345", situacao: reserva.situacao ?? "aguardando_pagamento", reservado_ate: "2026-11-19T12:15:00.000Z", total_centavos: total, taxa_centavos: taxa, produtor_centavos: total - taxa };
     },
     async registrarAceite(pedido, versao) { chamadas.aceites.push([pedido, versao]); },
-    async definirMeioPix(pedido) { chamadas.meio.push(pedido); },
+    async definirMeio(pedido, meio, parcelas) { chamadas.meio.push(`${pedido}:${meio}:${parcelas}`); },
     provedor(chave) {
       const p: ProvedorDePagamento = {
         nome: "asaas",
@@ -72,9 +72,9 @@ test("compra com Pix: reserva 15 minutos, escolhe o Pix, abre a cobrança NA SUB
   assert.ok(l.ok);
   if (!l.ok) return;
   const r = await iniciarCompra(l.corpo, portas);
-  assert.deepEqual(r, { situacao: "aguardando_pagamento", pedido_id: "0d760000-0000-4000-8000-0000000000e1", codigo: "ABCD2345", total_centavos: 7000, reservado_ate: "2026-11-19T12:15:00.000Z", pix_copia_e_cola: "00020126-PIX" });
+  assert.deepEqual(r, { situacao: "aguardando_pagamento", meio: "pix", pedido_id: "0d760000-0000-4000-8000-0000000000e1", codigo: "ABCD2345", total_centavos: 7000, reservado_ate: "2026-11-19T12:15:00.000Z", pix_copia_e_cola: "00020126-PIX" });
   assert.equal((chamadas.reservar[0] as [unknown, number])[1], 15);
-  assert.deepEqual(chamadas.meio, ["0d760000-0000-4000-8000-0000000000e1"]);
+  assert.deepEqual(chamadas.meio, ["0d760000-0000-4000-8000-0000000000e1:pix:null"], "o Pix não tem parcelas");
   assert.deepEqual(chamadas.aceites, [["0d760000-0000-4000-8000-0000000000e1", VERSAO_DOS_TERMOS_DE_COMPRA]], "o pedido guarda a versão dos termos aceita");
   assert.equal(chamadas.cobrancas.length, 1);
   assert.equal(chamadas.cobrancas[0].chave, "chave-da-subconta-0123456789", "a cobrança nasce com a chave da subconta");
@@ -82,6 +82,70 @@ test("compra com Pix: reserva 15 minutos, escolhe o Pix, abre a cobrança NA SUB
   assert.equal(c.total_centavos, 7000, "o comprador paga só o preço");
   assert.deepEqual(c.split, [{ carteira: "carteira-do-jards", valor_centavos: 175 }]);
   assert.equal(c.comprador_documento, "52998224725", "o documento vai ao provedor");
+});
+
+test("o cartão: escolhe o meio, abre a cobrança de cartão NA SUBCONTA com a comissão dividida e devolve o endereço da página segura (nenhum dado de cartão passa por aqui)", async () => {
+  const cartoes: { chave: string; pedido: PedidoParaCobrar & { parcelas: number } }[] = [];
+  const { portas, chamadas } = montar({
+    provedor(chave) {
+      return {
+        nome: "asaas",
+        async criarCobranca(): Promise<Cobranca> { throw new Error("não é Pix"); },
+        async criarCobrancaCartao(pedido) { cartoes.push({ chave, pedido }); return { ref: "pay_c", url: "https://sandbox.asaas.com/i/abc", expira_em: pedido.expira_em }; },
+        async estornar() { return { ok: true }; },
+        lerAviso() { return { ok: false, motivo: "evento_irrelevante" }; },
+      };
+    },
+  });
+  const l = lerCorpoDaCompra({ ...bom, meio: "cartao" });
+  assert.ok(l.ok);
+  if (!l.ok) return;
+  assert.equal(l.corpo.meio, "cartao");
+  const r = await iniciarCompra(l.corpo, portas);
+  assert.deepEqual(r, { situacao: "aguardando_pagamento", meio: "cartao", pedido_id: "0d760000-0000-4000-8000-0000000000e1", codigo: "ABCD2345", total_centavos: 7000, reservado_ate: "2026-11-19T12:15:00.000Z", url_de_pagamento: "https://sandbox.asaas.com/i/abc" });
+  assert.deepEqual(chamadas.meio, ["0d760000-0000-4000-8000-0000000000e1:cartao:1"], "à vista");
+  assert.equal(cartoes[0].chave, "chave-da-subconta-0123456789");
+  assert.equal(cartoes[0].pedido.parcelas, 1);
+  assert.deepEqual(cartoes[0].pedido.split, [{ carteira: "carteira-do-jards", valor_centavos: 175 }]);
+});
+
+test("o meio e as parcelas: Pix é o padrão; meio desconhecido recusa; parcelamento NÃO está liberado (o aviso de cada parcela ainda não é somado)", () => {
+  const ok = lerCorpoDaCompra(bom);
+  assert.ok(ok.ok && ok.corpo.meio === "pix" && ok.corpo.parcelas === 1, "sem meio, Pix à vista");
+  for (const [mudanca, problema] of [
+    [{ meio: "boleto" }, "forma de pagamento"], [{ meio: "cartao", parcelas: 2 }, "parcelas"], [{ meio: "cartao", parcelas: 0 }, "parcelas"], [{ meio: "cartao", parcelas: 1.5 }, "parcelas"],
+    [{ meio: "cartao", parcelas: "1" }, "parcelas"], [{ meio: "pix", parcelas: 3 }, "parcelas"], [{ meio: "cartao", parcelas: 7 }, "parcelas"],
+  ] as [object, string][]) {
+    const l = lerCorpoDaCompra({ ...bom, ...mudanca });
+    assert.equal(l.ok, false, JSON.stringify(mudanca));
+    if (!l.ok) assert.ok(l.problemas.includes(problema), problema);
+  }
+  assert.equal(PARCELAMENTO_LIBERADO, false);
+  const c = lerCorpoDaCompra({ ...bom, meio: "cartao", parcelas: 1 });
+  assert.ok(c.ok && c.corpo.parcelas === 1);
+});
+
+test("o meio que a loja não oferece (ou o custo não deixa) vira a frase 'escolha o Pix', e nada é cobrado", async () => {
+  const { portas, chamadas } = montar({ async definirMeio() { throw new ErroDaCompra("meio_indisponivel", "Esta forma de pagamento não está disponível para esta compra. Escolha o Pix."); } });
+  const l = lerCorpoDaCompra({ ...bom, meio: "cartao" });
+  if (!l.ok) throw new Error("corpo");
+  await assert.rejects(iniciarCompra(l.corpo, portas), (e: unknown) => e instanceof ErroDaCompra && e.codigo === "meio_indisponivel" && /Pix/.test(e.mensagem));
+  assert.equal(chamadas.cobrancas.length, 0);
+});
+
+test("se o Asaas não abre a página do cartão, o comprador é avisado sem detalhe e pode pagar com Pix", async () => {
+  const { portas, chamadas } = montar({ provedor() { return { nome: "asaas", async criarCobranca() { throw new Error("não"); }, async criarCobrancaCartao() { throw new Error("o Asaas recusou POST /payments: 400 chave=segredo"); }, async estornar() { return { ok: true }; }, lerAviso() { return { ok: false, motivo: "evento_irrelevante" }; } }; } });
+  const l = lerCorpoDaCompra({ ...bom, meio: "cartao" });
+  if (!l.ok) throw new Error("corpo");
+  await assert.rejects(iniciarCompra(l.corpo, portas), (e: unknown) => e instanceof ErroDaCompra && e.codigo === "cobranca_falhou" && /Pix/.test(e.mensagem) && !/Asaas|segredo|400/.test(e.mensagem));
+  assert.equal(chamadas.erros.length, 1);
+});
+
+test("provedor sem cartão: falha segura", async () => {
+  const { portas } = montar();
+  const l = lerCorpoDaCompra({ ...bom, meio: "cartao" });
+  if (!l.ok) throw new Error("corpo");
+  await assert.rejects(iniciarCompra(l.corpo, portas), (e: unknown) => e instanceof ErroDaCompra && e.codigo === "cobranca_falhou");
 });
 
 test("ingresso gratuito: já nasce pago, sem Pix nem cobrança", async () => {

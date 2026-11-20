@@ -60,7 +60,7 @@ test("escolher os ingressos: preço, esgotado, total e o botão só com ingresso
 
 test("os dados: resumo, campos, aviso do documento e o botão", () => {
   const html = renderToStaticMarkup(createElement(TelaDados, { site, evento, resumo: { linhas: [{ nome: "Inteira", quantidade: 2, total_centavos: 12000 }], total_centavos: 12000 }, valores: { nome: "", email: "", documento: "" } }));
-  for (const t of ["Seus dados", "2 × Inteira", "Total", "Nome completo", "E-mail", "CPF ou CNPJ", "Exigido para gerar o Pix. Não fica guardado.", "Gerar Pix", "Voltar", "Passo 2 de 3", "15 minutos"]) assert.ok(html.includes(t), `falta: ${t}`);
+  for (const t of ["Seus dados", "2 × Inteira", "Total", "Nome completo", "E-mail", "CPF ou CNPJ", "Exigido pelo provedor de pagamento. Não fica guardado.", "Gerar Pix", "Voltar", "Passo 2 de 3", "15 minutos"]) assert.ok(html.includes(t), `falta: ${t}`);
   assert.match(renderToStaticMarkup(createElement(TelaDados, { site, evento, resumo: { linhas: [], total_centavos: 0 }, valores: { nome: "", email: "", documento: "" }, erro: "Confira: nome." })), /role="alert"/);
 });
 
@@ -91,7 +91,7 @@ test("o aviso tem título, texto e, se houver, a ação", () => {
 });
 
 test("a compra da sessão começa na escolha dos ingressos e, sem ingresso à venda, avisa", () => {
-  const vitrine: VitrineDaSessao = { estado: "aberta", sessao_id: "0d760000-0000-4000-8000-000000000081", site, evento: { titulo: "Hamlet", descricao: null, classificacao: null, quando: "Sábado", local: "Teatro" }, ingressos };
+  const vitrine: VitrineDaSessao = { estado: "aberta", sessao_id: "0d760000-0000-4000-8000-000000000081", parcelas_max: 1, site, evento: { titulo: "Hamlet", descricao: null, classificacao: null, quando: "Sábado", local: "Teatro" }, ingressos };
   const roteador = { push() {}, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} };
   const comRoteador = (v: VitrineDaSessao) => renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: roteador as never }, createElement(CompraDaSessao, { vitrine: v })));
   assert.match(comRoteador(vitrine), /Passo 1 de 3/);

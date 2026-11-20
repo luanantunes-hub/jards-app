@@ -13,10 +13,14 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const MAX_ITENS_POR_COMPRA = 10;
 export const MAX_QUANTIDADE_POR_ITEM = 20;
 export const MINUTOS_DE_RESERVA = 15;
+/** Até quantas parcelas a plataforma deixa oferecer. O parcelamento NÃO está liberado: o Asaas manda um aviso por parcela e o processamento do aviso ainda não os soma (o valor do aviso não bateria com o total do pedido). Liberar só depois de provar no sandbox. */
+export const PARCELAMENTO_LIBERADO = false;
+export const MAX_PARCELAS = 6;
+export type MeioDaCompra = "pix" | "cartao";
 
 export type ItemDaCompra = { ingresso_id: string; quantidade: number };
 /** `termos` é a versão dos Termos de compra que o comprador aceitou: precisa ser a atual (lib/ticketeria/termos-de-compra.ts). */
-export type CorpoDaCompra = { sessao_id: string; itens: ItemDaCompra[]; nome: string; email: string; documento: string; termos: string };
+export type CorpoDaCompra = { sessao_id: string; itens: ItemDaCompra[]; nome: string; email: string; documento: string; termos: string; meio: MeioDaCompra; parcelas: number };
 
 /** CPF (11) ou CNPJ (14) com os dígitos verificadores certos; só os números. */
 export function documentoValido(bruto: string): boolean {
@@ -63,8 +67,12 @@ export function lerCorpoDaCompra(entrada: unknown): LeituraDaCompra {
   const documento = texto(e.documento).replace(/\D/g, "");
   if (!documentoValido(documento)) problemas.push("CPF ou CNPJ");
   if (texto(e.termos) !== VERSAO_DOS_TERMOS_DE_COMPRA) problemas.push("aceite dos Termos de compra");
+  const meio = e.meio === undefined || e.meio === null || e.meio === "" ? "pix" : e.meio;
+  if (meio !== "pix" && meio !== "cartao") problemas.push("forma de pagamento");
+  const parcelas = e.parcelas === undefined || e.parcelas === null ? 1 : e.parcelas;
+  if (typeof parcelas !== "number" || !Number.isInteger(parcelas) || parcelas < 1 || parcelas > MAX_PARCELAS || (meio === "pix" && parcelas !== 1) || (!PARCELAMENTO_LIBERADO && parcelas !== 1)) problemas.push("parcelas");
   if (problemas.length > 0) return { ok: false, problemas };
-  return { ok: true, corpo: { sessao_id: sessao.toLowerCase(), itens, nome, email, documento, termos: VERSAO_DOS_TERMOS_DE_COMPRA } };
+  return { ok: true, corpo: { sessao_id: sessao.toLowerCase(), itens, nome, email, documento, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: meio as MeioDaCompra, parcelas: parcelas as number } };
 }
 
 /** O que o comprador precisa entender quando a compra não segue. */
@@ -82,8 +90,8 @@ export type PortasDaCompra = {
   reservar(corpo: CorpoDaCompra, minutos: number): Promise<PedidoReservado>;
   /** fn_ticketeria_registrar_aceite: o pedido guarda a versão dos Termos aceita e a hora. Falhar aqui falha a compra (sem aceite gravado, não há cobrança). */
   registrarAceite(pedido: string, versao: string): Promise<void>;
-  /** fn_ticketeria_definir_meio (Pix). */
-  definirMeioPix(pedido: string): Promise<void>;
+  /** fn_ticketeria_definir_meio. Meio ou parcelas que a loja não oferece (ou que o custo não deixa) saem como ErroDaCompra("meio_indisponivel"). */
+  definirMeio(pedido: string, meio: MeioDaCompra, parcelas: number | null): Promise<void>;
   /** O provedor que abre a cobrança na subconta (com a chave dela). */
   provedor(chaveDaSubconta: string): ProvedorDePagamento;
   /** A carteira do Jards no provedor, para onde vai a comissão. Nulo se não configurada. */
@@ -95,7 +103,9 @@ export type PortasDaCompra = {
 
 export type CompraIniciada =
   | { situacao: "pago"; pedido_id: string; codigo: string; total_centavos: 0 }
-  | { situacao: "aguardando_pagamento"; pedido_id: string; codigo: string; total_centavos: number; reservado_ate: string; pix_copia_e_cola: string };
+  | { situacao: "aguardando_pagamento"; meio: "pix"; pedido_id: string; codigo: string; total_centavos: number; reservado_ate: string; pix_copia_e_cola: string }
+  /** Cartão: a pessoa paga na página segura do provedor (`url_de_pagamento`). */
+  | { situacao: "aguardando_pagamento"; meio: "cartao"; pedido_id: string; codigo: string; total_centavos: number; reservado_ate: string; url_de_pagamento: string };
 
 export async function iniciarCompra(corpo: CorpoDaCompra, portas: PortasDaCompra): Promise<CompraIniciada> {
   const conta = await portas.contaDaSessao(corpo.sessao_id);
@@ -115,23 +125,31 @@ export async function iniciarCompra(corpo: CorpoDaCompra, portas: PortasDaCompra
   }
 
   try {
-    await portas.definirMeioPix(pedido.pedido_id);
+    await portas.definirMeio(pedido.pedido_id, corpo.meio, corpo.meio === "cartao" ? corpo.parcelas : null);
   } catch (erro) {
+    if (erro instanceof ErroDaCompra) throw erro;
     portas.registrarErro?.(erro);
     throw new ErroDaCompra("meio_indisponivel", "Não foi possível abrir o pagamento. Tente de novo.");
   }
+  const paraCobrar = {
+    id: pedido.pedido_id, codigo: pedido.codigo, total_centavos: pedido.total_centavos, expira_em: pedido.reservado_ate,
+    comprador_nome: corpo.nome, comprador_email: corpo.email, comprador_documento: corpo.documento,
+    ...(pedido.taxa_centavos > 0 && portas.carteiraDoJards ? { split: [{ carteira: portas.carteiraDoJards, valor_centavos: pedido.taxa_centavos }] } : {}),
+  };
   try {
-    const cobranca = await portas.provedor(conta.chave).criarCobranca({
-      id: pedido.pedido_id, codigo: pedido.codigo, total_centavos: pedido.total_centavos, expira_em: pedido.reservado_ate,
-      comprador_nome: corpo.nome, comprador_email: corpo.email, comprador_documento: corpo.documento,
-      ...(pedido.taxa_centavos > 0 && portas.carteiraDoJards ? { split: [{ carteira: portas.carteiraDoJards, valor_centavos: pedido.taxa_centavos }] } : {}),
-    });
+    const provedor = portas.provedor(conta.chave);
+    if (corpo.meio === "cartao") {
+      if (!provedor.criarCobrancaCartao) throw new Error("o provedor não tem cartão");
+      const cobranca = await provedor.criarCobrancaCartao({ ...paraCobrar, parcelas: corpo.parcelas });
+      return { situacao: "aguardando_pagamento", meio: "cartao", pedido_id: pedido.pedido_id, codigo: pedido.codigo, total_centavos: pedido.total_centavos, reservado_ate: pedido.reservado_ate, url_de_pagamento: cobranca.url };
+    }
+    const cobranca = await provedor.criarCobranca(paraCobrar);
     if (!cobranca.pix_copia_e_cola) throw new Error("a cobrança nasceu sem o copia e cola do Pix");
-    return { situacao: "aguardando_pagamento", pedido_id: pedido.pedido_id, codigo: pedido.codigo, total_centavos: pedido.total_centavos, reservado_ate: pedido.reservado_ate, pix_copia_e_cola: cobranca.pix_copia_e_cola };
+    return { situacao: "aguardando_pagamento", meio: "pix", pedido_id: pedido.pedido_id, codigo: pedido.codigo, total_centavos: pedido.total_centavos, reservado_ate: pedido.reservado_ate, pix_copia_e_cola: cobranca.pix_copia_e_cola };
   } catch (erro) {
     // A reserva vence sozinha em 15 minutos e devolve os lugares; o comprador pode tentar de novo.
     portas.registrarErro?.(erro);
-    throw new ErroDaCompra("cobranca_falhou", "Não foi possível gerar o Pix agora. Tente de novo em instantes.");
+    throw new ErroDaCompra("cobranca_falhou", corpo.meio === "cartao" ? "Não foi possível abrir o pagamento no cartão agora. Tente de novo ou pague com Pix." : "Não foi possível gerar o Pix agora. Tente de novo em instantes.");
   }
 }
 

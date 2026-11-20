@@ -116,7 +116,7 @@ test("o ingresso gratuito manda os ingressos na hora da compra, e falha no envio
     async contaDaSessao() { return { chave: "chave-da-subconta-0123456789", aprovada: true }; },
     async reservar() { return { pedido_id: PEDIDO, codigo: "ABCD2345", situacao: "pago", reservado_ate: "2026-11-19T12:15:00.000Z", total_centavos: 0, taxa_centavos: 0, produtor_centavos: 0 }; },
     async registrarAceite() {},
-    async definirMeioPix() { throw new Error("não deveria"); },
+    async definirMeio() { throw new Error("não deveria"); },
     provedor() { throw new Error("não deveria"); },
     carteiraDoJards: "carteira",
     registrarErro: e => erros.push(e),

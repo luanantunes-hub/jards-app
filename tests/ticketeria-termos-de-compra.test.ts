@@ -4,7 +4,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { AppRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { ATUALIZADO_EM_DOS_TERMOS_DE_COMPRA, SECOES_DOS_TERMOS_DE_COMPRA, VERSAO_DOS_TERMOS_DE_COMPRA, comEmail } from "../lib/ticketeria/termos-de-compra";
-import { TelaDados, TelaTermosDeCompra } from "../components/ticketeria/CompraView";
+import { TelaAbrindoPagamento, TelaDados, TelaTermosDeCompra } from "../components/ticketeria/CompraView";
 import { CompraDaSessao } from "../components/ticketeria/CompraDaSessao";
 import type { VitrineDaSessao } from "../lib/ticketeria/vitrine";
 
@@ -54,7 +54,26 @@ test("a tela de dados tem a caixa do aceite com o link dos termos em outra aba; 
 });
 
 test("a compra da sessão começa sem aceite (o aceite não é lembrado entre compras)", () => {
-  const vitrine: VitrineDaSessao = { estado: "aberta", sessao_id: "0d760000-0000-4000-8000-000000000081", site, evento: { titulo: "Hamlet", descricao: null, classificacao: null, quando: "Sábado", local: "Teatro" }, ingressos: [{ id: "a", nome: "Inteira", descricao: null, limite: 6, faixas: [{ preco_centavos: 6000, livres: 40 }] }] };
+  const vitrine: VitrineDaSessao = { estado: "aberta", sessao_id: "0d760000-0000-4000-8000-000000000081", parcelas_max: 1, site, evento: { titulo: "Hamlet", descricao: null, classificacao: null, quando: "Sábado", local: "Teatro" }, ingressos: [{ id: "a", nome: "Inteira", descricao: null, limite: 6, faixas: [{ preco_centavos: 6000, livres: 40 }] }] };
   const roteador = { push() {}, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} };
   assert.match(html(createElement(AppRouterContext.Provider, { value: roteador as never }, createElement(CompraDaSessao, { vitrine }))), /Passo 1 de 3/);
+});
+
+test("como pagar: Pix por padrão; com cartão, as parcelas que a loja oferece e o aviso de que o cartão não passa pelo Jards", () => {
+  const pix = html(createElement(TelaDados, { site, evento, resumo, valores }));
+  for (const t of ["Como pagar", "Cartão de crédito", "Gerar Pix", "À vista."]) assert.ok(pix.includes(t), `falta: ${t}`);
+  assert.match(pix, /name="meio" checked="" value="pix"/);
+  assert.doesNotMatch(pix, /Parcelas/);
+  const cartao = html(createElement(TelaDados, { site, evento, resumo, valores, meio: "cartao", parcelasMax: 3, parcelas: 3 }));
+  for (const t of ["Pagar com cartão", "em até 3x, sem juros para você", "Parcelas", "3x de R$ 20,00, sem juros", "Os dados do seu cartão não passam pelo Jards"]) assert.ok(cartao.includes(t), `falta: ${t}`);
+  assert.match(cartao, /name="meio" checked="" value="cartao"/);
+  const aVista = html(createElement(TelaDados, { site, evento, resumo, valores, meio: "cartao", parcelasMax: 1 }));
+  assert.doesNotMatch(aVista, /Parcelas/, "loja sem parcelamento: sem o campo");
+  assert.match(aVista, /Pagar com cartão/);
+  assert.match(html(createElement(TelaDados, { site, evento, resumo, valores, meio: "cartao", trabalhando: true })), /Abrindo o pagamento…/);
+});
+
+test("a tela de saída para o cartão: resumo, botão para a página segura e o caminho de volta ao pedido", () => {
+  const h = html(createElement(TelaAbrindoPagamento, { site, evento, resumo, endereco: "https://sandbox.asaas.com/i/abc", enderecoDoPedido: "/pedido/x" }));
+  for (const t of ["Abrindo o pagamento", "página segura de pagamento", "Abrir a página de pagamento", 'href="https://sandbox.asaas.com/i/abc"', "Já pagou?", 'href="/pedido/x"', "R$ 60,00"]) assert.ok(h.includes(t), `falta: ${t}`);
 });

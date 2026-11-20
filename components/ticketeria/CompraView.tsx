@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { create as criarQr } from "qrcode";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 import { textoSobreCor } from "@/lib/ticketeria/site";
 import { disponivelNasFaixas, totalNasFaixas, type IngressoDaVitrine } from "@/lib/ticketeria/vitrine";
@@ -107,13 +108,15 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
 
 export type ResumoDoPedido = { linhas: { nome: string; quantidade: number; total_centavos: number }[]; total_centavos: number };
 
-export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, aceito = false, onAceitar, onMudar, onVoltar, onGerarPix }: {
+export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, aceito = false, onAceitar, meio = "pix", onMeio, parcelasMax = 1, parcelas = 1, onParcelas, onMudar, onVoltar, onGerarPix }: {
   site: { titulo: string; cor?: string }; evento: EventoParaComprar; resumo: ResumoDoPedido; valores: { nome: string; email: string; documento: string };
-  erro?: string | null; trabalhando?: boolean; aceito?: boolean; onAceitar?: (aceito: boolean) => void; onMudar?: (campo: "nome" | "email" | "documento", valor: string) => void; onVoltar?: () => void; onGerarPix?: () => void;
+  erro?: string | null; trabalhando?: boolean; aceito?: boolean; onAceitar?: (aceito: boolean) => void;
+  /** Como pagar: Pix (o código aparece na hora) ou cartão (a pessoa paga na página segura do provedor). `parcelasMax` é até quantas vezes a loja oferece, sem juros para quem compra. */
+  meio?: "pix" | "cartao"; onMeio?: (meio: "pix" | "cartao") => void; parcelasMax?: number; parcelas?: number; onParcelas?: (parcelas: number) => void; onMudar?: (campo: "nome" | "email" | "documento", valor: string) => void; onVoltar?: () => void; onGerarPix?: () => void;
 }) {
   return (
     <Moldura titulo={site.titulo} cor={site.cor} passo={{ atual: 2, total: 3 }}
-      rodape={<div className="flex items-center gap-3"><button type="button" className={`${BOTAO_SECUNDARIO} shrink-0`} onClick={onVoltar} disabled={trabalhando}>Voltar</button><button type="button" className={BOTAO} onClick={onGerarPix} disabled={trabalhando}>{trabalhando ? "Gerando o Pix…" : "Gerar Pix"}</button></div>}>
+      rodape={<div className="flex items-center gap-3"><button type="button" className={`${BOTAO_SECUNDARIO} shrink-0`} onClick={onVoltar} disabled={trabalhando}>Voltar</button><button type="button" className={BOTAO} onClick={onGerarPix} disabled={trabalhando}>{trabalhando ? (meio === "cartao" ? "Abrindo o pagamento…" : "Gerando o Pix…") : meio === "cartao" ? "Pagar com cartão" : "Gerar Pix"}</button></div>}>
       <h1 className="text-[1.5rem] font-semibold tracking-[-.025em]">Seus dados</h1>
       <p className="mt-1 text-[0.875rem] text-black/60">{evento.titulo} · {evento.quando}</p>
       <section aria-label="Resumo do pedido" className="mt-5 rounded border border-black/10 px-4 py-3">
@@ -128,13 +131,35 @@ export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, ac
       <form className="mt-5 space-y-4" onSubmit={e => { e.preventDefault(); onGerarPix?.(); }}>
         <div><label className={ROTULO} htmlFor="c-nome">Nome completo</label><input id="c-nome" className={CAMPO} value={valores.nome} onChange={e => onMudar?.("nome", e.target.value)} autoComplete="name" maxLength={120} disabled={trabalhando} /></div>
         <div><label className={ROTULO} htmlFor="c-email">E-mail</label><input id="c-email" type="email" inputMode="email" className={CAMPO} value={valores.email} onChange={e => onMudar?.("email", e.target.value)} autoComplete="email" maxLength={200} placeholder="seus ingressos chegam aqui" disabled={trabalhando} /></div>
-        <div><label className={ROTULO} htmlFor="c-doc">CPF ou CNPJ</label><input id="c-doc" inputMode="numeric" className={CAMPO} value={valores.documento} onChange={e => onMudar?.("documento", e.target.value)} placeholder="000.000.000-00" disabled={trabalhando} /><p className="mt-1.5 text-[0.75rem] text-black/50">Exigido para gerar o Pix. Não fica guardado.</p></div>
+        <div><label className={ROTULO} htmlFor="c-doc">CPF ou CNPJ</label><input id="c-doc" inputMode="numeric" className={CAMPO} value={valores.documento} onChange={e => onMudar?.("documento", e.target.value)} placeholder="000.000.000-00" disabled={trabalhando} /><p className="mt-1.5 text-[0.75rem] text-black/50">Exigido pelo provedor de pagamento. Não fica guardado.</p></div>
       </form>
+      <fieldset className="mt-6" disabled={trabalhando}>
+        <legend className={ROTULO}>Como pagar</legend>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {([["pix", "Pix", "O código aparece na hora e o ingresso chega assim que o pagamento cai."], ["cartao", "Cartão de crédito", parcelasMax > 1 ? `À vista ou em até ${parcelasMax}x, sem juros para você.` : "À vista."]] as const).map(([id, titulo, texto]) => (
+            <label key={id} className={`flex cursor-pointer items-start gap-3 rounded border px-4 py-3.5 transition ${meio === id ? "border-[#282525] bg-black/[.02]" : "border-black/15 hover:bg-black/[.02]"}`}>
+              <input type="radio" name="meio" value={id} checked={meio === id} onChange={() => onMeio?.(id)} className="mt-1 h-4 w-4 shrink-0 accent-[#282525]" />
+              <span><span className="block text-[0.9375rem] font-medium">{titulo}</span><span className="mt-0.5 block text-[0.75rem] leading-snug text-black/55">{texto}</span></span>
+            </label>
+          ))}
+        </div>
+        {meio === "cartao" && (
+          <div className="mt-3">
+            {parcelasMax > 1 && (
+              <div className="mb-3">
+                <span className={ROTULO}>Parcelas</span>
+                <Dropdown ariaLabel="Parcelas" value={String(parcelas)} onChange={v => onParcelas?.(Number(v))} options={Array.from({ length: parcelasMax }, (_, i) => i + 1).map(n => ({ value: String(n), label: n === 1 ? `À vista, ${formatarMoeda(resumo.total_centavos)}` : `${n}x de ${formatarMoeda(Math.ceil(resumo.total_centavos / n))}, sem juros` }))} />
+              </div>
+            )}
+            <p className="text-[0.75rem] leading-relaxed text-black/55">Você paga na página segura do provedor de pagamento. Os dados do seu cartão não passam pelo Jards.</p>
+          </div>
+        )}
+      </fieldset>
       <label className="mt-5 flex cursor-pointer items-start gap-3 rounded border border-black/10 px-4 py-3.5 text-[0.875rem] leading-snug">
         <input type="checkbox" checked={aceito} onChange={e => onAceitar?.(e.target.checked)} disabled={trabalhando} className="mt-0.5 h-5 w-5 shrink-0 accent-[#282525]" />
         <span>Li e concordo com os <a href="/termos-de-compra" target="_blank" rel="noopener noreferrer" className="font-medium underline underline-offset-2">Termos de compra</a>.</span>
       </label>
-      <p className="mt-4 text-[0.75rem] leading-relaxed text-black/50">Pagamento por Pix. Os lugares ficam reservados por 15 minutos depois que você gera o código.</p>
+      <p className="mt-4 text-[0.75rem] leading-relaxed text-black/50">{meio === "cartao" ? "Os lugares ficam reservados por 15 minutos para você pagar." : "Os lugares ficam reservados por 15 minutos depois que você gera o código."}</p>
     </Moldura>
   );
 }
@@ -275,5 +300,31 @@ export function TelaTermosDeCompra({ secoes, atualizadoEm, email }: { secoes: { 
         <p className="mt-12 border-t border-black/10 pt-6 text-[0.8125rem] text-black/45">Veja também a <a href="/privacidade" className="underline underline-offset-2">Política de Privacidade</a>.</p>
       </main>
     </div>
+  );
+}
+
+/** Entre o clique em "Pagar com cartão" e a página segura do provedor. */
+export function TelaAbrindoPagamento({ site, evento, resumo, endereco, enderecoDoPedido }: { site: { titulo: string; cor?: string }; evento: EventoParaComprar; resumo: ResumoDoPedido; endereco: string; enderecoDoPedido?: string }) {
+  return (
+    <Moldura titulo={site.titulo} cor={site.cor} passo={{ atual: 3, total: 3 }}>
+      <h1 className="text-[1.5rem] font-semibold tracking-[-.025em]">Abrindo o pagamento</h1>
+      <p className="mt-1 text-[0.875rem] text-black/60">{evento.titulo} · {evento.quando}</p>
+      <div role="status" className="mt-6 flex items-start gap-3 rounded border px-4 py-3.5" style={{ borderColor: "#B07A1447" }}>
+        <span aria-hidden="true" className="mt-1 h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-[#B07A14] motion-reduce:animate-none" />
+        <div>
+          <p className="text-[0.9375rem] font-medium">Levando você à página segura de pagamento</p>
+          <p className="mt-0.5 text-[0.8125rem] text-black/60">Pague com o cartão por lá. Quando o pagamento for aprovado, os seus ingressos aparecem na página do pedido e chegam por e-mail.</p>
+        </div>
+      </div>
+      <section aria-label="Resumo do pedido" className="mt-5 rounded border border-black/10 px-4 py-3">
+        <ul className="space-y-1.5">
+          {resumo.linhas.map(l => <li key={l.nome} className="flex justify-between gap-4 text-[0.9375rem]"><span>{l.quantidade} × {l.nome}</span><span className="tabular-nums">{formatarMoeda(l.total_centavos)}</span></li>)}
+        </ul>
+        <p className="mt-2 flex justify-between border-t border-black/10 pt-2 text-[1rem] font-semibold"><span>Total</span><span className="tabular-nums">{formatarMoeda(resumo.total_centavos)}</span></p>
+      </section>
+      <a href={endereco} className={`${BOTAO} mt-5`}>Abrir a página de pagamento</a>
+      <p className="mt-3 text-[0.75rem] text-black/50">Se a página não abrir sozinha, toque no botão. Depois de pagar, volte para esta página.</p>
+      {enderecoDoPedido && <p className="mt-2 text-[0.75rem] text-black/50">Já pagou? <a href={enderecoDoPedido} className="font-medium underline underline-offset-2">Ver o meu pedido</a>.</p>}
+    </Moldura>
   );
 }

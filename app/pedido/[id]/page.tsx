@@ -20,14 +20,14 @@ export default async function PaginaDoPedido({ params }: { params: Promise<{ id:
   const admin = createAdminClient();
   const t = clienteDaTicketeria(admin);
   const pedidoId = id.toLowerCase();
-  const { data: pedido } = await t.from("ticketeria_pedidos").select("loja_id, situacao").eq("id", pedidoId).maybeSingle();
+  const { data: pedido } = await t.from("ticketeria_pedidos").select("loja_id, situacao, meio").eq("id", pedidoId).maybeSingle();
   if (!pedido) notFound();
   const site = await siteDaLoja(admin, pedido.loja_id);
   if (pedido.situacao !== "pago") {
     return (
       <>
         <AtualizarQuandoPagar pedido={pedidoId} />
-        <TelaAviso site={site} titulo={pedido.situacao === "cancelado" ? "Este pedido foi cancelado" : "Ainda não vimos o pagamento"} texto={pedido.situacao === "cancelado" ? "Não há ingressos neste pedido." : "Assim que o Pix cair, esta página mostra os seus ingressos sozinha. Se você já pagou, aguarde alguns instantes."} />
+        <TelaAviso site={site} titulo={pedido.situacao === "cancelado" ? "Este pedido foi cancelado" : pedido.meio === "cartao" ? "Ainda não vimos a aprovação" : "Ainda não vimos o pagamento"} texto={pedido.situacao === "cancelado" ? "Não há ingressos neste pedido." : pedido.meio === "cartao" ? "O pagamento no cartão pode levar alguns minutos para ser aprovado. Assim que for, esta página mostra os seus ingressos sozinha. Se você já pagou, aguarde um instante." : "Assim que o Pix cair, esta página mostra os seus ingressos sozinha. Se você já pagou, aguarde alguns instantes."} />
       </>
     );
   }
