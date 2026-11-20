@@ -929,11 +929,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <Menu size={18} aria-hidden="true" />
             </button>
-            <img src="/jards-icon.svg" alt="Jards" className="h-6 w-6" />
+            {!menuFixoAberto && <img src="/jards-icon.svg" alt="Jards" className="h-6 w-6" />}
           </div>
           {/* Right actions */}
           <div className="flex items-center gap-3">
-            {user && <NotificationBell userId={user.id} />}
+            {/* Na Ticketeria a barra do topo não tem o sino de notificações. */}
+            {user && !menuFixoAberto && <NotificationBell userId={user.id} />}
             {memberships.length > 1 ? (
               <div className="relative">
                 <button
