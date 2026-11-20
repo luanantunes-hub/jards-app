@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, ExternalLink, RefreshCw, ScrollText } from "lucide-react";
+import { FunctionRegion } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { chaveDoArquivo, type ArquivoLigado } from "@/supabase/functions/_shared/vigia-paginas";
 import { DiferencaDasVersoes } from "./DiferencaDasVersoes";
@@ -402,13 +403,14 @@ export default function AdminNormasPage() {
     setOcupado("coleta");
     setErro("");
     setAviso("");
-    const { data, error } = await supabase.functions.invoke("agente-normativo", { body: { data: dia } });
+    // O arquivo do mês vem de um servidor do Brasil: de São Paulo o download leva uns 9 s; dos EUA, quase 1 min.
+    const { data, error } = await supabase.functions.invoke("agente-normativo", { body: { data: dia }, region: FunctionRegion.SaEast1 });
     setOcupado(null);
     const r = data as { situacao?: string; lidos?: number; relevantes?: number; novos?: number; detalhe?: string } | null;
     if (error && !r?.situacao) setErro("Não foi possível coletar o Diário agora.");
     else if (r?.situacao === "falhou") setErro(`A coleta falhou: ${r.detalhe ?? "sem detalhe"}.`);
     else if (r?.situacao === "sem_edicao") setAviso(`Sem Diário Oficial da seção 1 em ${dataBr(dia)}.`);
-    else if (r?.situacao === "aguardando") setAviso(`${dataBr(dia)} ainda não está na base aberta do Diário Oficial: ela se atualiza uma vez por dia, perto do meio-dia.`);
+    else if (r?.situacao === "aguardando") setAviso(`${dataBr(dia)} ainda não está na base aberta do Diário Oficial: ela se atualiza uma vez por dia, à tarde.`);
     else if (r) setAviso(`${dataBr(dia)}: ${r.lidos} atos lidos, ${r.relevantes} na triagem, ${r.novos} ${r.novos === 1 ? "novo" : "novos"}.`);
     await recarregar();
   }
@@ -426,7 +428,7 @@ export default function AdminNormasPage() {
         <div className="min-w-0">
           <h1 className="text-xl font-bold text-[#282525]">Vigia normativo</h1>
           <p className="mt-0.5 max-w-[48rem] text-sm text-black/45">
-            Todo dia às 8h, a seção 1 do Diário Oficial da União é lida na base de dados aberta da Imprensa Nacional, que se atualiza perto do meio-dia (por isso o Diário de hoje costuma entrar só no dia seguinte): ficam os atos que citam as normas dos regimes ou que vêm do Ministério da Cultura, da ANCINE e do Ministério do Esporte tratando de prestação de contas ou de incentivo. Às 9h37, as leis compiladas, as normas consolidadas e as páginas de manuais e modelos dos órgãos são comparadas com a última versão guardada.
+            Todo dia às 8h, a seção 1 do Diário Oficial da União é lida na base de dados aberta da Imprensa Nacional, que se atualiza uma vez por dia, à tarde (por isso o Diário de hoje costuma entrar só no dia seguinte): ficam os atos que citam as normas dos regimes ou que vêm do Ministério da Cultura, da ANCINE e do Ministério do Esporte tratando de prestação de contas ou de incentivo. Às 9h37, as leis compiladas, as normas consolidadas e as páginas de manuais e modelos dos órgãos são comparadas com a última versão guardada.
           </p>
         </div>
         <div className="flex items-end gap-2">
