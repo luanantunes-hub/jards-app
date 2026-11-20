@@ -19,7 +19,7 @@ def _adstock(x: np.ndarray, a: float) -> np.ndarray:
     return saida
 
 
-def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False, com_controles: bool = False) -> tuple[list[dict], dict[str, float]]:
+def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False, com_controles: bool = False, variacao: float = 1.0) -> tuple[list[dict], dict[str, float]]:
     """Devolve a tabela semanal (no formato do Jards, centavos) e a parte verdadeira de cada canal nas vendas, em % (mais a base)."""
     rng = np.random.default_rng(semente)
     n = semanas
@@ -28,6 +28,7 @@ def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, g
     def gasto(base: float, amp: float, periodo: float) -> np.ndarray:
         if gasto_constante:
             return np.full(n, base)
+        amp = amp * variacao  # `variacao` < 1: o gasto muda pouco de semana a semana (o caso difícil para o modelo)
         return np.clip(base + amp * np.sin(t * 2 * np.pi / periodo) + rng.normal(0, amp * 0.3, n), 0, None)
 
     gastos = {"meta-ads": gasto(150, 120, 11), "google-ads": gasto(60, 50, 7)}

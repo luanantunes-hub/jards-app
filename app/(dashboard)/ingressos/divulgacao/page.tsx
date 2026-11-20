@@ -11,6 +11,7 @@ import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from 
 import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
 import { DatasDePicoSheet } from "@/components/ticketeria/DatasDePicoSheet";
 import { SimularOrcamentoSheet } from "@/components/ticketeria/SimularOrcamentoSheet";
+import { PlanoBDoModelo } from "@/components/ticketeria/PlanoBView";
 import { lerDataDePico, type CamposDaDataDePico, type DataDePico } from "@/lib/ticketeria/modelo-controles";
 import { ModeloDaLoja, ResultadoDoModelo } from "@/components/ticketeria/ModeloView";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
@@ -238,6 +239,8 @@ export default function DivulgacaoPage() {
   const dados = estado.dados;
   // O gasto por semana de cada canal (o mais comum nas semanas com gasto): a base da previsão e do simulador.
   const gastoSemanal: Record<string, number> = Object.fromEntries((prontidao?.canais ?? []).filter(c => c.medianaCentavos > 0).map(c => [c.canal, c.medianaCentavos]));
+  // O dia da próxima sessão à venda: o plano B não sugere experimento perto de uma sessão.
+  const proximaSessao = (dados?.sessoes ?? []).filter(x => x.a_venda && x.dia && x.dia >= (dados?.hoje ?? "")).map(x => x.dia as string).sort()[0] ?? null;
   const acoes = (
     <>
       {dados && aba === "acoes" && <SecondaryListAction onClick={() => abrirNova(dados.hoje)}>Registrar ação</SecondaryListAction>}
@@ -266,8 +269,9 @@ export default function DivulgacaoPage() {
               ? (prontidaoErro ? <p role="alert" className="rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>Não foi possível conferir os dados do modelo agora. Recarregue a página.</p>
                 : prontidao ? (
                   <div className="space-y-4">
-                    {resultadoDoModelo && <ResultadoDoModelo resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} />}
+                    {resultadoDoModelo && <ResultadoDoModelo resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} sessoes={prontidao.resumo?.sessoes ?? null} eventos={prontidao.resumo?.eventos ?? null} />}
                     {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} />}
+                    {(!resultadoDoModelo || !prontidao.pronto || resultadoDoModelo.execucao.confianca !== "boa") && <PlanoBDoModelo acoes={dados.acoes} canais={prontidao.canais} hoje={dados.hoje} proximaSessao={proximaSessao} onRegistrar={valores => { setAcaoErro(null); setAcao({ id: null, valores }); }} />}
                   </div>)
                 : <p className="text-[0.8125rem] text-black/40" aria-live="polite">Conferindo os dados…</p>)
               : aba === "historico"

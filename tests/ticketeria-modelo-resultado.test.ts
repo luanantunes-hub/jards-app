@@ -141,3 +141,19 @@ test("a margem mostrada é a maior distância até uma ponta do intervalo, vezes
   assert.equal(margemMostrada(10, 40, 20), 60, "o lado maior (20) vezes 3");
   assert.equal(margemMostrada(20, 20, 20), 0);
 });
+
+// ─── A confiança pelas semanas, pelo diagnóstico e pela variação do gasto ───
+
+test("a confiança: abaixo de 52 semanas é baixa; de 52 a 103, média; 104 ou mais, boa se o gasto varia em todos os canais e o ajuste fechou", () => {
+  const limpo = { r_hat_maximo: 1.01, divergencias: 0, ess_minimo: 700 };
+  const varia = [{ gasto_constante: false }, { gasto_constante: false }];
+  assert.equal(confiancaDoResultado(30, limpo, varia), "baixa");
+  assert.equal(confiancaDoResultado(51, limpo, varia), "baixa");
+  assert.equal(confiancaDoResultado(52, limpo, varia), "media");
+  assert.equal(confiancaDoResultado(103, limpo, varia), "media");
+  assert.equal(confiancaDoResultado(104, limpo, varia), "boa");
+  assert.equal(confiancaDoResultado(104, limpo), "boa", "sem canais informados vale como antes");
+  assert.equal(confiancaDoResultado(120, limpo, [{ gasto_constante: false }, { gasto_constante: true }]), "media", "com um canal de gasto quase constante, no máximo média");
+  assert.equal(confiancaDoResultado(120, { ...limpo, divergencias: 2 }, varia), "baixa");
+  assert.equal(confiancaDoResultado(120, { ...limpo, r_hat_maximo: 1.2 }, varia), "baixa");
+});

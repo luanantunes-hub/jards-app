@@ -8,7 +8,7 @@
 //     mais confiável (conexão, depois planilha, depois ação): assim o mesmo gasto nunca entra duas vezes. Ação de "anúncio pago" é ignorada quando já há gasto de anúncio lido das conexões.
 
 import { rotuloDoCanal } from "@/lib/ticketeria/divulgacao";
-import type { ChaveDoControle, ControleDaTela } from "@/lib/ticketeria/modelo-controles";
+import type { ChaveDoControle, ControleDaTela, ResumoDosControles } from "@/lib/ticketeria/modelo-controles";
 
 export const MIN_SEMANAS_DE_VENDAS = 26;
 export const MIN_SEMANAS_COM_GASTO = 26;
@@ -153,6 +153,8 @@ export type ProntidaoDoModelo = {
   confianca: Confianca | null; semanas: number; canais: ResumoDoCanal[]; ignoradas: string[];
   /** O que o modelo leva em conta além dos anúncios (ver modelo-controles.ts): vazio quando quem chamou não calculou. */
   controles: ControleDaTela[];
+  /** O que a loja tem de eventos, sessões, lotes e cupons (para o texto da confiança); null quando quem chamou não calculou. */
+  resumo: ResumoDosControles | null;
 };
 
 const semanasTexto = (n: number) => `${n} ${n === 1 ? "semana" : "semanas"}`;
@@ -163,7 +165,7 @@ export function confiancaPelasSemanas(semanas: number): Confianca {
 }
 
 export type EntradaDaProntidao = {
-  tabela: SemanaDaTabela[]; ga4Conectado: boolean; primeiroDiaDeVisitas: string | null; ultimoDiaDeVisitas: string | null; ignoradas?: string[]; controles?: ControleDaTela[];
+  tabela: SemanaDaTabela[]; ga4Conectado: boolean; primeiroDiaDeVisitas: string | null; ultimoDiaDeVisitas: string | null; ignoradas?: string[]; controles?: ControleDaTela[]; resumo?: ResumoDosControles;
 };
 
 /** Confere se há dado para o modelo rodar: vendas, gasto, variação do gasto (os três obrigatórios) e visitas (opcional). */
@@ -213,5 +215,5 @@ export function avaliarProntidao(e: EntradaDaProntidao): ProntidaoDoModelo {
     const ate = comVendas.at(-1)!.semana < melhor.ultimaSemana ? comVendas.at(-1)!.semana : melhor.ultimaSemana;
     semanasJuntas = semanasEntre(de, ate);
   }
-  return { pronto, verificacoes, prontos, total: obrigatorias.length, confianca: pronto ? confiancaPelasSemanas(semanasJuntas) : null, semanas: semanasJuntas, canais, ignoradas: e.ignoradas ?? [], controles: e.controles ?? [] };
+  return { pronto, verificacoes, prontos, total: obrigatorias.length, confianca: pronto ? confiancaPelasSemanas(semanasJuntas) : null, semanas: semanasJuntas, canais, ignoradas: e.ignoradas ?? [], controles: e.controles ?? [], resumo: e.resumo ?? null };
 }

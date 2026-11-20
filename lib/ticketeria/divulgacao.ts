@@ -126,7 +126,7 @@ export function enderecoDeDivulgacao(origem: string, sessaoId: string, canal: st
   return busca === "" ? base : `${base}?${busca}`;
 }
 
-export type SessaoParaDivulgar = { id: string; evento: string; quando: string; a_venda: boolean };
+export type SessaoParaDivulgar = { id: string; evento: string; quando: string; a_venda: boolean; /** O dia da sessão (AAAA-MM-DD, no fuso do local). */ dia?: string };
 export type DivulgacaoDaLoja = {
   linhas: LinhaDaDivulgacao[]; sessoes: SessaoParaDivulgar[];
   /** As ações registradas, com o que cada uma vendeu (pelos pedidos cujo link tinha o nome da ação) e o custo por ingresso. */

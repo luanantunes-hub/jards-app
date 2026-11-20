@@ -42,7 +42,7 @@ export async function divulgacaoDaLoja(admin: Admin, lojaId: string, agora: numb
     por_dia: ingressosPorDia(pedidos, quantidadePorPedido),
     hoje: diaNoFuso(new Date(agora)),
     sessoes: (sessoes ?? []).filter(s => !s.cancelada_em).map(s => ({
-      id: s.id, evento: titulo.get(s.evento_id) ?? "Evento", quando: diaCurtoEHora(s.inicio, fuso.get(s.local_id)), a_venda: Date.parse(s.inicio) > agora,
+      id: s.id, evento: titulo.get(s.evento_id) ?? "Evento", quando: diaCurtoEHora(s.inicio, fuso.get(s.local_id)), a_venda: Date.parse(s.inicio) > agora, dia: diaNoFuso(s.inicio, fuso.get(s.local_id)),
     })),
   };
 }

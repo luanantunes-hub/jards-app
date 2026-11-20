@@ -6,6 +6,7 @@ import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
 import { SEMANAS_DOS_CONTROLES_EXTRAS, type ControleDaTela } from "@/lib/ticketeria/modelo-controles";
 import { FATOR_DE_CAUTELA, margemMostrada, temMargemGrande, type CanalDoResultado, type ChaveDaParte } from "@/lib/ticketeria/modelo-resultado";
 import { canaisComCurva, linhasDeInvestimento, recomendar } from "@/lib/ticketeria/modelo-recomendacao";
+import { confiancaMostrada, fatoresDaConfianca, oQueAConfiancaPermite } from "@/lib/ticketeria/modelo-confianca";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 
 // A aba Modelo da Divulgação (fatia M-A): se já há dado para o modelo de marketing rodar, e o que falta. Ainda não há o cálculo do modelo (é a fatia seguinte). Só desenho: os dados
@@ -90,6 +91,46 @@ export function ControlesDoModelo({ controles, onDatas, onConexoes }: { controle
   );
 }
 
+// ─── A confiança por fatores ────────────────────────────────────────────────
+
+const COR_DA_PERMISSAO = { sim: [VERDE, "sim"], cautela: [AMBAR, "com cautela"], nao: ["rgba(13,13,13,.55)", "ainda não"] } as const;
+
+/** A confiança do modelo explicada por fatores (histórico, variação do gasto, sessões, firmeza do ajuste) e o que ela permite fazer com o resultado. */
+export function ConfiancaDoModelo({ resultado, sessoes = null, eventos = null }: { resultado: ResultadoParaATela; sessoes?: number | null; eventos?: number | null }) {
+  const { execucao: e, canais } = resultado;
+  const confianca = confiancaMostrada(e.confianca, sessoes);
+  const fatores = fatoresDaConfianca({ semanas: e.semanas, diagnosticos: { r_hat_maximo: e.r_hat_maximo, divergencias: e.divergencias, ess_minimo: e.ess_minimo }, canais, sessoes, eventos });
+  const ok = fatores.filter(f => f.estado === "ok").length;
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border px-4 py-3.5" style={{ borderColor: "rgba(176,122,20,.25)", background: "#FFFBF2" }}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="max-w-3xl text-[0.8125rem] text-black/60"><span className="text-[#282525]">Confiança {ROTULO_CONFIANCA[confianca]}.</span> Última leitura do modelo: {dataBr(e.created_at)}. A confiança vem de {fatores.length === 4 ? "quatro" : "três"} coisas:</p>
+          <span className="inline-flex shrink-0 rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal" style={{ borderColor: "rgba(176,122,20,.28)", color: AMBAR }}>{ok} de {fatores.length} em ordem</span>
+        </div>
+        <div className="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+          {fatores.map(f => (
+            <div key={f.chave} className="rounded-xl border bg-white px-3 py-2.5" style={{ borderColor: BORDA }}>
+              <p className="flex items-center gap-1.5 text-[0.78rem] text-[#282525]"><span className="size-2 rounded-full" style={{ background: f.estado === "ok" ? VERDE : AMBAR }} aria-hidden="true" />{f.titulo}</p>
+              <p className="mt-1 text-[0.72rem] leading-snug text-black/50">{f.texto}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="rounded-xl border bg-white px-5 py-4" style={{ borderColor: BORDA }}>
+        <p className="text-[0.875rem] text-[#282525]">O que essa confiança permite</p>
+        <ul className="mt-2.5 space-y-1.5">
+          {oQueAConfiancaPermite(confianca).map(p => (
+            <li key={p.texto} className="flex items-start gap-2.5 text-[0.75rem] leading-relaxed text-black/55">
+              <span className="mt-0.5 inline-flex shrink-0 rounded-xl border bg-white px-2 py-0.5 text-[0.625rem]" style={{ borderColor: BORDA, color: COR_DA_PERMISSAO[p.estado][0] }}>{COR_DA_PERMISSAO[p.estado][1]}</span>{p.texto}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 // ─── O resultado do modelo (M-B) ────────────────────────────────────────────
 
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
@@ -118,7 +159,7 @@ export function RecomendacaoDeInvestimento({ canais, gastoSemanal, confianca = "
           <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[0.6875rem] text-white" style={{ background: AMBAR }} aria-hidden="true">!</span>
           <div className="min-w-0">
             <p className="text-[0.875rem] text-[#282525]">{semanas ? `Com ${semanas} semanas` : "Com este histórico"} ainda não dá para recomendar um canal com segurança.</p>
-            <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/50">A tabela abaixo é um indício. Nos testes com dados inventados, o modelo errou a ordem dos canais quando tinha menos de 104 semanas de histórico.</p>
+            <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/50">A tabela abaixo é um indício. Nos testes com dados inventados, o modelo errou a ordem dos canais com frequência quando tinha menos de 104 semanas de histórico.</p>
           </div>
         </div>
       ) : (
@@ -132,10 +173,10 @@ export function RecomendacaoDeInvestimento({ canais, gastoSemanal, confianca = "
             </>
           ) : (
             <>
-              <p className="text-[0.875rem] text-[#282525]">Hoje o próximo real rende mais no {rotulo(r.canal as string)}.</p>
+              <p className="text-[0.875rem] text-[#282525]">O modelo aponta o {rotulo(r.canal as string)} como o canal em que o próximo real rende mais.</p>
               <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/50">
                 Mais R$ 100 por semana no {rotulo(r.canal as string)} trazem cerca de {pontos(r.ingressosPorCem)} ingressos a mais{r.segundo ? `; no ${rotulo(r.segundo)}, cerca de ${pontos(r.ingressosPorCemDoSegundo as number)}` : ""}.
-                {noLimite.map(l => limiteDe(l.canal) !== null ? ` O ${rotulo(l.canal)} já está perto do limite: acima de ${formatarMoeda(limiteDe(l.canal) as number)} por semana, cada real a mais rende pouco.` : "").join("")}
+                {noLimite.map(l => limiteDe(l.canal) !== null ? ` O ${rotulo(l.canal)} já está perto do limite: acima de ${formatarMoeda(limiteDe(l.canal) as number)} por semana, cada real a mais rende pouco.` : "").join("")} É um indício: confirme com um pequeno experimento antes de mudar o orçamento.
               </p>
             </>
           )}
@@ -169,7 +210,7 @@ export function RecomendacaoDeInvestimento({ canais, gastoSemanal, confianca = "
           </tbody>
         </table>
       </div>
-      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Isto é uma previsão, não uma garantia: vem da curva que o modelo estimou de cada canal e vale perto do que você já gastou (o gasto por semana é o mais comum nas semanas com gasto). Fora dessa faixa, como dobrar o gasto de um canal, a estimativa fica bem menos firme. Só canais com gasto entram.</p>
+      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Isto é uma previsão, não uma garantia: vem da curva que o modelo estimou de cada canal e vale perto do que você já gastou (o gasto por semana é o mais comum nas semanas com gasto). Fora dessa faixa, como dobrar o gasto de um canal, a estimativa fica bem menos firme. Nos testes com dados inventados, com 104 semanas o modelo acertou qual canal rende mais em 6 de cada 10 vezes (e com 58 semanas, em 1 de cada 4). Só canais com gasto entram.</p>
     </section>
   );
 }
@@ -217,21 +258,13 @@ export function QuebraDaBase({ base }: { base: ResultadoParaATela["execucao"]["b
 }
 
 /** O que o modelo estimou: o selo de confiança, a tabela canal a canal com o modelo ao lado dos links e, para cada canal, o gasto semanal a partir do qual rende pouco. */
-export function ResultadoDoModelo({ resultado, gastoSemanal }: { resultado: ResultadoParaATela; gastoSemanal?: Record<string, number> }) {
+export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eventos = null }: { resultado: ResultadoParaATela; gastoSemanal?: Record<string, number>; sessoes?: number | null; eventos?: number | null }) {
   const { execucao: e, comparacao, canais, ultimaFalha } = resultado;
-  const parte = Math.min(100, Math.round((e.semanas / SEMANAS_IDEAIS) * 100));
   const saturacoes = canais.filter(c => c.saturacao_gasto_centavos !== null && c.gasto_centavos > 0);
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border px-4 py-3.5" style={{ borderColor: "rgba(176,122,20,.25)", background: "#FFFBF2" }}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="max-w-3xl text-[0.8125rem] text-black/60"><span className="text-[#282525]">Confiança {ROTULO_CONFIANCA[e.confianca]}.</span> {e.semanas} semanas de histórico (o ideal são {SEMANAS_IDEAIS}). Última leitura do modelo: {dataBr(e.created_at)}.</p>
-          <span className="inline-flex shrink-0 rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal" style={{ borderColor: "rgba(176,122,20,.28)", color: AMBAR }}>{e.semanas} de {SEMANAS_IDEAIS} semanas</span>
-        </div>
-        <div className="mt-2.5 h-2 rounded bg-[#F1E6C8]" aria-hidden="true"><div className="h-2 rounded" style={{ width: `${parte}%`, background: AMBAR }} /></div>
-        {e.confianca === "baixa" && (e.r_hat_maximo > 1.05 || e.divergencias > 0) && <p className="mt-2 text-[0.75rem] text-black/50">O cálculo ainda não se firmou direito com estes dados: leia os números como indício.</p>}
-      </div>
-      {gastoSemanal && <RecomendacaoDeInvestimento canais={canais} gastoSemanal={gastoSemanal} confianca={e.confianca} semanas={e.semanas} />}
+      <ConfiancaDoModelo resultado={resultado} sessoes={sessoes} eventos={eventos} />
+      {gastoSemanal && <RecomendacaoDeInvestimento canais={canais} gastoSemanal={gastoSemanal} confianca={confiancaMostrada(e.confianca, sessoes)} semanas={e.semanas} />}
       {ultimaFalha && <p role="alert" className="rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-black/55" style={{ borderColor: "rgba(176,122,20,.25)" }}>A rodada de {dataBr(ultimaFalha.created_at)} não deu: {ultimaFalha.motivo} Esta tela mostra a anterior.</p>}
       <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>
         <table className="w-full min-w-[46rem] border-collapse">

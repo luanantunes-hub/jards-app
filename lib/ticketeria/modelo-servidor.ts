@@ -60,7 +60,7 @@ export async function entradaDaLoja(admin: Admin, lojaId: string): Promise<Entra
   const { controles, resumo } = await controlesDaLoja(t, lojaId, semanal.map(s => s.semana));
   const doGa4 = controleDeVisitas(visitas, primeiroDiaDeVisitas, ultimoDiaDeVisitas, semanal.map(s => s.semana));
   const tabela = semanal.map(s => ({ ...s, controles: { ...controles[s.semana], visitas: doGa4.valores[s.semana] ?? 0 } }));
-  return { tabela, ga4Conectado, primeiroDiaDeVisitas, ultimoDiaDeVisitas, ignoradas, controles: controlesDaTela(tabela, resumo, { conectado: ga4Conectado, semanas: doGa4.semanasLidas }) };
+  return { tabela, ga4Conectado, primeiroDiaDeVisitas, ultimoDiaDeVisitas, ignoradas, controles: controlesDaTela(tabela, resumo, { conectado: ga4Conectado, semanas: doGa4.semanasLidas }), resumo };
 }
 
 type Cliente = ReturnType<typeof clienteDaTicketeria>;
