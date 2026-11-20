@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { BilheteriaShell } from "../components/ticketeria/BilheteriaShell";
 import { frasesDaEntrada, lerBilheteiros, mensagemDoLogin, motivoDaEntrada } from "../lib/ticketeria/bilheteria";
 
-const MIGRATION = "supabase/migrations/20261122300000_ticketeria_bilheteiros.sql";
+const MIGRATION = "supabase/migrations/20261120062929_ticketeria_bilheteiros.sql";
 
 test("a resposta do banco: só item inteiro entra, o resto é ignorado", () => {
   assert.deepEqual(lerBilheteiros([{ id: "b1", loja_id: "l1", loja: "Teatro Central", nome: "Marina" }]), [{ id: "b1", lojaId: "l1", loja: "Teatro Central", nome: "Marina" }]);
