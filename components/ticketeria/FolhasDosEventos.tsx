@@ -12,15 +12,15 @@ import {
 
 // As folhas da Ticketeria (T2): evento, sessão, local e setor. Criar e editar pela mesma folha; tudo grava ao salvar.
 
-export const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
-export const AREA = "w-full rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
-export const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
-const CANCELAR = "rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
-const SALVAR = "rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
-const APAGAR = "mr-auto rounded px-4 py-2.5 text-[0.75rem] font-medium text-[#B23B3B] transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
-const ARQUIVAR = "mr-auto rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
+export const CAMPO = "h-10 w-full rounded-xl border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
+export const AREA = "w-full rounded-xl border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
+export const ROTULO = "mb-1.5 block text-[0.6875rem] font-normal text-black/55";
+const CANCELAR = "rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
+const SALVAR = "rounded-xl acao-salvar px-4 py-2.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
+const APAGAR = "mr-auto rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-[#B23B3B] transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
+const ARQUIVAR = "mr-auto rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 
-export const Aviso = ({ texto }: { texto: string }) => <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{texto}</p>;
+export const Aviso = ({ texto }: { texto: string }) => <p role="alert" className="rounded-xl border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{texto}</p>;
 
 export function Rodape({ fechar, salvando, rotulo, onSalvar, onApagar, rotuloApagar, arquivar = false }: { fechar: () => void; salvando: boolean; rotulo: string; onSalvar: () => void; onApagar?: () => void; rotuloApagar?: string; arquivar?: boolean }) {
   return (
@@ -81,8 +81,8 @@ export function EventoSheet({ organizationId, nomeDaOrganizacao, evento, onClose
         {erro && <Aviso texto={erro} />}
         <div><label className={ROTULO} htmlFor="ev-titulo">Título</label><input id="ev-titulo" autoFocus className={CAMPO} value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Hamlet" maxLength={200} disabled={salvando} /></div>
         <div><span className={ROTULO}>Classificação indicativa</span><Dropdown ariaLabel="Classificação indicativa" value={classificacao} onChange={setClassificacao} disabled={salvando} placeholder="Sem classificação" options={[{ value: "", label: "Sem classificação" }, ...CLASSIFICACOES_INDICATIVAS.map(c => ({ value: c, label: ROTULO_DA_CLASSIFICACAO[c] }))]} /></div>
-        <details className="rounded border border-black/[.08]" open={Boolean(evento?.descricao || evento?.imagem_url)}>
-          <summary className="cursor-pointer px-3 py-2.5 text-[0.75rem] font-medium text-black/60">Mais detalhes</summary>
+        <details className="rounded-xl border border-black/[.08]" open={Boolean(evento?.descricao || evento?.imagem_url)}>
+          <summary className="cursor-pointer px-3 py-2.5 text-[0.75rem] font-normal text-black/60">Mais detalhes</summary>
           <div className="space-y-4 border-t border-black/[.06] px-3 py-3">
             <div><label className={ROTULO} htmlFor="ev-descricao">Descrição</label><textarea id="ev-descricao" rows={5} className={AREA} value={descricao} onChange={e => setDescricao(e.target.value)} maxLength={5000} disabled={salvando} /></div>
             <div><label className={ROTULO} htmlFor="ev-imagem">Imagem (https://…)</label><input id="ev-imagem" className={CAMPO} value={imagem} onChange={e => setImagem(e.target.value)} placeholder="https://…/cartaz.jpg" maxLength={500} disabled={salvando} /></div>
@@ -148,8 +148,8 @@ export function SessaoSheet({ organizationId, eventoId, locais, sessao, podeApag
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
         {emUso.length === 0 ? (
-          <div className="rounded border border-black/[.08] px-3 py-3 text-[0.75rem] text-black/55">
-            Cadastre primeiro o local onde a sessão acontece. <button type="button" onClick={onNovoLocal} className="font-medium text-[#282525] underline underline-offset-2">Novo local</button>
+          <div className="rounded-xl border border-black/[.08] px-3 py-3 text-[0.75rem] text-black/55">
+            Cadastre primeiro o local onde a sessão acontece. <button type="button" onClick={onNovoLocal} className="font-normal text-[#282525] underline underline-offset-2">Novo local</button>
           </div>
         ) : (
           <div><span className={ROTULO}>Local</span><Dropdown ariaLabel="Local da sessão" value={localEscolhido} onChange={setLocalId} disabled={salvando} options={emUso.map(local => ({ value: local.id, label: local.nome }))} /></div>
@@ -217,8 +217,8 @@ export function LocalSheet({ organizationId, nomeDaOrganizacao, local, onClose, 
           <div><label className={ROTULO} htmlFor="lo-cidade">Cidade</label><input id="lo-cidade" className={CAMPO} value={cidade} onChange={e => setCidade(e.target.value)} maxLength={120} disabled={salvando} /></div>
           <div><span className={ROTULO}>UF</span><Dropdown ariaLabel="Estado" value={uf} onChange={setUf} disabled={salvando} placeholder="—" options={[{ value: "", label: "—" }, ...UFS.map(item => ({ value: item, label: item }))]} /></div>
         </div>
-        <details className="rounded border border-black/[.08]" open={Boolean(local?.endereco || (local && local.fuso !== "America/Sao_Paulo"))}>
-          <summary className="cursor-pointer px-3 py-2.5 text-[0.75rem] font-medium text-black/60">Mais detalhes</summary>
+        <details className="rounded-xl border border-black/[.08]" open={Boolean(local?.endereco || (local && local.fuso !== "America/Sao_Paulo"))}>
+          <summary className="cursor-pointer px-3 py-2.5 text-[0.75rem] font-normal text-black/60">Mais detalhes</summary>
           <div className="space-y-4 border-t border-black/[.06] px-3 py-3">
             <div><label className={ROTULO} htmlFor="lo-endereco">Endereço</label><input id="lo-endereco" className={CAMPO} value={endereco} onChange={e => setEndereco(e.target.value)} placeholder="Rua, número, bairro" maxLength={300} disabled={salvando} /></div>
             <div><span className={ROTULO}>Fuso horário</span><Dropdown ariaLabel="Fuso horário" value={fuso} onChange={setFuso} disabled={salvando} options={FUSOS_DO_BRASIL.map(item => ({ value: item.id, label: item.rotulo }))} /></div>

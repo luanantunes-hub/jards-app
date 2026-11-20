@@ -20,8 +20,8 @@ type Evento = EventoEditavel & { situacao: SituacaoDoEvento };
 type Sessao = SessaoEditavel & { cancelada_em: string | null };
 type Folha = { tipo: "evento" } | { tipo: "sessao"; sessao?: Sessao } | { tipo: "local" };
 
-const BOTAO_ESCURO = "inline-flex h-10 items-center rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
-const BOTAO_CLARO = "inline-flex h-10 items-center rounded border border-black/[.12] bg-white px-4 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
+const BOTAO_ESCURO = "inline-flex h-10 items-center rounded-xl bg-[#1C0E33] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
+const BOTAO_CLARO = "inline-flex h-10 items-center rounded-xl border border-black/[.12] bg-white px-4 text-[0.75rem] font-normal text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const ROTULO_DA_SESSAO = { agendada: "Por vir", realizada: "Realizada", cancelada: "Cancelada" } as const;
 
 /** O evento (T2): título, situação, publicar ou cancelar, e as sessões com dia, hora e local. */
@@ -120,7 +120,7 @@ export default function EventoPage() {
           <DetailBackLink href="/ingressos" label="Eventos" />
           <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525] [text-wrap:balance]">{evento.titulo}</h1>
+              <h1 className="text-[1.5rem] font-medium tracking-[-.02em] text-[#282525] [text-wrap:balance]">{evento.titulo}</h1>
               <p className="mt-1 text-[0.75rem] text-black/45">{resumo}</p>
               {evento.descricao && <p className="mt-3 max-w-2xl whitespace-pre-line text-[0.8125rem] text-black/65 line-clamp-3">{evento.descricao}</p>}
             </div>
@@ -140,28 +140,28 @@ export default function EventoPage() {
         {evento.situacao === "publicado" && <p className="mb-6 max-w-2xl text-[0.75rem] text-black/55">Publicado: o catálogo de ingressos está montado abaixo; a venda e o pagamento entram nas próximas etapas.</p>}
         <section aria-labelledby="sessoes-do-evento">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <h2 id="sessoes-do-evento" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Sessões</h2>
+            <h2 id="sessoes-do-evento" className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Sessões</h2>
             {editavel && <SecondaryListAction onClick={() => setFolha({ tipo: "sessao" })}><CalendarPlus size={13} aria-hidden="true" /> Nova sessão</SecondaryListAction>}
           </div>
           {linhas.length === 0 ? (
-            <div className="rounded border bg-white px-5 py-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[0.8125rem] font-medium text-black/55">Nenhuma sessão ainda</p>
+            <div className="rounded-xl border bg-white px-5 py-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+              <p className="text-[0.8125rem] font-normal text-black/55">Nenhuma sessão ainda</p>
               <p className="mx-auto mt-1 max-w-sm text-[0.75rem] text-black/45">Cada sessão é um dia e uma hora num local. Os ingressos valem para as sessões no local do setor.</p>
             </div>
           ) : (
-            <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+            <ul className="divide-y divide-black/[.06] overflow-hidden rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               {linhas.map(({ sessao, local, quando, situacao, detalhes }) => (
                 <li key={sessao.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
                   <span className="min-w-0 flex-1 basis-60">
-                    <span className={`block text-[0.8125rem] font-medium tabular-nums ${situacao === "cancelada" ? "text-black/40 line-through" : "text-[#282525]"}`}>{quando}</span>
+                    <span className={`block text-[0.8125rem] font-normal tabular-nums ${situacao === "cancelada" ? "text-black/40 line-through" : "text-[#282525]"}`}>{quando}</span>
                     <span className="flex items-center gap-1.5 truncate text-[0.6875rem] text-black/45"><MapPin size={12} aria-hidden="true" className="shrink-0 text-black/40" />{[local?.nome ?? "Local", detalhes].filter(Boolean).join(" · ")}</span>
                   </span>
                   <span className="text-[0.6875rem] text-black/50">{ROTULO_DA_SESSAO[situacao]}</span>
                   {evento.situacao === "publicado" && situacao === "agendada" && <LinkDeVenda sessaoId={sessao.id} />}
                   {editavel && (
                     <span className="flex items-center gap-1">
-                      {situacao !== "cancelada" && <button type="button" onClick={() => setFolha({ tipo: "sessao", sessao })} className="h-8 rounded px-2.5 text-[0.6875rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Editar</button>}
-                      {evento.situacao === "publicado" && situacao !== "realizada" && <button type="button" onClick={() => void cancelarSessao(sessao, situacao !== "cancelada")} className="h-8 rounded px-2.5 text-[0.6875rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">{situacao === "cancelada" ? "Desfazer cancelamento" : "Cancelar"}</button>}
+                      {situacao !== "cancelada" && <button type="button" onClick={() => setFolha({ tipo: "sessao", sessao })} className="h-8 rounded-xl px-2.5 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Editar</button>}
+                      {evento.situacao === "publicado" && situacao !== "realizada" && <button type="button" onClick={() => void cancelarSessao(sessao, situacao !== "cancelada")} className="h-8 rounded-xl px-2.5 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">{situacao === "cancelada" ? "Desfazer cancelamento" : "Cancelar"}</button>}
                     </span>
                   )}
                 </li>
@@ -173,8 +173,8 @@ export default function EventoPage() {
         {editavel && (
           <div className="mt-12">
             {evento.situacao === "rascunho"
-              ? <button type="button" onClick={apagarEvento} className="text-[0.75rem] font-medium text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Apagar este evento</button>
-              : <button type="button" onClick={cancelarEvento} className="text-[0.75rem] font-medium text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Cancelar este evento</button>}
+              ? <button type="button" onClick={apagarEvento} className="text-[0.75rem] font-normal text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Apagar este evento</button>
+              : <button type="button" onClick={cancelarEvento} className="text-[0.75rem] font-normal text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Cancelar este evento</button>}
           </div>
         )}
       </DetailPageContent>

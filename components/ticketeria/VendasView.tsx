@@ -10,21 +10,21 @@ import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 const BORDA = "rgba(13,13,13,.08)";
 
 // A superfície das tabelas e o estado vazio, iguais aos de ListPagePrimitives (que puxa a fonte do título e não roda fora do Next, nem nos testes das telas).
-function ListTableSurface({ children }: { children: React.ReactNode }) { return <div className="overflow-x-auto rounded border bg-white" style={{ borderColor: BORDA }}>{children}</div>; }
+function ListTableSurface({ children }: { children: React.ReactNode }) { return <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>{children}</div>; }
 function ListEmptyState({ title, description }: { title: string; description: string }) {
   return (
     <div className="flex flex-col items-center px-4 py-20 text-center">
       <Ticket size={28} className="mb-3 text-black/15" aria-hidden="true" />
-      <p className="text-[0.875rem] font-semibold text-black/55">{title}</p>
+      <p className="text-[0.875rem] font-medium text-black/55">{title}</p>
       <p className="mt-1.5 max-w-sm text-[0.75rem] leading-relaxed text-black/35">{description}</p>
     </div>
   );
 }
-const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
+const ROTULO = "text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45";
 const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
-const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35";
-const LINK = "rounded text-[0.8125rem] text-black/55 underline-offset-2 transition hover:text-black/75 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
-const CANCELAR = "rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
+const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
+const LINK = "rounded-xl text-[0.8125rem] text-black/55 underline-offset-2 transition hover:text-black/75 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
+const CANCELAR = "rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
 
 export type ResumoDasVendas = {
   vendido_centavos: number; ingressos: number; compras: number;
@@ -50,14 +50,14 @@ const ETIQUETA_DA_COMPRA: Record<SituacaoDaCompra, { texto: string; cor: string 
 };
 
 function Etiqueta({ texto, cor }: { texto: string; cor: string }) {
-  return <span className="inline-flex shrink-0 rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={{ borderColor: cor + "47", color: cor }}>{texto}</span>;
+  return <span className="inline-flex shrink-0 rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal" style={{ borderColor: cor + "47", color: cor }}>{texto}</span>;
 }
 
 function Indicador({ rotulo, valor, apoio }: { rotulo: string; valor: number; apoio: string }) {
   return (
     <div className="min-w-0">
       <p className={ROTULO}>{rotulo}</p>
-      <p className={`mt-1.5 text-[1.5rem] font-semibold tabular-nums tracking-[-.02em] ${valor === 0 ? "text-black/30" : "text-[#282525]"}`}>{formatarMoeda(valor)}</p>
+      <p className={`mt-1.5 text-[1.5rem] font-medium tabular-nums tracking-[-.02em] ${valor === 0 ? "text-black/30" : "text-[#282525]"}`}>{formatarMoeda(valor)}</p>
       <p className="mt-1 text-[0.6875rem] leading-snug text-black/45">{apoio}</p>
     </div>
   );
@@ -67,7 +67,7 @@ const plural = (n: number, um: string, varios: string) => `${n.toLocaleString("p
 
 export function ResumoDeVendas({ resumo }: { resumo: ResumoDasVendas }) {
   return (
-    <section aria-label="Resumo das vendas" className="rounded border bg-white px-5 py-5" style={{ borderColor: BORDA }}>
+    <section aria-label="Resumo das vendas" className="rounded-xl border bg-white px-5 py-5" style={{ borderColor: BORDA }}>
       <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 xl:grid-cols-4">
         <Indicador rotulo="Vendido" valor={resumo.vendido_centavos} apoio={`${plural(resumo.ingressos, "ingresso", "ingressos")} em ${plural(resumo.compras, "compra", "compras")}`} />
         <Indicador rotulo="Seu repasse" valor={resumo.repasse_centavos} apoio="Já descontadas a taxa do Jards e o custo do Pix" />
@@ -91,7 +91,7 @@ export function SessoesDeVendas({ sessoes }: { sessoes: SessaoDeVendas[] }) {
               const etiqueta = ETIQUETA_DA_SESSAO[s.situacao];
               return (
                 <tr key={s.id}>
-                  <td className={CELULA}><p className="font-medium">{s.evento}</p><p className="text-[0.6875rem] text-black/45">{s.quando}</p></td>
+                  <td className={CELULA}><p className="font-normal">{s.evento}</p><p className="text-[0.6875rem] text-black/45">{s.quando}</p></td>
                   <td className={CELULA}>
                     <p className="tabular-nums">{s.vendidos.toLocaleString("pt-BR")} <span className="text-black/45">de {s.lugares.toLocaleString("pt-BR")}</span></p>
                     <div className="mt-1.5 h-1 w-32 overflow-hidden rounded-full bg-black/[.08]" role="img" aria-label={`${pct}% dos lugares vendidos`}><div className="h-full rounded-full bg-[#3DA86A]" style={{ width: `${pct}%` }} /></div>
@@ -118,7 +118,7 @@ export function ComprasDeVendas({ compras, filtro, onFiltrar, onAbrir }: { compr
         <h2 className={ROTULO}>Compras</h2>
         <div className="flex gap-2" role="group" aria-label="Filtrar compras">
           {FILTROS.map(([id, rotulo]) => (
-            <button key={id} type="button" aria-pressed={filtro === id} onClick={() => onFiltrar?.(id)} className={`h-8 rounded border px-3 text-[0.75rem] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${filtro === id ? "border-[#7259B5]/40 text-[#7259B5]" : "border-black/[.12] text-black/55 hover:bg-black/[.04]"}`}>{rotulo}</button>
+            <button key={id} type="button" aria-pressed={filtro === id} onClick={() => onFiltrar?.(id)} className={`h-8 rounded-xl border px-3 text-[0.75rem] font-normal transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${filtro === id ? "border-[#7259B5]/40 text-[#7259B5]" : "border-black/[.12] text-black/55 hover:bg-black/[.04]"}`}>{rotulo}</button>
           ))}
         </div>
       </div>
@@ -131,7 +131,7 @@ export function ComprasDeVendas({ compras, filtro, onFiltrar, onAbrir }: { compr
             <tbody className="divide-y divide-black/[.08]">
               {compras.map(c => (
                 <tr key={c.id} className="transition hover:bg-black/[.02]">
-                  <td className={CELULA}><button type="button" onClick={() => onAbrir?.(c.id)} className="rounded font-medium tabular-nums tracking-[.04em] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{c.codigo}</button><p className="text-[0.6875rem] text-black/45">{c.pago_em ?? "Ainda não pago"}</p></td>
+                  <td className={CELULA}><button type="button" onClick={() => onAbrir?.(c.id)} className="rounded-xl font-normal tabular-nums tracking-[.04em] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{c.codigo}</button><p className="text-[0.6875rem] text-black/45">{c.pago_em ?? "Ainda não pago"}</p></td>
                   <td className={CELULA}><p>{c.comprador}</p><p className="text-[0.6875rem] text-black/45">{c.email}</p></td>
                   <td className={CELULA}><p>{c.evento}</p><p className="text-[0.6875rem] text-black/45">{c.quando}</p></td>
                   <td className={`${CELULA} text-right tabular-nums`}>{c.quantidade}</td>
@@ -169,17 +169,17 @@ export function DetalheDaCompraSheet({ compra, onClose }: { compra: DetalheDaCom
     )}>
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0"><p className="text-[0.9375rem] font-medium text-[#282525]">{compra.comprador}</p><p className="truncate text-[0.75rem] text-black/50">{compra.email}</p><p className="mt-1 text-[0.75rem] text-black/50">{compra.quando}</p></div>
+          <div className="min-w-0"><p className="text-[0.9375rem] font-normal text-[#282525]">{compra.comprador}</p><p className="truncate text-[0.75rem] text-black/50">{compra.email}</p><p className="mt-1 text-[0.75rem] text-black/50">{compra.quando}</p></div>
           <Etiqueta {...ETIQUETA_DA_COMPRA[compra.situacao]} />
         </div>
         {compra.ingressos.length > 0 && (
           <div>
             <p className={`mb-1.5 ${ROTULO}`}>Ingressos</p>
-            <ul className="divide-y divide-black/[.08] rounded border" style={{ borderColor: BORDA }}>
+            <ul className="divide-y divide-black/[.08] rounded-xl border" style={{ borderColor: BORDA }}>
               {compra.ingressos.map(i => (
                 <li key={i.codigo} className="flex items-center justify-between gap-3 px-3 py-2.5 text-[0.8125rem]">
                   <span>{i.nome}</span>
-                  <span className="flex items-center gap-2"><span className="font-medium tabular-nums tracking-[.08em]">{i.codigo}</span>{i.cancelado ? <Etiqueta texto="CANCELADO" cor="#6b6767" /> : i.usado ? <Etiqueta texto="USADO" cor="#6b6767" /> : null}</span>
+                  <span className="flex items-center gap-2"><span className="font-normal tabular-nums tracking-[.08em]">{i.codigo}</span>{i.cancelado ? <Etiqueta texto="CANCELADO" cor="#6b6767" /> : i.usado ? <Etiqueta texto="USADO" cor="#6b6767" /> : null}</span>
                 </li>
               ))}
             </ul>
@@ -191,7 +191,7 @@ export function DetalheDaCompraSheet({ compra, onClose }: { compra: DetalheDaCom
             <Linha rotulo="Pago pelo comprador" valor={formatarMoeda(compra.total_centavos)} />
             <Linha rotulo="Taxa do Jards" valor={`− ${formatarMoeda(compra.taxa_centavos)}`} />
             <Linha rotulo="Custo do Pix" valor={compra.custo_do_pix_centavos == null ? "—" : `− ${formatarMoeda(compra.custo_do_pix_centavos)}`} />
-            <div className="flex items-baseline justify-between gap-4 border-t py-2 text-[0.9375rem] font-semibold" style={{ borderColor: BORDA }}><dt>Seu repasse</dt><dd className="tabular-nums">{formatarMoeda(compra.repasse_centavos)}</dd></div>
+            <div className="flex items-baseline justify-between gap-4 border-t py-2 text-[0.9375rem] font-medium" style={{ borderColor: BORDA }}><dt>Seu repasse</dt><dd className="tabular-nums">{formatarMoeda(compra.repasse_centavos)}</dd></div>
           </dl>
           {compra.pago_em && <p className="mt-1 text-[0.6875rem] text-black/45">Pago em {compra.pago_em}.</p>}
         </div>
@@ -224,7 +224,7 @@ export function ReembolsosDeVendas({ reembolsos, onTentarDeNovo, tentando }: { r
           <tbody className="divide-y divide-black/[.08]">
             {reembolsos.map(r => (
               <tr key={r.id}>
-                <td className={CELULA}><p className="font-medium tabular-nums tracking-[.04em]">{r.codigo}</p><p className="text-[0.6875rem] text-black/45">{r.recebido}</p></td>
+                <td className={CELULA}><p className="font-normal tabular-nums tracking-[.04em]">{r.codigo}</p><p className="text-[0.6875rem] text-black/45">{r.recebido}</p></td>
                 <td className={CELULA}>
                   <p className="text-[0.8125rem]">{r.remetente}</p>
                   <p className="mt-0.5 max-w-md text-[0.6875rem] leading-snug text-black/50">{FRASE_DO_REEMBOLSO[r.situacao]}</p>

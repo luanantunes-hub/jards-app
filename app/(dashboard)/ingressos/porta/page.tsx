@@ -144,7 +144,7 @@ export default function PortaPage() {
     <>
       <ListPageHeader eyebrow="Ticketeria" title="Porta" />
       <ListContent>
-        {erro && <p role="alert" className="mx-auto mb-4 max-w-[34rem] rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {erro && <p role="alert" className="mx-auto mb-4 max-w-[34rem] rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {opcoes.length === 0 ? (
           <ListTableSurface><ListEmptyState icon={ScanLine} title="Nenhuma sessão para conferir" description="As sessões que ainda vão acontecer (e as das últimas 12 horas) aparecem aqui." /></ListTableSurface>
         ) : (
@@ -153,7 +153,7 @@ export default function PortaPage() {
             entraram={resumo?.entraram ?? 0} lugares={resumo?.validos ?? 0} recentes={resumo?.recentes ?? ([] as EntradaRecente[])}
             codigo={codigo} onCodigo={setCodigo} onConferir={() => void conferir(codigo)} onLerQr={() => void lerQr()} lendo={lendo} conferindo={conferindo} semCamera={semCamera}
             resultado={resultado} onProximo={() => setResultado(null)}
-            previa={lendo ? <video ref={video} muted playsInline className="mb-3 aspect-video w-full rounded border border-black/10 bg-[#1C0E33] object-cover" aria-label="Câmera lendo o QR Code" /> : undefined}
+            previa={lendo ? <video ref={video} muted playsInline className="mb-3 aspect-video w-full rounded-xl border border-black/10 bg-[#1C0E33] object-cover" aria-label="Câmera lendo o QR Code" /> : undefined}
           />
         )}
       </ListContent>
