@@ -13,6 +13,7 @@ import { ROTULO_DA_CLASSIFICACAO, ROTULO_DA_SITUACAO_DO_EVENTO, mensagemDoErroDo
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { CatalogoDoEvento } from "@/components/ticketeria/CatalogoDoEvento";
+import { LinkDeVenda } from "@/components/ticketeria/LinkDeVenda";
 import { Aviso, EventoSheet, LocalSheet, SessaoSheet, type EventoEditavel, type LocalDaSessao, type SessaoEditavel } from "@/components/ticketeria/FolhasDosEventos";
 
 type Evento = EventoEditavel & { situacao: SituacaoDoEvento };
@@ -156,6 +157,7 @@ export default function EventoPage() {
                     <span className="flex items-center gap-1.5 truncate text-[0.6875rem] text-black/45"><MapPin size={12} aria-hidden="true" className="shrink-0 text-black/40" />{[local?.nome ?? "Local", detalhes].filter(Boolean).join(" · ")}</span>
                   </span>
                   <span className="text-[0.6875rem] text-black/50">{ROTULO_DA_SESSAO[situacao]}</span>
+                  {evento.situacao === "publicado" && situacao === "agendada" && <LinkDeVenda sessaoId={sessao.id} />}
                   {editavel && (
                     <span className="flex items-center gap-1">
                       {situacao !== "cancelada" && <button type="button" onClick={() => setFolha({ tipo: "sessao", sessao })} className="h-8 rounded px-2.5 text-[0.6875rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Editar</button>}
