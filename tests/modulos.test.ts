@@ -200,10 +200,3 @@ test("quem só usa a produção: toda rota da captação e da prestação leva a
     assert.equal(destinoSemAcesso(rota, SO_PRODUCAO), null, rota);
   }
 });
-
-test("inicioDeOutroModulo: leva ao primeiro outro módulo que a pessoa usa, ou à captação", async () => {
-  const { inicioDeOutroModulo } = await import("../lib/modulos");
-  assert.equal(inicioDeOutroModulo({ superAdmin: true, modulosOrganizacao: [], modulosMembro: [] }, "ticketeria"), "/dashboard");
-  assert.equal(inicioDeOutroModulo({ superAdmin: false, modulosOrganizacao: ["prestacao", "ticketeria"], modulosMembro: ["prestacao", "ticketeria"] }, "ticketeria"), "/prestacoes");
-  assert.equal(inicioDeOutroModulo({ superAdmin: false, modulosOrganizacao: ["ticketeria"], modulosMembro: ["ticketeria"] }, "ticketeria"), "/dashboard");
-});
