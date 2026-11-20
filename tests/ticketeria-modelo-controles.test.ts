@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { controlesDaTela, controlesDasSemanas, controlesQueEntram, datasNacionaisDoAno, lerDataDePico, pascoa, SEMANAS_DOS_CONTROLES_EXTRAS, variaNaTabela, type ControleDaTela, type EntradaDosControles } from "../lib/ticketeria/modelo-controles";
+import { controleDeVisitas, controlesDaTela, controlesDasSemanas, controlesQueEntram, datasNacionaisDoAno, lerDataDePico, pascoa, SEMANAS_DOS_CONTROLES_EXTRAS, variaNaTabela, visitaDeAnuncioPago, type ControleDaTela, type EntradaDosControles, type VisitaDoDia } from "../lib/ticketeria/modelo-controles";
 import { inicioDaSemana } from "../lib/ticketeria/modelo";
 
 const dia = (ms: number) => new Date(ms).toISOString().slice(0, 10);
@@ -127,4 +127,52 @@ test("a data de pico da loja: dia que existe e nome de 2 a 60 letras", () => {
   assert.equal(lerDataDePico({ dia: "2026-02-30", nome: "Festa" }).ok, false, "30 de fevereiro não existe");
   assert.equal(lerDataDePico({ dia: "2026-09-14", nome: "F" }).ok, false);
   assert.equal(lerDataDePico({ dia: "2026-09-14", nome: "x".repeat(61) }).ok, false);
+});
+
+// ─── As visitas sem anúncio (GA4) ───────────────────────────────────────────
+
+test("visita de anúncio pago: o meio do GA4 (cpc, cpm, ppc, paid…) ou o link da loja marcado como anúncio pago", () => {
+  for (const pago of ["google / cpc", "facebook / paid_social", "bing / ppc", "tiktok / cpm", "x / retargeting", "anuncio-pago / divulgacao", "Google / CPC"]) assert.equal(visitaDeAnuncioPago(pago), true, pago);
+  for (const livre of ["google / organic", "instagram / social", "(direct) / (none)", "l.instagram.com / referral", "email / divulgacao", "(not set)", ""]) assert.equal(visitaDeAnuncioPago(livre), false, livre);
+});
+
+const semanasDeVisita = (n: number) => Array.from({ length: n }, (_, i) => segunda(i));
+const domingo = (i: number) => new Date(Date.parse(`${segunda(i)}T00:00:00Z`) + 6 * 86400000).toISOString().slice(0, 10);
+const doOrganico = (n: number): VisitaDoDia[] => semanasDeVisita(n).flatMap((s, i) => [{ dia: s, origem: "google / organic", sessoes: 10 + (i % 5) }, { dia: s, origem: "google / cpc", sessoes: 1000 }]);
+
+test("o controle de visitas: só as sem anúncio, em log relativo à mediana, só semanas inteiras", () => {
+  const semanas = semanasDeVisita(30);
+  const r = controleDeVisitas(doOrganico(30), segunda(0), domingo(29), semanas);
+  assert.equal(r.semanasLidas, 30);
+  assert.equal(r.valores[segunda(4)], 0.1431, "14 sessões contra a mediana de 12 (o anúncio de 1.000 não entra)");
+  assert.equal(r.valores[segunda(0)], -0.1671, "10 sessões");
+  assert.equal(r.valores[segunda(2)], 0, "a mediana");
+});
+
+test("a semana que a conexão leu pela metade e as semanas de fora ficam em zero", () => {
+  const semanas = semanasDeVisita(32);
+  const quarta = new Date(Date.parse(`${segunda(0)}T00:00:00Z`) + 2 * 86400000).toISOString().slice(0, 10);
+  const r = controleDeVisitas(doOrganico(30), quarta, domingo(29), semanas);
+  assert.equal(r.semanasLidas, 29, "a primeira semana foi lida pela metade");
+  assert.equal(r.valores[segunda(0)], 0);
+  assert.equal(r.valores[segunda(30)], 0, "depois do último dia lido");
+  assert.ok(r.valores[segunda(4)] !== 0);
+});
+
+test("com menos de 26 semanas lidas, o GA4 não vira controle (tudo zero) e sem leitura também não", () => {
+  const poucas = controleDeVisitas(doOrganico(20), segunda(0), domingo(19), semanasDeVisita(20));
+  assert.equal(poucas.semanasLidas, 20);
+  assert.ok(Object.values(poucas.valores).every(v => v === 0));
+  assert.deepEqual(controleDeVisitas([], null, null, semanasDeVisita(3)), { valores: { [segunda(0)]: 0, [segunda(1)]: 0, [segunda(2)]: 0 }, semanasLidas: 0 });
+});
+
+test("a tela das visitas: poucas semanas lidas, entra com 52 e em uso", () => {
+  const t = (n: number, varia: boolean) => tabela(n, i => ({ proximidade: 0, feriado: 0, lote: 0, preco: 0, cupom: 0, visitas: varia ? (i % 5) / 10 : 0 }));
+  const dos = (l: ControleDaTela[]) => grupo(l, "visitas");
+  assert.equal(dos(controlesDaTela(t(60, true), resumo, { conectado: true, semanas: 10 })).estado, "sem_dados");
+  assert.match(dos(controlesDaTela(t(60, true), resumo, { conectado: true, semanas: 10 })).detalhe, /só 10 semanas de visitas foram lidas.*26 semanas/);
+  assert.equal(dos(controlesDaTela(t(41, true), resumo, { conectado: true, semanas: 40 })).estado, "entra_depois");
+  assert.equal(dos(controlesDaTela(t(60, true), resumo, { conectado: true, semanas: 40 })).estado, "em_uso");
+  assert.equal(dos(controlesDaTela(t(60, false), resumo, { conectado: true, semanas: 40 })).estado, "sem_dados");
+  assert.equal(dos(controlesDaTela(t(60, true), resumo, { conectado: false, semanas: 0 })).estado, "opcional");
 });

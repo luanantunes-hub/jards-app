@@ -14,6 +14,8 @@
 import { inicioDaSemana, semanasEntre } from "@/lib/ticketeria/modelo";
 
 export const SEMANAS_DOS_CONTROLES_EXTRAS = 52;
+/** O GA4 só vira controle com pelo menos tantas semanas inteiras de visitas lidas (com menos, o modelo não tem como separar a visita do resto). */
+export const MIN_SEMANAS_DE_VISITAS = 26;
 export const HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS = 8;
 
 export type ChaveDoControle = "proximidade" | "feriado" | "lote" | "preco" | "cupom" | "visitas";
@@ -116,6 +118,39 @@ export function controlesDasSemanas(e: EntradaDosControles): Record<string, Reco
   return saida;
 }
 
+
+// ─── As visitas sem anúncio (GA4) ───────────────────────────────────────────
+
+/** O mesmo critério do próprio GA4 para "pago": o meio tem "cp" (cpc, cpm, cpv…), é ppc, retargeting ou começa com "paid"; e o link de divulgação da própria loja marcado como anúncio pago. */
+const MEIO_PAGO = /^(.*cp.*|ppc|retargeting|paid.*)$/;
+export function visitaDeAnuncioPago(origem: string): boolean {
+  const [fonte = "", meio = ""] = origem.split("/").map(x => x.trim().toLowerCase());
+  return fonte === "anuncio-pago" || MEIO_PAGO.test(meio);
+}
+
+export type VisitaDoDia = { dia: string; origem: string; sessoes: number };
+const somaDias = (dia: string, n: number): string => diaDe(Date.parse(`${dia}T00:00:00Z`) + n * msDoDia);
+
+/**
+ * O controle de visitas de cada semana: as sessões que NÃO vieram de anúncio pago (as de anúncio são consequência do gasto: se entrassem como controle o modelo contaria o mesmo efeito
+ * duas vezes), em escala de log em relação à mediana (0 = a visita de sempre). Só valem as semanas INTEIRAS lidas; as de fora, e tudo se houver menos de MIN_SEMANAS_DE_VISITAS semanas
+ * lidas, ficam em 0 (nada a dizer). `semanasLidas` são as semanas inteiras que a conexão leu.
+ */
+export function controleDeVisitas(visitas: VisitaDoDia[], primeiroDia: string | null, ultimoDia: string | null, semanas: string[]): { valores: Record<string, number>; semanasLidas: number } {
+  const zeros = Object.fromEntries(semanas.map(s => [s, 0]));
+  if (!primeiroDia || !ultimoDia || ultimoDia < primeiroDia) return { valores: zeros, semanasLidas: 0 };
+  const porSemana = new Map<string, number>();
+  for (let ws = inicioDaSemana(primeiroDia); somaDias(ws, 6) <= ultimoDia; ws = somaDias(ws, 7)) if (ws >= primeiroDia) porSemana.set(ws, 0);
+  for (const v of visitas) {
+    const ws = inicioDaSemana(v.dia);
+    if (porSemana.has(ws) && !visitaDeAnuncioPago(v.origem)) porSemana.set(ws, (porSemana.get(ws) ?? 0) + v.sessoes);
+  }
+  const semanasLidas = porSemana.size;
+  if (semanasLidas < MIN_SEMANAS_DE_VISITAS) return { valores: zeros, semanasLidas };
+  const referencia = Math.log1p(mediana([...porSemana.values()]));
+  return { valores: Object.fromEntries(semanas.map(s => [s, porSemana.has(s) ? arredondar(Math.log1p(porSemana.get(s) as number) - referencia) : 0])), semanasLidas };
+}
+
 // ─── O que a tela mostra de cada controle ───────────────────────────────────
 
 export type EstadoDoControle = "em_uso" | "entra_depois" | "sem_dados" | "opcional";
@@ -140,6 +175,7 @@ export function controlesDaTela(tabela: { controles?: Partial<Record<ChaveDoCont
     const base = { grupo: g.grupo, rotulo: g.rotulo };
     if (g.grupo === "visitas") {
       if (!visitas.conectado || visitas.semanas === 0) return { ...base, estado: "opcional", faltam: null, acao: "conexoes", detalhe: "Só as visitas que não vieram de anúncio pago: busca, direto, e-mail, indicação. As de anúncio não entram, para o efeito não ser contado duas vezes." } satisfies ControleDaTela;
+      if (visitas.semanas < MIN_SEMANAS_DE_VISITAS) return { ...base, estado: "sem_dados", faltam: null, acao: null, detalhe: `O GA4 está conectado, mas só ${plural(visitas.semanas, "semana", "semanas")} de visitas foram lidas. Entra com ${MIN_SEMANAS_DE_VISITAS} semanas lidas.` } satisfies ControleDaTela;
       if (faltam > 0) return { ...base, estado: "entra_depois", faltam, acao: null, detalhe: `O GA4 está conectado (${plural(visitas.semanas, "semana", "semanas")} de visitas). Só entram as que não vieram de anúncio pago.` } satisfies ControleDaTela;
       return { ...base, estado: varia ? "em_uso" : "sem_dados", faltam: null, acao: null, detalhe: varia ? `Só as visitas que não vieram de anúncio pago (${plural(visitas.semanas, "semana", "semanas")} lidas).` : "As visitas sem anúncio ainda não variam o bastante entre as semanas." } satisfies ControleDaTela;
     }
