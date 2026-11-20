@@ -518,7 +518,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
   const desenharGrupo = ({ section, items }: (typeof navGroups)[number], gi: number) => (
     <div key={section} className={gi > 0 ? "mt-4" : ""}>
-              <div
+              {/* Na Ticketeria o menu não tem o título da seção ("TICKETERIA") */}
+              {!menuFixoAberto && <div
                 style={{
                   height: isExpanded ? "auto" : 0,
                   overflow: "hidden",
@@ -530,7 +531,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <p className="px-2 text-[0.625rem] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap">
                   {section}
                 </p>
-              </div>
+              </div>}
               <div className="space-y-0.5">
                 {items.map(({ label, href, icon: Icon }) => {
                   const active = href === hrefAtivo;
@@ -720,8 +721,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           )}
         </div>}
 
-        {/* Módulo: captação (o CRM) e prestação de contas */}
-        {!isWorkspaceCaptador && (
+        {/* Módulo: captação (o CRM) e prestação de contas. Na Ticketeria o menu não mostra o seletor. */}
+        {!isWorkspaceCaptador && !menuFixoAberto && (
           <SeletorDeModulo
             opcoes={opcoesDeModulo}
             ativo={moduloDoMenu}
