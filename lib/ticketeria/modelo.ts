@@ -8,6 +8,7 @@
 //     mais confiável (conexão, depois planilha, depois ação): assim o mesmo gasto nunca entra duas vezes. Ação de "anúncio pago" é ignorada quando já há gasto de anúncio lido das conexões.
 
 import { rotuloDoCanal } from "@/lib/ticketeria/divulgacao";
+import type { ChaveDoControle, ControleDaTela } from "@/lib/ticketeria/modelo-controles";
 
 export const MIN_SEMANAS_DE_VENDAS = 26;
 export const MIN_SEMANAS_COM_GASTO = 26;
@@ -96,7 +97,7 @@ export function consolidarGasto(entrada: { conexoes: { dia: string; canal: strin
 
 // ─── A tabela semanal ───────────────────────────────────────────────────────
 
-export type SemanaDaTabela = { semana: string; ingressos: number; gasto: Record<string, number> };
+export type SemanaDaTabela = { semana: string; ingressos: number; gasto: Record<string, number>; /** O que mais empurra as vendas na semana (proximidade da sessão, feriado…): ver modelo-controles.ts. */ controles?: Partial<Record<ChaveDoControle, number>> };
 
 /** Uma linha por semana, da primeira à última com qualquer dado, sem furos (semana sem nada vale zero): é a entrada do modelo. */
 export function montarTabelaSemanal(entrada: { vendas: Record<string, number>; gasto: GastoDiario[] }): SemanaDaTabela[] {
@@ -150,6 +151,8 @@ export type ProntidaoDoModelo = {
   pronto: boolean; verificacoes: Verificacao[]; prontos: number; total: number;
   /** A confiança que o modelo teria com estes dados (só quando está pronto); `semanas` são as semanas com vendas e gasto juntos. */
   confianca: Confianca | null; semanas: number; canais: ResumoDoCanal[]; ignoradas: string[];
+  /** O que o modelo leva em conta além dos anúncios (ver modelo-controles.ts): vazio quando quem chamou não calculou. */
+  controles: ControleDaTela[];
 };
 
 const semanasTexto = (n: number) => `${n} ${n === 1 ? "semana" : "semanas"}`;
@@ -160,7 +163,7 @@ export function confiancaPelasSemanas(semanas: number): Confianca {
 }
 
 export type EntradaDaProntidao = {
-  tabela: SemanaDaTabela[]; ga4Conectado: boolean; primeiroDiaDeVisitas: string | null; ultimoDiaDeVisitas: string | null; ignoradas?: string[];
+  tabela: SemanaDaTabela[]; ga4Conectado: boolean; primeiroDiaDeVisitas: string | null; ultimoDiaDeVisitas: string | null; ignoradas?: string[]; controles?: ControleDaTela[];
 };
 
 /** Confere se há dado para o modelo rodar: vendas, gasto, variação do gasto (os três obrigatórios) e visitas (opcional). */
@@ -210,5 +213,5 @@ export function avaliarProntidao(e: EntradaDaProntidao): ProntidaoDoModelo {
     const ate = comVendas.at(-1)!.semana < melhor.ultimaSemana ? comVendas.at(-1)!.semana : melhor.ultimaSemana;
     semanasJuntas = semanasEntre(de, ate);
   }
-  return { pronto, verificacoes, prontos, total: obrigatorias.length, confianca: pronto ? confiancaPelasSemanas(semanasJuntas) : null, semanas: semanasJuntas, canais, ignoradas: e.ignoradas ?? [] };
+  return { pronto, verificacoes, prontos, total: obrigatorias.length, confianca: pronto ? confiancaPelasSemanas(semanasJuntas) : null, semanas: semanasJuntas, canais, ignoradas: e.ignoradas ?? [], controles: e.controles ?? [] };
 }

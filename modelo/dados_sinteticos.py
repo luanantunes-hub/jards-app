@@ -19,7 +19,7 @@ def _adstock(x: np.ndarray, a: float) -> np.ndarray:
     return saida
 
 
-def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False) -> tuple[list[dict], dict[str, float]]:
+def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False, com_controles: bool = False) -> tuple[list[dict], dict[str, float]]:
     """Devolve a tabela semanal (no formato do Jards, centavos) e a parte verdadeira de cada canal nas vendas, em % (mais a base)."""
     rng = np.random.default_rng(semente)
     n = semanas
@@ -34,17 +34,30 @@ def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, g
     gastos["instagram"] = np.full(n, 40.0) if gasto_constante else np.where(rng.random(n) < 0.5, rng.uniform(20, 80, n), 0.0)
     contribuicoes = {c: v["beta"] * (1 - np.exp(-v["lam"] * _adstock(gastos[c], v["adstock"]) / v["escala"])) for c, v in VERDADE.items()}
     base = 40 + 0.05 * t + 6 * np.sin(t * 2 * np.pi / 52)
-    y = base + sum(contribuicoes.values()) + rng.normal(0, 3, n)
+    # Os controles (só com `com_controles`): a proximidade da sessão (uma sessão a cada 13 semanas), as semanas de feriado, a virada de lote (junto da abertura de cada sessão) e o cupom.
+    efeitos: dict[str, np.ndarray] = {}
+    controles: dict[str, np.ndarray] = {}
+    if com_controles:
+        proximidade = np.clip(1 - ((13 - 1 - t % 13) % 13) / 9, 0, 1)
+        feriado = (rng.random(n) < 0.12).astype(float)
+        lote = (t % 13 == 4).astype(float)
+        cupom = np.clip(rng.normal(0.1, 0.12, n), 0, 1) * (rng.random(n) < 0.5)
+        controles = {"proximidade": proximidade, "feriado": feriado, "lote": lote, "preco": np.zeros(n), "cupom": cupom}
+        efeitos = {"proximidade": 22 * proximidade, "feriado": 9 * feriado, "preco_e_lotes": 12 * lote, "cupom": 30 * cupom}
+    y = base + sum(contribuicoes.values()) + sum(efeitos.values()) + rng.normal(0, 3, n)
     total = float(y.sum())
     verdade = {c: float(v.sum()) / total * 100 for c, v in contribuicoes.items()}
     verdade["base"] = float((y - sum(contribuicoes.values())).sum()) / total * 100
+    for chave, efeito in efeitos.items():
+        verdade[f"parte:{chave}"] = float(efeito.sum()) / total * 100
     mostrados = {c: g.copy() for c, g in gastos.items()}
     if embaralhar_gasto:
         for g in mostrados.values():
             rng.shuffle(g)
     datas = np.datetime64("2025-01-06") + t * np.timedelta64(7, "D")
     tabela = [
-        {"semana": str(datas[i]), "ingressos": max(0, int(round(y[i]))), "gasto": {c: int(round(mostrados[c][i] * 100)) for c in mostrados if mostrados[c][i] > 0}}
+        {"semana": str(datas[i]), "ingressos": max(0, int(round(y[i]))), "gasto": {c: int(round(mostrados[c][i] * 100)) for c in mostrados if mostrados[c][i] > 0},
+         **({"controles": {k: round(float(v[i]), 4) for k, v in controles.items()}} if controles else {})}
         for i in range(n)
     ]
     return tabela, verdade

@@ -37,7 +37,7 @@ test("o resultado do job: conferido, arredondado, com confiança e avisos calcul
   assert.ok(r.ok);
   if (!r.ok) return;
   assert.equal(r.resultado.confianca, "media", "59 semanas, diagnóstico limpo");
-  assert.deepEqual(r.resultado.base, { porcento: 41.23, baixo: 33, alto: 49.5 });
+  assert.deepEqual(r.resultado.base, { porcento: 41.23, baixo: 33, alto: 49.5, partes: [] });
   assert.deepEqual(r.resultado.canais.map(c => [c.canal, c.margem_grande, c.gasto_constante]), [["meta-ads", false, false], ["google-ads", true, true], ["instagram", true, false], ["email", true, false]]);
   assert.deepEqual(r.resultado.canais[2].curva, [], "curva ausente vira lista vazia");
   assert.equal(r.resultado.canais[0].curva.length, 2);
@@ -80,4 +80,53 @@ test("o modelo ao lado dos links: canais com link comparam, anúncios pagos vão
   assert.equal(compararComOsLinks([r.resultado.canais[2]], { instagram: 5 }).anuncios, null, "sem canal de anúncio, sem linha de anúncios");
   assert.equal(c.linhas[1].custoPorIngressoCentavos, 1029);
   assert.equal(c.linhas[1].margemGrande, true);
+});
+
+// ─── As partes da base ("venderia de qualquer jeito") ───────────────────────
+
+import { lerPartesDaBase } from "../lib/ticketeria/modelo-resultado";
+
+const partesBoas = [
+  { chave: "nivel", porcento: 22, baixo: 18, alto: 26 }, { chave: "tendencia", porcento: 9, baixo: 6, alto: 12 }, { chave: "proximidade", porcento: 6.234, baixo: 4, alto: 8 },
+  { chave: "feriado", porcento: 3, baixo: 1, alto: 5 }, { chave: "preco_e_lotes", porcento: -1.5, baixo: -3, alto: 0.5 }, { chave: "cupom", porcento: 2.5, baixo: 0, alto: 5 },
+];
+
+test("o resultado aceita a base dividida em partes (que podem ser negativas) e arredonda", () => {
+  const r = lerResultadoDoModelo({ ...bom(), base: { porcento: 41.234, baixo: 33, alto: 49.5, partes: partesBoas } });
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  assert.equal(r.resultado.base.partes.length, 6);
+  assert.equal(r.resultado.base.partes[2].porcento, 6.23);
+  assert.equal(r.resultado.base.partes[4].porcento, -1.5);
+});
+
+test("sem partes o resultado vale como antes (resultado antigo ou semana sem controle)", () => {
+  const r = lerResultadoDoModelo(bom());
+  assert.ok(r.ok);
+  if (r.ok) assert.deepEqual(r.resultado.base.partes, []);
+});
+
+test("partes com chave desconhecida, repetida, fora de -100 a 100, intervalo desordenado ou soma que não fecha na base são recusadas", () => {
+  const base = (partes: unknown) => lerResultadoDoModelo({ ...bom(), base: { porcento: 41.234, baixo: 33, alto: 49.5, partes } });
+  for (const [nome, partes] of [
+    ["chave desconhecida", [{ chave: "lua", porcento: 41, baixo: 40, alto: 42 }]],
+    ["repetida", [{ chave: "nivel", porcento: 20, baixo: 18, alto: 22 }, { chave: "nivel", porcento: 21, baixo: 18, alto: 22 }]],
+    ["fora da faixa", [{ chave: "nivel", porcento: 141, baixo: 140, alto: 142 }]],
+    ["intervalo desordenado", [{ chave: "nivel", porcento: 41, baixo: 45, alto: 40 }]],
+    ["soma longe da base", [{ chave: "nivel", porcento: 20, baixo: 18, alto: 22 }]],
+    ["não é lista", { nivel: 41 }],
+    ["lista grande demais", Array.from({ length: 13 }, () => ({ chave: "nivel", porcento: 3, baixo: 1, alto: 5 }))],
+  ] as [string, unknown][]) {
+    const r = base(partes);
+    assert.equal(r.ok, false, nome);
+    if (!r.ok) assert.equal(r.problema, "partes", nome);
+  }
+  assert.ok(base([{ chave: "nivel", porcento: 41, baixo: 38, alto: 44 }]).ok, "uma parte que fecha na base");
+});
+
+test("lerPartesDaBase: vazio e ausente são aceitos; formato errado devolve null", () => {
+  assert.deepEqual(lerPartesDaBase(undefined), []);
+  assert.deepEqual(lerPartesDaBase(null), []);
+  assert.deepEqual(lerPartesDaBase([]), []);
+  assert.equal(lerPartesDaBase("x"), null);
 });
