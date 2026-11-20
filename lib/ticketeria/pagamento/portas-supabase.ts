@@ -172,7 +172,7 @@ export function portasDoEnvioDoSupabase(admin: SupabaseClient<Database>, config:
 }
 
 /** As portas do reembolso por e-mail: as funções do banco (só com a chave de serviço); o estorno no Asaas e o e-mail vêm de quem monta (a rota). */
-export function portasDoReembolsoDoSupabase(admin: SupabaseClient<Database>, config: { estornar: PortasDoReembolso["estornar"]; responder: PortasDoReembolso["responder"]; registrarErro?: (erro: unknown) => void }): PortasDoReembolso {
+export function portasDoReembolsoDoSupabase(admin: SupabaseClient<Database>, config: { estornar: PortasDoReembolso["estornar"]; responder: PortasDoReembolso["responder"]; avisarOJards?: PortasDoReembolso["avisarOJards"]; registrarErro?: (erro: unknown) => void }): PortasDoReembolso {
   const t = clienteDaTicketeria(admin);
   return {
     async registrar(e, codigo) {
@@ -208,6 +208,7 @@ export function portasDoReembolsoDoSupabase(admin: SupabaseClient<Database>, con
     },
     estornar: config.estornar,
     responder: config.responder,
+    avisarOJards: config.avisarOJards,
     registrarErro: config.registrarErro,
   };
 }

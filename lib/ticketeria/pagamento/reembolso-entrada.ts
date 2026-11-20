@@ -30,6 +30,10 @@ async function executar(email: EmailDeReembolso): Promise<{ status: number; corp
         const provedor = new ProvedorAsaas({ chave, tokenDoWebhook: process.env.ASAAS_WEBHOOK_TOKEN || "nao-usado-ao-estornar".padEnd(32, "x"), url: base.url });
         return provedor.estornarPixComComissao(pedido.provedor_ref, pedido.total_centavos, pedido.taxa_centavos, carteira);
       },
+      async avisarOJards(a) {
+        const r = await sendTransactionalEmail({ to: process.env.TICKETERIA_EMAIL_DE_ALERTA || "luan.antunes@jards.com.br", subject: a.assunto, text: a.texto, html: `<pre style="font-family:Arial,Helvetica,sans-serif;font-size:14px;white-space:pre-wrap">${a.texto.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</pre>` });
+        if (!r.ok) erro(new Error(`aviso ao Jards não enviado: ${r.error}`));
+      },
       async responder(para, m) {
         const r = await sendTransactionalEmail({ to: para, subject: m.assunto, text: m.texto, html: m.html });
         if (!r.ok) erro(new Error(`resposta do reembolso não enviada: ${r.error}`));

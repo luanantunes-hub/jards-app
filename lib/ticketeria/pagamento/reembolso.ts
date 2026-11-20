@@ -101,6 +101,8 @@ export type PortasDoReembolso = {
   concluir(id: string, partidas: Partida[], ref: string | null): Promise<void>;
   /** O e-mail ao comprador. Nunca derruba o resto. */
   responder(para: string, mensagem: Mensagem): Promise<void>;
+  /** Avisa o Jards (por e-mail) de que um reembolso precisa de uma pessoa: o estorno falhou, a gravação falhou depois do estorno ou o pedido pede análise. Opcional; nunca derruba o resto. */
+  avisarOJards?(aviso: { assunto: string; texto: string }): Promise<void>;
   /** O nome de quem organiza (a loja), para a resposta de fora do prazo. */
   nomeDoOrganizador(loja: string): Promise<string>;
   registrarErro?(erro: unknown): void;
@@ -113,6 +115,7 @@ export async function tratarEmailDeReembolso(email: { email_id: string; remetent
   if (!lido) return { resultado: "ignorado" };
   const responder = async (para: string, m: Mensagem) => { try { await portas.responder(para, m); } catch (erro) { portas.registrarErro?.(erro); } };
   const remetente = enderecoDoRemetente(email.remetente);
+  const avisar = async (assunto: string, texto: string) => { try { await portas.avisarOJards?.({ assunto, texto }); } catch (erro) { portas.registrarErro?.(erro); } };
 
   const registro = await portas.registrar({ ...email, remetente }, lido.codigo);
   // Já tratado (o Resend reenvia): não faz nada. O que ficou em "recebido" (a conta caiu no meio) é retomado.
@@ -125,7 +128,10 @@ export async function tratarEmailDeReembolso(email: { email_id: string; remetent
     await portas.marcar(registro.id, decisao.situacao, decisao.motivo, pedido?.id);
     if (decisao.situacao === "fora_do_prazo" && pedido) await responder(pedido.comprador_email, RESPOSTAS.foraDoPrazo(pedido, lido.codigo ?? pedido.codigo, email.recebido_em, await portas.nomeDoOrganizador(pedido.loja_id).catch(() => "a produtora do evento")));
     else if (decisao.situacao === "ja_reembolsado" && pedido) await responder(pedido.comprador_email, RESPOSTAS.jaReembolsado(pedido));
-    else if (decisao.situacao === "nao_elegivel" && pedido) await responder(pedido.comprador_email, RESPOSTAS.emAnalise(pedido));
+    else if (decisao.situacao === "nao_elegivel" && pedido) {
+      await responder(pedido.comprador_email, RESPOSTAS.emAnalise(pedido));
+      await avisar(`Reembolso para analisar: pedido ${pedido.codigo}`, `Um pedido de reembolso não pôde ser atendido sozinho e espera uma análise.\n\nPedido: ${pedido.codigo}\nMotivo: ${decisao.motivo}\nE-mail recebido: ${email.recebido_em}\n\nEle está na fila da tela Vendas (seção Reembolsos) da loja.`);
+    }
     else await responder(remetente, RESPOSTAS.naoLocalizado());
     return { resultado: decisao.situacao };
   }
@@ -144,6 +150,7 @@ export async function tratarEmailDeReembolso(email: { email_id: string; remetent
   if (!estorno.ok) {
     await portas.marcar(registro.id, "falhou", `o Asaas não estornou: ${estorno.motivo ?? "sem motivo"}`, pedido.id);
     await responder(pedido.comprador_email, RESPOSTAS.emAnalise(pedido));
+    await avisar(`Reembolso FALHOU: pedido ${pedido.codigo}`, `O Asaas não conseguiu estornar um reembolso.\n\nPedido: ${pedido.codigo} (${reais(pedido.total_centavos)})\nMotivo: ${estorno.motivo ?? "sem motivo"}\n\nO comprador recebeu "estamos analisando". O prazo de 7 dias conta da hora do e-mail (${email.recebido_em}). Dá para tentar de novo pelo botão da seção Reembolsos da tela Vendas, depois de resolver o motivo (por exemplo, saldo na conta do produtor).`);
     return { resultado: "falhou" };
   }
   // O dinheiro já voltou ao comprador. Se gravar no banco falhar, o registro fica "estornando" (nunca estorna de novo) e o erro grita no registro para o Jards acertar à mão.
@@ -151,6 +158,7 @@ export async function tratarEmailDeReembolso(email: { email_id: string; remetent
     await portas.concluir(registro.id, partidasDaDevolucao(pedido, false), estorno.ref ?? null);
   } catch (erro) {
     portas.registrarErro?.(new Error(`ESTORNO FEITO NO ASAAS, MAS NÃO GRAVADO: pedido ${pedido.codigo}, referência ${estorno.ref ?? "?"}: ${erro instanceof Error ? erro.message : erro}`));
+    await avisar(`URGENTE: estorno feito e não gravado, pedido ${pedido.codigo}`, `O Asaas estornou o Pix (${reais(pedido.total_centavos)}, referência ${estorno.ref ?? "?"}), mas o Jards não conseguiu gravar. O comprador já foi avisado do reembolso.\n\nPedido: ${pedido.codigo}\n\nO registro do reembolso ficou "estornando": o sistema nunca estorna de novo. É preciso cancelar o pedido, os ingressos e lançar a devolução no razão à mão.`);
   }
   await responder(pedido.comprador_email, RESPOSTAS.estornado(pedido));
   return { resultado: "estornado" };

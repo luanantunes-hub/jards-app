@@ -58,7 +58,7 @@ test("a decisão: estorna só com tudo certo; recusa na dúvida, e cada recusa c
 });
 
 function portas(sobre: Partial<PortasDoReembolso> = {}, achado: PedidoParaReembolso | null = pedido()) {
-  const c = { chamadas: [] as string[], respostas: [] as { para: string; assunto: string; texto: string }[], erros: [] as unknown[], marcado: null as null | { situacao: string; motivo: string; pedido?: string }, partidas: null as unknown, ref: null as string | null };
+  const c = { alertas: [] as { assunto: string; texto: string }[], chamadas: [] as string[], respostas: [] as { para: string; assunto: string; texto: string }[], erros: [] as unknown[], marcado: null as null | { situacao: string; motivo: string; pedido?: string }, partidas: null as unknown, ref: null as string | null };
   const p: PortasDoReembolso = {
     async registrar() { c.chamadas.push("registrar"); return { id: "rb1", novo: true, situacao: "recebido" }; },
     async buscarPedido() { c.chamadas.push("buscar"); return achado; },
@@ -68,6 +68,7 @@ function portas(sobre: Partial<PortasDoReembolso> = {}, achado: PedidoParaReembo
     async estornar() { c.chamadas.push("estornar"); return { ok: true, ref: "pay_1" }; },
     async concluir(_id, partidas, ref) { c.chamadas.push("concluir"); c.partidas = partidas; c.ref = ref; },
     async responder(para, m) { c.chamadas.push("responder"); c.respostas.push({ para, ...m }); },
+    async avisarOJards(a) { c.alertas.push(a); },
     async nomeDoOrganizador() { return "Cia Atores de Mar"; },
     registrarErro: e => c.erros.push(e),
     ...sobre,
@@ -234,4 +235,43 @@ test("o Asaas recusa o estorno (400): devolve ok falso com os códigos, sem lan�
     "POST /payments/pay_1/refund": { status: 400, corpo: { errors: [{ code: "invalid_action" }] } },
   });
   assert.deepEqual(await provedor.estornarPixComComissao("pay_1", 12000, 300, "carteira-jards"), { ok: false, motivo: "invalid_action" });
+});
+
+test("o Jards é avisado por e-mail quando um reembolso precisa de gente: falhou, estorno não gravado e análise; o que se resolve sozinho não faz barulho", async () => {
+  const falhou = portas({ async estornar() { return { ok: false, motivo: "insufficient_balance" }; } });
+  await tratarEmailDeReembolso(email(), falhou.p);
+  assert.equal(falhou.c.alertas.length, 1);
+  assert.match(falhou.c.alertas[0].assunto, /FALHOU.*ABCD2345/);
+  assert.match(falhou.c.alertas[0].texto, /insufficient_balance/);
+  assert.match(falhou.c.alertas[0].texto, /R\$ 120,00/);
+  assert.match(falhou.c.alertas[0].texto, /Tentar de novo|tentar de novo/);
+
+  const naoGravou = portas({ async concluir() { throw new Error("banco fora do ar"); } });
+  await tratarEmailDeReembolso(email(), naoGravou.p);
+  assert.match(naoGravou.c.alertas[0].assunto, /URGENTE.*ABCD2345/);
+  assert.match(naoGravou.c.alertas[0].texto, /pay_1/);
+  assert.match(naoGravou.c.alertas[0].texto, /nunca estorna de novo/);
+
+  const analise = portas({}, pedido({ ingresso_usado: true }));
+  await tratarEmailDeReembolso(email(), analise.p);
+  assert.match(analise.c.alertas[0].assunto, /analisar.*ABCD2345/);
+  assert.match(analise.c.alertas[0].texto, /usado/);
+
+  for (const calmo of [portas(), portas({}, pedido({ pago_em: "2026-11-01T12:00:00.000Z" })), portas({}, null), portas({}, pedido({ reembolsado_em: "2026-11-18T10:00:00.000Z", situacao: "cancelado", pago_em: null }))]) {
+    await tratarEmailDeReembolso(email(), calmo.p);
+    assert.equal(calmo.c.alertas.length, 0, "estorno feito, fora do prazo, não encontrado e já reembolsado não avisam");
+  }
+});
+
+test("falha ao avisar o Jards não derruba nada e vai ao registro", async () => {
+  const { p, c } = portas({ async estornar() { return { ok: false, motivo: "x" }; }, async avisarOJards() { throw new Error("e-mail fora do ar"); } });
+  assert.deepEqual(await tratarEmailDeReembolso(email(), p), { resultado: "falhou" });
+  assert.equal(c.erros.length, 1);
+});
+
+test("o aviso não vaza o e-mail nem o nome do comprador", async () => {
+  const { p, c } = portas({ async estornar() { return { ok: false, motivo: "x" }; } });
+  await tratarEmailDeReembolso(email(), p);
+  const tudo = c.alertas.map(a => a.assunto + a.texto).join(" ");
+  assert.doesNotMatch(tudo, /rita@exemplo\.com|Rita/);
 });
