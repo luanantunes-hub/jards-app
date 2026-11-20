@@ -52,6 +52,7 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/ingressos/porta/relatorio", "Relatório da porta"],
   ["/ingressos/porta", "Porta"],
   ["/ingressos/recebimentos", "Recebimentos"],
+  ["/ingressos/divulgacao", "Divulgação"],
   ["/ingressos/cupons", "Cupons"],
   ["/ingressos/espera", "Lista de espera"],
   ["/ingressos/locais", "Locais"],
