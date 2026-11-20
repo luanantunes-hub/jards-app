@@ -24,6 +24,8 @@ const construirContentSecurityPolicy = (frameAncestors: string) => [
 const contentSecurityPolicy = construirContentSecurityPolicy("'none'");
 // A programação para embutir (/embed/...) é a única página que outro site pode abrir num iframe: só mostra dados públicos.
 const contentSecurityPolicyParaEmbutir = construirContentSecurityPolicy("*");
+// A prévia do site (/previa-site/...) só pode ser aberta dentro do próprio painel do Jards (a prévia ao lado do editor): mesma origem e mais ninguém.
+const contentSecurityPolicyDaPrevia = construirContentSecurityPolicy("'self'");
 
 const cabecalhosComuns = [
   { key: "Content-Security-Policy", value: contentSecurityPolicy },
@@ -40,9 +42,11 @@ const cabecalhosComuns = [
 const nextConfig: NextConfig = {
   async headers() {
     return [
-      // Tudo, menos /embed/: não pode ser aberto dentro de outro site e não usa a câmera. (A porta da Produção, que usava a
+      // Tudo, menos /embed/ e /previa-site/: não pode ser aberto dentro de outro site e não usa a câmera. (A porta da Produção, que usava a
       // câmera, saiu na T1 da Ticketeria; a leitura de ingressos da Ticketeria terá a regra dela quando existir.)
-      { source: "/((?!embed/).*)", headers: [...cabecalhosComuns, { key: "X-Frame-Options", value: "DENY" }] },
+      { source: "/((?!embed/|previa-site/).*)", headers: [...cabecalhosComuns, { key: "X-Frame-Options", value: "DENY" }] },
+      // A prévia do site abre dentro do painel (a prévia ao lado do editor de páginas), e só nele: SAMEORIGIN e frame-ancestors 'self'.
+      { source: "/previa-site/:path*", headers: [{ key: "Content-Security-Policy", value: contentSecurityPolicyDaPrevia }, ...cabecalhosComuns.filter(cabecalho => cabecalho.key !== "Content-Security-Policy"), { key: "X-Frame-Options", value: "SAMEORIGIN" }] },
       { source: "/embed/:path*", headers: [{ key: "Content-Security-Policy", value: contentSecurityPolicyParaEmbutir }, ...cabecalhosComuns.filter(cabecalho => cabecalho.key !== "Content-Security-Policy")] },
     ];
   },
