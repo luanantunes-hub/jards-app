@@ -1102,6 +1102,70 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_visitas_diarias: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          conexao_id: string;
+          dia: string;
+          origem: string;
+          canal: string;
+          sessoes: number;
+          usuarios: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          conexao_id: string;
+          dia: string;
+          origem: string;
+          canal: string;
+          sessoes?: number;
+          usuarios?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          conexao_id?: string;
+          dia?: string;
+          origem?: string;
+          canal?: string;
+          sessoes?: number;
+          usuarios?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_visitas_diarias_conexao_id_fkey";
+            columns: ["conexao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_conexoes_midia";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_visitas_diarias_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_visitas_diarias_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_midia_diaria: {
         Row: {
           id: string;
@@ -2478,6 +2542,10 @@ export type BancoDaTicketeria = {
       fn_ticketeria_midia_definir_gerente: {
         Args: { p_conexao: string; p_gerente: string | null };
         Returns: undefined;
+      };
+      fn_ticketeria_midia_gravar_visitas: {
+        Args: { p_conexao: string; p_visitas: Json };
+        Returns: number;
       };
       fn_ticketeria_midia_desconectar: {
         Args: { p_conexao: string };

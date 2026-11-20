@@ -19,8 +19,8 @@ const AVISO_DO_RETORNO = (fonte: string): Record<string, string> => ({
   falhou: `Não foi possível concluir a conexão com o ${fonte}. Tente de novo.`, indisponivel: `A conexão com o ${fonte} ainda não está disponível.`,
 });
 /** O pedaço do endereço das rotas de cada provedor (lib/ticketeria/midia/provedores.ts). */
-const PEDACO: Record<ProvedorDoCartao, string> = { meta: "meta", google_ads: "google" };
-const SEM_CONEXAO: Record<ProvedorDoCartao, EstadoDeMidia> = { meta: { disponivel: false, conexao: null }, google_ads: { disponivel: false, conexao: null } };
+const PEDACO: Record<ProvedorDoCartao, string> = { meta: "meta", google_ads: "google", ga4: "ga4" };
+const SEM_CONEXAO: Record<ProvedorDoCartao, EstadoDeMidia> = { meta: { disponivel: false, conexao: null }, google_ads: { disponivel: false, conexao: null }, ga4: { disponivel: false, conexao: null } };
 
 /** Divulgação: de onde vieram as vendas, o link de divulgação de cada sessão e as ações (com gasto) cruzadas com as vendas por dia. Lê da rota do servidor, que confere quem edita a Ticketeria. */
 export default function DivulgacaoPage() {
@@ -54,7 +54,7 @@ export default function DivulgacaoPage() {
         if (!resposta.ok) throw new Error(String(resposta.status));
         const dados = (await resposta.json()) as DadosDaDivulgacao;
         const c = await fetch(`/api/ticketeria/lojas/${loja.id}/conexoes`, { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).catch(() => null) as Partial<Record<ProvedorDoCartao, EstadoDeMidia>> | null;
-        if (ativo) { setErro(null); setEstado({ lojaId: loja.id, dados }); if (c) setConexoes({ meta: c.meta ?? SEM_CONEXAO.meta, google_ads: c.google_ads ?? SEM_CONEXAO.google_ads }); }
+        if (ativo) { setErro(null); setEstado({ lojaId: loja.id, dados }); if (c) setConexoes({ meta: c.meta ?? SEM_CONEXAO.meta, google_ads: c.google_ads ?? SEM_CONEXAO.google_ads, ga4: c.ga4 ?? SEM_CONEXAO.ga4 }); }
       } catch {
         if (ativo) { setErro("Não foi possível carregar a divulgação. Só quem edita a Ticketeria vê esta página."); setEstado({ lojaId: loja.id, dados: null }); }
       }
@@ -68,7 +68,7 @@ export default function DivulgacaoPage() {
     queueMicrotask(() => {
       const p = new URLSearchParams(window.location.search);
       if (p.get("aba") === "conexoes") setAba("conexoes");
-      const provedor = p.get("conexao") === "google_ads" ? "google_ads" : p.get("conexao") === "meta" ? "meta" : null;
+      const provedor = (["meta", "google_ads", "ga4"] as const).find(x => x === p.get("conexao")) ?? null;
       const resultado = p.get("resultado");
       if (provedor && resultado === "escolher") void abrirEscolha(provedor);
       else if (provedor && resultado && AVISO_DO_RETORNO(CARTOES[provedor].fonte)[resultado]) setAvisoMidia(AVISO_DO_RETORNO(CARTOES[provedor].fonte)[resultado]);
@@ -151,7 +151,7 @@ export default function DivulgacaoPage() {
   }
 
   async function desconectar(provedor: ProvedorDoCartao) {
-    if (!estado?.lojaId || !window.confirm(`Desconectar o ${CARTOES[provedor].nome}? O gasto já lido fica guardado; para voltar a ler, é só conectar de novo.`)) return;
+    if (!estado?.lojaId || !window.confirm(`Desconectar o ${CARTOES[provedor].nome}? O que já foi lido fica guardado; para voltar a ler, é só conectar de novo.`)) return;
     setOcupadoMidia(provedor);
     try { await fetch(`/api/ticketeria/lojas/${estado.lojaId}/conexoes/${PEDACO[provedor]}`, { method: "DELETE" }); } finally { setOcupadoMidia(null); setVersao(v => v + 1); }
   }
@@ -188,7 +188,7 @@ export default function DivulgacaoPage() {
         )}
       </ListContent>
       {criando && dados && <LinkDeDivulgacaoSheet sessoes={dados.sessoes} origem={window.location.origin} sessaoInicial={sessaoId} onClose={() => setCriando(false)} />}
-      {escolhendo && <EscolherContaSheet fonte={CARTOES[escolhendo.provedor].fonte} contas={escolhendo.contas} escolhida={escolhendo.escolhida} erro={escolhendo.erro} salvando={salvando} onEscolher={id => setEscolhendo(e => (e ? { ...e, escolhida: id } : e))} onClose={() => setEscolhendo(null)} onSalvar={() => void confirmarConta()} />}
+      {escolhendo && <EscolherContaSheet fonte={CARTOES[escolhendo.provedor].fonte} tipo={escolhendo.provedor === "ga4" ? "visitas" : "gasto"} contas={escolhendo.contas} escolhida={escolhendo.escolhida} erro={escolhendo.erro} salvando={salvando} onEscolher={id => setEscolhendo(e => (e ? { ...e, escolhida: id } : e))} onClose={() => setEscolhendo(null)} onSalvar={() => void confirmarConta()} />}
       {acao && <AcaoSheet editando={acao.id !== null} valores={acao.valores} erro={acaoErro} salvando={salvando} onMudar={(campo, valor) => setAcao(a => (a ? { ...a, valores: { ...a.valores, [campo]: valor } } : a))} onClose={() => setAcao(null)} onSalvar={() => void salvar()} onApagar={() => void apagar()} />}
     </>
   );

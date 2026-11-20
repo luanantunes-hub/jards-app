@@ -2,15 +2,16 @@ import "server-only";
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/supabase/types";
+import type { Database, Json } from "@/lib/supabase/types";
 import { decryptSecret, encryptSecret } from "@/lib/calendar/crypto";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
-import { diaNoFuso } from "@/lib/ticketeria/divulgacao";
+import { diaNoFuso, rotuloDoCanal } from "@/lib/ticketeria/divulgacao";
 import type { BuscarHttp } from "@/lib/ticketeria/midia/meta";
 import { PROVEDORES_DE_MIDIA, adaptadorDeMidia, type AdaptadorDeMidia, type ProvedorDeMidia } from "@/lib/ticketeria/midia/provedores";
 import { lerConexao, type PortasDaLeitura, type ResultadoDaLeitura } from "@/lib/ticketeria/midia/sincronizar";
 
 type Admin = SupabaseClient<Database>;
+const LOTE_DE_LINHAS = 500;
 
 /** O endereço do Jards (o retorno do login tem de ser exatamente o cadastrado no app da plataforma). */
 export function origemDoApp(): string {
@@ -53,6 +54,8 @@ export async function fecharSessaoDoLogin(): Promise<void> { (await cookies()).d
 export type ConexaoDaLoja = {
   id: string; situacao: "escolher_conta" | "ativa" | "erro" | "desconectada"; conta_nome: string | null; moeda: string | null;
   ultima_leitura_em: string | null; ultimo_erro: string | null; lido_desde: string | null; gasto_30_dias_centavos: number;
+  /** Só no GA4: as visitas dos últimos 30 dias e a origem que mais trouxe (com a parte dela, em %). */
+  visitas_30_dias?: number; principal_origem?: { nome: string; porcento: number } | null;
 };
 
 export async function conexaoDaLoja(admin: Admin, lojaId: string, provedor: ProvedorDeMidia, hoje: string = diaNoFuso(new Date())): Promise<ConexaoDaLoja | null> {
@@ -61,8 +64,18 @@ export async function conexaoDaLoja(admin: Admin, lojaId: string, provedor: Prov
   if (!c || c.situacao === "desconectada") return null;
   const desde = new Date(`${hoje}T00:00:00Z`);
   desde.setUTCDate(desde.getUTCDate() - 29);
-  const { data: dias } = await t.from("ticketeria_midia_diaria").select("gasto_centavos").eq("conexao_id", c.id).gte("dia", desde.toISOString().slice(0, 10)).lte("dia", hoje);
-  return { ...c, situacao: c.situacao as ConexaoDaLoja["situacao"], gasto_30_dias_centavos: (dias ?? []).reduce((soma, d) => soma + Number(d.gasto_centavos), 0) };
+  const de = desde.toISOString().slice(0, 10);
+  const base = { ...c, situacao: c.situacao as ConexaoDaLoja["situacao"] };
+  if (provedor === "ga4") {
+    const { data: visitas } = await t.from("ticketeria_visitas_diarias").select("canal, origem, sessoes").eq("conexao_id", c.id).gte("dia", de).lte("dia", hoje).limit(50000);
+    const porCanal = new Map<string, number>();
+    let total = 0;
+    for (const v of visitas ?? []) { total += Number(v.sessoes); porCanal.set(v.canal, (porCanal.get(v.canal) ?? 0) + Number(v.sessoes)); }
+    const [canal, sessoes] = [...porCanal.entries()].sort((a, b) => b[1] - a[1])[0] ?? [null, 0];
+    return { ...base, gasto_30_dias_centavos: 0, visitas_30_dias: total, principal_origem: canal && total > 0 ? { nome: rotuloDoCanal(canal), porcento: Math.round((sessoes / total) * 100) } : null };
+  }
+  const { data: dias } = await t.from("ticketeria_midia_diaria").select("gasto_centavos").eq("conexao_id", c.id).gte("dia", de).lte("dia", hoje);
+  return { ...base, gasto_30_dias_centavos: (dias ?? []).reduce((soma, d) => soma + Number(d.gasto_centavos), 0) };
 }
 
 /** As portas da leitura no Supabase (só com a chave de serviço: o token está no Vault). */
@@ -74,10 +87,16 @@ export function portasDaLeituraDoSupabase(admin: Admin, adaptador: AdaptadorDeMi
       if (error) throw new Error(error.message);
       return typeof data === "string" && data !== "" ? data : null;
     },
-    lerGasto: (token, conta, de, ate, gerente) => adaptador.lerGasto(token, conta, de, ate, gerente),
-    async gravarDias(conexao, dias) {
-      const { error } = await t.rpc("fn_ticketeria_midia_gravar_dias", { p_conexao: conexao, p_dias: dias });
-      if (error) throw new Error(error.message);
+    async lerPeriodo(token, conta, de, ate, gerente, conexao) {
+      const dados = await adaptador.ler(token, conta, de, ate, gerente);
+      // Em lotes: o GA4 pode trazer dezenas de milhares de linhas (uma por dia e origem).
+      const linhas: Json[] = (dados.visitas ?? dados.gasto ?? []) as unknown as Json[];
+      for (let i = 0; i < linhas.length; i += LOTE_DE_LINHAS) {
+        const lote = linhas.slice(i, i + LOTE_DE_LINHAS);
+        const { error } = dados.visitas ? await t.rpc("fn_ticketeria_midia_gravar_visitas", { p_conexao: conexao, p_visitas: lote }) : await t.rpc("fn_ticketeria_midia_gravar_dias", { p_conexao: conexao, p_dias: lote });
+        if (error) throw new Error(error.message);
+      }
+      return linhas.length;
     },
     async marcar(conexao, r) {
       const { error } = await t.rpc("fn_ticketeria_midia_marcar", { p_conexao: conexao, p_ok: r.ok, p_erro: r.ok ? null : r.erro, p_token_invalido: r.ok ? false : r.token_invalido, p_lido_desde: r.ok ? r.lido_desde : null });

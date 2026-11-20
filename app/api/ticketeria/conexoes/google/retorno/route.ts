@@ -5,4 +5,5 @@ import { concluirLogin } from "@/lib/ticketeria/midia/retorno";
 
 export const dynamic = "force-dynamic";
 
-export const GET = (req: NextRequest) => concluirLogin(req, "google_ads");
+// O mesmo endereço serve ao Google Ads e ao GA4 (o cookie do login diz qual dos dois abriu o login).
+export const GET = (req: NextRequest) => concluirLogin(req, ["google_ads", "ga4"]);

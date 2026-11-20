@@ -21,3 +21,24 @@ O código do conector (aba **Conexões** da Divulgação, cartão **Google Ads**
 - O endereço de listar as contas acessíveis (`customers:listAccessibleCustomers`) e o formato da resposta.
 - Os campos da consulta (`segments.date`, `metrics.cost_micros`, `customer.currency_code`) e que `cost_micros` é milionésimo da moeda (o código divide por 10.000 para dar centavos).
 - A versão da API (as páginas citam v26; o padrão aqui é v26).
+
+---
+
+# Google Analytics 4 (as visitas ao site), na mesma conta do Google (20/11/2026)
+
+O cartão **Google Analytics 4** (grupo "Site e redes" da aba Conexões) usa o **mesmo cliente OAuth e o mesmo endereço de retorno** do Google Ads (`https://jards.com.br/api/ticketeria/conexoes/google/retorno`; o cookie do login diz qual dos dois abriu). Não traz gasto: traz as **visitas por dia e por origem** ("instagram / social"), que servem de variável do modelo e para saber quantos visitantes viram a compra.
+
+## O que o Jards faz
+- Permissão pedida: só `https://www.googleapis.com/auth/analytics.readonly` (leitura do Analytics), numa autorização separada da do Google Ads (o produtor escolhe conectar um, o outro ou os dois).
+- Lê, por dia e origem (`sessionSourceMedium`): sessões e usuários. Primeira leitura: o último ano; depois, todo dia os últimos 7 dias (o mesmo Vercel Cron).
+- O GA4 só enxerga origens marcadas com `utm_*`. Por isso o link de divulgação criado na aba Divulgação passou a levar também `utm_source` (o canal), `utm_medium=divulgacao` e `utm_campaign` (a ação), além do `?canal=` e do `?acao=` que o Jards já lia. Os links de e-mail de divulgação seguem como estavam.
+- Reconhece o canal da origem (Instagram, WhatsApp, Google, e-mail, direto) e guarda o resto como "outros".
+
+## O que a mais só o dono do Jards faz
+1. No projeto do Google Cloud, ativar também a **Analytics Data API** e a **Analytics Admin API**.
+2. Na tela de consentimento, adicionar o escopo `analytics.readonly` (a verificação cobre os dois escopos; o vídeo de demonstração deve mostrar também a aba Conexões com as visitas).
+3. Nada de variável nova na Vercel: o GA4 usa `GOOGLE_MARKETING_CLIENT_ID` e `GOOGLE_MARKETING_CLIENT_SECRET`.
+4. Dizer qual propriedade do GA4 sua serve para testes (o produtor precisa ter acesso à propriedade).
+
+## A conferir com uma resposta real
+O formato de `accountSummaries` (propriedades) e de `runReport` com `date` e `sessionSourceMedium`; e se o escopo `analytics.readonly` é tratado como sensível na verificação.

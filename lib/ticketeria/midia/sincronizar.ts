@@ -1,8 +1,7 @@
-// A leitura de uma conexão de mídia: que dias ler, ler em partes, gravar e marcar o resultado. Sem banco e sem rede: as portas entram por parâmetro (tests/ticketeria-sincronizar.test.ts).
+// A leitura de uma conexão de mídia (gasto ou visitas): que dias ler, ler em partes, gravar e marcar o resultado. Sem banco e sem rede: as portas entram por parâmetro (tests/ticketeria-sincronizar.test.ts).
 // A primeira leitura traz o último ano (o modelo precisa de histórico); as seguintes refazem os últimos 7 dias, porque a Meta ajusta os números recentes.
 
 import { frasePedindoNovaConexao, fraseDoErro } from "@/lib/ticketeria/midia/erro";
-import type { DiaDeMidia } from "@/lib/ticketeria/midia/meta";
 
 export const DIAS_DA_PRIMEIRA_LEITURA = 365;
 export const DIAS_REFEITOS_NA_LEITURA = 7;
@@ -32,8 +31,8 @@ export type ConexaoParaLer = { id: string; conta_externa_id: string; ultima_leit
 
 export type PortasDaLeitura = {
   token(conexao: string): Promise<string | null>;
-  lerGasto(token: string, conta: string, de: string, ate: string, gerente: string | null): Promise<DiaDeMidia[]>;
-  gravarDias(conexao: string, dias: DiaDeMidia[]): Promise<void>;
+  /** Lê um pedaço do período na plataforma e grava o que veio (gasto por dia ou visitas por dia e origem). Devolve quantas linhas leu. */
+  lerPeriodo(token: string, conta: string, de: string, ate: string, gerente: string | null, conexao: string): Promise<number>;
   marcar(conexao: string, resultado: { ok: true; lido_desde: string } | { ok: false; erro: string; token_invalido: boolean }): Promise<void>;
 };
 
@@ -57,9 +56,7 @@ export async function lerConexao(portas: PortasDaLeitura, conexao: ConexaoParaLe
   let total = 0;
   try {
     for (const parte of emPartes(janela.de, janela.ate)) {
-      const dias = await portas.lerGasto(token, conexao.conta_externa_id, parte.de, parte.ate, conexao.gerente ?? null);
-      if (dias.length > 0) await portas.gravarDias(conexao.id, dias);
-      total += dias.length;
+      total += await portas.lerPeriodo(token, conexao.conta_externa_id, parte.de, parte.ate, conexao.gerente ?? null, conexao.id);
     }
     await portas.marcar(conexao.id, { ok: true, lido_desde: janela.de });
   } catch (erro) {

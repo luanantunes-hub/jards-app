@@ -89,7 +89,7 @@ export function LinkDeDivulgacaoSheet({ sessoes, origem, sessaoInicial = null, c
   const [acao, setAcao] = useState(acaoInicial);
   const [copiado, setCopiado] = useState(copiadoDeInicio);
   const [erro, setErro] = useState(false);
-  const endereco = sessao ? enderecoDeDivulgacao(origem, sessao, canal, acao) : "";
+  const endereco = sessao ? enderecoDeDivulgacao(origem, sessao, canal, acao, true) : "";
 
   async function copiar() {
     try { await navigator.clipboard.writeText(endereco); setErro(false); setCopiado(true); setTimeout(() => setCopiado(false), 3000); } catch { setErro(true); }
