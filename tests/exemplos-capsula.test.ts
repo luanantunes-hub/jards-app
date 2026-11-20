@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { LOGOS_HISTORICOS } from "../lib/logos-historicos";
 
-const MIGRATION = readFileSync("supabase/migrations/20261120120000_exemplos_capsula_do_tempo.sql", "utf8");
+const MIGRATION = readFileSync("supabase/migrations/20261120040034_exemplos_capsula_do_tempo.sql", "utf8");
 
 test("todo logo histórico e toda imagem citada pelos exemplos existe em public/", () => {
   const caminhos = new Set([...Object.values(LOGOS_HISTORICOS), ...MIGRATION.match(/\/exemplos\/[a-z]+\.(png|jpg)/g) ?? []]);
