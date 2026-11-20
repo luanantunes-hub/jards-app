@@ -1169,6 +1169,170 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_importacoes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          tipo: string;
+          arquivo: string;
+          periodo_inicio: string;
+          periodo_fim: string;
+          linhas: number;
+          total_ingressos: number;
+          total_valor_centavos: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          tipo: string;
+          arquivo: string;
+          periodo_inicio: string;
+          periodo_fim: string;
+          linhas: number;
+          total_ingressos?: number;
+          total_valor_centavos?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          tipo?: string;
+          arquivo?: string;
+          periodo_inicio?: string;
+          periodo_fim?: string;
+          linhas?: number;
+          total_ingressos?: number;
+          total_valor_centavos?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_importacoes_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_importacoes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_historico_vendas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          importacao_id: string;
+          dia: string;
+          canal: string;
+          ingressos: number;
+          valor_centavos: number;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          importacao_id: string;
+          dia: string;
+          canal: string;
+          ingressos?: number;
+          valor_centavos?: number;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          importacao_id?: string;
+          dia?: string;
+          canal?: string;
+          ingressos?: number;
+          valor_centavos?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_historico_vendas_importacao_id_fkey";
+            columns: ["importacao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_importacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_historico_vendas_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_historico_vendas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_historico_gasto: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          importacao_id: string;
+          dia: string;
+          canal: string;
+          gasto_centavos: number;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          importacao_id: string;
+          dia: string;
+          canal: string;
+          gasto_centavos?: number;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          importacao_id?: string;
+          dia?: string;
+          canal?: string;
+          gasto_centavos?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_historico_gasto_importacao_id_fkey";
+            columns: ["importacao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_importacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_historico_gasto_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_historico_gasto_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_midia_diaria: {
         Row: {
           id: string;
@@ -2549,6 +2713,14 @@ export type BancoDaTicketeria = {
       fn_ticketeria_midia_gravar_visitas: {
         Args: { p_conexao: string; p_visitas: Json };
         Returns: number;
+      };
+      fn_ticketeria_historico_importar: {
+        Args: { p_loja: string; p_tipo: string; p_arquivo: string; p_linhas: Json };
+        Returns: string;
+      };
+      fn_ticketeria_historico_desfazer: {
+        Args: { p_importacao: string; p_loja: string };
+        Returns: undefined;
       };
       fn_ticketeria_midia_desconectar: {
         Args: { p_conexao: string };
