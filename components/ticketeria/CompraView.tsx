@@ -254,7 +254,8 @@ export function TelaPagarPix({ site, evento, pedido, onCopiar, copiado, onVoltar
 
 // ─── 4. Os ingressos ────────────────────────────────────────────────────────
 
-export type IngressoDaPagina = { codigo: string; nome: string; usado?: boolean; cancelado?: boolean };
+/** `assento` só vem quando o ingresso é de um setor com lugares numerados: "Fileira C · lugar 7". */
+export type IngressoDaPagina = { codigo: string; nome: string; assento?: string | null; usado?: boolean; cancelado?: boolean };
 
 export function TelaIngressos({ site, evento, comprador, pedido, ingressos, emailDeReembolso }: {
   site: { titulo: string; cor?: string }; evento: EventoParaComprar; comprador: string; pedido: string; ingressos: IngressoDaPagina[]; emailDeReembolso: string;
@@ -271,7 +272,7 @@ export function TelaIngressos({ site, evento, comprador, pedido, ingressos, emai
         {ingressos.map(i => (
           <li key={i.codigo} className={`rounded-xl border border-black/15 px-4 py-5 ${i.cancelado ? "opacity-50" : ""}`}>
             <div className="flex items-start justify-between gap-3">
-              <p className="text-[1rem] font-normal">{i.nome}</p>
+              <div className="min-w-0"><p className="text-[1rem] font-normal">{i.nome}</p>{i.assento && <p className="mt-0.5 text-[0.9375rem] text-black/70">{i.assento}</p>}</div>
               {i.cancelado && <span className={ETIQUETA} style={{ borderColor: "#D94A4A47", color: "#D94A4A" }}>Cancelado</span>}
               {i.usado && !i.cancelado && <span className={ETIQUETA} style={{ borderColor: "#6b676747", color: "#6b6767" }}>Já usado</span>}
             </div>

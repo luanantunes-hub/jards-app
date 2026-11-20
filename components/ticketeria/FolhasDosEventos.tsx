@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria, type ClienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { CLASSIFICACOES_INDICATIVAS } from "@/lib/ticketeria/estados";
 import {
-  FUSOS_DO_BRASIL, UFS, ROTULO_DA_CLASSIFICACAO, lerEvento, lerLocal, lerSessao, lerSetor, mensagemDoErroDoEvento, partesNoFuso,
+  FUSOS_DO_BRASIL, UFS, ROTULO_DA_CLASSIFICACAO, lerEvento, lerLocal, lerSessao, mensagemDoErroDoEvento, partesNoFuso,
 } from "@/lib/ticketeria/eventos";
 
 // As folhas da Ticketeria (T2): evento, sessão, local e setor. Criar e editar pela mesma folha; tudo grava ao salvar.
@@ -229,43 +229,3 @@ export function LocalSheet({ organizationId, nomeDaOrganizacao, local, onClose, 
   );
 }
 
-export type SetorEditavel = { id: string; nome: string; lugares: number; arquivado: boolean };
-
-export function SetorSheet({ organizationId, localId, setor, onClose, onSaved }: { organizationId: string; localId: string; setor?: SetorEditavel; onClose: () => void; onSaved: () => void }) {
-  const [nome, setNome] = useState(setor?.nome ?? "");
-  const [lugares, setLugares] = useState(setor ? String(setor.lugares) : "");
-  const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-
-  async function gravar(fechar: () => void, mudanca?: { arquivado: boolean }) {
-    const leitura = lerSetor({ nome, lugares });
-    if (!leitura.ok) { setErro(leitura.erro); return; }
-    setSalvando(true);
-    setErro(null);
-    const ticketeria = clienteDaTicketeria(createClient());
-    const { error } = setor
-      ? await ticketeria.from("ticketeria_setores").update({ ...leitura.valor, ...mudanca }).eq("id", setor.id)
-      : await ticketeria.from("ticketeria_setores").insert({ organization_id: organizationId, local_id: localId, ...leitura.valor });
-    setSalvando(false);
-    if (error) { setErro(mensagemDoErroDoEvento(error)); return; }
-    onSaved();
-    fechar();
-  }
-
-  return (
-    <TopSheet
-      titulo={setor ? "Editar setor" : "Novo setor"}
-      onClose={onClose}
-      footer={fechar => <Rodape fechar={fechar} salvando={salvando} rotulo={setor ? "Salvar" : "Criar setor"} onSalvar={() => void gravar(fechar)} onApagar={setor ? () => void gravar(fechar, { arquivado: !setor.arquivado }) : undefined} rotuloApagar={setor?.arquivado ? "Tirar do arquivo" : "Arquivar"} arquivar />}
-    >
-      <div className="space-y-4">
-        {erro && <Aviso texto={erro} />}
-        <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
-          <div><label className={ROTULO} htmlFor="st-nome">Nome</label><input id="st-nome" autoFocus className={CAMPO} value={nome} onChange={e => setNome(e.target.value)} placeholder="Plateia" maxLength={120} disabled={salvando} /></div>
-          <div><label className={ROTULO} htmlFor="st-lugares">Lugares</label><input id="st-lugares" inputMode="numeric" className={CAMPO} value={lugares} onChange={e => setLugares(e.target.value)} placeholder="300" disabled={salvando} /></div>
-        </div>
-        <p className="text-[0.75rem] text-black/55">A capacidade do local é a soma dos setores. Assento marcado vem depois.</p>
-      </div>
-    </TopSheet>
-  );
-}

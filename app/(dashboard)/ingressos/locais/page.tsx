@@ -8,7 +8,8 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { podeEditarATicketeria } from "@/lib/ticketeria/permissoes";
 import { FUSOS_DO_BRASIL, capacidadeDoLocal } from "@/lib/ticketeria/eventos";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
-import { LocalSheet, SetorSheet, type LocalEditavel, type SetorEditavel } from "@/components/ticketeria/FolhasDosEventos";
+import { LocalSheet, type LocalEditavel } from "@/components/ticketeria/FolhasDosEventos";
+import { SetorSheet, type SetorEditavel } from "@/components/ticketeria/SetorDoLocal";
 
 type Setor = SetorEditavel & { local_id: string; ordem: number };
 type Folha = { tipo: "local"; local?: LocalEditavel } | { tipo: "setor"; local: LocalEditavel; setor?: Setor };
@@ -36,7 +37,7 @@ export default function LocaisPage() {
       const ticketeria = clienteDaTicketeria(createClient());
       const [lo, se] = await Promise.all([
         ticketeria.from("ticketeria_locais").select("id, nome, endereco, cidade, uf, fuso, arquivado").eq("organization_id", organizationId).order("nome"),
-        ticketeria.from("ticketeria_setores").select("id, local_id, nome, lugares, ordem, arquivado").eq("organization_id", organizationId).order("ordem").order("nome"),
+        ticketeria.from("ticketeria_setores").select("id, local_id, nome, lugares, numerado, corredor_no_meio, ordem, arquivado").eq("organization_id", organizationId).order("ordem").order("nome"),
       ]);
       if (!ativo) return;
       setLocais((lo.data ?? []) as LocalEditavel[]);
@@ -88,7 +89,7 @@ export default function LocaisPage() {
                       {deles.length === 0 && <span className="text-[0.6875rem] text-black/45">Sem setores</span>}
                       {deles.map(setor => (
                         <button key={setor.id} type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "setor", local, setor })} className={`rounded-xl border border-black/[.12] bg-white px-2.5 py-1 text-[0.6875rem] font-normal transition enabled:hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${setor.arquivado ? "text-black/35 line-through" : "text-black/65"}`}>
-                          {setor.nome} · {numero(setor.lugares)}
+                          {setor.nome} · {numero(setor.lugares)}{setor.numerado ? " · numerado" : ""}
                         </button>
                       ))}
                       {podeEditar && !local.arquivado && (
@@ -103,7 +104,7 @@ export default function LocaisPage() {
         )}
       </ListContent>
       {folha?.tipo === "local" && organizationId && <LocalSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} local={folha.local} onClose={() => setFolha(null)} onSaved={recarregar} />}
-      {folha?.tipo === "setor" && organizationId && <SetorSheet organizationId={organizationId} localId={folha.local.id} setor={folha.setor} onClose={() => setFolha(null)} onSaved={recarregar} />}
+      {folha?.tipo === "setor" && organizationId && <SetorSheet organizationId={organizationId} localId={folha.local.id} nomeDoLocal={folha.local.nome} setor={folha.setor} onClose={() => setFolha(null)} onSaved={recarregar} />}
     </>
   );
 }

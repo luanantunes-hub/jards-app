@@ -296,6 +296,8 @@ export type BancoDaTicketeria = {
           local_id: string;
           nome: string;
           lugares: number;
+          numerado: boolean;
+          corredor_no_meio: boolean;
           ordem: number;
           arquivado: boolean;
           created_at: string;
@@ -307,6 +309,8 @@ export type BancoDaTicketeria = {
           local_id: string;
           nome: string;
           lugares: number;
+          numerado?: boolean;
+          corredor_no_meio?: boolean;
           ordem?: number;
           arquivado?: boolean;
           created_at?: string;
@@ -318,6 +322,8 @@ export type BancoDaTicketeria = {
           local_id?: string;
           nome?: string;
           lugares?: number;
+          numerado?: boolean;
+          corredor_no_meio?: boolean;
           ordem?: number;
           arquivado?: boolean;
           created_at?: string;
@@ -947,6 +953,51 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_assentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          setor_id: string;
+          fileira: string;
+          numero: number;
+          bloqueado: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          setor_id: string;
+          fileira: string;
+          numero: number;
+          bloqueado?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          setor_id?: string;
+          fileira?: string;
+          numero?: number;
+          bloqueado?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_assentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_assentos_setor_id_fkey";
+            columns: ["setor_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_setores";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_transacoes: {
         Row: {
           id: string;
@@ -1449,6 +1500,14 @@ export type BancoDaTicketeria = {
       fn_ticketeria_espera_desfazer_aviso: {
         Args: { p_ids: string[] };
         Returns: number;
+      };
+      fn_ticketeria_salvar_mapa: {
+        Args: { p_setor: string; p_fileiras: Json; p_corredor?: boolean };
+        Returns: Json;
+      };
+      fn_ticketeria_mapa_do_setor: {
+        Args: { p_setor: string };
+        Returns: Json;
       };
       fn_ticketeria_definir_meio: {
         Args: { p_pedido: string; p_meio: MeioDePagamento; p_parcelas: number | null };

@@ -9,12 +9,14 @@ import { useModalDismiss } from "@/hooks/useModalDismiss";
  * conteúdo e uma base em papel com as ações. Sombra funda (`elevacao-folha`) e uma alça na borda de baixo.
  * `etiqueta` é opcional: a área ou o assunto, em letras pequenas acima do título.
  */
-export function TopSheet({ titulo, etiqueta, onClose, children, footer }: {
+export function TopSheet({ titulo, etiqueta, onClose, children, footer, largura = "27.5rem" }: {
   titulo: string;
   etiqueta?: string;
   onClose: () => void;
   children: React.ReactNode;
   footer: (close: () => void) => React.ReactNode;
+  /** A largura da folha (padrão 27,5rem): editores largos, como o mapa de assentos, pedem mais. */
+  largura?: string;
 }) {
   const [sheetVisible, setSheetVisible] = useState(false);
   const titleId = useId();
@@ -41,7 +43,7 @@ export function TopSheet({ titulo, etiqueta, onClose, children, footer }: {
         aria-labelledby={titleId}
         className="absolute left-1/2 top-0 transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none"
         style={{
-          width: "27.5rem",
+          width: largura,
           maxWidth: "92vw",
           transform: sheetVisible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(-100%)",
         }}
