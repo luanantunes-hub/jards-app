@@ -1,7 +1,7 @@
 // Os textos e as contas da tela dos webhooks (Integrações): a frase do que cada endereço recebe, a linha de cada aviso com a hora e o resultado, e a leitura das respostas das rotas. Sem
 // banco, sem rede e sem servidor (roda no navegador e nos testes). Desenhos aprovados pelo dono em 20/11/2026.
 
-import { EVENTOS_DO_WEBHOOK, MAX_TENTATIVAS, ROTULO_DO_EVENTO, type EventoDoWebhook } from "@/lib/ticketeria/webhooks";
+import { EVENTOS_DO_WEBHOOK, MAX_TENTATIVAS, ROTULO_DO_EVENTO, type EventoDoWebhook } from "@/lib/ticketeria/webhooks-eventos";
 
 const FUSO = "America/Sao_Paulo";
 

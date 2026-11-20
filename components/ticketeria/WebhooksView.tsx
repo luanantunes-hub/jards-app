@@ -4,7 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { Check } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
-import { EVENTOS_DO_WEBHOOK, MAX_WEBHOOKS_POR_LOJA, ROTULO_DO_EVENTO, type EventoDoWebhook } from "@/lib/ticketeria/webhooks";
+import { EVENTOS_DO_WEBHOOK, MAX_WEBHOOKS_POR_LOJA, ROTULO_DO_EVENTO, type EventoDoWebhook } from "@/lib/ticketeria/webhooks-eventos";
 import { AVISO_DO_SEGREDO, AVISO_DOS_DADOS_DO_COMPRADOR, enderecoCurto, eventosEmTexto, frasesDoErroDeRota, lerEntregasDaLista, linhaDoAviso, type EntregaDaLista, type WebhookDaLista } from "@/lib/ticketeria/webhooks-tela";
 
 // Os avisos para outros sistemas (webhooks), na página Integrações: a lista de endereços, a folha de novo/editar (com o segredo mostrado uma vez) e a dos últimos avisos.

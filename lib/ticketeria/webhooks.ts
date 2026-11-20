@@ -4,17 +4,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { isIP } from "node:net";
 
-export const EVENTOS_DO_WEBHOOK = ["pedido.pago", "pedido.reembolsado", "ingresso.lido", "sessao.cancelada"] as const;
-export type EventoDoWebhook = (typeof EVENTOS_DO_WEBHOOK)[number];
+import { EVENTOS_DO_WEBHOOK, MAX_WEBHOOKS_POR_LOJA, type EventoDoWebhook } from "@/lib/ticketeria/webhooks-eventos";
 
-export const ROTULO_DO_EVENTO: Record<EventoDoWebhook, string> = {
-  "pedido.pago": "Venda paga", "pedido.reembolsado": "Reembolso", "ingresso.lido": "Ingresso lido na porta", "sessao.cancelada": "Sessão cancelada",
-};
+export { EVENTOS_DO_WEBHOOK, MAX_TENTATIVAS, MAX_WEBHOOKS_POR_LOJA, ROTULO_DO_EVENTO, type EventoDoWebhook } from "@/lib/ticketeria/webhooks-eventos";
 
 export const VERSAO_DO_AVISO = 1;
-export const MAX_WEBHOOKS_POR_LOJA = 5;
-/** Quantas tentativas cada aviso tem (a sexta falha encerra); a espera entre elas está no banco. */
-export const MAX_TENTATIVAS = 6;
 export const TEMPO_MAXIMO_DO_ENVIO_MS = 8000;
 
 // ─── A assinatura ───────────────────────────────────────────────────────────

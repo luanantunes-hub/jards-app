@@ -98,3 +98,12 @@ test("a página liga o cartão e as folhas dos webhooks na tela Integrações", 
   const pagina = readFileSync("app/(dashboard)/ingressos/integracoes/page.tsx", "utf8");
   for (const t of ["CartaoDosWebhooks", "WebhookSheet", "AvisosSheet", "/webhooks`", "/teste`"]) assert.ok(pagina.includes(t), t);
 });
+
+test("o que a tela importa não leva código de servidor para o navegador (o build do navegador não aceita node:crypto nem node:net)", () => {
+  for (const arquivo of ["lib/ticketeria/webhooks-tela.ts", "lib/ticketeria/webhooks-eventos.ts", "components/ticketeria/WebhooksView.tsx", "app/(dashboard)/ingressos/integracoes/page.tsx", "components/ticketeria/IntegracoesView.tsx"]) {
+    const codigo = readFileSync(arquivo, "utf8");
+    assert.doesNotMatch(codigo, /from "node:/, `${arquivo} importa node:`);
+    assert.doesNotMatch(codigo, /from "@\/lib\/ticketeria\/webhooks"/, `${arquivo} importa webhooks.ts (com crypto e net), e não webhooks-eventos.ts`);
+    assert.doesNotMatch(codigo, /server-only/, `${arquivo} importa código só de servidor`);
+  }
+});
