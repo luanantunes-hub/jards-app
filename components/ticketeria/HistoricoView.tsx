@@ -9,6 +9,7 @@ import {
   MAX_BYTES_DO_ARQUIVO, ROTULO_DO_TIPO, adivinharColunas, consolidarGastos, consolidarVendas, importacoesQueSeSobrepoem, lerCsv, modeloDeCsv,
   type CorpoDaImportacao, type ImportacaoDaLista, type MapaDeColunas, type TipoDeHistorico,
 } from "@/lib/ticketeria/historico";
+import { escolherAba, lerPlanilhaDoExcel, type AbaLida } from "@/lib/ticketeria/historico-xlsx";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 
 // A aba Histórico da Divulgação: as planilhas importadas (vendas e gastos de eventos antigos) e a folha de importar. Só desenho: os dados e as ações chegam por props. O arquivo é lido e
@@ -70,7 +71,9 @@ export function HistoricoDaLoja({ importacoes, semanas, onDesfazer, onImportar, 
 
 const NENHUMA = "-1";
 
-type ArquivoLido = { nome: string; cabecalho: string[]; linhas: string[][]; separador: string; truncado: boolean };
+/** O arquivo já lido. Do Excel, `abas` traz todas as abas e `aba` a que está em uso (cabeçalho e linhas são os dela). */
+type ArquivoLido = { nome: string; cabecalho: string[]; linhas: string[][]; separador: string; truncado: boolean; abas?: AbaLida[]; aba?: number };
+const EXCEL = /\.(xlsx|xls)$/i;
 
 /** Lê o arquivo como UTF-8; se não for (o Excel em português costuma salvar em Windows-1252), lê como Windows-1252. */
 export async function lerTextoDoArquivo(arquivo: File): Promise<string> {
@@ -97,11 +100,30 @@ export function ImportarPlanilhaSheet({ existentes, erro, importando, arquivoIni
     setAviso(null);
     if (!f) return;
     if (f.size > MAX_BYTES_DO_ARQUIVO) { setAviso("O arquivo passa de 5 MB. Divida em partes menores."); return; }
-    if (!/\.(csv|txt)$/i.test(f.name) && !/csv|text\/plain/.test(f.type)) { setAviso("Use um arquivo CSV. No Excel: Arquivo > Salvar como > CSV."); return; }
+    if (EXCEL.test(f.name)) {
+      let abas: AbaLida[];
+      try {
+        const X = await import("xlsx");
+        abas = lerPlanilhaDoExcel(X, await f.arrayBuffer());
+      } catch { setAviso("Não consegui abrir esse arquivo do Excel. Salve de novo como .xlsx ou como CSV."); return; }
+      const i = escolherAba(abas, tipo);
+      if (i < 0) { setAviso("Não encontrei linhas nesse arquivo. Confira se a primeira linha de alguma aba é o cabeçalho."); return; }
+      usarAba({ nome: f.name, cabecalho: [], linhas: [], separador: "", truncado: false, abas, aba: i }, i);
+      return;
+    }
+    if (!/\.(csv|txt)$/i.test(f.name) && !/csv|text\/plain/.test(f.type)) { setAviso("Use um arquivo do Excel (.xlsx) ou CSV."); return; }
     const csv = lerCsv(await lerTextoDoArquivo(f));
     if (csv.cabecalho.length < 2 || csv.linhas.length === 0) { setAviso("Não encontrei linhas nesse arquivo. Confira se a primeira linha é o cabeçalho."); return; }
     setArquivo({ nome: f.name, cabecalho: csv.cabecalho, linhas: csv.linhas, separador: csv.separador, truncado: csv.truncado });
     setMapa(adivinharColunas(csv.cabecalho));
+  }
+
+  /** Passa a usar a aba `i` de um arquivo do Excel: o cabeçalho e as linhas dela, e as colunas adivinhadas de novo. */
+  function usarAba(a: ArquivoLido, i: number) {
+    const aba = (a.abas ?? [])[i];
+    if (!aba) return;
+    setArquivo({ ...a, aba: i, cabecalho: aba.cabecalho, linhas: aba.linhas, truncado: aba.truncado });
+    setMapa(adivinharColunas(aba.cabecalho));
   }
 
   const resumo = useMemo(() => (arquivo && mapa.dia !== null && (tipo === "vendas" || mapa.valor !== null) ? prepararImportacao(arquivo, tipo, mapa) : null), [arquivo, tipo, mapa]);
@@ -138,15 +160,28 @@ export function ImportarPlanilhaSheet({ existentes, erro, importando, arquivoIni
           </div>
         </div>
         <div className="rounded-xl border border-dashed bg-[#FBFAFD] px-4 py-4 text-center" style={{ borderColor: "rgba(13,13,13,.18)" }}>
-          {arquivo ? <p className="text-[0.8125rem] text-black/60"><span className="text-[#282525]">{arquivo.nome}</span> · {numero(arquivo.linhas.length)} linhas · separador “{arquivo.separador === "\t" ? "tab" : arquivo.separador}”{arquivo.truncado ? " · só as primeiras 20.000 linhas" : ""}</p> : <p className="text-[0.8125rem] text-black/45">Escolha o arquivo CSV da planilha.</p>}
+          {arquivo ? <p className="text-[0.8125rem] text-black/60"><span className="text-[#282525]">{arquivo.nome}</span> · {arquivo.abas ? "Excel" : `separador “${arquivo.separador === "\t" ? "tab" : arquivo.separador}”`} · {numero(arquivo.linhas.length)} linhas{arquivo.truncado ? " · só as primeiras 20.000 linhas" : ""}</p> : <p className="text-[0.8125rem] text-black/45">Escolha o arquivo do Excel ou CSV da planilha.</p>}
           <label className="mt-2 inline-block cursor-pointer rounded-xl border bg-white px-3.5 py-2 text-[0.75rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#7259B5]" style={{ borderColor: BORDA }}>
             {arquivo ? "Trocar arquivo" : "Escolher arquivo"}
-            <input type="file" accept=".csv,text/csv,text/plain" className="sr-only" disabled={importando} onChange={e => { void escolher(e.target.files?.[0]); e.target.value = ""; }} />
+            <input type="file" accept=".csv,.txt,.xlsx,.xls,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" className="sr-only" disabled={importando} onChange={e => { void escolher(e.target.files?.[0]); e.target.value = ""; }} />
           </label>
-          <p className="mt-2 text-[0.6875rem] text-black/40">Arquivo do Excel? Salve como CSV (Arquivo &gt; Salvar como). <a className="underline underline-offset-2" href={`data:text/csv;charset=utf-8,${encodeURIComponent(`﻿${modeloDeCsv(tipo)}`)}`} download={`modelo-${tipo === "vendas" ? "vendas" : "gastos"}.csv`}>Baixar modelo</a></p>
+          <p className="mt-2 text-[0.6875rem] text-black/40">Aceita Excel (.xlsx) e CSV. <a className="underline underline-offset-2" href={`data:text/csv;charset=utf-8,${encodeURIComponent(`﻿${modeloDeCsv(tipo)}`)}`} download={`modelo-${tipo === "vendas" ? "vendas" : "gastos"}.csv`}>Baixar modelo</a></p>
         </div>
         {arquivo && (
           <>
+            {arquivo.abas && arquivo.abas.length > 1 && (
+              <div>
+                <span className={ROTULO}>Qual aba usar</span>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Qual aba usar">
+                  {arquivo.abas.map((a, i) => (
+                    <button key={a.nome} type="button" onClick={() => usarAba(arquivo, i)} aria-pressed={arquivo.aba === i}
+                      className={`rounded-xl border px-3 py-1.5 text-[0.8125rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${arquivo.aba === i ? "border-[#7259B5] bg-[#F5F2FB] font-normal text-[#1C0E33]" : "bg-white text-black/60 hover:bg-black/[.03]"}`}
+                      style={arquivo.aba === i ? undefined : { borderColor: BORDA }}>{a.nome}</button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-[0.6875rem] text-black/40">{mapa.dia !== null ? `Escolhi “${arquivo.abas[arquivo.aba ?? 0].nome}” porque tem datas e ${tipo === "vendas" ? "quantidades" : "valores"}. Troque se for outra.` : "Não achei uma coluna de data nesta aba. Escolha a aba certa."}</p>
+              </div>
+            )}
             <div>
               <span className={ROTULO}>Onde está cada coisa</span>
               <div className="grid items-center gap-x-4 gap-y-2 sm:grid-cols-[1fr_1.3fr]">
