@@ -4,6 +4,10 @@
 export type SituacaoDoSite = "rascunho" | "publicado";
 export const SITUACOES_DO_SITE: readonly SituacaoDoSite[] = ["rascunho", "publicado"];
 
+/** `ticketeria_site_versoes.origem`: uma versão publicada ou o rascunho guardado antes de restaurar outra. */
+export type OrigemDaVersao = "publicada" | "rascunho_guardado";
+export const ORIGENS_DA_VERSAO: readonly OrigemDaVersao[] = ["publicada", "rascunho_guardado"];
+
 /** `ticketeria_sites.tema`: o jeito do site todo (os cinco temas prontos de lib/ticketeria/temas.ts). */
 export type TemaDoSite = "classico" | "editorial" | "moderno" | "noite" | "calor";
 export const TEMAS_DO_SITE: readonly TemaDoSite[] = ["classico", "editorial", "moderno", "noite", "calor"];
