@@ -50,7 +50,7 @@ export function emailDosIngressos(dados: IngressosDoPedido, endereco: string): {
     `${dados.evento}\n${quando}\n${onde}`,
     `Seus ingressos (mostre o código ou o QR Code na entrada):\n${linhas.join("\n")}`,
     `Para ver os ingressos com o QR Code: ${endereco}`,
-    `Pedido ${dados.codigo}. Para pedir reembolso em até 7 dias da compra, responda a este e-mail ou escreva com o assunto "reembolso - código do ingresso".`,
+    `Pedido ${dados.codigo}. Para pedir reembolso em até 7 dias da compra, use o botão “Pedir reembolso” na página dos ingressos (o link acima) ou escreva, do mesmo e-mail da compra, com o assunto "reembolso - código do ingresso".`,
   ].join("\n\n");
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#282525">`
     + `<p style="margin:0 0 14px">Olá, ${escapar(dados.comprador_nome)}! Seu pagamento foi confirmado.</p>`
@@ -58,7 +58,7 @@ export function emailDosIngressos(dados: IngressosDoPedido, endereco: string): {
     + `<p style="margin:0 0 6px">Seus ingressos (mostre o código ou o QR Code na entrada):</p>`
     + `<ul style="margin:0 0 14px;padding-left:18px">${validos.map(i => `<li>${escapar(i.nome)}${i.assento ? ` (${escapar(i.assento)})` : ""}: <strong style="letter-spacing:2px">${escapar(i.codigo)}</strong></li>`).join("")}</ul>`
     + `<p style="margin:0 0 14px"><a href="${escapar(endereco)}">Ver os ingressos com o QR Code</a></p>`
-    + `<p style="margin:0;color:#6b6767;font-size:13px">Pedido ${escapar(dados.codigo)}. Para pedir reembolso em até 7 dias da compra, escreva com o assunto "reembolso - código do ingresso".</p>`
+    + `<p style="margin:0;color:#6b6767;font-size:13px">Pedido ${escapar(dados.codigo)}. Para pedir reembolso em até 7 dias da compra, use o botão “Pedir reembolso” na página dos ingressos (o link acima) ou escreva, do mesmo e-mail da compra, com o assunto "reembolso - código do ingresso".</p>`
     + `</div>`;
   return { assunto: `Seus ingressos: ${dados.evento}`, texto, html };
 }

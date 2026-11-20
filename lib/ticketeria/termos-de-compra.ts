@@ -1,12 +1,12 @@
 // Os Termos de compra de ingressos (passo C, parte final): o texto que o comprador lê e aceita antes de gerar o Pix. Só o texto e a versão, sem imports de servidor: a página
 // pública (/termos-de-compra) e a tela de compra usam os mesmos números, e o aceite grava a versão (fn_ticketeria_registrar_aceite). TROCAR O TEXTO = trocar a versão.
 //
-// Segue as decisões do plano (docs/acoes-futuras/estudos/plano-modulo-ticketeria.md): D1 (o organizador vende; o Jards é a plataforma), D5 e D15 (devolução e reembolso por e-mail),
+// Segue as decisões do plano (docs/acoes-futuras/estudos/plano-modulo-ticketeria.md): D1 (o organizador vende; o Jards é a plataforma), D5 e D15 (devolução e reembolso, pela página do pedido ou por e-mail),
 // D6 e D17 (dados), D14 (o preço é o que se paga). Em português simples, sem rodeios.
 
 /** A versão do texto abaixo. Muda toda vez que o texto muda; o pedido guarda a versão que o comprador aceitou. */
-export const VERSAO_DOS_TERMOS_DE_COMPRA = "2026-11-19";
-export const ATUALIZADO_EM_DOS_TERMOS_DE_COMPRA = "19 de novembro de 2026";
+export const VERSAO_DOS_TERMOS_DE_COMPRA = "2026-11-20";
+export const ATUALIZADO_EM_DOS_TERMOS_DE_COMPRA = "20 de novembro de 2026";
 
 export type SecaoDosTermos = { id: string; titulo: string; paragrafos: string[] };
 
@@ -44,17 +44,18 @@ export const SECOES_DOS_TERMOS_DE_COMPRA: SecaoDosTermos[] = [
   {
     id: "desistir", titulo: "Desistir da compra",
     paragrafos: [
-      "Você pode desistir de uma compra feita pela internet em até 7 dias corridos, contados da hora em que o seu pedido de reembolso chegar até nós, desde que a compra tenha sido feita há no máximo 7 dias (art. 49 do Código de Defesa do Consumidor).",
-      "Para pedir, envie um e-mail para {email} com o assunto \"reembolso - código do ingresso\", trocando \"código do ingresso\" pelo código que aparece no seu ingresso. Escreva a partir do mesmo e-mail que você usou na compra.",
-      "Pedidos feitos dentro do prazo e a partir do e-mail da compra são atendidos automaticamente: devolvemos o valor total pelo mesmo Pix, e os ingressos do pedido deixam de valer. O tempo para o dinheiro aparecer na sua conta depende do seu banco.",
-      "Pedidos de outro endereço de e-mail não são atendidos automaticamente: ficam para uma conferência nossa. O mesmo vale se algum ingresso do pedido já tiver sido usado na entrada.",
+      "Você pode desistir de uma compra feita pela internet em até 7 dias corridos, contados da hora em que o seu pedido de reembolso for feito, desde que a compra tenha sido feita há no máximo 7 dias (art. 49 do Código de Defesa do Consumidor).",
+      "O jeito mais simples é pela página do seu pedido (o link que chega no e-mail dos ingressos): toque em \"Pedir reembolso\". Enviamos um link de confirmação ao e-mail que você usou na compra, e o reembolso só sai quando você abrir esse link e confirmar. O link vale por pouco tempo (48 horas, e nunca além dos 7 dias da compra) e só pode ser usado uma vez. Se você não confirmar, nada acontece com o seu pedido.",
+      "Se preferir, envie um e-mail para {email} com o assunto \"reembolso - código do ingresso\", trocando \"código do ingresso\" pelo código que aparece no seu ingresso. Escreva a partir do mesmo e-mail que você usou na compra.",
+      "Pedidos feitos dentro do prazo (pela página, depois de confirmados, ou pelo e-mail da compra) são atendidos automaticamente: devolvemos o valor total pelo mesmo meio com que você pagou, e os ingressos do pedido deixam de valer. O tempo para o dinheiro aparecer na sua conta depende do seu banco.",
+      "Pedidos por e-mail vindos de outro endereço não são atendidos automaticamente: ficam para uma conferência nossa. O mesmo vale se algum ingresso do pedido já tiver sido usado na entrada.",
       "Depois de 7 dias da compra, não há devolução por desistência. Cancelamento e adiamento do evento seguem a regra da seção seguinte.",
     ],
   },
   {
     id: "cancelado", titulo: "Evento cancelado ou adiado",
     paragrafos: [
-      "Se o evento ou a sessão for cancelado, devolvemos o valor de todos os ingressos, sem você precisar pedir. Se for adiado, você tem direito ao reembolso e pode pedi-lo pelo mesmo e-mail da seção anterior.",
+      "Se o evento ou a sessão for cancelado, devolvemos o valor de todos os ingressos, sem você precisar pedir. Se for adiado, você tem direito ao reembolso e pode pedi-lo da mesma forma que na seção anterior.",
       "A devolução é de responsabilidade do organizador do evento e é feita pela plataforma.",
     ],
   },

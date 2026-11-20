@@ -25,6 +25,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/ticketeria/porta-equipe", 300],
   // A API pública de leitura da Ticketeria (sem login, aberta a outros sites): por IP; o cache da borda segura o grosso.
   ["/api/ticketeria/publico", 120],
+  // Pedir e confirmar o reembolso pela página do pedido (sem login): poucas por minuto, por IP; o link é de uso único e o banco limita os pedidos por pedido.
+  ["/api/ticketeria/pedido", 10],
   ["/api/ticketeria/compra/cupom", 15],
   // O mapa de lugares de uma sessão (sem login): a tela o relê a cada vez que abre.
   ["/api/ticketeria/compra/mapa", 40],

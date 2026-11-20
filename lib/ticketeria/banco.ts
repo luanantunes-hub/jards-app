@@ -2453,6 +2453,7 @@ export type BancoDaTicketeria = {
           valor_centavos: number | null;
           pago_em: string | null;
           estorno_ref: string | null;
+          origem: string;
           created_at: string;
           updated_at: string;
         };
@@ -2470,6 +2471,7 @@ export type BancoDaTicketeria = {
           valor_centavos?: number | null;
           pago_em?: string | null;
           estorno_ref?: string | null;
+          origem?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -2487,8 +2489,42 @@ export type BancoDaTicketeria = {
           valor_centavos?: number | null;
           pago_em?: string | null;
           estorno_ref?: string | null;
+          origem?: string;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ticketeria_reembolso_links: {
+        Row: {
+          id: string;
+          pedido_id: string;
+          token_hash: string;
+          pedido_em: string;
+          expira_em: string;
+          usado_em: string | null;
+          invalidado_em: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          pedido_id: string;
+          token_hash: string;
+          pedido_em?: string;
+          expira_em: string;
+          usado_em?: string | null;
+          invalidado_em?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          pedido_id?: string;
+          token_hash?: string;
+          pedido_em?: string;
+          expira_em?: string;
+          usado_em?: string | null;
+          invalidado_em?: string | null;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -2931,6 +2967,18 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_reembolso_reabrir: {
         Args: { p_reembolso: string; p_loja: string };
+        Returns: Json;
+      };
+      fn_ticketeria_reembolso_link_pedir: {
+        Args: { p_pedido: string; p_hash: string };
+        Returns: Json;
+      };
+      fn_ticketeria_reembolso_link_ver: {
+        Args: { p_pedido: string; p_hash: string };
+        Returns: Json;
+      };
+      fn_ticketeria_reembolso_link_consumir: {
+        Args: { p_pedido: string; p_hash: string };
         Returns: Json;
       };
       fn_ticketeria_midia_guardar_conexao: {
