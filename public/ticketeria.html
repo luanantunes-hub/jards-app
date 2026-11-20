@@ -34,8 +34,8 @@
 
 /* ── Landing da Ticketeria: concreto claro, tipografia condensada e fios finos ──
    Tudo com o prefixo tku-. Violeta iris #6450D2, laranja #FF5528 e lima #DCFF00 sobre concreto #F4F3EF; texto e superfícies escuras no roxo noite #1C0E33 (o dos botões do app).
-   Os fios são de 1px, sem sombra dura. Menu e rodapé são os de todas as páginas do site. */
-.tku { --tku-ink:#1C0E33; --tku-papel:#F4F3EF; --tku-linha:rgba(28,14,51,.14); --tku-mudo:#66655F; --tku-vio:#6450D2; --tku-amb:#FF5528; --tku-ambl:rgba(255,85,40,.13); --tku-lil:#E6E1FA; --tku-lima:#DCFF00;
+   Cantos de 12px e fios de 1px em tom suave, sem borda dura ou sombra seca. Menu e rodapé são os de todas as páginas do site. */
+.tku { --tku-ink:#1C0E33; --tku-papel:#F4F3EF; --tku-linha:rgba(28,14,51,.12); --tku-raio:12px; --tku-sup:rgba(255,255,255,.78); --tku-mudo:#66655F; --tku-vio:#6450D2; --tku-amb:#FF5528; --tku-ambl:rgba(255,85,40,.13); --tku-lil:#E6E1FA; --tku-lima:#DCFF00;
   background:var(--tku-papel); color:var(--tku-ink); font-family:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif; font-weight:400; }
 .tku *, .tku *::before, .tku *::after { box-sizing:border-box; }
 :where(.tku) :is(h1,h2,h3,p,ul,pre) { margin:0; padding:0; }
@@ -47,14 +47,14 @@
 .tku ::selection { background:var(--tku-lima); color:var(--tku-ink); }
 .tku-vio { color:var(--tku-vio); }
 .tku-mudo { color:var(--tku-mudo); }
-.tku-btn { display:inline-flex; align-items:center; justify-content:space-between; gap:22px; min-height:48px; padding:0 18px; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:12px; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; text-decoration:none; transition:background-color .16s ease, color .16s ease; }
+.tku-btn { display:inline-flex; border-radius:var(--tku-raio); align-items:center; justify-content:space-between; gap:22px; min-height:48px; padding:0 18px; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:12px; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; text-decoration:none; transition:background-color .16s ease, color .16s ease; }
 .tku-btn i { font-style:normal; font-size:16px; }
 .tku-btn--pr { background:var(--tku-ink); color:#fff; }
 .tku-btn--pr i { color:#B79CFF; }
 .tku-btn--pr:hover { background:#2D1A53; }
 .tku-btn--am { background:var(--tku-amb); color:var(--tku-ink); }
 .tku-btn--am:hover { background:#FF6C45; }
-.tku-btn--ln { border:1px solid var(--tku-ink); color:var(--tku-ink); }
+.tku-btn--ln { border:1px solid rgba(28,14,51,.28); color:var(--tku-ink); }
 .tku-btn--ln:hover { background:rgba(28,14,51,.05); }
 .tku a:focus-visible, .tku summary:focus-visible { outline:2px solid var(--tku-vio); outline-offset:3px; }
 .tku-cta .tku-btn:focus-visible { outline-color:#fff; }
@@ -68,18 +68,12 @@
 .tku-sub { display:grid; grid-template-columns:minmax(0,470px) minmax(0,1fr); gap:56px; margin-top:44px; padding-bottom:64px; }
 .tku-desc { font-size:17px; line-height:1.6; color:#3A3935; max-width:470px; }
 .tku-acoes { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
-.tku-spec { margin-top:30px; border:1px solid var(--tku-linha); background:rgba(255,255,255,.7); max-width:470px; }
+.tku-spec { margin-top:30px; border:1px solid var(--tku-linha); border-radius:var(--tku-raio); overflow:hidden; background:var(--tku-sup); max-width:470px; }
 .tku-spec li { display:flex; gap:14px; padding:9px 14px; border-top:1px solid var(--tku-linha); font-size:13.5px; line-height:1.45; font-weight:400; }
 .tku-spec li:first-child { border-top:0; }
 .tku-spec b { font-family:'Geist Mono',monospace; font-weight:500; color:var(--tku-vio); min-width:22px; }
-.tku-ler { margin-top:22px; display:inline-block; border:1px solid var(--tku-amb); background:var(--tku-ambl); padding:11px 15px; font-size:12px; line-height:1.75; }
-.tku-ler b { font-weight:500; }
-.tku-palco { position:relative; border:1px solid var(--tku-linha); background:rgba(255,255,255,.6); align-self:start; }
+.tku-palco { position:relative; border:1px solid var(--tku-linha); border-radius:var(--tku-raio); overflow:hidden; background:var(--tku-sup); align-self:start; }
 .tku-palco img { display:block; width:100%; height:auto; }
-.tku-tick { position:absolute; width:11px; height:11px; }
-.tku-tick::before, .tku-tick::after { content:""; position:absolute; background:var(--tku-ink); }
-.tku-tick::before { left:5px; top:0; width:1px; height:11px; }
-.tku-tick::after { top:5px; left:0; height:1px; width:11px; }
 .tku-fig { display:flex; justify-content:space-between; gap:12px; margin-top:8px; color:var(--tku-mudo); }
 
 /* seções */
@@ -89,21 +83,12 @@
 .tku-h2 { font-size:clamp(38px,5.6vw,72px); line-height:1.03; margin-top:26px; max-width:980px; padding-bottom:.06em; letter-spacing:-.05em; }
 .tku-h2 .tku-vio { color:var(--tku-vio); }
 .tku-lede { margin-top:22px; font-size:16px; line-height:1.6; color:#3A3935; max-width:520px; }
-.tku-tres { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:48px; }
-.tku-tres > article { padding:6px 28px 8px 0; }
-.tku-tres > article + article { padding-left:28px; border-left:1px solid var(--tku-linha); }
+.tku-tres { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:48px; }
+.tku-tres > article { padding:28px 28px 30px; background:var(--tku-sup); border:1px solid var(--tku-linha); border-radius:var(--tku-raio); }
 .tku-tres svg { width:44px; height:44px; stroke:var(--tku-ink); fill:none; stroke-width:1.2; }
 .tku-tres .tku-k { margin-top:22px; color:var(--tku-vio); }
 .tku-tres h3 { font-size:28px; line-height:1.1; margin-top:8px; }
 .tku-tres p.tku-t { margin-top:12px; font-size:14.5px; line-height:1.6; color:var(--tku-mudo); max-width:300px; }
-.tku-pas { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); margin-top:44px; border-top:1px solid var(--tku-linha); border-bottom:1px solid var(--tku-linha); }
-.tku-pas > article { padding:22px 20px 26px 0; min-height:220px; }
-.tku-pas > article + article { padding-left:22px; border-left:1px solid var(--tku-linha); }
-.tku-pas .tku-n { font-size:84px; line-height:.8; color:transparent; -webkit-text-stroke:1.2px var(--tku-ink); margin-top:8px; display:block; }
-.tku-pas h3 { font-size:30px; margin-top:34px; }
-.tku-pas p { margin-top:8px; font-size:13.5px; line-height:1.5; color:var(--tku-mudo); max-width:190px; }
-.tku-pas > article:last-child .tku-n { -webkit-text-stroke-color:var(--tku-vio); }
-.tku-pas > article:last-child h3 { color:var(--tku-vio); }
 .tku-duas { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,540px); gap:56px; margin-top:34px; align-items:start; }
 .tku-duas--inv { grid-template-columns:minmax(0,540px) minmax(0,1fr); }
 .tku-duas .tku-h2 { font-size:clamp(38px,5vw,64px); margin-top:0; }
@@ -113,26 +98,26 @@
 .tku-lista li::before { content:"+"; font-family:'Geist Mono',monospace; color:var(--tku-vio); font-weight:500; }
 .tku-lista--tres { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 28px; max-width:none; margin-top:40px; }
 .tku-lista--tres li { max-width:none; border-bottom:1px solid var(--tku-linha); }
-.tku-janela { border:1px solid var(--tku-ink); background:#fff; }
-.tku-janela .tku-h { display:flex; justify-content:space-between; gap:12px; padding:10px 16px; background:var(--tku-ink); color:#fff; }
+.tku-janela { border:1px solid var(--tku-linha); border-radius:var(--tku-raio); overflow:hidden; background:#fff; box-shadow:0 1px 2px rgba(28,14,51,.04), 0 24px 48px -28px rgba(28,14,51,.28); }
+.tku-janela .tku-h { display:flex; justify-content:space-between; gap:12px; padding:12px 16px; background:#FAF9F7; color:var(--tku-mudo); border-bottom:1px solid var(--tku-linha); }
 .tku-janela .tku-b { padding:16px; }
-.tku-url { margin:16px; border:1px solid var(--tku-linha); }
+.tku-url { margin:16px; border:1px solid var(--tku-linha); border-radius:8px; overflow:hidden; }
 .tku-url .tku-bar { padding:8px 12px; background:var(--tku-papel); border-bottom:1px solid var(--tku-linha); font-size:11.5px; }
 .tku-tab { width:100%; border-collapse:collapse; font-size:13.5px; }
 .tku-tab th { text-align:left; padding:9px 14px; border-bottom:1px solid var(--tku-linha); }
 .tku-tab td { padding:10px 14px; border-top:1px solid var(--tku-linha); font-weight:400; }
 .tku-tab th:last-child, .tku-tab td:last-child { text-align:right; }
 .tku-tab tr:first-child td { border-top:0; }
-.tku-tot { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 16px; border-top:1px solid var(--tku-ink); background:var(--tku-ambl); font-size:13px; font-weight:400; }
-.tku-tot .tku-btn { min-height:38px; background:var(--tku-ink); color:#fff; }
+.tku-tot { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 16px; border-top:1px solid var(--tku-linha); background:var(--tku-ambl); font-size:13px; font-weight:400; }
+.tku-tot .tku-btn { min-height:38px; border-radius:10px; background:var(--tku-ink); color:#fff; }
 .tku-bar2 { display:grid; grid-template-columns:96px minmax(0,1fr) 112px; gap:12px; align-items:center; margin-top:12px; }
 .tku-bar2:first-child { margin-top:0; }
-.tku-bar2 i { display:block; height:7px; background:rgba(28,14,51,.1); position:relative; }
+.tku-bar2 i { display:block; height:7px; border-radius:99px; overflow:hidden; background:rgba(28,14,51,.1); position:relative; }
 .tku-bar2 i::after { content:""; position:absolute; left:0; top:0; bottom:0; width:var(--w); background:var(--tku-vio); }
 .tku-bar2 span:last-child { text-align:right; }
 .tku-ln { display:flex; gap:10px; align-items:center; padding:10px 16px; border-top:1px solid var(--tku-linha); font-size:13px; font-weight:400; }
 .tku-ln em { margin-left:auto; font-style:normal; color:var(--tku-mudo); font-family:'Geist Mono',monospace; font-size:11px; text-align:right; }
-.tku-tg { font-family:'Geist Mono',monospace; font-size:10px; text-transform:uppercase; padding:3px 7px; letter-spacing:.05em; white-space:nowrap; }
+.tku-tg { font-family:'Geist Mono',monospace; font-size:10px; text-transform:uppercase; padding:3px 8px; border-radius:6px; letter-spacing:.05em; white-space:nowrap; }
 .tku-tg--g { background:#DDF3C9; color:#2C6B0E; }
 .tku-tg--y { background:var(--tku-ambl); color:#A8300F; }
 .tku-tg--r { background:#FFDADA; color:#A22; }
@@ -141,9 +126,8 @@
 .tku-quem li:last-child { border-bottom:1px solid var(--tku-linha); }
 .tku-quem b { font-size:clamp(38px,7.2vw,92px); line-height:1.06; padding:14px 0 12px; letter-spacing:-.055em; }
 .tku-quem li:nth-child(2) b { color:var(--tku-vio); }
-.tku-dois { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0; margin-top:34px; }
-.tku-dois > div { padding:4px 28px 4px 0; }
-.tku-dois > div + div { padding-left:28px; border-left:1px solid var(--tku-linha); }
+.tku-dois { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:34px; }
+.tku-dois > div { padding:28px 28px 30px; background:var(--tku-sup); border:1px solid var(--tku-linha); border-radius:var(--tku-raio); }
 .tku-dois h3 { font-size:28px; line-height:1.1; margin-top:8px; }
 .tku-dois p.tku-t { margin-top:10px; font-size:14.5px; line-height:1.6; color:var(--tku-mudo); max-width:380px; }
 .tku-sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
@@ -158,11 +142,11 @@
 .tku-faq p { padding:0 0 22px; font-size:15px; line-height:1.65; color:var(--tku-mudo); max-width:640px; }
 
 /* fechamento */
-.tku-cta { margin:72px 40px 72px; border-radius:14px; background:var(--tku-ink); color:#fff; padding:48px 56px 52px; position:relative; overflow:hidden; }
+.tku-cta { margin:72px 40px 72px; border-radius:var(--tku-raio); background:var(--tku-ink); color:#fff; padding:48px 56px 52px; position:relative; overflow:hidden; }
 .tku-cta > * { position:relative; z-index:1; }
 .tku-cta h2 { font-size:min(100px,8.2vw); line-height:1.02; margin-top:18px; letter-spacing:-.055em; }
 .tku-cta h2 span { color:var(--tku-amb); }
-.tku-cta .tku-tk { margin-top:30px; border-top:1px solid rgba(255,255,255,.2); border-bottom:1px solid rgba(255,255,255,.2); padding:12px 0; display:flex; gap:34px; flex-wrap:wrap; color:rgba(255,255,255,.7); }
+.tku-cta .tku-tk { margin-top:30px; border-top:1px solid rgba(255,255,255,.14); border-bottom:1px solid rgba(255,255,255,.14); padding:12px 0; display:flex; gap:34px; flex-wrap:wrap; color:rgba(255,255,255,.7); }
 .tku-cta .tku-tk b { color:var(--tku-lima); font-weight:400; }
 .tku-cta p.tku-fim { margin-top:30px; display:flex; flex-wrap:wrap; gap:18px; align-items:center; }
 
@@ -170,11 +154,7 @@
   .tku-in { padding:0 32px; }
   .tku-sub, .tku-duas, .tku-duas--inv { grid-template-columns:minmax(0,1fr); gap:40px; }
   .tku-tres { grid-template-columns:minmax(0,1fr); }
-  .tku-tres > article, .tku-tres > article + article { padding:24px 0; border-left:0; border-top:1px solid var(--tku-linha); }
-  .tku-pas { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .tku-pas > article, .tku-pas > article + article { padding:22px 16px 24px 0; border-left:0; border-top:1px solid var(--tku-linha); min-height:0; }
-  .tku-pas > article:nth-child(-n+2) { border-top:0; }
-  .tku-lista--tres { grid-template-columns:minmax(0,1fr); }
+        .tku-lista--tres { grid-template-columns:minmax(0,1fr); }
   .tku-cta { margin:56px 20px; padding:36px 28px 40px; }
 }
 @media (max-width:640px) {
@@ -182,24 +162,20 @@
   .tku-hero { padding-top:88px; }
   .tku-hero h1 { font-size:clamp(38px,11.4vw,62px); }
   .tku-dois { grid-template-columns:minmax(0,1fr); }
-  .tku-dois > div, .tku-dois > div + div { padding:20px 0; border-left:0; border-top:1px solid var(--tku-linha); }
   .tku-bar2 { grid-template-columns:76px minmax(0,1fr) 92px; }
   .tku-quem b { font-size:clamp(30px,10vw,46px); }
   .tku-cta h2 { font-size:clamp(34px,10.4vw,54px); }
-  .tku-pas { grid-template-columns:minmax(0,1fr); }
-  .tku-pas > article:nth-child(2) { border-top:1px solid var(--tku-linha); }
-  .tku-btn { white-space:normal; }
+      .tku-btn { white-space:normal; }
 }
 @media (prefers-reduced-motion: reduce) { .tku-btn, .tku-faq summary i { transition:none; } }
 
 /* situação de cada capacidade */
-.tku-st { display:inline-flex; align-items:center; gap:7px; padding:3px 8px; border:1px solid var(--tku-linha); background:rgba(255,255,255,.7); font-family:'Geist Mono',ui-monospace,monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; color:var(--tku-ink); }
+.tku-st { display:inline-flex; align-items:center; gap:7px; padding:3px 8px; border-radius:999px; border:1px solid var(--tku-linha); background:rgba(255,255,255,.7); font-family:'Geist Mono',ui-monospace,monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; color:var(--tku-ink); }
 .tku-st::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--tku-lima); box-shadow:0 0 0 1px rgba(28,14,51,.45); }
 .tku-st--c::before { background:var(--tku-amb); }
 .tku-st--b::before { background:transparent; border:1.5px solid var(--tku-vio); }
-.tku-seis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:48px; border-top:1px solid var(--tku-linha); }
-.tku-seis > article { padding:26px 28px 30px 0; border-bottom:1px solid var(--tku-linha); }
-.tku-seis > article:not(:nth-child(3n+1)) { padding-left:28px; border-left:1px solid var(--tku-linha); }
+.tku-seis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:48px; }
+.tku-seis > article { padding:26px 26px 30px; background:var(--tku-sup); border:1px solid var(--tku-linha); border-radius:var(--tku-raio); }
 .tku-seis h3 { font-size:25px; line-height:1.12; margin-top:20px; }
 .tku-seis p.tku-t { margin-top:12px; font-size:14.5px; line-height:1.6; color:var(--tku-mudo); max-width:300px; }
 .tku-par { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; margin-top:40px; align-items:start; }
@@ -209,11 +185,11 @@
 .tku-pre { margin:0; padding:18px 20px; background:var(--tku-ink); color:#E8E6DF; font-family:'Geist Mono',ui-monospace,monospace; font-size:12.5px; line-height:1.75; overflow:auto; }
 .tku-pre .k { color:#B79CFF; } .tku-pre .v { color:var(--tku-amb); }
 .tku-tres--st h3 { font-size:25px; }
-.tku-vemai { margin-top:34px; border-top:1px solid var(--tku-linha); }
-.tku-vemai li { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px 0; border-bottom:1px solid var(--tku-linha); font-size:20px; font-weight:500; letter-spacing:-.02em; }
+.tku-vemai { margin-top:34px; border:1px solid var(--tku-linha); border-radius:var(--tku-raio); overflow:hidden; background:var(--tku-sup); }
+.tku-vemai li { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px 24px; border-top:1px solid var(--tku-linha); font-size:20px; font-weight:500; letter-spacing:-.02em; }
+.tku-vemai li:first-child { border-top:0; }
 @media (max-width:1023px) {
   .tku-seis { grid-template-columns:minmax(0,1fr); }
-  .tku-seis > article, .tku-seis > article:not(:nth-child(3n+1)) { padding:24px 0; border-left:0; }
   .tku-par { grid-template-columns:minmax(0,1fr); }
   .tku-quem--d li > div { flex-direction:column; align-items:flex-start; gap:6px; padding-bottom:14px; }
 }
@@ -227,7 +203,7 @@ img, svg { display:block; max-width:100%; }
 button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
 table { border-collapse:collapse; }
 section[id] { scroll-margin-top:72px; }
-.skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; background:#1C0E33; color:#fff; font-size:13px; transition:transform .18s ease; }
+.skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:8px; background:#1C0E33; color:#fff; font-size:13px; transition:transform .18s ease; }
 .skip-link:focus { transform:translateY(0); }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } .skip-link { transition:none; } }
 /* identidade e navegação */
@@ -293,7 +269,7 @@ section[id] { scroll-margin-top:72px; }
       <div>
         <div class="tku-palco">
           <img src="assets/ticketeria-painel.webp" width="1096" height="738" alt="Prévia da Ticketeria: painel do organizador no computador e ingresso com QR no celular" />
-          <span class="tku-tick" style="left:-6px;top:-6px" aria-hidden="true"></span><span class="tku-tick" style="right:-6px;top:-6px" aria-hidden="true"></span><span class="tku-tick" style="left:-6px;bottom:-6px" aria-hidden="true"></span><span class="tku-tick" style="right:-6px;bottom:-6px" aria-hidden="true"></span>
+          
         </div>
         <p class="tku-fig tku-mono"><span>Fig. 01 · prévia da plataforma</span><span>Dados de exemplo</span></p>
       </div>
