@@ -1,4 +1,4 @@
-// GET /api/ticketeria/midia/ler-todas: a leitura diária (Vercel Cron, ver vercel.json). Lê o gasto de todas as conexões ativas do Meta, uma de cada vez. Só aceita o cabeçalho
+// GET /api/ticketeria/midia/ler-todas: a leitura diária (Vercel Cron, ver vercel.json). Lê o gasto de todas as conexões ativas (Meta e Google Ads), uma de cada vez. Só aceita o cabeçalho
 // `Authorization: Bearer ${CRON_SECRET}` (a Vercel o envia sozinha quando a variável existe); sem CRON_SECRET configurado responde 503.
 
 import { timingSafeEqual } from "crypto";
@@ -6,7 +6,7 @@ import { type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { resposta } from "@/lib/ticketeria/pagamento/autorizar-loja";
-import { lerConexaoAgora, metaConfigurada } from "@/lib/ticketeria/midia/servidor";
+import { lerConexaoAgora } from "@/lib/ticketeria/midia/servidor";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -24,14 +24,12 @@ function autorizado(req: NextRequest): boolean {
 export async function GET(req: NextRequest) {
   if (!process.env.CRON_SECRET) return resposta({ error: "cron_indisponivel" }, 503);
   if (!autorizado(req)) return resposta({ error: "nao_autorizado" }, 401);
-  const config = metaConfigurada();
-  if (!config) return resposta({ lidas: 0, erros: 0, motivo: "meta_indisponivel" });
   const admin = createAdminClient();
-  const { data: ativas } = await clienteDaTicketeria(admin).from("ticketeria_conexoes_midia").select("id").eq("provedor", "meta").eq("situacao", "ativa").order("ultima_leitura_em", { ascending: true, nullsFirst: true }).limit(MAX_CONEXOES_POR_RODADA);
+  const { data: ativas } = await clienteDaTicketeria(admin).from("ticketeria_conexoes_midia").select("id").eq("situacao", "ativa").order("ultima_leitura_em", { ascending: true, nullsFirst: true }).limit(MAX_CONEXOES_POR_RODADA);
   let lidas = 0;
   let erros = 0;
   for (const c of ativas ?? []) {
-    const r = await lerConexaoAgora(admin, config, c.id);
+    const r = await lerConexaoAgora(admin, c.id);
     if (r?.ok) lidas++; else erros++;
   }
   return resposta({ lidas, erros });

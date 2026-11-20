@@ -1038,6 +1038,7 @@ export type BancoDaTicketeria = {
           provedor: string;
           situacao: string;
           conta_externa_id: string | null;
+          conta_gerente_id: string | null;
           conta_nome: string | null;
           moeda: string | null;
           token_secret_id: string | null;
@@ -1055,6 +1056,7 @@ export type BancoDaTicketeria = {
           provedor: string;
           situacao?: string;
           conta_externa_id?: string | null;
+          conta_gerente_id?: string | null;
           conta_nome?: string | null;
           moeda?: string | null;
           token_secret_id?: string | null;
@@ -1072,6 +1074,7 @@ export type BancoDaTicketeria = {
           provedor?: string;
           situacao?: string;
           conta_externa_id?: string | null;
+          conta_gerente_id?: string | null;
           conta_nome?: string | null;
           moeda?: string | null;
           token_secret_id?: string | null;
@@ -2453,7 +2456,7 @@ export type BancoDaTicketeria = {
         Returns: Json;
       };
       fn_ticketeria_midia_guardar_conexao: {
-        Args: { p_loja: string; p_provedor: string; p_token: string; p_expira_em: string };
+        Args: { p_loja: string; p_provedor: string; p_token: string; p_expira_em: string | null };
         Returns: string;
       };
       fn_ticketeria_midia_token: {
@@ -2470,6 +2473,10 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_midia_marcar: {
         Args: { p_conexao: string; p_ok: boolean; p_erro: string | null; p_token_invalido: boolean; p_lido_desde: string | null };
+        Returns: undefined;
+      };
+      fn_ticketeria_midia_definir_gerente: {
+        Args: { p_conexao: string; p_gerente: string | null };
         Returns: undefined;
       };
       fn_ticketeria_midia_desconectar: {

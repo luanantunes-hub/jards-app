@@ -148,7 +148,7 @@ select is((select situacao || '|' || conta_nome || '|' || moeda from public.tick
 select is(public.fn_ticketeria_midia_gravar_dias((select id from tv.ids where nome = 'c1'), '[{"dia":"2026-11-18","gasto_centavos":8000,"impressoes":5000,"alcance":0,"cliques":40},{"dia":"2026-11-19","gasto_centavos":12050,"impressoes":9000,"alcance":7000,"cliques":130}]'::jsonb), 2, 'grava dois dias');
 select is(public.fn_ticketeria_midia_gravar_dias((select id from tv.ids where nome = 'c1'), '[{"dia":"2026-11-19","gasto_centavos":13000,"impressoes":9500,"alcance":7100,"cliques":140}]'::jsonb), 1, 'refaz o mesmo dia');
 select is((select count(*)::int || '|' || sum(gasto_centavos)::int from public.ticketeria_midia_diaria where loja_id = tv.id('61')), '2|21000', 'sem duplicar: o dia refeito vale o novo número');
-select is((select canal from public.ticketeria_midia_diaria where dia = '2026-11-18'), 'anuncio-pago', 'o canal do Meta é anúncio pago');
+select is((select canal from public.ticketeria_midia_diaria where dia = '2026-11-18'), 'meta-ads', 'o canal do Meta é meta-ads');
 select public.fn_ticketeria_midia_marcar((select id from tv.ids where nome = 'c1'), false, 'O acesso ao Meta venceu ou foi retirado. Conecte de novo.', true, null);
 select is((select situacao from public.ticketeria_conexoes_midia where loja_id = tv.id('61')), 'erro', 'erro de token põe a conexão em erro');
 select is(public.fn_ticketeria_midia_token((select id from tv.ids where nome = 'c1')), null, 'e o token não é mais entregue');

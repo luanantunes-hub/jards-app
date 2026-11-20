@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { CartaoDoMeta, ConexoesDaLoja, EscolherContaSheet, type ConexaoMeta } from "../components/ticketeria/ConexoesView";
+import { CartaoDeAnuncios, CartaoDoMeta, ConexoesDaLoja, EscolherContaSheet, type ConexaoMeta } from "../components/ticketeria/ConexoesView";
 
 const html = (el: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(el).replace(/ /g, " ");
 const ativa: ConexaoMeta = { situacao: "ativa", conta_nome: "Cia Atores de Mar", moeda: "BRL", ultima_leitura_em: "2026-11-20T09:10:00Z", ultimo_erro: null, lido_desde: "2025-11-20", gasto_30_dias_centavos: 184230 };
@@ -23,9 +23,22 @@ test("o cartão do Meta em cada situação", () => {
   assert.ok(html(createElement(CartaoDoMeta, { meta: { disponivel: true, conexao: { ...ativa, ultimo_erro: "A Meta pediu para esperar um pouco." } } })).includes("pediu para esperar"));
 });
 
-test("a aba: o texto de só leitura, os outros conectores em breve e o aviso da volta do login", () => {
-  const aba = html(createElement(ConexoesDaLoja, { meta: { disponivel: true, conexao: null }, aviso: "O Meta não liberou o acesso." }));
-  for (const t of ["Só leitura", "Anúncios pagos", "Google Ads", "TikTok Ads", "Em breve", "O Meta não liberou o acesso."]) assert.ok(aba.includes(t), `falta: ${t}`);
+test("o cartão do Google Ads: o mesmo cartão, com o nome e as frases dele", () => {
+  const sem = html(createElement(CartaoDeAnuncios, { provedor: "google_ads", estado: { disponivel: true, conexao: null } }));
+  assert.ok(sem.includes("Google Ads") && sem.includes("Pesquisa e YouTube") && sem.includes("Conectar"));
+  const escolher = html(createElement(CartaoDeAnuncios, { provedor: "google_ads", estado: { disponivel: true, conexao: { ...ativa, situacao: "escolher_conta", conta_nome: null } } }));
+  assert.ok(escolher.includes("Você entrou no Google Ads"));
+  const erro = html(createElement(CartaoDeAnuncios, { provedor: "google_ads", estado: { disponivel: true, conexao: { ...ativa, situacao: "erro", ultimo_erro: null } } }));
+  assert.ok(erro.includes("O acesso ao Google Ads venceu ou foi retirado"));
+  assert.ok(html(createElement(CartaoDeAnuncios, { provedor: "google_ads", estado: { disponivel: false, conexao: null } })).includes("Em breve"));
+  assert.ok(html(createElement(CartaoDeAnuncios, { provedor: "google_ads", estado: { disponivel: true, conexao: ativa } })).includes("R$ 1.842,30"));
+});
+
+test("a aba: o texto de só leitura, os dois cartões, o TikTok em breve e o aviso da volta do login", () => {
+  const sem = { disponivel: true, conexao: null };
+  const aba = html(createElement(ConexoesDaLoja, { estados: { meta: sem, google_ads: { disponivel: false, conexao: null } }, aviso: "O Meta não liberou o acesso." }));
+  for (const t of ["Só leitura", "Anúncios pagos", "Meta Ads", "Google Ads", "TikTok Ads", "Em breve", "O Meta não liberou o acesso."]) assert.ok(aba.includes(t), `falta: ${t}`);
+  assert.equal((aba.match(/Em breve/g) ?? []).length, 2, "o Google (sem credenciais) e o TikTok");
 });
 
 test("a folha de escolher a conta: só real e ativa pode ser escolhida; carregando, vazio e erro", () => {
@@ -33,7 +46,7 @@ test("a folha de escolher a conta: só real e ativa pode ser escolhida; carregan
     { id: "1048771", nome: "Cia Atores de Mar", moeda: "BRL", ativa: true, suportada: true }, { id: "7731902", nome: "Conta em dólar", moeda: "USD", ativa: true, suportada: false }, { id: "2290305", nome: "Antiga", moeda: "BRL", ativa: false, suportada: true },
   ];
   const f = html(createElement(EscolherContaSheet, { contas, escolhida: "1048771", onClose: () => {} }));
-  for (const t of ["Escolha a conta de anúncios", "Cia Atores de Mar", "real (BRL)", "não dá para somar com real ainda", "conta desativada no Meta", "Conectar esta conta", "nunca criamos nem mudamos anúncios"]) assert.ok(f.includes(t), `falta: ${t}`);
+  for (const t of ["Escolha a conta de anúncios", "Cia Atores de Mar", "real (BRL)", "não dá para somar com real ainda", "conta desativada na plataforma", "Conectar esta conta", "nunca criamos nem mudamos anúncios"]) assert.ok(f.includes(t), `falta: ${t}`);
   assert.equal((f.match(/role="radio"/g) ?? []).length, 3);
   assert.equal((f.match(/aria-checked="true"/g) ?? []).length, 1);
   assert.equal((f.match(/disabled=""/g) ?? []).length >= 2, true, "a conta em dólar e a desativada não se escolhem");

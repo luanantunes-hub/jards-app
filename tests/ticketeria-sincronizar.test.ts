@@ -23,7 +23,7 @@ function portas(sobre: Partial<PortasDaLeitura> = {}) {
   const chamadas = { pedidos: [] as [string, string][], gravados: [] as number[], marcas: [] as unknown[] };
   const p: PortasDaLeitura = {
     async token() { return "EAAB-token-de-teste-0123456789"; },
-    async lerGasto(_t, conta, de, ate) { chamadas.pedidos.push([de, ate]); assert.equal(conta, "1048771"); return [{ dia: de, gasto_centavos: 100, impressoes: 1, alcance: 1, cliques: 1 } satisfies DiaDeMidia]; },
+    async lerGasto(_t, conta, de, ate, _g) { chamadas.pedidos.push([de, ate]); assert.equal(conta, "1048771"); return [{ dia: de, gasto_centavos: 100, impressoes: 1, alcance: 1, cliques: 1 } satisfies DiaDeMidia]; },
     async gravarDias(_c, dias) { chamadas.gravados.push(dias.length); },
     async marcar(_c, r) { chamadas.marcas.push(r); },
     ...sobre,
