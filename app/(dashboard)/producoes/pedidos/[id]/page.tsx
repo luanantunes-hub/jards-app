@@ -8,7 +8,7 @@ import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationC
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { papelNaProducao } from "@/lib/producao/permissoes";
-import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais } from "@/lib/producao/dinheiro";
 import { ROTULO_DA_CATEGORIA_DO_ORCAMENTO } from "@/lib/producao/orcamento";
 import type { CategoriaDoOrcamento } from "@/lib/producao/estados";
 import {
@@ -16,7 +16,7 @@ import {
 } from "@/lib/producao/pedidos";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PedidoSheet, type LinhaDisponivel } from "@/components/producao/PedidosDaTemporada";
-import { BOTAO, BOTAO_PEQUENO, CAMPO } from "@/components/producao/estilosDoBordero";
+import { BOTAO, BOTAO_PEQUENO, CAMPO } from "@/components/producao/estilos";
 
 type Lancamento = { id: string; descricao: string; data: string; valor: number; documento: string | null };
 type Detalhe = { pedido: PedidoDaTemporada & { created_at: string; temporada_id: string }; temporada: string; linhas: LinhaDisponivel[]; lancamentos: Lancamento[]; nomes: Record<string, string>; eu: string | null };

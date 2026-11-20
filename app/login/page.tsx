@@ -23,7 +23,7 @@ function PasswordResetModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+        className="absolute inset-0 veu"
         onClick={!loading && !sent ? onCancel : undefined}
       />
       <div className="relative w-full max-w-sm rounded bg-white shadow-2xl">

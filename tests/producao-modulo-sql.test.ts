@@ -10,6 +10,10 @@ import { dividirComandos } from "../lib/supabase/sql-em-bloco";
 // lib/modulos.ts e a forma das duas migrations da entrega.
 
 const TESTE = "supabase/tests/producao_modulo.test.sql";
+
+// Estas migrations (PD0.1) são anteriores à ticketeria: listam os módulos da época.
+// A ticketeria tem as migrations e os testes dela em tests/ticketeria-modulo-sql.test.ts.
+const MODULOS_DA_EPOCA = MODULOS.filter(modulo => modulo !== "ticketeria");
 const PRECEDENTE = "20261005130100_convites_papeis.sql";
 const POLITICA = "organization_members: modulo pago so pelo suporte";
 
@@ -58,7 +62,7 @@ test("as quatro regras de módulo do banco listam os mesmos módulos que MODULOS
     const criar = comandos[soltar + 1] ?? "";
     assert.ok(criar.startsWith(`alter table public.${tabela} add constraint ${nome} check (`),
       `${nome}: o add constraint vem logo depois do drop`);
-    assert.deepEqual(idsDe(/array\[([^\]]*)\]/.exec(criar)?.[1]), [...MODULOS], `${nome}: a lista é a de MODULOS`);
+    assert.deepEqual(idsDe(/array\[([^\]]*)\]/.exec(criar)?.[1]), [...MODULOS_DA_EPOCA], `${nome}: a lista é a de MODULOS`);
     const forma = coluna === "modulos_acesso"
       ? /check \(cardinality\(modulos_acesso\) > 0 and modulos_acesso <@ array\[/
       : /check \(modulo = any \(array\[/;
@@ -100,12 +104,12 @@ test("a regra restritiva fecha a porta do navegador antes de as regras abrirem, 
 
 test("as três funções repetem a lista de MODULOS", async () => {
   const comandos = comandosDe((await migration("funcoes")).sql);
-  assert.deepEqual(idsDe(/unnest\(array\[([^\]]*)\]\)/.exec(funcao(comandos, "modulos_canonicos"))?.[1]), [...MODULOS],
+  assert.deepEqual(idsDe(/unnest\(array\[([^\]]*)\]\)/.exec(funcao(comandos, "modulos_canonicos"))?.[1]), [...MODULOS_DA_EPOCA],
     "modulos_canonicos na ordem de MODULOS");
-  assert.deepEqual(idsDe(/p_modulos <@ array\[([^\]]*)\]::text\[\]/.exec(funcao(comandos, "fn_conferir_modulos"))?.[1]), [...MODULOS],
+  assert.deepEqual(idsDe(/p_modulos <@ array\[([^\]]*)\]::text\[\]/.exec(funcao(comandos, "fn_conferir_modulos"))?.[1]), [...MODULOS_DA_EPOCA],
     "fn_conferir_modulos");
   const ramos = [...funcao(comandos, "modulo_vagas_limite").matchAll(/when '(\w+)' then/g)].map(m => m[1]);
-  assert.deepEqual(ramos, [...MODULOS], "modulo_vagas_limite tem um ramo por módulo");
+  assert.deepEqual(ramos, [...MODULOS_DA_EPOCA], "modulo_vagas_limite tem um ramo por módulo");
 });
 
 test("o ramo da produção em modulo_vagas_limite é igual ao da prestação", async () => {

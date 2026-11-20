@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Copy, X } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
-import { Erro } from "@/components/producao/estilosDoBordero";
+import { Erro } from "@/components/producao/estilos";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import {

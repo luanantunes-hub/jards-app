@@ -8,14 +8,14 @@ import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { papelNaProducao } from "@/lib/producao/permissoes";
 import type { SituacaoDaFatura } from "@/lib/producao/estados";
-import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais } from "@/lib/producao/dinheiro";
 import {
   calcularFatura, faturaEmitida, liquidoDaFaturaEmCentavos, mensagemDoErroDeFatura, proximaSituacaoDaFatura, ROTULO_DA_SITUACAO_DA_FATURA, situacaoAnteriorDaFatura,
   type FaturaDaTemporada, type ParcelaDaFatura,
 } from "@/lib/producao/faturas";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { FaturaSheet, type AcordoAReceber } from "@/components/producao/FaturasDaTemporada";
-import { BOTAO, BOTAO_PEQUENO, Erro } from "@/components/producao/estilosDoBordero";
+import { BOTAO, BOTAO_PEQUENO, Erro } from "@/components/producao/estilos";
 
 type Detalhe = { fatura: FaturaDaTemporada & { created_at: string; temporada_id: string }; parcelas: ParcelaDaFatura[]; temporada: string; acordos: AcordoAReceber[] };
 

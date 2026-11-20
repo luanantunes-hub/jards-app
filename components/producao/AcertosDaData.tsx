@@ -95,7 +95,7 @@ function NovoAcertoSheet({ dataId, modelos, onClose, onCreated }: { dataId: stri
       footer={fechar => (
         <>
           <button type="button" onClick={fechar} disabled={criando} className="rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
-          <button type="button" onClick={() => void criar(fechar)} disabled={criando} className="rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{criando ? "Criando…" : "Criar e gerar o link"}</button>
+          <button type="button" onClick={() => void criar(fechar)} disabled={criando} className="rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{criando ? "Criando…" : "Criar e gerar o link"}</button>
         </>
       )}
     >
@@ -143,7 +143,7 @@ function RevisaoDoItem({ item, podeEditar, onRevisado, onErro }: { item: Item; p
       <p className="mt-0.5 text-[0.6875rem] text-black/45">{item.destino === "livre" ? "Fica só no acerto." : `Se aprovar, vai para: ${DESTINO_DO_ACERTO[item.destino].rotulo}.`}</p>
       {podeEditar && !recusando && (
         <div className="mt-2 flex gap-2">
-          <button type="button" onClick={() => void revisar(true)} disabled={enviando} className="h-9 rounded bg-[#2E8932] px-3.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">Aprovar</button>
+          <button type="button" onClick={() => void revisar(true)} disabled={enviando} className="h-9 rounded acao-salvar px-3.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">Aprovar</button>
           <button type="button" onClick={() => setRecusando(true)} disabled={enviando} className={BOTAO}>Recusar</button>
         </div>
       )}

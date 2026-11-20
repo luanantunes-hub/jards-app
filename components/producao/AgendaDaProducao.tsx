@@ -11,7 +11,7 @@ import type { EstadoDoEquipamento, SituacaoDaLicenca, TipoDeLicenca } from "@/li
 import { avisosDeEquipamentosParaHoje, avisosDeLicencasParaHoje, type AvisoDeHoje } from "@/lib/producao/hoje";
 import { avisosDeDocumentosParaHoje, type DocumentoDaPasta } from "@/lib/producao/documentos";
 import { agruparPorMes, diaDaSemana, diaEMes, filtrarDatas, opcaoVencida, pendenciasDeHoje, proximasDatas, type FiltrosDaAgenda, ROTULO_DA_SITUACAO_DA_DATA, ROTULO_DO_TIPO_DE_DATA, type DataDaAgenda } from "@/lib/producao/agenda";
-import { ListContent, ListEmptyState, ListPageHeader, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { ListContent, ListEmptyState, ListPageHeader, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { Select } from "@/components/ui/Select";
 import { CalendarioDaAgenda } from "@/components/producao/CalendarioDaAgenda";
@@ -126,7 +126,7 @@ export function AgendaDaProducao() {
   // Sem nada ainda, o botão está no estado vazio: não repete no cabeçalho.
   const acoes = podeEditar && temporadas.length > 0 && (
     <>
-      <PrimaryListAction onClick={() => setFolha("temporada")}>Nova temporada</PrimaryListAction>
+      <SecondaryListAction onClick={() => setFolha("temporada")}>Nova temporada</SecondaryListAction>
       {temporadas.length > 0 && <PrimaryListAction onClick={() => setFolha("data")}><Plus size={13} aria-hidden="true" /> Nova data</PrimaryListAction>}
     </>
   );

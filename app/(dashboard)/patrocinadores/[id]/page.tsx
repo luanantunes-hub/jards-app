@@ -960,18 +960,12 @@ export default function PatrocinadorPage() {
       <>
         {showSugerirForm && (
           <div
-            className="fixed inset-0 z-40"
-            style={{ background: "rgba(13,13,13,.18)" }}
+            className="fixed inset-0 z-40 veu"
             onClick={() => setShowSugerirForm(false)}
           />
         )}
         <div
-          className="fixed top-0 right-0 h-full w-80 z-50 flex flex-col bg-white border-l elevacao-2-lado"
-          style={{
-            transform: showSugerirForm ? "translateX(0)" : "translateX(100%)",
-            transition: "transform 0.22s cubic-bezier(0.4,0,0.2,1)",
-            borderLeft: "1px solid rgba(13,13,13,.08)",
-          }}
+          className={`folha-vidro fixed inset-x-0 top-0 z-50 mx-auto max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-y-auto ${showSugerirForm ? "folha-desce flex" : "hidden"}`}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>

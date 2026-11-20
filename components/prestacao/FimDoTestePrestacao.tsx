@@ -107,14 +107,14 @@ export function FimDoTestePrestacao({ organizationId, ate, admin, emUso, precos,
             data-principal
             onClick={assinar}
             disabled={abrindo || !cobrancaConfigurada}
-            className="flex items-center gap-1.5 rounded bg-[#282525] px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded bg-[#1C0E33] px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {abrindo && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" aria-hidden />}
             {abrindo ? "Abrindo o pagamento…" : cobrancaConfigurada ? "Assinar agora" : "Pagamento indisponível"}
           </button>
         </>
       ) : (
-        <button type="button" data-principal onClick={onClose} className="rounded bg-[#282525] px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
+        <button type="button" data-principal onClick={onClose} className="rounded bg-[#1C0E33] px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
           Entendi
         </button>
       )}

@@ -2,22 +2,25 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import { fraseDoHistorico, rotuloDaEntidade } from "../lib/producao/historico";
-import { nomeDeQuemFez, pessoasDoFiltro, agruparPorDia, AREAS_DA_LINHA_DO_TEMPO, entidadesDaArea, inicioDoPeriodo, intervaloDaPagina, recortarPagina, TAMANHO_DA_PAGINA } from "../lib/producao/linha-do-tempo";
+import { paisDoFiltro, nomeDeQuemFez, pessoasDoFiltro, agruparPorDia, AREAS_DA_LINHA_DO_TEMPO, entidadesDaArea, inicioDoPeriodo, intervaloDaPagina, recortarPagina, TAMANHO_DA_PAGINA } from "../lib/producao/linha-do-tempo";
 
 /** As tabelas da produção com gatilho de histórico, lidas das migrations (uma tabela nova sem área nem frase reprova aqui). */
 async function tabelasComHistorico(): Promise<string[]> {
   const pasta = "supabase/migrations";
   const tabelas = new Set<string>();
-  for (const arquivo of await readdir(pasta)) {
+  // Na ordem das versões: a tabela apagada depois (a T1 da Ticketeria tirou o site, a plateia, os convidados e o borderô) sai da lista.
+  for (const arquivo of (await readdir(pasta)).sort()) {
     if (!arquivo.endsWith(".sql")) continue;
-    for (const achado of (await readFile(`${pasta}/${arquivo}`, "utf8")).matchAll(/after insert or update or delete on public\.(producao_[a-z_]+)/g)) tabelas.add(achado[1]);
+    const sql = await readFile(`${pasta}/${arquivo}`, "utf8");
+    for (const achado of sql.matchAll(/after insert or update or delete on public\.(producao_[a-z_]+)/g)) tabelas.add(achado[1]);
+    for (const achado of sql.matchAll(/^drop table if exists public\.(producao_[a-z_]+);/gm)) tabelas.delete(achado[1]);
   }
   return [...tabelas].sort();
 }
 
 test("toda tabela da produção com histórico está em exatamente uma área e tem frase própria", async () => {
   const tabelas = await tabelasComHistorico();
-  assert.ok(tabelas.length >= 40, "leu as migrations");
+  assert.ok(tabelas.length >= 30, "leu as migrations");
   const todas = AREAS_DA_LINHA_DO_TEMPO.flatMap(area => [...area.entidades]);
   assert.equal(new Set(todas).size, todas.length, "nenhuma entidade em duas áreas");
   for (const tabela of tabelas) {
@@ -29,7 +32,7 @@ test("toda tabela da produção com histórico está em exatamente uma área e t
 
 test("frases das tabelas novas", () => {
   assert.equal(fraseDoHistorico({ entidade: "producao_matriculas", acao: "alterou", campo: "certificado_emitido_em", antes: null, depois: "2026-11-20" }), "Mudou o certificado em uma matrícula de vazio para 20/11/2026");
-  assert.equal(fraseDoHistorico({ entidade: "producao_convidados", acao: "criou", campo: null, antes: null, depois: "Rita" }), "Criou um convidado: Rita");
+  assert.equal(fraseDoHistorico({ entidade: "producao_voluntarios", acao: "criou", campo: null, antes: null, depois: "Rita" }), "Criou um voluntário: Rita");
 });
 
 test("área e período: filtro por entidades e início do período", () => {
@@ -71,4 +74,12 @@ test("quem fez: o nome vem dos membros da organização; sem quem, ou de quem sa
 test("o filtro por pessoa lista só quem tem nome, em ordem alfabética", () => {
   const membros = [{ user_id: "u3", full_name: "Zé Lima" }, { user_id: "u2", full_name: null }, { user_id: "u1", full_name: "Ana Souza" }, { user_id: "u4", full_name: "   " }];
   assert.deepEqual(pessoasDoFiltro(membros), [{ id: "u1", nome: "Ana Souza" }, { id: "u3", nome: "Zé Lima" }]);
+});
+
+test("os pais do filtro: só quem tem nome, em ordem alfabética", () => {
+  assert.deepEqual(
+    paisDoFiltro([{ id: "b", nome: " Teatro Zabumba " }, { id: "a", nome: null }, { id: "c", nome: "  " }, { id: "d", nome: "Arena" }]),
+    [{ id: "d", nome: "Arena" }, { id: "b", nome: "Teatro Zabumba" }],
+  );
+  assert.deepEqual(paisDoFiltro([]), []);
 });

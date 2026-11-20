@@ -1,12 +1,12 @@
-// O site de um espaço, no domínio da própria pessoa (PD12.1b). Esta rota nunca é aberta pelo endereço do Jards: o proxy.ts reescreve
+// O site da loja (Ticketeria), no domínio da própria pessoa (desenho da PD12.1b). Esta rota nunca é aberta pelo endereço do Jards: o proxy.ts reescreve
 // para cá o pedido que chega por um domínio que não é do Jards (e recusa o acesso direto a /dominio/...). Sem login: o servidor lê
 // só o que está publicado, de um site publicado, num domínio ativo (DNS conferido e posse provada).
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { SiteView } from "@/components/producao/SiteView";
-import { paginaPublicaDoDominio, type SitePublico } from "@/lib/producao/site-publico";
-import { enderecoDaPagina, hostDoPedido } from "@/lib/producao/site";
+import { SiteView } from "@/components/ticketeria/SiteView";
+import { paginaPublicaDoDominio, type SitePublico } from "@/lib/ticketeria/site-publico";
+import { enderecoDaPagina, hostDoPedido } from "@/lib/ticketeria/site";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // O site muda a cada publicação: nunca vem pronto do cache da rota.

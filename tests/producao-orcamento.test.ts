@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { lerValorEmReais } from "../lib/producao/bordero";
+import { lerValorEmReais } from "../lib/producao/dinheiro";
 import { calcularOrcamento, compararCenarios, lerLinhaDoOrcamento, mensagemDoErroDeOrcamento, planilhaDoOrcamento, textoDoOrcamento, type LinhaDoOrcamento } from "../lib/producao/orcamento";
 
 const linha = (extra: Partial<LinhaDoOrcamento> & Pick<LinhaDoOrcamento, "id" | "descricao">): LinhaDoOrcamento => ({

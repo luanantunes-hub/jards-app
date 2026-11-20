@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { BOTAO, CANCELAR, Erro } from "@/components/producao/estilosDoBordero";
+import { BOTAO, CANCELAR, Erro } from "@/components/producao/estilos";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { diaEMes } from "@/lib/producao/agenda";
-import { retornoDaMarca, textoDoRetorno, type BorderoDoRetorno, type LeituraDoRetorno, type SessaoDoRetorno } from "@/lib/producao/retorno-marca";
+import { retornoDaMarca, textoDoRetorno, type SessaoDoRetorno } from "@/lib/producao/retorno-marca";
 
 const numero = (n: number) => n.toLocaleString("pt-BR");
 const hojeEmBrasilia = () => new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
@@ -22,9 +22,9 @@ function Indicador({ rotulo, valor, apoio }: { rotulo: string; valor: string; ap
   );
 }
 
-/** O retorno de uma marca (PD9.3, primeiro corte): as sessões que ela apresentou, o público e as entradas com credencial, só para a produção, com o texto para colar numa mensagem ao patrocinador. */
+/** O retorno de uma marca (PD9.3, primeiro corte): as sessões que ela apresentou, só para a produção, com o texto para colar numa mensagem ao patrocinador. */
 export function RetornoDaMarcaSheet({ marca, onClose }: { marca: { id: string; nome: string }; onClose: () => void }) {
-  const [dados, setDados] = useState<{ sessoes: SessaoDoRetorno[]; borderos: BorderoDoRetorno[]; leituras: LeituraDoRetorno[] } | null>(null);
+  const [sessoes, setSessoes] = useState<SessaoDoRetorno[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
 
@@ -34,26 +34,17 @@ export function RetornoDaMarcaSheet({ marca, onClose }: { marca: { id: string; n
       const producao = clienteDaProducao(createClient());
       const { data: lidas, error } = await producao.from("producao_sessoes").select("id, dia, titulo, pauta_id").eq("marca_id", marca.id);
       if (!ativo) return;
-      if (error) { setErro("Não foi possível carregar o retorno. Recarregue a página."); setDados({ sessoes: [], borderos: [], leituras: [] }); return; }
-      const ids = (lidas ?? []).map(sessao => sessao.id);
+      if (error) { setErro("Não foi possível carregar o retorno. Recarregue a página."); setSessoes([]); return; }
       const pautaIds = [...new Set((lidas ?? []).map(sessao => sessao.pauta_id))];
-      const [pautas, borderos, leituras] = await Promise.all([
-        pautaIds.length > 0 ? producao.from("producao_pautas").select("id, titulo").in("id", pautaIds) : Promise.resolve({ data: [] as { id: string; titulo: string }[] }),
-        ids.length > 0 ? producao.from("producao_borderos").select("sessao_id, publico_casa").in("sessao_id", ids) : Promise.resolve({ data: [] as BorderoDoRetorno[] }),
-        ids.length > 0 ? producao.from("producao_porta_leituras").select("sessao_id, resultado").in("sessao_id", ids) : Promise.resolve({ data: [] as LeituraDoRetorno[] }),
-      ]);
+      const pautas = pautaIds.length > 0 ? await producao.from("producao_pautas").select("id, titulo").in("id", pautaIds) : { data: [] as { id: string; titulo: string }[] };
       if (!ativo) return;
       const titulos = new Map((pautas.data ?? []).map(pauta => [pauta.id, pauta.titulo]));
-      setDados({
-        sessoes: (lidas ?? []).map(sessao => ({ id: sessao.id, dia: sessao.dia, titulo: sessao.titulo?.trim() || titulos.get(sessao.pauta_id) || "Sessão" })),
-        borderos: (borderos.data ?? []) as BorderoDoRetorno[],
-        leituras: (leituras.data ?? []) as LeituraDoRetorno[],
-      });
+      setSessoes((lidas ?? []).map(sessao => ({ id: sessao.id, dia: sessao.dia, titulo: sessao.titulo?.trim() || titulos.get(sessao.pauta_id) || "Sessão" })));
     })();
     return () => { ativo = false; };
   }, [marca.id]);
 
-  const retorno = useMemo(() => (dados ? retornoDaMarca(dados.sessoes, dados.borderos, dados.leituras, hojeEmBrasilia()) : null), [dados]);
+  const retorno = useMemo(() => (sessoes ? retornoDaMarca(sessoes, hojeEmBrasilia()) : null), [sessoes]);
 
   async function copiar() {
     if (!retorno) return;
@@ -86,8 +77,6 @@ export function RetornoDaMarcaSheet({ marca, onClose }: { marca: { id: string; n
           <>
             <div className="flex flex-wrap gap-x-10 gap-y-4">
               <Indicador rotulo="Sessões" valor={numero(retorno.sessoes)} apoio={`${numero(retorno.realizadas)} já ${retorno.realizadas === 1 ? "realizada" : "realizadas"}, ${numero(retorno.proximas)} por vir`} />
-              <Indicador rotulo="Público" valor={numero(retorno.publico)} apoio={retorno.semPublico > 0 ? `${numero(retorno.semPublico)} ${retorno.semPublico === 1 ? "sessão sem público informado" : "sessões sem público informado"}` : retorno.comPublico > 0 ? "das sessões realizadas" : undefined} />
-              <Indicador rotulo="Entradas com credencial" valor={numero(retorno.entradasPelaPorta)} />
             </div>
             <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               {retorno.linhas.map(linha => (
@@ -95,7 +84,7 @@ export function RetornoDaMarcaSheet({ marca, onClose }: { marca: { id: string; n
                   <span className="w-16 shrink-0 text-[0.75rem] tabular-nums text-black/55">{diaEMes(linha.dia)}</span>
                   <span className="min-w-0 flex-1 basis-40 truncate text-[0.8125rem] text-[#282525]">{linha.titulo}</span>
                   <span className="text-[0.75rem] tabular-nums text-black/55">
-                    {!linha.aconteceu ? "por vir" : linha.publico !== null ? `${numero(linha.publico)} ${linha.publico === 1 ? "pessoa" : "pessoas"}` : "sem público informado"}
+                    {linha.aconteceu ? "realizada" : "por vir"}
                   </span>
                 </li>
               ))}

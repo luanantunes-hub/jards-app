@@ -1,9 +1,10 @@
 // Guia do Jards que a IA da ajuda (o botão "?") usa para responder. É a única fonte dela: o que não estiver aqui, ela manda
 // para a equipe. Preços e planos seguem a página de preços (public/precos.html) e a tela Meu plano.
 //
-// Mantenha este texto em dia quando mudar plano, preço, menu ou fluxo. Em especial: Reuniões está escondida do menu dos
-// clientes até o Vexa estar no ar (ROTAS_SO_SUPER_ADMIN em app/(dashboard)/layout.tsx); quando ela abrir, tire "/reunioes"
-// de lá, passe o trecho de Reuniões para o menu e republique a função. Um teste avisa se uma ponta mudar sem a outra.
+// Mantenha este texto em dia quando mudar plano, preço, menu ou fluxo. Em especial: Conversas (e-mails e reuniões) está
+// escondida do menu dos clientes enquanto o e-mail está em teste fechado e o Vexa não está no ar (ROTAS_SO_SUPER_ADMIN em
+// app/(dashboard)/layout.tsx); quando ela abrir, tire "/conversas" de lá, passe o trecho de Conversas para o menu e
+// republique a função. Um teste avisa se uma ponta mudar sem a outra.
 // Sem crases nem "${" aqui dentro: o texto é um template string.
 
 export const GUIA_DO_JARDS = `
@@ -31,7 +32,7 @@ Relacionamento
 O sino no alto da tela mostra os avisos. Configurações e Sair ficam no fim do menu lateral.
 
 AINDA NÃO DISPONÍVEL
-- Reuniões: a ideia é um assistente que entra numa reunião do Meet ou do Teams, grava e transcreve. Ainda está em preparação e não aparece no menu. Se perguntarem, diga que ainda não está disponível.
+- Conversas: a ideia é reunir num lugar só o que foi conversado com o patrocinador, em dois ambientes. No de e-mail, as conversas trocadas com os contatos (Gmail ou Outlook), com escrever, responder e agendar o envio. No de reuniões, marcar uma reunião pelo Jards, que cria o evento na agenda da pessoa com a sala do Meet ou do Teams e convida quem ela escolher. Ainda está em preparação e não aparece no menu. Se perguntarem, diga que ainda não está disponível.
 
 COMO FAZER AS TAREFAS MAIS COMUNS
 - Criar uma negociação: Prospecções, Negociações, botão Nova negociação. Escolha o patrocinador (ou crie na hora), o projeto, o valor e a etapa.

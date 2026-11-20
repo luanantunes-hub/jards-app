@@ -105,7 +105,7 @@ export function DecisaoAlteracao({ alteracao, acao, regime, prestacaoId, organiz
 
   const vermelho = acao === "negar";
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center veu p-4" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
@@ -200,7 +200,7 @@ export function DecisaoAlteracao({ alteracao, acao, regime, prestacaoId, organiz
             type="button"
             onClick={registrar}
             disabled={salvando}
-            className={`flex items-center gap-1.5 rounded px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40 ${vermelho ? "bg-[#D94A4A] hover:bg-[#C03E3E] focus-visible:outline-[#D94A4A]" : "bg-[#2E8932] hover:bg-[#26752A] focus-visible:outline-[#2E8932]"}`}
+            className={`flex items-center gap-1.5 rounded px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40 ${vermelho ? "bg-[#D94A4A] hover:bg-[#C03E3E] focus-visible:outline-[#D94A4A]" : "acao-salvar focus-visible:outline-[#2E8932]"}`}
           >
             {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
             {BOTAO[acao]}

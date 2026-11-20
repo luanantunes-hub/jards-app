@@ -257,7 +257,10 @@ export function CalendarConnections() {
                 onChange={(e) => toggleSync(opts.provider, e.target.checked)}
                 className="rounded border-black/20"
               />
-              <span className="text-[0.75rem] text-black/60">Sincronização ativa</span>
+              <span className="text-[0.75rem] text-black/60">
+                Sincronização ativa
+                <span className="text-black/40"> · as atividades do Jards vão para a agenda e as reuniões da agenda vêm para o Jards</span>
+              </span>
             </label>
 
             {c.last_error && (

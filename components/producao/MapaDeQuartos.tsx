@@ -68,7 +68,7 @@ export function MapaDeQuartos({ organizationId, hospedagemId, hotel, quartos, oc
           onClick={() => setEscolhida(atual => (atual === pessoa.id ? null : pessoa.id))}
           onDragStart={event => { event.dataTransfer.setData("text/plain", pessoa.id); event.dataTransfer.effectAllowed = "move"; setArrastando(pessoa.id); setErro(null); }}
           onDragEnd={() => { setArrastando(null); setSobre(null); }}
-          className={`flex min-h-10 cursor-grab items-center gap-1.5 rounded border px-2.5 text-left text-[0.8125rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:cursor-default ${marcada ? "border-[#282525] bg-[#282525] text-white" : "border-black/[.16] bg-white text-[#282525] hover:bg-black/[.04]"} ${arrastando === pessoa.id ? "opacity-40" : ""}`}>
+          className={`flex min-h-10 cursor-grab items-center gap-1.5 rounded border px-2.5 text-left text-[0.8125rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:cursor-default ${marcada ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/[.16] bg-white text-[#282525] hover:bg-black/[.04]"} ${arrastando === pessoa.id ? "opacity-40" : ""}`}>
           {podeEditar && <GripVertical size={12} aria-hidden="true" className={marcada ? "text-white/60" : "text-black/30"} />}
           {pessoa.nome}
         </button>
@@ -117,7 +117,7 @@ export function MapaDeQuartos({ organizationId, hospedagemId, hotel, quartos, oc
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-[0.8125rem] font-medium text-[#282525]">Quarto {quarto.nome} <span className="font-normal tabular-nums text-black/45">· {doQuarto.length}/{quarto.capacidade}{rotuloDaCama(quarto.cama) ? ` · ${rotuloDaCama(quarto.cama).toLowerCase()}` : ""}</span></h3>
                     {podeReceber && escolhida && !doQuarto.some(ocupante => ocupante.pessoa_id === escolhida) && (
-                      <button type="button" onClick={() => void mover(escolhida, quarto.id)} disabled={ocupado} className="h-9 rounded bg-[#282525] px-3 text-[0.75rem] font-medium text-white hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Pôr {nomes.get(escolhida)?.split(" ")[0]} aqui</button>
+                      <button type="button" onClick={() => void mover(escolhida, quarto.id)} disabled={ocupado} className="h-9 rounded bg-[#1C0E33] px-3 text-[0.75rem] font-medium text-white hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Pôr {nomes.get(escolhida)?.split(" ")[0]} aqui</button>
                     )}
                   </div>
                   {doQuarto.length === 0 ? (

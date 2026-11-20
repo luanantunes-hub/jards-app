@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useId } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
 import { escalaUi } from "@/lib/escala-ui";
 
@@ -146,7 +147,7 @@ export function Dropdown({
         <ChevronDown size={13} aria-hidden="true" className={`flex-shrink-0 text-black/30 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
           ref={listRef}
           id={listId}
@@ -173,7 +174,8 @@ export function Dropdown({
               {opt.value === value && <Check size={12} aria-hidden="true" className="flex-shrink-0 text-black/40" />}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

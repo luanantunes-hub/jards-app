@@ -93,7 +93,7 @@ export function FecharNegocioSheet({ captacao, empresaNome, propostaAceitaId, on
             Cancelar
           </button>
           <button type="button" onClick={() => void fechar(close)} disabled={salvando}
-            className="min-h-10 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-40">
+            className="min-h-10 rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-40">
             {salvando ? "Fechando…" : "Fechar negócio"}
           </button>
         </>

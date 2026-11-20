@@ -2,16 +2,16 @@
 @import "tailwindcss";
 
 /* Elevação: janelas por cima da tela (menus, folhas, pop-ups).
-   Borda cinza bem clara + sombra em duas camadas, com o roxo noite da marca diluído.
+   Borda cinza bem clara + sombra em duas camadas, em preto neutro, sem nenhuma cor da marca.
    1 = menus, listas suspensas e dicas · 2 = folhas e painéis laterais · 3 = pop-ups no centro.
    A largura da borda fica na classe da peça (border, border-x border-b...), para deixar aberto o lado colado à tela. */
 :root {
   --elevacao-borda: rgba(13, 13, 13, .075);
-  --elevacao-sombra-1: 0 1px 2px rgba(28, 14, 51, .06), 0 6px 16px rgba(28, 14, 51, .08);
-  --elevacao-sombra-2: 0 2px 6px rgba(28, 14, 51, .06), 0 16px 40px rgba(28, 14, 51, .10);
-  --elevacao-sombra-2-cima: 0 -2px 6px rgba(28, 14, 51, .05), 0 -16px 40px rgba(28, 14, 51, .09);
-  --elevacao-sombra-2-lado: -2px 0 6px rgba(28, 14, 51, .05), -16px 0 40px rgba(28, 14, 51, .09);
-  --elevacao-sombra-3: 0 2px 8px rgba(28, 14, 51, .06), 0 24px 64px rgba(28, 14, 51, .14);
+  --elevacao-sombra-1: 0 1px 2px rgba(13, 13, 13, .06), 0 6px 16px rgba(13, 13, 13, .08);
+  --elevacao-sombra-2: 0 2px 6px rgba(13, 13, 13, .06), 0 16px 40px rgba(13, 13, 13, .10);
+  --elevacao-sombra-2-cima: 0 -2px 6px rgba(13, 13, 13, .05), 0 -16px 40px rgba(13, 13, 13, .09);
+  --elevacao-sombra-2-lado: -2px 0 6px rgba(13, 13, 13, .05), -16px 0 40px rgba(13, 13, 13, .09);
+  --elevacao-sombra-3: 0 2px 8px rgba(13, 13, 13, .06), 0 24px 64px rgba(13, 13, 13, .14);
 }
 @utility elevacao-1 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-1); }
 @utility elevacao-2 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-2); }
@@ -19,6 +19,157 @@
 @utility elevacao-2-lado { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-2-lado); }
 @utility elevacao-3 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-3); }
 @utility elevacao-sombra-1 { box-shadow: var(--elevacao-sombra-1); }
+
+/* Folhas (TopSheet, BottomSheet e as folhas próprias): cantos bem arredondados, superfície de vidro
+   (quase branca, com o fundo desfocado por trás), fio de luz por dentro e sombra funda e neutra,
+   sem nenhuma cor da marca. `folha-vidro` é a que desce do topo; `folha-vidro-cima`, a que sobe da base.
+   `folha-rodape` é a faixa das ações: um cinza bem claro, com um fio de luz embaixo da linha de divisão. */
+:root {
+  --raio-folha: 1.25rem;
+  --folha-vidro: rgba(255, 255, 255, .96);
+  --folha-luz: inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 0 0 1px rgba(255, 255, 255, .7), inset 0 -1px 0 rgba(13, 13, 13, .04);
+  --folha-sombra: 0 0 0 1px rgba(13, 13, 13, .10), 0 2px 4px rgba(13, 13, 13, .08), 0 24px 48px -8px rgba(13, 13, 13, .30), 0 70px 130px -24px rgba(13, 13, 13, .40);
+  --folha-sombra-cima: 0 0 0 1px rgba(13, 13, 13, .10), 0 -2px 4px rgba(13, 13, 13, .08), 0 -24px 48px -8px rgba(13, 13, 13, .30), 0 -70px 130px -24px rgba(13, 13, 13, .40);
+  --folha-sombra-centro: 0 0 0 1px rgba(13, 13, 13, .10), 0 4px 8px rgba(13, 13, 13, .08), 0 30px 70px -12px rgba(13, 13, 13, .36);
+  --folha-sombra-direita: 0 0 0 1px rgba(13, 13, 13, .10), -2px 0 4px rgba(13, 13, 13, .08), -24px 0 48px -8px rgba(13, 13, 13, .30), -70px 0 130px -24px rgba(13, 13, 13, .40);
+}
+@utility folha-vidro {
+  background-color: var(--folha-vidro);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: var(--folha-sombra), var(--folha-luz);
+  border-bottom-left-radius: var(--raio-folha);
+  border-bottom-right-radius: var(--raio-folha);
+}
+@utility folha-vidro-cima {
+  background-color: var(--folha-vidro);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: var(--folha-sombra-cima), var(--folha-luz);
+  border-top-left-radius: var(--raio-folha);
+  border-top-right-radius: var(--raio-folha);
+}
+@utility folha-vidro-centro {
+  background-color: var(--folha-vidro);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: var(--folha-sombra-centro), var(--folha-luz);
+  border-radius: var(--raio-folha);
+}
+@utility folha-vidro-direita {
+  background-color: var(--folha-vidro);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: var(--folha-sombra-direita), var(--folha-luz);
+  border-top-left-radius: var(--raio-folha);
+  border-bottom-left-radius: var(--raio-folha);
+}
+/* Entrada da folha que desce do topo (a da Nova atividade): vem de cima, sem estado nem JavaScript. */
+@keyframes folha-desce {
+  from { transform: translateY(-100%); }
+  to { transform: none; }
+}
+@utility folha-desce {
+  animation: folha-desce 260ms cubic-bezier(.32, .72, 0, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .folha-desce { animation: none; }
+}
+@utility folha-rodape {
+  background-color: rgba(250, 250, 249, .9);
+  border-top-color: rgba(13, 13, 13, .07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95);
+}
+
+
+/* Véu: o fundo atrás de folhas, painéis e pop-ups. Escurece e desfoca a tela de leve.
+   Use `veu` no fundo; nas folhas que entram com animação, some junto: `veu ${visivel ? "" : "veu-oculto"}`. */
+:root {
+  --veu-cor: rgba(0, 0, 0, .58);
+  --veu-desfoque: 4px;
+}
+.veu {
+  background-color: var(--veu-cor);
+  -webkit-backdrop-filter: blur(var(--veu-desfoque));
+  backdrop-filter: blur(var(--veu-desfoque));
+  transition: background-color 260ms ease, -webkit-backdrop-filter 260ms ease, backdrop-filter 260ms ease;
+}
+.veu.veu-oculto {
+  --veu-cor: transparent;
+  --veu-desfoque: 0px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .veu { transition: none; }
+}
+
+/* Ação principal (botões de criar): o roxo noite do hero da landing (#1C0E33), parado.
+   Volume discreto: degradê de cima para baixo em torno do roxo noite, uma linha de luz de 1px no
+   topo, uma de sombra na base e uma sombra curta neutra, que descola o botão da
+   página. Sem movimento no hover: só um tom mais claro, na hora; ao pressionar, afunda.
+   Sem contorno em volta: o foco do teclado clareia como o hover e abre um brilho embaixo do
+   botão; o contorno só aparece no modo de alto contraste do sistema. */
+.acao-principal {
+  background-color: #1C0E33;
+  background-image: linear-gradient(180deg, #28164B 0%, #1C0E33 55%, #160A2A 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .14),
+    inset 0 -1px 0 rgba(0, 0, 0, .3),
+    0 1px 2px rgba(13, 13, 13, .28),
+    0 4px 12px -4px rgba(13, 13, 13, .45);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .3);
+}
+.acao-principal:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .14),
+    inset 0 -1px 0 rgba(0, 0, 0, .3),
+    inset 0 0 0 999px rgba(142, 99, 245, .1),
+    0 1px 2px rgba(13, 13, 13, .28),
+    0 4px 12px -4px rgba(13, 13, 13, .45);
+}
+.acao-principal:active {
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, .4),
+    inset 0 0 0 999px rgba(142, 99, 245, .06),
+    0 1px 1px rgba(13, 13, 13, .25);
+}
+.acao-principal:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .18),
+    inset 0 -1px 0 rgba(0, 0, 0, .3),
+    inset 0 0 0 999px rgba(142, 99, 245, .12),
+    0 6px 20px -4px rgba(142, 99, 245, .65);
+}
+.acao-principal:disabled { box-shadow: none; text-shadow: none; }
+@media (forced-colors: active) {
+  .acao-principal:focus-visible { outline-color: Highlight; }
+}
+
+/* Ação de salvar (o botão verde dos rodapés de folha, modal e formulário): o mesmo volume discreto do
+   botão de criar, em verde liso (#2E8932, sem degradê): linha de luz de 1px no topo, linha de sombra na
+   base e sombra curta tingida de verde. Hover amigo: o verde clareia um tom
+   (#34953A), de leve e sem pressa, sem mexer na sombra nem na posição. Pressionar afunda; desativado fica
+   chapado. Sem movimento.
+   Troca o par `bg-[#2E8932]` + `hover:bg-[#26752A]`. */
+.acao-salvar {
+  background-color: #2E8932;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .22),
+    inset 0 -1px 0 rgba(0, 0, 0, .2),
+    0 1px 2px rgba(24, 80, 28, .28),
+    0 4px 12px -4px rgba(24, 80, 28, .42);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .22);
+  transition: background-color .18s ease;
+}
+.acao-salvar:hover { background-color: #34953A; }
+.acao-salvar:active {
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, .3),
+    inset 0 0 0 999px rgba(255, 255, 255, .04),
+    0 1px 1px rgba(24, 80, 28, .25);
+}
+.acao-salvar:disabled { background-color: #2E8932; box-shadow: none; text-shadow: none; }
 
 :root {
   --cream:          #FFFFFF;
@@ -513,6 +664,48 @@ table thead th > span > span {
   }
 }
 
+/* Sucesso da seleção em lote (components/patrocinadores/SucessoDoLote.tsx): um círculo verde com o check branco
+   sobe do fundo da tela, o check se desenha (o traço tem pathLength 1, então o tracejado vai de 1 a 0) e, no
+   fim, a tela troca para a lista do que a pessoa acabou de fazer. Com movimento reduzido, tudo aparece de uma vez. */
+@keyframes sucesso-veu-entra {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sucesso-sobe {
+  0% { transform: translateY(55vh) scale(.6); opacity: 0; }
+  35% { opacity: 1; }
+  72% { transform: translateY(-.75rem) scale(1.06); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes sucesso-risca {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes sucesso-aro {
+  from { transform: scale(1); opacity: .45; }
+  to { transform: scale(1.8); opacity: 0; }
+}
+
+.sucesso-veu {
+  animation: sucesso-veu-entra 180ms ease-out both;
+}
+.sucesso-circulo {
+  animation: sucesso-sobe 640ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.sucesso-check {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: sucesso-risca 340ms cubic-bezier(.65, 0, .35, 1) 430ms forwards;
+}
+.sucesso-aro {
+  animation: sucesso-aro 700ms ease-out 560ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sucesso-circulo { animation: none; }
+  .sucesso-check { animation: none; stroke-dashoffset: 0; }
+  .sucesso-aro { animation: none; opacity: 0; }
+}
+
 /* Tamanduá no divã: cena abaixo do leque, espelhada, mais à direita e levemente inclinada. */
 .auth-oblique-scene {
   display: block;
@@ -533,3 +726,9 @@ table thead th > span > span {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(13,13,13,.18); border-radius: 3px; }
+
+/* Popups pequenos (cores do ícone): surgem do ponto de onde foram abertos. */
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(-2px) scale(.97); }
+  to { opacity: 1; transform: none; }
+}

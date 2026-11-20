@@ -332,7 +332,7 @@ export default function PrestacoesList() {
 
   return (
     <div className="flex h-full flex-col">
-      <ListPageHeader
+      <ListPageHeader secao="prestacoes"
         eyebrow="Prestação de contas"
         title="Prestações"
         summary={!loading && (

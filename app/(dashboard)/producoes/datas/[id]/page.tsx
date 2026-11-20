@@ -14,7 +14,7 @@ import { FUSO_PADRAO, instanteParaHoraLocal, montarDiaDoModelo, ordenarBlocos, r
 import { situacaoDoRoteiro, textoDoAtraso } from "@/lib/producao/ao-vivo";
 import { modelosDeDia, type TipoBloco, type TipoData, type TipoProducao } from "@/lib/producao/vocabulario";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
-import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { Select } from "@/components/ui/Select";
 import { NovoBlocoSheet } from "@/components/producao/NovoBlocoSheet";
 import { EquipeDaData } from "@/components/producao/EquipeDaData";
@@ -26,6 +26,7 @@ import { TarefasDaData } from "@/components/producao/TarefasDaData";
 import { HistoricoDaData } from "@/components/producao/HistoricoDaData";
 import { ArquivosDaData } from "@/components/producao/ArquivosDaData";
 import { NotasDaData } from "@/components/producao/NotasDaData";
+import { ComunicacaoDaData } from "@/components/producao/ComunicacaoDaData";
 import { ContrapartidasDaData } from "@/components/producao/ContrapartidasDaData";
 import { LicencasDaData } from "@/components/producao/LicencasDaData";
 import { AcertosDaData } from "@/components/producao/AcertosDaData";
@@ -230,7 +231,10 @@ export default function DataPage() {
                       <PrimaryListAction onClick={() => void aplicarModelo()} disabled={aplicando || !horaDoPrimeiro}>{aplicando ? "Montando…" : "Montar o dia"}</PrimaryListAction>
                     </>
                   )}
-                  <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</PrimaryListAction>
+                  {/* Com modelo à mão, "Montar o dia" é o caminho principal e montar à mão é o de apoio. */}
+                  {modelos.length > 0
+                    ? <SecondaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</SecondaryListAction>
+                    : <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</PrimaryListAction>}
                 </div>
               ) : null}
             </div>
@@ -266,7 +270,7 @@ export default function DataPage() {
                           <button type="button" onClick={() => void marcar(bloco, "comecou")} aria-label="Marcar que o bloco começou" title="Começou" className="flex h-9 items-center gap-1 rounded border border-black/[.14] px-2.5 text-[0.6875rem] font-medium text-[#282525] transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Play size={11} aria-hidden="true" /> Começou</button>
                         )}
                         {aoVivo.get(bloco.id)?.estado === "em_andamento" && (
-                          <button type="button" onClick={() => void marcar(bloco, "terminou")} aria-label="Marcar que o bloco terminou" title="Terminou" className="flex h-9 items-center gap-1 rounded bg-[#282525] px-2.5 text-[0.6875rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><Square size={11} aria-hidden="true" /> Terminou</button>
+                          <button type="button" onClick={() => void marcar(bloco, "terminou")} aria-label="Marcar que o bloco terminou" title="Terminou" className="flex h-9 items-center gap-1 rounded bg-[#1C0E33] px-2.5 text-[0.6875rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><Square size={11} aria-hidden="true" /> Terminou</button>
                         )}
                         {aoVivo.get(bloco.id)?.estado !== "pendente" && (
                           <button type="button" onClick={() => void marcar(bloco, "desfazer")} aria-label="Desfazer a marcação do bloco" title="Desfazer" className="flex h-9 w-9 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Undo2 size={14} aria-hidden="true" /></button>
@@ -292,6 +296,7 @@ export default function DataPage() {
         {organizationId && <AcertosDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
         {organizationId && <ItensDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
         {organizationId && <ContrapartidasDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
+        {organizationId && <ComunicacaoDaData organizationId={organizationId} dataId={data.id} titulo={`${nomeDoTipo} de ${diaEMes(data.data)}${data.temporada?.titulo ? ` · ${data.temporada.titulo}` : ""}`} podeEditar={podeEditar} />}
         {organizationId && <NotasDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
         {organizationId && <ArquivosDaData organizationId={organizationId} temporadaId={data.temporada_id} dataId={data.id} podeEditar={podeEditar} />}
         {organizationId && <HistoricoDaData dataId={data.id} />}

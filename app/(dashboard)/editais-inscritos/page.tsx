@@ -433,7 +433,7 @@ export default function EditaisInscritosPage() {
               </span>
               <div
                 role="tooltip"
-                className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[11.875rem] rounded bg-[#282525] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
+                className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[11.875rem] rounded bg-[#1C0E33] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
               >
                 <p className="font-semibold">{atividade.nome}</p>
                 <p className={atividade.atrasada ? "text-[#F0B24D]" : "text-white/55"}>
@@ -580,7 +580,7 @@ export default function EditaisInscritosPage() {
         />
       )}
 
-      <ListPageHeader eyebrow="Operação de editais" title="Inscrições" summary={!loading&&<><ListSummary strong={filtered.length}>registros</ListSummary><ListSummary strong={countByStatus('aprovado')}>aprovados</ListSummary><ListSummary strong={countByStatus('em_analise')}>em análise</ListSummary></>} actions={<><ViewToggle view={view} onChange={setView}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Nova inscrição</PrimaryListAction></>}/>
+      <ListPageHeader secao="inscricoes" eyebrow="Operação de editais" title="Inscrições" summary={!loading&&<><ListSummary strong={filtered.length}>registros</ListSummary><ListSummary strong={countByStatus('aprovado')}>aprovados</ListSummary><ListSummary strong={countByStatus('em_analise')}>em análise</ListSummary></>} actions={<><ViewToggle view={view} onChange={setView}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Nova inscrição</PrimaryListAction></>}/>
 
       <div className="flex shrink-0 flex-col gap-3 border-b bg-white px-4 py-3 md:px-8 lg:flex-row lg:items-center" style={{borderColor:"rgba(13,13,13,.06)"}}>
         <ListSearch value={search} onChange={setSearch} placeholder="Buscar empresa ou projeto"/>

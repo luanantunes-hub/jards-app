@@ -11,7 +11,7 @@ const JA_EXISTENTES: Record<string, number> = {};
 
 const PASTAS = ["app", "components", "lib", "hooks", "contexts", "supabase/functions", "mcp-server/src"];
 const ARQUIVOS_DA_RAIZ = ["proxy.ts"];
-const MODULO = `["'\`](?:captacao|prestacao|producao)["'\`]`;
+const MODULO = `["'\`](?:captacao|prestacao|producao|ticketeria)["'\`]`;
 /** Um array numa linha só com dois ou mais ids de módulo, em qualquer ordem. */
 const LISTA_LITERAL = new RegExp(`\\[[^\\]\\n]*${MODULO}[^\\]\\n]*${MODULO}[^\\]\\n]*\\]`, "g");
 /** As fases do projeto (planejamento, captação, execução, prestação) não são módulos. */

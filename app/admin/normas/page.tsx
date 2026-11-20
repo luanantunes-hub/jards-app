@@ -263,7 +263,7 @@ function CartaoDoAto({ d, ocupado, onDecidir, onCopia, regimes, sugeridos, propo
               className="h-9 rounded px-3 text-[0.75rem] text-black/55 transition hover:text-black/80 focus-visible:outline-2 focus-visible:outline-[#7259B5]">Cancelar</button>
             <button type="button" disabled={ocupado || escolhidos.length === 0}
               onClick={() => { setEscolhendo(false); onDecidir("conferido", nota, escolhidos); }}
-              className="h-9 rounded bg-[#2E8932] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50">
+              className="h-9 rounded acao-salvar px-4 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50">
               Confirmar e propor mudanças
             </button>
           </div>
@@ -438,7 +438,7 @@ export default function AdminNormasPage() {
               className="h-9 rounded border border-black/[.12] bg-white px-3 text-[0.75rem] tabular-nums text-[#282525] outline-none focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
           </label>
           <button type="button" onClick={coletar} disabled={!!ocupado || !dia}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50">
+            className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50">
             <RefreshCw size={13} className={ocupado === "coleta" ? "animate-spin motion-reduce:animate-none" : ""} aria-hidden />
             {ocupado === "coleta" ? "Lendo o Diário…" : "Coletar o Diário"}
           </button>

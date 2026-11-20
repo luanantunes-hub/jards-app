@@ -67,10 +67,8 @@ export type PainelId =
   | "palco"
   | "obras"
   | "visitacao"
-  | "convidados"
   | "publico"
-  | "dinheiro"
-  | "bordero";
+  | "dinheiro";
 
 /** Um nome com plural e gênero ("Nova data", "Novo show"). */
 export type Termo = { singular: string; plural: string; genero: "m" | "f" };
@@ -106,7 +104,7 @@ export type TipoNoCatalogo = {
   /** Nomes que mudam com o formato. */
   porFormato?: Partial<Record<FormatoTemporada, Partial<Vocabulario>>>;
   modelosDia: readonly ModeloDia[];
-  /** Painéis próprios do tipo; os gerais (viagem, convidados, acerto, dinheiro) vêm dos sinais da data. */
+  /** Painéis próprios do tipo; os gerais (viagem, acerto, dinheiro) vêm dos sinais da data. */
   paineis: readonly PainelId[];
   /** Rótulos de painel que mudam no tipo. */
   rotulosDePainel?: Partial<Record<PainelId, string>>;
@@ -159,10 +157,8 @@ export const ROTULO_DO_PAINEL: Record<PainelId, string> = {
   palco: "Palco",
   obras: "Obras",
   visitacao: "Visitação",
-  convidados: "Convidados",
   publico: "Público",
   dinheiro: "Dinheiro",
-  bordero: "Borderô",
 };
 
 /** Formatos em que a equipe se desloca: o tipo ganha os dias de viagem e de folga. */
@@ -181,7 +177,7 @@ export const MODELOS_DE_ESTRADA: readonly ModeloDia[] = [
   { id: "estrada-folga", nome: "Folga", tipoData: "folga", blocos: [] },
 ];
 
-const PAINEIS_DE_PALCO: readonly PainelId[] = ["palco", "publico", "bordero"];
+const PAINEIS_DE_PALCO: readonly PainelId[] = ["palco", "publico"];
 
 export const TIPOS_DE_PRODUCAO: readonly TipoNoCatalogo[] = [
   {
@@ -379,7 +375,7 @@ export const TIPOS_DE_PRODUCAO: readonly TipoNoCatalogo[] = [
         ],
       },
     ],
-    paineis: ["obras", "visitacao", "publico", "bordero"],
+    paineis: ["obras", "visitacao", "publico"],
   },
   {
     id: "festival",
@@ -427,8 +423,6 @@ export const TIPOS_DE_PRODUCAO: readonly TipoNoCatalogo[] = [
       ],
     }],
     paineis: ["publico"],
-    // Na literatura, "convidados" são os autores das mesas; o painel é o das cortesias.
-    rotulosDePainel: { convidados: "Cortesias" },
   },
   {
     id: "audiovisual",
@@ -462,7 +456,7 @@ export const TIPOS_DE_PRODUCAO: readonly TipoNoCatalogo[] = [
         ],
       },
     ],
-    paineis: ["publico", "bordero"],
+    paineis: ["publico"],
   },
   {
     id: "formacao",

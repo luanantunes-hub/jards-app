@@ -95,14 +95,14 @@ export function NovaPropostaModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="bg-white rounded shadow-2xl w-full overflow-hidden" style={{ maxWidth: "25rem" }} onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex justify-center items-start veu" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-desce folha-vidro w-full overflow-hidden max-h-[96dvh]" style={{ maxWidth: "25rem" }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">
               <Coins size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">{proposta ? "Editar proposta" : "Nova proposta"}</h2>
+            <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">{proposta ? "Editar proposta" : "Nova proposta"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={15} className="text-black/40" />
@@ -153,7 +153,7 @@ export function NovaPropostaModal({
           <button
             onClick={salvar}
             disabled={salvando || !valorInput.trim()}
-            className="w-full px-3 py-2 text-[0.6875rem] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 text-[0.6875rem] font-medium acao-salvar text-white rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {salvando ? "Salvando…" : "Salvar"}
           </button>

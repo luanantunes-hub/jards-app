@@ -9,6 +9,9 @@ import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { Select } from "@/components/ui/Select";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { NotasRelacionais } from "@/components/relationship/NotasRelacionais";
+import { LinhaDeConversa } from "@/components/relationship/LinhaDeConversa";
+import { ConversaDeEmail } from "@/components/relationship/ConversaDeEmail";
+import { agruparConversas, COLUNAS_DO_EMAIL_DE_CONVERSA, type EmailDeConversa } from "@/lib/email/conversas";
 
 type Contact = { id: string; nome: string; cargo: string | null };
 type Member = { id: string; nome: string };
@@ -70,6 +73,9 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
   const [notaFormOpen, setNotaFormOpen] = useState(false);
   const [filter, setFilter] = useState<FollowupFilter>("pendentes");
   const [interactions, setInteractions] = useState<Interaction[]>([]);
+  const [emails, setEmails] = useState<EmailDeConversa[]>([]);
+  const [chaveAberta, setChaveAberta] = useState<string | null>(null);
+  const [meuId, setMeuId] = useState<string | null>(null);
   const [followups, setFollowups] = useState<Followup[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -101,20 +107,30 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
       else if (proponenteId) query = query.eq("proponente_id", proponenteId);
       return query;
     };
-    const [i, f, q, memberResult] = await Promise.all([
+    // Os e-mails sincronizados só têm empresa e negociação: nas outras páginas (conta de patrocínio, proponente) não há e-mails.
+    const escopoDeEmail = captacaoId
+      ? { coluna: "captacao_id", valor: captacaoId }
+      : contaPatrocinioId ? null : empresaCrmId ? { coluna: "empresa_crm_id", valor: empresaCrmId } : null;
+    const [i, f, q, memberResult, e] = await Promise.all([
       scope("crm_interacoes", "id,tipo,canal,direcao,assunto,resumo,resultado,ocorreu_em,email_id,created_by,account_id,contato:contatos(nome)").order("ocorreu_em", { ascending: false }),
       scope("crm_followups", "id,titulo,motivo,canal,previsto_para,status,tentativa,workflow,contato_id,responsavel_id,concluido_em,resultado,contato:contatos(nome),responsavel:profiles!responsavel_id(full_name)").order("previsto_para"),
       scope("crm_duvidas", "id,tipo,titulo,resposta,status,contato:contatos(nome)").order("created_at", { ascending: false }),
       fetchOrganizationMembers(organizationId)
         .then(data => ({ data, error: null as Error | null }))
         .catch(error => ({ data: [], error: error instanceof Error ? error : new Error("Falha ao carregar equipe") })),
+      escopoDeEmail
+        ? (supabase as any).from("emails").select(COLUNAS_DO_EMAIL_DE_CONVERSA).eq(escopoDeEmail.coluna, escopoDeEmail.valor).order("sent_at", { ascending: false }).limit(300)
+        : Promise.resolve({ data: [] as EmailDeConversa[], error: null }),
     ]);
     const firstError = i.error ?? f.error ?? q.error ?? memberResult.error;
     setError(firstError?.message ?? null); setInteractions(i.data ?? []); setFollowups(f.data ?? []); setQuestions(q.data ?? []);
+    // Sem acesso aos e-mails (ou sem e-mails), a aba segue só com as interações registradas.
+    setEmails(e.error ? [] : e.data ?? []);
     setMembers(memberResult.data.filter(item => item.papel !== "captador").map(item => ({ id: item.user_id, nome: item.full_name || item.email || "Membro da equipe" })));
     setLoading(false);
   }, [captacaoId, contaPatrocinioId, empresaCrmId, organizationId, proponenteId, supabase]);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void supabase.auth.getUser().then(({ data }) => setMeuId(data.user?.id ?? null)); }, [supabase]);
   useEffect(() => {
     if (emailSyncStarted.current) return;
     emailSyncStarted.current = true;
@@ -211,6 +227,18 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
   };
   const coldDays = lastInteraction ? Math.floor((Date.now() - new Date(lastInteraction).getTime()) / 86_400_000) : null;
   const workflows = mode === "customer_success" ? CUSTOMER_SUCCESS_WORKFLOWS : WORKFLOWS;
+  // Linha do tempo da aba Interações: cada conversa de e-mail ocupa um item só (o fio inteiro), no lugar das mensagens soltas.
+  const conversas = useMemo(() => agruparConversas(emails), [emails]);
+  const linhaDoTempo = useMemo(() => {
+    const idsDosEmails = new Set(emails.map(item => item.id));
+    return [
+      ...interactions.filter(item => !item.email_id || !idsDosEmails.has(item.email_id)).map(item => ({ tipo: "interacao" as const, quando: new Date(item.ocorreu_em).getTime(), item })),
+      ...conversas.map(conversa => ({ tipo: "conversa" as const, quando: conversa.ultimaEm ?? 0, conversa })),
+    ].sort((a, b) => b.quando - a.quando);
+  }, [conversas, emails, interactions]);
+  const conversaAberta = chaveAberta ? conversas.find(conversa => conversa.chave === chaveAberta) ?? null : null;
+
+  const linhaDeInteracao = (item: Interaction) => <div key={item.id} className="px-5 py-4"><div className="flex items-start justify-between gap-4"><div className="min-w-0"><div className="flex items-center gap-2">{item.email_id && <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-black/[.04] text-black/45" title="Sincronizado do e-mail"><Mail size={10}/></span>}<p className="truncate text-[0.8125rem] font-semibold text-[#282525]">{item.assunto}</p></div></div><span className="flex-shrink-0 text-[0.6875rem] text-black/30">{dateLabel(item.ocorreu_em)}</span></div>{item.resumo && <p className="mt-2 whitespace-pre-line text-[0.75rem] leading-relaxed text-black/50">{item.resumo}</p>}<p className="mt-1 text-[0.625rem] text-black/30">{item.contato?.nome ?? "Empresa"} · {channelLabel(item.canal ?? item.tipo)}{item.direcao ? ` · ${item.direcao === "entrada" ? "Recebido" : "Enviado"}` : ""}{item.resultado ? ` · ${resultLabel(item.resultado)}` : ""}{autorDe(item) ? ` · por ${autorDe(item)}` : ""}</p></div>;
 
   return <div className="space-y-5">
     <div className="grid gap-px overflow-hidden rounded border bg-black/[.06] sm:grid-cols-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -227,8 +255,8 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
       {error && !form && !finishing && <p className="m-5 rounded border border-[#D94E4E]/20 px-3 py-2 text-xs text-[#D94E4E]">{error}</p>}
       {section === "notas" ? <NotasRelacionais empresaCrmId={empresaCrmId} proponenteId={proponenteId} showNew={notaFormOpen} setShowNew={setNotaFormOpen} /> : (
         <div className="divide-y divide-black/[.06]">
-          {loading ? <p className="px-5 py-12 text-center text-xs text-black/30">Carregando…</p> : section === "followups" ? visible.map(item => <FollowupRow key={item.id} item={item} channelLabel={channelLabel} saving={saving} onFinish={() => setFinishing(item)} onEdit={() => editFollowup(item)} onCancel={() => void updateStatus(item, "cancelado")} onReopen={() => void updateStatus(item, "pendente")} />) : section === "interacoes" ? interactions.map(item => <div key={item.id} className="px-5 py-4"><div className="flex items-start justify-between gap-4"><div className="min-w-0"><div className="flex items-center gap-2">{item.email_id && <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-black/[.04] text-black/45" title="Sincronizado do e-mail"><Mail size={10}/></span>}<p className="truncate text-[0.8125rem] font-semibold text-[#282525]">{item.assunto}</p></div></div><span className="flex-shrink-0 text-[0.6875rem] text-black/30">{dateLabel(item.ocorreu_em)}</span></div>{item.resumo && <p className="mt-2 whitespace-pre-line text-[0.75rem] leading-relaxed text-black/50">{item.resumo}</p>}<p className="mt-1 text-[0.625rem] text-black/30">{item.contato?.nome ?? "Empresa"} · {channelLabel(item.canal ?? item.tipo)}{item.direcao ? ` · ${item.direcao === "entrada" ? "Recebido" : "Enviado"}` : ""}{item.resultado ? ` · ${resultLabel(item.resultado)}` : ""}{autorDe(item) ? ` · por ${autorDe(item)}` : ""}</p></div>) : questions.map(item => <div key={item.id} className="px-5 py-4"><div className="flex items-center gap-2"><span className="rounded border px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase" style={{ color: item.tipo === "objecao" ? "#D94E4E" : "#2D72B0", borderColor: item.tipo === "objecao" ? "#D94E4E40" : "#2D72B040" }}>{item.tipo}</span><p className="text-[0.8125rem] font-semibold text-[#282525]">{item.titulo}</p></div>{item.resposta && <p className="mt-2 text-[0.75rem] text-black/50">{item.resposta}</p>}</div>)}
-          {!loading && ((section === "followups" && !visible.length) || (section === "interacoes" && !interactions.length) || (section === "duvidas" && !questions.length)) && <div className="px-5 py-14 text-center"><p className="text-sm font-medium text-black/30">Nada registrado aqui ainda</p></div>}
+          {loading ? <p className="px-5 py-12 text-center text-xs text-black/30">Carregando…</p> : section === "followups" ? visible.map(item => <FollowupRow key={item.id} item={item} channelLabel={channelLabel} saving={saving} onFinish={() => setFinishing(item)} onEdit={() => editFollowup(item)} onCancel={() => void updateStatus(item, "cancelado")} onReopen={() => void updateStatus(item, "pendente")} />) : section === "interacoes" ? linhaDoTempo.map(linha => linha.tipo === "conversa" ? <LinhaDeConversa key={linha.conversa.chave} conversa={linha.conversa} data={dateLabel(new Date(linha.quando).toISOString())} contatos={linha.conversa.contatoIds.map(id => contacts.find(contato => contato.id === id)?.nome).filter((nome): nome is string => Boolean(nome))} canal={channelLabel("email")} autor={members.find(member => member.id === linha.conversa.donoIds[0])?.nome ?? null} onAbrir={() => setChaveAberta(linha.conversa.chave)} /> : linhaDeInteracao(linha.item)) : questions.map(item => <div key={item.id} className="px-5 py-4"><div className="flex items-center gap-2"><span className="rounded border px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase" style={{ color: item.tipo === "objecao" ? "#D94E4E" : "#2D72B0", borderColor: item.tipo === "objecao" ? "#D94E4E40" : "#2D72B040" }}>{item.tipo}</span><p className="text-[0.8125rem] font-semibold text-[#282525]">{item.titulo}</p></div>{item.resposta && <p className="mt-2 text-[0.75rem] text-black/50">{item.resposta}</p>}</div>)}
+          {!loading && ((section === "followups" && !visible.length) || (section === "interacoes" && !linhaDoTempo.length) || (section === "duvidas" && !questions.length)) && <div className="px-5 py-14 text-center"><p className="text-sm font-medium text-black/30">Nada registrado aqui ainda</p></div>}
         </div>
       )}
     </div>
@@ -257,6 +285,7 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
         onConfirm={contactIdChosen => { const def = pendingWorkflow; setPendingWorkflow(null); void runWorkflow(def, contactIdChosen); }}
       />
     )}
+    {conversaAberta && <ConversaDeEmail conversa={conversaAberta} meuId={meuId} contatos={contacts.map(({ id, nome }) => ({ id, nome }))} membros={members} onClose={() => setChaveAberta(null)} onMudou={() => void load()} />}
   </div>;
 }
 
@@ -284,7 +313,7 @@ const fieldStyle = { borderColor: "rgba(13,13,13,.15)" } as const;
 function WorkflowContactPicker({ def, contacts, saving, onCancel, onConfirm }: { def: WorkflowDef; contacts: Contact[]; saving: boolean; onCancel: () => void; onConfirm: (contactId: string | null) => void }) {
   const [contactId, setContactId] = useState("");
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center" style={{ background: "rgba(0,0,0,.45)" }} onClick={onCancel}>
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={onCancel}>
       <div
         className="flex w-full max-w-[30rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
         style={{ boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
@@ -317,7 +346,7 @@ function WorkflowContactPicker({ def, contacts, saving, onCancel, onConfirm }: {
 
         <footer className="flex items-center justify-end gap-2 border-t px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button onClick={onCancel} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
-          <button disabled={saving} onClick={() => onConfirm(contactId || null)} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60">
+          <button disabled={saving} onClick={() => onConfirm(contactId || null)} className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:opacity-60">
             <Save size={12} /> {saving ? "Criando…" : "Confirmar"}
           </button>
         </footer>
@@ -331,7 +360,7 @@ function EntryForm(props: { kind: FormKind; editing: boolean; title:string; deta
   const titleText = props.editing ? "Editar follow-up" : props.kind === "followup" ? "Novo follow-up" : props.kind === "interacao" ? "Registrar interação" : "Nova dúvida ou objeção";
   const Icon = props.kind === "followup" ? CalendarClock : props.kind === "interacao" ? RefreshCw : MessageCircleQuestion;
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center" style={{ background: "rgba(0,0,0,.45)" }} onClick={props.onCancel}>
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={props.onCancel}>
       <div
         className="flex w-full max-w-[30rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
         style={{ boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
@@ -419,7 +448,7 @@ function EntryForm(props: { kind: FormKind; editing: boolean; title:string; deta
           {props.error ? <p className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{props.error}</p> : <div />}
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <button onClick={props.onCancel} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
-            <button disabled={!props.title.trim()||props.saving} onClick={props.onSave} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60">
+            <button disabled={!props.title.trim()||props.saving} onClick={props.onSave} className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:opacity-60">
               <Save size={12} /> {props.saving ? "Salvando…" : "Salvar"}
             </button>
           </div>

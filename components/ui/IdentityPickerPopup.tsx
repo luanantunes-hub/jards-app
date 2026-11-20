@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { FolderOpen, ImagePlus, Pencil } from "lucide-react";
-import { ProjectIdentity, IDENTITY_COLORS, type IdentityIconOption, type IdentityType } from "./ProjectIdentity";
+import { Pencil } from "lucide-react";
+import { ProjectIdentity, type IdentityIconOption, type IdentityType } from "./ProjectIdentity";
+import { IconePicker } from "./IconePicker";
 
 type IdentityPickerPopupProps = {
   nome: string;
@@ -10,7 +11,6 @@ type IdentityPickerPopupProps = {
   logoUrl: string | null;
   cor: string | null;
   iconOptions: readonly IdentityIconOption[];
-  iconColors?: readonly { key: string; label: string; cor: string }[];
   saving: boolean;
   title: string;
   onSave: (tipo: IdentityType, valor: string | null, logoUrl?: string | null, cor?: string | null) => void;
@@ -18,73 +18,51 @@ type IdentityPickerPopupProps = {
   triggerLabel: string;
 };
 
+/** Identidade no cabeçalho das páginas de detalhe: clica no ícone e escolhe ali mesmo. */
 export function IdentityPickerPopup({
-  nome,
-  tipo,
-  valor,
-  logoUrl,
-  cor,
-  iconColors = IDENTITY_COLORS,
-  iconOptions,
-  saving,
-  title,
-  onSave,
-  onLogoFile,
-  triggerLabel,
+  nome, tipo, valor, logoUrl, cor, iconOptions, saving, title, onSave, onLogoFile, triggerLabel,
 }: IdentityPickerPopupProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const gatilhoRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    const close = (event: MouseEvent) => { if (!containerRef.current?.contains(event.target as Node)) setOpen(false); };
-    window.addEventListener("mousedown", close);
-    return () => window.removeEventListener("mousedown", close);
+    const fecharFora = (event: MouseEvent) => { if (!containerRef.current?.contains(event.target as Node)) setOpen(false); };
+    const fecharEsc = (event: KeyboardEvent) => { if (event.key === "Escape" && !event.defaultPrevented) { setOpen(false); gatilhoRef.current?.focus(); } };
+    window.addEventListener("mousedown", fecharFora);
+    window.addEventListener("keydown", fecharEsc);
+    return () => { window.removeEventListener("mousedown", fecharFora); window.removeEventListener("keydown", fecharEsc); };
   }, [open]);
 
   return (
     <div ref={containerRef} className="relative mt-0.5">
-      <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={event => { onLogoFile(event.target.files?.[0]); event.target.value = ""; }} />
-      <button type="button" onClick={() => setOpen(open => !open)} aria-label={triggerLabel} aria-expanded={open} className="group relative rounded outline-none ring-[#7259B5]/25 focus-visible:ring-2">
+      <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={event => { onLogoFile(event.target.files?.[0]); event.target.value = ""; setOpen(false); }} />
+      <button
+        ref={gatilhoRef}
+        type="button"
+        onClick={() => setOpen(atual => !atual)}
+        aria-label={triggerLabel}
+        aria-expanded={open}
+        className={`group relative rounded outline-none transition-colors hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${open ? "bg-black/[.05]" : ""}`}
+      >
         <ProjectIdentity nome={nome} tipo={tipo} valor={valor} logoUrl={logoUrl} cor={cor} size="md" iconOptions={iconOptions} />
-        <span className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded border border-black/10 bg-white text-black/45 opacity-0 shadow-sm transition group-hover:opacity-100 group-hover:text-[#7259B5] group-focus-visible:opacity-100 ${open ? "opacity-100" : ""}`}><Pencil size={8} /></span>
+        <span className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded bg-white text-black/45 opacity-0 shadow-[0_1px_3px_rgba(13,13,13,.18)] transition group-hover:opacity-100 group-focus-visible:opacity-100 ${open ? "opacity-100" : ""}`} aria-hidden><Pencil size={8} /></span>
       </button>
       {open && (
-        <div className="absolute left-0 top-12 z-30 w-[17.875rem] rounded bg-white p-3 border elevacao-1">
-          <div className="px-1 pb-3"><p className="text-[0.8125rem] font-semibold text-black/70">{title}</p></div>
-          <div className="grid grid-cols-4 gap-1.5">
-            {iconOptions.map(({ key, label, Icon }) => {
-              const active = tipo === "icone" && valor === key;
-              return (
-                <button key={key} type="button" title={label} disabled={saving} onClick={() => void onSave("icone", key, null, cor ?? iconColors[0].cor)} className={`flex h-12 items-center justify-center rounded border bg-white transition hover:bg-black/[.04] disabled:opacity-40 ${active ? "border-[#7259B5]/45 text-[#7259B5]" : "border-black/[.08] text-black/40"}`}>
-                  <Icon size={17} />
-                </button>
-              );
-            })}
-            <button type="button" title="Identidade padrão" disabled={saving} onClick={() => void onSave("padrao", null)} className={`flex h-12 items-center justify-center rounded border bg-white transition hover:bg-black/[.04] disabled:opacity-40 ${tipo === "padrao" ? "border-[#7259B5]/45 text-[#7259B5]" : "border-black/[.08] text-black/40"}`}>
-              <FolderOpen size={17} />
-            </button>
-          </div>
-          {tipo === "icone" && (
-            <div className="mt-2.5 border-t pt-2.5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="px-1 pb-2 text-[0.625rem] font-semibold text-black/40">Cor do ícone</p>
-              <div className="grid grid-cols-8 gap-1.5">
-                {iconColors.map(({ key, label, cor: corValue }) => {
-                  const active = (cor ?? iconColors[0].cor) === corValue;
-                  return (
-                    <button key={key} type="button" title={label} disabled={saving} onClick={() => void onSave("icone", valor ?? iconOptions[0].key, null, corValue)} className={`flex h-7 items-center justify-center rounded border bg-white transition hover:scale-105 disabled:opacity-40 ${active ? "border-[#7259B5]/60 ring-1 ring-[#7259B5]/25" : "border-black/[.08]"}`}>
-                      <span className="h-3.5 w-3.5 rounded-full" style={{ background: corValue }} />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          <button type="button" disabled={saving} onClick={() => logoInputRef.current?.click()} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded border border-[#7259B5]/25 bg-white text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40">
-            <ImagePlus size={14} />
-            {saving ? "Salvando…" : tipo === "logo" ? "Trocar logo" : "Usar logo"}
-          </button>
+        <div role="dialog" aria-label={title} className="absolute left-0 top-12 z-30 rounded bg-white p-3 animate-[aparecer_.14s_ease-out] motion-reduce:animate-none" style={{ boxShadow: "var(--elevacao-sombra-2)" }}>
+          <IconePicker
+            tipo={tipo}
+            valor={valor}
+            cor={cor}
+            iconOptions={iconOptions}
+            saving={saving}
+            temLogo={tipo === "logo" && !!logoUrl}
+            onEscolher={(icone, novaCor) => { onSave("icone", icone, null, novaCor); setOpen(false); gatilhoRef.current?.focus(); }}
+            onRemover={() => { onSave("padrao", null); setOpen(false); }}
+            onLogo={() => logoInputRef.current?.click()}
+          />
         </div>
       )}
     </div>

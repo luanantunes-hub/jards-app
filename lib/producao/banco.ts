@@ -71,14 +71,13 @@ import type {
   VisibilidadeDoAcerto,
   DestinoDoAcerto,
   SituacaoDoAcerto,
-  SituacaoDoSite,
-  SituacaoDoDominio,
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   EscopoDoDocumento,
   TipoDeDocumento,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, TipoDeTabela, CamaDoQuarto, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoAdiantamento, SituacaoDoPedido, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, TipoDeTabela, CamaDoQuarto, SituacaoDoVoluntario, SituacaoDoAdiantamento, SituacaoDoPedido, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PosicaoNaExposicao, LuzDaObra, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite, TipoDeComunicacao,
+} from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -248,6 +247,60 @@ export type BancoDaProducao = {
             isOneToOne: false;
             referencedRelation: "organization_members";
             referencedColumns: ["organization_id", "user_id"];
+          },
+        ];
+      };
+      producao_comunicacao: {
+        Row: {
+          id: string;
+          organization_id: string;
+          data_id: string;
+          tipo: TipoDeComunicacao;
+          titulo: string;
+          texto: string | null;
+          url: string | null;
+          ordem: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          data_id: string;
+          tipo?: TipoDeComunicacao;
+          titulo: string;
+          texto?: string | null;
+          url?: string | null;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          data_id?: string;
+          tipo?: TipoDeComunicacao;
+          titulo?: string;
+          texto?: string | null;
+          url?: string | null;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_comunicacao_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_comunicacao_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
           },
         ];
       };
@@ -577,6 +630,8 @@ export type BancoDaProducao = {
           depois: string | null;
           quem: string | null;
           quando: string;
+          espaco_id: string | null;
+          temporada_id: string | null;
         };
         // O id é gerado pelo banco (identity always): nunca se manda. Quem grava é o gatilho.
         Insert: {
@@ -590,6 +645,8 @@ export type BancoDaProducao = {
           depois?: string | null;
           quem?: string | null;
           quando?: string;
+          espaco_id?: string | null;
+          temporada_id?: string | null;
         };
         Update: {
           id?: never;
@@ -602,6 +659,8 @@ export type BancoDaProducao = {
           depois?: string | null;
           quem?: string | null;
           quando?: string;
+          espaco_id?: string | null;
+          temporada_id?: string | null;
         };
         Relationships: [
           {
@@ -778,6 +837,7 @@ export type BancoDaProducao = {
           organization_id: string;
           temporada_id: string;
           data_id: string | null;
+          lancamento_id: string | null;
           pasta: PastaDeArquivo;
           storage_path: string;
           nome: string;
@@ -795,6 +855,7 @@ export type BancoDaProducao = {
           organization_id: string;
           temporada_id: string;
           data_id?: string | null;
+          lancamento_id?: string | null;
           pasta: PastaDeArquivo;
           storage_path: string;
           nome: string;
@@ -810,6 +871,7 @@ export type BancoDaProducao = {
           organization_id?: string;
           temporada_id?: string;
           data_id?: string | null;
+          lancamento_id?: string | null;
           pasta?: PastaDeArquivo;
           storage_path?: string;
           nome?: string;
@@ -821,6 +883,13 @@ export type BancoDaProducao = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "producao_arquivos_lancamento_id_fkey";
+            columns: ["lancamento_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_lancamentos";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "producao_arquivos_data_id_fkey";
             columns: ["data_id"];
@@ -1502,6 +1571,7 @@ export type BancoDaProducao = {
           contato_nome: string | null;
           contato_telefone: string | null;
           contato_email: string | null;
+          logo_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -1516,6 +1586,7 @@ export type BancoDaProducao = {
           contato_nome?: string | null;
           contato_telefone?: string | null;
           contato_email?: string | null;
+          logo_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1530,6 +1601,7 @@ export type BancoDaProducao = {
           contato_nome?: string | null;
           contato_telefone?: string | null;
           contato_email?: string | null;
+          logo_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -2630,284 +2702,6 @@ export type BancoDaProducao = {
           },
         ];
       };
-      producao_credencial_tipos: {
-        Row: {
-          id: string;
-          organization_id: string;
-          nome: string;
-          cota_por_sessao: number | null;
-          arquivado: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          nome: string;
-          cota_por_sessao?: number | null;
-          arquivado?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          nome?: string;
-          cota_por_sessao?: number | null;
-          arquivado?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_credencial_tipos_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_convidados: {
-        Row: {
-          id: string;
-          organization_id: string;
-          sessao_id: string;
-          tipo_id: string;
-          nome: string;
-          afiliacao: string | null;
-          quantidade: number;
-          situacao: SituacaoDoConvidado;
-          solicitante: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          sessao_id: string;
-          tipo_id: string;
-          nome: string;
-          afiliacao?: string | null;
-          quantidade?: number;
-          situacao?: SituacaoDoConvidado;
-          solicitante?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          sessao_id?: string;
-          tipo_id?: string;
-          nome?: string;
-          afiliacao?: string | null;
-          quantidade?: number;
-          situacao?: SituacaoDoConvidado;
-          solicitante?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_convidados_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_convidados_sessao_id_fkey";
-            columns: ["sessao_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_sessoes";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_convidados_tipo_id_fkey";
-            columns: ["tipo_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_credencial_tipos";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_credenciais: {
-        Row: {
-          id: string;
-          organization_id: string;
-          sessao_id: string;
-          convidado_id: string;
-          token_hash: string;
-          entradas: number;
-          ultima_entrada_em: string | null;
-          revogada_em: string | null;
-          emitida_por: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          sessao_id: string;
-          convidado_id: string;
-          token_hash: string;
-          entradas?: number;
-          ultima_entrada_em?: string | null;
-          revogada_em?: string | null;
-          emitida_por?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          sessao_id?: string;
-          convidado_id?: string;
-          token_hash?: string;
-          entradas?: number;
-          ultima_entrada_em?: string | null;
-          revogada_em?: string | null;
-          emitida_por?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_credenciais_convidado_id_fkey";
-            columns: ["convidado_id"];
-            isOneToOne: true;
-            referencedRelation: "producao_convidados";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_credenciais_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_credenciais_sessao_id_fkey";
-            columns: ["sessao_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_sessoes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_porta_leituras: {
-        Row: {
-          id: string;
-          organization_id: string;
-          sessao_id: string;
-          credencial_id: string | null;
-          resultado: ResultadoDaLeitura;
-          motivo: string | null;
-          lida_em: string;
-          lida_por: string | null;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          sessao_id: string;
-          credencial_id?: string | null;
-          resultado: ResultadoDaLeitura;
-          motivo?: string | null;
-          lida_em?: string;
-          lida_por?: string | null;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          sessao_id?: string;
-          credencial_id?: string | null;
-          resultado?: ResultadoDaLeitura;
-          motivo?: string | null;
-          lida_em?: string;
-          lida_por?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_porta_leituras_credencial_id_fkey";
-            columns: ["credencial_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_credenciais";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_porta_leituras_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_porta_leituras_sessao_id_fkey";
-            columns: ["sessao_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_sessoes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_convidados_links: {
-        Row: {
-          id: string;
-          organization_id: string;
-          sessao_id: string;
-          token_hash: string;
-          titulo: string | null;
-          corte_em: string;
-          limite: number;
-          revogado_em: string | null;
-          criado_por: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          sessao_id: string;
-          token_hash: string;
-          titulo?: string | null;
-          corte_em: string;
-          limite?: number;
-          revogado_em?: string | null;
-          criado_por?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          sessao_id?: string;
-          token_hash?: string;
-          titulo?: string | null;
-          corte_em?: string;
-          limite?: number;
-          revogado_em?: string | null;
-          criado_por?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_convidados_links_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_convidados_links_sessao_id_fkey";
-            columns: ["sessao_id"];
-            isOneToOne: true;
-            referencedRelation: "producao_sessoes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       producao_visitas_horarios: {
         Row: {
           id: string;
@@ -3292,109 +3086,6 @@ export type BancoDaProducao = {
           },
         ];
       };
-      producao_setores: {
-        Row: {
-          id: string;
-          organization_id: string;
-          sala_id: string;
-          nome: string;
-          lugares: number;
-          ordem: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          sala_id: string;
-          nome: string;
-          lugares: number;
-          ordem?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          sala_id?: string;
-          nome?: string;
-          lugares?: number;
-          ordem?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_setores_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_setores_sala_id_fkey";
-            columns: ["sala_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_salas";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_setor_cotas: {
-        Row: {
-          id: string;
-          organization_id: string;
-          sessao_id: string;
-          setor_id: string;
-          categoria: CategoriaDaCota;
-          lugares: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          sessao_id: string;
-          setor_id: string;
-          categoria: CategoriaDaCota;
-          lugares: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          sessao_id?: string;
-          setor_id?: string;
-          categoria?: CategoriaDaCota;
-          lugares?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_setor_cotas_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_setor_cotas_sessao_id_fkey";
-            columns: ["sessao_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_sessoes";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_setor_cotas_setor_id_fkey";
-            columns: ["setor_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_setores";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       producao_expografia: {
         Row: {
           id: string;
@@ -3408,6 +3099,8 @@ export type BancoDaProducao = {
           lux: number | null;
           notas: string | null;
           instalada_em: string | null;
+          x_m: number | null;
+          y_m: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -3423,6 +3116,8 @@ export type BancoDaProducao = {
           lux?: number | null;
           notas?: string | null;
           instalada_em?: string | null;
+          x_m?: number | null;
+          y_m?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -3438,6 +3133,8 @@ export type BancoDaProducao = {
           lux?: number | null;
           notas?: string | null;
           instalada_em?: string | null;
+          x_m?: number | null;
+          y_m?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -3461,222 +3158,6 @@ export type BancoDaProducao = {
             columns: ["item_id"];
             isOneToOne: false;
             referencedRelation: "producao_itens";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_borderos: {
-        Row: {
-          id: string;
-          organization_id: string;
-          sessao_id: string;
-          publico_casa: number | null;
-          situacao: SituacaoDoBordero;
-          observacao: string | null;
-          fechado_em: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          sessao_id: string;
-          publico_casa?: number | null;
-          situacao?: SituacaoDoBordero;
-          observacao?: string | null;
-          fechado_em?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          sessao_id?: string;
-          publico_casa?: number | null;
-          situacao?: SituacaoDoBordero;
-          observacao?: string | null;
-          fechado_em?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_borderos_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_borderos_sessao_id_fkey";
-            columns: ["sessao_id"];
-            isOneToOne: true;
-            referencedRelation: "producao_sessoes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_bordero_receitas: {
-        Row: {
-          id: string;
-          organization_id: string;
-          bordero_id: string;
-          categoria: string;
-          quantidade: number;
-          valor_unitario: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          bordero_id: string;
-          categoria: string;
-          quantidade?: number;
-          valor_unitario?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          bordero_id?: string;
-          categoria?: string;
-          quantidade?: number;
-          valor_unitario?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_bordero_receitas_bordero_id_fkey";
-            columns: ["bordero_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_borderos";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_bordero_receitas_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_bordero_deducoes: {
-        Row: {
-          id: string;
-          organization_id: string;
-          bordero_id: string;
-          nome: string;
-          forma: FormaDaDeducao;
-          valor: number;
-          beneficiario: string | null;
-          ordem: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          bordero_id: string;
-          nome: string;
-          forma?: FormaDaDeducao;
-          valor?: number;
-          beneficiario?: string | null;
-          ordem?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          bordero_id?: string;
-          nome?: string;
-          forma?: FormaDaDeducao;
-          valor?: number;
-          beneficiario?: string | null;
-          ordem?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_bordero_deducoes_bordero_id_fkey";
-            columns: ["bordero_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_borderos";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_bordero_deducoes_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_bordero_acertos: {
-        Row: {
-          id: string;
-          organization_id: string;
-          bordero_id: string;
-          parte: string;
-          papel: PapelNoAcerto;
-          forma: FormaDoAcerto;
-          valor: number;
-          situacao: SituacaoDoAcertoDoBordero;
-          aprovado_por: string | null;
-          aprovado_em: string | null;
-          pago_em: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          bordero_id: string;
-          parte: string;
-          papel?: PapelNoAcerto;
-          forma?: FormaDoAcerto;
-          valor?: number;
-          situacao?: SituacaoDoAcertoDoBordero;
-          aprovado_por?: string | null;
-          aprovado_em?: string | null;
-          pago_em?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          bordero_id?: string;
-          parte?: string;
-          papel?: PapelNoAcerto;
-          forma?: FormaDoAcerto;
-          valor?: number;
-          situacao?: SituacaoDoAcertoDoBordero;
-          aprovado_por?: string | null;
-          aprovado_em?: string | null;
-          pago_em?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_bordero_acertos_bordero_id_fkey";
-            columns: ["bordero_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_borderos";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_bordero_acertos_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];
@@ -4965,6 +4446,57 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_marca_links: {
+        Row: {
+          id: string;
+          organization_id: string;
+          marca_id: string;
+          token_hash: string;
+          expira_em: string;
+          revogado_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          marca_id: string;
+          token_hash: string;
+          expira_em: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          marca_id?: string;
+          token_hash?: string;
+          expira_em?: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_marca_links_marca_id_fkey";
+            columns: ["marca_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_marcas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_marca_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_marcas: {
         Row: {
           id: string;
@@ -5267,183 +4799,6 @@ export type BancoDaProducao = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_sites: {
-        Row: {
-          id: string;
-          organization_id: string;
-          espaco_id: string;
-          nome: string;
-          titulo: string | null;
-          cor: string;
-          situacao: SituacaoDoSite;
-          criado_por: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          espaco_id: string;
-          nome: string;
-          titulo?: string | null;
-          cor?: string;
-          situacao?: SituacaoDoSite;
-          criado_por?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          espaco_id?: string;
-          nome?: string;
-          titulo?: string | null;
-          cor?: string;
-          situacao?: SituacaoDoSite;
-          criado_por?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_sites_espaco_id_fkey";
-            columns: ["espaco_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_espacos";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_sites_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_site_paginas: {
-        Row: {
-          id: string;
-          organization_id: string;
-          site_id: string;
-          slug: string;
-          titulo: string;
-          ordem: number;
-          blocos: Json;
-          blocos_publicados: Json | null;
-          publicada_em: string | null;
-          descricao: string | null;
-          imagem_url: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          site_id: string;
-          slug: string;
-          titulo: string;
-          ordem?: number;
-          blocos?: Json;
-          blocos_publicados?: Json | null;
-          publicada_em?: string | null;
-          descricao?: string | null;
-          imagem_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          site_id?: string;
-          slug?: string;
-          titulo?: string;
-          ordem?: number;
-          blocos?: Json;
-          blocos_publicados?: Json | null;
-          publicada_em?: string | null;
-          descricao?: string | null;
-          imagem_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_site_paginas_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_site_paginas_site_id_fkey";
-            columns: ["site_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_sites";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      producao_site_dominios: {
-        Row: {
-          id: string;
-          organization_id: string;
-          site_id: string;
-          dominio: string;
-          situacao: SituacaoDoDominio;
-          token_verificacao: string;
-          erro: string | null;
-          verificado_em: string | null;
-          conferido_em: string | null;
-          criado_por: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          site_id: string;
-          dominio: string;
-          situacao?: SituacaoDoDominio;
-          token_verificacao: string;
-          erro?: string | null;
-          verificado_em?: string | null;
-          conferido_em?: string | null;
-          criado_por?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          site_id?: string;
-          dominio?: string;
-          situacao?: SituacaoDoDominio;
-          token_verificacao?: string;
-          erro?: string | null;
-          verificado_em?: string | null;
-          conferido_em?: string | null;
-          criado_por?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "producao_site_dominios_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "producao_site_dominios_site_id_fkey";
-            columns: ["site_id"];
-            isOneToOne: false;
-            referencedRelation: "producao_sites";
             referencedColumns: ["id"];
           },
         ];
@@ -5947,26 +5302,6 @@ export type BancoDaProducao = {
         Args: { p_temporada: string; p_dias: number; p_titulo: string; p_vagas: number };
         Returns: string;
       };
-      fn_producao_credenciais_emitir: {
-        Args: { p_sessao: string };
-        Returns: Json;
-      };
-      fn_producao_credencial_achar: {
-        Args: { p_sessao: string; p_codigo: string };
-        Returns: string;
-      };
-      fn_producao_credencial_reemitir: {
-        Args: { p_convidado: string };
-        Returns: string;
-      };
-      fn_producao_porta_ler: {
-        Args: { p_sessao: string; p_codigo: string };
-        Returns: Json;
-      };
-      fn_producao_convidados_gerar_link: {
-        Args: { p_sessao: string; p_corte: string; p_titulo: string; p_limite: number };
-        Returns: string;
-      };
       fn_producao_visitas_gerar_link: {
         Args: { p_espaco: string; p_dias: number; p_titulo: string };
         Returns: string;
@@ -5999,16 +5334,16 @@ export type BancoDaProducao = {
         Args: { p_hospedagem: string; p_dias: number };
         Returns: string;
       };
+      fn_producao_marca_criar_link: {
+        Args: { p_marca: string; p_dias: number };
+        Returns: string;
+      };
       fn_producao_palco_criar_link: {
         Args: { p_data: string; p_dias: number };
         Returns: string;
       };
       fn_producao_programacao_criar_link: {
         Args: { p_espaco: string; p_titulo: string };
-        Returns: string;
-      };
-      fn_producao_site_publicar_pagina: {
-        Args: { p_pagina: string };
         Returns: string;
       };
       fn_producao_caminho_partes: {

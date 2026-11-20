@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { lerValorEmReais } from "../lib/producao/bordero";
+import { lerValorEmReais } from "../lib/producao/dinheiro";
 import { contaDaDivisao, dividirIgualmente, lerLancamento, mensagemDoErroDeLancamento, pagoPorLinha, planilhaDosLancamentos } from "../lib/producao/lancamentos";
 import { calcularOrcamento, mensagemDoErroDeOrcamento } from "../lib/producao/orcamento";
 

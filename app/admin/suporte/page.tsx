@@ -87,7 +87,7 @@ export default function AdminSuportePage() {
       <div className="mb-4 flex items-center gap-1">
         {([["mensagens", `Mensagens (${mensagens.length})`], ["perguntas", `Perguntas à IA (${perguntas.length})`]] as const).map(([chave, rotulo]) => (
           <button key={chave} type="button" onClick={() => setAba(chave)} aria-pressed={aba === chave}
-            className={`rounded px-3 py-1.5 text-[0.75rem] font-semibold transition ${aba === chave ? "bg-[#282525] text-white" : "text-black/50 hover:bg-black/[.05]"}`}>
+            className={`rounded px-3 py-1.5 text-[0.75rem] font-semibold transition ${aba === chave ? "bg-[#1C0E33] text-white" : "text-black/50 hover:bg-black/[.05]"}`}>
             {rotulo}
           </button>
         ))}

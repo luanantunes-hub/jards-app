@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import { encryptSecret, decryptSecret } from "@/lib/calendar/crypto";
+import type { EmailProvider } from "./config";
 
 const COOKIE = "jards_email_oauth";
 const MAX_AGE = 10 * 60;
@@ -10,6 +11,8 @@ export type EmailOAuthSession = {
   verifier: string;
   userId: string;
   organizationId: string | null;
+  /** Qual provedor abriu a autorização; sessões antigas, sem o campo, são do Google. */
+  provider?: EmailProvider;
 };
 
 export function generatePkce(): { verifier: string; challenge: string } {

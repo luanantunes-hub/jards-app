@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { INICIO_DO_MODULO } from "@/lib/modulos";
 import { entradaDoAcesso, lerAcessoAosModulos } from "@/lib/modulos-acesso";
-import { ehHostDoApp, hostDoPedido } from "@/lib/producao/site";
+import { ehHostDoApp, hostDoPedido } from "@/lib/ticketeria/site";
 
 const WINDOW_MS = 60_000;
 
@@ -15,6 +15,12 @@ const API_LIMITS: [string, number][] = [
   ["/api/patrocinadores", 10],
   ["/api/calendar", 30],
   ["/api/email", 30],
+  // Avisos de pagamento do provedor (sem login, token próprio): muitos em rajada quando um evento abre as vendas.
+  ["/api/ticketeria/avisos", 600],
+  // Validação de saque do Asaas (sem login, token próprio): um pedido por saque, rápido.
+  ["/api/ticketeria/validacao-saque", 300],
+  // Compra de ingressos (sem login): por IP. Cada compra abre uma reserva e uma cobrança, então o teto é baixo; a consulta do Pix pago é mais frequente.
+  ["/api/ticketeria/compra", 60],
   ["/api/mcp/keys", 10],
   ["/api/mcp/oauth/token", 60],
   ["/api/mcp/oauth/register", 30],
@@ -29,8 +35,6 @@ const API_LIMITS: [string, number][] = [
   ["/api/presenca", 30],
   // Inscrição de voluntários pelo link (sem login): por IP.
   ["/api/voluntario", 10],
-  // Pedido de convidados pelo link (sem login): por IP.
-  ["/api/convidar", 20],
   // Agendamento de visitas pelo link (sem login): por IP.
   ["/api/visita", 10],
   // Programação pública de um espaço (sem login, aberta a outros sites): por IP.
@@ -85,7 +89,7 @@ function getIp(request: NextRequest): string {
 }
 
 /**
- * O pedido chegou por um domínio que não é do Jards: é o site de uma pessoa (PD12.1b). Reescreve para a rota interna
+ * O pedido chegou por um domínio que não é do Jards: é o site de uma pessoa (o site da loja na Ticketeria). Reescreve para a rota interna
  * /dominio/[host]/... (que só mostra o que está publicado) e não deixa passar o app, a API nem o painel por esse endereço.
  */
 function rotearSiteDaPessoa(request: NextRequest, host: string): NextResponse {
@@ -175,14 +179,16 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/acerto/") ||
         pathname.startsWith("/presenca/") ||
         pathname.startsWith("/voluntario/") ||
-        pathname.startsWith("/credencial/") ||
-        pathname.startsWith("/convidar/") ||
         pathname.startsWith("/visita/") ||
         pathname.startsWith("/programacao/") ||
         pathname.startsWith("/hospedagem/") ||
+        pathname.startsWith("/patrocinador/") ||
         pathname.startsWith("/palco/") ||
         pathname.startsWith("/ficha/") ||
         pathname.startsWith("/tabela/") ||
+        // Compra de ingressos e os ingressos de um pedido (sem login): o id da sessão e o do pedido (UUID sorteado) são a prova; o servidor confere tudo.
+        pathname.startsWith("/comprar/") ||
+        pathname.startsWith("/pedido/") ||
         pathname.startsWith("/embed/") ||
         pathname.startsWith("/convite/") ||
         pathname === "/login" ||
@@ -190,11 +196,13 @@ export async function proxy(request: NextRequest) {
         pathname === "/robots.txt" ||
         pathname === "/sitemap.xml" ||
         pathname === "/termos" ||
+        pathname === "/termos-de-compra" ||
         pathname === "/privacidade" ||
         pathname === "/incentivadores" ||
         pathname === "/crm" ||
         pathname === "/precos" ||
         pathname === "/prestacao-de-contas" ||
+        pathname === "/ticketeria" ||
         pathname.startsWith("/redefinir-senha") ||
         pathname.startsWith("/nova-senha") ||
         pathname.startsWith("/cadastro") ||
@@ -244,22 +252,23 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/presenca/") ||
     // Inscrição de voluntários pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/voluntario/") ||
-    // Credencial do convidado pelo link, com o QR (sem login): o código do link, conferido no servidor, é a autorização.
-    pathname.startsWith("/credencial/") ||
-    // Pedido de convidados pelo link (sem login): o código do link, conferido no servidor, é a autorização.
-    pathname.startsWith("/convidar/") ||
     // Agendamento de visitas pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/visita/") ||
     // Programação pública de um espaço e a versão para embutir (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/programacao/") ||
     // Lista de quartos para o hotel, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/hospedagem/") ||
+    // Portal do patrocinador, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/patrocinador/") ||
     // Tela de palco pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/palco/") ||
     // Ficha técnica do espaço, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/ficha/") ||
     // Tabelas para a transportadora e a locadora, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/tabela/") ||
+    // Compra de ingressos e os ingressos de um pedido (sem login): o id da sessão e o do pedido (UUID sorteado) são a prova; o servidor confere tudo.
+    pathname.startsWith("/comprar/") ||
+    pathname.startsWith("/pedido/") ||
     pathname.startsWith("/embed/") ||
     // Convite de convidado da prestação (P5.3): o banco confere o link; o aceite pede login.
     pathname.startsWith("/convite/") ||
@@ -270,11 +279,13 @@ export async function proxy(request: NextRequest) {
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" ||
     pathname === "/termos" ||
+    pathname === "/termos-de-compra" ||
     pathname === "/privacidade" ||
     pathname === "/incentivadores" ||
     pathname === "/crm" ||
     pathname === "/precos" ||
-    pathname === "/prestacao-de-contas";
+    pathname === "/prestacao-de-contas" ||
+    pathname === "/ticketeria";
 
   // Usuário não logado tentando acessar rota privada → login
   if (!user && !isPublicRoute) {

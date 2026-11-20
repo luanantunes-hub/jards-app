@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, Building, Users, Newspaper, Inbox, ClipboardList, ChevronLeft, Megaphone, FlaskConical, ScrollText, Scale, LifeBuoy } from "lucide-react";
+import { LayoutDashboard, Building2, Building, Users, Newspaper, Inbox, ClipboardList, ChevronLeft, Megaphone, FlaskConical, ScrollText, Scale, LifeBuoy, Video } from "lucide-react";
 
 const NAV = [
   { href: "/admin/dashboard",      label: "Dashboard",      icon: LayoutDashboard },
@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin/blog",           label: "Publicações",    icon: Newspaper  },
   { href: "/admin/pedidos",        label: "Pedidos",        icon: Inbox      },
   { href: "/admin/suporte",        label: "Suporte",        icon: LifeBuoy   },
+  { href: "/admin/reunioes",       label: "Reuniões",       icon: Video      },
   { href: "/admin/campanhas",      label: "Campanhas",      icon: Megaphone  },
   { href: "/admin/logs",           label: "Logs",           icon: ClipboardList },
 ];
@@ -24,7 +25,7 @@ export default function AdminNav() {
   return (
     <nav
       className="flex items-center gap-1 px-6 h-12 sticky top-0 z-30 overflow-x-auto"
-      style={{ background: "#282525", borderBottom: "1px solid rgba(255,255,255,.08)" }}
+      style={{ background: "#1C0E33", borderBottom: "1px solid rgba(255,255,255,.08)" }}
     >
       <Link
         href="/dashboard"

@@ -102,21 +102,20 @@ export function PropostaUploadModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,.45)" }}
+      className="fixed inset-0 z-50 flex justify-center veu items-start"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-md bg-white rounded border elevacao-3"
+        className="folha-desce folha-vidro w-full max-w-md max-h-[96dvh]"
         style={{ borderColor: "rgba(13,13,13,.10)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <p id={titleId} className="text-[0.8125rem] font-bold text-black/80">Enviar proposta</p>
+          <p id={titleId} className="text-[0.8125rem] text-black/80 font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Enviar proposta</p>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/6 transition text-black/35 hover:text-black/60">
             <X size={14} />
           </button>
@@ -213,7 +212,7 @@ export function PropostaUploadModal({
           <button
             onClick={handleSalvar}
             disabled={saving || !file}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
             {saving ? "Enviando…" : "Salvar proposta"}

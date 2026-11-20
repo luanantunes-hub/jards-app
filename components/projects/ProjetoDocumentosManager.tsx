@@ -218,7 +218,7 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={closeModal}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center veu p-4" onClick={closeModal}>
           <div className="w-full max-w-lg overflow-hidden rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-black/[.07] px-5 py-4"><h3 className="text-[0.875rem] font-semibold text-black/80">Adicionar documento</h3><button onClick={closeModal} className="rounded p-1.5 text-black/30 hover:bg-black/[.05]"><X size={14} /></button></div>
             <div className="space-y-4 p-5">
@@ -233,7 +233,7 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
               <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Arquivo</label><button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-20 w-full items-center justify-center gap-2 rounded border border-dashed border-black/[.14] px-4 text-[0.75rem] text-black/40 transition hover:bg-black/[.02]"><Upload size={15} /> {file ? file.name : "Selecionar arquivo"}</button><input ref={inputRef} type="file" className="hidden" onChange={event => { const selected = event.target.files?.[0]; if (selected) chooseFile(selected); }} /><p className="mt-1.5 text-[0.625rem] text-black/25">Qualquer formato, até 50 MB.</p></div>
               {erro && <p className="rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[0.6875rem] text-[#B23A3A]">{erro}</p>}
             </div>
-            <div className="flex items-center justify-end gap-3 border-t border-black/[.07] px-5 py-4"><button onClick={closeModal} className="text-[0.75rem] font-semibold text-black/35 hover:text-black/55">Cancelar</button><button onClick={() => void save()} disabled={saving || !file || !titulo.trim()} className="rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></div>
+            <div className="flex items-center justify-end gap-3 border-t border-black/[.07] px-5 py-4"><button onClick={closeModal} className="text-[0.75rem] font-semibold text-black/35 hover:text-black/55">Cancelar</button><button onClick={() => void save()} disabled={saving || !file || !titulo.trim()} className="rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></div>
           </div>
         </div>
       )}

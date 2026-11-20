@@ -78,7 +78,7 @@ export function AcessoContatosModal({
 
   return (
     <div
-      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/25 px-4 py-6 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[110] flex justify-center veu items-start"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -88,7 +88,7 @@ export function AcessoContatosModal({
         aria-modal="true"
         aria-labelledby="acesso-contatos-title"
         aria-describedby="acesso-contatos-description"
-        className="relative w-full max-w-[30rem] overflow-hidden rounded bg-white border elevacao-3"
+        className="folha-desce folha-vidro relative w-full max-w-[30rem] overflow-hidden max-h-[96dvh]"
       >
         <button
           type="button"

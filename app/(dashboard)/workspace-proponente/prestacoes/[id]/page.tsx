@@ -174,7 +174,7 @@ export default function PrestacaoDoProponentePage({ params }: { params: Promise<
               </p>
             </div>
             <button type="button" onClick={() => setModal("despesa")}
-              className="flex items-center gap-1.5 rounded bg-[#282525] px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
+              className="flex items-center gap-1.5 rounded bg-[#1C0E33] px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
               <Upload size={14} aria-hidden /> Enviar despesa
             </button>
           </div>

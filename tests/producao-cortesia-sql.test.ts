@@ -15,6 +15,10 @@ const ANTIGA = "supabase/migrations/20261011110000_prestacao_teste_gratis_45_dia
 const TESTE = "supabase/tests/cortesia_por_modulo.test.sql";
 const FUNCAO = "fn_prestacao_cortesias_diaria";
 
+// Esta migration (PD0.6) é anterior à ticketeria: ela cobre os módulos com contrato da época.
+// O ramo da ticketeria está em tests/ticketeria-modulo-sql.test.ts.
+const COM_CONTRATO_DA_EPOCA = MODULOS_COM_CONTRATO.filter(modulo => modulo !== "ticketeria");
+
 async function migracao(): Promise<{ nome: string; sql: string }> {
   const nome = (await readdir("supabase/migrations")).find(n => n.endsWith("_producao_cortesia_por_modulo.sql"));
   assert.ok(nome, "migration producao_cortesia_por_modulo.sql não encontrada");
@@ -69,10 +73,10 @@ test("só troca o corpo da rotina: sem DROP, com o caminho de busca fixo, e as p
 
 test("os módulos avisados, os nomes e os links do SQL são os do app", async () => {
   const corpo = corpoDaRotina((await migracao()).sql);
-  assert.deepEqual(idsDe(/where om\.modulo in \(([^)]*)\)/.exec(corpo)?.[1]), [...MODULOS_COM_CONTRATO], "o aviso olha os módulos com contrato");
+  assert.deepEqual(idsDe(/where om\.modulo in \(([^)]*)\)/.exec(corpo)?.[1]), COM_CONTRATO_DA_EPOCA, "o aviso olha os módulos com contrato");
   for (const [variavel, campo] of [["v_nome", (m: keyof typeof NOME_NO_TEXTO) => NOME_NO_TEXTO[m].completo], ["v_link", (m: keyof typeof INICIO_DO_MODULO) => INICIO_DO_MODULO[m]]] as const) {
     const ramos = [...(new RegExp(`${variavel} := case contrato\\.modulo (.*?) end;`).exec(corpo)?.[1] ?? "").matchAll(/when '(\w+)' then '([^']+)'/g)];
-    assert.deepEqual(ramos.map(r => r[1]), [...MODULOS_COM_CONTRATO], `${variavel}: um ramo por módulo com contrato, na mesma ordem`);
+    assert.deepEqual(ramos.map(r => r[1]), COM_CONTRATO_DA_EPOCA, `${variavel}: um ramo por módulo com contrato, na mesma ordem`);
     for (const [, modulo, texto] of ramos) assert.equal(texto, (campo as (m: string) => string)(modulo), `${variavel}: ${modulo}`);
   }
 });

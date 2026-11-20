@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { lerValorEmReais } from "../lib/producao/bordero";
+import { lerValorEmReais } from "../lib/producao/dinheiro";
 import {
   lerPedido, mensagemDoErroDePedido, passosDoPedido, pedidoApagavel, pedidoEditavel, pendenciaEditavel, pendenciaVencida, planilhaDosPedidos, resumoDoPedido,
   totaisDosPedidos, type PedidoDaTemporada,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { Plus } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
@@ -52,7 +53,7 @@ export default function FormacaoPage() {
           <>
             <div className="mb-5 flex flex-wrap items-center gap-3">
               {turmas.length > 0 && <div className="w-80 max-w-full"><Dropdown ariaLabel="Turma" value={turmaId} onChange={setTurmaId} options={turmas.map(item => ({ value: item.id, label: item.nome }))} /></div>}
-              {podeEditar && <button type="button" onClick={() => setNovaAberta(true)} className="flex h-10 items-center gap-1.5 rounded border border-black/12 bg-white px-3.5 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98]"><Plus size={13} aria-hidden="true" /> Nova turma</button>}
+              {podeEditar && <PrimaryListAction onClick={() => setNovaAberta(true)}><Plus size={13} aria-hidden="true" /> Nova turma</PrimaryListAction>}
             </div>
             {turma && organizationId ? (
               <FormacaoDaTurma key={turma.id} organizationId={organizationId} turma={turma} podeEditar={podeEditar} onTurmaMudou={() => setVersao(atual => atual + 1)} />

@@ -64,11 +64,9 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_convites: { fora: "token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", rotulos: "resposta" },
   // As ocorrências do dia (PD7.8): a descrição e a providência podem falar de saúde ou de pessoas e ficam de fora; o tipo é o rótulo.
   producao_ocorrencias: { fora: "descricao,providencia", rotulos: "tipo" },
+  producao_comunicacao: { fora: "texto", rotulos: "titulo" },
   // As inscrições de voluntários (PD7.11): o contato e a disponibilidade são dado pessoal e ficam de fora; o nome é o rótulo.
   producao_voluntarios: { fora: "email,telefone,disponibilidade", rotulos: "nome" },
-  // Os tipos de credencial e os convidados das sessões (PD7.2): só nome e afiliação, sem documento nem contato; o nome é o rótulo.
-  producao_credencial_tipos: { fora: "", rotulos: "nome" },
-  producao_convidados: { fora: "", rotulos: "nome" },
   // A acessibilidade por sessão (PD7.6): a nota pode falar de uma pessoa do público e fica de fora; o tipo é o rótulo.
   producao_acessibilidade: { fora: "notas", rotulos: "tipo" },
   // A visitação e os grupos (PD7.5): o contato do responsável e a observação ficam de fora; o dia e o grupo são os rótulos. O link é só o hash e a validade.
@@ -78,22 +76,14 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_turmas: { fora: "", rotulos: "nome" },
   producao_turma_aulas: { fora: "", rotulos: "dia" },
   producao_matriculas: { fora: "email,telefone", rotulos: "nome" },
-  // O mapa da plateia (PD7.7): setor e cota sem dado pessoal nem dinheiro; o nome e a categoria são os rótulos.
-  producao_setores: { fora: "", rotulos: "nome" },
-  producao_setor_cotas: { fora: "", rotulos: "categoria" },
   // A planta expográfica (PD8.5): posição, altura, ordem, luz e instalação de uma obra; nada sensível. A posição é o rótulo.
   producao_expografia: { fora: "", rotulos: "posicao" },
-  // O borderô (PD7.4): só o público e a situação, sem dinheiro; a situação é o rótulo. A receita e as deduções são dinheiro e ficam sem histórico (abaixo).
-  producao_borderos: { fora: "", rotulos: "situacao" },
   // Os turnos da equipe da casa (PD3.4): só dia, hora e função; o dia é o rótulo.
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
   producao_licencas: { fora: "", rotulos: "tipo" },
   // Os documentos com validade (PD4.8): o tipo é o rótulo; o título e a nota ficam de fora (podem identificar a pessoa ou o documento).
   producao_documentos: { fora: "titulo,notas", rotulos: "tipo" },
-  // O site do espaço (PD12.1): o nome do site e o título da página são o rótulo; o JSON dos blocos fica de fora (grande).
-  producao_sites: { fora: "", rotulos: "nome" },
-  producao_site_paginas: { fora: "blocos,blocos_publicados", rotulos: "titulo" },
   // As sessões da grade de programação (PD8.1): só dia, hora, título e notas; o dia é o rótulo.
   producao_sessoes: { fora: "pauta_id", rotulos: "dia" },
   // O acerto técnico (PD4.1 e PD4.2): o modelo deixa de fora o JSON dos campos (grande); o acerto deixa de fora o hash do
@@ -123,9 +113,9 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_temporada_links: "é só o link público de uma lista da temporada (tipo, filtro, hash do código, que é segredo, e a validade): quem criou e quando já ficam na própria linha",
   producao_ficha_links: "é só o link público da ficha técnica de um espaço (hash do código, que é segredo, validade e se o contato aparece): quem criou e quando já ficam na própria linha",
   producao_hospedagem_links: "é só o link público da lista de quartos (hash do código, que é segredo, e a validade): quem criou e quando já ficam na própria linha",
+  producao_marca_links: "é só o link público do portal de uma marca (hash do código, que é segredo, e a validade): quem criou e quando já ficam na própria linha",
   producao_palco_links: "é só o link público da tela de palco (hash do código, que é segredo, e a validade): quem criou e quando já ficam na própria linha",
   producao_programacao_links: "é só o link público da programação (título e hash do código, que é segredo): quem criou e quando já ficam na própria linha",
-  producao_site_dominios: "são os domínios da pessoa ligados ao site, escritos só pelo servidor depois de conferir o DNS: quem criou e quando já ficam na própria linha, e o token de verificação é segredo",
   producao_sala_fichas: "é só a ficha técnica da sala (medidas e texto): muda pouco e o histórico da sala já conta o que importa",
   producao_veiculo_documentos: "são só os papéis de um veículo (tipo, número e validade): o histórico do veículo e a própria validade dizem o que importa",
   producao_quartos: "são só os quartos de uma hospedagem (nome e capacidade): o histórico da hospedagem e a própria lista de quartos dizem o que importa",
@@ -135,7 +125,6 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_abastecimento_valores: "é só o valor pago em um abastecimento: dinheiro, e com o histórico o valor iria para uma linha que quem não vê o dinheiro também lê",
   producao_abastecimentos: "é só o registro de um abastecimento (litros, combustível, posto e hora): quem registrou e quando já ficam na própria linha, e o histórico do deslocamento conta o resto",
   producao_voluntarios_links: "é só o link de inscrição (título, vagas e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
-  producao_convidados_links: "é só o link de pedidos (título, corte, limite e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_visitas_links: "é só o link de agendamento de visitas (título, validade e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_orcamentos: "é dinheiro (valor, comprometido e pago): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; quem aprovou e quando ficam no próprio orçamento",
   producao_orcamento_linhas: "é dinheiro (valor, comprometido e pago): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; quem aprovou e quando ficam no próprio orçamento",
@@ -152,12 +141,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_acordo_datas: "é só a lista das datas que o acordo cobre, e muda junto com o acordo (assinado, não muda)",
   producao_rider_item_equipamentos: "é só a ligação entre a linha do rider e o equipamento da casa; o rider e o equipamento têm o histórico deles",
   producao_acordo_documentos: "é só a lista dos documentos da pasta que o acordo pede; o acordo não tem histórico (as condições são valores) e o documento tem o dele",
-  producao_bordero_acertos: "é só o acerto de contas do borderô (parte, forma e valor): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; quem aprovou, quando e quando foi pago ficam na própria linha",
-  producao_bordero_receitas: "é só a receita do borderô (quantidade e valor por categoria de ingresso): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; o borderô guarda a situação e o fechamento",
-  producao_bordero_deducoes: "são só as deduções do borderô (nome, valor e quem recebe): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; o borderô guarda a situação e o fechamento",
   producao_presencas: "são só as marcas de presença de cada matriculado em cada aula (uma linha por par, de alto volume): a frequência e o certificado já contam o que importa na matrícula",
-  producao_credenciais: "é só o código da credencial (hash, que é segredo) e a contagem de entradas, que muda a cada leitura na porta: quem emitiu e quando já ficam na própria linha, e cada leitura é registrada em producao_porta_leituras",
-  producao_porta_leituras: "é o próprio registro da porta, só de acrescentar: ninguém altera nem apaga uma leitura",
   producao_manutencoes: "são só as manutenções de um equipamento (descrição e datas): o histórico do equipamento e a própria data dizem o que importa",
   producao_item_datas: "é só a ligação do item à data e a quantidade: o histórico do item e o da data já contam o que importa",
 };
@@ -235,6 +219,11 @@ async function colunasDaProducao(): Promise<Map<string, Set<string>>> {
       if (!m) continue;
       for (const adicao of m[2].matchAll(/add column (?:if not exists )?(\w+)/g)) mapa.get(m[1])?.add(adicao[1]);
     }
+    // A tabela apagada depois (a T1 da Ticketeria tirou da produção o site, a plateia, os convidados, a porta e o borderô) sai.
+    for (const comando of comandos) {
+      const apagada = /^drop table if exists public\.(producao_\w+)$/.exec(comando);
+      if (apagada) mapa.delete(apagada[1]);
+    }
   }
   return mapa;
 }
@@ -246,6 +235,8 @@ async function gatilhosDeHistorico(): Promise<Map<string, { fora: string[]; rotu
     for (const comando of comandosDe(await readFile(`supabase/migrations/${nome}`, "utf8"))) {
       const m = /^create or replace trigger \w+ after insert or update or delete on public\.(\w+) for each row execute function public\.fn_producao_historico\('([^']*)', '([^']*)'\)$/.exec(comando);
       if (m) mapa.set(m[1], { fora: m[2].split(",").filter(Boolean), rotulos: m[3] });
+      const apagada = /^drop table if exists public\.(producao_\w+)$/.exec(comando);
+      if (apagada) mapa.delete(apagada[1]);
     }
   }
   return mapa;
@@ -351,7 +342,7 @@ test("a lista de exclusão: toda coluna listada existe, e nenhuma coluna de apar
   // Hoje as colunas fora são as que repetem o autor, nos arquivos o nome (dado de pessoa na pasta pessoas), o caminho, a
   // impressão digital e quem enviou, e nas pessoas da equipe o contato (e-mail e telefone).
   assert.deepEqual([...gatilhos].filter(([, g]) => g.fora.length).map(([t, g]) => `${t}: ${g.fora.join(",")}`).sort(),
-    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_acessibilidade: notas", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_documentos: titulo,notas", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_matriculas: email,telefone", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_plantas: fundo", "producao_sessoes: pauta_id", "producao_site_paginas: blocos,blocos_publicados", "producao_visitas_agendamentos: email,telefone,observacao,consentiu_em", "producao_voluntarios: email,telefone,disponibilidade"]);
+    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_acessibilidade: notas", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_comunicacao: texto", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_documentos: titulo,notas", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_matriculas: email,telefone", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_plantas: fundo", "producao_sessoes: pauta_id", "producao_visitas_agendamentos: email,telefone,observacao,consentiu_em", "producao_voluntarios: email,telefone,disponibilidade"]);
 });
 
 test("o gatilho: uma linha por campo, nada de controle, nunca o histórico do histórico, o autor só se existe e o apagar da organização não trava", async () => {

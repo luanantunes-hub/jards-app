@@ -172,6 +172,19 @@ export function frasesPossiveis({ nome, organizacao, agora }: EntradaSaudacao): 
   return modelos.map((m) => preencher(m, primeiro, (organizacao ?? "").trim()));
 }
 
+/**
+ * Escolhe uma frase entre os modelos, fixa por pessoa e dia (e por chave), já com nome e organização.
+ * Modelos com "{org}" só entram quando a organização cabe na frase.
+ */
+export function escolherFrase(modelos: string[], entrada: EntradaSaudacao, chave = ""): string | null {
+  const usaveis = modelos.filter(m => !m.includes("{org}") || organizacaoCabe(entrada.organizacao, entrada.nome));
+  if (!usaveis.length) return null;
+  const { agora } = entrada;
+  const dia = `${agora.getFullYear()}-${agora.getMonth() + 1}-${agora.getDate()}`;
+  const modelo = usaveis[hash(`${entrada.semente ?? ""}|${dia}|${chave}`) % usaveis.length];
+  return preencher(modelo, primeiroNome(entrada.nome), (entrada.organizacao ?? "").trim());
+}
+
 export function saudacaoDoPainel(entrada: EntradaSaudacao): string {
   const opcoes = frasesPossiveis(entrada);
   const { agora } = entrada;

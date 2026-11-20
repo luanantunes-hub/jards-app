@@ -1,7 +1,7 @@
 // Adiantamentos e diárias da temporada (plano do módulo, PD5.6, primeiro corte): dinheiro entregue a uma pessoa, a prestação de contas e o saldo; e a diária por
 // período, com o recibo. Sem tela e sem banco; tudo em centavos inteiros.
 
-import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais } from "@/lib/producao/dinheiro";
 import { montarPlanilha, reaisNaPlanilha } from "@/lib/producao/planilha";
 import type { SituacaoDoAdiantamento } from "@/lib/producao/estados";
 

@@ -77,7 +77,7 @@ function MensagemBubble({ autor, texto, data, destaque = false, rotulo }: {
   const inicial = autor.trim().charAt(0).toUpperCase() || "?";
   return (
     <div className="flex gap-2.5">
-      <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold text-white ${destaque ? "bg-[#171717]" : "bg-black/25"}`}>{inicial}</div>
+      <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold text-white ${destaque ? "bg-[#1C0E33]" : "bg-black/25"}`}>{inicial}</div>
       <div className="min-w-0 flex-1 rounded border bg-white px-3.5 py-2.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <p className="whitespace-pre-wrap text-[0.8125rem] leading-relaxed text-black/80">{texto}</p>
         <p className="mt-1.5 text-[0.6875rem] text-black/40">{rotulo ?? autor} · <DataMensagem data={data} /></p>
@@ -196,7 +196,7 @@ export function PedidoConversa({ pedido, isGestor, onChange, onOpenAtribuicao }:
             className="w-full resize-none rounded border border-black/[.15] px-3 py-2.5 text-[0.8125rem] outline-none focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
           />
           <button type="button" onClick={() => void enviar()} disabled={saving || !texto.trim()}
-            className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-3.5 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">
+            className="inline-flex items-center gap-1.5 rounded acao-salvar px-3.5 py-2 text-[0.75rem] font-semibold text-white transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">
             <Send size={13} /> {saving ? "Enviando…" : "Enviar mensagem"}
           </button>
         </div>
