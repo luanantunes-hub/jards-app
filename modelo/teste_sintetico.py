@@ -6,6 +6,7 @@ import sys
 from dados_sinteticos import gerar
 from mmm import SemDadosSuficientes, ajustar
 
+TOLERANCIA_DAS_PARTES_EM_PONTOS = 6.0  # cada parte da base (proximidade, feriado, lote, cupom) pode errar até isto, em pontos percentuais
 TOLERANCIA_EM_PONTOS = 12.0  # o porcento estimado de cada canal pode errar até isto, em pontos percentuais, em relação ao verdadeiro
 
 
@@ -47,6 +48,27 @@ def main() -> int:
     print(f"gasto embaralhado: soma dos canais {soma_embaralhada:.1f}% (com o gasto certo: {sum(c['porcento'] for c in r['canais']):.1f}%)")
     if soma_embaralhada > 0.6 * sum(c["porcento"] for c in r["canais"]):
         falhas.append("com o gasto embaralhado o modelo ainda atribuiu muito aos canais")
+
+    # Os controles: com proximidade, feriado, virada de lote e cupom de efeito conhecido, cada parte da base tem de voltar perto do verdadeiro e a soma das partes tem de fechar na base.
+    tabela_c, verdade_c = gerar(semanas=90, semente=7, com_controles=True)
+    rc = ajustar(tabela_c, draws=600, tune=600)
+    partes = {p["chave"]: p for p in rc["base"]["partes"]}
+    print("partes da base:", {k: (v["porcento"], v["baixo"], v["alto"]) for k, v in partes.items()})
+    print("verdade das partes:", {k: round(v, 1) for k, v in verdade_c.items() if k.startswith("parte:")})
+    for chave in ("proximidade", "feriado", "preco_e_lotes", "cupom"):
+        esperado = verdade_c[f"parte:{chave}"]
+        if chave not in partes:
+            falhas.append(f"a parte {chave} não saiu")
+        elif abs(partes[chave]["porcento"] - esperado) > TOLERANCIA_DAS_PARTES_EM_PONTOS:
+            falhas.append(f"{chave}: estimado {partes[chave]['porcento']}% longe do verdadeiro {esperado:.1f}%")
+    soma_das_partes = sum(p["porcento"] for p in partes.values())
+    if abs(soma_das_partes - rc["base"]["porcento"]) > 1.5:
+        falhas.append(f"as partes somam {soma_das_partes:.1f}% e a base é {rc['base']['porcento']}%")
+    # Com poucas semanas (< 52) só os dois primeiros controles entram.
+    curta_c = ajustar(gerar(semanas=40, semente=7, com_controles=True)[0], draws=400, tune=400)
+    chaves_curtas = {p["chave"] for p in curta_c["base"]["partes"]}
+    if chaves_curtas & {"preco_e_lotes", "cupom", "visitas"}:
+        falhas.append(f"com 40 semanas entraram controles a mais: {sorted(chaves_curtas)}")
 
     # Tabela sem dado suficiente: tem de recusar com uma frase, não quebrar.
     try:

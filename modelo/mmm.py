@@ -4,7 +4,9 @@ Entrada: a tabela semanal que o Jards monta (uma linha por semana: ingressos ven
 Saída: contribuição de cada canal em % das vendas (com intervalo de 80%), o que venderia de qualquer jeito, custo por ingresso, a curva de resposta e os diagnósticos.
 
 O que o modelo faz: cada canal tem um efeito que demora a aparecer (adstock geométrico) e que rende cada vez menos (saturação logística); o resto das vendas é uma base com tendência e
-sazonalidade anual. Só entram canais com gasto em pelo menos MIN_SEMANAS_POR_CANAL semanas; o efeito dos demais fica na base. É uma ESTIMATIVA: o intervalo diz o quanto ela ainda pode errar.
+sazonalidade anual. Além do gasto, entram CONTROLES (o que também empurra as vendas: proximidade da sessão, feriados, viradas de lote, preço, cupons, visitas sem anúncio): os dois
+primeiros sempre, os outros só com SEMANAS_DOS_CONTROLES_EXTRAS semanas ou mais (a mesma regra de lib/ticketeria/modelo-controles.ts), e só os que variam. Só entram canais com gasto em
+pelo menos MIN_SEMANAS_POR_CANAL semanas; o efeito dos demais fica na base. A base ("venderia de qualquer jeito") sai dividida em partes: nível da loja, tendência e época do ano e cada controle. É uma ESTIMATIVA: o intervalo diz o quanto ela ainda pode errar.
 """
 from __future__ import annotations
 
@@ -21,14 +23,37 @@ SEMANAS_PARA_SAZONALIDADE_ANUAL = 52
 VARIACAO_MINIMA = 0.25
 PONTOS_DA_CURVA = 16
 SEMENTE = 42
+SEMANAS_DOS_CONTROLES_EXTRAS = 52
+# Os controles de cada grupo (as chaves da coluna `controles` da tabela semanal) e o nome da parte que aparece no resultado. `extra`: só entra com SEMANAS_DOS_CONTROLES_EXTRAS semanas.
+GRUPOS_DE_CONTROLE = [
+    {"parte": "proximidade", "chaves": ["proximidade"], "extra": False},
+    {"parte": "feriado", "chaves": ["feriado"], "extra": False},
+    {"parte": "preco_e_lotes", "chaves": ["lote", "preco"], "extra": True},
+    {"parte": "cupom", "chaves": ["cupom"], "extra": True},
+    {"parte": "visitas", "chaves": ["visitas"], "extra": True},
+]
 
 
 class SemDadosSuficientes(Exception):
     """A tabela não dá para ajustar o modelo (poucas semanas, nenhum canal com gasto suficiente)."""
 
 
-def montar_entrada(semanas: list[dict[str, Any]]) -> tuple[pd.DataFrame, pd.Series, list[str], dict[str, dict[str, float]]]:
-    """DataFrame de entrada do MMM (gasto em reais), o alvo (ingressos), os canais que entram e um resumo de cada um (gasto total em centavos, variação)."""
+def escolher_controles(ordenadas: list[dict[str, Any]]) -> list[str]:
+    """Os controles que entram: os dois primeiros sempre, o resto com SEMANAS_DOS_CONTROLES_EXTRAS semanas ou mais, e só os que variam (coluna constante não ensina nada ao modelo)."""
+    extras = len(ordenadas) >= SEMANAS_DOS_CONTROLES_EXTRAS
+    escolhidos: list[str] = []
+    for grupo in GRUPOS_DE_CONTROLE:
+        if grupo["extra"] and not extras:
+            continue
+        for chave in grupo["chaves"]:
+            valores = {round(float((s.get("controles") or {}).get(chave, 0.0)), 6) for s in ordenadas}
+            if len(valores) >= 2:
+                escolhidos.append(chave)
+    return escolhidos
+
+
+def montar_entrada(semanas: list[dict[str, Any]]) -> tuple[pd.DataFrame, pd.Series, list[str], dict[str, dict[str, float]], list[str]]:
+    """DataFrame de entrada do MMM (gasto em reais), o alvo (ingressos), os canais que entram, um resumo de cada um (gasto total em centavos, variação) e os controles escolhidos."""
     if len(semanas) < MIN_SEMANAS_DO_MODELO:
         raise SemDadosSuficientes(f"Só há {len(semanas)} semanas; o modelo precisa de pelo menos {MIN_SEMANAS_DO_MODELO}.")
     ordenadas = sorted(semanas, key=lambda s: s["semana"])
@@ -49,11 +74,13 @@ def montar_entrada(semanas: list[dict[str, Any]]) -> tuple[pd.DataFrame, pd.Seri
         canais.append(c)
     if not canais:
         raise SemDadosSuficientes(f"Nenhum canal tem gasto em pelo menos {MIN_SEMANAS_POR_CANAL} semanas.")
-    x = pd.DataFrame({"date_week": datas, **{c: gasto[c] / 100.0 for c in canais}, "t": np.arange(len(ordenadas)) / len(ordenadas)})
+    controles = escolher_controles(ordenadas)
+    colunas_de_controle = {c: np.array([float((s.get("controles") or {}).get(c, 0.0)) for s in ordenadas]) for c in controles}
+    x = pd.DataFrame({"date_week": datas, **{c: gasto[c] / 100.0 for c in canais}, "t": np.arange(len(ordenadas)) / len(ordenadas), **colunas_de_controle})
     y = pd.Series([float(s["ingressos"]) for s in ordenadas], name="y")
     if float(y.sum()) <= 0:
         raise SemDadosSuficientes("Não há ingressos vendidos nas semanas da tabela.")
-    return x, y, canais, resumo
+    return x, y, canais, resumo, controles
 
 
 def _quantis(valores: np.ndarray) -> tuple[float, float, float]:
@@ -80,16 +107,43 @@ def _ponto_de_saturacao(gastos: list[float], ingressos: list[float]) -> float | 
     return None
 
 
+def _partes_da_base(posterior: Any, escala_do_alvo: float, total_y: float, n: int, base: Any, controles: list[str]) -> list[dict[str, Any]]:
+    """A base ("venderia de qualquer jeito") dividida em partes, em % das vendas, por amostra do modelo (assim o intervalo de cada parte é honesto): a tendência e a época do ano, cada grupo de
+    controles (a soma dos controles do grupo) e o nível da loja, que é o que sobra para a conta fechar na base. Pode haver parte negativa (o preço alto segura a venda)."""
+    def em_porcento(x: Any) -> Any:
+        return x * escala_do_alvo / total_y * 100.0
+
+    por_controle = em_porcento(posterior["control_contribution"].sum("date"))  # chain, draw, control
+    partes_brutas: dict[str, Any] = {}
+    tendencia = por_controle.sel(control="t")
+    if "yearly_seasonality_contribution" in posterior:
+        tendencia = tendencia + em_porcento(posterior["yearly_seasonality_contribution"].sum("date"))
+    partes_brutas["tendencia"] = tendencia
+    for grupo in GRUPOS_DE_CONTROLE:
+        usados = [c for c in grupo["chaves"] if c in controles]
+        if usados:
+            partes_brutas[grupo["parte"]] = sum(por_controle.sel(control=c) for c in usados)
+    partes_brutas["nivel"] = base - sum(partes_brutas.values())  # o resto: o nível normal da loja (e o que o modelo não explica)
+    ordem = ["nivel", "tendencia", *[g["parte"] for g in GRUPOS_DE_CONTROLE]]
+    saida: list[dict[str, Any]] = []
+    for chave in ordem:
+        if chave not in partes_brutas:
+            continue
+        baixo, meio, alto = _quantis(np.asarray(partes_brutas[chave]).ravel())
+        saida.append({"chave": chave, "porcento": round(max(-100.0, min(100.0, meio)), 2), "baixo": round(max(-100.0, min(100.0, baixo)), 2), "alto": round(max(-100.0, min(100.0, alto)), 2)})
+    return saida
+
+
 def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int = 800, tune: int = 800, chains: int = 4) -> dict[str, Any]:
     """Ajusta o modelo e devolve o resultado no formato do Jards. Levanta SemDadosSuficientes quando a tabela não serve."""
     import arviz as az
     import pymc_marketing
     from pymc_marketing.mmm import MMM, GeometricAdstock, LogisticSaturation
 
-    x, y, canais, resumo = montar_entrada(semanas)
+    x, y, canais, resumo, controles = montar_entrada(semanas)
     n = len(y)
     mmm = MMM(
-        date_column="date_week", channel_columns=canais, control_columns=["t"],
+        date_column="date_week", channel_columns=canais, control_columns=["t", *controles],
         adstock=GeometricAdstock(l_max=6), saturation=LogisticSaturation(),
         yearly_seasonality=2 if n >= SEMANAS_PARA_SAZONALIDADE_ANUAL else None,
     )
@@ -127,6 +181,7 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
         })
 
     b_baixo, b_meio, b_alto = _quantis(np.asarray(base).ravel())
+    partes = _partes_da_base(posterior, escala_do_alvo, total_y, n, base, controles)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)  # parâmetros constantes (variância zero) geram avisos de divisão; os diagnósticos ignoram esses valores
         resumo_az = az.summary(posterior.to_dataset())
@@ -136,6 +191,6 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
     return {
         "motor": "pymc-marketing", "versao_motor": str(pymc_marketing.__version__), "semanas": n,
         "diagnosticos": {"r_hat_maximo": round(r_hat if math.isfinite(r_hat) else 99.0, 4), "divergencias": divergencias, "ess_minimo": int(ess) if math.isfinite(ess) else 0},
-        "base": {"porcento": round(_limitar(b_meio), 2), "baixo": round(_limitar(b_baixo), 2), "alto": round(_limitar(b_alto), 2)},
+        "base": {"porcento": round(_limitar(b_meio), 2), "baixo": round(_limitar(b_baixo), 2), "alto": round(_limitar(b_alto), 2), "partes": partes},
         "canais": resultado_canais,
     }

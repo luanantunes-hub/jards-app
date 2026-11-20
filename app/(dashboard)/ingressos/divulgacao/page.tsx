@@ -9,6 +9,8 @@ import { ListContent, ListPageHeader, PrimaryListAction, SecondaryListAction } f
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from "@/components/ticketeria/DivulgacaoView";
 import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
+import { DatasDePicoSheet } from "@/components/ticketeria/DatasDePicoSheet";
+import { lerDataDePico, type CamposDaDataDePico, type DataDePico } from "@/lib/ticketeria/modelo-controles";
 import { ModeloDaLoja, ResultadoDoModelo } from "@/components/ticketeria/ModeloView";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
 import type { ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
@@ -55,6 +57,9 @@ export default function DivulgacaoPage() {
   const [prontidao, setProntidao] = useState<ProntidaoDoModelo | null>(null);
   const [prontidaoErro, setProntidaoErro] = useState(false);
   const [resultadoDoModelo, setResultadoDoModelo] = useState<ResultadoParaATela | null>(null);
+  // As datas de pico da loja (a folha "Adicionar uma data sua" da aba Modelo).
+  const [datasDePico, setDatasDePico] = useState<DataDePico[]>([]);
+  const [folhaDeDatas, setFolhaDeDatas] = useState<{ valores: CamposDaDataDePico; erro: string | null } | null>(null);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -105,6 +110,8 @@ export default function DivulgacaoPage() {
       .then(r => (r.ok ? (r.json() as Promise<{ resultado: ResultadoParaATela | null }>) : null))
       .then(d => { if (ativo && d) setResultadoDoModelo(d.resultado); })
       .catch(() => { /* sem resultado: segue a checklist */ });
+    void clienteDaTicketeria(createClient()).from("ticketeria_datas_de_pico").select("id, dia, nome").eq("loja_id", estado.lojaId).order("dia", { ascending: true })
+      .then(({ data }) => { if (ativo && data) setDatasDePico(data); });
     return () => { ativo = false; };
   }, [aba, estado?.lojaId, versao]);
 
@@ -123,6 +130,26 @@ export default function DivulgacaoPage() {
     setSalvando(false);
     if (error) { setAcaoErro("Não foi possível salvar a ação. Tente de novo."); return; }
     setAcao(null);
+    setVersao(v => v + 1);
+  }
+
+  async function adicionarData() {
+    if (!folhaDeDatas || !estado?.lojaId || !organizationId) return;
+    const lida = lerDataDePico(folhaDeDatas.valores);
+    if (!lida.ok) { setFolhaDeDatas(f => (f ? { ...f, erro: lida.erro } : f)); return; }
+    setSalvando(true);
+    const { error } = await clienteDaTicketeria(createClient()).from("ticketeria_datas_de_pico").insert({ ...lida.valor, organization_id: organizationId, loja_id: estado.lojaId });
+    setSalvando(false);
+    if (error) { setFolhaDeDatas(f => (f ? { ...f, erro: error.code === "23505" ? "Já há uma data sua neste dia." : "Não foi possível adicionar a data. Tente de novo." } : f)); return; }
+    setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null });
+    setVersao(v => v + 1);
+  }
+
+  async function apagarData(id: string) {
+    setSalvando(true);
+    const { error } = await clienteDaTicketeria(createClient()).from("ticketeria_datas_de_pico").delete().eq("id", id);
+    setSalvando(false);
+    if (error) { setFolhaDeDatas(f => (f ? { ...f, erro: "Não foi possível remover a data. Tente de novo." } : f)); return; }
     setVersao(v => v + 1);
   }
 
@@ -235,7 +262,7 @@ export default function DivulgacaoPage() {
                 : prontidao ? (
                   <div className="space-y-4">
                     {resultadoDoModelo && <ResultadoDoModelo resultado={resultadoDoModelo} />}
-                    {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} />}
+                    {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} />}
                   </div>)
                 : <p className="text-[0.8125rem] text-black/40" aria-live="polite">Conferindo os dados…</p>)
               : aba === "historico"
@@ -250,6 +277,7 @@ export default function DivulgacaoPage() {
       {criando && dados && <LinkDeDivulgacaoSheet sessoes={dados.sessoes} origem={window.location.origin} sessaoInicial={sessaoId} onClose={() => setCriando(false)} />}
       {folhaDeImportar && <ImportarPlanilhaSheet existentes={historico.importacoes} erro={erroDeImportar} importando={importando} onClose={() => setFolhaDeImportar(false)} onImportar={c => void importar(c)} />}
       {escolhendo && <EscolherContaSheet fonte={CARTOES[escolhendo.provedor].fonte} tipo={escolhendo.provedor === "ga4" ? "visitas" : "gasto"} contas={escolhendo.contas} escolhida={escolhendo.escolhida} erro={escolhendo.erro} salvando={salvando} onEscolher={id => setEscolhendo(e => (e ? { ...e, escolhida: id } : e))} onClose={() => setEscolhendo(null)} onSalvar={() => void confirmarConta()} />}
+      {folhaDeDatas && <DatasDePicoSheet datas={datasDePico} valores={folhaDeDatas.valores} erro={folhaDeDatas.erro} salvando={salvando} onMudar={(campo, valor) => setFolhaDeDatas(f => (f ? { ...f, valores: { ...f.valores, [campo]: valor } } : f))} onClose={() => setFolhaDeDatas(null)} onAdicionar={() => void adicionarData()} onApagar={id => void apagarData(id)} />}
       {acao && <AcaoSheet editando={acao.id !== null} valores={acao.valores} erro={acaoErro} salvando={salvando} onMudar={(campo, valor) => setAcao(a => (a ? { ...a, valores: { ...a.valores, [campo]: valor } } : a))} onClose={() => setAcao(null)} onSalvar={() => void salvar()} onApagar={() => void apagar()} />}
     </>
   );

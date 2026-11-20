@@ -14,15 +14,40 @@ export type CanalDoResultado = {
   saturacao_gasto_centavos: number | null; margem_grande: boolean; gasto_constante: boolean; curva: PontoDaCurva[];
 };
 export type DiagnosticosDoModelo = { r_hat_maximo: number; divergencias: number; ess_minimo: number };
+/** As partes em que a base ("venderia de qualquer jeito") se divide: o nível normal da loja, a tendência e a época do ano e cada controle que entrou no modelo. */
+export const CHAVES_DAS_PARTES = ["nivel", "tendencia", "proximidade", "feriado", "preco_e_lotes", "cupom", "visitas"] as const;
+export type ChaveDaParte = (typeof CHAVES_DAS_PARTES)[number];
+/** Pode ser negativa: o preço mais alto ou a falta de uma data de pico também seguram a venda. */
+export type ParteDaBase = { chave: ChaveDaParte; porcento: number; baixo: number; alto: number };
+export const MAX_PARTES_DA_BASE = 12;
+/** A soma das partes pode destoar da base por arredondamento (e só por isso). */
+export const TOLERANCIA_DA_SOMA_DAS_PARTES = 3;
 export type ResultadoDoModelo = {
   motor: string; versao_motor: string; semanas: number; confianca: Confianca; diagnosticos: DiagnosticosDoModelo;
-  base: { porcento: number; baixo: number; alto: number }; canais: CanalDoResultado[];
+  base: { porcento: number; baixo: number; alto: number; partes: ParteDaBase[] }; canais: CanalDoResultado[];
 };
 
 /** A confiança: pelas semanas e pelo diagnóstico. Ajuste que não convergiu (r-hat alto) ou com divergências vale como baixa, qualquer que seja o número de semanas. */
 export function confiancaDoResultado(semanas: number, d: DiagnosticosDoModelo): Confianca {
   if (d.r_hat_maximo > R_HAT_MAXIMO_ACEITO || d.divergencias > 0) return "baixa";
   return semanas >= SEMANAS_IDEAIS ? "boa" : semanas >= SEMANAS_DA_CONFIANCA_MEDIA ? "media" : "baixa";
+}
+
+/** As partes da base, conferidas: chaves conhecidas e sem repetir, números dentro de -100 a 100 e o intervalo em ordem. Vazio é aceito (resultado sem quebra); formato errado devolve null. */
+export function lerPartesDaBase(entrada: unknown): ParteDaBase[] | null {
+  if (entrada === undefined || entrada === null) return [];
+  if (!Array.isArray(entrada) || entrada.length > MAX_PARTES_DA_BASE) return null;
+  const vistas = new Set<string>();
+  const partes: ParteDaBase[] = [];
+  for (const bruta of entrada) {
+    const o = (bruta && typeof bruta === "object" ? bruta : {}) as Record<string, unknown>;
+    const chave = (CHAVES_DAS_PARTES as readonly string[]).includes(o.chave as string) && !vistas.has(o.chave as string) ? (o.chave as ChaveDaParte) : null;
+    const p = numero(o.porcento, -100, 100); const lo = numero(o.baixo, -100, 100); const hi = numero(o.alto, -100, 100);
+    if (!chave || p === null || lo === null || hi === null || lo > hi) return null;
+    vistas.add(chave);
+    partes.push({ chave, porcento: casas(p, 2), baixo: casas(lo, 2), alto: casas(hi, 2) });
+  }
+  return partes;
 }
 
 /** "Margem grande": o intervalo é mais largo que a própria contribuição (e passa de 5 pontos). */
@@ -52,6 +77,8 @@ export function lerResultadoDoModelo(entrada: unknown): { ok: true; resultado: R
   const b = (e.base && typeof e.base === "object" ? e.base : {}) as Record<string, unknown>;
   const bp = numero(b.porcento, 0, 100); const bb = numero(b.baixo, 0, 100); const ba = numero(b.alto, 0, 100);
   if (bp === null || bb === null || ba === null || bb > ba) return { ok: false, problema: "base" };
+  const partes = lerPartesDaBase(b.partes);
+  if (partes === null || (partes.length > 0 && Math.abs(partes.reduce((soma, x) => soma + x.porcento, 0) - bp) > TOLERANCIA_DA_SOMA_DAS_PARTES)) return { ok: false, problema: "partes" };
   if (!Array.isArray(e.canais) || e.canais.length === 0 || e.canais.length > MAX_CANAIS_NO_RESULTADO) return { ok: false, problema: "canais" };
   const vistos = new Set<string>();
   const canais: CanalDoResultado[] = [];
@@ -79,7 +106,7 @@ export function lerResultadoDoModelo(entrada: unknown): { ok: true; resultado: R
   const soma = bp + canais.reduce((s, c) => s + c.porcento, 0);
   if (soma < 90 || soma > 110) return { ok: false, problema: "soma" };
   const diagnosticos = { r_hat_maximo: casas(rHat, 4), divergencias, ess_minimo: ess };
-  return { ok: true, resultado: { motor, versao_motor: versao, semanas, confianca: confiancaDoResultado(semanas, diagnosticos), diagnosticos, base: { porcento: casas(bp, 2), baixo: casas(bb, 2), alto: casas(ba, 2) }, canais } };
+  return { ok: true, resultado: { motor, versao_motor: versao, semanas, confianca: confiancaDoResultado(semanas, diagnosticos), diagnosticos, base: { porcento: casas(bp, 2), baixo: casas(bb, 2), alto: casas(ba, 2), partes }, canais } };
 }
 
 // ─── O modelo ao lado dos links ─────────────────────────────────────────────

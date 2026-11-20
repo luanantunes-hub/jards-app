@@ -3,6 +3,8 @@
 import { Check } from "lucide-react";
 import { SEMANAS_IDEAIS, rotuloDoCanalDeGasto, type Confianca, type ProntidaoDoModelo, type Verificacao } from "@/lib/ticketeria/modelo";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
+import { SEMANAS_DOS_CONTROLES_EXTRAS, type ControleDaTela } from "@/lib/ticketeria/modelo-controles";
+import { temMargemGrande, type ChaveDaParte } from "@/lib/ticketeria/modelo-resultado";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 
 // A aba Modelo da Divulgação (fatia M-A): se já há dado para o modelo de marketing rodar, e o que falta. Ainda não há o cálculo do modelo (é a fatia seguinte). Só desenho: os dados
@@ -21,7 +23,7 @@ function Marca({ estado }: { estado: Verificacao["estado"] }) {
 }
 
 /** A checklist de prontidão: o aviso (pronto ou não, com o progresso) e cada verificação, com o botão que leva ao que resolve. */
-export function ModeloDaLoja({ prontidao, onImportar, onConexoes }: { prontidao: ProntidaoDoModelo; onImportar?: () => void; onConexoes?: () => void }) {
+export function ModeloDaLoja({ prontidao, onImportar, onConexoes, onDatas }: { prontidao: ProntidaoDoModelo; onImportar?: () => void; onConexoes?: () => void; onDatas?: () => void }) {
   const { pronto, prontos, total, confianca, semanas, verificacoes, ignoradas } = prontidao;
   return (
     <div className="space-y-4">
@@ -48,8 +50,42 @@ export function ModeloDaLoja({ prontidao, onImportar, onConexoes }: { prontidao:
           </div>
         ))}
       </div>
+      <ControlesDoModelo controles={prontidao.controles} onDatas={onDatas} onConexoes={onConexoes} />
       {ignoradas.length > 0 && <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Para não contar o mesmo gasto duas vezes, ficou de fora o gasto {ignoradas.length === 1 ? "da ação" : "das ações"} <span className="text-black/65">{ignoradas.join(", ")}</span>: o gasto de anúncios já vem das conexões.</p>}
     </div>
+  );
+}
+
+
+// ─── O que o modelo leva em conta além dos anúncios ─────────────────────────
+
+function PilulaDoControle({ c }: { c: ControleDaTela }) {
+  const [texto, cor] = c.estado === "em_uso" ? ["Em uso", VERDE] : c.estado === "entra_depois" ? [`Entra com ${SEMANAS_DOS_CONTROLES_EXTRAS} semanas · ${c.faltam === 1 ? "falta 1" : `faltam ${c.faltam}`}`, AMBAR] : c.estado === "opcional" ? ["Opcional", "rgba(13,13,13,.55)"] : ["Sem dado ainda", "rgba(13,13,13,.55)"];
+  return <span className="inline-flex shrink-0 rounded-xl border bg-white px-2 py-0.5 text-[0.625rem] font-normal" style={{ borderColor: c.estado === "em_uso" ? `${VERDE}4D` : c.estado === "entra_depois" ? "rgba(176,122,20,.3)" : BORDA, color: cor }}>{texto}</span>;
+}
+
+/** Os controles do modelo (proximidade da sessão, feriados, preço e lotes, cupons, visitas sem anúncio): quais já estão em uso e quando entram os outros. */
+export function ControlesDoModelo({ controles, onDatas, onConexoes }: { controles: ControleDaTela[]; onDatas?: () => void; onConexoes?: () => void }) {
+  if (controles.length === 0) return null;
+  return (
+    <section className="space-y-2.5" aria-label="O que o modelo leva em conta além dos anúncios">
+      <h3 className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">O que o modelo leva em conta além dos anúncios</h3>
+      <div className="divide-y divide-black/[.08] rounded-xl border bg-white" style={{ borderColor: BORDA }}>
+        {controles.map(c => (
+          <div key={c.grupo} className="flex items-start gap-3.5 px-4 py-4">
+            <Marca estado={c.estado === "em_uso" ? "ok" : c.estado === "opcional" ? "opcional" : "falta"} />
+            <div className="min-w-0 flex-1">
+              <p className="text-[0.8125rem] text-[#282525]">{c.rotulo}</p>
+              <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/45">{c.detalhe}</p>
+              {c.acao === "datas" && <button type="button" onClick={onDatas} className={`mt-1.5 ${LINK}`}>Adicionar uma data sua</button>}
+              {c.acao === "conexoes" && <button type="button" onClick={onConexoes} className={`mt-1.5 ${LINK}`}>Conectar o GA4</button>}
+            </div>
+            <PilulaDoControle c={c} />
+          </div>
+        ))}
+      </div>
+      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Com menos de um ano de histórico, o modelo usa só os dois controles mais importantes, para não confundir um efeito com outro. O resto entra sozinho a partir de {SEMANAS_DOS_CONTROLES_EXTRAS} semanas, sem você precisar fazer nada.</p>
+    </section>
   );
 }
 
@@ -60,6 +96,49 @@ const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
 const dataBr = (iso: string) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso));
 const pontos = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ","));
 const margem = (baixo: number, alto: number, meio: number) => Math.round(Math.max(meio - baixo, alto - meio));
+
+
+const PARTES: Record<ChaveDaParte, { rotulo: string; dica: string; cor: string }> = {
+  nivel: { rotulo: "Nível normal da loja", dica: "o que a loja vende sem nada especial acontecendo", cor: "#1C0E33" },
+  tendencia: { rotulo: "Tendência e época do ano", dica: "a loja vem crescendo ou caindo; as estações", cor: "#3A2466" },
+  proximidade: { rotulo: "Proximidade da sessão", dica: "vende mais nas semanas antes da data", cor: "#7259B5" },
+  feriado: { rotulo: "Feriados e datas de pico", dica: "Natal, Dia das Mães, as datas suas", cor: "#A894D6" },
+  preco_e_lotes: { rotulo: "Preço e lotes", dica: "a troca de lote puxa uma corrida de compra", cor: "#C9BCE6" },
+  cupom: { rotulo: "Cupons", dica: "semanas com cupom venderam diferente", cor: "#DDD4F0" },
+  visitas: { rotulo: "Visitas sem anúncio (GA4)", dica: "busca, direto, e-mail, indicação", cor: "#EAE4F6" },
+};
+const sinal = (n: number) => (n < 0 ? `−${pontos(Math.abs(n))}` : pontos(n));
+
+/** O que está dentro do "venderia de qualquer jeito": o nível da loja, a tendência e cada controle, com o quanto cada um explica das vendas e a margem de erro. */
+export function QuebraDaBase({ base }: { base: ResultadoParaATela["execucao"]["base"] }) {
+  const partes = base.partes;
+  if (partes.length === 0) return null;
+  const positivas = partes.filter(p => p.porcento > 0);
+  const soma = positivas.reduce((s, p) => s + p.porcento, 0) || 1;
+  return (
+    <section className="rounded-xl border bg-white py-4" style={{ borderColor: BORDA }} aria-label="O que está dentro de venderia de qualquer jeito">
+      <div className="px-4">
+        <p className="text-[0.875rem] text-[#282525]">O que está dentro de “venderia de qualquer jeito”: {pontos(base.porcento)}% das vendas</p>
+        <p className="mt-1 text-[0.75rem] text-black/45">Antes de culpar ou elogiar um anúncio, o modelo separa o que já empurrava as vendas.</p>
+        <div className="mt-3.5 flex h-[22px] overflow-hidden rounded-md bg-[#F4F2F8]" aria-hidden="true">
+          {positivas.map(p => <span key={p.chave} className="block h-full" style={{ width: `${(p.porcento / soma) * 100}%`, background: PARTES[p.chave].cor }} />)}
+        </div>
+      </div>
+      <ul className="mt-3 divide-y divide-black/[.08] border-t" style={{ borderColor: BORDA }}>
+        {partes.map(p => (
+          <li key={p.chave} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-[0.8125rem] text-[#282525]">
+            <span className="size-2.5 shrink-0 rounded-[3px]" style={{ background: PARTES[p.chave].cor, border: "1px solid rgba(13,13,13,.08)" }} aria-hidden="true" />
+            <span>{PARTES[p.chave].rotulo}</span>
+            <span className="text-[0.6875rem] text-black/40">{PARTES[p.chave].dica}</span>
+            <span className="ml-auto tabular-nums">{sinal(p.porcento)}% <span className="text-black/35">±{margem(p.baixo, p.alto, p.porcento)}</span>
+              {temMargemGrande(Math.abs(p.porcento), p.baixo, p.alto) && <span className="ml-2 inline-flex rounded-xl border px-2 py-0.5 text-[0.625rem] text-black/50" style={{ borderColor: BORDA }}>margem grande</span>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 /** O que o modelo estimou: o selo de confiança, a tabela canal a canal com o modelo ao lado dos links e, para cada canal, o gasto semanal a partir do qual rende pouco. */
 export function ResultadoDoModelo({ resultado }: { resultado: ResultadoParaATela }) {
@@ -98,6 +177,7 @@ export function ResultadoDoModelo({ resultado }: { resultado: ResultadoParaATela
           </tbody>
         </table>
       </div>
+      <QuebraDaBase base={e.base} />
       {comparacao.anuncios && <p className="text-[0.75rem] text-black/50">Anúncios pagos (Meta e Google juntos, porque os links só dizem “anúncio pago”): modelo {comparacao.anuncios.modelo}%{comparacao.anuncios.links !== null ? ` · links ${comparacao.anuncios.links}%` : ""}.</p>}
       {saturacoes.length > 0 && (
         <ul className="space-y-1 text-[0.75rem] text-black/50">

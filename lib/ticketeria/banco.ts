@@ -1354,6 +1354,7 @@ export type BancoDaTicketeria = {
           base_baixo: number | null;
           base_alto: number | null;
           created_at: string;
+          base_partes: Json;
         };
         Insert: {
           id?: string;
@@ -1372,6 +1373,7 @@ export type BancoDaTicketeria = {
           base_baixo?: number | null;
           base_alto?: number | null;
           created_at?: string;
+          base_partes?: Json;
         };
         Update: {
           id?: string;
@@ -1390,6 +1392,7 @@ export type BancoDaTicketeria = {
           base_baixo?: number | null;
           base_alto?: number | null;
           created_at?: string;
+          base_partes?: Json;
         };
         Relationships: [
           {
@@ -1401,6 +1404,48 @@ export type BancoDaTicketeria = {
           },
           {
             foreignKeyName: "ticketeria_mmm_execucoes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_datas_de_pico: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          dia: string;
+          nome: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          dia: string;
+          nome: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          dia?: string;
+          nome?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_datas_de_pico_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_datas_de_pico_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";

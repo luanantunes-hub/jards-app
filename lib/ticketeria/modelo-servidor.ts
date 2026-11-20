@@ -2,10 +2,12 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
+import { diaNoFuso } from "@/lib/ticketeria/divulgacao";
 import { divulgacaoDaLoja } from "@/lib/ticketeria/divulgacao-servidor";
-import { compararComOsLinks, type CanalDoResultado } from "@/lib/ticketeria/modelo-resultado";
+import { controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles } from "@/lib/ticketeria/modelo-controles";
+import { compararComOsLinks, lerPartesDaBase, type CanalDoResultado, type ParteDaBase } from "@/lib/ticketeria/modelo-resultado";
 import type { Confianca } from "@/lib/ticketeria/modelo";
-import { avaliarProntidao, consolidarGasto, montarTabelaSemanal, type EntradaDaProntidao, type ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
+import { avaliarProntidao, consolidarGasto, montarTabelaSemanal, semanasEntre, type EntradaDaProntidao, type ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
 
 type Admin = SupabaseClient<Database>;
 const PAGINA = 1000;
@@ -52,7 +54,50 @@ export async function entradaDaLoja(admin: Admin, lojaId: string): Promise<Entra
     primeiroDiaDeVisitas = primeiro?.[0]?.dia ?? null;
     ultimoDiaDeVisitas = ultimo?.[0]?.dia ?? null;
   }
-  return { tabela: montarTabelaSemanal({ vendas, gasto }), ga4Conectado, primeiroDiaDeVisitas, ultimoDiaDeVisitas, ignoradas };
+  const semanal = montarTabelaSemanal({ vendas, gasto });
+  const { controles, resumo } = await controlesDaLoja(t, lojaId, semanal.map(s => s.semana));
+  const tabela = semanal.map(s => ({ ...s, controles: controles[s.semana] }));
+  const semanasDeVisitas = primeiroDiaDeVisitas && ultimoDiaDeVisitas ? semanasEntre(primeiroDiaDeVisitas, ultimoDiaDeVisitas) : 0;
+  return { tabela, ga4Conectado, primeiroDiaDeVisitas, ultimoDiaDeVisitas, ignoradas, controles: controlesDaTela(tabela, resumo, { conectado: ga4Conectado, semanas: semanasDeVisitas }) };
+}
+
+type Cliente = ReturnType<typeof clienteDaTicketeria>;
+
+/** Os controles de cada semana (proximidade da sessão, feriado, virada de lote, preço, cupom) e o que a loja tem de cada coisa. Lido com a chave de serviço. */
+async function controlesDaLoja(t: Cliente, lojaId: string, semanas: string[]): Promise<{ controles: ReturnType<typeof controlesDasSemanas>; resumo: ResumoDosControles }> {
+  const [{ data: eventos }, { data: locais }, { data: datas }] = await Promise.all([
+    t.from("ticketeria_eventos").select("id").eq("loja_id", lojaId),
+    t.from("ticketeria_locais").select("id, fuso").eq("loja_id", lojaId),
+    t.from("ticketeria_datas_de_pico").select("dia, nome").eq("loja_id", lojaId),
+  ]);
+  const idsDosEventos = (eventos ?? []).map(e => e.id);
+  const fuso = new Map((locais ?? []).map(l => [l.id, l.fuso]));
+  const [{ data: sessoesBrutas }, { data: ingressos }, { count: cupons }] = idsDosEventos.length === 0 ? [{ data: [] }, { data: [] }, { count: 0 }] : await Promise.all([
+    t.from("ticketeria_sessoes").select("local_id, inicio, cancelada_em").in("evento_id", idsDosEventos),
+    t.from("ticketeria_ingressos").select("id").in("evento_id", idsDosEventos),
+    t.from("ticketeria_cupons").select("id", { count: "exact", head: true }).in("evento_id", idsDosEventos),
+  ]);
+  const sessoes = (sessoesBrutas ?? []).filter(s => !s.cancelada_em).map(s => diaNoFuso(s.inicio, fuso.get(s.local_id)));
+  const idsDosIngressos = (ingressos ?? []).map(i => i.id);
+  const lotes: { ordem: number; vendas_inicio: string | null }[] = [];
+  for (let i = 0; i < idsDosIngressos.length; i += 150) {
+    const { data } = await t.from("ticketeria_lotes").select("ordem, vendas_inicio").in("ingresso_id", idsDosIngressos.slice(i, i + 150));
+    for (const l of data ?? []) lotes.push({ ordem: l.ordem, vendas_inicio: l.vendas_inicio });
+  }
+  // As compras pagas: o dia, o cupom e cada item (quantidade e preço).
+  const pagos = await todas(async (de, ate) => t.from("ticketeria_pedidos").select("id, pago_em, cupom_id").eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, ate));
+  const itens: ItemDePedidoPago[] = [];
+  const porPedido = new Map(pagos.map(p => [p.id, p]));
+  for (let i = 0; i < pagos.length; i += 150) {
+    const { data } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade, preco_centavos").in("pedido_id", pagos.slice(i, i + 150).map(p => p.id));
+    for (const it of data ?? []) {
+      const p = porPedido.get(it.pedido_id);
+      if (p?.pago_em) itens.push({ dia: diaNoFuso(p.pago_em), quantidade: it.quantidade, precoCentavos: it.preco_centavos, comCupom: p.cupom_id !== null });
+    }
+  }
+  const viradasDeLote = lotes.filter(l => l.ordem > 0 && l.vendas_inicio).map(l => diaNoFuso(l.vendas_inicio as string));
+  const controles = controlesDasSemanas({ semanas, sessoes, datasProprias: (datas ?? []).map(d => ({ dia: d.dia, nome: d.nome })), viradasDeLote, itens });
+  return { controles, resumo: { eventos: idsDosEventos.length, sessoes: sessoes.length, lotes: lotes.length, cupons: cupons ?? 0, datasProprias: (datas ?? []).length } };
 }
 
 /** A prontidão do modelo de uma loja: confere se há dado para o modelo rodar. */
@@ -61,7 +106,7 @@ export async function prontidaoDaLoja(admin: Admin, lojaId: string): Promise<Pro
 }
 
 export type ResultadoParaATela = {
-  execucao: { id: string; created_at: string; semanas: number; confianca: Confianca; motor: string; versao_motor: string; r_hat_maximo: number; divergencias: number; ess_minimo: number; base: { porcento: number; baixo: number; alto: number } };
+  execucao: { id: string; created_at: string; semanas: number; confianca: Confianca; motor: string; versao_motor: string; r_hat_maximo: number; divergencias: number; ess_minimo: number; base: { porcento: number; baixo: number; alto: number; partes: ParteDaBase[] } };
   comparacao: ReturnType<typeof compararComOsLinks>;
   /** O que cada canal fez no ano (gasto semanal e curva), para a tela. */
   canais: CanalDoResultado[];
@@ -73,7 +118,7 @@ export type ResultadoParaATela = {
 export async function resultadoDaLoja(admin: Admin, lojaId: string): Promise<ResultadoParaATela | null> {
   const t = clienteDaTicketeria(admin);
   const [{ data: boa }, { data: ultima }] = await Promise.all([
-    t.from("ticketeria_mmm_execucoes").select("id, created_at, semanas, confianca, motor, versao_motor, r_hat_maximo, divergencias, ess_minimo, base_porcento, base_baixo, base_alto").eq("loja_id", lojaId).eq("situacao", "ok").order("created_at", { ascending: false }).limit(1),
+    t.from("ticketeria_mmm_execucoes").select("id, created_at, semanas, confianca, motor, versao_motor, r_hat_maximo, divergencias, ess_minimo, base_porcento, base_baixo, base_alto, base_partes").eq("loja_id", lojaId).eq("situacao", "ok").order("created_at", { ascending: false }).limit(1),
     t.from("ticketeria_mmm_execucoes").select("situacao, motivo, created_at").eq("loja_id", lojaId).order("created_at", { ascending: false }).limit(1),
   ]);
   const e = boa?.[0];
@@ -90,7 +135,7 @@ export async function resultadoDaLoja(admin: Admin, lojaId: string): Promise<Res
   const porCanalDoLink: Record<string, number> = {};
   for (const l of painel.linhas) porCanalDoLink[l.chave] = (porCanalDoLink[l.chave] ?? 0) + l.ingressos;
   return {
-    execucao: { id: e.id, created_at: e.created_at, semanas: Number(e.semanas), confianca: e.confianca as Confianca, motor: String(e.motor), versao_motor: String(e.versao_motor), r_hat_maximo: Number(e.r_hat_maximo), divergencias: Number(e.divergencias), ess_minimo: Number(e.ess_minimo), base: { porcento: Number(e.base_porcento), baixo: Number(e.base_baixo), alto: Number(e.base_alto) } },
+    execucao: { id: e.id, created_at: e.created_at, semanas: Number(e.semanas), confianca: e.confianca as Confianca, motor: String(e.motor), versao_motor: String(e.versao_motor), r_hat_maximo: Number(e.r_hat_maximo), divergencias: Number(e.divergencias), ess_minimo: Number(e.ess_minimo), base: { porcento: Number(e.base_porcento), baixo: Number(e.base_baixo), alto: Number(e.base_alto), partes: lerPartesDaBase(e.base_partes) ?? [] } },
     comparacao: compararComOsLinks(canais, porCanalDoLink), canais,
     ultimaFalha: falha && Date.parse(falha.created_at) > Date.parse(e.created_at) ? { motivo: String(falha.motivo ?? ""), created_at: falha.created_at } : null,
   };

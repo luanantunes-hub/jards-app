@@ -40,7 +40,7 @@ import type { ResultadoParaATela } from "../lib/ticketeria/modelo-servidor";
 const canal = (c: string, porcento: number, baixo: number, alto: number, gasto: number, custo: number | null, extra: Partial<CanalDoResultado> = {}): CanalDoResultado => ({ canal: c, porcento, baixo, alto, ingressos: 100, gasto_centavos: gasto, custo_por_ingresso_centavos: custo, saturacao_gasto_centavos: null, margem_grande: false, gasto_constante: false, curva: [], ...extra });
 const canais = [canal("meta-ads", 27, 16, 38, 780000, 2250, { saturacao_gasto_centavos: 30000 }), canal("google-ads", 9, 0.5, 18, 210000, 1820, { margem_grande: true, gasto_constante: true }), canal("instagram", 14, 5, 23, 0, null), canal("email", 9, 3, 15, 0, null)];
 const resultado = (extra: Partial<ResultadoParaATela> = {}, semanas = 58, confianca: "baixa" | "media" | "boa" = "media"): ResultadoParaATela => ({
-  execucao: { id: "e1", created_at: "2026-11-17T09:00:00Z", semanas, confianca, motor: "pymc-marketing", versao_motor: "1.5.0", r_hat_maximo: 1.01, divergencias: 0, ess_minimo: 700, base: { porcento: 41, baixo: 33, alto: 49 } },
+  execucao: { id: "e1", created_at: "2026-11-17T09:00:00Z", semanas, confianca, motor: "pymc-marketing", versao_motor: "1.5.0", r_hat_maximo: 1.01, divergencias: 0, ess_minimo: 700, base: { porcento: 41, baixo: 33, alto: 49, partes: [] } },
   comparacao: compararComOsLinks(canais, { instagram: 22, email: 13, "anuncio-pago": 27, "sem-origem": 38 }), canais, ultimaFalha: null, ...extra,
 });
 
@@ -62,4 +62,35 @@ test("o resultado: a rodada que falhou aparece sem esconder a anterior; diagnós
   const semLinks = resultado({ comparacao: compararComOsLinks(canais, {}) });
   const h = html(createElement(ResultadoDoModelo, { resultado: semLinks }));
   assert.ok(h.includes("modelo 36%.") && !h.includes("links 27%"));
+});
+
+// ─── Os controles e a quebra da base ────────────────────────────────────────
+
+import { ControlesDoModelo } from "../components/ticketeria/ModeloView";
+import { controlesDaTela } from "../lib/ticketeria/modelo-controles";
+
+test("os controles: os dois primeiros em uso, os outros entram com 52 semanas e o GA4 é opcional", () => {
+  const t = Array.from({ length: 41 }, (_, i) => ({ controles: { proximidade: (i % 9) / 9, feriado: i % 7 === 0 ? 1 : 0, lote: 0, preco: 0, cupom: 0, visitas: 0 } }));
+  const p = html(createElement(ControlesDoModelo, { controles: controlesDaTela(t, { eventos: 3, sessoes: 12, lotes: 4, cupons: 6, datasProprias: 0 }, { conectado: false, semanas: 0 }) }));
+  for (const x of ["O que o modelo leva em conta além dos anúncios", "Proximidade da sessão", "3 eventos, 12 sessões", "Feriados e datas de pico", "Adicionar uma data sua", "Preço e lotes", "Entra com 52 semanas · faltam 11", "Cupons", "Visitas ao site, sem anúncio (GA4)", "Opcional", "Conectar o GA4", "Em uso", "só os dois controles mais importantes"]) assert.ok(p.includes(x), `falta: ${x}`);
+  assert.equal(html(createElement(ControlesDoModelo, { controles: [] })), "", "sem controles não desenha nada");
+});
+
+test("a aba Modelo sem dado mostra os controles logo abaixo da checklist", () => {
+  const t = Array.from({ length: 41 }, (_, i) => ({ ...semana(i, 10, i >= 29 ? { "meta-ads": 15000 } : {}), controles: { proximidade: (i % 9) / 9, feriado: i % 7 === 0 ? 1 : 0 } }));
+  const controles = controlesDaTela(t, { eventos: 1, sessoes: 2, lotes: 1, cupons: 0, datasProprias: 1 }, { conectado: false, semanas: 0 });
+  const p = html(createElement(ModeloDaLoja, { prontidao: avaliarProntidao({ ...base, tabela: t, controles }) }));
+  assert.ok(p.includes("Mais 1 data sua."));
+  assert.ok(p.indexOf("Gasto em divulgação: só 12 semanas") < p.indexOf("O que o modelo leva em conta além dos anúncios"));
+});
+
+test("o resultado mostra o que está dentro de “venderia de qualquer jeito”, com parte negativa e margem grande", () => {
+  const partes = [
+    { chave: "nivel" as const, porcento: 22, baixo: 18, alto: 26 }, { chave: "tendencia" as const, porcento: 9, baixo: 6, alto: 12 }, { chave: "proximidade" as const, porcento: 18, baixo: 14, alto: 22 },
+    { chave: "preco_e_lotes" as const, porcento: -4, baixo: -9, alto: 1 },
+  ];
+  const r = resultado();
+  const p = html(createElement(ResultadoDoModelo, { resultado: { ...r, execucao: { ...r.execucao, base: { ...r.execucao.base, partes } } } }));
+  for (const x of ["O que está dentro de “venderia de qualquer jeito”: 41% das vendas", "Nível normal da loja", "Tendência e época do ano", "Proximidade da sessão", "18% <span", "Preço e lotes", "−4%", "margem grande"]) assert.ok(p.includes(x), `falta: ${x}`);
+  assert.ok(!html(createElement(ResultadoDoModelo, { resultado: r })).includes("O que está dentro de"), "sem partes (resultado antigo) a quebra não aparece");
 });
