@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/email/transactional";
-import { ProvedorAsaas, ambienteDoAsaas } from "@/lib/ticketeria/pagamento/asaas";
+import { ProvedorAsaas, ambienteDoAsaas, ehParcelamentoDoAsaas } from "@/lib/ticketeria/pagamento/asaas";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { portasDoReembolsoDoSupabase } from "@/lib/ticketeria/pagamento/portas-supabase";
 import { enderecoDoRemetente, enderecosDeReembolso, lerAssuntoDoReembolso, tratarEmailDeReembolso } from "@/lib/ticketeria/pagamento/reembolso";
@@ -28,6 +28,9 @@ async function executar(email: EmailDeReembolso): Promise<{ status: number; corp
         const { data: chave } = await clienteDaTicketeria(admin).rpc("fn_ticketeria_chave_da_conta_asaas", { p_loja: pedido.loja_id });
         if (!chave || !pedido.provedor_ref) return { ok: false, motivo: "sem_chave_ou_referencia" };
         const provedor = new ProvedorAsaas({ chave, tokenDoWebhook: process.env.ASAAS_WEBHOOK_TOKEN || "nao-usado-ao-estornar".padEnd(32, "x"), url: base.url });
+        // Cartão parcelado: o `provedor_ref` é o id do PARCELAMENTO (um UUID, e não `pay_...`): estorna todas as parcelas de uma vez, e o que o Asaas ainda não repassou (as parcelas
+        // do cartão só caem mês a mês, e o reembolso é de até 7 dias) é cancelado, a comissão do Jards junto.
+        if (ehParcelamentoDoAsaas(pedido.provedor_ref)) return provedor.estornarParcelamento(pedido.provedor_ref);
         return provedor.estornarPixComComissao(pedido.provedor_ref, pedido.total_centavos, pedido.taxa_centavos, carteira);
       },
       async avisarOJards(a) {

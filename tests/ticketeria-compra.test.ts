@@ -113,16 +113,18 @@ test("o meio e as parcelas: Pix é o padrão; meio desconhecido recusa; parcelam
   const ok = lerCorpoDaCompra(bom);
   assert.ok(ok.ok && ok.corpo.meio === "pix" && ok.corpo.parcelas === 1, "sem meio, Pix à vista");
   for (const [mudanca, problema] of [
-    [{ meio: "boleto" }, "forma de pagamento"], [{ meio: "cartao", parcelas: 2 }, "parcelas"], [{ meio: "cartao", parcelas: 0 }, "parcelas"], [{ meio: "cartao", parcelas: 1.5 }, "parcelas"],
+    [{ meio: "boleto" }, "forma de pagamento"], [{ meio: "cartao", parcelas: 0 }, "parcelas"], [{ meio: "cartao", parcelas: 1.5 }, "parcelas"],
     [{ meio: "cartao", parcelas: "1" }, "parcelas"], [{ meio: "pix", parcelas: 3 }, "parcelas"], [{ meio: "cartao", parcelas: 7 }, "parcelas"],
   ] as [object, string][]) {
     const l = lerCorpoDaCompra({ ...bom, ...mudanca });
     assert.equal(l.ok, false, JSON.stringify(mudanca));
     if (!l.ok) assert.ok(l.problemas.includes(problema), problema);
   }
-  assert.equal(PARCELAMENTO_LIBERADO, false);
+  assert.equal(PARCELAMENTO_LIBERADO, true);
   const c = lerCorpoDaCompra({ ...bom, meio: "cartao", parcelas: 1 });
   assert.ok(c.ok && c.corpo.parcelas === 1);
+  const parcelado = lerCorpoDaCompra({ ...bom, meio: "cartao", parcelas: 6 });
+  assert.ok(parcelado.ok && parcelado.corpo.parcelas === 6, "até 6x");
 });
 
 test("o meio que a loja não oferece (ou o custo não deixa) vira a frase 'escolha o Pix', e nada é cobrado", async () => {

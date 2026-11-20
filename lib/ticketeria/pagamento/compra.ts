@@ -15,8 +15,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const MAX_ITENS_POR_COMPRA = 10;
 export const MAX_QUANTIDADE_POR_ITEM = 20;
 export const MINUTOS_DE_RESERVA = 15;
-/** Até quantas parcelas a plataforma deixa oferecer. O parcelamento NÃO está liberado: o Asaas manda um aviso por parcela e o processamento do aviso ainda não os soma (o valor do aviso não bateria com o total do pedido). Liberar só depois de provar no sandbox. */
-export const PARCELAMENTO_LIBERADO = false;
+/**
+ * Até quantas parcelas a plataforma deixa oferecer, e se o parcelamento está LIBERADO (20/11/2026, depois da prova no sandbox: o Asaas manda um aviso por parcela, e o aviso de
+ * qualquer uma delas confirma o pedido pelo parcelamento inteiro; veja `processarAviso`). Quem oferece é o produtor, por loja (`ticketeria_lojas.parcelas_max`, 1 = só à vista).
+ */
+export const PARCELAMENTO_LIBERADO = true;
 export const MAX_PARCELAS = 6;
 export type MeioDaCompra = "pix" | "cartao";
 

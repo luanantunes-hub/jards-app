@@ -15,9 +15,17 @@ import type { DecisaoDeSaque, PedidoDeSaque } from "@/lib/ticketeria/pagamento/v
 // As portas dos avisos do provedor no Supabase, com a chave de serviço (só o servidor grava em ticketeria_notificacoes_provedor e
 // executa fn_ticketeria_confirmar_pagamento_real). A rota que recebe o aviso chega com o provedor real (T5).
 
-export function portasDoSupabase(admin: SupabaseClient<Database>): PortasDosAvisos {
+export function portasDoSupabase(admin: SupabaseClient<Database>, config: { provedorDaConta?: (chaveDaSubconta: string) => ProvedorDePagamento } = {}): PortasDosAvisos {
   const ticketeria = clienteDaTicketeria(admin);
   return {
+    // O provedor com a chave da subconta da loja do pedido: a cobrança nasceu lá, e é lá que se lê o parcelamento e se estorna.
+    async provedorDoPedido(pedidoId) {
+      if (!config.provedorDaConta) return null;
+      const { data: pedido } = await ticketeria.from("ticketeria_pedidos").select("loja_id").eq("id", pedidoId).maybeSingle();
+      if (!pedido) return null;
+      const { data: chave } = await ticketeria.rpc("fn_ticketeria_chave_da_conta_asaas", { p_loja: pedido.loja_id });
+      return chave ? config.provedorDaConta(chave) : null;
+    },
     async registrar(aviso) {
       const { error } = await ticketeria.from("ticketeria_notificacoes_provedor")
         .insert({ provedor: aviso.provedor, id_externo: aviso.id_externo, tipo: aviso.tipo, pedido_id: aviso.pedido_id, payload: aviso.payload as Json });
