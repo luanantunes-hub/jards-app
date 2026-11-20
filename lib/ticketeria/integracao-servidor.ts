@@ -33,7 +33,7 @@ export async function eventosDaLoja(admin: Admin, lojaId: string, origem: string
   const [site, { data: loja }, { data: eventos }] = await Promise.all([
     siteDaLoja(admin, lojaId),
     t.from("ticketeria_lojas").select("nome").eq("id", lojaId).maybeSingle(),
-    t.from("ticketeria_eventos").select("id, titulo, descricao, imagem_url, classificacao").eq("loja_id", lojaId).eq("situacao", "publicado"),
+    t.from("ticketeria_eventos").select("id, slug, titulo, descricao, imagem_url, classificacao").eq("loja_id", lojaId).eq("situacao", "publicado"),
   ]);
   const base: ListaDeEventosNaApi = { versao: VERSAO_DA_API, loja: { nome: loja?.nome ?? site.titulo }, tema: site, eventos: [] };
   if (!eventos || eventos.length === 0) return base;
@@ -51,14 +51,14 @@ export async function eventosDaLoja(admin: Admin, lojaId: string, origem: string
     const l = local.get(s.local_id);
     const quando = diaEHoraDoEvento(s.inicio, l?.fuso ?? "America/Sao_Paulo");
     const lista = porEvento.get(s.evento_id) ?? [];
-    lista.push({ id: s.id, inicio: s.inicio, quando: quando.charAt(0).toUpperCase() + quando.slice(1), local: v.evento.local, estado: estadoNaApi(v), a_partir_de_centavos: menorPreco(v.ingressos), poucos: poucosNaSessao(v.ingressos), url: urlDeCompra(origem, s.id) });
+    lista.push({ id: s.id, inicio: s.inicio, quando: quando.charAt(0).toUpperCase() + quando.slice(1), local: v.evento.local, local_nome: l?.nome, cidade: l?.cidade ?? null, uf: l?.uf ?? null, estado: estadoNaApi(v), a_partir_de_centavos: menorPreco(v.ingressos), poucos: poucosNaSessao(v.ingressos), url: urlDeCompra(origem, s.id) });
     porEvento.set(s.evento_id, lista);
   });
   // Os eventos na ordem da primeira sessão; evento sem sessão futura não aparece.
   const ordem = [...new Set(sessoes.map(s => s.evento_id))];
   for (const id of ordem) {
     const e = eventos.find(x => x.id === id);
-    if (e) base.eventos.push({ id: e.id, titulo: e.titulo, descricao: e.descricao, classificacao: e.classificacao ? ROTULO_DA_CLASSIFICACAO[e.classificacao] ?? null : null, imagem: e.imagem_url, sessoes: porEvento.get(id) ?? [] });
+    if (e) base.eventos.push({ id: e.id, slug: e.slug, titulo: e.titulo, descricao: e.descricao, classificacao: e.classificacao ? ROTULO_DA_CLASSIFICACAO[e.classificacao] ?? null : null, imagem: e.imagem_url, sessoes: porEvento.get(id) ?? [] });
   }
   return base;
 }

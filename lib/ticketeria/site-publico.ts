@@ -7,7 +7,11 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { blocosDoJson, corDoTema, espacosDosBlocos, eventosDosBlocos, hostDoPedido, ordemDasPaginas, type Bloco } from "@/lib/ticketeria/site";
 import { appUrl } from "@/lib/email/config";
 import { agoraDoServidor } from "@/lib/ticketeria/contagem";
+import { agendaDosEventos, type ItemDaAgenda } from "@/lib/ticketeria/evento-site";
+import { eventosDaLoja } from "@/lib/ticketeria/integracao-servidor";
+import type { EventoNaApi } from "@/lib/ticketeria/integracao";
 import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
+import { ROTULO_DA_CLASSIFICACAO } from "@/lib/ticketeria/eventos";
 import type { Database } from "@/lib/supabase/types";
 
 // O site público da loja (Ticketeria, T1; desenho da PD12.1): o que a página de um domínio da pessoa mostra. Sem login: o servidor
@@ -29,6 +33,8 @@ export type SitePublico = {
   pagina: { slug: string; titulo: string; blocos: Bloco[]; descricao: string | null; imagem: string | null };
   /** A hora do servidor (ms) ao montar a página, para a contagem regressiva. */
   agora: number;
+  /** Os eventos da Agenda, quando a página tem um bloco de agenda. */
+  agenda?: ItemDaAgenda[];
   /** As sessões confirmadas dos espaços que os blocos de programação citam (só os da organização do site). */
   programacoes: ProgramacoesDoSite;
   /** As sessões que ainda vão acontecer de cada evento citado num bloco de ingressos, pelo id do evento. */
@@ -75,14 +81,14 @@ export async function ingressosDosBlocos(admin: Admin, organizationId: string, b
 }
 
 /** O site publicado num domínio ativo, ou null. */
-async function siteNoAr(admin: Admin, host: string) {
+export async function siteNoAr(admin: Admin, host: string) {
   const dominio = hostDoPedido(host);
   if (dominio === "") return null;
   const ticketeria = clienteDaTicketeria(admin);
   const { data: registro, error } = await ticketeria.from("ticketeria_site_dominios").select("site_id, situacao").eq("dominio", dominio).maybeSingle();
   if (error) throw new Error("não foi possível conferir o domínio");
   if (!registro || registro.situacao !== "ativo") return null;
-  const { data: site } = await ticketeria.from("ticketeria_sites").select("id, organization_id, nome, titulo, cor, tema, situacao").eq("id", registro.site_id).maybeSingle();
+  const { data: site } = await ticketeria.from("ticketeria_sites").select("id, organization_id, loja_id, nome, titulo, cor, tema, situacao").eq("id", registro.site_id).maybeSingle();
   if (!site || site.situacao !== "publicado") return null;
   return site;
 }
@@ -96,10 +102,11 @@ export async function paginaPublicaDoDominio(admin: Admin, host: string, slug: s
   const atual = publicadas.find(pagina => pagina.slug === slug);
   if (!atual) return null;
   const blocos = blocosDoJson(atual.blocos_publicados);
-  const [organizacao, programacoes, ingressos] = await Promise.all([
+  const [organizacao, programacoes, ingressos, agenda] = await Promise.all([
     admin.from("organizations").select("nome").eq("id", site.organization_id).maybeSingle(),
     programacoesDosBlocos(admin, site.organization_id, blocos),
     ingressosDosBlocos(admin, site.organization_id, blocos),
+    agendaDosBlocos(admin, site.loja_id, blocos),
   ]);
   return {
     titulo: site.titulo ?? site.nome,
@@ -111,6 +118,7 @@ export async function paginaPublicaDoDominio(admin: Admin, host: string, slug: s
     agora: agoraDoServidor(),
     programacoes,
     ingressos,
+    ...(agenda ? { agenda } : {}),
   };
 }
 
@@ -120,4 +128,51 @@ export async function paginasPublicadasDoDominio(admin: Admin, host: string): Pr
   if (!site) return null;
   const { data: paginas } = await clienteDaTicketeria(admin).from("ticketeria_site_paginas").select("slug, titulo, ordem, publicada_em").eq("site_id", site.id).not("blocos_publicados", "is", null);
   return ordemDasPaginas(paginas ?? []).map(pagina => ({ slug: pagina.slug, publicada_em: pagina.publicada_em }));
+}
+
+/** A Agenda dos blocos: os eventos publicados da loja com sessão por vir (nulo se nenhum bloco da página é de agenda, para não gastar a consulta). */
+export async function agendaDosBlocos(admin: Admin, lojaId: string, blocos: readonly Bloco[], origem: string = appUrl()): Promise<ItemDaAgenda[] | null> {
+  if (!blocos.some(b => b.tipo === "agenda")) return null;
+  return agendaDosEventos((await eventosDaLoja(admin, lojaId, origem)).eventos);
+}
+
+export type EventoPublicoDoDominio = {
+  titulo: string; cor: string; tema: string; organizacao: string; agora: number;
+  menu: { slug: string; titulo: string }[];
+  evento: EventoNaApi;
+};
+
+/** A página do evento `slug` do site que está no ar no domínio `host`, ou null (site fora do ar, evento que não existe ou não está publicado: tudo responde igual). */
+export async function eventoPublicoDoDominio(admin: Admin, host: string, slug: string): Promise<EventoPublicoDoDominio | null> {
+  const site = await siteNoAr(admin, host);
+  if (!site) return null;
+  const t = clienteDaTicketeria(admin);
+  const { data: evento } = await t.from("ticketeria_eventos").select("id, situacao").eq("loja_id", site.loja_id).eq("slug", slug).maybeSingle();
+  if (!evento || evento.situacao !== "publicado") return null;
+  const [{ data: paginas }, lista, organizacao] = await Promise.all([
+    t.from("ticketeria_site_paginas").select("slug, titulo, ordem, publicada_em").eq("site_id", site.id).not("blocos_publicados", "is", null),
+    eventosDaLoja(admin, site.loja_id, appUrl()),
+    admin.from("organizations").select("nome").eq("id", site.organization_id).maybeSingle(),
+  ]);
+  const achado = lista.eventos.find(e => e.id === evento.id);
+  // Evento publicado sem sessão por vir: a página ainda abre (com o título e a frase de espera), com as sessões vazias.
+  const doEvento: EventoNaApi = achado ?? await eventoSemSessoes(admin, evento.id);
+  return {
+    titulo: site.titulo ?? site.nome, cor: corDoTema(site.cor), tema: site.tema, organizacao: (organizacao.data as { nome?: string | null } | null)?.nome ?? "", agora: agoraDoServidor(),
+    menu: ordemDasPaginas(paginas ?? []).map(pagina => ({ slug: pagina.slug, titulo: pagina.titulo })), evento: doEvento,
+  };
+}
+
+async function eventoSemSessoes(admin: Admin, id: string): Promise<EventoNaApi> {
+  const { data: e } = await clienteDaTicketeria(admin).from("ticketeria_eventos").select("id, slug, titulo, descricao, imagem_url, classificacao").eq("id", id).maybeSingle();
+  if (!e) throw new Error("evento_inexistente");
+  return { id: e.id, slug: e.slug, titulo: e.titulo, descricao: e.descricao, classificacao: e.classificacao ? ROTULO_DA_CLASSIFICACAO[e.classificacao] ?? null : null, imagem: e.imagem_url, sessoes: [] };
+}
+
+/** Os eventos publicados do site no ar no domínio (para o sitemap), ou null se o domínio não tem site no ar. */
+export async function eventosPublicadosDoDominio(admin: Admin, host: string): Promise<{ slug: string; atualizado_em: string }[] | null> {
+  const site = await siteNoAr(admin, host);
+  if (!site) return null;
+  const { data } = await clienteDaTicketeria(admin).from("ticketeria_eventos").select("slug, updated_at").eq("loja_id", site.loja_id).eq("situacao", "publicado").order("created_at");
+  return (data ?? []).map(e => ({ slug: e.slug, atualizado_em: e.updated_at }));
 }

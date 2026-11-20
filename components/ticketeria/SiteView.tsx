@@ -3,6 +3,8 @@ import { MarcaDaSessao } from "@/components/producao/MarcaDaSessao";
 import { ContagemRegressiva } from "@/components/ticketeria/ContagemRegressiva";
 import { enderecoDoMapa, enderecoDoVideo, textoSobreCor, type Bloco, type ColunaDoBloco } from "@/lib/ticketeria/site";
 import { variaveisDoTema } from "@/lib/ticketeria/temas";
+import { caminhoDoEvento, type ItemDaAgenda } from "@/lib/ticketeria/evento-site";
+import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 import { diaPorExtenso } from "@/components/producao/ProgramacaoPublicaView";
 
 export type SiteParaDesenhar = {
@@ -13,6 +15,8 @@ export type SiteParaDesenhar = {
   pagina: { slug: string; titulo: string; blocos: Bloco[] };
   /** A hora do servidor (ms), para a contagem regressiva começar certa; quem monta o site a traz de `agoraDoServidor`. */
   agora: number;
+  /** Os eventos da Agenda (só quando a página tem um bloco de agenda). */
+  agenda?: ItemDaAgenda[];
   /** A programação de cada espaço da Produção citado num bloco, pelo id do espaço. */
   programacoes: Record<string, DiaPublico[]>;
   /** As sessões de cada evento citado num bloco de ingressos, pelo id do evento. */
@@ -78,7 +82,7 @@ export function IngressosDoEvento({ titulo, sessoes }: { titulo: string; sessoes
 const BOTAO_CLARO = "inline-flex min-h-11 items-center rounded-[var(--site-raio)] bg-white px-5 py-2.5 text-[0.9375rem] font-normal text-[#282525] transition hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 
 /** A faixa de abertura: com imagem de fundo (escurecida, para o texto branco ler bem) ou na cor do tema. */
-function Capa({ bloco, cor }: { bloco: Extract<Bloco, { tipo: "capa" }>; cor: string }) {
+export function Capa({ bloco, cor }: { bloco: Extract<Bloco, { tipo: "capa" }>; cor: string }) {
   const comImagem = bloco.imagem !== "";
   const texto = comImagem ? "#ffffff" : textoSobreCor(cor);
   return (
@@ -115,7 +119,43 @@ function TituloDoBloco({ titulo }: { titulo: string }) {
 
 const SANDBOX_DO_QUADRO = "allow-scripts allow-same-origin allow-popups allow-presentation";
 
-function BlocoDoSite({ bloco, cor, agora, programacoes, ingressos }: { bloco: Bloco; cor: string; agora: number; programacoes: Record<string, DiaPublico[]>; ingressos: Record<string, { id: string; quando: string; local: string; url: string }[]> }) {
+const ROTULO_DO_ESTADO: Record<ItemDaAgenda["estado"], string | null> = { aberta: null, esgotado: "Esgotado", indisponivel: "Indisponível" };
+
+/** A lista dos eventos da loja: cada um com a próxima sessão, o preço e o link para a página do evento (na prévia, sem link: a página do evento só existe no site no ar). */
+export function Agenda({ titulo, itens, base, semLinks }: { titulo: string; itens: ItemDaAgenda[]; base: string; semLinks: boolean }) {
+  return (
+    <section aria-label={titulo || "Agenda"}>
+      {titulo && <h2 className="mb-3 text-[1.25rem] font-medium tracking-[-.01em]">{titulo}</h2>}
+      {itens.length === 0 ? (
+        <p className="rounded-[var(--site-raio)] border border-[color:var(--site-borda)] px-4 py-5 text-[0.9375rem] opacity-70">Nenhum evento em cartaz por enquanto. Volte em breve.</p>
+      ) : (
+        <ul className="space-y-2.5">
+          {itens.map(item => {
+            const detalhe = ROTULO_DO_ESTADO[item.estado] ?? (item.a_partir_de_centavos !== null ? `a partir de ${formatarMoeda(item.a_partir_de_centavos)}` : null);
+            const conteudo = (
+              <>
+                {item.imagem
+                  // eslint-disable-next-line @next/next/no-img-element -- imagem de endereço externo (https), sem otimização do Next
+                  ? <img src={item.imagem} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-16 shrink-0 rounded-[calc(var(--site-raio)*.7)] object-cover" />
+                  : <span aria-hidden="true" className="h-16 w-16 shrink-0 rounded-[calc(var(--site-raio)*.7)] bg-black/[.06]" />}
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[1rem] font-medium leading-snug">{item.titulo}</span>
+                  {item.proxima && <span className="mt-0.5 block text-[0.8125rem] opacity-70">Próxima: {item.proxima.quando.toLowerCase()}{item.proxima.local ? ` · ${item.proxima.local}` : ""}</span>}
+                  {detalhe && <span className="mt-0.5 block text-[0.8125rem]">{detalhe}</span>}
+                </span>
+                {!semLinks && <span className="shrink-0 text-[0.8125rem] underline underline-offset-2 opacity-70">Ver evento</span>}
+              </>
+            );
+            const caixa = "flex items-center gap-3 rounded-[var(--site-raio)] border border-[color:var(--site-borda)] p-2.5";
+            return <li key={item.slug}>{semLinks ? <div className={caixa}>{conteudo}</div> : <a href={caminhoDoEvento(base, item.slug)} className={`${caixa} transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2`}>{conteudo}</a>}</li>;
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function BlocoDoSite({ bloco, cor, agora, base, semLinksDeEvento, agenda, programacoes, ingressos }: { bloco: Bloco; cor: string; agora: number; base: string; semLinksDeEvento: boolean; agenda: ItemDaAgenda[]; programacoes: Record<string, DiaPublico[]>; ingressos: Record<string, { id: string; quando: string; local: string; url: string }[]> }) {
   switch (bloco.tipo) {
     case "titulo":
       return <h2 className="text-[1.5rem] font-medium tracking-[-.02em]">{bloco.texto}</h2>;
@@ -191,6 +231,8 @@ function BlocoDoSite({ bloco, cor, agora, programacoes, ingressos }: { bloco: Bl
           </ul>
         </section>
       );
+    case "agenda":
+      return <Agenda titulo={bloco.titulo} itens={agenda} base={base} semLinks={semLinksDeEvento} />;
     case "programacao":
       return <Programacao titulo={bloco.titulo} dias={bloco.espaco_id ? programacoes[bloco.espaco_id] ?? null : null} />;
     case "ingressos":
@@ -206,11 +248,8 @@ function BlocoDoSite({ bloco, cor, agora, programacoes, ingressos }: { bloco: Bl
   }
 }
 
-/**
- * O site da loja desenhado: cabeçalho com o título e o menu, e os blocos da página. Serve ao domínio da pessoa (`base` vazio)
- * e à prévia do painel (`base` é o caminho da prévia). `previa` marca o rascunho com uma faixa.
- */
-export function SiteView({ site, base, previa }: { site: SiteParaDesenhar; base: string; previa?: boolean }) {
+/** O quadro do site: o tema, o cabeçalho com o título e o menu, e o miolo da página (os blocos, ou a página de um evento). `paginaAtual` marca o item do menu em que a pessoa está (vazio: nenhum). */
+export function QuadroDoSite({ site, base, previa, paginaAtual, children }: { site: Pick<SiteParaDesenhar, "titulo" | "cor" | "tema" | "menu">; base: string; previa?: boolean; paginaAtual: string; children: React.ReactNode }) {
   const texto = textoSobreCor(site.cor);
   return (
     <div className="site-tema min-h-screen" style={{ ...variaveisDoTema(site.tema, site.cor), backgroundColor: "var(--site-fundo)", color: "var(--site-texto)", fontFamily: "var(--site-fonte)" }}>
@@ -223,23 +262,33 @@ export function SiteView({ site, base, previa }: { site: SiteParaDesenhar; base:
             <nav aria-label="Páginas do site">
               <ul className="flex flex-wrap gap-x-5 gap-y-1">
                 {site.menu.map(item => (
-                  <li key={item.slug}><a href={caminhoDe(base, item.slug)} aria-current={item.slug === site.pagina.slug ? "page" : undefined} className={`text-[0.875rem] underline-offset-4 hover:underline ${item.slug === site.pagina.slug ? "underline" : "opacity-90"}`} style={{ color: texto }}>{item.titulo}</a></li>
+                  <li key={item.slug}><a href={caminhoDe(base, item.slug)} aria-current={item.slug === paginaAtual ? "page" : undefined} className={`text-[0.875rem] underline-offset-4 hover:underline ${item.slug === paginaAtual ? "underline" : "opacity-90"}`} style={{ color: texto }}>{item.titulo}</a></li>
                 ))}
               </ul>
             </nav>
           )}
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[56rem] px-4 py-8 sm:px-6 sm:py-10">
-        <h1 className="sr-only">{site.pagina.titulo}</h1>
-        {site.pagina.blocos.length === 0 ? (
-          <p className="text-[0.9375rem] opacity-60">Esta página ainda não tem conteúdo.</p>
-        ) : (
-          <div className="space-y-8">
-            {site.pagina.blocos.map((bloco, indice) => <BlocoDoSite key={indice} bloco={bloco} cor={site.cor} agora={site.agora} programacoes={site.programacoes} ingressos={site.ingressos ?? {}} />)}
-          </div>
-        )}
-      </main>
+      <main className="mx-auto w-full max-w-[56rem] px-4 py-8 sm:px-6 sm:py-10">{children}</main>
     </div>
+  );
+}
+
+/**
+ * O site da loja desenhado: cabeçalho com o título e o menu, e os blocos da página. Serve ao domínio da pessoa (`base` vazio)
+ * e à prévia do painel (`base` é o caminho da prévia). `previa` marca o rascunho com uma faixa.
+ */
+export function SiteView({ site, base, previa }: { site: SiteParaDesenhar; base: string; previa?: boolean }) {
+  return (
+    <QuadroDoSite site={site} base={base} previa={previa} paginaAtual={site.pagina.slug}>
+      <h1 className="sr-only">{site.pagina.titulo}</h1>
+      {site.pagina.blocos.length === 0 ? (
+        <p className="text-[0.9375rem] opacity-60">Esta página ainda não tem conteúdo.</p>
+      ) : (
+        <div className="space-y-8">
+          {site.pagina.blocos.map((bloco, indice) => <BlocoDoSite key={indice} bloco={bloco} cor={site.cor} agora={site.agora} base={base} semLinksDeEvento={Boolean(previa)} agenda={site.agenda ?? []} programacoes={site.programacoes} ingressos={site.ingressos ?? {}} />)}
+        </div>
+      )}
+    </QuadroDoSite>
   );
 }

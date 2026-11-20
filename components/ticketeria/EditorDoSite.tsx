@@ -50,6 +50,7 @@ const resumoDoBloco = (bloco: Bloco, espacos: readonly EspacoDaProgramacao[], ev
     case "mapa": return [bloco.titulo, bloco.endereco].filter(Boolean).join(" · ");
     case "contagem": return [bloco.titulo, `até ${partesNoFuso(bloco.ate, "America/Sao_Paulo").dia.split("-").reverse().join("/")} ${partesNoFuso(bloco.ate, "America/Sao_Paulo").hora}`].filter(Boolean).join(" · ");
     case "faq": return [bloco.titulo, `${bloco.itens.length} ${bloco.itens.length === 1 ? "pergunta" : "perguntas"}`].filter(Boolean).join(" · ");
+    case "agenda": return [bloco.titulo, "os eventos da loja"].filter(Boolean).join(" · ");
     case "patrocinadores": return [bloco.titulo, `${bloco.itens.length} ${bloco.itens.length === 1 ? "patrocinador" : "patrocinadores"}`].filter(Boolean).join(" · ");
   }
 };

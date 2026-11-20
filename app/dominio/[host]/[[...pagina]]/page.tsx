@@ -4,8 +4,10 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { EventoDoSiteView } from "@/components/ticketeria/EventoDoSiteView";
 import { SiteView } from "@/components/ticketeria/SiteView";
-import { paginaPublicaDoDominio, type SitePublico } from "@/lib/ticketeria/site-publico";
+import { eventoPublicoDoDominio, paginaPublicaDoDominio, type EventoPublicoDoDominio, type SitePublico } from "@/lib/ticketeria/site-publico";
+import { descricaoResumida, enderecoDoEvento } from "@/lib/ticketeria/evento-site";
 import { enderecoDaPagina, hostDoPedido } from "@/lib/ticketeria/site";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -13,6 +15,19 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const dynamic = "force-dynamic";
 
 type Parametros = { params: Promise<{ host: string; pagina?: string[] }> };
+
+/** A página do evento (/e/<slug>) em vez de uma página do site. */
+const ehEvento = (pagina?: string[]) => pagina?.length === 2 && pagina[0] === "e";
+
+async function carregarEvento({ params }: Parametros): Promise<EventoPublicoDoDominio | null> {
+  const { host, pagina } = await params;
+  if (!ehEvento(pagina)) return null;
+  try {
+    return await eventoPublicoDoDominio(createAdminClient(), decodeURIComponent(host), pagina![1]);
+  } catch {
+    return null;
+  }
+}
 
 async function carregar({ params }: Parametros): Promise<SitePublico | null> {
   const { host, pagina } = await params;
@@ -25,6 +40,20 @@ async function carregar({ params }: Parametros): Promise<SitePublico | null> {
 }
 
 export async function generateMetadata(entrada: Parametros): Promise<Metadata> {
+  if (ehEvento((await entrada.params).pagina)) {
+    const dados = await carregarEvento(entrada);
+    if (!dados) return { title: "Página não encontrada", robots: { index: false, follow: false } };
+    const dominio = hostDoPedido(decodeURIComponent((await entrada.params).host));
+    const titulo = `${dados.evento.titulo} · ${dados.titulo}`;
+    const endereco = enderecoDoEvento(dominio, dados.evento.slug);
+    const descricao = descricaoResumida(dados.evento.descricao) ?? undefined;
+    const imagens = dados.evento.imagem && /^https:\/\//.test(dados.evento.imagem) ? [{ url: dados.evento.imagem }] : undefined;
+    return {
+      title: titulo, description: descricao, alternates: { canonical: endereco },
+      openGraph: { type: "website", url: endereco, title: titulo, description: descricao, siteName: dados.titulo, locale: "pt_BR", images: imagens },
+      twitter: { card: imagens ? "summary_large_image" : "summary", title: titulo, description: descricao, images: imagens?.map(i => i.url) },
+    };
+  }
   const site = await carregar(entrada);
   if (!site) return { title: "Página não encontrada", robots: { index: false, follow: false } };
   const { host } = await entrada.params;
@@ -42,6 +71,11 @@ export async function generateMetadata(entrada: Parametros): Promise<Metadata> {
 }
 
 export default async function SiteDaPessoa(entrada: Parametros) {
+  if (ehEvento((await entrada.params).pagina)) {
+    const dados = await carregarEvento(entrada);
+    if (!dados) notFound();
+    return <EventoDoSiteView dados={dados} host={hostDoPedido(decodeURIComponent((await entrada.params).host))} />;
+  }
   const site = await carregar(entrada);
   if (!site) notFound();
   return <SiteView site={site} base="" />;

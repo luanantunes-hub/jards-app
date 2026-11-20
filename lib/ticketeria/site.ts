@@ -4,19 +4,19 @@
 
 // ─── Blocos ─────────────────────────────────────────────────────────────────
 
-export const TIPOS_DE_BLOCO = ["capa", "titulo", "texto", "colunas", "imagem", "galeria", "video", "mapa", "botao", "contagem", "faq", "patrocinadores", "programacao", "ingressos", "contato"] as const;
+export const TIPOS_DE_BLOCO = ["capa", "titulo", "texto", "colunas", "imagem", "galeria", "video", "mapa", "botao", "contagem", "faq", "patrocinadores", "programacao", "ingressos", "agenda", "contato"] as const;
 export type TipoDeBloco = (typeof TIPOS_DE_BLOCO)[number];
 
 export const ROTULO_DO_TIPO_DE_BLOCO: Record<TipoDeBloco, string> = {
   capa: "Capa", titulo: "Título", texto: "Texto", colunas: "Duas colunas", imagem: "Imagem", galeria: "Galeria", video: "Vídeo", mapa: "Mapa", botao: "Botão com link",
-  contagem: "Contagem regressiva", faq: "Perguntas frequentes", patrocinadores: "Patrocinadores", programacao: "Programação de um espaço (Produção)", ingressos: "Ingressos de um evento", contato: "Contato",
+  agenda: "Agenda de eventos", contagem: "Contagem regressiva", faq: "Perguntas frequentes", patrocinadores: "Patrocinadores", programacao: "Programação de um espaço (Produção)", ingressos: "Ingressos de um evento", contato: "Contato",
 };
 
 /** Os grupos do seletor "Acrescentar bloco", na ordem em que aparecem (desenho aprovado pelo dono em 20/11/2026). */
 export const GRUPOS_DE_BLOCOS: { titulo: string; tipos: readonly TipoDeBloco[] }[] = [
   { titulo: "Conteúdo", tipos: ["capa", "titulo", "texto", "colunas", "imagem", "galeria"] },
   { titulo: "Mídia e local", tipos: ["video", "mapa", "contato"] },
-  { titulo: "Venda e confiança", tipos: ["ingressos", "botao", "contagem", "faq", "patrocinadores", "programacao"] },
+  { titulo: "Venda e confiança", tipos: ["ingressos", "agenda", "botao", "contagem", "faq", "patrocinadores", "programacao"] },
 ];
 
 /** Uma das duas colunas do bloco "Duas colunas": um texto ou uma imagem. */
@@ -46,6 +46,8 @@ export type Bloco =
   | { tipo: "programacao"; titulo: string; espaco_id: string | null }
   /** As sessões de um evento publicado da mesma organização, cada uma com o botão de comprar (a página de compra do Jards); sem evento, o bloco não mostra nada. */
   | { tipo: "ingressos"; titulo: string; evento_id: string | null }
+  /** A lista dos eventos publicados da loja com sessão por vir, cada um com a próxima sessão, o preço e o link para a página do evento. */
+  | { tipo: "agenda"; titulo: string }
   | { tipo: "contato"; email: string; telefone: string; endereco: string };
 
 export const MAX_BLOCOS_POR_PAGINA = 60;
@@ -253,6 +255,10 @@ export function lerBloco(entrada: unknown): LeituraDoBloco {
       }
       return { ok: true, bloco: { tipo: "patrocinadores", titulo, itens } };
     }
+    case "agenda": {
+      const titulo = texto(e.titulo);
+      return titulo.length > 120 ? { ok: false, erro: "O título da agenda pode ter até 120 letras." } : { ok: true, bloco: { tipo: "agenda", titulo } };
+    }
     default:
       return { ok: false, erro: "Escolha o tipo do bloco." };
   }
@@ -419,8 +425,10 @@ const escapaXml = (texto: string) => texto.replace(/&/g, "&amp;").replace(/</g, 
 export const enderecoDaPagina = (host: string, slug: string) => (slug === "inicio" ? `https://${host}/` : `https://${host}/${slug}`);
 
 /** O sitemap.xml do domínio: as páginas publicadas, com a data da última publicação. */
-export function sitemapDoSite(host: string, paginas: readonly { slug: string; publicada_em: string | null }[]): string {
-  const itens = paginas.map(pagina => `  <url><loc>${escapaXml(enderecoDaPagina(host, pagina.slug))}</loc>${pagina.publicada_em ? `<lastmod>${escapaXml(pagina.publicada_em.slice(0, 10))}</lastmod>` : ""}</url>`).join("\n");
+export function sitemapDoSite(host: string, paginas: readonly { slug: string; publicada_em: string | null }[], eventos: readonly { slug: string; atualizado_em: string }[] = []): string {
+  const daspaginas = paginas.map(pagina => `  <url><loc>${escapaXml(enderecoDaPagina(host, pagina.slug))}</loc>${pagina.publicada_em ? `<lastmod>${escapaXml(pagina.publicada_em.slice(0, 10))}</lastmod>` : ""}</url>`);
+  const dosEventos = eventos.map(evento => `  <url><loc>${escapaXml(`https://${host}/e/${evento.slug}`)}</loc><lastmod>${escapaXml(evento.atualizado_em.slice(0, 10))}</lastmod></url>`);
+  const itens = [...daspaginas, ...dosEventos].join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${itens}\n</urlset>\n`;
 }
 
