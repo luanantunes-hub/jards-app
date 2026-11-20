@@ -68,7 +68,7 @@ const dataBr = (iso: string) => new Intl.DateTimeFormat("pt-BR", { timeZone: "Am
 export const RESPOSTAS = {
   estornado: (p: PedidoParaReembolso) => mensagem("Reembolso do pedido " + p.codigo, [
     `Olá, ${p.comprador_nome}!`,
-    `Pedimos o reembolso de ${reais(p.total_centavos)} do pedido ${p.codigo} ao seu banco, pelo mesmo Pix com que você pagou. O dinheiro costuma aparecer na sua conta em poucos instantes; se não aparecer em alguns dias úteis, fale com o seu banco.`,
+    `Pedimos o reembolso de ${reais(p.total_centavos)} do pedido ${p.codigo} ao seu banco, pelo mesmo meio com que você pagou. No Pix, o dinheiro costuma aparecer na sua conta em poucos instantes; no cartão, o valor volta na fatura (em compra parcelada, todas as parcelas são devolvidas) e pode levar até duas faturas, conforme o seu banco. Se não aparecer, fale com o seu banco.`,
     "Os ingressos deste pedido foram cancelados e não valem mais na entrada.",
   ]),
   foraDoPrazo: (p: PedidoParaReembolso, codigo: string, recebidoEm: string, organizador: string) => mensagem("Sobre o seu pedido de reembolso", [
@@ -95,7 +95,7 @@ export type PortasDoReembolso = {
   marcar(id: string, situacao: Exclude<SituacaoDoReembolso, "estornado">, motivo: string, pedido?: string): Promise<void>;
   /** fn_ticketeria_reembolso_autorizar_estorno: a ordem do cadeado, antes de o Asaas perguntar. */
   autorizarEstorno(id: string): Promise<void>;
-  /** O estorno no Asaas: devolve o Pix inteiro ao comprador, com a comissão do Jards saindo da carteira do Jards. `ok: false` quando o Asaas recusa (sem saldo, por exemplo). */
+  /** O estorno no Asaas: devolve o pagamento inteiro ao comprador (Pix, cartão ou o parcelamento todo), com a comissão do Jards saindo da carteira do Jards. `ok: false` quando o Asaas recusa (sem saldo, por exemplo). */
   estornar(pedido: PedidoParaReembolso): Promise<{ ok: boolean; motivo?: string; ref?: string }>;
   /** fn_ticketeria_reembolso_concluir: cancela o pedido e os ingressos e grava a devolução no razão. */
   concluir(id: string, partidas: Partida[], ref: string | null): Promise<void>;

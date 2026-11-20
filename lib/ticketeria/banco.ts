@@ -660,6 +660,9 @@ export type BancoDaTicketeria = {
           reembolsado_em: string | null;
           termos_versao: string | null;
           termos_aceitos_em: string | null;
+          novidades_versao: string | null;
+          novidades_aceitas_em: string | null;
+          comprador_whatsapp: string | null;
           cupom_id: string | null;
           cupom_codigo: string | null;
           desconto_centavos: number;
@@ -695,6 +698,9 @@ export type BancoDaTicketeria = {
           reembolsado_em?: string | null;
           termos_versao?: string | null;
           termos_aceitos_em?: string | null;
+          novidades_versao?: string | null;
+          novidades_aceitas_em?: string | null;
+          comprador_whatsapp?: string | null;
           cupom_id?: string | null;
           cupom_codigo?: string | null;
           origem_canal?: string | null;
@@ -730,6 +736,9 @@ export type BancoDaTicketeria = {
           reembolsado_em?: string | null;
           termos_versao?: string | null;
           termos_aceitos_em?: string | null;
+          novidades_versao?: string | null;
+          novidades_aceitas_em?: string | null;
+          comprador_whatsapp?: string | null;
           cupom_id?: string | null;
           cupom_codigo?: string | null;
           origem_canal?: string | null;
@@ -1908,6 +1917,10 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_registrar_aceite: {
         Args: { p_pedido: string; p_versao: string };
+        Returns: undefined;
+      };
+      fn_ticketeria_registrar_novidades: {
+        Args: { p_pedido: string; p_versao: string; p_whatsapp: string | null };
         Returns: undefined;
       };
       fn_ticketeria_registrar_origem: {

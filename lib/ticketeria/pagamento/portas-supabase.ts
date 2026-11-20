@@ -15,9 +15,17 @@ import type { DecisaoDeSaque, PedidoDeSaque } from "@/lib/ticketeria/pagamento/v
 // As portas dos avisos do provedor no Supabase, com a chave de serviço (só o servidor grava em ticketeria_notificacoes_provedor e
 // executa fn_ticketeria_confirmar_pagamento_real). A rota que recebe o aviso chega com o provedor real (T5).
 
-export function portasDoSupabase(admin: SupabaseClient<Database>): PortasDosAvisos {
+export function portasDoSupabase(admin: SupabaseClient<Database>, config: { provedorDaConta?: (chaveDaSubconta: string) => ProvedorDePagamento } = {}): PortasDosAvisos {
   const ticketeria = clienteDaTicketeria(admin);
   return {
+    // O provedor com a chave da subconta da loja do pedido: a cobrança nasceu lá, e é lá que se lê o parcelamento e se estorna.
+    async provedorDoPedido(pedidoId) {
+      if (!config.provedorDaConta) return null;
+      const { data: pedido } = await ticketeria.from("ticketeria_pedidos").select("loja_id").eq("id", pedidoId).maybeSingle();
+      if (!pedido) return null;
+      const { data: chave } = await ticketeria.rpc("fn_ticketeria_chave_da_conta_asaas", { p_loja: pedido.loja_id });
+      return chave ? config.provedorDaConta(chave) : null;
+    },
     async registrar(aviso) {
       const { error } = await ticketeria.from("ticketeria_notificacoes_provedor")
         .insert({ provedor: aviso.provedor, id_externo: aviso.id_externo, tipo: aviso.tipo, pedido_id: aviso.pedido_id, payload: aviso.payload as Json });
@@ -135,6 +143,10 @@ export function portasDaCompraDoSupabase(admin: SupabaseClient<Database>, config
     },
     async registrarOrigem(pedido, origem) {
       const { error } = await ticketeria.rpc("fn_ticketeria_registrar_origem", { p_pedido: pedido, p_canal: origem.canal, p_acao: origem.acao, p_referencia: origem.referencia, p_utm: origem.utm as Json | null });
+      if (error) throw new Error(error.message);
+    },
+    async registrarNovidades(pedido, novidades) {
+      const { error } = await ticketeria.rpc("fn_ticketeria_registrar_novidades", { p_pedido: pedido, p_versao: novidades.versao, p_whatsapp: novidades.whatsapp });
       if (error) throw new Error(error.message);
     },
     async definirMeio(pedido, meio, parcelas) {

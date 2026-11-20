@@ -16,7 +16,12 @@ export type AvisoDoProvedor = {
   valor_centavos: number;
   /** O que sobrou depois das taxas do provedor (o valor líquido). Só no pagamento confirmado e só se o provedor o informa; o custo real do meio é valor − líquido. */
   liquido_centavos?: number | null;
+  /** O parcelamento a que o pagamento pertence, quando é de uma parcela do cartão: o provedor manda um aviso por parcela, e o pedido é pago pelo parcelamento inteiro (veja `consultarParcelamento`). */
+  parcelamento_id?: string;
 };
+
+/** O parcelamento inteiro como o provedor o vê: o total e o líquido de todas as parcelas juntas. */
+export type ParcelamentoDoProvedor = { valor_centavos: number; liquido_centavos: number | null; parcelas: number };
 
 /** `evento_irrelevante`: o aviso é verdadeiro, mas não é de um pedido nosso ou não muda nada para nós (cobrança criada, vencida, visualizada...). */
 export type LeituraDoAviso = { ok: true; aviso: AvisoDoProvedor } | { ok: false; motivo: "assinatura_invalida" | "corpo_invalido" | "evento_irrelevante" };
@@ -41,6 +46,10 @@ export interface ProvedorDePagamento {
    * `parcelas` 1 = à vista.
    */
   criarCobrancaCartao?(pedido: PedidoParaCobrar & { parcelas: number }): Promise<{ ref: string; url: string; expira_em: string }>;
+  /** Lê o parcelamento inteiro (total e líquido), pelo id que veio no aviso de uma parcela. Opcional: só quem parcela. `null` se o provedor não o acha. */
+  consultarParcelamento?(id: string): Promise<ParcelamentoDoProvedor | null>;
+  /** Estorna o parcelamento inteiro (todas as parcelas) e cancela o que ainda não foi repassado. `ok: false` quando o provedor recusa. Opcional: só quem parcela. */
+  estornarParcelamento?(id: string): Promise<{ ok: boolean; motivo?: string }>;
   /** Pede o estorno (total ou parcial) de uma cobrança paga. `ok: false` quando o provedor recusa (ex.: sem saldo); o motivo vai junto. */
   estornar(ref: string, valorCentavos: number): Promise<{ ok: boolean; motivo?: string }>;
   /** Cancela uma cobrança que ninguém pagou (a reserva venceu). Opcional: nem todo provedor deixa. */

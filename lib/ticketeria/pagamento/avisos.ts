@@ -13,6 +13,11 @@ export type PortasDosAvisos = {
   registrar(aviso: { provedor: string; id_externo: string; tipo: string; pedido_id: string; payload: unknown }): Promise<"novo" | "ja_processado">;
   /** fn_ticketeria_confirmar_pagamento_real: 'pago' ou 'ja_pago'; erro com a mensagem do banco. `liquidoCentavos` é o que o provedor deixou depois das taxas (null: vale a estimativa). */
   confirmar(pedidoId: string, provedor: string, ref: string, valorCentavos: number, liquidoCentavos: number | null): Promise<string>;
+  /**
+   * O provedor com a chave da conta onde a cobrança nasceu (a SUBCONTA do produtor): é nela que se lê o parcelamento e se estorna. O aviso chega ao provedor da plataforma, que não enxerga
+   * a cobrança da subconta. Sem esta porta (o provedor de mentira, os testes) vale o próprio provedor.
+   */
+  provedorDoPedido?(pedidoId: string): Promise<ProvedorDePagamento | null>;
   /** Anota o resultado e a hora do processamento. */
   concluir(provedor: string, idExterno: string, resultado: string): Promise<void>;
   /** Depois que o pedido ficou pago (ou já estava): o que vem a seguir, como mandar os ingressos por e-mail. Falha aqui NÃO desfaz nem reprova o aviso. */
@@ -44,7 +49,18 @@ export async function processarAviso(provedor: ProvedorDePagamento, portas: Port
     return { status: 200, resultado: "ignorado", pedido_id: aviso.pedido_id };
   }
   try {
-    const situacao = await portas.confirmar(aviso.pedido_id, provedor.nome, aviso.ref, aviso.valor_centavos, aviso.liquido_centavos ?? null);
+    // Parcela do cartão: o aviso traz só o valor da parcela. O pedido é pago pelo parcelamento inteiro (total e líquido de todas as parcelas), lido no provedor com a chave da
+    // subconta; as parcelas seguintes só chegam como "ja_pago". Sem como ler o parcelamento, falha passageira: o provedor manda o aviso de novo.
+    let valor = aviso.valor_centavos;
+    let liquido = aviso.liquido_centavos ?? null;
+    if (aviso.parcelamento_id) {
+      const doPedido = (await portas.provedorDoPedido?.(aviso.pedido_id)) ?? provedor;
+      const parcelamento = await doPedido.consultarParcelamento?.(aviso.parcelamento_id);
+      if (!parcelamento) throw new Error("parcelamento_nao_encontrado");
+      valor = parcelamento.valor_centavos;
+      liquido = parcelamento.liquido_centavos;
+    }
+    const situacao = await portas.confirmar(aviso.pedido_id, provedor.nome, aviso.ref, valor, liquido);
     const resultado = situacao === "ja_pago" ? "ja_pago" : "pago";
     await portas.concluir(provedor.nome, aviso.id_externo, resultado);
     // O pagamento está gravado: o e-mail dos ingressos é uma segunda etapa e não pode derrubar o aviso (o envio guarda a vaga e se refaz sozinho).
@@ -54,10 +70,16 @@ export async function processarAviso(provedor: ProvedorDePagamento, portas: Port
     const mensagem = erro instanceof Error ? erro.message : String(erro);
     const motivo = PEDEM_ESTORNO.find(nome => mensagem.includes(nome));
     if (motivo) {
-      // O comprador pagou, mas o pedido não pode virar pago: o dinheiro volta (o provedor estorna). O aviso fica respondido (200),
-      // senão o provedor o mandaria de novo sem fim.
-      await provedor.estornar(aviso.ref, aviso.valor_centavos);
-      await portas.concluir(provedor.nome, aviso.id_externo, `estornar: ${motivo}`);
+      // O comprador pagou, mas o pedido não pode virar pago: o dinheiro volta (o provedor estorna, com a chave da conta onde a cobrança nasceu). O aviso fica respondido (200),
+      // senão o provedor o mandaria de novo sem fim. Parcelado: o parcelamento inteiro, e nunca uma parcela solta.
+      let estorno: { ok: boolean; motivo?: string } = { ok: false, motivo: "sem_como_estornar" };
+      const doPedido = (await portas.provedorDoPedido?.(aviso.pedido_id)) ?? provedor;
+      if (aviso.parcelamento_id) {
+        if (doPedido.estornarParcelamento) estorno = await doPedido.estornarParcelamento(aviso.parcelamento_id);
+      } else {
+        estorno = await doPedido.estornar(aviso.ref, aviso.valor_centavos);
+      }
+      await portas.concluir(provedor.nome, aviso.id_externo, `estornar: ${motivo}${estorno.ok ? "" : ` (estorno falhou: ${estorno.motivo ?? "?"})`}`);
       return { status: 200, resultado: "estornar", pedido_id: aviso.pedido_id, motivo };
     }
     throw erro; // falha passageira (banco fora do ar): sem resposta 200, o provedor manda de novo, e o aviso sem conclusão é reprocessado

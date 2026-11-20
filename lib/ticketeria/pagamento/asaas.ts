@@ -14,7 +14,7 @@
 //   - o estorno integral de um Pix logo depois de recebido pode falhar com 400 por falta de saldo (as taxas não voltam).
 
 import { timingSafeEqual } from "node:crypto";
-import type { AvisoDoProvedor, Cobranca, LeituraDoAviso, PedidoParaCobrar, ProvedorDePagamento } from "@/lib/ticketeria/pagamento/provedor";
+import type { AvisoDoProvedor, Cobranca, LeituraDoAviso, ParcelamentoDoProvedor, PedidoParaCobrar, ProvedorDePagamento } from "@/lib/ticketeria/pagamento/provedor";
 import { partesNoFuso } from "@/lib/ticketeria/eventos";
 
 export const URL_DO_SANDBOX = "https://api-sandbox.asaas.com/v3";
@@ -42,6 +42,8 @@ export class ErroDoAsaas extends Error {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** O `provedor_ref` de um pedido parcelado no cartão é o id do parcelamento (um UUID); o de uma cobrança única é `pay_...`. */
+export const ehParcelamentoDoAsaas = (ref: string) => UUID.test(ref);
 const reais = (centavos: number) => Number((centavos / 100).toFixed(2));
 const centavos = (valorEmReais: number) => Math.round(valorEmReais * 100);
 const apenasNumeros = (texto: string) => texto.replace(/\D/g, "");
@@ -120,14 +122,15 @@ export class ProvedorAsaas implements ProvedorDePagamento {
 
   /**
    * A cobrança no CARTÃO: o Asaas devolve o endereço da página segura (`invoiceUrl`), onde a pessoa digita o cartão; nenhum dado de cartão passa pelo Jards.
-   * À vista (1x): uma cobrança com `value` e a comissão em `fixedValue`. Parcelado: `installmentCount` e `totalValue`, com a comissão em `totalFixedValue` (a divisão do
-   * parcelamento) — **ainda sem prova no sandbox** e, no parcelamento, o Asaas manda um aviso por parcela, que o processamento do aviso ainda não soma: por isso a compra só
-   * libera à vista (`PARCELAMENTO_LIBERADO` em compra.ts).
+   * À vista (1x): uma cobrança com `value` e a comissão em `fixedValue`. Parcelado: `installmentCount` e `totalValue`, com a comissão em `totalFixedValue` (o Asaas divide
+   * pelas parcelas). Provado no sandbox em 20/11/2026: 3x de R$ 100,00 viram parcelas de 33,33 / 33,33 / 33,34, todas confirmadas de uma vez, cada uma com o seu aviso; o
+   * `netValue` do parcelamento (GET /installments/{id}) é o líquido de todas juntas e não desconta o split. O aviso de cada parcela traz `payment.installment`; veja `lerAviso`.
+   * O `ref` devolvido é o do PARCELAMENTO (o id que o Asaas põe em `installment`), e não o da primeira parcela: é com ele que o pedido é estornado inteiro.
    */
   async criarCobrancaCartao(pedido: PedidoParaCobrar & { parcelas: number }): Promise<{ ref: string; url: string; expira_em: string }> {
     const cliente = await this.criarCliente(pedido);
     const parcelado = pedido.parcelas > 1;
-    const cobranca = await this.chamar<{ id: string; invoiceUrl?: string }>("POST", "/payments", {
+    const cobranca = await this.chamar<{ id: string; invoiceUrl?: string; installment?: string }>("POST", "/payments", {
       customer: cliente.id,
       billingType: "CREDIT_CARD",
       ...(parcelado ? { installmentCount: pedido.parcelas, totalValue: reais(pedido.total_centavos) } : { value: reais(pedido.total_centavos) }),
@@ -137,7 +140,36 @@ export class ProvedorAsaas implements ProvedorDePagamento {
       ...(pedido.split && pedido.split.length > 0 ? { split: pedido.split.map(parte => ({ walletId: parte.carteira, ...(parcelado ? { totalFixedValue: reais(parte.valor_centavos) } : { fixedValue: reais(parte.valor_centavos) }) })) } : {}),
     });
     if (typeof cobranca.invoiceUrl !== "string" || !/^https:\/\//.test(cobranca.invoiceUrl)) throw new Error("o Asaas não devolveu a página de pagamento do cartão");
-    return { ref: cobranca.id, url: cobranca.invoiceUrl, expira_em: pedido.expira_em };
+    return { ref: parcelado && typeof cobranca.installment === "string" ? cobranca.installment : cobranca.id, url: cobranca.invoiceUrl, expira_em: pedido.expira_em };
+  }
+
+  /** O parcelamento inteiro: o total, o líquido de todas as parcelas e quantas são. A chave tem de ser a da subconta, onde ele nasceu. */
+  async consultarParcelamento(id: string): Promise<ParcelamentoDoProvedor | null> {
+    if (!UUID.test(id)) return null;
+    try {
+      const p = await this.chamar<{ value?: unknown; netValue?: unknown; installmentCount?: unknown }>("GET", `/installments/${encodeURIComponent(id)}`);
+      if (typeof p.value !== "number" || !Number.isFinite(p.value) || p.value <= 0 || typeof p.installmentCount !== "number" || !Number.isInteger(p.installmentCount)) return null;
+      const liquido = typeof p.netValue === "number" && Number.isFinite(p.netValue) && p.netValue >= 0 ? centavos(p.netValue) : null;
+      return { valor_centavos: centavos(p.value), liquido_centavos: liquido, parcelas: p.installmentCount };
+    } catch (erro) {
+      if (erro instanceof ErroDoAsaas && erro.status === 404) return null;
+      throw erro;
+    }
+  }
+
+  /**
+   * O estorno do parcelamento INTEIRO (POST /installments/{id}/refund): o comprador recebe tudo de volta e o que ainda não foi repassado (as parcelas do cartão só caem
+   * mês a mês) é cancelado, a comissão do Jards junto; provado no sandbox em 20/11/2026. Só 4xx vira `ok: false`.
+   */
+  async estornarParcelamento(id: string): Promise<{ ok: boolean; motivo?: string }> {
+    if (!UUID.test(id)) return { ok: false, motivo: "parcelamento_invalido" };
+    try {
+      await this.chamar("POST", `/installments/${encodeURIComponent(id)}/refund`, {});
+      return { ok: true };
+    } catch (erro) {
+      if (erro instanceof ErroDoAsaas && erro.status >= 400 && erro.status < 500) return { ok: false, motivo: erro.codigos.join(", ") || `http_${erro.status}` };
+      throw erro;
+    }
   }
 
   /**
@@ -217,7 +249,9 @@ export class ProvedorAsaas implements ProvedorDePagamento {
     if (typeof p.value !== "number" || !Number.isFinite(p.value) || p.value < 0) return { ok: false, motivo: "corpo_invalido" };
     // O valor líquido (`netValue`): o que o Asaas deixou depois das taxas dele. Sem ele (ou fora de um pagamento), o núcleo usa a estimativa da tabela.
     const liquido = tipo === "pagamento_confirmado" && typeof p.netValue === "number" && Number.isFinite(p.netValue) && p.netValue >= 0 ? centavos(p.netValue) : null;
-    return { ok: true, aviso: { id_externo: a.id, tipo, pedido_id: p.externalReference.toLowerCase(), ref: p.id, valor_centavos: centavos(p.value), liquido_centavos: liquido } };
+    // Parcela de um parcelamento no cartão: o aviso diz só o valor DAQUELA parcela. Quem processa lê o parcelamento inteiro e o pedido é pago por ele; o `ref` do pedido é o do parcelamento.
+    const parcelamento = tipo === "pagamento_confirmado" && typeof p.installment === "string" && UUID.test(p.installment) ? p.installment : null;
+    return { ok: true, aviso: { id_externo: a.id, tipo, pedido_id: p.externalReference.toLowerCase(), ref: parcelamento ?? p.id, valor_centavos: centavos(p.value), liquido_centavos: liquido, ...(parcelamento ? { parcelamento_id: parcelamento } : {}) } };
   }
 }
 
