@@ -46,7 +46,7 @@ const resultado = (extra: Partial<ResultadoParaATela> = {}, semanas = 58, confia
 
 test("o resultado do modelo: confiança, tabela com o modelo ao lado dos links, avisos de margem e de gasto constante", () => {
   const h = html(createElement(ResultadoDoModelo, { resultado: resultado() }));
-  for (const t of ["Confiança média.", "58 semanas de histórico (o ideal são 104)", "58 de 104 semanas", "Venderia de qualquer jeito", "41%", "±24", "Meta Ads", "R$ 7.800,00", "27%", "±33", "Google Ads", "margem grande", "gasto quase constante", "Instagram", "22%", "E-mail", "13%", "R$ 22,50", "R$ 18,20",
+  for (const t of ["Confiança média.", "Histórico: 58 semanas", "em ordem", "O que essa confiança permite", "Venderia de qualquer jeito", "41%", "±24", "Meta Ads", "R$ 7.800,00", "27%", "±33", "Google Ads", "margem grande", "gasto quase constante", "Instagram", "22%", "E-mail", "13%", "R$ 22,50", "R$ 18,20",
     "Anúncios pagos (Meta e Google juntos", "modelo 36% · links 27%", "Meta Ads: acima de R$ 300,00 por semana, cada real a mais rende pouco.", "já alargado 3 vezes", "desconfie do modelo"]) assert.ok(h.includes(t), `falta: ${t}`);
   assert.ok(!h.includes("Google Ads: acima de"), "sem ponto de saturação, sem frase");
   assert.ok(!h.includes("não deu"));
@@ -57,7 +57,7 @@ test("o resultado: a rodada que falhou aparece sem esconder a anterior; diagnós
   assert.ok(falha.includes("não deu: Só há 20 semanas. Esta tela mostra a anterior."));
   const ruim = resultado({}, 80, "baixa");
   ruim.execucao.r_hat_maximo = 1.2;
-  assert.ok(html(createElement(ResultadoDoModelo, { resultado: ruim })).includes("ainda não se firmou direito"));
+  assert.ok(html(createElement(ResultadoDoModelo, { resultado: ruim })).includes("Ajuste instável"));
   assert.ok(html(createElement(ResultadoDoModelo, { resultado: resultado({}, 110, "boa") })).includes("Confiança boa."));
   const semLinks = resultado({ comparacao: compararComOsLinks(canais, {}) });
   const h = html(createElement(ResultadoDoModelo, { resultado: semLinks }));
@@ -114,7 +114,7 @@ const gasto = { "meta-ads": 20000, "google-ads": 4000 };
 
 test("onde investir: a frase com o canal que mais rende, a tabela, a barra de limite e o aviso de previsão", () => {
   const p = html(createElement(RecomendacaoDeInvestimento, { canais: comCurva, gastoSemanal: gasto }));
-  for (const x of ["Hoje o próximo real rende mais no Google Ads.", "Mais R$ 100 por semana no Google Ads trazem cerca de", "no Meta Ads, cerca de", "O Meta Ads já está perto do limite: acima de R$ 180,00 por semana", "Onde vale investir mais", "Ingressos por R$ 100 a mais", "Custo do ingresso extra", "R$ 200,00", "R$ 40,00", "perto do limite", "espaço para crescer", "Isto é uma previsão, não uma garantia"]) assert.ok(p.includes(x), `falta: ${x}`);
+  for (const x of ["O modelo aponta o Google Ads como o canal em que o próximo real rende mais.", "Mais R$ 100 por semana no Google Ads trazem cerca de", "no Meta Ads, cerca de", "O Meta Ads já está perto do limite: acima de R$ 180,00 por semana", "Onde vale investir mais", "Ingressos por R$ 100 a mais", "Custo do ingresso extra", "R$ 200,00", "R$ 40,00", "perto do limite", "espaço para crescer", "Isto é uma previsão, não uma garantia"]) assert.ok(p.includes(x), `falta: ${x}`);
   assert.ok(!p.includes("Instagram"), "sem gasto e sem curva, o canal não entra");
   assert.ok(p.indexOf("Google Ads</td>") < p.indexOf("Meta Ads</td>"), "o que mais rende vem primeiro");
   assert.equal(html(createElement(RecomendacaoDeInvestimento, { canais: comCurva, gastoSemanal: {} })), "", "sem gasto por semana não há o que prever");
@@ -123,7 +123,7 @@ test("onde investir: a frase com o canal que mais rende, a tabela, a barra de li
 test("todos os canais perto do limite: a frase diz que gastar mais rende pouco", () => {
   const p = html(createElement(RecomendacaoDeInvestimento, { canais: [comCurva[0]], gastoSemanal: { "meta-ads": 20000 } }));
   assert.ok(p.includes("estão perto do limite") && p.includes("Gastar mais neles rende pouco"));
-  assert.ok(!p.includes("rende mais no"));
+  assert.ok(!p.includes("aponta o"));
 });
 
 test("o resultado mostra a recomendação só quando recebe o gasto por semana", () => {
@@ -149,7 +149,7 @@ test("a cautela: com menos de 104 semanas a tela não recomenda canal, só mostr
   assert.ok(media.includes("Com 58 semanas ainda não dá para recomendar um canal com segurança.") && media.includes("A tabela abaixo é um indício"));
   assert.ok(!media.includes("rende mais no") && media.includes("Onde vale investir mais") && media.includes("Ingressos por R$ 100 a mais"), "a tabela continua");
   const boa = html(createElement(RecomendacaoDeInvestimento, { canais: comCurva, gastoSemanal: gasto, confianca: "boa", semanas: 104 }));
-  assert.ok(boa.includes("Hoje o próximo real rende mais no Google Ads.") && !boa.includes("ainda não dá para recomendar"));
+  assert.ok(boa.includes("O modelo aponta o Google Ads como o canal em que o próximo real rende mais.") && boa.includes("confirme com um pequeno experimento") && !boa.includes("ainda não dá para recomendar"));
 });
 
 test("a cautela no simulador: aviso de indício com pouco histórico e faixa com margem alargada", () => {

@@ -27,10 +27,15 @@ export type ResultadoDoModelo = {
   base: { porcento: number; baixo: number; alto: number; partes: ParteDaBase[] }; canais: CanalDoResultado[];
 };
 
-/** A confiança: pelas semanas e pelo diagnóstico. Ajuste que não convergiu (r-hat alto) ou com divergências vale como baixa, qualquer que seja o número de semanas. */
-export function confiancaDoResultado(semanas: number, d: DiagnosticosDoModelo): Confianca {
+/**
+ * A confiança: pelas semanas, pelo diagnóstico e pela variação do gasto. Ajuste que não convergiu (r-hat alto) ou com divergências vale como baixa, qualquer que seja o número de semanas. Abaixo de
+ * SEMANAS_DA_CONFIANCA_MEDIA semanas é baixa (no estudo com dados inventados, com 30 e 45 semanas o erro médio por canal foi de 9 pontos e o ajuste costumou não fechar). Com algum canal de gasto
+ * quase constante (`canais`), no máximo média: sem variação o modelo não separa o efeito do anúncio do nível normal de vendas.
+ */
+export function confiancaDoResultado(semanas: number, d: DiagnosticosDoModelo, canais: { gasto_constante: boolean }[] = []): Confianca {
   if (d.r_hat_maximo > R_HAT_MAXIMO_ACEITO || d.divergencias > 0) return "baixa";
-  return semanas >= SEMANAS_IDEAIS ? "boa" : semanas >= SEMANAS_DA_CONFIANCA_MEDIA ? "media" : "baixa";
+  if (semanas < SEMANAS_DA_CONFIANCA_MEDIA) return "baixa";
+  return semanas >= SEMANAS_IDEAIS && !canais.some(c => c.gasto_constante) ? "boa" : "media";
 }
 
 /** As partes da base, conferidas: chaves conhecidas e sem repetir, números dentro de -100 a 100 e o intervalo em ordem. Vazio é aceito (resultado sem quebra); formato errado devolve null. */
@@ -114,7 +119,7 @@ export function lerResultadoDoModelo(entrada: unknown): { ok: true; resultado: R
   const soma = bp + canais.reduce((s, c) => s + c.porcento, 0);
   if (soma < 90 || soma > 110) return { ok: false, problema: "soma" };
   const diagnosticos = { r_hat_maximo: casas(rHat, 4), divergencias, ess_minimo: ess };
-  return { ok: true, resultado: { motor, versao_motor: versao, semanas, confianca: confiancaDoResultado(semanas, diagnosticos), diagnosticos, base: { porcento: casas(bp, 2), baixo: casas(bb, 2), alto: casas(ba, 2), partes }, canais } };
+  return { ok: true, resultado: { motor, versao_motor: versao, semanas, confianca: confiancaDoResultado(semanas, diagnosticos, canais), diagnosticos, base: { porcento: casas(bp, 2), baixo: casas(bb, 2), alto: casas(ba, 2), partes }, canais } };
 }
 
 // ─── O modelo ao lado dos links ─────────────────────────────────────────────
