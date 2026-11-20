@@ -47,7 +47,7 @@ Com as três travas **ainda desligadas**, rode uma venda inteira no sandbox: cri
 
 ## 6. Decisões que ainda são suas
 
-- **Parcelamento no cartão:** está **desligado** (`PARCELAMENTO_LIBERADO = false` em `compra.ts`). O Asaas manda um aviso por parcela e o sistema ainda não os soma. Para liberar: somar as parcelas, provar no sandbox e ligar. A tela já está pronta.
+- **Parcelamento no cartão:** está **ligado** (`PARCELAMENTO_LIBERADO = true` em `compra.ts`, 20/11/2026), provado no sandbox: o aviso de qualquer parcela confirma o pedido pelo parcelamento inteiro. Cada produtor escolhe até quantas vezes oferece (`parcelas_max`, padrão 1 = só à vista). **Lembrar do dono:** as parcelas caem na conta mês a mês (cartão cai em 32 dias), e o razão já conta o valor todo; a antecipação é decisão dele. Os Termos de compra ainda citam só o Pix.
 - **Acesso da equipe da porta:** hoje só quem **edita a Ticketeria** confere ingressos. Se a equipe da porta não deve ver o resto (vendas, repasse), é preciso um acesso só de conferência (um papel novo). Diga se quer.
 - **Prazo para o dinheiro do reembolso aparecer:** os termos dizem "depende do seu banco". O número de dias úteis do Asaas segue pendente.
 - **Texto dos Termos de compra:** aprovado em 19/11; a versão gravada em cada pedido é `2026-11-19`. Mudar o texto é mudar a versão (`lib/ticketeria/termos-de-compra.ts`).

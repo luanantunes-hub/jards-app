@@ -137,3 +137,68 @@ test("a resposta da reserva é conferida, e os erros viram frases", () => {
   assert.match(mensagemDoErroDaReserva({ message: "sessao_indisponivel" }), /não está mais à venda/);
   assert.match(mensagemDoErroDaReserva({ message: "outra coisa" }), /Tente de novo/);
 });
+
+// ─── Parcelamento no cartão: o aviso de uma parcela confirma o pedido pelo parcelamento inteiro ───
+
+class ProvedorParcelado extends ProvedorDeMentira {
+  consultas: string[] = [];
+  parcelamentosEstornados: string[] = [];
+  constructor(private readonly parcelamento: { valor_centavos: number; liquido_centavos: number | null; parcelas: number } | null, private readonly avisoDeParcela: { id_externo: string; valor: number }) { super(SEGREDO); }
+  override lerAviso() {
+    return { ok: true as const, aviso: { id_externo: this.avisoDeParcela.id_externo, tipo: "pagamento_confirmado" as const, pedido_id: PEDIDO, ref: "parcelamento-1", valor_centavos: this.avisoDeParcela.valor, liquido_centavos: 3235, parcelamento_id: "parcelamento-1" } };
+  }
+  async consultarParcelamento(id: string) { this.consultas.push(id); return this.parcelamento; }
+  async estornarParcelamento(id: string) { this.parcelamentosEstornados.push(id); return { ok: true }; }
+}
+
+test("parcelado: o pedido é confirmado pelo total e pelo líquido do parcelamento, não pelo valor da parcela", async () => {
+  const provedor = new ProvedorParcelado({ valor_centavos: 10000, liquido_centavos: 9705, parcelas: 3 }, { id_externo: "evt-parcela-1", valor: 3333 });
+  const recebido: unknown[][] = [];
+  const { portas } = portasFalsas(async (...args) => { recebido.push(args); return "pago"; });
+  const r = await processarAviso(provedor, portas, "{}", null);
+  assert.deepEqual(r, { status: 200, resultado: "pago", pedido_id: PEDIDO });
+  assert.deepEqual(recebido, [[PEDIDO, "mentira", "parcelamento-1", 10000, 9705]], "total e líquido do parcelamento, com o ref dele");
+  assert.deepEqual(provedor.consultas, ["parcelamento-1"]);
+});
+
+test("parcelado: o aviso das outras parcelas só encontra o pedido já pago, e usa o provedor da subconta quando a porta existe", async () => {
+  const doPedido = new ProvedorParcelado({ valor_centavos: 10000, liquido_centavos: 9705, parcelas: 3 }, { id_externo: "evt-parcela-2", valor: 3333 });
+  const daPlataforma = new ProvedorParcelado(null, { id_externo: "evt-parcela-2", valor: 3333 });
+  const { portas } = portasFalsas(async () => "ja_pago");
+  const r = await processarAviso(daPlataforma, { ...portas, async provedorDoPedido() { return doPedido; } }, "{}", null);
+  assert.equal(r.resultado, "ja_pago");
+  assert.deepEqual(doPedido.consultas, ["parcelamento-1"], "a leitura é feita com a chave da subconta");
+  assert.deepEqual(daPlataforma.consultas, [], "o provedor da plataforma não enxerga a cobrança da subconta");
+});
+
+test("parcelado: sem achar o parcelamento é falha passageira (o provedor manda de novo), e nunca confirma pelo valor da parcela", async () => {
+  const provedor = new ProvedorParcelado(null, { id_externo: "evt-parcela-3", valor: 3333 });
+  const { portas, chamadas } = portasFalsas(async () => "pago");
+  await assert.rejects(processarAviso(provedor, portas, "{}", null), /parcelamento_nao_encontrado/);
+  assert.deepEqual(chamadas, [], "o banco nem foi chamado");
+});
+
+test("parcelado: pedido que não pode virar pago estorna o parcelamento INTEIRO, e nunca uma parcela solta", async () => {
+  const provedor = new ProvedorParcelado({ valor_centavos: 10000, liquido_centavos: 9705, parcelas: 3 }, { id_externo: "evt-parcela-4", valor: 3333 });
+  const { portas, avisos } = portasFalsas(async () => { throw new Error("valor_divergente"); });
+  assert.deepEqual(await processarAviso(provedor, portas, "{}", null), { status: 200, resultado: "estornar", pedido_id: PEDIDO, motivo: "valor_divergente" });
+  assert.deepEqual(provedor.parcelamentosEstornados, ["parcelamento-1"]);
+  assert.deepEqual(provedor.estornos, [], "nenhuma parcela solta foi estornada");
+  assert.equal(avisos.get("evt-parcela-4")?.resultado, "estornar: valor_divergente");
+});
+
+test("o estorno de um pedido que não vira pago usa a chave da subconta, e o aviso registra quando o estorno falha", async () => {
+  const daPlataforma = new ProvedorDeMentira(SEGREDO);
+  const doPedido = new ProvedorDeMentira(SEGREDO);
+  const aviso = daPlataforma.simularAviso({ id_externo: "evt-sub-1", tipo: "pagamento_confirmado", pedido_id: PEDIDO, ref: "r-sub", valor_centavos: 5000 });
+  const { portas } = portasFalsas(async () => { throw new Error("pedido_cancelado"); });
+  await processarAviso(daPlataforma, { ...portas, async provedorDoPedido() { return doPedido; } }, aviso.corpo, aviso.assinatura);
+  assert.deepEqual(doPedido.estornos, [{ ref: "r-sub", valor: 5000 }]);
+  assert.deepEqual(daPlataforma.estornos, []);
+  const recusado = new ProvedorDeMentira(SEGREDO);
+  recusado.estornar = async () => ({ ok: false, motivo: "insufficient_balance" });
+  const c = portasFalsas(async () => { throw new Error("pedido_cancelado"); });
+  const aviso2 = recusado.simularAviso({ id_externo: "evt-sub-2", tipo: "pagamento_confirmado", pedido_id: PEDIDO, ref: "r-sub", valor_centavos: 5000 });
+  await processarAviso(recusado, c.portas, aviso2.corpo, aviso2.assinatura);
+  assert.equal(c.avisos.get("evt-sub-2")?.resultado, "estornar: pedido_cancelado (estorno falhou: insufficient_balance)");
+});
