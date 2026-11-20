@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Como a Jards coleta, usa e protege seus dados.",
 };
 
-const UPDATED = "15 de novembro de 2026";
+const UPDATED = "20 de novembro de 2026";
 
 export default function PrivacidadePage() {
   return (
@@ -230,7 +230,22 @@ export default function PrivacidadePage() {
             <p>Alterações relevantes serão comunicadas por e-mail com pelo menos 15 dias de antecedência. A data no topo desta página indica sempre a versão mais recente.</p>
           </Section>
 
-          <Section id="s13" num="13" title="Contato">
+          <Section id="s13" num="13" title="Ingressos e novidades dos organizadores">
+            <p>
+              Quando você compra um ingresso de um organizador pela Ticketeria, guardamos o seu nome, o seu e-mail e os dados da compra e, se você informar, o seu WhatsApp. O CPF ou CNPJ vai ao
+              provedor de pagamento para cobrar e não é guardado por nós.
+            </p>
+            <p className="mt-3">
+              O organizador só pode mandar novidades e ofertas se você marcar a caixa &ldquo;Quero receber novidades e ofertas deste produtor&rdquo;. Ela vem desmarcada e é separada dos Termos
+              de compra: comprar não obriga a receber nada. Guardamos que você aceitou, quando e qual versão do texto você viu, e o WhatsApp só é guardado junto com esse aceite.
+            </p>
+            <p className="mt-3">
+              Todo e-mail de divulgação traz um link para sair da lista. Ao sair, aquele organizador não pode mais enviar novidades para você, e isso vale para sempre. Os ingressos que você já
+              comprou continuam valendo. Os envios saem pela plataforma do Jards, em nome do organizador, que escolhe o que enviar e para quem.
+            </p>
+          </Section>
+
+          <Section id="s14" num="14" title="Contato">
             <p>
               Dúvidas ou solicitações:{" "}
               <a href="mailto:luan.antunes@jards.com.br" className="text-[#7259B5] hover:underline">luan.antunes@jards.com.br</a>
