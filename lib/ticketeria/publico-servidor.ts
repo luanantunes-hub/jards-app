@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
+import type { EntradaParaEnvio } from "@/lib/ticketeria/envios";
 import { montarPublico, type EsperaParaOPublico, type PedidoParaOPublico, type PublicoDaLoja } from "@/lib/ticketeria/publico";
 
 type Admin = SupabaseClient<Database>;
@@ -9,10 +10,15 @@ const PAGINA = 1000;
 
 /** O Público de uma loja, lido com a chave de serviço (quem chama já foi conferido como quem edita a Ticketeria da organização: tem nome, e-mail e telefone). */
 export async function publicoDaLoja(admin: Admin, lojaId: string): Promise<PublicoDaLoja> {
+  return montarPublico(await entradaDoPublico(admin, lojaId));
+}
+
+/** Tudo de que o Público e os envios precisam: as compras pagas, a lista de espera, as saídas e os eventos das sessões. */
+export async function entradaDoPublico(admin: Admin, lojaId: string): Promise<EntradaParaEnvio> {
   const t = clienteDaTicketeria(admin);
   const { data: loja, error: erroDaLoja } = await t.from("ticketeria_lojas").select("organization_id").eq("id", lojaId).maybeSingle();
   if (erroDaLoja) throw new Error(erroDaLoja.message);
-  if (!loja) return montarPublico({ pedidos: [], quantidadePorPedido: {}, espera: [], eventoDaSessao: {} });
+  if (!loja) return { pedidos: [], quantidadePorPedido: {}, espera: [], eventoDaSessao: {}, eventoIdDaSessao: {}, saidas: [] };
   // Em páginas de 1.000: a consulta sem .range() corta em silêncio.
   const pedidos: PedidoParaOPublico[] = [];
   for (let de = 0; ; de += PAGINA) {
@@ -46,5 +52,6 @@ export async function publicoDaLoja(admin: Admin, lojaId: string): Promise<Publi
   const { data: sessoes } = ids.length > 0 ? await t.from("ticketeria_sessoes").select("id, evento_id").in("evento_id", ids) : { data: [] as { id: string; evento_id: string }[] };
   const titulo = new Map((eventos ?? []).map(e => [e.id, e.titulo]));
   const eventoDaSessao = Object.fromEntries((sessoes ?? []).map(s => [s.id, titulo.get(s.evento_id) ?? "Evento"]));
-  return montarPublico({ pedidos, quantidadePorPedido, espera, eventoDaSessao, saidas });
+  const eventoIdDaSessao = Object.fromEntries((sessoes ?? []).map(s => [s.id, s.evento_id]));
+  return { pedidos, quantidadePorPedido, espera, eventoDaSessao, eventoIdDaSessao, saidas };
 }
