@@ -1,7 +1,7 @@
 // A porta (passo C5 da T5): o que a conferência de ingressos devolve do banco, em frases e horas para a tela. Só a conta, sem banco e sem imports de servidor: roda no
 // navegador e nos testes (tests/ticketeria-porta.test.ts). O banco decide tudo (fn_ticketeria_conferir_ingresso); aqui só se lê e se formata.
 
-import type { IngressoAchado, RelatorioDaSessao } from "@/components/ticketeria/PortaExtrasView";
+import type { IngressoAchado, LinkDaEquipe, RelatorioDaSessao } from "@/components/ticketeria/PortaExtrasView";
 import type { EntradaRecente, ResultadoDaConferencia } from "@/components/ticketeria/PortaView";
 import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
 
@@ -120,4 +120,52 @@ export function csvDaLista(bruto: unknown): string | null {
     linhas.push([texto(i.comprador), texto(i.ingresso), texto(i.assento), SITUACAO_DO_CSV[texto(i.situacao)] ?? "", i.situacao === "entrou" && texto(i.usado_em) ? dataHora(texto(i.usado_em)) : ""]);
   }
   return "\uFEFF" + linhas.map(l => l.map(celulaDoCsv).join(";")).join("\r\n") + "\r\n";
+}
+
+// ─── O link da equipe da porta ──────────────────────────────────────────────
+
+/** O segredo do link: 64 letras minúsculas e números. */
+export const TOKEN_DO_LINK = /^[a-f0-9]{64}$/;
+
+/** "dom., 30/11 às 20:00", no fuso do local. */
+export function validadeDoLink(iso: string, fuso: string): string {
+  try {
+    const dia = new Intl.DateTimeFormat("pt-BR", { timeZone: fuso, weekday: "short", day: "2-digit", month: "2-digit" }).format(new Date(iso)).replace(",", "");
+    const partes = dia.split(" ");
+    return `${partes[0]}${partes.length > 1 ? ", " + partes.slice(1).join(" ") : ""} às ${horaNoFuso(iso, fuso)}`;
+  } catch { return iso; }
+}
+
+/** A lista de links de uma sessão como a folha a mostra: o endereço leva o segredo e a origem do app. */
+export function linksDaEquipe(bruto: unknown, origem: string): LinkDaEquipe[] | null {
+  const r = registro(bruto);
+  if (!Array.isArray(r.links)) return null;
+  const fuso = texto(r.fuso) || "America/Sao_Paulo";
+  const links: LinkDaEquipe[] = [];
+  for (const x of r.links) {
+    const l = registro(x);
+    if (!TOKEN_DO_LINK.test(texto(l.token)) || !texto(l.id)) return null;
+    links.push({ id: texto(l.id), rotulo: texto(l.rotulo), endereco: `${origem.replace(/\/+$/, "")}/porta/${texto(l.token)}`, valido_ate: validadeDoLink(texto(l.valido_ate), fuso), ativo: l.ativo === true });
+  }
+  return links;
+}
+
+/** O próximo nome de link: "Porta 1", "Porta 2"... (o primeiro que ainda não existe). */
+export function proximoNomeDeLink(existentes: readonly string[]): string {
+  const usados = new Set(existentes.map(n => n.trim().toLowerCase()));
+  let n = 1;
+  while (usados.has(`porta ${n}`)) n++;
+  return `Porta ${n}`;
+}
+
+export type ResumoDaEquipe = { evento: string; quando: string; link: string; resumo: ResumoDaPorta };
+
+/** O resumo que a equipe vê pelo link: o evento, o dia da sessão, o nome do link e a contagem. */
+export function resumoDaEquipe(bruto: unknown): ResumoDaEquipe | null {
+  const resumo = resumoDaPorta(bruto);
+  if (!resumo) return null;
+  const r = registro(bruto);
+  const fuso = texto(r.fuso) || "America/Sao_Paulo";
+  const inicio = texto(r.inicio);
+  return { evento: texto(r.evento), quando: inicio ? validadeDoLink(inicio, fuso) : "", link: texto(r.link), resumo };
 }

@@ -21,6 +21,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/ticketeria/validacao-saque", 300],
   // Compra de ingressos (sem login): por IP. Cada compra abre uma reserva e uma cobrança, então o teto é baixo; a consulta do Pix pago é mais frequente.
   // Conferir um cupom (sem login): o teto é bem menor, para ninguém ficar adivinhando códigos.
+  // A equipe da porta pelo link (sem login): várias pessoas no mesmo wi-fi, uma leitura atrás da outra.
+  ["/api/ticketeria/porta-equipe", 300],
   ["/api/ticketeria/compra/cupom", 15],
   // O mapa de lugares de uma sessão (sem login): a tela o relê a cada vez que abre.
   ["/api/ticketeria/compra/mapa", 40],
@@ -197,6 +199,8 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/pedido/") ||
         // Sair da lista de espera pelo link do e-mail (sem login): o token do link, conferido no servidor, é a prova.
         pathname.startsWith("/espera/") ||
+        // A porta da equipe pelo link (sem login): o segredo do link, conferido no servidor, é a prova.
+        pathname.startsWith("/porta/") ||
         pathname.startsWith("/embed/") ||
         pathname.startsWith("/convite/") ||
         pathname === "/login" ||
@@ -278,6 +282,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/comprar/") ||
     pathname.startsWith("/pedido/") ||
     pathname.startsWith("/espera/") ||
+    pathname.startsWith("/porta/") ||
     pathname.startsWith("/embed/") ||
     // Convite de convidado da prestação (P5.3): o banco confere o link; o aceite pede login.
     pathname.startsWith("/convite/") ||

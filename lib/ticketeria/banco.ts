@@ -1137,6 +1137,57 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_porta_links: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          rotulo: string;
+          token: string;
+          valido_ate: string;
+          ativo: boolean;
+          criado_por: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          rotulo: string;
+          token: string;
+          valido_ate: string;
+          ativo?: boolean;
+          criado_por?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          rotulo?: string;
+          token?: string;
+          valido_ate?: string;
+          ativo?: boolean;
+          criado_por?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_porta_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_porta_links_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_transacoes: {
         Row: {
           id: string;
@@ -1677,6 +1728,30 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_porta_lista: {
         Args: { p_loja: string; p_sessao: string };
+        Returns: Json;
+      };
+      fn_ticketeria_porta_link_criar: {
+        Args: { p_loja: string; p_sessao: string; p_rotulo: string; p_usuario: string | null };
+        Returns: Json;
+      };
+      fn_ticketeria_porta_link_listar: {
+        Args: { p_loja: string; p_sessao: string };
+        Returns: Json;
+      };
+      fn_ticketeria_porta_link_revogar: {
+        Args: { p_loja: string; p_link: string };
+        Returns: boolean;
+      };
+      fn_ticketeria_porta_equipe_resumo: {
+        Args: { p_token: string };
+        Returns: Json;
+      };
+      fn_ticketeria_porta_equipe_conferir: {
+        Args: { p_token: string; p_codigo: string };
+        Returns: Json;
+      };
+      fn_ticketeria_porta_equipe_buscar: {
+        Args: { p_token: string; p_termo: string };
         Returns: Json;
       };
       fn_ticketeria_definir_meio: {
