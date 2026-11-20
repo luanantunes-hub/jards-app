@@ -25,7 +25,7 @@ const arquivo = { nome: "sympla-2025.csv", cabecalho: csv.cabecalho, linhas: csv
 
 test("a folha de importar: sem arquivo pede o arquivo; com arquivo mostra as colunas, a prévia e o total", () => {
   const vazia = html(createElement(ImportarPlanilhaSheet, { existentes: [], onClose: () => {} }));
-  for (const t of ["Importar planilha", "Só os totais por dia são enviados", "Vendas de ingressos", "Gastos de divulgação", "Escolha o arquivo CSV", "Escolher arquivo", "Baixar modelo"]) assert.ok(vazia.includes(t), `falta: ${t}`);
+  for (const t of ["Importar planilha", "Só os totais por dia são enviados", "Vendas de ingressos", "Gastos de divulgação", "Escolha o arquivo do Excel ou CSV", "Escolher arquivo", "Aceita Excel (.xlsx) e CSV.", "Baixar modelo"]) assert.ok(vazia.includes(t), `falta: ${t}`);
   assert.ok(!vazia.includes("Onde está cada coisa"));
   const cheia = html(createElement(ImportarPlanilhaSheet, { existentes: [], arquivoInicial: arquivo, onClose: () => {} }));
   for (const t of ["sympla-2025.csv", "3 linhas", "separador “;”", "Onde está cada coisa", "Dia da venda", "Quantidade de ingressos", "Valor (opcional)", "Origem ou canal (opcional)", "03/03/2025", "instagram", "sem origem", "R$ 240,00",
@@ -51,4 +51,19 @@ test("preparar a importação: vendas e gastos pelo mesmo caminho; só os totais
   const v = prepararImportacao(arquivo, "vendas", { dia: 0, ingressos: 3, valor: 4, canal: 5 });
   assert.deepEqual(v.linhas.map(l => Object.keys(l).sort()), v.linhas.map(() => ["canal", "dia", "ingressos", "valor_centavos"]), "só dia, canal, ingressos e valor");
   assert.equal(v.totalIngressos, 13);
+});
+
+test("a folha com um arquivo do Excel: mostra Excel, as abas e a aba escolhida; com uma aba só não pergunta", () => {
+  const abas = [
+    { nome: "Resumo", cabecalho: ["Item", "Total"], linhas: [["Ingressos", "1240"]], truncado: false },
+    { nome: "Pedidos", cabecalho: csv.cabecalho, linhas: csv.linhas.map(l => [...l]), truncado: false },
+  ];
+  const doExcel = { nome: "sympla-2025.xlsx", cabecalho: abas[1].cabecalho, linhas: abas[1].linhas, separador: "", truncado: false, abas, aba: 1 };
+  const p = html(createElement(ImportarPlanilhaSheet, { existentes: [], arquivoInicial: doExcel, onClose: () => {} }));
+  for (const t of ["sympla-2025.xlsx", "Excel · 3 linhas", "Qual aba usar", "Resumo", "Pedidos", "Escolhi “Pedidos” porque tem datas e quantidades. Troque se for outra.", "Total: 13 ingressos (R$ 780,00)", "Importar 3 linhas"]) assert.ok(p.includes(t), `falta: ${t}`);
+  assert.ok(!p.includes("separador"), "do Excel não há separador");
+  const uma = html(createElement(ImportarPlanilhaSheet, { existentes: [], arquivoInicial: { ...doExcel, abas: [abas[1]], aba: 0 }, onClose: () => {} }));
+  assert.ok(!uma.includes("Qual aba usar"), "com uma aba só não há o que escolher");
+  const semData = html(createElement(ImportarPlanilhaSheet, { existentes: [], arquivoInicial: { ...doExcel, cabecalho: abas[0].cabecalho, linhas: abas[0].linhas, aba: 0 }, onClose: () => {} }));
+  assert.ok(semData.includes("Não achei uma coluna de data nesta aba. Escolha a aba certa."));
 });
