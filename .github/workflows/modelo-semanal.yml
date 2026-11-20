@@ -1,0 +1,52 @@
+# O cálculo semanal do modelo de marketing (MMM) da Ticketeria. Fala SÓ com o Jards, por um token estreito: este workflow nunca recebe a chave do banco.
+# Toda segunda às 09:00 UTC (06:00 em Brasília) e, quando se quiser, a mão (Actions > Modelo semanal > Run workflow; o campo "loja" roda uma loja só).
+# Segredos do repositório: MODELO_BASE_URL (https://jards.com.br) e MODELO_TOKEN (o mesmo valor da variável da Vercel).
+name: Modelo semanal
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      loja:
+        description: "Id de uma loja (vazio = todas as lojas com dados prontos)"
+        required: false
+        default: ""
+      teste_sintetico:
+        description: "Só provar o modelo com dados inventados (não fala com o Jards)"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: modelo-semanal
+  cancel-in-progress: false
+
+jobs:
+  modelo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: modelo/requirements.txt
+      - name: Instalar o modelo
+        run: pip install -r modelo/requirements.txt
+      - name: Provar o modelo com dados inventados
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.teste_sintetico }}
+        working-directory: modelo
+        run: python teste_sintetico.py
+      - name: Rodar o modelo de cada loja
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.teste_sintetico) }}
+        working-directory: modelo
+        env:
+          MODELO_BASE_URL: ${{ secrets.MODELO_BASE_URL }}
+          MODELO_TOKEN: ${{ secrets.MODELO_TOKEN }}
+          LOJA: ${{ github.event_name == 'workflow_dispatch' && inputs.loja || '' }}
+        run: python rodar.py $LOJA

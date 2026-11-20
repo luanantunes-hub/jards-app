@@ -9,7 +9,8 @@ import { ListContent, ListPageHeader, PrimaryListAction, SecondaryListAction } f
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from "@/components/ticketeria/DivulgacaoView";
 import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
-import { ModeloDaLoja } from "@/components/ticketeria/ModeloView";
+import { ModeloDaLoja, ResultadoDoModelo } from "@/components/ticketeria/ModeloView";
+import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
 import type { ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
 import type { CorpoDaImportacao, ImportacaoDaLista, TipoDeHistorico } from "@/lib/ticketeria/historico";
 import { CARTOES, ConexoesDaLoja, EscolherContaSheet, type ContaParaEscolher, type EstadoDeMidia, type ProvedorDoCartao } from "@/components/ticketeria/ConexoesView";
@@ -53,6 +54,7 @@ export default function DivulgacaoPage() {
   // A prontidão do modelo (aba Modelo): lida só quando a aba é aberta (junta várias fontes).
   const [prontidao, setProntidao] = useState<ProntidaoDoModelo | null>(null);
   const [prontidaoErro, setProntidaoErro] = useState(false);
+  const [resultadoDoModelo, setResultadoDoModelo] = useState<ResultadoParaATela | null>(null);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -99,6 +101,10 @@ export default function DivulgacaoPage() {
       .then(r => (r.ok ? (r.json() as Promise<ProntidaoDoModelo>) : Promise.reject(new Error(String(r.status)))))
       .then(p => { if (ativo) { setProntidao(p); setProntidaoErro(false); } })
       .catch(() => { if (ativo) setProntidaoErro(true); });
+    void fetch(`/api/ticketeria/lojas/${estado.lojaId}/modelo/resultado`, { cache: "no-store" })
+      .then(r => (r.ok ? (r.json() as Promise<{ resultado: ResultadoParaATela | null }>) : null))
+      .then(d => { if (ativo && d) setResultadoDoModelo(d.resultado); })
+      .catch(() => { /* sem resultado: segue a checklist */ });
     return () => { ativo = false; };
   }, [aba, estado?.lojaId, versao]);
 
@@ -226,7 +232,11 @@ export default function DivulgacaoPage() {
               ? <DivulgacaoDaLoja linhas={dados.linhas} sessoes={dados.sessoes} sessaoId={sessaoId} onSessao={setSessaoId} onCriarLink={() => setCriando(true)} />
               : aba === "modelo"
               ? (prontidaoErro ? <p role="alert" className="rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>Não foi possível conferir os dados do modelo agora. Recarregue a página.</p>
-                : prontidao ? <ModeloDaLoja prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} />
+                : prontidao ? (
+                  <div className="space-y-4">
+                    {resultadoDoModelo && <ResultadoDoModelo resultado={resultadoDoModelo} />}
+                    {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} />}
+                  </div>)
                 : <p className="text-[0.8125rem] text-black/40" aria-live="polite">Conferindo os dados…</p>)
               : aba === "historico"
               ? <HistoricoDaLoja importacoes={historico.importacoes} semanas={historico.semanas} desfazendo={desfazendo} onDesfazer={id => void desfazerImportacao(id)} onImportar={() => { setErroDeImportar(null); setFolhaDeImportar(true); }} />

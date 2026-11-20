@@ -1,0 +1,4 @@
+# O job semanal do modelo de marketing (MMM). Python 3.12 ou mais novo. Versões fixas: o resultado de uma semana não pode mudar porque uma biblioteca atualizou sozinha.
+pymc-marketing==1.5.0
+pymc==6.4.0
+nutpie==0.16.11
