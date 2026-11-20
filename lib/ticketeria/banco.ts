@@ -1480,6 +1480,123 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_webhooks: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          url: string;
+          segredo: string;
+          eventos: string[];
+          ativo: boolean;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          url: string;
+          segredo: string;
+          eventos: string[];
+          ativo?: boolean;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          url?: string;
+          segredo?: string;
+          eventos?: string[];
+          ativo?: boolean;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_webhooks_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_webhooks_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_webhook_entregas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          webhook_id: string;
+          tipo: string;
+          dados: Json;
+          estado: string;
+          tentativas: number;
+          proxima_tentativa: string;
+          ultimo_status: number | null;
+          ultimo_erro: string | null;
+          enviada_em: string | null;
+          created_at: string;
+          atualizada_em: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          webhook_id: string;
+          tipo: string;
+          dados: Json;
+          estado?: string;
+          tentativas?: number;
+          proxima_tentativa?: string;
+          ultimo_status?: number | null;
+          ultimo_erro?: string | null;
+          enviada_em?: string | null;
+          created_at?: string;
+          atualizada_em?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          webhook_id?: string;
+          tipo?: string;
+          dados?: Json;
+          estado?: string;
+          tentativas?: number;
+          proxima_tentativa?: string;
+          ultimo_status?: number | null;
+          ultimo_erro?: string | null;
+          enviada_em?: string | null;
+          created_at?: string;
+          atualizada_em?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_webhook_entregas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_webhook_entregas_webhook_id_fkey";
+            columns: ["webhook_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_webhooks";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_transacoes: {
         Row: {
           id: string;
@@ -2046,6 +2163,46 @@ export type BancoDaTicketeria = {
       fn_ticketeria_chave_publica_resolver: {
         Args: { p_chave: string };
         Returns: Json;
+      };
+      fn_ticketeria_webhooks_enfileirar: {
+        Args: { p_loja: string; p_tipo: string; p_dados: Json };
+        Returns: number;
+      };
+      fn_ticketeria_webhook_criar: {
+        Args: { p_loja: string; p_url: string; p_eventos: string[]; p_usuario: string | null };
+        Returns: Json;
+      };
+      fn_ticketeria_webhook_mudar: {
+        Args: { p_loja: string; p_id: string; p_url: string | null; p_eventos: string[] | null; p_ativo: boolean | null };
+        Returns: boolean;
+      };
+      fn_ticketeria_webhook_girar: {
+        Args: { p_loja: string; p_id: string };
+        Returns: Json;
+      };
+      fn_ticketeria_webhook_apagar: {
+        Args: { p_loja: string; p_id: string };
+        Returns: boolean;
+      };
+      fn_ticketeria_webhook_teste: {
+        Args: { p_loja: string; p_id: string };
+        Returns: string;
+      };
+      fn_ticketeria_webhook_entregas: {
+        Args: { p_loja: string; p_id: string; p_limite: number };
+        Returns: Json;
+      };
+      fn_ticketeria_webhooks_reivindicar: {
+        Args: { p_limite: number };
+        Returns: Json;
+      };
+      fn_ticketeria_webhooks_registrar: {
+        Args: { p_entrega: string; p_ok: boolean; p_status: number | null; p_erro: string | null };
+        Returns: string;
+      };
+      fn_ticketeria_webhooks_limpar: {
+        Args: { p_dias: number };
+        Returns: number;
       };
       fn_ticketeria_porta_link_criar: {
         Args: { p_loja: string; p_sessao: string; p_rotulo: string; p_usuario: string | null };
