@@ -6,7 +6,7 @@ import { corDoTema } from "@/lib/ticketeria/site";
 import { ROTULO_DA_CLASSIFICACAO } from "@/lib/ticketeria/eventos";
 import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
 import { MAX_PARCELAS, PARCELAMENTO_LIBERADO } from "@/lib/ticketeria/pagamento/compra";
-import { estadoDaVenda, faixasDoIngresso, type IngressoDaVitrine, type VitrineDaSessao } from "@/lib/ticketeria/vitrine";
+import { estadoDaVenda, faixasDoIngresso, limitarFaixas, type IngressoDaVitrine, type VitrineDaSessao } from "@/lib/ticketeria/vitrine";
 
 type Admin = SupabaseClient<Database>;
 
@@ -43,7 +43,7 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
   };
   if (estado !== "aberta") return vitrine;
 
-  const { data: setores } = await t.from("ticketeria_setores").select("id").eq("local_id", sessao.local_id);
+  const { data: setores } = await t.from("ticketeria_setores").select("id, nome, numerado").eq("local_id", sessao.local_id);
   const { data: ingressos } = await t.from("ticketeria_ingressos").select("id, nome, descricao, limite_por_pedido, setor_id, ordem, created_at")
     .eq("evento_id", evento.id).eq("publico", true).eq("arquivado", false).in("setor_id", (setores ?? []).map(s => s.id)).order("ordem").order("created_at");
   const ids = (ingressos ?? []).map(i => i.id);
@@ -54,10 +54,17 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
     const { data } = await t.rpc("fn_ticketeria_ocupados", { p_sessao: sessao.id, p_lote: l.id, p_fora: null });
     return [l.id, Number(data ?? 0)] as const;
   })));
+  // Num setor numerado o que se compra não passa dos lugares livres do mapa (os tipos de ingresso do setor dividem os mesmos lugares).
+  const livresDoSetor = new Map<string, number>(await Promise.all((setores ?? []).filter(s => s.numerado).map(async s => {
+    const { data } = await t.rpc("fn_ticketeria_lugares_livres_do_setor", { p_sessao: sessao.id, p_setor: s.id });
+    return [s.id, Number(data ?? 0)] as const;
+  })));
   for (const i of ingressos ?? []) {
     if (!(lotes ?? []).some(l => l.ingresso_id === i.id)) continue; // sem nenhum lote, o ingresso ainda não tem o que vender
-    const faixas = faixasDoIngresso((lotes ?? []).filter(l => l.ingresso_id === i.id).map(l => ({ ...l, ocupados: ocupados.get(l.id) ?? 0 })), agora);
-    const doIngresso: IngressoDaVitrine = { id: i.id, nome: i.nome, descricao: i.descricao, limite: i.limite_por_pedido, faixas };
+    let faixas = faixasDoIngresso((lotes ?? []).filter(l => l.ingresso_id === i.id).map(l => ({ ...l, ocupados: ocupados.get(l.id) ?? 0 })), agora);
+    const setor = (setores ?? []).find(s => s.id === i.setor_id);
+    if (setor?.numerado) faixas = limitarFaixas(faixas, livresDoSetor.get(setor.id) ?? 0);
+    const doIngresso: IngressoDaVitrine = { id: i.id, nome: i.nome, descricao: i.descricao, limite: i.limite_por_pedido, faixas, ...(setor?.numerado ? { numerado: { setor: setor.nome } } : {}) };
     vitrine.ingressos.push(doIngresso);
   }
   return vitrine;

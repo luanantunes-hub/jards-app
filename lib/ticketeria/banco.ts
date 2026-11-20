@@ -998,6 +998,78 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_pedido_assentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          pedido_id: string;
+          sessao_id: string;
+          ingresso_id: string;
+          assento_id: string | null;
+          fileira: string;
+          numero: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          pedido_id: string;
+          sessao_id: string;
+          ingresso_id: string;
+          assento_id?: string | null;
+          fileira: string;
+          numero: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          pedido_id?: string;
+          sessao_id?: string;
+          ingresso_id?: string;
+          assento_id?: string | null;
+          fileira?: string;
+          numero?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_pedido_assentos_assento_id_fkey";
+            columns: ["assento_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_assentos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_pedido_assentos_ingresso_id_fkey";
+            columns: ["ingresso_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_ingressos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_pedido_assentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_pedido_assentos_pedido_id_fkey";
+            columns: ["pedido_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_pedidos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_pedido_assentos_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_transacoes: {
         Row: {
           id: string;
@@ -1344,6 +1416,7 @@ export type BancoDaTicketeria = {
           sessao_id: string;
           codigo: string;
           nome: string;
+          assento_rotulo: string | null;
           preco_centavos: number;
           usado_em: string | null;
           cancelado_em: string | null;
@@ -1359,6 +1432,7 @@ export type BancoDaTicketeria = {
           sessao_id: string;
           codigo: string;
           nome: string;
+          assento_rotulo?: string | null;
           preco_centavos: number;
           usado_em?: string | null;
           cancelado_em?: string | null;
@@ -1374,6 +1448,7 @@ export type BancoDaTicketeria = {
           sessao_id?: string;
           codigo?: string;
           nome?: string;
+          assento_rotulo?: string | null;
           preco_centavos?: number;
           usado_em?: string | null;
           cancelado_em?: string | null;
@@ -1508,6 +1583,18 @@ export type BancoDaTicketeria = {
       fn_ticketeria_mapa_do_setor: {
         Args: { p_setor: string };
         Returns: Json;
+      };
+      fn_ticketeria_reservar_com_lugares: {
+        Args: { p_sessao: string; p_itens: Json; p_nome: string; p_email: string; p_minutos: number; p_codigo: string | null; p_lugares: Json | null };
+        Returns: Json;
+      };
+      fn_ticketeria_mapa_da_sessao: {
+        Args: { p_sessao: string; p_ingresso: string };
+        Returns: Json;
+      };
+      fn_ticketeria_lugares_livres_do_setor: {
+        Args: { p_sessao: string; p_setor: string };
+        Returns: number;
       };
       fn_ticketeria_definir_meio: {
         Args: { p_pedido: string; p_meio: MeioDePagamento; p_parcelas: number | null };

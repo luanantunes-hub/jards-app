@@ -22,6 +22,8 @@ const API_LIMITS: [string, number][] = [
   // Compra de ingressos (sem login): por IP. Cada compra abre uma reserva e uma cobrança, então o teto é baixo; a consulta do Pix pago é mais frequente.
   // Conferir um cupom (sem login): o teto é bem menor, para ninguém ficar adivinhando códigos.
   ["/api/ticketeria/compra/cupom", 15],
+  // O mapa de lugares de uma sessão (sem login): a tela o relê a cada vez que abre.
+  ["/api/ticketeria/compra/mapa", 40],
   // Entrar na lista de espera e sair dela (sem login): poucas por minuto, por IP.
   ["/api/ticketeria/compra/espera", 10],
   ["/api/ticketeria/compra", 60],

@@ -34,7 +34,21 @@ export function totalNasFaixas(faixas: readonly FaixaDePreco[], quantidade: numb
   return falta === 0 ? total : null;
 }
 
-export type IngressoDaVitrine = { id: string; nome: string; descricao: string | null; limite: number; faixas: FaixaDePreco[] };
+/** `numerado`: o ingresso é de um setor com lugares numerados (a pessoa escolhe os lugares no mapa); traz o nome do setor. */
+export type IngressoDaVitrine = { id: string; nome: string; descricao: string | null; limite: number; faixas: FaixaDePreco[]; numerado?: { setor: string } };
+
+/** As faixas de preço limitadas a `maximo` ingressos, tirando das primeiras (o que se compra primeiro) e cortando o resto. */
+export function limitarFaixas(faixas: readonly FaixaDePreco[], maximo: number): FaixaDePreco[] {
+  const saida: FaixaDePreco[] = [];
+  let restante = Math.max(0, maximo);
+  for (const f of faixas) {
+    if (restante <= 0) break;
+    const livres = Math.min(f.livres, restante);
+    saida.push({ preco_centavos: f.preco_centavos, livres });
+    restante -= livres;
+  }
+  return saida;
+}
 
 export type EstadoDaVitrine = "aberta" | "sessao_encerrada" | "sessao_cancelada" | "nao_publicado" | "vendas_pausadas";
 

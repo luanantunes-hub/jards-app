@@ -25,6 +25,10 @@ export function mensagemDoErroDaReserva(erro: { message?: string }): string {
   const m = erro.message ?? "";
   const cupom = mensagemDoErroDoCupom(m);
   if (cupom) return cupom;
+  if (m.includes("lugar_ocupado")) return "Alguém acabou de escolher um desses lugares. Escolha de novo.";
+  if (m.includes("lugar_indisponivel")) return "Um desses lugares não está mais à venda. Escolha de novo.";
+  if (m.includes("lugares_obrigatorios")) return "Escolha os lugares no mapa.";
+  if (m.includes("lugares_quantidade") || m.includes("lugares_invalidos") || m.includes("ingresso_sem_mapa")) return "Escolha os lugares de novo.";
   if (m.includes("esgotado")) return "Não há mais lugares nesta quantidade. Escolha menos ingressos ou outra sessão.";
   if (m.includes("sessao_indisponivel")) return "Esta sessão não está mais à venda.";
   if (m.includes("evento_nao_publicado")) return "Este evento ainda não está à venda.";

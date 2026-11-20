@@ -41,7 +41,7 @@ export default async function PaginaDoPedido({ params }: { params: Promise<{ id:
       evento={{ titulo: dados.evento, quando: quando.charAt(0).toUpperCase() + quando.slice(1), local: [dados.local, [dados.cidade, dados.uf].filter(Boolean).join("/")].filter(Boolean).join(", ") }}
       comprador={dados.comprador_nome.split(" ")[0]}
       pedido={dados.codigo}
-      ingressos={dados.ingressos.map(i => ({ codigo: i.codigo, nome: i.nome, usado: i.usado, cancelado: i.cancelado }))}
+      ingressos={dados.ingressos.map(i => ({ codigo: i.codigo, nome: i.nome, assento: i.assento ?? null, usado: i.usado, cancelado: i.cancelado }))}
       emailDeReembolso={process.env.TICKETERIA_EMAIL_DE_REEMBOLSO || "luan.antunes@jards.com.br"}
     />
   );

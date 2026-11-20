@@ -88,8 +88,8 @@ const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-x
 const BOTAO_SECUNDARIO = "inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-[0.875rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
 
 /** A tela de escolher os lugares de um ingresso no mapa do setor. `escolhidos` são os rótulos ("C7") na ordem em que a pessoa os tocou. */
-export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, escolhidos, max, totalCentavos, ampliado = false, onAmpliar, onAlternar, onVoltar, onConfirmar }: {
-  site: Site; evento: EventoParaComprar; ingresso: { nome: string; preco_centavos: number }; setor: string; fileiras: FileiraDoMapa[]; escolhidos: string[]; max: number; totalCentavos: number; ampliado?: boolean;
+export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, escolhidos, max, totalCentavos, ampliado = false, carregando = false, erroDoMapa = null, onTentarDeNovo, onAmpliar, onAlternar, onVoltar, onConfirmar }: {
+  site: Site; evento: EventoParaComprar; ingresso: { nome: string; preco_centavos: number }; setor: string; fileiras: FileiraDoMapa[]; escolhidos: string[]; max: number; totalCentavos: number; ampliado?: boolean; carregando?: boolean; erroDoMapa?: string | null; onTentarDeNovo?: () => void;
   onAmpliar?: () => void; onAlternar?: (fileira: string, numero: number) => void; onVoltar?: () => void; onConfirmar?: () => void;
 }) {
   return (
@@ -107,30 +107,22 @@ export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, e
       <h1 className="text-[1.5rem] font-medium tracking-[-.025em]">Escolha seus lugares</h1>
       <p className="mt-1 text-[0.875rem] text-black/60">{evento.titulo} · {evento.quando}</p>
       <p className="mt-0.5 text-[0.875rem] text-black/60">{ingresso.nome} · {setor} · {formatarMoeda(ingresso.preco_centavos)} cada</p>
-      <div className="mt-4 flex justify-end"><button type="button" onClick={onAmpliar} aria-pressed={ampliado} className="rounded-xl text-[0.8125rem] text-black/60 underline underline-offset-2 hover:text-black/80">{ampliado ? "Ver o mapa inteiro" : "Ampliar o mapa"}</button></div>
-      <div className="mt-2"><MapaDeAssentos fileiras={fileiras} modo="comprador" ampliado={ampliado} onAlternar={onAlternar} /></div>
-      <LegendaDoMapa modo="comprador" />
+      {carregando ? (
+        <p role="status" className="mt-8 text-center text-[0.9375rem] text-black/55">Carregando o mapa…</p>
+      ) : erroDoMapa ? (
+        <div className="mt-6 text-center">
+          <p role="alert" className="text-[0.9375rem] text-[#B23B3B]">{erroDoMapa}</p>
+          <button type="button" onClick={onTentarDeNovo} className={`${BOTAO_SECUNDARIO} mt-4`}>Tentar de novo</button>
+        </div>
+      ) : (
+        <>
+          <div className="mt-4 flex justify-end"><button type="button" onClick={onAmpliar} aria-pressed={ampliado} className="rounded-xl text-[0.8125rem] text-black/60 underline underline-offset-2 hover:text-black/80">{ampliado ? "Ver o mapa inteiro" : "Ampliar o mapa"}</button></div>
+          <div className="mt-2"><MapaDeAssentos fileiras={fileiras} modo="comprador" ampliado={ampliado} onAlternar={onAlternar} /></div>
+          <LegendaDoMapa modo="comprador" />
+        </>
+      )}
       <p className="mt-4 text-center text-[0.75rem] text-black/50">Até {max} lugares. Os lugares ficam reservados por 15 minutos depois que você continuar.</p>
     </Moldura>
-  );
-}
-
-/** A escolha dos ingressos quando um deles é de setor numerado: no lugar do contador, "Escolher lugares", e os lugares escolhidos aparecem como etiquetas. */
-export function IngressoComLugares({ nome, setor, precoCentavos, escolhidos, onEscolher }: { nome: string; setor: string; precoCentavos: number; escolhidos: string[]; onEscolher?: () => void }) {
-  return (
-    <li className="flex items-center justify-between gap-4 px-4 py-4">
-      <div className="min-w-0">
-        <p className="text-[1rem] font-normal">{nome}</p>
-        <p className="mt-0.5 text-[0.8125rem] text-black/55">{setor} · lugares numerados</p>
-        <p className="mt-1 text-[0.9375rem] tabular-nums">{formatarMoeda(precoCentavos)}</p>
-        {escolhidos.length > 0 && (
-          <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Lugares escolhidos">
-            {escolhidos.map(l => <li key={l} className="rounded-lg bg-[#282525] px-2 py-1 text-[0.75rem] tabular-nums text-white">{l}</li>)}
-          </ul>
-        )}
-      </div>
-      <button type="button" className={`${BOTAO_SECUNDARIO} shrink-0`} onClick={onEscolher}>{escolhidos.length === 0 ? "Escolher lugares" : "Trocar lugares"}</button>
-    </li>
   );
 }
 

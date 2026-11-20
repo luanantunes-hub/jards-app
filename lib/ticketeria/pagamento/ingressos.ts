@@ -3,7 +3,8 @@
 // vaga do envio manda, e se o envio falha a vaga volta e a próxima tentativa (o reenvio do aviso do provedor, por exemplo) manda. As portas são
 // injetadas: testa-se sem rede e sem banco (tests/ticketeria-ingressos.test.ts).
 
-export type IngressoDoPedido = { codigo: string; nome: string; preco_centavos: number; usado: boolean; cancelado: boolean };
+/** `assento`: "Plateia · Fileira C · lugar 7" quando o ingresso é de um setor numerado. */
+export type IngressoDoPedido = { codigo: string; nome: string; assento?: string | null; preco_centavos: number; usado: boolean; cancelado: boolean };
 
 export type IngressosDoPedido = {
   pedido_id: string; codigo: string; comprador_nome: string; evento: string; inicio: string; fuso: string; local: string;
@@ -43,7 +44,7 @@ export function emailDosIngressos(dados: IngressosDoPedido, endereco: string): {
   const quando = diaEHoraDoEvento(dados.inicio, dados.fuso);
   const onde = [dados.local, [dados.cidade, dados.uf].filter(Boolean).join("/")].filter(Boolean).join(", ");
   const validos = dados.ingressos.filter(i => !i.cancelado);
-  const linhas = validos.map(i => `${i.nome}: ${i.codigo}`);
+  const linhas = validos.map(i => `${i.nome}${i.assento ? ` (${i.assento})` : ""}: ${i.codigo}`);
   const texto = [
     `Olá, ${dados.comprador_nome}! Seu pagamento foi confirmado.`,
     `${dados.evento}\n${quando}\n${onde}`,
@@ -55,7 +56,7 @@ export function emailDosIngressos(dados: IngressosDoPedido, endereco: string): {
     + `<p style="margin:0 0 14px">Olá, ${escapar(dados.comprador_nome)}! Seu pagamento foi confirmado.</p>`
     + `<p style="margin:0 0 14px"><strong>${escapar(dados.evento)}</strong><br>${escapar(quando)}<br>${escapar(onde)}</p>`
     + `<p style="margin:0 0 6px">Seus ingressos (mostre o código ou o QR Code na entrada):</p>`
-    + `<ul style="margin:0 0 14px;padding-left:18px">${validos.map(i => `<li>${escapar(i.nome)}: <strong style="letter-spacing:2px">${escapar(i.codigo)}</strong></li>`).join("")}</ul>`
+    + `<ul style="margin:0 0 14px;padding-left:18px">${validos.map(i => `<li>${escapar(i.nome)}${i.assento ? ` (${escapar(i.assento)})` : ""}: <strong style="letter-spacing:2px">${escapar(i.codigo)}</strong></li>`).join("")}</ul>`
     + `<p style="margin:0 0 14px"><a href="${escapar(endereco)}">Ver os ingressos com o QR Code</a></p>`
     + `<p style="margin:0;color:#6b6767;font-size:13px">Pedido ${escapar(dados.codigo)}. Para pedir reembolso em até 7 dias da compra, escreva com o assunto "reembolso - código do ingresso".</p>`
     + `</div>`;

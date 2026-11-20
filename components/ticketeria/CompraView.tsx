@@ -60,7 +60,7 @@ function Contador({ valor, max, nome, onMudar }: { valor: number; max: number; n
   );
 }
 
-export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, onMudar, onContinuar, cupom = null, cupomErro = null, codigoDoCupom = "", onCodigoDoCupom, onAbrirCupom, onAplicarCupom, onRemoverCupom, aplicandoCupom = false, cupomAberto = false, onEntrarNaEspera }: {
+export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, onMudar, onContinuar, cupom = null, cupomErro = null, codigoDoCupom = "", onCodigoDoCupom, onAbrirCupom, onAplicarCupom, onRemoverCupom, aplicandoCupom = false, cupomAberto = false, onEntrarNaEspera, aviso = null, lugaresEscolhidos = {}, onEscolherLugares, onLimparLugares }: {
   site: { titulo: string; cor?: string }; evento: EventoParaComprar; ingressos: IngressoParaComprar[]; quantidades: Record<string, number>;
   onMudar?: (id: string, novo: number) => void; onContinuar?: () => void;
   /** O cupom já aplicado (o desconto do pedido, em centavos), a frase de erro do código digitado, e as ações. `cupomAberto`: mostra o campo (a pessoa tocou em "Tem um cupom?"). */
@@ -68,6 +68,10 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
   onCodigoDoCupom?: (codigo: string) => void; onAbrirCupom?: () => void; onAplicarCupom?: () => void; onRemoverCupom?: () => void; aplicandoCupom?: boolean; cupomAberto?: boolean;
   /** Ingresso esgotado: "Avise-me se voltar" leva à lista de espera (sem a ação, o ingresso só mostra "Esgotado"). */
   onEntrarNaEspera?: (ingressoId: string) => void;
+  /** Uma frase de aviso acima dos ingressos (por exemplo: alguém acabou de escolher os lugares). */
+  aviso?: string | null;
+  /** Ingresso de setor numerado: os lugares escolhidos ("C7") por ingresso, e as ações de escolher no mapa e de limpar. */
+  lugaresEscolhidos?: Record<string, string[]>; onEscolherLugares?: (ingressoId: string) => void; onLimparLugares?: (ingressoId: string) => void;
 }) {
   const total = ingressos.reduce((soma, i) => soma + (totalNasFaixas(i.faixas, quantidades[i.id] ?? 0) ?? 0), 0);
   const qtd = ingressos.reduce((soma, i) => soma + (quantidades[i.id] ?? 0), 0);
@@ -85,6 +89,7 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
         </div>
       }>
       <Cabecalho evento={evento} />
+      {aviso && <p role="alert" className="mb-4 rounded-xl border px-3.5 py-2.5 text-[0.8125rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{aviso}</p>}
       <h2 className="mb-2 text-[0.6875rem] font-normal uppercase tracking-[.08em] text-black/50">Ingressos</h2>
       <ul className="divide-y divide-black/10 overflow-hidden rounded-xl border border-black/10">
         {ingressos.map(i => {
@@ -92,6 +97,28 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
           const esgotado = disponivel <= 0;
           const max = Math.min(i.limite, disponivel);
           const preco = i.faixas[0]?.preco_centavos ?? 0;
+          if (i.numerado && !esgotado) {
+            const escolhidos = lugaresEscolhidos[i.id] ?? [];
+            return (
+              <li key={i.id} className="flex items-center justify-between gap-4 px-4 py-4">
+                <div className="min-w-0">
+                  <p className="text-[1rem] font-normal">{i.nome}</p>
+                  <p className="mt-0.5 text-[0.8125rem] text-black/55">{i.numerado.setor} · lugares numerados</p>
+                  {i.descricao && <p className="mt-0.5 text-[0.8125rem] text-black/55">{i.descricao}</p>}
+                  <p className="mt-1 text-[0.9375rem] tabular-nums">{preco === 0 ? "Gratuito" : formatarMoeda(preco)}</p>
+                  {escolhidos.length > 0 && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <ul className="flex flex-wrap gap-1.5" aria-label={`Lugares escolhidos: ${i.nome}`}>
+                        {escolhidos.map(l => <li key={l} className="rounded-lg bg-[#282525] px-2 py-1 text-[0.75rem] tabular-nums text-white">{l}</li>)}
+                      </ul>
+                      <button type="button" onClick={() => onLimparLugares?.(i.id)} className="rounded-xl px-1 text-[0.8125rem] text-black/55 underline underline-offset-2 hover:text-black/75">Limpar</button>
+                    </div>
+                  )}
+                </div>
+                <button type="button" className={`${BOTAO_SECUNDARIO} shrink-0`} onClick={() => onEscolherLugares?.(i.id)}>{escolhidos.length === 0 ? "Escolher lugares" : "Trocar lugares"}</button>
+              </li>
+            );
+          }
           return (
             <li key={i.id} className="flex items-center justify-between gap-4 px-4 py-4">
               <div className="min-w-0">
