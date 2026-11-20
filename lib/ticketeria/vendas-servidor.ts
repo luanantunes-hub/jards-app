@@ -2,7 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
-import { montarVendas, type LinhaDeIngressoEmitido, type LinhaDePedido, type LinhaDeReembolso, type LinhaDeSessao, type VendasDaLoja } from "@/lib/ticketeria/vendas";
+import { montarInicio, type InicioDaLoja } from "@/lib/ticketeria/inicio";
+import { montarVendas, type EntradaDasVendas, type LinhaDeIngressoEmitido, type LinhaDePedido, type LinhaDeReembolso, type LinhaDeSessao, type VendasDaLoja } from "@/lib/ticketeria/vendas";
 
 type Admin = SupabaseClient<Database>;
 /** As compras mais recentes que a tela mostra; as contas do resumo valem para todas. */
@@ -10,6 +11,16 @@ const MAX_COMPRAS_NA_LISTA = 200;
 
 /** As vendas de uma loja, lidas com a chave de serviço (quem chama já foi conferido como quem edita a Ticketeria da organização). */
 export async function vendasDaLoja(admin: Admin, lojaId: string, agora: number = Date.now()): Promise<VendasDaLoja> {
+  const vendas = montarVendas(await entradaDasVendas(admin, lojaId, agora));
+  return { ...vendas, compras: vendas.compras.slice(0, MAX_COMPRAS_NA_LISTA) };
+}
+
+/** A página inicial da loja: o mesmo que as vendas lê, em outra conta (lib/ticketeria/inicio.ts). */
+export async function inicioDaLoja(admin: Admin, lojaId: string, agora: number = Date.now()): Promise<InicioDaLoja> {
+  return montarInicio(await entradaDasVendas(admin, lojaId, agora));
+}
+
+async function entradaDasVendas(admin: Admin, lojaId: string, agora: number): Promise<EntradaDasVendas> {
   const t = clienteDaTicketeria(admin);
   const [{ data: pedidos }, { data: eventos }, { data: locais }, { data: conta }] = await Promise.all([
     t.from("ticketeria_pedidos").select("id, codigo, comprador_nome, comprador_email, sessao_id, situacao, total_centavos, taxa_centavos, produtor_centavos, custo_meio_centavos, custo_meio_real_centavos, pago_em, created_at").eq("loja_id", lojaId).order("created_at", { ascending: false }),
@@ -51,10 +62,9 @@ export async function vendasDaLoja(admin: Admin, lojaId: string, agora: number =
   }
   const lugaresDoLocal: Record<string, number> = {};
   for (const s of setores ?? []) lugaresDoLocal[s.local_id] = (lugaresDoLocal[s.local_id] ?? 0) + s.lugares;
-  const vendas = montarVendas({
+  return {
     pedidos: (pedidos ?? []) as LinhaDePedido[], quantidadePorPedido, sessoes: (sessoes ?? []) as LinhaDeSessao[],
     tituloDoEvento: Object.fromEntries((eventos ?? []).map(e => [e.id, e.titulo])), fusoDoLocal: Object.fromEntries((locais ?? []).map(l => [l.id, l.fuso])),
     lugaresDoLocal, emitidos, reembolsos, liberadoCentavos: liberado, sacadoCentavos: sacado, agora,
-  });
-  return { ...vendas, compras: vendas.compras.slice(0, MAX_COMPRAS_NA_LISTA) };
+  };
 }

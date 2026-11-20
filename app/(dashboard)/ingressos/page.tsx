@@ -1,97 +1,57 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { CalendarDays, Plus, Ticket } from "lucide-react";
-import { useOrganizationId, useOrganizationName, useOrganizationRole } from "@/contexts/OrganizationContext";
+import { useEffect, useState } from "react";
+import { Plus, Ticket } from "lucide-react";
+import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
-import { podeEditarATicketeria } from "@/lib/ticketeria/permissoes";
-import type { SituacaoDoEvento } from "@/lib/ticketeria/estados";
-import { ROTULO_DA_SITUACAO_DO_EVENTO, proximaSessao, quandoDaSessao } from "@/lib/ticketeria/eventos";
-import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
-import { EventoSheet } from "@/components/ticketeria/FolhasDosEventos";
+import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface } from "@/components/list/ListPagePrimitives";
+import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
+import { ESTILO_DO_LINK, InicioView } from "@/components/ticketeria/InicioView";
+import type { InicioDaLoja, PeriodoDoInicio } from "@/lib/ticketeria/inicio";
 
-type Evento = { id: string; titulo: string; situacao: SituacaoDoEvento };
-type Sessao = { id: string; evento_id: string; local_id: string; inicio: string; fim: string | null; cancelada_em: string | null };
-type Local = { id: string; nome: string; fuso: string };
-
-const COR_DA_SITUACAO: Record<SituacaoDoEvento, string> = { rascunho: "#6B6767", publicado: "#2E8932", cancelado: "#B23B3B" };
-
-/** Os eventos da loja (T2): título, situação, a próxima sessão e quantas sessões há. A venda chega na T3. */
-export default function IngressosPage() {
+/** A página inicial da Ticketeria: hoje, saldos e a visão geral das vendas. Lê da rota do servidor, que confere quem edita a Ticketeria. */
+export default function IngressosInicioPage() {
   const organizationId = useOrganizationId();
-  const nomeDaOrganizacao = useOrganizationName();
-  const papel = useOrganizationRole();
-  const router = useRouter();
-  const [eventos, setEventos] = useState<Evento[] | null>(null);
-  const [sessoes, setSessoes] = useState<Sessao[]>([]);
-  const [locais, setLocais] = useState<Local[]>([]);
-  const [folha, setFolha] = useState(false);
+  const [estado, setEstado] = useState<{ dados: InicioDaLoja | null } | undefined>(undefined);
   const [erro, setErro] = useState<string | null>(null);
-  const podeEditar = podeEditarATicketeria(papel);
+  const [periodo, setPeriodo] = useState<PeriodoDoInicio>("tudo");
 
   useEffect(() => {
     if (!organizationId) return;
     let ativo = true;
     void (async () => {
-      const ticketeria = clienteDaTicketeria(createClient());
-      const [ev, se, lo] = await Promise.all([
-        ticketeria.from("ticketeria_eventos").select("id, titulo, situacao").eq("organization_id", organizationId).order("created_at", { ascending: false }),
-        ticketeria.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, fim, cancelada_em").eq("organization_id", organizationId).order("inicio"),
-        ticketeria.from("ticketeria_locais").select("id, nome, fuso").eq("organization_id", organizationId),
-      ]);
+      const { data: loja, error } = await clienteDaTicketeria(createClient()).from("ticketeria_lojas").select("id").eq("organization_id", organizationId).maybeSingle();
       if (!ativo) return;
-      setEventos((ev.data ?? []) as Evento[]);
-      setSessoes((se.data ?? []) as Sessao[]);
-      setLocais((lo.data ?? []) as Local[]);
-      setErro(ev.error || se.error || lo.error ? "Não foi possível carregar os eventos. Recarregue a página." : null);
+      if (error) { setErro("Não foi possível carregar a página. Recarregue."); setEstado({ dados: null }); return; }
+      if (!loja) { setEstado({ dados: null }); return; }
+      try {
+        const resposta = await fetch(`/api/ticketeria/lojas/${loja.id}/inicio`, { cache: "no-store" });
+        if (!resposta.ok) throw new Error(String(resposta.status));
+        const dados = (await resposta.json()) as InicioDaLoja;
+        if (ativo) { setErro(null); setEstado({ dados }); }
+      } catch {
+        if (ativo) { setErro("Não foi possível carregar a página. Só quem edita a Ticketeria a vê."); setEstado({ dados: null }); }
+      }
     })();
     return () => { ativo = false; };
   }, [organizationId]);
 
-  const linhas = useMemo(() => (eventos ?? []).map(evento => {
-    const delas = sessoes.filter(sessao => sessao.evento_id === evento.id);
-    const proxima = proximaSessao(delas);
-    const local = proxima ? locais.find(item => item.id === proxima.local_id) : undefined;
-    return { evento, total: delas.filter(sessao => !sessao.cancelada_em).length, proxima: proxima && local ? `${quandoDaSessao(proxima.inicio, local.fuso)} · ${local.nome}` : null };
-  }), [eventos, sessoes, locais]);
-
-  const novo = podeEditar ? <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo evento</PrimaryListAction> : undefined;
-
+  if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   return (
     <>
-      <ListPageHeader title="Eventos" actions={eventos && eventos.length > 0 ? novo : undefined} />
+      <ListPageHeader title="Hoje" />
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
-        <ListTableSurface>
-          {eventos === null ? (
-            <div className="h-32 bg-black/[.02] motion-safe:animate-pulse" />
-          ) : eventos.length === 0 ? (
-            <ListEmptyState icon={Ticket} title="Nenhum evento ainda" action={novo} />
-          ) : (
-            <ul className="divide-y divide-black/[.06]">
-              {linhas.map(({ evento, total, proxima }) => (
-                <li key={evento.id}>
-                  <Link href={`/ingressos/eventos/${evento.id}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 transition hover:bg-black/[.02] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
-                    <span className="min-w-0 flex-1 basis-60">
-                      <span className="block truncate text-[0.8125rem] font-normal text-[#282525]">{evento.titulo}</span>
-                      <span className="flex items-center gap-1.5 truncate text-[0.6875rem] text-black/45">
-                        <CalendarDays size={12} aria-hidden="true" className="shrink-0 text-black/40" />
-                        {proxima ?? (total === 0 ? "Sem sessões" : "Nenhuma sessão por vir")}
-                      </span>
-                    </span>
-                    <span className="text-[0.6875rem] tabular-nums text-black/45">{total} {total === 1 ? "sessão" : "sessões"}</span>
-                    <span className="rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal" style={{ borderColor: COR_DA_SITUACAO[evento.situacao] + "47", color: COR_DA_SITUACAO[evento.situacao] }}>{ROTULO_DA_SITUACAO_DO_EVENTO[evento.situacao]}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </ListTableSurface>
+        {estado.dados ? (
+          <InicioView dados={estado.dados} periodo={periodo} onPeriodo={setPeriodo} ver={destino => <Link href={destino} prefetch={false} className={ESTILO_DO_LINK}>Ver tudo</Link>} />
+        ) : !erro && (
+          <ListTableSurface>
+            <ListEmptyState icon={Ticket} title="Nenhum evento ainda" action={<Link href="/ingressos/eventos" className="inline-flex items-center gap-1.5 rounded-xl bg-[#1C0E33] px-4 py-2.5 text-[0.75rem] text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><Plus size={13} aria-hidden="true" /> Criar evento</Link>} />
+          </ListTableSurface>
+        )}
       </ListContent>
-      {folha && organizationId && <EventoSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} onClose={() => setFolha(false)} onSaved={id => router.push(`/ingressos/eventos/${id}`)} />}
     </>
   );
 }
