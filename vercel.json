@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/ticketeria/midia/ler-todas", "schedule": "0 9 * * *" }
+  ]
+}
