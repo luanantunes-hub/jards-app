@@ -769,3 +769,17 @@ table thead th > span > span {
   from { opacity: 0; transform: translateY(-2px) scale(.97); }
   to { opacity: 1; transform: none; }
 }
+
+/* Ticketeria: Plus Jakarta Sans, leve (lib/ticketeria/fonte.ts). O título (h1) e
+   .font-display usam a Valley Sans no resto do app; aqui também seguem a Jakarta. */
+.fonte-ticketeria,
+.fonte-ticketeria h1,
+.fonte-ticketeria h2,
+.fonte-ticketeria .font-display {
+  font-family: var(--font-jakarta), var(--font-google-sans), system-ui, sans-serif;
+  font-weight: 300;
+}
+.fonte-ticketeria .font-normal { font-weight: 300; }
+.fonte-ticketeria .font-medium { font-weight: 400; }
+.fonte-ticketeria .font-semibold { font-weight: 500; }
+.fonte-ticketeria .font-bold { font-weight: 500; }

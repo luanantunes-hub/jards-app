@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { tituloDaPagina } from "@/lib/navigation/rotas";
 import { exigirModulo } from "@/lib/modulos-servidor";
+import { CLASSE_FONTE_TICKETERIA } from "@/lib/ticketeria/fonte";
 
 // As páginas desta seção são client components; o título da aba vem daqui.
 export const metadata: Metadata = { title: tituloDaPagina("/ingressos") };
@@ -13,5 +14,5 @@ export const metadata: Metadata = { title: tituloDaPagina("/ingressos") };
 // jards.com.br/ticketeria é a página pública do produto.
 export default async function Layout({ children }: { children: React.ReactNode }) {
   await exigirModulo("ticketeria");
-  return children;
+  return <div className={CLASSE_FONTE_TICKETERIA}>{children}</div>;
 }
