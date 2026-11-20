@@ -15,6 +15,7 @@ import {
   Search,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { moduloDaBusca, notificacaoDoModulo } from "@/lib/notificacoes-modulo";
 import { Select } from "@/components/ui/Select";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import { TituloComFrase } from "@/components/list/TituloComFrase";
@@ -52,6 +53,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   integracoes: "Integrações",
   prestacao: "Prestação de contas",
   sistema: "Sistema",
+  ticketeria: "Ticketeria",
 };
 
 function normalize(value: Record<string, unknown>): NotificationItem {
@@ -110,7 +112,11 @@ export default function NotificacoesPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<NotificationItem[]>([]);
+  const [todas, setItems] = useState<NotificationItem[]>([]);
+  // Vindo do sino da Ticketeria (?modulo=ticketeria), a lista mostra só o que é do módulo.
+  const [modulo, setModulo] = useState<ReturnType<typeof moduloDaBusca>>(null);
+  useEffect(() => { setModulo(moduloDaBusca(window.location.search)); }, []);
+  const items = useMemo(() => (modulo ? todas.filter(n => notificacaoDoModulo(n, modulo)) : todas), [todas, modulo]);
   const [filter, setFilter] = useState<Filter>("todas");
   const [category, setCategory] = useState("todas");
   const [migrationReady, setMigrationReady] = useState(true);
@@ -211,12 +217,11 @@ export default function NotificacoesPage() {
     if (!userId) return;
     const supabase = createClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: updateError } = await (supabase.from("notificacoes") as any)
-      .update({ lida: true })
-      .eq("user_id", userId)
-      .eq("lida", false);
+    const idsDoModulo = items.filter(item => !item.lida).map(item => item.id);
+    const base = (supabase.from("notificacoes") as any).update({ lida: true });
+    const { error: updateError } = await (modulo ? base.in("id", idsDoModulo) : base.eq("user_id", userId).eq("lida", false));
     if (updateError) setError("Não foi possível marcar todas como lidas.");
-    else setItems(current => current.map(item => ({ ...item, lida: true, lida_em: new Date().toISOString() })));
+    else setItems(current => current.map(item => (!modulo || idsDoModulo.includes(item.id) ? { ...item, lida: true, lida_em: new Date().toISOString() } : item)));
   }
 
   async function archive(item: NotificationItem) {

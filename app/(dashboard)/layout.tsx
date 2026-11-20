@@ -951,7 +951,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {menuFixoAberto && <BuscaDoTopo organizationId={organizationId} />}
           {/* Right actions */}
           <div className={`flex items-center gap-3 ${menuFixoAberto ? "ml-auto shrink-0 pl-3" : ""}`}>
-            {user && <NotificationBell userId={user.id} />}
+            {user && <NotificationBell userId={user.id} modulo={menuFixoAberto ? "ticketeria" : undefined} />}
             {menuFixoAberto && (
               <Link
                 href="/configuracoes"

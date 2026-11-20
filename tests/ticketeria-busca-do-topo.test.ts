@@ -31,7 +31,7 @@ test("compra achada leva à tela de vendas já com a compra aberta; sem texto, n
 test("na Ticketeria o topo tem busca, notificações e configurações, e o menu não tem rodapé nem a bolinha com a letra", async () => {
   const layout = await readFile("app/(dashboard)/layout.tsx", "utf8");
   assert.match(layout, /menuFixoAberto && <BuscaDoTopo organizationId=\{organizationId\} \/>/);
-  assert.match(layout, /\{user && <NotificationBell userId=\{user\.id\} \/>\}/);
+  assert.match(layout, /\{user && <NotificationBell userId=\{user\.id\}/);
   assert.match(layout, /\{!menuFixoAberto && <div className="px-2 py-2\.5 border-t/);
   assert.match(layout, /\) : menuFixoAberto \? null : \(/);
   assert.doesNotMatch(layout, /Sair da Ticketeria/);
