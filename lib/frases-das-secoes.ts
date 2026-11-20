@@ -22,7 +22,7 @@ export const FRASES_DAS_SECOES = {
   publicacoes: ["O que o Jards tem a dizer hoje?"],
   // Ficam no fim de propósito: a ordem das chaves decide o tamanduá do dia de cada seção.
   conversas: ["Com quem foi a última boa conversa{, nome}?", "Tudo o que foi dito, num lugar só.", "Quem está esperando sua resposta hoje?"],
-  comparativo: ["Quem investe mais na lei do seu projeto{, nome}?", "Lado a lado, a escolha fica mais clara.", "Compare antes de escrever o primeiro e-mail."],
+  comparativo: ["Quem tem espaço de investimento na lei do seu projeto{, nome}?", "Lado a lado, a escolha fica mais clara.", "Compare antes de escrever o primeiro e-mail."],
 } as const satisfies Record<string, readonly string[]>;
 
 export type SecaoComFrase = keyof typeof FRASES_DAS_SECOES;
