@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe, Plus } from "lucide-react";
+import { Globe, PencilLine, Plus } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
@@ -90,6 +90,8 @@ export default function SiteDaLojaPage() {
   const [cor, setCor] = useState("#282525");
   const [folha, setFolha] = useState(false);
   const [folhaDoTema, setFolhaDoTema] = useState(false);
+  // O editor das páginas abre em tela inteira (editor à esquerda, prévia à direita).
+  const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
@@ -205,10 +207,17 @@ export default function SiteDaLojaPage() {
           <span className="text-[#282525]">{temaDoSite(site.tema).nome}</span>
           {podeEditar && <button type="button" onClick={() => setFolhaDoTema(true)} className="rounded-xl text-[0.8125rem] text-black/55 underline underline-offset-2 transition hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Mudar</button>}
         </div>
-        <EditorDoSite siteId={site.id} organizationId={organizationId} podeEditar={podeEditar} espacos={espacos} eventos={eventos} />
+        <section aria-labelledby="paginas-do-site" className="mb-10 flex max-w-2xl flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border bg-white px-4 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <div className="min-w-0 flex-1 basis-60">
+            <h2 id="paginas-do-site" className="text-[0.875rem] font-medium text-[#282525]">Páginas do site</h2>
+            <p className="mt-0.5 text-[0.75rem] leading-relaxed text-black/55">Monte as páginas com a prévia ao lado, em tela inteira: o editor à esquerda e a página de verdade à direita.</p>
+          </div>
+          <button type="button" onClick={() => setEditando(true)} className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1C0E33] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><PencilLine size={13} aria-hidden="true" /> {podeEditar ? "Abrir o editor" : "Ver as páginas"}</button>
+        </section>
         <DominiosDoSite siteId={site.id} podeEditar={podeEditar} />
         {podeEditar && <div className="mt-12"><button type="button" onClick={apagar} className="text-[0.75rem] font-normal text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Apagar este site</button></div>}
       </DetailPageContent>
+      {editando && <EditorDoSite siteId={site.id} nomeDoSite={site.titulo ?? site.nome} organizationId={organizationId} podeEditar={podeEditar} espacos={espacos} eventos={eventos} onFechar={() => setEditando(false)} />}
       {folhaDoTema && <TemaDoSiteSheet siteId={site.id} temaAtual={site.tema} cor={corDoTema(site.cor)} onClose={() => setFolhaDoTema(false)} onSaved={recarregar} />}
     </div>
   );

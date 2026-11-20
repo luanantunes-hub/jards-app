@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Copy, ExternalLink, GripVertical, Plus, Trash2 } from "lucide-react";
+import { createPortal } from "react-dom";
+import { ArrowDown, ArrowUp, Copy, ExternalLink, Eye, GripVertical, PencilLine, Plus, Trash2, X } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
-import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
@@ -217,8 +217,11 @@ function SeoDaPagina({ pagina, organizationId, podeEditar, onSalvo }: { pagina: 
   );
 }
 
-/** As páginas do site e os blocos de cada uma: o rascunho salva a cada mudança, e "Publicar esta página" põe no ar. */
-export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, eventos = [] }: { siteId: string; organizationId: string; podeEditar: boolean; espacos: readonly EspacoDaProgramacao[]; eventos?: readonly EventoParaBloco[] }) {
+/**
+ * O editor do site em TELA INTEIRA (pedido do dono em 20/11/2026): por cima do painel, o editor das páginas à esquerda e a prévia da página de verdade à direita. O rascunho salva a cada
+ * mudança, e "Publicar esta página" põe no ar. Em tela estreita (celular), um botão alterna entre o editor e a prévia. `onFechar` volta para a tela do site.
+ */
+export function EditorDoSite({ siteId, nomeDoSite, organizationId, podeEditar, espacos, eventos = [], onFechar }: { siteId: string; nomeDoSite: string; organizationId: string; podeEditar: boolean; espacos: readonly EspacoDaProgramacao[]; eventos?: readonly EventoParaBloco[]; onFechar: () => void }) {
   const { confirmDelete } = useDeleteConfirm();
   const [paginas, setPaginas] = useState<Pagina[] | null>(null);
   const [slug, setSlug] = useState("inicio");
@@ -228,9 +231,16 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
   const [versao, setVersao] = useState(0);
   const [arrastando, setArrastando] = useState<number | null>(null);
   const [sobre, setSobre] = useState<number | null>(null);
-  // A prévia ao lado já vem aberta em tela larga; em tela estreita, fechada (um botão a abre embaixo).
-  const [mostrarPrevia, setMostrarPrevia] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches);
+  // Em tela larga o editor e a prévia ficam lado a lado; em tela estreita, um de cada vez (este botão alterna).
+  const [mostrarPrevia, setMostrarPrevia] = useState(false);
   const recarregar = () => setVersao(atual => atual + 1);
+
+  // O editor ocupa a tela: o painel por baixo não rola enquanto ele está aberto.
+  useEffect(() => {
+    const antes = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = antes; };
+  }, []);
 
   useEffect(() => {
     let ativo = true;
@@ -314,33 +324,41 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
     });
   }
 
-  return (
-    <section aria-labelledby="paginas-do-site">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 id="paginas-do-site" className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Páginas</h2>
-        {podeEditar && <PrimaryListAction onClick={() => setFolha({ tipo: "pagina" })}><Plus size={13} aria-hidden="true" /> Nova página</PrimaryListAction>}
-      </div>
-      {aviso && <p role="status" className="mb-3 rounded-xl border border-black/[.1] bg-white px-4 py-2.5 text-[0.75rem] text-black/70">{aviso}</p>}
-      {erro && <p role="alert" className="mb-3 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
-      {paginas === null ? (
-        <div className="h-24 rounded-xl border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
-      ) : (
-        <>
-          <div role="tablist" aria-label="Páginas do site" className="mb-4 flex gap-1 overflow-x-auto">
-            {paginas.map(pagina => (
-              <button key={pagina.id} type="button" role="tab" aria-selected={atual?.id === pagina.id} onClick={() => { setSlug(pagina.slug); setAviso(null); }} className={`h-10 shrink-0 rounded-xl border px-3.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${atual?.id === pagina.id ? "border-[#282525] bg-black/[.06] font-normal text-[#282525]" : "border-black/[.12] text-black/55 hover:bg-black/[.04]"}`}>{pagina.titulo}</button>
-            ))}
+  const tela = (
+    <div role="dialog" aria-modal="false" aria-label="Editor do site" className="fixed inset-0 z-[45] flex flex-col bg-[#F7F6F4]">
+      <header className="shrink-0 border-b bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="flex items-center gap-3 px-4 py-2.5">
+          <button type="button" onClick={onFechar} className={`${BOTAO} shrink-0`}><X size={13} aria-hidden="true" /> Fechar<span className="hidden sm:inline"> o editor</span></button>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[0.875rem] font-medium text-[#282525]">{nomeDoSite}</p>
+            {atual && <p className="truncate text-[0.6875rem] text-black/50">{atual.publicada_em === null ? "Ainda não publicada." : publicadaIgual ? "Publicada, sem mudanças." : "Há mudanças que ainda não estão no ar."}</p>}
           </div>
-          {atual && (
-            <div className={mostrarPrevia ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_440px] lg:items-start" : ""}>
-              <div className="min-w-0">
+          <button type="button" onClick={() => setMostrarPrevia(valor => !valor)} aria-pressed={mostrarPrevia} className={`${BOTAO} lg:hidden`}>{mostrarPrevia ? <><PencilLine size={13} aria-hidden="true" /> Editar</> : <><Eye size={13} aria-hidden="true" /> Prévia</>}</button>
+          {podeEditar && atual && <button type="button" onClick={() => void publicar()} disabled={publicadaIgual} className="inline-flex h-9 shrink-0 items-center rounded-xl acao-salvar px-3.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">Publicar<span className="hidden sm:inline"> esta página</span></button>}
+        </div>
+        {paginas !== null && (
+          <div className="flex items-center gap-2 border-t px-4 py-2" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+            <div role="tablist" aria-label="Páginas do site" className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
+              {paginas.map(pagina => (
+                <button key={pagina.id} type="button" role="tab" aria-selected={atual?.id === pagina.id} onClick={() => { setSlug(pagina.slug); setAviso(null); }} className={`h-9 shrink-0 rounded-xl border px-3.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${atual?.id === pagina.id ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/[.12] bg-white text-black/60 hover:bg-black/[.04]"}`}>{pagina.titulo}</button>
+              ))}
+            </div>
+            {podeEditar && <button type="button" onClick={() => setFolha({ tipo: "pagina" })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Nova página</button>}
+          </div>
+        )}
+      </header>
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <div className={`min-h-0 w-full overflow-y-auto border-black/[.08] bg-white p-4 lg:w-[440px] lg:shrink-0 lg:border-r ${mostrarPrevia ? "hidden lg:block" : "flex-1 lg:flex-none"}`}>
+          {aviso && <p role="status" className="mb-3 rounded-xl border border-black/[.1] bg-white px-4 py-2.5 text-[0.75rem] text-black/70">{aviso}</p>}
+          {erro && <p role="alert" className="mb-3 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+          {paginas === null ? (
+            <div className="h-24 rounded-xl border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
+          ) : atual && (
+            <>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <p className="mr-auto text-[0.75rem] text-black/55">{atual.publicada_em === null ? "Ainda não publicada." : publicadaIgual ? "Publicada, sem mudanças." : "Há mudanças que ainda não estão no ar."}</p>
-                <button type="button" onClick={() => setMostrarPrevia(valor => !valor)} aria-pressed={mostrarPrevia} className={BOTAO}>{mostrarPrevia ? "Ocultar a prévia" : "Mostrar a prévia"}</button>
-                <a href={enderecoDaPrevia(siteId, atual.slug)} target="_blank" rel="noopener noreferrer" className={BOTAO}><ExternalLink size={13} aria-hidden="true" /> Ver a prévia</a>
+                <a href={enderecoDaPrevia(siteId, atual.slug)} target="_blank" rel="noopener noreferrer" className={BOTAO}><ExternalLink size={13} aria-hidden="true" /> Ver em outra aba</a>
                 {podeEditar && <button type="button" onClick={() => setFolha({ tipo: "versoes" })} className={BOTAO}>Versões</button>}
                 {podeEditar && <button type="button" onClick={() => void duplicarPagina()} className={BOTAO}>Duplicar a página</button>}
-                {podeEditar && <button type="button" onClick={() => void publicar()} disabled={publicadaIgual} className="inline-flex h-9 items-center rounded-xl acao-salvar px-3.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">Publicar esta página</button>}
                 {podeEditar && atual.slug !== "inicio" && <button type="button" onClick={apagarPagina} className={BOTAO}>Apagar a página</button>}
               </div>
               {atual.blocos.length === 0 ? (
@@ -380,12 +398,13 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
                   <button type="button" onClick={() => setFolha({ tipo: "escolher" })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Acrescentar bloco</button>
                 </div>
               )}
-              </div>
-              {mostrarPrevia && <PreviaDoSite siteId={siteId} slug={atual.slug} versao={versao} />}
-            </div>
+            </>
           )}
-        </>
-      )}
+        </div>
+        <div className={`min-h-0 flex-1 p-4 ${mostrarPrevia ? "" : "hidden lg:block"}`}>
+          {atual ? <PreviaDoSite siteId={siteId} slug={atual.slug} versao={versao} telaInteira /> : null}
+        </div>
+      </div>
       {folha?.tipo === "pagina" && paginas && <NovaPaginaSheet siteId={siteId} organizationId={organizationId} existentes={paginas} onClose={() => setFolha(null)} onCreated={novoSlug => { setSlug(novoSlug); recarregar(); }} />}
       {folha?.tipo === "versoes" && atual && (
         <VersoesSheet paginaId={atual.id} titulo={atual.titulo} publicados={atual.blocos_publicados} podeEditar={podeEditar} onClose={() => setFolha(null)} onRestaurado={mensagem => { setAviso(mensagem); recarregar(); }} />
@@ -407,6 +426,8 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
           onSalvar={novo => gravar(folha.indice === null ? [...atual.blocos, novo] : atual.blocos.map((existente, i) => (i === folha.indice ? novo : existente)))}
         />
       )}
-    </section>
+    </div>
   );
+  // O editor só se abre por um clique (nunca vem no HTML do servidor); a guarda é para quem o montar já no carregamento.
+  return typeof document === "undefined" ? null : createPortal(tela, document.body);
 }

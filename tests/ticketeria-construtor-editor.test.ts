@@ -65,7 +65,7 @@ test("o quadro da prévia: a página de verdade num iframe da própria origem, c
 
 test("o editor liga arrastar, duplicar bloco, duplicar página e a prévia ao lado; os botões de subir e descer seguem", () => {
   const codigo = readFileSync("components/ticketeria/EditorDoSite.tsx", "utf8");
-  for (const t of ["draggable={podeEditar}", "onDragStart", "onDragOver", "onDrop", "reordenar(", 'aria-label="Duplicar o bloco"', "duplicarBloco(", "Duplicar a página", "duplicarPagina()", "copiaDeUmaPagina(", "PreviaDoSite", "Ocultar a prévia", "Mostrar a prévia", 'aria-label="Subir o bloco"', 'aria-label="Descer o bloco"', "Ver a prévia", "lg:grid-cols-[minmax(0,1fr)_440px]", "min-width: 1024px"]) assert.ok(codigo.includes(t), t);
+  for (const t of ["draggable={podeEditar}", "onDragStart", "onDragOver", "onDrop", "reordenar(", 'aria-label="Duplicar o bloco"', "duplicarBloco(", "Duplicar a página", "duplicarPagina()", "copiaDeUmaPagina(", "PreviaDoSite", "telaInteira", 'aria-label="Subir o bloco"', 'aria-label="Descer o bloco"', "Ver em outra aba"]) assert.ok(codigo.includes(t), t);
   assert.ok(codigo.includes("blocos: atual.blocos, descricao: atual.descricao, imagem_url: atual.imagem_url"), "a cópia leva os blocos, a descrição e a imagem, e nasce sem publicar");
   assert.doesNotMatch(codigo, /blocos_publicados: atual/, "a cópia não herda o que está publicado");
 });
@@ -75,4 +75,19 @@ test("a prévia só abre no próprio painel: o cabeçalho da rota permite a mesm
   assert.match(next, /source: "\/previa-site\/:path\*"/);
   assert.match(next, /construirContentSecurityPolicy\("'self'"\)/);
   assert.match(next, /\(\?!embed\/\|previa-site\/\)/, "a regra geral deixa a prévia de fora");
+});
+
+test("o editor abre em TELA INTEIRA: por cima do painel, o editor à esquerda e a prévia à direita; em tela estreita um botão alterna; fechar volta ao site", () => {
+  const editor = readFileSync("components/ticketeria/EditorDoSite.tsx", "utf8");
+  for (const t of ["fixed inset-0 z-[45]", "createPortal(tela, document.body)", 'lg:w-[440px]', "lg:flex-row", "<PreviaDoSite siteId={siteId} slug={atual.slug} versao={versao} telaInteira />", "Fechar<span className=\"hidden sm:inline\"> o editor</span>", "onFechar", "lg:hidden", 'hidden lg:block', 'document.body.style.overflow = "hidden"']) assert.ok(editor.includes(t), t);
+  assert.ok(editor.indexOf("> esta página</span>") < editor.indexOf('role="tablist"'), "publicar fica no alto, as páginas logo abaixo");
+  const folhas = ["<VersoesSheet", "<AcrescentarBlocoSheet", "<BlocoSheet", "<NovaPaginaSheet"];
+  for (const f of folhas) assert.ok(editor.includes(f), `${f} segue ligada (as folhas abrem por cima do editor: z-50)`);
+  const pagina = readFileSync("app/(dashboard)/ingressos/site/page.tsx", "utf8");
+  assert.ok(pagina.includes("const [editando, setEditando] = useState(false)") && pagina.includes("Abrir o editor") && pagina.includes("{editando && <EditorDoSite") && pagina.includes("onFechar={() => setEditando(false)}"), "a tela do site abre o editor por um botão");
+  const html = renderToStaticMarkup(createElement(PreviaDoSite, { siteId: "s1", slug: "inicio", versao: 0, telaInteira: true }));
+  for (const t of ["Prévia do rascunho", "Computador", "Celular", "/previa-site/s1", 'class="h-full w-full"']) assert.ok(html.includes(t), t);
+  assert.ok(html.indexOf('aria-pressed="true"') < html.indexOf("Computador") + 200, "na tela inteira a prévia abre no tamanho do computador (largura da coluna)");
+  const comum = renderToStaticMarkup(createElement(PreviaDoSite, { siteId: "s1", slug: "inicio", versao: 0 }));
+  assert.ok(!comum.includes('class="h-full w-full"'), "a prévia da coluna estreita segue como era");
 });
