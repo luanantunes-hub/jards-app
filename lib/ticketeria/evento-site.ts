@@ -2,6 +2,8 @@
 // o resumo para o cartão de compartilhamento, o estado do evento e a lista da Agenda. Só lógica e dados (sem banco, sem tela e sem servidor): roda no navegador e nos testes.
 
 import type { EventoNaApi, SessaoNaApi } from "@/lib/ticketeria/integracao";
+import { codigoDoCupomValido, normalizarCodigo } from "@/lib/ticketeria/cupom";
+import { origemDaPagina } from "@/lib/ticketeria/origem";
 
 /** O endereço público da página do evento no domínio do produtor. */
 export const enderecoDoEvento = (host: string, slug: string) => `https://${host}/e/${slug}`;
@@ -65,4 +67,71 @@ export function dadosEstruturadosDoEvento(evento: Pick<EventoNaApi, "titulo" | "
 /** O JSON para dentro de um <script type="application/ld+json">: sem "<" (nada fecha a tag antes da hora) e sem os separadores de linha que quebram o script. */
 export function jsonParaScript(dados: unknown): string {
   return JSON.stringify(dados).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+}
+
+// ─── O que viaja do link da página do evento para a compra (C2b-1) ──────────
+
+/** A busca de uma página (`searchParams` do Next ou `location.search`): um valor, uma lista deles ou nada. */
+export type BuscaDaPagina = Record<string, string | string[] | undefined>;
+
+const primeiro = (v: string | string[] | undefined): string | null => (Array.isArray(v) ? v[0] : v) ?? null;
+
+/**
+ * Os parâmetros que o link de divulgação traz e a compra precisa receber: o cupom (`?cupom=VERAO`, conferido no formato) e a origem da divulgação (`canal`, `acao` e as `utm_*`, recortados
+ * como a compra os recorta). Só estes: nada mais que esteja na busca da página vai para a compra. O cupom só é CONFERIDO de verdade na compra (se existe, se vale para a sessão).
+ */
+export function parametrosParaACompra(busca: BuscaDaPagina): URLSearchParams {
+  const saida = new URLSearchParams();
+  const cupom = normalizarCodigo(primeiro(busca.cupom));
+  if (codigoDoCupomValido(cupom)) saida.set("cupom", cupom);
+  const entrada = new URLSearchParams();
+  for (const [chave, valor] of Object.entries(busca)) { const v = primeiro(valor); if (v !== null) entrada.set(chave, v); }
+  const origem = origemDaPagina(entrada.toString(), "", "");
+  if (origem?.canal) saida.set("canal", origem.canal);
+  if (origem?.acao) saida.set("acao", origem.acao);
+  for (const [campo, valor] of Object.entries(origem?.utm ?? {})) saida.set(campo, valor);
+  return saida;
+}
+
+/** O endereço da compra (`/comprar/<sessão>`) com o que veio no link da página do evento. Sem nada a levar, o próprio endereço. */
+export function enderecoDaCompra(url: string, busca: BuscaDaPagina): string {
+  const extra = parametrosParaACompra(busca);
+  if (extra.size === 0) return url;
+  try {
+    const u = new URL(url);
+    for (const [chave, valor] of extra) u.searchParams.set(chave, valor);
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
+/** O cupom que a página de compra recebe na busca (`?cupom=`), no formato do banco; nulo se não veio ou não é um código. */
+export function cupomDaBusca(busca: BuscaDaPagina): string | null {
+  const c = normalizarCodigo(primeiro(busca.cupom));
+  return codigoDoCupomValido(c) ? c : null;
+}
+
+// ─── A contagem na página do evento (C2b-1) ─────────────────────────────────
+
+const FUSO_DA_CONTAGEM = "America/Sao_Paulo";
+const diaNoFuso = (instante: number) => new Intl.DateTimeFormat("en-CA", { timeZone: FUSO_DA_CONTAGEM, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(instante));
+
+/**
+ * Quanto falta para a próxima sessão que ainda vai acontecer (não cancelada, não encerrada), contando DIAS DO CALENDÁRIO no horário de Brasília: "A próxima sessão é hoje", "...é amanhã",
+ * "Faltam 5 dias para a próxima sessão". Nulo se não há sessão por vir. `agora` vem de fora (a página o lê uma vez), para o texto não depender do relógio de quem desenha.
+ */
+export function contagemParaOEvento(sessoes: readonly Pick<SessaoNaApi, "inicio" | "estado">[], agora: number): { dias: number; frase: string } | null {
+  const hoje = Date.parse(diaNoFuso(agora));
+  let menor: number | null = null;
+  for (const s of sessoes) {
+    if (s.estado === "cancelada" || s.estado === "encerrada") continue;
+    const inicio = Date.parse(s.inicio);
+    if (!Number.isFinite(inicio)) continue;
+    const dias = Math.round((Date.parse(diaNoFuso(inicio)) - hoje) / 86_400_000);
+    if (dias < 0) continue;
+    if (menor === null || dias < menor) menor = dias;
+  }
+  if (menor === null) return null;
+  return { dias: menor, frase: menor === 0 ? "A próxima sessão é hoje" : menor === 1 ? "A próxima sessão é amanhã" : `Faltam ${menor} dias para a próxima sessão` };
 }
