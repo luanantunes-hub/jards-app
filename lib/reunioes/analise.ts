@@ -202,3 +202,14 @@ export function iniciais(nome: string): string {
   const ultima = partes.length > 1 ? partes[partes.length - 1][0] : "";
   return (primeira + ultima).toUpperCase();
 }
+
+export type TipoDoPasso = "email" | "telefone" | "reuniao" | "outro";
+
+/** Tipo de atividade mais provável para um próximo passo; a pessoa pode trocar na folha. */
+export function tipoSugeridoDoPasso(texto: string): TipoDoPasso {
+  const t = texto.toLowerCase();
+  if (/\b(ligar|liga[çc][ãa]o|telefon)/.test(t)) return "telefone";
+  if (/\b(agendar|marcar|reuni[ãa]o|conversa|apresenta[çc][ãa]o|visita)/.test(t)) return "reuniao";
+  if (/\b(enviar|mandar|e-?mail|responder|compartilhar)/.test(t)) return "email";
+  return "outro";
+}

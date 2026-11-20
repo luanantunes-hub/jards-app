@@ -4,15 +4,17 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useParams } from "next/navigation";
 import {
-  CalendarDays, Check, Clock, Copy, Gauge, Handshake, ListChecks, MessageCircleQuestion,
+  CalendarDays, CalendarPlus, Check, CircleCheck, Clock, Copy, Gauge, Handshake, ListChecks, MessageCircleQuestion,
   Mic, Search, Star, Timer, Users, Video, X, type LucideIcon,
 } from "lucide-react";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { CLASSE_DA_FRASE, FAMILIA_DA_FRASE, IlustracaoDaSecao, VARIAVEIS_DA_FRASE } from "@/components/list/TituloComFrase";
+import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PROJECT_ICON_COLORS } from "@/components/ui/ProjectIdentity";
 import {
   ehPergunta, estatisticasDaReuniao, formatarDuracao, formatarTimestamp, iniciais, mapaDaConversa,
-  parcelasEmPorcentagem, partesEmNegrito, separarResumo, type TrechoDaTranscricao,
+  parcelasEmPorcentagem, partesEmNegrito, separarResumo, tipoSugeridoDoPasso, type TrechoDaTranscricao,
 } from "@/lib/reunioes/analise";
 
 type Reuniao = {
@@ -23,6 +25,8 @@ type Reuniao = {
   status: "agendada" | "bot_entrando" | "gravando" | "processando" | "concluida" | "falhou";
   erro: string | null;
   resumo_ia: string | null;
+  captacao_id: string | null;
+  empresa_crm_id: string | null;
   agendada_para: string | null;
   iniciada_em: string | null;
   finalizada_em: string | null;
@@ -82,7 +86,7 @@ function Metrica({ rotulo, icone: Icone, valor, unidade, detalhe, className = ""
   rotulo: string; icone: LucideIcon; valor: string | null; unidade?: string; detalhe?: string; className?: string;
 }) {
   return (
-    <div className={`flex min-h-[5.25rem] flex-col justify-between gap-3 bg-white px-4 py-3.5 lg:min-h-[6.25rem] ${className}`}>
+    <div className={`cartao-textura flex min-h-[5.25rem] flex-col justify-between gap-3 rounded px-4 py-3.5 lg:min-h-[6.25rem] ${className}`}>
       <p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
         <Icone size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
         {rotulo}
@@ -135,6 +139,8 @@ export default function ReuniaoDetalhePage() {
   const [falanteAtivo, setFalanteAtivo] = useState<string | null>(null);
   const [destacado, setDestacado] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [passoEmAtividade, setPassoEmAtividade] = useState<{ id: string; texto: string } | null>(null);
+  const [passosComAtividade, setPassosComAtividade] = useState<Set<string>>(() => new Set());
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -268,11 +274,13 @@ export default function ReuniaoDetalhePage() {
           </div>
 
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <h1 className="text-[1.75rem] font-semibold leading-[1.08] tracking-[-.04em] text-[#282525] [text-wrap:balance] sm:text-[2.125rem]">
+            <div className={`flex min-w-0 items-center gap-4 ${VARIAVEIS_DA_FRASE}`}>
+              <IlustracaoDaSecao arquivo="conversas" />
+              <div className="min-w-0">
+              <h1 className={`text-balance text-[#282525] ${CLASSE_DA_FRASE}`} style={{ fontFamily: FAMILIA_DA_FRASE }}>
                 {reuniao.titulo}
               </h1>
-              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.8125rem] text-black/45">
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.8125rem] text-black/45">
                 <span className="inline-flex items-center gap-1.5"><CalendarDays size={14} aria-hidden="true" className="text-black/35" />{dataDaReuniao(reuniao)}</span>
                 {duracaoMs > 0 && <span className="inline-flex items-center gap-1.5"><Clock size={14} aria-hidden="true" className="text-black/35" />{formatarDuracao(duracaoMs)}</span>}
                 <span className="inline-flex items-center gap-1.5"><Video size={14} aria-hidden="true" className="text-black/35" />{plataforma}</span>
@@ -288,6 +296,7 @@ export default function ReuniaoDetalhePage() {
                     {negociacao.titulo || "Negociação"}
                   </Link>
                 )}
+              </div>
               </div>
             </div>
 
@@ -320,7 +329,7 @@ export default function ReuniaoDetalhePage() {
           )}
 
           {temTranscricao && (
-            <div className="mt-7 grid grid-cols-2 gap-px overflow-hidden rounded border bg-black/[.045] lg:grid-cols-5" style={{ borderColor: "rgba(13,13,13,.055)" }}>
+            <div className="mt-7 grid grid-cols-2 gap-3 lg:grid-cols-5">
               <Metrica rotulo="Duração" icone={Clock} valor={duracaoMs > 0 ? formatarDuracao(duracaoMs) : null} />
               <Metrica rotulo="Pessoas" icone={Users} valor={totalDePessoas > 0 ? String(totalDePessoas) : null} detalhe={totalDePessoas > 0 ? `${trechos.length} falas` : undefined} />
               <Metrica rotulo="Perguntas" icone={MessageCircleQuestion} valor={estatisticas.perguntas > 0 ? String(estatisticas.perguntas) : null} />
@@ -377,20 +386,38 @@ export default function ReuniaoDetalhePage() {
 
             {proximosPassos.length > 0 && (
               <Cartao titulo="Próximos passos" icone={ListChecks} contagem={proximosPassos.length}>
-                <ul className="flex flex-col gap-2.5">
-                  {proximosPassos.map(passo => (
-                    <li key={passo.id} className="flex items-start gap-2.5 text-[0.8125rem] leading-snug text-black/70">
-                      <span aria-hidden="true" className="mt-[0.1875rem] h-3.5 w-3.5 shrink-0 rounded-[3px] border border-black/25" />
-                      <span className="min-w-0 flex-1">
-                        <Negrito texto={passo.texto} />
-                        {passo.timestamp !== null && (
-                          <button type="button" onClick={() => irParaMomento(passo.timestamp!)} className="ml-1.5 text-[0.6875rem] tabular-nums text-black/35 underline-offset-2 hover:text-black/60 hover:underline">
-                            {formatarTimestamp(passo.timestamp)}
+                <ul className="-mx-1 flex flex-col">
+                  {proximosPassos.map(passo => {
+                    const criada = passosComAtividade.has(passo.id);
+                    return (
+                      <li key={passo.id} className="group flex items-start gap-2 rounded px-1 py-1.5 text-[0.8125rem] leading-snug text-black/70">
+                        <span className="min-w-0 flex-1 pt-[0.1875rem]">
+                          <Negrito texto={passo.texto} />
+                          {passo.timestamp !== null && (
+                            <button type="button" onClick={() => irParaMomento(passo.timestamp!)} className="ml-1.5 text-[0.6875rem] tabular-nums text-black/35 underline-offset-2 hover:text-black/60 hover:underline">
+                              {formatarTimestamp(passo.timestamp)}
+                            </button>
+                          )}
+                        </span>
+                        {criada ? (
+                          <span title="Atividade criada" className="flex h-7 w-7 shrink-0 items-center justify-center text-[#2E8932]">
+                            <CircleCheck size={15} strokeWidth={1.9} aria-hidden="true" />
+                            <span className="sr-only">Atividade criada</span>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setPassoEmAtividade({ id: passo.id, texto: passo.texto })}
+                            title="Criar atividade"
+                            aria-label={`Criar atividade: ${passo.texto}`}
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] active:scale-95"
+                          >
+                            <CalendarPlus size={15} strokeWidth={1.8} aria-hidden="true" />
                           </button>
                         )}
-                      </span>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               </Cartao>
             )}
@@ -562,6 +589,23 @@ export default function ReuniaoDetalhePage() {
           </div>
         </div>
       </DetailPageContent>
+
+      {passoEmAtividade && (
+        <NovaAtividadeModal
+          prefill={{
+            nome: passoEmAtividade.texto.replace(/\*\*/g, ""),
+            tipo: tipoSugeridoDoPasso(passoEmAtividade.texto),
+            captacao_id: reuniao.captacao_id ?? undefined,
+            empresa_crm_id: reuniao.empresa_crm_id ?? undefined,
+          }}
+          onClose={() => setPassoEmAtividade(null)}
+          onSaved={() => {
+            const id = passoEmAtividade.id;
+            setPassosComAtividade(atuais => new Set(atuais).add(id));
+            setPassoEmAtividade(null);
+          }}
+        />
+      )}
     </div>
   );
 }

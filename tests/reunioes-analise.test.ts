@@ -9,6 +9,7 @@ import {
   parcelasEmPorcentagem,
   partesEmNegrito,
   separarResumo,
+  tipoSugeridoDoPasso,
   type TrechoDaTranscricao,
 } from "../lib/reunioes/analise";
 
@@ -89,4 +90,12 @@ test("formatos de tempo e iniciais", () => {
   assert.equal(formatarDuracao(20000), "20 s");
   assert.equal(iniciais("Marina Teixeira"), "MT");
   assert.equal(iniciais("Rafael"), "R");
+});
+
+test("tipo sugerido para transformar um próximo passo em atividade", () => {
+  assert.equal(tipoSugeridoDoPasso("Enviar proposta revisada com as três cotas até sexta-feira."), "email");
+  assert.equal(tipoSugeridoDoPasso("Agendar conversa com a área jurídica na próxima semana."), "reuniao");
+  assert.equal(tipoSugeridoDoPasso("Confirmar data da apresentação para colaboradores."), "reuniao");
+  assert.equal(tipoSugeridoDoPasso("Ligar para a Marina"), "telefone");
+  assert.equal(tipoSugeridoDoPasso("Revisar orçamento"), "outro");
 });

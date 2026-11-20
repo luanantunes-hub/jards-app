@@ -430,6 +430,43 @@ table thead th > span > span {
   pointer-events: none;
 }
 
+/* Cartão-textura dentro do app: o mesmo papel das cartas do login (branco quente, retícula, sombra por dentro), com o raio de 4px do produto. */
+.cartao-textura {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(13, 13, 13, .09);
+  background: linear-gradient(165deg, #FFFFFF, #F7F4EF);
+  box-shadow:
+    0 1px 2px rgba(52, 42, 78, .05),
+    0 8px 18px -12px rgba(52, 42, 78, .16),
+    inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+
+.cartao-textura::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    radial-gradient(rgba(13, 13, 13, .14) .75px, transparent .75px),
+    radial-gradient(rgba(13, 13, 13, .08) .75px, transparent .75px);
+  background-size: 3px 3px, 6px 6px;
+  background-position: 0 0, 1.5px 3px;
+  mix-blend-mode: multiply;
+  opacity: .55;
+  pointer-events: none;
+}
+
+.cartao-textura::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  box-shadow: inset 0 0 22px rgba(52, 42, 78, .07);
+  pointer-events: none;
+}
+
 /* Leque: 3 cartas reais derramadas sobre a mesa, todas com o mesmo cartão-textura. */
 .auth-oblique-spread {
   position: relative;
