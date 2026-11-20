@@ -22,7 +22,7 @@ test("CPF e CNPJ: só com os dígitos verificadores certos", () => {
 test("o corpo da compra: lido, aparado e conferido", () => {
   const r = lerCorpoDaCompra(bom);
   assert.ok(r.ok);
-  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: "pix", parcelas: 1, cupom: null, lugares: [] });
+  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: "pix", parcelas: 1, cupom: null, lugares: [], origem: null });
   const ruim = (mudanca: object) => lerCorpoDaCompra({ ...bom, ...mudanca });
   for (const [mudanca, problema] of [
     [{ sessao_id: "x" }, "sessão"], [{ itens: [] }, "ingressos"], [{ itens: "x" }, "ingressos"],
@@ -222,4 +222,32 @@ test("o aceite é gravado também no ingresso gratuito, e se não der para grava
   const { portas, chamadas } = montar({ async registrarAceite() { throw new Error("banco fora do ar"); } });
   await assert.rejects(iniciarCompra(l.corpo, portas), /banco fora do ar/);
   assert.deepEqual([chamadas.meio.length, chamadas.cobrancas.length], [0, 0], "sem aceite gravado, não há Pix");
+});
+
+test("a origem da compra: lida do corpo, aparada, guardada no pedido, e nunca barra a venda", async () => {
+  const origem = { canal: "Instagram", acao: "Stories do lote 2!", referencia: "l.instagram.com", utm: { utm_source: "ig", utm_campaign: "lote2", gclid: "nao-entra" } };
+  const l = lerCorpoDaCompra({ ...bom, origem });
+  assert.ok(l.ok);
+  if (!l.ok) return;
+  assert.deepEqual(l.corpo.origem, { canal: "instagram", acao: "stories-do-lote-2", referencia: "l.instagram.com", utm: { utm_source: "ig", utm_campaign: "lote2" } });
+  for (const torta of [undefined, null, "instagram", 7, [], {}, { canal: "!!!" }]) {
+    const r = lerCorpoDaCompra({ ...bom, origem: torta });
+    assert.ok(r.ok, "origem torta não é problema");
+    if (r.ok) assert.equal(r.corpo.origem, null);
+  }
+
+  const gravadas: [string, unknown][] = [];
+  const { portas } = montar({ async registrarOrigem(pedido, o) { gravadas.push([pedido, o]); } });
+  await iniciarCompra(l.corpo, portas);
+  assert.deepEqual(gravadas, [["0d760000-0000-4000-8000-0000000000e1", l.corpo.origem]], "grava a origem no pedido reservado");
+
+  const semOrigem = lerCorpoDaCompra(bom);
+  assert.ok(semOrigem.ok);
+  if (semOrigem.ok) { gravadas.length = 0; await iniciarCompra(semOrigem.corpo, portas); assert.equal(gravadas.length, 0, "sem origem, não chama o banco"); }
+
+  const quebrada = montar({ async registrarOrigem() { throw new Error("banco fora do ar"); } });
+  const compra = await iniciarCompra(l.corpo, quebrada.portas);
+  assert.equal(compra.situacao, "aguardando_pagamento", "falhar em guardar a origem não derruba a compra");
+  assert.equal(quebrada.chamadas.erros.length, 1, "mas o erro fica no registro");
+  assert.equal(quebrada.chamadas.cobrancas.length, 1, "e a cobrança nasce");
 });

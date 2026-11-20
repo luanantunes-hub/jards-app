@@ -7,6 +7,7 @@ import { TelaEscolherLugares } from "@/components/ticketeria/AssentosView";
 import { TelaListaDeEspera, TelaNaListaDeEspera } from "@/components/ticketeria/ListaDeEsperaView";
 import { lerCorpoDaEspera } from "@/lib/ticketeria/espera";
 import { alternarEscolha, comCorredor, comEscolhidos, lerMapaDaSessao, rotuloDoLugar, type LugarEscolhido, type MapaDaSessao } from "@/lib/ticketeria/mapa";
+import { origemDaPagina } from "@/lib/ticketeria/origem";
 import { lerCorpoDaCompra } from "@/lib/ticketeria/pagamento/compra";
 import { codigoDoCupomValido, descontoEmTexto, descontoNasFaixas, normalizarCodigo, type CupomConferido } from "@/lib/ticketeria/cupom";
 import { VERSAO_DOS_TERMOS_DE_COMPRA } from "@/lib/ticketeria/termos-de-compra";
@@ -109,7 +110,9 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     setErro(null);
     if (!aceito) { setErro("Aceite os Termos de compra para continuar."); return; }
     const leitura = lerCorpoDaCompra({ sessao_id: sessao, itens: Object.entries(quantidades).filter(([, q]) => q > 0).map(([ingresso_id, quantidade]) => ({ ingresso_id, quantidade })), ...valores, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio, parcelas: meio === "cartao" ? parcelas : 1, cupom: cupom?.codigo ?? null,
-      lugares: ingressos.filter(i => i.numerado && (quantidades[i.id] ?? 0) > 0).map(i => ({ ingresso_id: i.id, assentos: lugares[i.id] ?? [] })) });
+      lugares: ingressos.filter(i => i.numerado && (quantidades[i.id] ?? 0) > 0).map(i => ({ ingresso_id: i.id, assentos: lugares[i.id] ?? [] })),
+      // De qual link de divulgação a pessoa veio (?canal=, ?acao=, utm_* e o site de onde chegou). Só rótulo, lido do endereço no momento da compra; nada fica guardado no navegador.
+      origem: origemDaPagina(window.location.search, document.referrer, window.location.hostname) });
     if (!leitura.ok) { setErro(`Confira: ${leitura.problemas.join(", ")}.`); return; }
     setTrabalhando(true);
     try {
