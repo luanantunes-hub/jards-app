@@ -1,6 +1,6 @@
 Fontes da landing da Ticketeria, hospedadas aqui (sem pedidos a servidores de terceiros).
 
-- Satoshi (400, 500, 700) e Gambetta (itálico 400): Indian Type Foundry, distribuídas pela Fontshare sob a ITF Free Font License
+- Satoshi (400, 500, 700), Cabinet Grotesk (800, no nome da marca) e Gambetta (itálico 400): Indian Type Foundry, distribuídas pela Fontshare sob a ITF Free Font License
   (uso comercial permitido). https://www.fontshare.com
   Antes de qualquer mudança de uso, conferir o texto da licença de cada fonte na página dela na Fontshare.
 - Geist Mono (400-500, subconjunto latino): Vercel, licença SIL Open Font License 1.1.
