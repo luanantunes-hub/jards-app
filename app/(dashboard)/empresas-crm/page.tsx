@@ -144,13 +144,21 @@ export default function EmpresasCrmPage() {
   const [search, setSearch] = useState("");
   const [dSearch, setDSearch] = useState("");
   const [tipoFilter, setTipoFilter] = useState<string>("todos");
-  // "Ver no CRM", no aviso da seleção em lote dos patrocinadores, chega com ?tag=. A lista só aparece depois de
-  // carregar no navegador, então ler o endereço aqui não descasa a hidratação.
+  // O fim da seleção em lote dos patrocinadores chega com ?tag=. A lista só aparece depois de carregar no
+  // navegador, então ler o endereço aqui não descasa a hidratação.
   const [tagFilter, setTagFilter] = useState(() => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("tag")) ?? "todas");
   const [showNovoProspect, setShowNovoProspect] = useState(false);
   const [showNovoCliente, setShowNovoCliente] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [viewMode, setViewMode] = usePersistedViewMode<ViewMode>("jards:empresas:view", VIEW_MODES, "lista");
+  // Chegar com ?tag= ou ?responsavel= (o fim da seleção em lote dos patrocinadores) abre a LISTA, mesmo para quem
+  // costuma ver as tags em cartões. A preferência fica guardada e volta quando a pessoa troca o modo aqui.
+  const [chegouComFiltro, setChegouComFiltro] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const endereco = new URLSearchParams(window.location.search);
+    return endereco.has("tag") || endereco.has("responsavel");
+  });
+  const modo: ViewMode = chegouComFiltro ? "lista" : viewMode;
 
   function handleDelete(id: string, nome: string) {
     confirmDelete({
@@ -308,7 +316,7 @@ export default function EmpresasCrmPage() {
         summary={!loading && <ListSummary strong={filtered.length}>{filtered.length === 1 ? "empresa" : "empresas"}</ListSummary>}
         actions={
           <div className="flex items-center gap-2">
-            <EntityViewSwitcher value={viewMode} onChange={modo => { if (modo === "tags") setTagFilter("todas"); setViewMode(modo); }} options={VIEW_OPTIONS}/>
+            <EntityViewSwitcher value={modo} onChange={novo => { setChegouComFiltro(false); if (novo === "tags") setTagFilter("todas"); setViewMode(novo); }} options={VIEW_OPTIONS}/>
             {tipoFilter === "cliente_ativo"
               ? <PrimaryListAction onClick={() => setShowNovoCliente(true)}><Plus size={13} aria-hidden="true" /> Novo cliente</PrimaryListAction>
               : <PrimaryListAction onClick={() => setShowNovoProspect(true)}><Plus size={13} aria-hidden="true" /> Novo prospect</PrimaryListAction>}
@@ -328,7 +336,7 @@ export default function EmpresasCrmPage() {
             { value: "ex_cliente",    label: "Ex-Clientes" },
           ] as const}
         />
-        <FiltroResponsavel membros={responsavel.membros} meuId={responsavel.meuId} value={responsavel.filtro} onChange={responsavel.setFiltro} />
+        <FiltroResponsavel membros={responsavel.membros} meuId={responsavel.meuId} value={responsavel.filtro} onChange={responsavel.setFiltro} sempre rotuloDeTodos="Todos os responsáveis" />
         {tagsDasEmpresas.length > 0 && (
           <CustomDropdown
             value={tagFilter}
@@ -341,7 +349,7 @@ export default function EmpresasCrmPage() {
         )}
       </ListToolbar>
 
-      <ListContent className="md:pr-0">{viewMode === "tags" ? (
+      <ListContent className="md:pr-0">{modo === "tags" ? (
         <div className="md:pr-8">
           <VisaoPorTags
             itens={filtered}
@@ -395,7 +403,7 @@ export default function EmpresasCrmPage() {
                   <td colSpan={COL_COUNT}>
                     {empresas.length === 0
                       ? <ListEmptyState icon={Building2} title="Nenhuma empresa cadastrada" description="Adicione empresas que você está prospectando ou explore a base de patrocinadores." action={<PrimaryListAction onClick={() => setShowNovoProspect(true)}><Plus size={13} aria-hidden="true" /> Novo prospect</PrimaryListAction>} />
-                      : <ListEmptyState icon={Search} title="Nenhuma empresa corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setTipoFilter("todos"); responsavel.setFiltro("todos"); }} />}
+                      : <ListEmptyState icon={Search} title="Nenhuma empresa corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setTipoFilter("todos"); setTagFilter("todas"); responsavel.setFiltro("todos"); }} />}
                   </td>
                 </tr>
               ) : (
