@@ -95,7 +95,7 @@ export default function EventoPage() {
       onConfirm: async () => {
         const { error } = await clienteDaTicketeria(createClient()).from("ticketeria_eventos").delete().eq("id", evento.id);
         if (error) throw new Error(mensagemDoErroDoEvento(error));
-        router.push("/ingressos");
+        router.push("/ingressos/eventos");
       },
     });
   }
@@ -108,7 +108,7 @@ export default function EventoPage() {
   }
 
   if (evento === undefined) return <DetailPageSkeleton sidebar={false} />;
-  if (evento === null || !organizationId) return <DetailNotFound title="Evento não encontrado" description="Ele pode ter sido apagado ou você não tem acesso." backHref="/ingressos" backLabel="Voltar aos eventos" />;
+  if (evento === null || !organizationId) return <DetailNotFound title="Evento não encontrado" description="Ele pode ter sido apagado ou você não tem acesso." backHref="/ingressos/eventos" backLabel="Voltar aos eventos" />;
 
   const editavel = podeEditar && evento.situacao !== "cancelado";
   const resumo = [ROTULO_DA_SITUACAO_DO_EVENTO[evento.situacao], evento.classificacao ? ROTULO_DA_CLASSIFICACAO[evento.classificacao as ClassificacaoIndicativa] : null].filter(Boolean).join(" · ");
@@ -117,7 +117,7 @@ export default function EventoPage() {
     <div className="min-h-full">
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
-          <DetailBackLink href="/ingressos" label="Eventos" />
+          <DetailBackLink href="/ingressos/eventos" label="Eventos" />
           <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
               <h1 className="text-[1.5rem] font-medium tracking-[-.02em] text-[#282525] [text-wrap:balance]">{evento.titulo}</h1>
