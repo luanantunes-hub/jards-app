@@ -177,7 +177,15 @@
       .tku-btn { white-space:normal; }
 }
 @media (max-width:640px) { .tku-fitas { height:168px; margin-top:20px; } }
-@media (prefers-reduced-motion: reduce) { .tku-btn, .tku-faq summary i { transition:none; } }
+@media (max-width:640px) {
+  /* nas telas estreitas a maquete do fechamento mostra as colunas essenciais */
+  .tku-tab--l :is(th,td):nth-child(3), .tku-tab--l :is(th,td):nth-child(4) { display:none; }
+  .tku-mc .tku-janela .tku-h { font-size:10px; gap:8px; }
+  .tku-mc .tku-janela .tku-h span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tku-mc .tku-janela .tku-h span:last-child, .tku-tab--l td:last-child { white-space:nowrap; }
+  .tku-mc .tku-tot { flex-wrap:wrap; }
+}
+@media (prefers-reduced-motion: reduce) { .tku-btn, .tku-faq summary i, .tku-exp, .tku-fec { transition:none; } }
 
 /* situação de cada capacidade */
 .tku-st { display:inline-flex; align-items:center; gap:7px; padding:3px 8px; border-radius:999px; border:1px solid var(--tku-linha); background:rgba(255,255,255,.7); font-family:'Geist Mono',ui-monospace,monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; color:var(--tku-ink); }
@@ -189,6 +197,67 @@
 .tku-seis h3 { font-size:25px; line-height:1.12; margin-top:20px; }
 .tku-seis p.tku-t { margin-top:12px; font-size:14.5px; line-height:1.6; color:var(--tku-mudo); max-width:300px; }
 .tku-par { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; margin-top:40px; align-items:start; }
+
+/* ── Mosaico da plataforma: cada peça com a sua maquete, ampliável ── */
+.tku-mos { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:16px; margin-top:48px; }
+.tku-mc { position:relative; overflow:hidden; grid-column:span 4; display:flex; flex-direction:column; min-height:392px;
+  padding:26px; background:var(--tku-papel); border:1px solid var(--tku-linha); border-radius:var(--tku-raio); }
+.tku-mc--7 { grid-column:span 7; } .tku-mc--5 { grid-column:span 5; } .tku-mc--12 { grid-column:span 12; min-height:0; }
+.tku-mc::before { content:""; position:absolute; inset:0; pointer-events:none; }
+.tku-mc--amb::before { background:radial-gradient(130% 88% at 100% 0%, rgba(255,85,40,.20), rgba(255,85,40,0) 56%); }
+.tku-mc--lil::before { background:radial-gradient(120% 96% at 0% 100%, rgba(100,80,210,.18), rgba(100,80,210,0) 58%); }
+.tku-mc > * { position:relative; z-index:1; }
+.tku-mc-cab { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+.tku-mc h3 { font-size:25px; line-height:1.12; margin-top:18px; max-width:16ch; }
+.tku-mc--7 h3, .tku-mc--12 h3 { max-width:22ch; }
+.tku-mc-art { flex:1; min-height:0; margin-top:26px; display:flex; align-items:flex-end; }
+.tku-mc-art > * { width:100%; }
+.tku-exp { display:none; }
+.tku-mos--js .tku-exp { display:inline-flex; align-items:center; justify-content:center; flex:none; width:38px; height:38px; padding:0;
+  border:0; border-radius:10px; background:rgba(28,14,51,.06); color:var(--tku-ink); cursor:pointer; transition:background-color .16s ease, color .16s ease; }
+.tku-mos--js .tku-exp:hover { background:var(--tku-vio); color:#fff; }
+.tku-exp svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.tku-exp:focus-visible { outline:2px solid var(--tku-vio); outline-offset:3px; }
+.tku-cx { padding:18px; background:#fff; border:1px solid var(--tku-linha); border-radius:10px; box-shadow:0 1px 2px rgba(28,14,51,.04), 0 18px 36px -26px rgba(28,14,51,.26); }
+.tku-val { font-size:30px; line-height:1.05; letter-spacing:-.045em; margin-top:4px; }
+.tku-split { position:relative; height:8px; margin-top:16px; border-radius:99px; background:var(--tku-amb); overflow:hidden; }
+.tku-split i { position:absolute; left:0; top:0; bottom:0; width:var(--w); background:var(--tku-vio); }
+.tku-rep li { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:10px 0; border-top:1px solid var(--tku-linha); font-size:13.5px; }
+.tku-rep li:first-child { border-top:0; margin-top:4px; }
+.tku-rep span { display:flex; align-items:center; gap:8px; color:var(--tku-mudo); }
+.tku-rep span::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--tku-vio); flex:none; }
+.tku-rep li:last-child span::before { background:var(--tku-amb); }
+.tku-rep b { font-weight:500; }
+.tku-fluxo { display:flex; align-items:center; gap:9px; margin-top:18px; padding-top:14px; border-top:1px solid var(--tku-linha); color:var(--tku-mudo); }
+.tku-fluxo i { flex:1; height:1px; background:rgba(28,14,51,.18); }
+.tku-mapa { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:4px; margin-top:14px; }
+.tku-mapa i { display:block; aspect-ratio:1; border-radius:3px; background:rgba(28,14,51,.10); }
+.tku-mapa i.v { background:var(--tku-vio); }
+.tku-mapa i.c { background:var(--tku-lima); box-shadow:inset 0 0 0 1px rgba(28,14,51,.3); }
+.tku-leg { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:14px; color:var(--tku-mudo); }
+.tku-leg span { display:flex; align-items:center; gap:6px; }
+.tku-leg i { display:block; width:8px; height:8px; border-radius:2px; background:rgba(28,14,51,.10); }
+.tku-leg span:nth-child(2) i { background:var(--tku-vio); }
+.tku-leg span:nth-child(3) i { background:var(--tku-lima); box-shadow:inset 0 0 0 1px rgba(28,14,51,.3); }
+.tku-prog { display:flex; justify-content:space-between; gap:10px; color:var(--tku-mudo); }
+.tku-barra { position:relative; display:block; height:7px; margin-top:10px; border-radius:99px; background:rgba(28,14,51,.1); overflow:hidden; }
+.tku-barra::after { content:""; position:absolute; inset:0 auto 0 0; width:var(--w); background:var(--tku-vio); }
+.tku-fone { width:192px; margin:0 auto; padding:8px; border-radius:24px; background:var(--tku-ink); box-shadow:0 24px 44px -28px rgba(28,14,51,.7); }
+.tku-fone-tela { padding:22px 16px 16px; border-radius:17px; background:#fff; text-align:center; }
+.tku-fone svg { display:block; width:26px; height:26px; margin:0 auto 14px; stroke:var(--tku-ink); fill:none; stroke-width:1.5; stroke-linecap:round; }
+.tku-fone-btn { margin-top:18px; padding:11px; border-radius:9px; background:var(--tku-ink); color:#fff; font-family:'Geist Mono',ui-monospace,monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
+.tku-tab--l th:not(:first-child), .tku-tab--l td:not(:first-child) { text-align:right; }
+.tku-tab--l tfoot td { background:var(--tku-sup); font-weight:500; }
+.tku-dlg { width:100%; max-width:min(880px,92vw); padding:0; border:0; border-radius:var(--tku-raio); background:var(--tku-papel); color:var(--tku-ink); box-shadow:0 40px 80px -30px rgba(28,14,51,.55); }
+.tku-dlg::backdrop { background:rgba(28,14,51,.45); }
+.tku-dlg-cab { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding:28px 28px 0; }
+.tku-dlg h3 { font-size:30px; line-height:1.1; letter-spacing:-.045em; }
+.tku-dlg p { padding:0 28px; margin-top:14px; font-size:15px; line-height:1.6; color:var(--tku-mudo); max-width:620px; }
+.tku-dlg-art { padding:26px 28px 30px; }
+.tku-fec { display:inline-flex; align-items:center; justify-content:center; flex:none; width:38px; height:38px; padding:0; border:0; border-radius:10px;
+  background:rgba(28,14,51,.06); color:var(--tku-ink); font-size:17px; line-height:1; cursor:pointer; transition:background-color .16s ease, color .16s ease; }
+.tku-fec:hover { background:var(--tku-ink); color:#fff; }
+.tku-fec:focus-visible { outline:2px solid var(--tku-vio); outline-offset:3px; }
 .tku-quem--d li { align-items:center; }
 .tku-quem--d p.tku-d { max-width:340px; font-size:14.5px; line-height:1.55; color:var(--tku-mudo); text-align:left; }
 .tku-quem--d li > div { display:flex; align-items:center; justify-content:space-between; gap:24px; flex:1; }
@@ -200,6 +269,8 @@
 .tku-vemai li:first-child { border-top:0; }
 @media (max-width:1023px) {
   .tku-seis { grid-template-columns:minmax(0,1fr); }
+  .tku-mos { grid-template-columns:minmax(0,1fr); }
+  .tku-mc, .tku-mc--7, .tku-mc--5, .tku-mc--12 { grid-column:auto; min-height:0; }
   .tku-par { grid-template-columns:minmax(0,1fr); }
   .tku-quem--d li > div { flex-direction:column; align-items:flex-start; gap:6px; padding-bottom:14px; }
 }
@@ -280,16 +351,12 @@ section[id] { scroll-margin-top:72px; }
     <p class="tku-cab tku-mono"><span class="tku-idx tku-vio">/02</span><span>Plataforma</span></p>
     <h2 id="base-titulo" class="tku-h2 tku-cond">Uma base flexível <span class="tku-vio">para cada tipo de evento.</span></h2>
     <p class="tku-lede">Sessão única, temporada ou turnê, com ou sem assento marcado. As mesmas peças, configuradas para cada modelo de venda.</p>
-    <div class="tku-seis">
-      <article><span class="tku-st">Em teste</span><h3 class="tku-cond">Venda online, na sua marca</h3><p class="tku-t">Loja, agenda e compra no domínio do organizador. O comprador não precisa criar conta e recebe o ingresso por e-mail.</p></article>
-      <article><span class="tku-st">Em teste</span><h3 class="tku-cond">Receba direto, sem custódia</h3><p class="tku-t">O pagamento é dividido no momento da compra: o valor do ingresso vai para o organizador e só a taxa fica com a Ticketeria. A Ticketeria não retém o dinheiro.</p></article>
-      <article><span class="tku-st">Em teste</span><h3 class="tku-cond">Gerencie lotes, assentos e categorias</h3><p class="tku-t">Assento marcado, categorias de preço, cortesias, cupons e lista de espera, com lotes que avançam quando esgotam.</p></article>
-      <article><span class="tku-st">Em teste</span><h3 class="tku-cond">Controle o acesso, mesmo sem conexão</h3><p class="tku-t">Cada ingresso tem um QR assinado. A leitura valida na hora e sincroniza quando a conexão volta.</p></article>
-      <article><span class="tku-st tku-st--c">Em construção</span><h3 class="tku-cond">Venda presencialmente</h3><p class="tku-t">Cobrança por Pix, cartão e terminal de pagamento no ponto de venda, com o mesmo controle de assentos e de público.</p></article>
-      <article><span class="tku-st">Em teste</span><h3 class="tku-cond">Feche cada sessão com relatórios</h3><p class="tku-t">Receita, taxas, público e cortesias por sessão, em relatórios para conciliação e prestação de contas.</p></article>
-    </div>
-
-    <div class="tku-par">
+    <div class="tku-mos" data-mosaico>
+  <article class="tku-mc tku-mc--7 tku-mc--amb">
+    <div class="tku-mc-cab"><span class="tku-st">Em teste</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Venda online, na sua marca"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
+    <h3 class="tku-cond">Venda online, na sua marca</h3>
+    <p class="tku-t tku-sr" data-txt>Loja, agenda e compra no domínio do organizador. O comprador não precisa criar conta e recebe o ingresso por e-mail.</p>
+    <div class="tku-mc-art">
       <div class="tku-janela" aria-hidden="true">
         <div class="tku-h tku-mono"><span>ciadeteatro.com.br/ingressos</span><span>Sáb 12/12 · 20h</span></div>
         <div class="tku-url">
@@ -298,19 +365,86 @@ section[id] { scroll-margin-top:72px; }
           <table class="tku-tab"><thead><tr class="tku-mono tku-mudo"><th>Categoria</th><th>Preço</th><th>Qtd.</th></tr></thead>
             <tbody><tr><td>Inteira</td><td>R$ 60,00</td><td>2</td></tr><tr><td>Meia-entrada</td><td>R$ 30,00</td><td>1</td></tr><tr><td>Social</td><td>R$ 15,00</td><td>0</td></tr></tbody></table>
         </div>
-        <div class="tku-tot"><span>Total R$ 150,00 + taxa</span><span class="tku-btn">Pagar com Pix <i>↗</i></span></div>
+        <div class="tku-tot"><span>Total R$ 150,00</span><span class="tku-btn">Pagar com Pix <i>↗</i></span></div>
       </div>
+    </div>
+  </article>
+  <article class="tku-mc tku-mc--5 tku-mc--lil">
+    <div class="tku-mc-cab"><span class="tku-st">Em teste</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Receba direto, sem custódia"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
+    <h3 class="tku-cond">Receba direto, sem custódia</h3>
+    <p class="tku-t tku-sr" data-txt>O pagamento é dividido no momento da compra: o valor do ingresso vai para o organizador e só a taxa fica com a Ticketeria. A Ticketeria não retém o dinheiro.</p>
+    <div class="tku-mc-art">
+      <div class="tku-cx" aria-hidden="true">
+        <p class="tku-mono tku-mudo">Ingresso vendido</p>
+        <p class="tku-val tku-cond">R$ 60,00</p>
+        <div class="tku-split"><i style="--w:97.5%"></i></div>
+        <ul class="tku-rep">
+          <li><span>Organizador</span><b>R$ 58,50</b></li>
+          <li><span>Taxa da Ticketeria · 2,5%</span><b>R$ 1,50</b></li>
+        </ul>
+        <div class="tku-fluxo tku-mono"><span>Compra</span><i></i><span>Divisão</span><i></i><span>Repasse</span></div>
+      </div>
+    </div>
+  </article>
+  <article class="tku-mc ">
+    <div class="tku-mc-cab"><span class="tku-st">Em teste</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Gerencie lotes, assentos e categorias"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
+    <h3 class="tku-cond">Gerencie lotes, assentos e categorias</h3>
+    <p class="tku-t tku-sr" data-txt>Assento marcado, categorias de preço, cortesias, cupons e lista de espera, com lotes que avançam quando esgotam.</p>
+    <div class="tku-mc-art">
+      <div class="tku-cx" aria-hidden="true">
+        <div class="tku-mono tku-mudo" style="display:flex;justify-content:space-between;gap:10px"><span>Plateia A</span><span>Lote 2 · R$ 60</span></div>
+        <div class="tku-mapa"><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="c"></i><i></i><i></i><i></i><i></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="c"></i><i></i><i></i><i></i><i></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="tku-leg tku-mono"><span><i></i>Livre</span><span><i></i>Vendido</span><span><i></i>Cortesia</span></div>
+      </div>
+    </div>
+  </article>
+  <article class="tku-mc ">
+    <div class="tku-mc-cab"><span class="tku-st">Em teste</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Controle o acesso, mesmo sem conexão"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
+    <h3 class="tku-cond">Controle o acesso, mesmo sem conexão</h3>
+    <p class="tku-t tku-sr" data-txt>Cada ingresso tem um QR assinado. A leitura valida na hora e sincroniza quando a conexão volta.</p>
+    <div class="tku-mc-art">
       <div class="tku-janela" aria-hidden="true">
-        <div class="tku-h tku-mono"><span>Acesso / sáb 12/12 · 20h</span><span>● ao vivo</span></div>
+        <div class="tku-h tku-mono"><span>Acesso · sáb 20h</span><span>● ao vivo</span></div>
         <div class="tku-b tku-mono">
-          <div class="tku-bar2"><span>Entraram</span><i style="--w:69%"></i><span>604 / 876</span></div>
-          <div class="tku-bar2"><span>Sem conexão</span><i style="--w:7%"></i><span>12 a sincronizar</span></div>
+          <div class="tku-prog"><span>Entraram</span><span>604 / 876</span></div>
+          <i class="tku-barra" style="--w:69%"></i>
         </div>
-        <div class="tku-ln"><span class="tku-tg tku-tg--g">Válido</span>Meia-entrada · Fila C, 12</div>
-        <div class="tku-ln"><span class="tku-tg tku-tg--g">Válido</span>Inteira · Plateia</div>
-        <div class="tku-ln"><span class="tku-tg tku-tg--y">Já utilizado</span>Inteira · Plateia<em>entrada às 19h52</em></div>
+        <div class="tku-ln"><span class="tku-tg tku-tg--g">Válido</span>Meia · Fila C, 12</div>
+        <div class="tku-ln"><span class="tku-tg tku-tg--y">Já utilizado</span>Inteira · Plateia</div>
         <div class="tku-ln"><span class="tku-tg tku-tg--r">Inválido</span>QR de outra sessão</div>
       </div>
+    </div>
+  </article>
+  <article class="tku-mc tku-mc--amb">
+    <div class="tku-mc-cab"><span class="tku-st tku-st--c">Em construção</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Venda presencialmente"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
+    <h3 class="tku-cond">Venda presencialmente</h3>
+    <p class="tku-t tku-sr" data-txt>Cobrança por Pix, cartão e terminal de pagamento no ponto de venda, com o mesmo controle de assentos e de público.</p>
+    <div class="tku-mc-art">
+      <div class="tku-fone" aria-hidden="true">
+        <div class="tku-fone-tela">
+          <svg viewBox="0 0 24 24"><path d="M8.5 6.5a7.5 7.5 0 0 1 0 11M12.5 4a11 11 0 0 1 0 16M4.5 9a3.6 3.6 0 0 1 0 6"/></svg>
+          <p class="tku-mono tku-mudo">Cia. de Teatro do Porto</p>
+          <p class="tku-val tku-cond">R$ 60,00</p>
+          <p class="tku-mono tku-mudo" style="margin-top:10px">Aproxime o cartão<br />ou pague por Pix</p>
+          <div class="tku-fone-btn">Cobrar</div>
+        </div>
+      </div>
+    </div>
+  </article>
+  <article class="tku-mc tku-mc--12">
+    <div class="tku-mc-cab"><span class="tku-st">Em teste</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Feche cada sessão com relatórios"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
+    <h3 class="tku-cond">Feche cada sessão com relatórios</h3>
+    <p class="tku-t tku-sr" data-txt>Receita, taxas, público e cortesias por sessão, em relatórios para conciliação e prestação de contas.</p>
+    <div class="tku-mc-art">
+      <div class="tku-janela" aria-hidden="true">
+        <div class="tku-h tku-mono"><span>O Auto da Compadecida · Temporada 2026</span><span>4 sessões</span></div>
+        <table class="tku-tab tku-tab--l"><thead><tr class="tku-mono tku-mudo"><th>Sessão</th><th>Público</th><th>Cortesias</th><th>Taxas</th><th>Receita</th></tr></thead>
+          <tbody><tr><td>Qui 10/12 · 20h</td><td>268</td><td>12</td><td>R$ 341,25</td><td>R$ 13.650,00</td></tr><tr><td>Sex 11/12 · 20h</td><td>312</td><td>18</td><td>R$ 402,50</td><td>R$ 16.100,00</td></tr><tr><td>Sáb 12/12 · 20h</td><td>348</td><td>9</td><td>R$ 456,25</td><td>R$ 18.250,00</td></tr><tr><td>Dom 13/12 · 18h</td><td>295</td><td>24</td><td>R$ 371,00</td><td>R$ 14.840,00</td></tr></tbody>
+          <tfoot><tr><td>Temporada</td><td>1.223</td><td>63</td><td>R$ 1.571,00</td><td>R$ 62.840,00</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </article>
     </div>
   </div>
 </section>
@@ -470,6 +604,15 @@ section[id] { scroll-margin-top:72px; }
   </p>
 </section>
 
+
+<dialog class="tku-dlg" id="tku-dialogo" aria-labelledby="tku-dlg-tit">
+  <div class="tku-dlg-cab">
+    <h3 class="tku-cond" id="tku-dlg-tit" data-dlg-tit></h3>
+    <button type="button" class="tku-fec" data-dlg-fechar aria-label="Fechar">✕</button>
+  </div>
+  <p data-dlg-txt></p>
+  <div class="tku-dlg-art" data-dlg-art></div>
+</dialog>
 </main>
 
 <footer class="tku-foot">
@@ -521,6 +664,30 @@ section[id] { scroll-margin-top:72px; }
     .whatsapp-float { right: 1rem; bottom: 1rem; width: 3.25rem; height: 3.25rem; }
   }
 </style>
+<script>
+// Cada peça do mosaico amplia numa janela com a mesma maquete, em tamanho maior, e a sua descrição.
+// O botão de ampliar só aparece quando há JavaScript e suporte a <dialog>.
+(function () {
+  var mos = document.querySelector("[data-mosaico]");
+  var dlg = document.getElementById("tku-dialogo");
+  if (!mos || !dlg || typeof dlg.showModal !== "function") return;
+  mos.classList.add("tku-mos--js");
+  var tit = dlg.querySelector("[data-dlg-tit]");
+  var txt = dlg.querySelector("[data-dlg-txt]");
+  var art = dlg.querySelector("[data-dlg-art]");
+  mos.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-exp]");
+    if (!b) return;
+    var peca = b.closest("article");
+    tit.textContent = peca.querySelector("h3").textContent;
+    txt.textContent = peca.querySelector("[data-txt]").textContent;
+    art.replaceChildren(peca.querySelector(".tku-mc-art").firstElementChild.cloneNode(true));
+    dlg.showModal();
+  });
+  dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+  dlg.querySelector("[data-dlg-fechar]").addEventListener("click", function () { dlg.close(); });
+})();
+</script>
 <script>
 // O polvo só se mexe quando aparece na tela, e fica parado (só o quadro de capa) com "reduzir movimento" ou sem JavaScript.
 (function () {
