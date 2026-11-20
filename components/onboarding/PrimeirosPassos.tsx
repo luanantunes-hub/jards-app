@@ -73,7 +73,11 @@ export function PrimeirosPassos() {
 
       const ordem = ordemDosPassos(perfil.objetivo_principal);
       const existencias = await Promise.all(
-        ordem.map(passo => db.from(passo.tabela).select("id").eq("organization_id", organizationId).limit(1)),
+        ordem.map(passo => {
+          const consulta = db.from(passo.tabela).select("id").eq("organization_id", organizationId);
+          // Os exemplos da conta nova não contam como passo feito (editais_user não tem exemplos).
+          return (passo.tabela === "editais_user" ? consulta : consulta.eq("exemplo", false)).limit(1);
+        }),
       );
       if (cancelado) return;
       const feitos = new Set<PassoId>(
