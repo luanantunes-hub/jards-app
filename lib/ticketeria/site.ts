@@ -4,11 +4,11 @@
 
 // ─── Blocos ─────────────────────────────────────────────────────────────────
 
-export const TIPOS_DE_BLOCO = ["titulo", "texto", "imagem", "botao", "programacao", "contato"] as const;
+export const TIPOS_DE_BLOCO = ["titulo", "texto", "imagem", "botao", "programacao", "ingressos", "contato"] as const;
 export type TipoDeBloco = (typeof TIPOS_DE_BLOCO)[number];
 
 export const ROTULO_DO_TIPO_DE_BLOCO: Record<TipoDeBloco, string> = {
-  titulo: "Título", texto: "Texto", imagem: "Imagem", botao: "Botão com link", programacao: "Programação de um espaço (Produção)", contato: "Contato",
+  titulo: "Título", texto: "Texto", imagem: "Imagem", botao: "Botão com link", programacao: "Programação de um espaço (Produção)", ingressos: "Ingressos de um evento", contato: "Contato",
 };
 
 export type Bloco =
@@ -18,6 +18,8 @@ export type Bloco =
   | { tipo: "botao"; rotulo: string; url: string }
   /** As sessões confirmadas de um espaço da Produção da mesma organização; sem espaço, o bloco não mostra nada. */
   | { tipo: "programacao"; titulo: string; espaco_id: string | null }
+  /** As sessões de um evento publicado da mesma organização, cada uma com o botão de comprar (a página de compra do Jards); sem evento, o bloco não mostra nada. */
+  | { tipo: "ingressos"; titulo: string; evento_id: string | null }
   | { tipo: "contato"; email: string; telefone: string; endereco: string };
 
 export const MAX_BLOCOS_POR_PAGINA = 60;
@@ -69,6 +71,12 @@ export function lerBloco(entrada: unknown): LeituraDoBloco {
       if (titulo.length > 120) return { ok: false, erro: "O título da programação pode ter até 120 letras." };
       if (espaco !== "" && !UUID.test(espaco)) return { ok: false, erro: "Escolha o espaço da programação." };
       return { ok: true, bloco: { tipo: "programacao", titulo, espaco_id: espaco === "" ? null : espaco.toLowerCase() } };
+    }
+    case "ingressos": {
+      const titulo = texto(e.titulo), evento = texto(e.evento_id);
+      if (titulo.length > 120) return { ok: false, erro: "O título dos ingressos pode ter até 120 letras." };
+      if (evento !== "" && !UUID.test(evento)) return { ok: false, erro: "Escolha o evento dos ingressos." };
+      return { ok: true, bloco: { tipo: "ingressos", titulo, evento_id: evento === "" ? null : evento.toLowerCase() } };
     }
     case "contato": {
       const email = texto(e.email), telefone = texto(e.telefone), endereco = texto(e.endereco);
@@ -191,6 +199,11 @@ export function provaConfere(registros: readonly (readonly string[])[], token: s
 /** Os espaços da Produção que os blocos de programação mostram, sem repetir. */
 export function espacosDosBlocos(blocos: readonly Bloco[]): string[] {
   return [...new Set(blocos.flatMap(bloco => (bloco.tipo === "programacao" && bloco.espaco_id ? [bloco.espaco_id] : [])))];
+}
+
+/** Os eventos que os blocos de ingressos mostram, sem repetir. */
+export function eventosDosBlocos(blocos: readonly Bloco[]): string[] {
+  return [...new Set(blocos.flatMap(bloco => (bloco.tipo === "ingressos" && bloco.evento_id ? [bloco.evento_id] : [])))];
 }
 
 /** Ordem simples de um item do menu do site: início primeiro, o resto pela ordem e pelo título. */

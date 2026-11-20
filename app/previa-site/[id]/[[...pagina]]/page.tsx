@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteView, type SiteParaDesenhar } from "@/components/ticketeria/SiteView";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
-import { programacoesDosBlocos } from "@/lib/ticketeria/site-publico";
+import { ingressosDosBlocos, programacoesDosBlocos } from "@/lib/ticketeria/site-publico";
 import { blocosDoJson, corDoTema, ordemDasPaginas } from "@/lib/ticketeria/site";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -33,6 +33,7 @@ export default async function PreviaDoSite({ params }: { params: Promise<{ id: s
     menu: ordenadas.map(item => ({ slug: item.slug, titulo: item.titulo })),
     pagina: { slug: atual.slug, titulo: atual.titulo, blocos },
     programacoes: await programacoesDosBlocos(createAdminClient(), site.organization_id, blocos),
+    ingressos: await ingressosDosBlocos(createAdminClient(), site.organization_id, blocos),
   };
   return <SiteView site={desenho} base={`/previa-site/${site.id}`} previa />;
 }

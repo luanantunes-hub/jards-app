@@ -10,6 +10,9 @@ import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { blocosDoJson, lerBloco, lerSeo, ordemDasPaginas, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, TIPOS_DE_BLOCO, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
 
+/** Um evento da loja: a fonte de um bloco de ingressos. */
+export type EventoParaBloco = { id: string; titulo: string; situacao: string };
+
 /** Um espaço da Produção da organização: a fonte de um bloco de programação. */
 export type EspacoDaProgramacao = { id: string; nome: string };
 
@@ -20,7 +23,7 @@ const AREA = "w-full rounded border border-black/[.12] bg-white px-3 py-2.5 text
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
 const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border border-black/[.12] px-3 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 
-const resumoDoBloco = (bloco: Bloco, espacos: readonly EspacoDaProgramacao[]): string => {
+const resumoDoBloco = (bloco: Bloco, espacos: readonly EspacoDaProgramacao[], eventos: readonly EventoParaBloco[] = []): string => {
   switch (bloco.tipo) {
     case "titulo": case "texto": return bloco.texto.slice(0, 120);
     case "imagem": return bloco.alt;
@@ -29,11 +32,15 @@ const resumoDoBloco = (bloco: Bloco, espacos: readonly EspacoDaProgramacao[]): s
       const espaco = espacos.find(item => item.id === bloco.espaco_id)?.nome;
       return [bloco.titulo, espaco ? `as sessões de ${espaco}` : "sem espaço: o bloco não mostra nada"].filter(Boolean).join(" · ");
     }
+    case "ingressos": {
+      const evento = eventos.find(item => item.id === bloco.evento_id);
+      return [bloco.titulo, evento ? `as sessões de ${evento.titulo}${evento.situacao === "publicado" ? "" : " (o evento ainda não está publicado: o bloco não mostra nada)"}` : "sem evento: o bloco não mostra nada"].filter(Boolean).join(" · ");
+    }
     case "contato": return [bloco.endereco, bloco.telefone, bloco.email].filter(Boolean).join(" · ");
   }
 };
 
-function BlocoSheet({ bloco, tipoInicial, espacos, onClose, onSalvar }: { bloco?: Bloco; tipoInicial: TipoDeBloco; espacos: readonly EspacoDaProgramacao[]; onClose: () => void; onSalvar: (bloco: Bloco) => Promise<string | null> }) {
+export function BlocoSheet({ bloco, tipoInicial, espacos, eventos = [], onClose, onSalvar }: { bloco?: Bloco; tipoInicial: TipoDeBloco; espacos: readonly EspacoDaProgramacao[]; eventos?: readonly EventoParaBloco[]; onClose: () => void; onSalvar: (bloco: Bloco) => Promise<string | null> }) {
   const tipo = bloco?.tipo ?? tipoInicial;
   const [texto, setTexto] = useState(bloco && (bloco.tipo === "titulo" || bloco.tipo === "texto") ? bloco.texto : "");
   const [url, setUrl] = useState(bloco && (bloco.tipo === "imagem" || bloco.tipo === "botao") ? bloco.url : "https://");
@@ -41,6 +48,8 @@ function BlocoSheet({ bloco, tipoInicial, espacos, onClose, onSalvar }: { bloco?
   const [rotulo, setRotulo] = useState(bloco?.tipo === "botao" ? bloco.rotulo : "");
   const [tituloProg, setTituloProg] = useState(bloco?.tipo === "programacao" ? bloco.titulo : "Programação");
   const [espacoId, setEspacoId] = useState(bloco?.tipo === "programacao" && bloco.espaco_id ? bloco.espaco_id : espacos[0]?.id ?? "");
+  const [tituloIng, setTituloIng] = useState(bloco?.tipo === "ingressos" ? bloco.titulo : "Ingressos");
+  const [eventoId, setEventoId] = useState(bloco?.tipo === "ingressos" && bloco.evento_id ? bloco.evento_id : eventos.find(e => e.situacao === "publicado")?.id ?? eventos[0]?.id ?? "");
   const [email, setEmail] = useState(bloco?.tipo === "contato" ? bloco.email : "");
   const [telefone, setTelefone] = useState(bloco?.tipo === "contato" ? bloco.telefone : "");
   const [endereco, setEndereco] = useState(bloco?.tipo === "contato" ? bloco.endereco : "");
@@ -49,7 +58,8 @@ function BlocoSheet({ bloco, tipoInicial, espacos, onClose, onSalvar }: { bloco?
 
   async function salvar(fechar: () => void) {
     if (tipo === "programacao" && !espacos.some(espaco => espaco.id === espacoId)) { setErro("Escolha o espaço da Produção de onde vem a programação."); return; }
-    const leitura = lerBloco({ tipo, texto, url, alt, rotulo, titulo: tituloProg, espaco_id: espacoId, email, telefone, endereco });
+    if (tipo === "ingressos" && !eventos.some(evento => evento.id === eventoId)) { setErro("Escolha o evento dos ingressos."); return; }
+    const leitura = lerBloco({ tipo, texto, url, alt, rotulo, titulo: tipo === "ingressos" ? tituloIng : tituloProg, espaco_id: espacoId, evento_id: eventoId, email, telefone, endereco });
     if (!leitura.ok) { setErro(leitura.erro); return; }
     setSalvando(true);
     const problema = await onSalvar(leitura.bloco);
@@ -94,6 +104,17 @@ function BlocoSheet({ bloco, tipoInicial, espacos, onClose, onSalvar }: { bloco?
               <div><span className={ROTULO}>Espaço</span><Dropdown ariaLabel="Espaço da programação" value={espacoId} onChange={setEspacoId} disabled={salvando} options={espacos.map(espaco => ({ value: espaco.id, label: espaco.nome }))} /></div>
             )}
             <p className="text-[0.75rem] text-black/55">Mostra as sessões confirmadas do espaço, de hoje em diante.</p>
+          </>
+        )}
+        {tipo === "ingressos" && (
+          <>
+            <div><label className={ROTULO} htmlFor="bl-ing">Título (opcional)</label><input id="bl-ing" autoFocus className={CAMPO} value={tituloIng} onChange={event => setTituloIng(event.target.value)} maxLength={120} disabled={salvando} /></div>
+            {eventos.length === 0 ? (
+              <p className="text-[0.75rem] text-black/55">Os ingressos vêm dos eventos da loja, e ainda não há nenhum. Crie e publique um evento para mostrar as sessões dele aqui.</p>
+            ) : (
+              <div><span className={ROTULO}>Evento</span><Dropdown ariaLabel="Evento dos ingressos" value={eventoId} onChange={setEventoId} disabled={salvando} options={eventos.map(evento => ({ value: evento.id, label: evento.situacao === "publicado" ? evento.titulo : `${evento.titulo} (não publicado)` }))} /></div>
+            )}
+            <p className="text-[0.75rem] text-black/55">Mostra as sessões que ainda vão acontecer, cada uma com o botão que leva à compra. O evento precisa estar publicado.</p>
           </>
         )}
         {tipo === "contato" && (
@@ -182,7 +203,7 @@ function SeoDaPagina({ pagina, podeEditar, onSalvo }: { pagina: Pagina; podeEdit
 }
 
 /** As páginas do site e os blocos de cada uma: o rascunho salva a cada mudança, e "Publicar esta página" põe no ar. */
-export function EditorDoSite({ siteId, organizationId, podeEditar, espacos }: { siteId: string; organizationId: string; podeEditar: boolean; espacos: readonly EspacoDaProgramacao[] }) {
+export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, eventos = [] }: { siteId: string; organizationId: string; podeEditar: boolean; espacos: readonly EspacoDaProgramacao[]; eventos?: readonly EventoParaBloco[] }) {
   const { confirmDelete } = useDeleteConfirm();
   const [paginas, setPaginas] = useState<Pagina[] | null>(null);
   const [slug, setSlug] = useState("inicio");
@@ -278,7 +299,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos }: { 
                     <li key={indice} className="flex items-center gap-2 px-3 py-2">
                       <button type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "bloco", indice, tipoDeBloco: bloco.tipo })} className="min-w-0 flex-1 rounded px-1 py-1 text-left transition enabled:hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                         <span className="block text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{ROTULO_DO_TIPO_DE_BLOCO[bloco.tipo]}</span>
-                        <span className="block truncate text-[0.8125rem] text-[#282525]">{resumoDoBloco(bloco, espacos)}</span>
+                        <span className="block truncate text-[0.8125rem] text-[#282525]">{resumoDoBloco(bloco, espacos, eventos)}</span>
                       </button>
                       {podeEditar && (
                         <span className="flex shrink-0 items-center">
@@ -294,7 +315,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos }: { 
               <SeoDaPagina key={`${atual.id}-${atual.descricao ?? ""}-${atual.imagem_url ?? ""}`} pagina={atual} podeEditar={podeEditar} onSalvo={recarregar} />
               {podeEditar && atual.blocos.length < 60 && (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <div className="w-64 max-w-full"><Dropdown ariaLabel="Tipo do novo bloco" value={novoTipo} onChange={setNovoTipo} options={TIPOS_DE_BLOCO.filter(tipo => tipo !== "programacao" || espacos.length > 0).map(tipo => ({ value: tipo, label: ROTULO_DO_TIPO_DE_BLOCO[tipo] }))} /></div>
+                  <div className="w-64 max-w-full"><Dropdown ariaLabel="Tipo do novo bloco" value={novoTipo} onChange={setNovoTipo} options={TIPOS_DE_BLOCO.filter(tipo => (tipo !== "programacao" || espacos.length > 0) && (tipo !== "ingressos" || eventos.length > 0)).map(tipo => ({ value: tipo, label: ROTULO_DO_TIPO_DE_BLOCO[tipo] }))} /></div>
                   <button type="button" onClick={() => setFolha({ tipo: "bloco", indice: null, tipoDeBloco: novoTipo as TipoDeBloco })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Acrescentar bloco</button>
                 </div>
               )}
@@ -305,7 +326,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos }: { 
       {folha?.tipo === "pagina" && paginas && <NovaPaginaSheet siteId={siteId} organizationId={organizationId} existentes={paginas} onClose={() => setFolha(null)} onCreated={novoSlug => { setSlug(novoSlug); recarregar(); }} />}
       {folha?.tipo === "bloco" && atual && (
         <BlocoSheet
-          bloco={folha.indice === null ? undefined : atual.blocos[folha.indice]} tipoInicial={folha.tipoDeBloco} espacos={espacos} onClose={() => setFolha(null)}
+          bloco={folha.indice === null ? undefined : atual.blocos[folha.indice]} tipoInicial={folha.tipoDeBloco} espacos={espacos} eventos={eventos} onClose={() => setFolha(null)}
           onSalvar={novo => gravar(folha.indice === null ? [...atual.blocos, novo] : atual.blocos.map((existente, i) => (i === folha.indice ? novo : existente)))}
         />
       )}
