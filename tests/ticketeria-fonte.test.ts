@@ -31,3 +31,11 @@ test("o menu e o layout geral do app não usam a fonte da Ticketeria", async () 
   const layout = await readFile("app/layout.tsx", "utf8");
   assert.doesNotMatch(layout, /fonte-ticketeria|Plus_Jakarta/);
 });
+
+test("na Ticketeria todo rounded do painel vira 12px: o layout põe a classe no body e o CSS a usa", async () => {
+  const css = await readFile("app/globals.css", "utf8");
+  assert.match(css, /body\.cantos-ticketeria \.rounded \{ border-radius: 0\.75rem; \}/);
+  const layout = await readFile("app/(dashboard)/layout.tsx", "utf8");
+  assert.match(layout, /classList\.toggle\("cantos-ticketeria", menuFixoAberto\)/);
+  assert.match(layout, /classList\.remove\("cantos-ticketeria"\)/);
+});

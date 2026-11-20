@@ -783,3 +783,8 @@ table thead th > span > span {
 .fonte-ticketeria .font-medium { font-weight: 400; }
 .fonte-ticketeria .font-semibold { font-weight: 500; }
 .fonte-ticketeria .font-bold { font-weight: 500; }
+
+/* Ticketeria (painel logado): todo `rounded` (4px) vira 12px, inclusive o menu, a barra do topo, os botões
+   e os componentes compartilhados. A classe é posta no body pelo layout do painel. rounded-full e as
+   variações (rounded-t, rounded-sm...) não entram. */
+body.cantos-ticketeria .rounded { border-radius: 0.75rem; }
