@@ -28,6 +28,11 @@ function rotulo(valor: unknown, max: number): string | null {
   return limpo === "" ? null : limpo;
 }
 
+/** O mesmo recorte do canal e da ação, para quem monta o link de divulgação (lib/ticketeria/divulgacao.ts). */
+export const rotuloDeCampanha = (valor: unknown, max: number): string | null => rotulo(valor, max);
+export const MAX_CANAL_DA_ORIGEM = MAX_CANAL;
+export const MAX_ACAO_DA_ORIGEM = MAX_ACAO;
+
 function dominio(valor: unknown): string | null {
   if (typeof valor !== "string") return null;
   const host = valor.trim().toLowerCase().replace(/[^a-z0-9.-]/g, "").slice(0, MAX_REFERENCIA).replace(/^[.-]+|[.-]+$/g, "");
