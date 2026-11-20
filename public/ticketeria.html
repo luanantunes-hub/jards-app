@@ -67,6 +67,9 @@
 
 /* abertura */
 .tku-hero { position:relative; padding:100px 0 0; border-bottom:1px solid var(--tku-linha); }
+.tku-hero .tku-in { position:relative; z-index:1; }
+/* A faixa de trilhos da abertura: desenhada em código (sem imagem nem vídeo), um laço de 12 s. */
+.tku-fitas { position:absolute; z-index:0; right:0; top:0; width:58%; height:100%; display:block; pointer-events:none; }
 .tku-hero .tku-idx { color:var(--tku-vio); display:flex; gap:14px; flex-wrap:wrap; }
 .tku-hero h1 { font-size:min(116px,9.4vw); line-height:.98; margin-top:22px; letter-spacing:-.055em; }
 .tku-hero h1 span { display:block; }
@@ -153,6 +156,7 @@
 
 @media (max-width:1023px) {
   .tku-in { padding:0 32px; }
+  .tku-fitas { position:relative; width:100%; height:200px; margin-top:28px; }
   .tku-sub, .tku-duas, .tku-duas--inv { grid-template-columns:minmax(0,1fr); gap:40px; }
   .tku-tres { grid-template-columns:minmax(0,1fr); }
         .tku-lista--tres { grid-template-columns:minmax(0,1fr); }
@@ -168,6 +172,7 @@
   .tku-cta h2 { font-size:clamp(34px,10.4vw,54px); }
       .tku-btn { white-space:normal; }
 }
+@media (max-width:640px) { .tku-fitas { height:168px; margin-top:20px; } }
 @media (prefers-reduced-motion: reduce) { .tku-btn, .tku-faq summary i { transition:none; } }
 
 /* situação de cada capacidade */
@@ -261,6 +266,7 @@ section[id] { scroll-margin-top:72px; }
       </div>
     </div>
   </div>
+  <canvas class="tku-fitas" data-fitas aria-hidden="true"></canvas>
 </section>
 
 
@@ -519,6 +525,163 @@ section[id] { scroll-margin-top:72px; }
       if (e.isIntersecting) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else { v.pause(); }
     });
   }, { threshold: 0.25 }).observe(v);
+})();
+</script>
+<script>
+// Abertura: trilhos de papel picotado com pacotes de luz correndo por eles. Desenhado em código
+// (sem imagem nem vídeo), num laço de 12 s que fecha sem emenda. Para quando sai da tela; com
+// "reduzir movimento", fica num quadro parado.
+(function () {
+  var cv = document.querySelector("[data-fitas]");
+  if (!cv || !cv.getContext) return;
+  var ctx = cv.getContext("2d");
+  var parado = window.matchMedia ? matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
+  var NOITE = "#1C0E33", IRIS = "#6450D2", LAR = "#FF5528", LIMA = "#DCFF00", T = 12;
+  var TRILHOS = [
+    { xo: -.03, amp: 54, m: 1, larg: 128, tipo: "cheia", cor: "#8C79E8", pacotes: 4 },
+    { xo: .07, amp: 70, m: 1, larg: 104, tipo: "contorno" },
+    { xo: .15, amp: 64, m: 2, larg: 92, tipo: "cheia", cor: IRIS, pacotes: 5, furos: true },
+    { xo: .25, amp: 78, m: 1, larg: 70, tipo: "tracejada", cor: IRIS },
+    { xo: .33, amp: 60, m: 2, larg: 84, tipo: "cheia", cor: LAR, pacotes: 4 },
+    { xo: .43, amp: 72, m: 1, larg: 58, tipo: "contorno" },
+    { xo: .51, amp: 56, m: 2, larg: 96, tipo: "cheia", cor: "#4A37B8", pacotes: 5, furos: true },
+    { xo: .62, amp: 66, m: 1, larg: 46, tipo: "tracejada", cor: LAR },
+    { xo: .70, amp: 50, m: 2, larg: 64, tipo: "contorno" },
+    { xo: .73, amp: 54, m: 1, larg: 24, tipo: "cheia", cor: LIMA, pacotes: 2 }
+  ];
+  var W = 0, H = 0, k = 1, faixa = false, dither = [], grao = null, fora = null;
+
+  function sorteio(semente) { return function () { semente = (semente * 1664525 + 1013904223) % 4294967296; return semente / 4294967296; }; }
+
+  function medir() {
+    var r = cv.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.round(r.width); H = Math.round(r.height);
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    k = W / 760; faixa = W > H * 1.5;
+    fora = document.createElement("canvas"); fora.width = cv.width; fora.height = cv.height;
+    fora.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
+    var r2 = sorteio(99), passo = faixa ? 6 : 7, lim = faixa ? W * .22 : W * .5;
+    dither = [];
+    for (var x = 0; x < lim; x += passo) for (var y = 0; y < H; y += passo) {
+      var p = 1 - x / lim; if (r2() < p * p * .92) dither.push([x, y]);
+    }
+    if (!grao) {
+      grao = document.createElement("canvas"); grao.width = grao.height = 256;
+      var g = grao.getContext("2d"), d = g.createImageData(256, 256);
+      for (var i = 0; i < d.data.length; i += 4) { var v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 22; }
+      g.putImageData(d, 0, 0);
+    }
+    return true;
+  }
+
+  function centro(f, u, t) {
+    var ph = 2 * Math.PI * (t / T);
+    return [W * (f.xo + .74 * u) + f.amp * k * Math.sin(2 * Math.PI * (u + f.xo * .45) + ph * f.m),
+            -H * .23 + (H * 1.46) * u + 20 * k * Math.sin(2 * Math.PI * (u * 1.6) + ph * f.m + f.xo * 5)];
+  }
+  function largura(f, u, t) { return f.larg * k * (.78 + .22 * Math.sin(2 * Math.PI * (u * 1.3 + f.xo) + 2 * Math.PI * (t / T))); }
+  function bordas(f, t, N) {
+    var A = [], B = [], C = [];
+    for (var i = 0; i <= N; i++) {
+      var u = -.06 + 1.17 * i / N, p = centro(f, u, t), q = centro(f, u + .004, t);
+      var dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, w = largura(f, u, t) / 2;
+      A.push([p[0] + nx * w, p[1] + ny * w]); B.push([p[0] - nx * w, p[1] - ny * w]); C.push(p);
+    }
+    return [A, B, C];
+  }
+  function linha(c, P) { for (var i = 0; i < P.length; i++) i ? c.lineTo(P[i][0], P[i][1]) : c.moveTo(P[0][0], P[0][1]); }
+  function contorno(c, A, B, N) { c.beginPath(); linha(c, A); for (var i = N; i >= 0; i--) c.lineTo(B[i][0], B[i][1]); c.closePath(); }
+
+  function desenhar(t) {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "rgba(28,14,51,.20)";
+    for (var x = 10; x < W; x += 26) for (var y = 10; y < H; y += 26) ctx.fillRect(x, y, 1.3, 1.3);
+    ctx.strokeStyle = "rgba(28,14,51,.10)"; ctx.lineWidth = 1;
+    for (var y2 = 10; y2 < H; y2 += 130) { ctx.beginPath(); ctx.moveTo(0, y2 + .5); ctx.lineTo(W, y2 + .5); ctx.stroke(); }
+
+    var N = 96;
+    TRILHOS.forEach(function (f) {
+      var b = bordas(f, t, N), A = b[0], B = b[1], C = b[2];
+      if (f.tipo === "cheia") {
+        ctx.save(); ctx.translate(0, 7 * k); contorno(ctx, A, B, N); ctx.fillStyle = "rgba(28,14,51,.10)"; ctx.fill(); ctx.restore();
+        if (f.furos) {
+          var o = fora.getContext("2d");
+          o.clearRect(0, 0, W, H); o.globalCompositeOperation = "source-over";
+          contorno(o, A, B, N); o.fillStyle = f.cor; o.fill();
+          o.globalCompositeOperation = "destination-out";
+          for (var i = 3; i < N - 3; i += 4) {
+            var p = A[i], q = B[i];
+            o.beginPath(); o.arc(p[0] + (q[0] - p[0]) * .085, p[1] + (q[1] - p[1]) * .085, 2.5 * k, 0, 7); o.fill();
+          }
+          o.globalCompositeOperation = "source-over";
+          ctx.drawImage(fora, 0, 0, fora.width, fora.height, 0, 0, W, H);
+        } else {
+          contorno(ctx, A, B, N); ctx.fillStyle = f.cor; ctx.fill();
+        }
+        ctx.strokeStyle = "rgba(255,255,255,.34)"; ctx.lineWidth = 1; ctx.setLineDash([3, 6]);
+        ctx.beginPath(); linha(ctx, C); ctx.stroke(); ctx.setLineDash([]);
+        for (var j = 0; j < f.pacotes; j++) {
+          var u = ((t / T) * (f.m === 2 ? 2 : 1) + j / f.pacotes) % 1, idx = Math.min(N, Math.max(0, Math.round(u * N)));
+          var a = C[idx], c2 = C[Math.min(N, idx + 2)], an = Math.atan2(c2[1] - a[1], c2[0] - a[0]);
+          ctx.save(); ctx.translate(a[0], a[1]); ctx.rotate(an);
+          var claro = f.cor === LIMA ? NOITE : "#fff";
+          if (f.cor === LIMA) { ctx.fillStyle = "rgba(28,14,51,.55)"; } else {
+            var rt = ctx.createLinearGradient(-54 * k, 0, 16 * k, 0);
+            rt.addColorStop(0, "rgba(255,255,255,0)"); rt.addColorStop(1, claro); ctx.fillStyle = rt;
+          }
+          ctx.fillRect(-54 * k, -1.3 * k, 56 * k, 2.6 * k);
+          ctx.fillStyle = claro; ctx.fillRect(-12 * k, -2.2 * k, 24 * k, 4.4 * k);
+          ctx.restore();
+        }
+      } else {
+        ctx.strokeStyle = f.tipo === "tracejada" ? f.cor : "rgba(28,14,51,.42)";
+        ctx.lineWidth = f.tipo === "tracejada" ? 1.6 : 1.1;
+        ctx.setLineDash(f.tipo === "tracejada" ? [9, 7] : []);
+        ctx.beginPath(); linha(ctx, A); ctx.stroke();
+        ctx.beginPath(); linha(ctx, B); ctx.stroke();
+        ctx.setLineDash([]);
+        if (f.tipo === "contorno") {
+          ctx.strokeStyle = "rgba(28,14,51,.16)"; ctx.lineWidth = 1;
+          for (var m = 4; m < N; m += 10) { ctx.beginPath(); ctx.moveTo(A[m][0], A[m][1]); ctx.lineTo(B[m][0], B[m][1]); ctx.stroke(); }
+        }
+      }
+    });
+
+    ctx.globalCompositeOperation = "destination-in";
+    var g2 = faixa ? ctx.createLinearGradient(0, 0, W * .26, 0) : ctx.createLinearGradient(0, 0, W * .62, 0);
+    g2.addColorStop(0, "rgba(0,0,0,0)"); g2.addColorStop(.42, "rgba(0,0,0,.55)"); g2.addColorStop(1, "rgba(0,0,0,1)");
+    ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "destination-out"; ctx.fillStyle = "#000";
+    for (var n = 0; n < dither.length; n++) ctx.fillRect(dither[n][0], dither[n][1], 4, 4);
+    ctx.globalCompositeOperation = "source-atop";
+    ctx.fillStyle = ctx.createPattern(grao, "repeat"); ctx.globalAlpha = .5; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  var visivel = false, rodando = false, inicio = 0, ultimo = 0;
+  function quadro(agora) {
+    if (!rodando) return;
+    if (agora - ultimo >= 33) { ultimo = agora; desenhar(((agora - inicio) / 1000) % T); }
+    requestAnimationFrame(quadro);
+  }
+  function ligar() {
+    if (rodando || parado.matches || !visivel) return;
+    rodando = true; inicio = performance.now() - 0; ultimo = 0; requestAnimationFrame(quadro);
+  }
+  function desligar() { rodando = false; }
+
+  if (!medir()) return;
+  desenhar(0);
+  if (!parado.matches && "IntersectionObserver" in window) {
+    new IntersectionObserver(function (e) { visivel = e[0].isIntersecting; visivel ? ligar() : desligar(); }).observe(cv);
+  }
+  function remedir() { if (medir()) desenhar(rodando ? ((performance.now() - inicio) / 1000) % T : 0); }
+  if ("ResizeObserver" in window) new ResizeObserver(remedir).observe(cv);
+  else { var espera; window.addEventListener("resize", function () { clearTimeout(espera); espera = setTimeout(remedir, 180); }, { passive: true }); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(remedir);
 })();
 </script>
 </body>
