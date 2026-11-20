@@ -8,7 +8,7 @@
 // (supabase gen types) em 18/11/2026, depois de aplicada: as mesmas colunas e anulabilidade. tests/ticketeria-banco-tipos.test.ts compara este arquivo com a migration.
 // Relationships não lista as chaves para auth.users (`criado_por`): o PostgREST só expõe o schema public.
 
-import type { CategoriaDoIngresso, ClassificacaoIndicativa, ContaDoRazao, MeioDePagamento, QuemPagaATaxa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoPedido, SituacaoDoSite, TemaDoSite, TipoDeTransacao, TipoDoCupom } from "@/lib/ticketeria/estados";
+import type { CategoriaDoIngresso, ClassificacaoIndicativa, ContaDoRazao, MeioDePagamento, QuemPagaATaxa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoPedido, OrigemDaVersao, SituacaoDoSite, TemaDoSite, TipoDeTransacao, TipoDoCupom } from "@/lib/ticketeria/estados";
 import type { Json } from "@/lib/supabase/types";
 
 export type BancoDaTicketeria = {
@@ -2115,6 +2115,51 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_site_versoes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          pagina_id: string;
+          origem: OrigemDaVersao;
+          blocos: Json;
+          criado_por: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          pagina_id: string;
+          origem: OrigemDaVersao;
+          blocos: Json;
+          criado_por?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          pagina_id?: string;
+          origem?: OrigemDaVersao;
+          blocos?: Json;
+          criado_por?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_site_versoes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_site_versoes_pagina_id_fkey";
+            columns: ["pagina_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_site_paginas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_transacoes: {
         Row: {
           id: string;
@@ -2721,6 +2766,10 @@ export type BancoDaTicketeria = {
       fn_ticketeria_webhooks_limpar: {
         Args: { p_dias: number };
         Returns: number;
+      };
+      fn_ticketeria_site_restaurar_versao: {
+        Args: { p_versao: string };
+        Returns: Json;
       };
       fn_ticketeria_porta_link_criar: {
         Args: { p_loja: string; p_sessao: string; p_rotulo: string; p_usuario: string | null };
