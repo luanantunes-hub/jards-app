@@ -8,8 +8,8 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface } from "@/components/list/ListPagePrimitives";
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PortaView, type EntradaRecente, type ResultadoDaConferencia } from "@/components/ticketeria/PortaView";
-import type { IngressoAchado } from "@/components/ticketeria/PortaExtrasView";
-import { frasesDoDesfazer, horaNoFuso, normalizarCodigo, resultadoDaBusca, resultadoDoDesfazer, type ResumoDaPorta } from "@/lib/ticketeria/porta";
+import { LinkDaEquipeSheet, type IngressoAchado, type LinkDaEquipe } from "@/components/ticketeria/PortaExtrasView";
+import { frasesDoDesfazer, horaNoFuso, linksDaEquipe, normalizarCodigo, resultadoDaBusca, resultadoDoDesfazer, type ResumoDaPorta } from "@/lib/ticketeria/porta";
 
 type SessaoNaLista = { id: string; rotulo: string; inicio: number };
 
@@ -41,6 +41,12 @@ export default function PortaPage() {
   const [buscando, setBuscando] = useState(false);
   const [desfazer, setDesfazer] = useState<{ codigo: string; comprador: string; ingresso: string; trabalhando?: boolean; erro?: string | null } | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  // O link da equipe da porta: a folha, os links da sessão e o que está acontecendo.
+  const [folhaDoLink, setFolhaDoLink] = useState(false);
+  const [links, setLinks] = useState<LinkDaEquipe[]>([]);
+  const [erroDoLink, setErroDoLink] = useState<string | null>(null);
+  const [trabalhandoNoLink, setTrabalhandoNoLink] = useState(false);
+  const [copiado, setCopiado] = useState<string | null>(null);
 
   useEffect(() => {
     queueMicrotask(() => setSemCamera(!(typeof navigator !== "undefined" && Boolean(navigator.mediaDevices) && criarDetector() !== null)));
@@ -129,6 +135,55 @@ export default function PortaPage() {
     }
   }, [lojaId, sessaoId, desfazer, atualizarResumo, buscar, termo]);
 
+  const abrirLinks = useCallback(async () => {
+    if (!lojaId || !sessaoId) return;
+    setErroDoLink(null);
+    setLinks([]);
+    setFolhaDoLink(true);
+    try {
+      const r = await fetch(`/api/ticketeria/lojas/${lojaId}/porta/links?sessao=${sessaoId}`, { cache: "no-store" });
+      const dados = (await r.json().catch(() => ({}))) as { links?: LinkDaEquipe[]; mensagem?: string };
+      if (!r.ok || !dados.links) { setErroDoLink(dados.mensagem ?? "Não foi possível carregar os links. Tente de novo."); return; }
+      setLinks(dados.links);
+    } catch {
+      setErroDoLink("Sem conexão. Tente de novo.");
+    }
+  }, [lojaId, sessaoId]);
+
+  const criarLink = useCallback(async () => {
+    if (!lojaId || !sessaoId) return;
+    setTrabalhandoNoLink(true);
+    setErroDoLink(null);
+    try {
+      const r = await fetch(`/api/ticketeria/lojas/${lojaId}/porta/links`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessao_id: sessaoId }) });
+      const dados = (await r.json().catch(() => ({}))) as { links?: LinkDaEquipe[]; mensagem?: string };
+      if (!r.ok || !dados.links) { setErroDoLink(dados.mensagem ?? "Não foi possível criar o link. Tente de novo."); return; }
+      setLinks(dados.links);
+    } catch {
+      setErroDoLink("Sem conexão. Tente de novo.");
+    } finally {
+      setTrabalhandoNoLink(false);
+    }
+  }, [lojaId, sessaoId]);
+
+  const desligarLink = useCallback(async (id: string) => {
+    if (!lojaId) return;
+    setErroDoLink(null);
+    try {
+      const r = await fetch(`/api/ticketeria/lojas/${lojaId}/porta/links/${id}`, { method: "DELETE" });
+      if (!r.ok) { setErroDoLink("Não foi possível desligar o link. Tente de novo."); return; }
+      setLinks(atual => atual.map(l => (l.id === id ? { ...l, ativo: false } : l)));
+    } catch {
+      setErroDoLink("Sem conexão. Tente de novo.");
+    }
+  }, [lojaId]);
+
+  const copiarLink = useCallback(async (id: string) => {
+    const link = links.find(l => l.id === id);
+    if (!link) return;
+    try { await navigator.clipboard.writeText(link.endereco); setCopiado(id); setTimeout(() => setCopiado(atual => (atual === id ? null : atual)), 3000); } catch { setErroDoLink("Não foi possível copiar. Selecione o endereço e copie."); }
+  }, [links]);
+
   const pararCamera = useCallback(() => {
     fluxo.current?.getTracks().forEach(t => t.stop());
     fluxo.current = null;
@@ -208,10 +263,13 @@ export default function PortaPage() {
             desfazer={desfazer} onDesfazer={codigoDaEntrada => { const e = resumo?.recentes.find(x => x.codigo === codigoDaEntrada); if (e) { setAviso(null); setDesfazer({ codigo: e.codigo, comprador: e.comprador, ingresso: e.ingresso }); } }}
             onConfirmarDesfazer={() => void confirmarDesfazer()} onCancelarDesfazer={() => setDesfazer(null)}
             relatorioHref={`/ingressos/porta/relatorio?sessao=${sessaoId}`}
+            acoes={<button type="button" onClick={() => void abrirLinks()} className="rounded-xl text-black/55 underline underline-offset-2 hover:text-black/75">Link da equipe</button>}
             previa={lendo ? <video ref={video} muted playsInline className="mb-3 aspect-video w-full rounded-xl border border-black/10 bg-[#1C0E33] object-cover" aria-label="Câmera lendo o QR Code" /> : undefined}
           />
         )}
       </ListContent>
+      {folhaDoLink && <LinkDaEquipeSheet sessao={opcoes.find(o => o.id === sessaoId)?.rotulo ?? ""} links={links} erro={erroDoLink} trabalhando={trabalhandoNoLink} copiado={copiado}
+        onCriar={() => void criarLink()} onCopiar={id => void copiarLink(id)} onRevogar={id => void desligarLink(id)} onClose={() => setFolhaDoLink(false)} />}
     </>
   );
 }
