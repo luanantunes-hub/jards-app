@@ -10,7 +10,7 @@ const RAIZ = fileURLToPath(new URL("..", import.meta.url));
 const INTERNO = /^(app\/\(dashboard\)\/|app\/admin\/|components\/)/;
 
 /** Fora do app (ou tela escura de propósito): segue em grafite. */
-const FORA_DO_APP = /^(app\/(acerto|convite|enviar|nova-senha|redefinir-senha|alterar-senha|p\/|palco|presenca|embed|publicacoes|blog|login|cadastro|dominio)|components\/site\/|components\/producao\/(ProgramacaoPublicaView|PalcoAoVivo)\.tsx|components\/ticketeria\/(SiteView|CompraView)\.tsx|app\/(comprar|pedido)\/)/;
+const FORA_DO_APP = /^(app\/(acerto|convite|enviar|nova-senha|redefinir-senha|alterar-senha|p\/|palco|presenca|embed|publicacoes|blog|login|cadastro|dominio)|components\/site\/|components\/producao\/(ProgramacaoPublicaView|PalcoAoVivo)\.tsx|components\/ticketeria\/(SiteView|CompraView|SairDaEspera|ListaDeEsperaView)\.tsx|app\/(comprar|pedido|espera)\/)/;
 
 /** Preenchimento preto chapado (com opacidade é gráfico ou cinza, e pode). */
 const PRETO = /bg-\[#(282525|0D0D0D|0d0d0d|171717|1a1a1a|000|000000)\](?!\/)|\bbg-black(?![/\w-])|hover:bg-\[#3A3535\]|background(Color)?: *[^,}\n]*"#(282525|0D0D0D|171717|1a1a1a|000)"/;

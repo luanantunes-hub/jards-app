@@ -886,6 +886,67 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_espera: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          ingresso_id: string;
+          nome: string;
+          email: string;
+          quantidade: number;
+          token: string;
+          avisado_em: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          ingresso_id: string;
+          nome: string;
+          email: string;
+          quantidade: number;
+          token?: string;
+          avisado_em?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          ingresso_id?: string;
+          nome?: string;
+          email?: string;
+          quantidade?: number;
+          token?: string;
+          avisado_em?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_espera_ingresso_id_fkey";
+            columns: ["ingresso_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_ingressos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_espera_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_espera_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_transacoes: {
         Row: {
           id: string;
@@ -1368,6 +1429,26 @@ export type BancoDaTicketeria = {
       fn_ticketeria_cupom_conferir: {
         Args: { p_sessao: string; p_codigo: string; p_fora?: string | null; p_travar?: boolean };
         Returns: Json;
+      };
+      fn_ticketeria_livres: {
+        Args: { p_sessao: string; p_ingresso: string };
+        Returns: number;
+      };
+      fn_ticketeria_espera_entrar: {
+        Args: { p_sessao: string; p_ingresso: string; p_nome: string; p_email: string; p_quantidade: number };
+        Returns: string;
+      };
+      fn_ticketeria_espera_sair: {
+        Args: { p_token: string };
+        Returns: boolean;
+      };
+      fn_ticketeria_espera_avisar: {
+        Args: { p_loja: string; p_sessao: string; p_ingresso: string; p_quantas: number };
+        Returns: Json;
+      };
+      fn_ticketeria_espera_desfazer_aviso: {
+        Args: { p_ids: string[] };
+        Returns: number;
       };
       fn_ticketeria_definir_meio: {
         Args: { p_pedido: string; p_meio: MeioDePagamento; p_parcelas: number | null };
