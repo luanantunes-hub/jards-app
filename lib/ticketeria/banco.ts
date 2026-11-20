@@ -1030,6 +1030,142 @@ export type BancoDaTicketeria = {
         };
         Relationships: [];
       };
+      ticketeria_conexoes_midia: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          provedor: string;
+          situacao: string;
+          conta_externa_id: string | null;
+          conta_nome: string | null;
+          moeda: string | null;
+          token_secret_id: string | null;
+          token_expira_em: string | null;
+          ultima_leitura_em: string | null;
+          ultimo_erro: string | null;
+          lido_desde: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          provedor: string;
+          situacao?: string;
+          conta_externa_id?: string | null;
+          conta_nome?: string | null;
+          moeda?: string | null;
+          token_secret_id?: string | null;
+          token_expira_em?: string | null;
+          ultima_leitura_em?: string | null;
+          ultimo_erro?: string | null;
+          lido_desde?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          provedor?: string;
+          situacao?: string;
+          conta_externa_id?: string | null;
+          conta_nome?: string | null;
+          moeda?: string | null;
+          token_secret_id?: string | null;
+          token_expira_em?: string | null;
+          ultima_leitura_em?: string | null;
+          ultimo_erro?: string | null;
+          lido_desde?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_conexoes_midia_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_conexoes_midia_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_midia_diaria: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          conexao_id: string;
+          canal: string;
+          dia: string;
+          gasto_centavos: number;
+          impressoes: number;
+          alcance: number;
+          cliques: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          conexao_id: string;
+          canal: string;
+          dia: string;
+          gasto_centavos?: number;
+          impressoes?: number;
+          alcance?: number;
+          cliques?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          conexao_id?: string;
+          canal?: string;
+          dia?: string;
+          gasto_centavos?: number;
+          impressoes?: number;
+          alcance?: number;
+          cliques?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_midia_diaria_conexao_id_fkey";
+            columns: ["conexao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_conexoes_midia";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_midia_diaria_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_midia_diaria_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_cupons: {
         Row: {
           id: string;
@@ -2315,6 +2451,30 @@ export type BancoDaTicketeria = {
       fn_ticketeria_reembolso_reabrir: {
         Args: { p_reembolso: string; p_loja: string };
         Returns: Json;
+      };
+      fn_ticketeria_midia_guardar_conexao: {
+        Args: { p_loja: string; p_provedor: string; p_token: string; p_expira_em: string };
+        Returns: string;
+      };
+      fn_ticketeria_midia_token: {
+        Args: { p_conexao: string };
+        Returns: string | null;
+      };
+      fn_ticketeria_midia_escolher_conta: {
+        Args: { p_conexao: string; p_conta: string; p_nome: string; p_moeda: string };
+        Returns: undefined;
+      };
+      fn_ticketeria_midia_gravar_dias: {
+        Args: { p_conexao: string; p_dias: Json };
+        Returns: number;
+      };
+      fn_ticketeria_midia_marcar: {
+        Args: { p_conexao: string; p_ok: boolean; p_erro: string | null; p_token_invalido: boolean; p_lido_desde: string | null };
+        Returns: undefined;
+      };
+      fn_ticketeria_midia_desconectar: {
+        Args: { p_conexao: string };
+        Returns: undefined;
       };
       fn_ticketeria_registrar_aceite: {
         Args: { p_pedido: string; p_versao: string };
