@@ -20,8 +20,10 @@ export const MAX_PARCELAS = 6;
 export type MeioDaCompra = "pix" | "cartao";
 
 export type ItemDaCompra = { ingresso_id: string; quantidade: number };
+/** Os lugares escolhidos no mapa para um ingresso de setor numerado (um lugar por ingresso comprado). */
+export type LugaresDoIngresso = { ingresso_id: string; assentos: { fileira: string; numero: number }[] };
 /** `termos` é a versão dos Termos de compra que o comprador aceitou: precisa ser a atual (lib/ticketeria/termos-de-compra.ts). `cupom` é o código do cupom de desconto, em maiúsculas, ou null. */
-export type CorpoDaCompra = { sessao_id: string; itens: ItemDaCompra[]; nome: string; email: string; documento: string; termos: string; meio: MeioDaCompra; parcelas: number; cupom: string | null };
+export type CorpoDaCompra = { sessao_id: string; itens: ItemDaCompra[]; nome: string; email: string; documento: string; termos: string; meio: MeioDaCompra; parcelas: number; cupom: string | null; lugares: LugaresDoIngresso[] };
 
 /** CPF (11) ou CNPJ (14) com os dígitos verificadores certos; só os números. */
 export function documentoValido(bruto: string): boolean {
@@ -37,6 +39,33 @@ export function documentoValido(bruto: string): boolean {
     return digito(d.slice(0, 12), p1) === Number(d[12]) && digito(d.slice(0, 13), [6, ...p1]) === Number(d[13]);
   }
   return false;
+}
+
+/** Os lugares do pedido, conferidos: cada ingresso do pedido aparece no máximo uma vez, com tantos lugares quanto ingressos, e nenhum lugar se repete. Nulo se estiver fora do formato. */
+function lerLugares(bruto: unknown, itens: readonly ItemDaCompra[]): LugaresDoIngresso[] | null {
+  if (bruto === undefined || bruto === null) return [];
+  if (!Array.isArray(bruto) || bruto.length > MAX_ITENS_POR_COMPRA) return null;
+  const saida: LugaresDoIngresso[] = [];
+  const ingressos = new Set<string>();
+  const lugares = new Set<string>();
+  for (const entrada of bruto) {
+    const x = (entrada && typeof entrada === "object" ? entrada : {}) as Record<string, unknown>;
+    const id = typeof x.ingresso_id === "string" ? x.ingresso_id.trim().toLowerCase() : "";
+    const item = itens.find(i => i.ingresso_id === id);
+    if (!UUID.test(id) || !item || ingressos.has(id) || !Array.isArray(x.assentos) || x.assentos.length !== item.quantidade) return null;
+    ingressos.add(id);
+    const assentos: { fileira: string; numero: number }[] = [];
+    for (const l of x.assentos) {
+      const a = (l && typeof l === "object" ? l : {}) as Record<string, unknown>;
+      const fileira = typeof a.fileira === "string" ? a.fileira.trim().toUpperCase() : "";
+      const numero = a.numero;
+      if (!/^[A-Z0-9]{1,4}$/.test(fileira) || typeof numero !== "number" || !Number.isInteger(numero) || numero < 1 || numero > 999 || lugares.has(`${fileira}|${numero}`)) return null;
+      lugares.add(`${fileira}|${numero}`);
+      assentos.push({ fileira, numero });
+    }
+    saida.push({ ingresso_id: id, assentos });
+  }
+  return saida;
 }
 
 export type LeituraDaCompra = { ok: true; corpo: CorpoDaCompra } | { ok: false; problemas: string[] };
@@ -75,8 +104,10 @@ export function lerCorpoDaCompra(entrada: unknown): LeituraDaCompra {
   const semCupom = e.cupom === undefined || e.cupom === null || (typeof e.cupom === "string" && e.cupom.trim() === "");
   const cupom = semCupom ? null : normalizarCodigo(e.cupom);
   if (!semCupom && (cupom === null || !codigoDoCupomValido(cupom))) problemas.push("cupom");
+  const lugares = lerLugares(e.lugares, itens);
+  if (lugares === null) problemas.push("lugares");
   if (problemas.length > 0) return { ok: false, problemas };
-  return { ok: true, corpo: { sessao_id: sessao.toLowerCase(), itens, nome, email, documento, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: meio as MeioDaCompra, parcelas: parcelas as number, cupom } };
+  return { ok: true, corpo: { sessao_id: sessao.toLowerCase(), itens, nome, email, documento, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: meio as MeioDaCompra, parcelas: parcelas as number, cupom, lugares: lugares ?? [] } };
 }
 
 /** O que o comprador precisa entender quando a compra não segue. */

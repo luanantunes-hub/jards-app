@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { IngressoComLugares, LegendaDoMapa, MapaDeAssentos, MapaEditorSheet, TelaEscolherLugares } from "../components/ticketeria/AssentosView";
+import { LegendaDoMapa, MapaDeAssentos, MapaEditorSheet, TelaEscolherLugares } from "../components/ticketeria/AssentosView";
 import { TelaIngressos } from "../components/ticketeria/CompraView";
 import { SetorSheet } from "../components/ticketeria/SetorDoLocal";
 import {
@@ -133,14 +133,11 @@ test("o setor: novo (sem mapa ainda), existente comum, existente numerado", () =
   assert.ok(numerado.includes('aria-checked="true"') && numerado.includes("Mapa") && !numerado.includes('id="st-lugares"'), "setor numerado não pede a quantidade: ela vem do mapa");
 });
 
-test("o comprador (etapa 2, já desenhada): o mapa, os lugares escolhidos e o ingresso com lugar", () => {
+test("o comprador: a tela do mapa e o ingresso com lugar", () => {
   const evento = { titulo: "Hamlet", quando: "sáb., 29 nov. · 20h", local: "Teatro" };
   const tela = html(createElement(TelaEscolherLugares, { site: { titulo: "Cia" }, evento, ingresso: { nome: "Inteira", preco_centavos: 6000 }, setor: "Plateia", fileiras: mapa, escolhidos: ["B1"], max: 10, totalCentavos: 6000 }));
   for (const t of ["Escolha seus lugares", "Inteira · Plateia · R$ 60,00 cada", "1 lugar · B1", "R$ 60,00", "Ampliar o mapa", "Até 10 lugares"]) assert.ok(tela.includes(t), `falta: ${t}`);
   assert.ok(html(createElement(TelaEscolherLugares, { site: { titulo: "Cia" }, evento, ingresso: { nome: "Inteira", preco_centavos: 6000 }, setor: "Plateia", fileiras: mapa, escolhidos: [], max: 10, totalCentavos: 0, ampliado: true })).includes("Ver o mapa inteiro"));
-  const linha = html(createElement(IngressoComLugares, { nome: "Inteira", setor: "Plateia", precoCentavos: 6000, escolhidos: ["C7", "C8"] }));
-  assert.ok(linha.includes("Plateia · lugares numerados") && linha.includes("Trocar lugares") && linha.includes("C7") && linha.includes("C8"));
-  assert.ok(html(createElement(IngressoComLugares, { nome: "Inteira", setor: "Plateia", precoCentavos: 6000, escolhidos: [] })).includes("Escolher lugares"));
   const ing = html(createElement(TelaIngressos, { site: { titulo: "Cia" }, evento, comprador: "Marina", pedido: "ABCD2345", ingressos: [{ codigo: "K7M2P9X4QA", nome: "Inteira", assento: "Plateia · Fileira C · lugar 7" }, { codigo: "R3T8W5N2HB", nome: "Meia" }], emailDeReembolso: "r@x.co" }));
   assert.ok(ing.includes("Plateia · Fileira C · lugar 7"));
   assert.equal((ing.match(/Fileira/g) ?? []).length, 1, "ingresso sem lugar não mostra linha de lugar");

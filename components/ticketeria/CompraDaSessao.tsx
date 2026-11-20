@@ -3,20 +3,22 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TelaAbrindoPagamento, TelaAviso, TelaDados, TelaEscolherIngressos, TelaPagarPix } from "@/components/ticketeria/CompraView";
+import { TelaEscolherLugares } from "@/components/ticketeria/AssentosView";
 import { TelaListaDeEspera, TelaNaListaDeEspera } from "@/components/ticketeria/ListaDeEsperaView";
 import { lerCorpoDaEspera } from "@/lib/ticketeria/espera";
+import { alternarEscolha, comCorredor, comEscolhidos, lerMapaDaSessao, rotuloDoLugar, type LugarEscolhido, type MapaDaSessao } from "@/lib/ticketeria/mapa";
 import { lerCorpoDaCompra } from "@/lib/ticketeria/pagamento/compra";
 import { codigoDoCupomValido, descontoEmTexto, descontoNasFaixas, normalizarCodigo, type CupomConferido } from "@/lib/ticketeria/cupom";
 import { VERSAO_DOS_TERMOS_DE_COMPRA } from "@/lib/ticketeria/termos-de-compra";
 import { mascararDocumento } from "@/lib/ticketeria/recebimentos";
-import { totalNasFaixas, type VitrineDaSessao } from "@/lib/ticketeria/vitrine";
+import { disponivelNasFaixas, totalNasFaixas, type VitrineDaSessao } from "@/lib/ticketeria/vitrine";
 
 // A compra de uma sessão, no navegador de quem compra: escolher, dados, Pix. Liga as telas de CompraView às rotas públicas (/api/ticketeria/compra).
 // O Pix gerado fica na sessão do navegador (sessionStorage) para a página recarregada não perder a reserva.
 
 /** O pedido em andamento: Pix (o código copia e cola) ou cartão (o endereço da página segura de pagamento). */
 type PedidoComPix = { pedido_id: string; codigo: string; total_centavos: number; reservado_ate: string; pix_copia_e_cola?: string; url_de_pagamento?: string };
-type Passo = "escolher" | "dados" | "pix" | "cartao" | "expirou" | "espera" | "na-lista";
+type Passo = "escolher" | "dados" | "pix" | "cartao" | "expirou" | "espera" | "na-lista" | "lugares";
 
 const chaveDaSessao = (sessao: string) => `ticketeria-compra-${sessao}`;
 const guardar = (sessao: string, pedido: PedidoComPix | null) => { try { if (pedido) sessionStorage.setItem(chaveDaSessao(sessao), JSON.stringify(pedido)); else sessionStorage.removeItem(chaveDaSessao(sessao)); } catch { /* sem armazenamento: segue sem */ } };
@@ -61,6 +63,15 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
   const [esperaQuantidade, setEsperaQuantidade] = useState(1);
   const [esperaErro, setEsperaErro] = useState<string | null>(null);
   const [entrandoNaEspera, setEntrandoNaEspera] = useState(false);
+  // Os lugares escolhidos no mapa, por ingresso de setor numerado; o mapa aberto e a escolha em andamento.
+  const [lugares, setLugares] = useState<Record<string, LugarEscolhido[]>>({});
+  const [lugaresIngresso, setLugaresIngresso] = useState<string | null>(null);
+  const [mapa, setMapa] = useState<MapaDaSessao | null>(null);
+  const [mapaErro, setMapaErro] = useState<string | null>(null);
+  const [carregandoMapa, setCarregandoMapa] = useState(false);
+  const [escolhaAtual, setEscolhaAtual] = useState<LugarEscolhido[]>([]);
+  const [mapaAmpliado, setMapaAmpliado] = useState(false);
+  const [avisoDaEscolha, setAvisoDaEscolha] = useState<string | null>(null);
 
   // Recarregou no meio do Pix: volta a ele (o servidor não sabe do armazenamento do navegador, então só dá para ler depois de montar).
   useEffect(() => {
@@ -97,7 +108,8 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
   const gerarPix = useCallback(async () => {
     setErro(null);
     if (!aceito) { setErro("Aceite os Termos de compra para continuar."); return; }
-    const leitura = lerCorpoDaCompra({ sessao_id: sessao, itens: Object.entries(quantidades).filter(([, q]) => q > 0).map(([ingresso_id, quantidade]) => ({ ingresso_id, quantidade })), ...valores, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio, parcelas: meio === "cartao" ? parcelas : 1, cupom: cupom?.codigo ?? null });
+    const leitura = lerCorpoDaCompra({ sessao_id: sessao, itens: Object.entries(quantidades).filter(([, q]) => q > 0).map(([ingresso_id, quantidade]) => ({ ingresso_id, quantidade })), ...valores, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio, parcelas: meio === "cartao" ? parcelas : 1, cupom: cupom?.codigo ?? null,
+      lugares: ingressos.filter(i => i.numerado && (quantidades[i.id] ?? 0) > 0).map(i => ({ ingresso_id: i.id, assentos: lugares[i.id] ?? [] })) });
     if (!leitura.ok) { setErro(`Confira: ${leitura.problemas.join(", ")}.`); return; }
     setTrabalhando(true);
     try {
@@ -114,13 +126,21 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
         } else setPasso("pix");
         return;
       }
+      if (d.error === "reserva_recusada" && /lugar/i.test(d.mensagem ?? "")) {
+        // Alguém levou um dos lugares (ou o mapa mudou): a escolha dos lugares recomeça, o resto do pedido fica.
+        setQuantidades(q => { const novo = { ...q }; for (const i of ingressos) if (i.numerado) novo[i.id] = 0; return novo; });
+        setLugares({});
+        setAvisoDaEscolha(d.mensagem ?? "Escolha os lugares de novo.");
+        setPasso("escolher");
+        return;
+      }
       setErro(d.error === "dados_invalidos" && d.problemas ? `Confira: ${d.problemas.join(", ")}.` : d.mensagem ?? (r.status === 429 ? "Muitas tentativas. Espere um instante." : "Não foi possível concluir agora. Tente de novo."));
     } catch {
       setErro("Sem conexão. Tente de novo.");
     } finally {
       setTrabalhando(false);
     }
-  }, [sessao, quantidades, valores, aceito, meio, parcelas, cupom, router]);
+  }, [sessao, quantidades, valores, aceito, meio, parcelas, cupom, lugares, ingressos, router]);
 
   const entrarNaEspera = useCallback(async () => {
     setEsperaErro(null);
@@ -138,6 +158,34 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
       setEntrandoNaEspera(false);
     }
   }, [sessao, esperaIngresso, esperaValores, esperaQuantidade]);
+
+  const carregarMapa = useCallback(async (ingressoId: string, manter: LugarEscolhido[]) => {
+    setMapaErro(null);
+    setCarregandoMapa(true);
+    try {
+      const r = await fetch(`/api/ticketeria/compra/mapa?sessao=${encodeURIComponent(sessao)}&ingresso=${encodeURIComponent(ingressoId)}`, { cache: "no-store" });
+      const lido = r.ok ? lerMapaDaSessao(await r.json().catch(() => null)) : null;
+      if (!lido) { setMapaErro(r.status === 404 ? "Este ingresso não tem mapa de lugares agora." : "Não foi possível carregar o mapa. Tente de novo."); return; }
+      setMapa(lido);
+      // Só ficam escolhidos os lugares que ainda estão livres.
+      setEscolhaAtual(manter.filter(l => lido.fileiras.some(f => f.nome === l.fileira && f.assentos.some(a => a.numero === l.numero && a.estado === "livre"))));
+    } catch {
+      setMapaErro("Sem conexão. Tente de novo.");
+    } finally {
+      setCarregandoMapa(false);
+    }
+  }, [sessao]);
+
+  const abrirMapa = (ingressoId: string) => {
+    const antes = lugares[ingressoId] ?? [];
+    setAvisoDaEscolha(null);
+    setLugaresIngresso(ingressoId);
+    setMapa(null);
+    setEscolhaAtual(antes);
+    setMapaAmpliado(false);
+    setPasso("lugares");
+    void carregarMapa(ingressoId, antes);
+  };
 
   const aplicarCupom = useCallback(async () => {
     const codigo = normalizarCodigo(codigoDoCupom);
@@ -167,6 +215,15 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     try { await navigator.clipboard.writeText(pedido.pix_copia_e_cola); setCopiado(true); setTimeout(() => setCopiado(false), 3000); } catch { setErro("Não foi possível copiar. Selecione o código e copie."); }
   }, [pedido]);
 
+  const ingressoDosLugares = ingressos.find(i => i.id === lugaresIngresso);
+  if (passo === "lugares" && ingressoDosLugares) {
+    const max = Math.min(ingressoDosLugares.limite, disponivelNasFaixas(ingressoDosLugares.faixas));
+    return <TelaEscolherLugares site={site} evento={evento} ingresso={{ nome: ingressoDosLugares.nome, preco_centavos: ingressoDosLugares.faixas[0]?.preco_centavos ?? 0 }} setor={ingressoDosLugares.numerado?.setor ?? ""}
+      fileiras={mapa ? comEscolhidos(comCorredor(mapa.fileiras, mapa.corredor), escolhaAtual) : []} escolhidos={escolhaAtual.map(l => rotuloDoLugar(l.fileira, l.numero))} max={max} totalCentavos={totalNasFaixas(ingressoDosLugares.faixas, escolhaAtual.length) ?? 0}
+      ampliado={mapaAmpliado} carregando={carregandoMapa} erroDoMapa={mapaErro} onTentarDeNovo={() => void carregarMapa(ingressoDosLugares.id, escolhaAtual)} onAmpliar={() => setMapaAmpliado(v => !v)}
+      onAlternar={(fileira, numero) => setEscolhaAtual(atual => alternarEscolha(atual, fileira, numero, max))} onVoltar={() => setPasso("escolher")}
+      onConfirmar={() => { setLugares(l => ({ ...l, [ingressoDosLugares.id]: escolhaAtual })); setQuantidades(q => ({ ...q, [ingressoDosLugares.id]: escolhaAtual.length })); setPasso("escolher"); }} />;
+  }
   const ingressoDaEspera = ingressos.find(i => i.id === esperaIngresso);
   if (passo === "espera" && ingressoDaEspera) {
     return <TelaListaDeEspera site={site} evento={evento} ingresso={ingressoDaEspera} valores={esperaValores} quantidade={esperaQuantidade} max={ingressoDaEspera.limite} erro={esperaErro} trabalhando={entrandoNaEspera}
@@ -195,5 +252,7 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     cupom={cupomParaMostrar} cupomErro={cupomErro} codigoDoCupom={codigoDoCupom} cupomAberto={cupomAberto} aplicandoCupom={aplicandoCupom}
     onCodigoDoCupom={codigo => { setCodigoDoCupom(codigo); setCupomErro(null); }} onAbrirCupom={() => setCupomAberto(true)} onAplicarCupom={() => void aplicarCupom()}
     onRemoverCupom={() => { setCupom(null); setCupomErro(null); }}
+    aviso={avisoDaEscolha} lugaresEscolhidos={Object.fromEntries(Object.entries(lugares).map(([id, ls]) => [id, ls.map(l => rotuloDoLugar(l.fileira, l.numero))]))} onEscolherLugares={abrirMapa}
+    onLimparLugares={id => { setLugares(l => { const novo = { ...l }; delete novo[id]; return novo; }); setQuantidades(q => ({ ...q, [id]: 0 })); }}
     onEntrarNaEspera={id => { setEsperaIngresso(id); setEsperaQuantidade(1); setEsperaErro(null); setPasso("espera"); }} />;
 }

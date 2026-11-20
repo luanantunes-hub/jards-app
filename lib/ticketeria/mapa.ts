@@ -118,9 +118,51 @@ export function mensagemDoErroDoMapa(erro: { code?: string; message?: string }):
   if (erro.code === "42501") return "Você não pode mudar a Ticketeria desta organização.";
   if (m.includes("mapa_sem_lugares")) return "Todos os lugares estão bloqueados. Deixe ao menos um à venda.";
   if (m.includes("mapa_vazio")) return "Monte o mapa antes de ligar os lugares numerados.";
+  if (m.includes("setor_com_lugares_vendidos")) return "Este setor tem lugares vendidos para uma sessão que ainda vai acontecer. Não dá para desligar os lugares numerados.";
+  if (m.includes("lugar_vendido")) return "Um lugar vendido ou reservado para uma sessão que ainda vai acontecer não pode sair do mapa nem ser bloqueado.";
   if (m.includes("setor_com_vendas")) return "Este setor já tem ingressos vendidos sem lugar marcado para uma sessão que ainda vai acontecer. Os lugares numerados valem para setores sem vendas.";
   if (m.includes("lugares_excedidos")) return "Os ingressos deste setor oferecem mais lugares do que o mapa tem. Diminua as quantidades dos lotes ou aumente o mapa.";
   if (m.includes("setor_arquivado")) return "Esse setor está arquivado. Tire-o do arquivo antes de montar o mapa.";
   if (m.includes("mapa_invalido")) return "O mapa não está no formato aceito: fileiras de 1 a 4 letras ou números, até 60 fileiras e 80 lugares por fileira.";
   return "Não foi possível salvar o mapa. Tente de novo.";
+}
+
+// ─── O mapa na hora de comprar ──────────────────────────────────────────────
+
+/** O mapa de um setor numerado numa sessão, como o comprador o vê: cada lugar livre ou ocupado (o bloqueado também aparece como ocupado). */
+export type MapaDaSessao = { setor: string; corredor: boolean; fileiras: FileiraDoMapa[] };
+
+/** A resposta de fn_ticketeria_mapa_da_sessao, conferida; null se veio algo que não se entende. */
+export function lerMapaDaSessao(resposta: unknown): MapaDaSessao | null {
+  const r = (resposta && typeof resposta === "object" ? resposta : {}) as { setor?: unknown; corredor?: unknown; fileiras?: unknown };
+  if (typeof r.setor !== "string" || !Array.isArray(r.fileiras)) return null;
+  const fileiras: FileiraDoMapa[] = [];
+  for (const bruta of r.fileiras) {
+    const f = (bruta && typeof bruta === "object" ? bruta : {}) as { nome?: unknown; assentos?: unknown };
+    if (typeof f.nome !== "string" || !Array.isArray(f.assentos)) return null;
+    const assentos: AssentoDoMapa[] = [];
+    for (const x of f.assentos) {
+      const a = (x && typeof x === "object" ? x : {}) as { numero?: unknown; estado?: unknown };
+      if (typeof a.numero !== "number" || !Number.isInteger(a.numero) || (a.estado !== "livre" && a.estado !== "ocupado")) return null;
+      assentos.push({ numero: a.numero, estado: a.estado });
+    }
+    fileiras.push({ nome: f.nome, assentos });
+  }
+  return { setor: r.setor, corredor: r.corredor !== false, fileiras };
+}
+
+/** "C7": o lugar como a pessoa o vê. */
+export const rotuloDoLugar = (fileira: string, numero: number) => `${fileira}${numero}`;
+
+export type LugarEscolhido = { fileira: string; numero: number };
+
+/** Marca no mapa os lugares escolhidos (só os que ainda estão livres). */
+export function comEscolhidos(fileiras: readonly FileiraDoMapa[], escolhidos: readonly LugarEscolhido[]): FileiraDoMapa[] {
+  return fileiras.map(f => ({ ...f, assentos: f.assentos.map(a => a.estado === "livre" && escolhidos.some(e => e.fileira === f.nome && e.numero === a.numero) ? { ...a, estado: "selecionado" as const } : a) }));
+}
+
+/** Escolhe ou solta um lugar, no máximo `max` (ao passar disso o lugar novo não entra). Mantém a ordem em que a pessoa tocou. */
+export function alternarEscolha(escolhidos: readonly LugarEscolhido[], fileira: string, numero: number, max: number): LugarEscolhido[] {
+  if (escolhidos.some(e => e.fileira === fileira && e.numero === numero)) return escolhidos.filter(e => !(e.fileira === fileira && e.numero === numero));
+  return escolhidos.length >= max ? [...escolhidos] : [...escolhidos, { fileira, numero }];
 }
