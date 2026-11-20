@@ -60,12 +60,14 @@ function Contador({ valor, max, nome, onMudar }: { valor: number; max: number; n
   );
 }
 
-export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, onMudar, onContinuar, cupom = null, cupomErro = null, codigoDoCupom = "", onCodigoDoCupom, onAbrirCupom, onAplicarCupom, onRemoverCupom, aplicandoCupom = false, cupomAberto = false }: {
+export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, onMudar, onContinuar, cupom = null, cupomErro = null, codigoDoCupom = "", onCodigoDoCupom, onAbrirCupom, onAplicarCupom, onRemoverCupom, aplicandoCupom = false, cupomAberto = false, onEntrarNaEspera }: {
   site: { titulo: string; cor?: string }; evento: EventoParaComprar; ingressos: IngressoParaComprar[]; quantidades: Record<string, number>;
   onMudar?: (id: string, novo: number) => void; onContinuar?: () => void;
   /** O cupom já aplicado (o desconto do pedido, em centavos), a frase de erro do código digitado, e as ações. `cupomAberto`: mostra o campo (a pessoa tocou em "Tem um cupom?"). */
   cupom?: { codigo: string; descricao: string; desconto_centavos: number } | null; cupomErro?: string | null; codigoDoCupom?: string;
   onCodigoDoCupom?: (codigo: string) => void; onAbrirCupom?: () => void; onAplicarCupom?: () => void; onRemoverCupom?: () => void; aplicandoCupom?: boolean; cupomAberto?: boolean;
+  /** Ingresso esgotado: "Avise-me se voltar" leva à lista de espera (sem a ação, o ingresso só mostra "Esgotado"). */
+  onEntrarNaEspera?: (ingressoId: string) => void;
 }) {
   const total = ingressos.reduce((soma, i) => soma + (totalNasFaixas(i.faixas, quantidades[i.id] ?? 0) ?? 0), 0);
   const qtd = ingressos.reduce((soma, i) => soma + (quantidades[i.id] ?? 0), 0);
@@ -95,10 +97,15 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
               <div className="min-w-0">
                 <p className="text-[1rem] font-normal">{i.nome}</p>
                 {i.descricao && <p className="mt-0.5 text-[0.8125rem] text-black/55">{i.descricao}</p>}
-                <p className="mt-1 text-[0.9375rem] tabular-nums">{preco === 0 ? "Gratuito" : formatarMoeda(preco)}</p>
+                {!esgotado && <p className="mt-1 text-[0.9375rem] tabular-nums">{preco === 0 ? "Gratuito" : formatarMoeda(preco)}</p>}
               </div>
               {esgotado
-                ? <span className={ETIQUETA} style={{ borderColor: "#6b676747", color: "#6b6767" }}>Esgotado</span>
+                ? (
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <span className={ETIQUETA} style={{ borderColor: "#6b676747", color: "#6b6767" }}>Esgotado</span>
+                    {onEntrarNaEspera && <button type="button" onClick={() => onEntrarNaEspera(i.id)} className="rounded text-[0.8125rem] text-black/60 underline underline-offset-2 hover:text-black/80">Avise-me se voltar</button>}
+                  </div>
+                )
                 : <Contador valor={quantidades[i.id] ?? 0} max={max} nome={i.nome} onMudar={novo => onMudar?.(i.id, novo)} />}
             </li>
           );
