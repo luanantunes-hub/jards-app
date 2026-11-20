@@ -53,7 +53,7 @@ export default function LocaisPage() {
 
   return (
     <>
-      <ListPageHeader eyebrow="Ticketeria" title="Locais" actions={locais && locais.length > 0 ? novo : undefined} />
+      <ListPageHeader title="Locais" actions={locais && locais.length > 0 ? novo : undefined} />
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {temArquivados && (
@@ -65,7 +65,7 @@ export default function LocaisPage() {
           <div className="h-32 rounded-xl border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
         ) : visiveis.length === 0 ? (
           <ListTableSurface>
-            <ListEmptyState icon={MapPin} title={locais.length === 0 ? "Nenhum local ainda" : "Nenhum local aqui"} description={locais.length === 0 ? "Cadastre o teatro, a casa de show ou a praça e os setores dele, com os lugares de cada um. As sessões dos eventos acontecem num local." : undefined} action={locais.length === 0 ? novo : undefined} />
+            <ListEmptyState icon={MapPin} title={locais.length === 0 ? "Nenhum local ainda" : "Nenhum local aqui"} action={locais.length === 0 ? novo : undefined} />
           </ListTableSurface>
         ) : (
           <ul className="space-y-3">

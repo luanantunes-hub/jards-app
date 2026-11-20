@@ -110,7 +110,7 @@ export default function CuponsPage() {
 
   return (
     <>
-      <ListPageHeader eyebrow="Ticketeria" title="Cupons" actions={novo} />
+      <ListPageHeader title="Cupons" actions={novo} />
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {dados === null ? (

@@ -1082,6 +1082,61 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_porta_desfeitas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          ingresso_emitido_id: string;
+          sessao_id: string;
+          usado_em: string;
+          usado_por: string | null;
+          desfeito_por: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          ingresso_emitido_id: string;
+          sessao_id: string;
+          usado_em: string;
+          usado_por?: string | null;
+          desfeito_por?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          ingresso_emitido_id?: string;
+          sessao_id?: string;
+          usado_em?: string;
+          usado_por?: string | null;
+          desfeito_por?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_porta_desfeitas_ingresso_emitido_id_fkey";
+            columns: ["ingresso_emitido_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_ingressos_emitidos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_porta_desfeitas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_porta_desfeitas_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_transacoes: {
         Row: {
           id: string;
@@ -1607,6 +1662,22 @@ export type BancoDaTicketeria = {
       fn_ticketeria_lugares_livres_do_setor: {
         Args: { p_sessao: string; p_setor: string };
         Returns: number;
+      };
+      fn_ticketeria_porta_buscar: {
+        Args: { p_loja: string; p_sessao: string; p_termo: string };
+        Returns: Json;
+      };
+      fn_ticketeria_porta_desfazer: {
+        Args: { p_loja: string; p_sessao: string; p_codigo: string; p_usuario: string | null };
+        Returns: Json;
+      };
+      fn_ticketeria_porta_relatorio: {
+        Args: { p_loja: string; p_sessao: string };
+        Returns: Json;
+      };
+      fn_ticketeria_porta_lista: {
+        Args: { p_loja: string; p_sessao: string };
+        Returns: Json;
       };
       fn_ticketeria_definir_meio: {
         Args: { p_pedido: string; p_meio: MeioDePagamento; p_parcelas: number | null };

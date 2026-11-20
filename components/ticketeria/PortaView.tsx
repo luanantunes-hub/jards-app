@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, ScanLine, XCircle } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { BuscaDaPorta, DesfazerEntrada, type IngressoAchado } from "@/components/ticketeria/PortaExtrasView";
 
 // A porta (passo C5 da T5): quem confere os ingressos na entrada do evento. Só desenho: os dados e as ações chegam por props. Pensada para o celular, com o polegar:
 // o resultado da conferência ocupa a largura toda e se lê de longe (verde pode entrar, âmbar já usado, vermelho não vale).
@@ -72,7 +73,7 @@ export function ResultadoDaPorta({ resultado, onProximo }: { resultado: Resultad
   );
 }
 
-export function PortaView({ sessoes, sessaoId, onSessao, entraram, lugares, codigo, onCodigo, onConferir, onLerQr, lendo, conferindo, resultado, onProximo, recentes, semCamera, previa }: {
+export function PortaView({ sessoes, sessaoId, onSessao, entraram, lugares, codigo, onCodigo, onConferir, onLerQr, lendo, conferindo, resultado, onProximo, recentes, semCamera, previa, busca, onBusca, onDarEntrada, desfazer, onDesfazer, onConfirmarDesfazer, onCancelarDesfazer, relatorioHref, acoes }: {
   sessoes: SessaoDaPorta[]; sessaoId: string; onSessao?: (id: string) => void;
   /** Quantos já entraram e quantos ingressos válidos há para a sessão. */
   entraram: number; lugares: number;
@@ -82,6 +83,16 @@ export function PortaView({ sessoes, sessaoId, onSessao, entraram, lugares, codi
   semCamera?: boolean;
   /** A imagem da câmera, acima do botão, enquanto lê. */
   previa?: ReactNode;
+  /** Buscar pelo nome de quem comprou: o termo, o que achou (null = ainda não buscou) e o que fazer. Sem isto a busca não aparece. */
+  busca?: { termo: string; resultados: IngressoAchado[] | null; buscando?: boolean };
+  onBusca?: (termo: string) => void; onDarEntrada?: (codigo: string) => void;
+  /** Desfazer uma entrada: a entrada que se pediu para desfazer (a confirmação aparece) e as ações. Sem `onDesfazer` o botão não aparece. */
+  desfazer?: { codigo: string; comprador: string; ingresso: string; trabalhando?: boolean; erro?: string | null } | null;
+  onDesfazer?: (codigo: string) => void; onConfirmarDesfazer?: () => void; onCancelarDesfazer?: () => void;
+  /** O endereço do relatório da sessão (só para quem edita a Ticketeria). */
+  relatorioHref?: string;
+  /** Ações extras no cartão da sessão (por exemplo, o link da equipe). */
+  acoes?: ReactNode;
 }) {
   const pct = lugares > 0 ? Math.min(100, Math.round((entraram / lugares) * 100)) : 0;
   return (
@@ -94,6 +105,7 @@ export function PortaView({ sessoes, sessaoId, onSessao, entraram, lugares, codi
           <p className="text-[0.8125rem] tabular-nums text-black/45">{pct}%</p>
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/[.08]" role="img" aria-label={`${pct}% dos ingressos já entraram`}><div className="h-full rounded-full bg-[#3DA86A]" style={{ width: `${pct}%` }} /></div>
+        {(relatorioHref || acoes) && <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem]">{relatorioHref && <a href={relatorioHref} className="text-black/55 underline underline-offset-2 hover:text-black/75">Relatório da sessão</a>}{acoes}</div>}
       </Cartao>
 
       {resultado ? <ResultadoDaPorta resultado={resultado} onProximo={onProximo} /> : (
@@ -111,8 +123,10 @@ export function PortaView({ sessoes, sessaoId, onSessao, entraram, lugares, codi
               <button type="submit" disabled={conferindo || codigo.trim().length === 0} className="h-12 shrink-0 rounded-xl border border-black/15 bg-white px-5 text-[0.875rem] font-normal text-[#282525] transition hover:bg-black/[.04] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Conferir</button>
             </div>
           </form>
+          {busca && <BuscaDaPorta termo={busca.termo} onTermo={onBusca} resultados={busca.resultados} buscando={busca.buscando} onDarEntrada={onDarEntrada} desligado={conferindo} />}
         </Cartao>
       )}
+      {desfazer && <DesfazerEntrada comprador={desfazer.comprador} ingresso={desfazer.ingresso} trabalhando={desfazer.trabalhando} erro={desfazer.erro} onConfirmar={onConfirmarDesfazer} onCancelar={onCancelarDesfazer} />}
 
       <section aria-label="Últimas entradas">
         <h2 className={`mb-2 ${ROTULO}`}>Últimas entradas</h2>
@@ -123,7 +137,7 @@ export function PortaView({ sessoes, sessaoId, onSessao, entraram, lugares, codi
             {recentes.map(r => (
               <li key={r.codigo} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="min-w-0"><p className="truncate text-[0.875rem] text-[#282525]">{r.comprador}</p><p className="text-[0.6875rem] text-black/45">{r.ingresso}{r.assento ? ` · ${r.assento}` : ""} · <span className="tabular-nums tracking-[.08em]">{r.codigo}</span></p></div>
-                <span className="shrink-0 text-[0.75rem] tabular-nums text-black/45">{r.hora}</span>
+                <div className="flex shrink-0 items-center gap-3"><span className="text-[0.75rem] tabular-nums text-black/45">{r.hora}</span>{onDesfazer && <button type="button" onClick={() => onDesfazer(r.codigo)} className="rounded-xl px-1 text-[0.75rem] text-black/45 underline underline-offset-2 hover:text-black/70" aria-label={`Desfazer a entrada de ${r.comprador}`}>Desfazer</button>}</div>
               </li>
             ))}
           </ul>
