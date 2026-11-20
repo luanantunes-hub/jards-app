@@ -9,7 +9,7 @@ import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PublicoDaLoja } from "@/components/ticketeria/PublicoView";
 import { filtrarPublico, type FiltroDoPublico, type PublicoDaLoja as DadosDoPublico } from "@/lib/ticketeria/publico";
 
-const VAZIO: DadosDoPublico = { contatos: [], resumo: { contatos: 0, aceitaram: 0, aceitaram_porcento: 0, com_whatsapp: 0 } };
+const VAZIO: DadosDoPublico = { contatos: [], resumo: { contatos: 0, aceitaram: 0, aceitaram_porcento: 0, com_whatsapp: 0, sairam: 0 } };
 
 /** Público: quem comprou ou entrou na lista de espera, com o aceite de novidades. Lê da rota do servidor, que confere quem edita a Ticketeria. */
 export default function PublicoPage() {

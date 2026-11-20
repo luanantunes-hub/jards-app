@@ -13,7 +13,7 @@ const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
 const ROTULO_PEQUENO = "text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45";
 
 const ETIQUETA: Record<NovidadesDoContato, { texto: string; cor: string }> = {
-  aceitou: { texto: "ACEITOU", cor: "#2E8932" }, sem_aceite: { texto: "SEM ACEITE", cor: "#B07A14" }, so_espera: { texto: "SÓ AVISO DA ESPERA", cor: "#B07A14" },
+  aceitou: { texto: "ACEITOU", cor: "#2E8932" }, sem_aceite: { texto: "SEM ACEITE", cor: "#B07A14" }, so_espera: { texto: "SÓ AVISO DA ESPERA", cor: "#B07A14" }, saiu: { texto: "SAIU DA LISTA", cor: "#6b6767" },
 };
 
 function Etiqueta({ texto, cor }: { texto: string; cor: string }) {
@@ -38,10 +38,11 @@ export function PublicoDaLoja({ resumo, contatos, filtro, busca, onFiltrar, onBu
 }) {
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Indicador rotulo="Contatos" valor={resumo.contatos.toLocaleString("pt-BR")} />
         <Indicador rotulo="Aceitaram novidades" valor={resumo.aceitaram.toLocaleString("pt-BR")} apoio={resumo.contatos > 0 ? `${resumo.aceitaram_porcento}% dos contatos` : undefined} />
         <Indicador rotulo="Com WhatsApp" valor={resumo.com_whatsapp.toLocaleString("pt-BR")} />
+        <Indicador rotulo="Saíram da lista" valor={resumo.sairam.toLocaleString("pt-BR")} />
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar contatos">

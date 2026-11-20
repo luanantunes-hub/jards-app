@@ -29,6 +29,13 @@ export async function publicoDaLoja(admin: Admin, lojaId: string): Promise<Publi
     espera.push(...(data ?? []));
     if ((data ?? []).length < PAGINA) break;
   }
+  const saidas: string[] = [];
+  for (let de = 0; ; de += PAGINA) {
+    const { data, error } = await t.from("ticketeria_saidas").select("email").eq("loja_id", lojaId).order("saiu_em", { ascending: true }).range(de, de + PAGINA - 1);
+    if (error) throw new Error(error.message);
+    saidas.push(...(data ?? []).map(x => x.email));
+    if ((data ?? []).length < PAGINA) break;
+  }
   const quantidadePorPedido: Record<string, number> = {};
   for (let i = 0; i < pedidos.length; i += 150) {
     const { data } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade").in("pedido_id", pedidos.slice(i, i + 150).map(p => p.id));
@@ -39,5 +46,5 @@ export async function publicoDaLoja(admin: Admin, lojaId: string): Promise<Publi
   const { data: sessoes } = ids.length > 0 ? await t.from("ticketeria_sessoes").select("id, evento_id").in("evento_id", ids) : { data: [] as { id: string; evento_id: string }[] };
   const titulo = new Map((eventos ?? []).map(e => [e.id, e.titulo]));
   const eventoDaSessao = Object.fromEntries((sessoes ?? []).map(s => [s.id, titulo.get(s.evento_id) ?? "Evento"]));
-  return montarPublico({ pedidos, quantidadePorPedido, espera, eventoDaSessao });
+  return montarPublico({ pedidos, quantidadePorPedido, espera, eventoDaSessao, saidas });
 }

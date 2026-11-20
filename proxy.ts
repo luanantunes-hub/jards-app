@@ -30,6 +30,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/ticketeria/compra/mapa", 40],
   // Entrar na lista de espera e sair dela (sem login): poucas por minuto, por IP.
   ["/api/ticketeria/compra/espera", 10],
+  // Sair da lista de novidades pelo link do e-mail (sem login): poucas por minuto, por IP.
+  ["/api/ticketeria/novidades", 20],
   ["/api/ticketeria/compra", 60],
   ["/api/mcp/keys", 10],
   ["/api/mcp/oauth/token", 60],
@@ -201,6 +203,8 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/pedido/") ||
         // Sair da lista de espera pelo link do e-mail (sem login): o token do link, conferido no servidor, é a prova.
         pathname.startsWith("/espera/") ||
+        // Sair da lista de novidades do produtor pelo link do e-mail de divulgação (sem login): o token do link, conferido no servidor, é a prova.
+        pathname.startsWith("/novidades/") ||
         // A porta da equipe pelo link (sem login): o segredo do link, conferido no servidor, é a prova.
         pathname.startsWith("/porta/") ||
         pathname.startsWith("/embed/") ||
@@ -284,6 +288,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/comprar/") ||
     pathname.startsWith("/pedido/") ||
     pathname.startsWith("/espera/") ||
+    pathname.startsWith("/novidades/") ||
     pathname.startsWith("/porta/") ||
     pathname.startsWith("/embed/") ||
     // Convite de convidado da prestação (P5.3): o banco confere o link; o aceite pede login.
