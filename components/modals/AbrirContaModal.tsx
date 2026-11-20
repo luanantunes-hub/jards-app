@@ -55,12 +55,12 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex justify-center veu items-start" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded w-full max-w-md p-6 border elevacao-3"
+        className="folha-desce folha-vidro w-full max-w-md p-6 max-h-[96dvh]"
         style={{ borderColor: "rgba(13,13,13,.08)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -70,7 +70,7 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
               <Building2 size={16} className="text-[#7259B5]" />
             </div>
             <div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Criar cliente</h2>
+              <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Criar cliente</h2>
               <p className="text-[0.75rem] text-black/40">{empresaNome}</p>
             </div>
           </div>
@@ -116,7 +116,7 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 px-5 py-2 text-[0.8125rem] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-5 py-2 text-[0.8125rem] font-medium acao-salvar text-white rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? (
               <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

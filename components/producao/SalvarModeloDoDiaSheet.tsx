@@ -38,7 +38,7 @@ export function SalvarModeloDoDiaSheet({ organizationId, blocos, onClose, onSave
       footer={fechar => (
         <>
           <button type="button" onClick={fechar} disabled={salvando} className="rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
-          <button type="button" onClick={() => void salvar(fechar)} disabled={salvando} className="rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Guardando…" : "Guardar modelo"}</button>
+          <button type="button" onClick={() => void salvar(fechar)} disabled={salvando} className="rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Guardando…" : "Guardar modelo"}</button>
         </>
       )}
     >
@@ -58,7 +58,6 @@ export function SalvarModeloDoDiaSheet({ organizationId, blocos, onClose, onSave
               </li>
             ))}
           </ul>
-          <p className="mt-1.5 text-[0.6875rem] text-black/45">O modelo guarda a ordem e a duração, não a hora: ao usar, você escolhe a hora do primeiro bloco.</p>
         </div>
       </div>
     </TopSheet>

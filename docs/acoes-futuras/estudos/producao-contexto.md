@@ -10,7 +10,18 @@
 | [plano-implementacao-modulo-producao.md](./plano-implementacao-modulo-producao.md) | As entregas (PD0.1, PD1.3…), a ordem, os aceites, os riscos, as decisões do dono e a tabela "Andamento", atualizada a cada entrega |
 | [producao-pd0-4-inventario.md](./producao-pd0-4-inventario.md) | Como a captação está protegida no banco (feito na PD0.4) |
 | Produção → Protótipos (`/producoes/prototipo`) | As telas que ainda não existem (página da data completa, folha do dia, tarefas, pautas do espaço, acordos e orçamento), com dados de exemplo e nada salvo; só o super admin vê. Não são entregas: quando a tela de verdade fica pronta, apague o protótipo dela (a pasta em `app/(dashboard)/producoes/prototipo/` e a linha em `components/producao/prototipo/Prototipo.tsx`) |
+| [producao-molde-de-tabela.md](../../producao-molde-de-tabela.md) | O gerador do miolo de uma tabela nova (migration, tipos, linha do histórico e teste de banco) e o executor do teste de banco que desfaz tudo no fim |
+| [producao-fila-de-trabalho.md](./producao-fila-de-trabalho.md) | A fila de lotes prontos, as regras de cada lote e quando parar: para seguir sem pedir "pode seguir" a cada entrega |
 | Este arquivo | Onde estamos, o que vem agora e os cuidados que não estão óbvios no plano |
+
+## O que saiu da Produção (18/11/2026)
+
+Decisão do dono, com a T1 da Ticketeria ([plano-modulo-ticketeria.md](./plano-modulo-ticketeria.md), seção 2): **a Produção não tem nenhuma forma de ticketeria**.
+
+- **O site público mudou-se para a Ticketeria** (é da loja do produtor, em `/ingressos/site`; código em `lib/ticketeria/` e `components/ticketeria/`). O bloco de programação do site continua mostrando as sessões confirmadas de um espaço da Produção.
+- **Saíram**: a plateia (setores e cotas), os convidados e cortesias das sessões (tipos de credencial, links de pedido, `/convidar/[código]`), a porta (credenciais, leituras, `/credencial/[código]`, leitor de câmera e a regra da câmera no `next.config.ts`) e o borderô (receitas, deduções e acerto de contas). Telas, rotas, componentes, bibliotecas, 14 tabelas e 20 funções; os testes delas também. Ficam no histórico do git como referência para as versões da Ticketeria.
+- **Ficam**: a programação pública e as marcas, a acessibilidade (agora com item próprio no menu, no grupo "Público"), a visitação, a formação, a expografia e todo o resto. O retorno da marca conta só as sessões (o público vinha do borderô e da porta). `emCentavos`, `formatarReais` e `lerValorEmReais` moram em `lib/producao/dinheiro.ts`, e os estilos de formulário em `components/producao/estilos.tsx` (eram de `bordero.ts` e `estilosDoBordero.tsx`).
+- No banco: `auth_producao_ve_historico` e `fn_producao_privacidade_limpar` foram reescritas sem as tabelas que saíram (a limpeza deixou de contar "convidados"), e as linhas do histórico dessas tabelas foram apagadas.
 
 ## A visão do dono, em uma frase
 
@@ -44,6 +55,8 @@ A escrita dessas telas foi **provada no banco real em 29/10/2026**, numa transa�
 - Os padrões das permissões ficam: leitor com "vê o dinheiro" vê; alçada vazia = não aprova; administrador vê tudo, mesmo com o recorte "vinculado".
 - 29/10/2026, equipe da data: **só o essencial agora**: pessoa (nome, nome artístico, e-mail, telefone, função), vínculo com a temporada, escala por data com aviso de conflito, cachê e diária só para quem vê o dinheiro. CPF, documentos, banco e PIX, alergia e contato de emergência esperam a política de dados pessoais (e vão para uma tabela própria, `producao_pessoas_privado`, sem histórico).
 
+- 15/11/2026, pelo painel de decisões (tabela completa em [producao-pendencias-do-dono.md](./producao-pendencias-do-dono.md)): guarda de **12 meses** dos dados de quem se inscreve, agenda ou é convidado; a **organização é a controladora** e o Jards o operador; encarregado `luan.antunes@jards.com.br`; teste grátis de **45 dias**; preço **mensal**; os **três pilotos** do plano; fornecedores com **cadastro comum**; venda de datas por **proposta por link**; leitura de passagem por IA com limite por organização. **Mudam o plano:** escolher o provedor de pagamento, contratar rotas, mapa, assinatura e QR e configurar o domínio próprio, tudo **agora**, e não adiado. Dados sensíveis da equipe só depois do texto de privacidade aprovado; PD1.1 liberada, com comparação da tela antes e depois.
+
 ## Em aberto (decisões do dono, seção 12 do plano)
 
 Teste grátis da produção; os três pilotos e o que medir; fornecedores (cadastro comum ou da produção); funil de venda das datas; provedores pagos (mapa, rotas, assinatura, QR); **política de dados pessoais da equipe** (o que se coleta, base legal, quem vê, prazo de guarda; trava CPF, documentos, banco, PIX, alergia e contato de emergência, que ficaram fora da PD1.9); por quanto tempo guardar o histórico e o que fazer com o autor que pede para sair; se o suporte (super admin) pode abrir a pasta `pessoas` dos arquivos; teto de tamanho por arquivo no bucket.
@@ -75,6 +88,10 @@ NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_K
 pgTAP (`supabase/tests/*.test.sql`) roda no editor SQL ou pelo conector, numa transação desfeita (`scripts/testes-banco-em-bloco.ts`), antes de cada merge com tabela nova. O CI não roda pgTAP nem e2e. Quando a migration e o teste juntos passam de uns 35 KB (o limite do conector por chamada), aplique a migration (o `apply_migration` já é tudo ou nada) e rode o teste logo depois, sobre ela; foi o que se fez com a equipe. Escreva verdadeiro e falso com `::text` (`true`/`false`): o `format('%s', …)` escreve `t`/`f`.
 
 **Teste de gravação das telas** (o que a PD1.3 a PD1.7 mandam ao banco): monte as linhas com as próprias funções de `lib/producao/` (um script `tsx` que imprime o SQL), e rode um bloco `do` com organização, módulo e pessoas de mentira (colaborador, leitor e administrador, como em `supabase/tests/producao_rls.test.sql`), entrando como cada pessoa com `set_config('request.jwt.claims', …)` e `set_config('role', 'authenticated', true)`, cada gravação num sub-bloco com `exception`, e terminando em `raise exception` para desfazer tudo. **Sem `delete`**: o conector recusa. O conector aceita blocos de uns 35 KB. Confira depois que o banco ficou como estava.
+
+## O que depende do dono
+
+O que sobra do plano depende de decisão do dono (dinheiro, privacidade, escolhas de produto) ou do painel logado para conferir as telas. As perguntas, a recomendação de cada uma, um rascunho do texto de privacidade e o roteiro de conferência estão em `docs/acoes-futuras/estudos/producao-pendencias-do-dono.md`.
 
 ## Cuidados que não estão óbvios
 

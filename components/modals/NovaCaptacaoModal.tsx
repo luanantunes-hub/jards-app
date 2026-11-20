@@ -170,7 +170,7 @@ function NovoContatoInline({
 }
 
 /* ─── Modal principal ─────────────────────────────────────────────── */
-export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, sitePreEmpresa, contatosSugeridos, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
+export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, sitePreEmpresa, contatosSugeridos, contatoPreId, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
   onClose: () => void;
   onSaved: (id?: string) => void;
   empresaPreId?: string;
@@ -180,6 +180,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   sitePreEmpresa?: string;
   /** Responsáveis do patrocinador já liberados para a pessoa (página do patrocinador). */
   contatosSugeridos?: ContatoSugerido[];
+  /** Quem abriu a negociação a partir de um contato específico (já da empresa de `empresaPreId`): vem escolhido. */
+  contatoPreId?: string;
   statusPre?: StatusCaptacao;
   potentialPre?: PotencialFechamento;
   editData?: EditDataCaptacao;
@@ -237,7 +239,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const [supervisorId, setSupervisorId]           = useState<string | null>(editData?.supervisor_id ?? null);
 
   // Contato empresa
-  const [contatoEmpresaId, setContatoEmpresaId]   = useState<string | null>(editData?.contato_empresa_id ?? null);
+  const [contatoEmpresaId, setContatoEmpresaId]   = useState<string | null>(editData?.contato_empresa_id ?? contatoPreId ?? null);
   const [contatosEmpresa, setContatosEmpresa]     = useState<ContatoItem[]>([]);
   const [showNovoContato, setShowNovoContato]     = useState(false);
   // Responsável do patrocinador escolhido; vira contato salvo só ao salvar a negociação.
@@ -685,9 +687,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center"
-      style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex w-full max-w-[47.5rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-vidro flex w-full max-w-[47.5rem] flex-col overflow-hidden"
         style={{ maxHeight: "100vh", boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }} onClick={e => e.stopPropagation()}>
 
         <header className="flex shrink-0 items-center justify-between border-b px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -695,7 +696,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-black/5">
               <Building2 size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="min-w-0 text-[0.9375rem] font-bold text-[#282525]">{editData ? "Editar negociação" : "Nova negociação"}</h2>
+            <h2 id={titleId} className="min-w-0 text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">{editData ? "Editar negociação" : "Nova negociação"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar"
             className="flex h-9 w-9 items-center justify-center rounded transition hover:bg-black/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
@@ -908,7 +909,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                           }}
                             className="border-r px-3 py-1.5 text-[0.625rem] font-semibold last:border-r-0"
                             style={captacaoTipo === tipo
-                              ? { background: "#282525", color: "white", borderColor: "#282525" }
+                              ? { background: "#1C0E33", color: "white", borderColor: "#1C0E33" }
                               : { background: "white", color: "rgba(13,13,13,.45)", borderColor: "rgba(13,13,13,.12)" }}>
                             {tipo === "interna" ? "Equipe interna" : "Captador externo"}
                           </button>
@@ -989,12 +990,12 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
           )}
         </main>
 
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           {erro ? <p role="alert" className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
           <div className="ml-auto flex flex-shrink-0 items-center gap-2">
             <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
             <button type="button" onClick={handleSalvar} disabled={saving}
-              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
+              className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-bold text-white transition active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
               <Save size={12} /> {saving ? "Salvando…" : editData ? "Salvar" : "Criar negociação"}
             </button>
           </div>

@@ -43,7 +43,7 @@ export type TabelaDaMigration = {
 
 export type FuncaoDaMigration = {
   nome: string;
-  argumentos: { nome: string; tipoSql: string }[];
+  argumentos: { nome: string; tipoSql: string; comPadrao?: boolean }[];
   retornoSql: string;
   /** A última palavra das migrations é `grant execute ... to authenticated`: o navegador a chama. */
   doNavegador: boolean;
@@ -89,6 +89,7 @@ export function tipoTsDe(tipoSql: string): string {
   if (["uuid", "text", "date", "timestamptz", "timestamp", "time", "varchar", "citext"].includes(tipo)) return "string";
   if (["jsonb", "json"].includes(tipo)) return "Json";
   if (["boolean", "bool"].includes(tipo)) return "boolean";
+  if (tipo === "void") return "undefined";
   if (["integer", "int", "int2", "int4", "int8", "smallint", "bigint", "numeric", "decimal", "real", "float4", "float8"].includes(tipo)) return "number";
   throw new Error(`tipo SQL sem correspondente no teste: ${tipoSql} (acrescente-o em tipoTsDe)`);
 }
@@ -185,8 +186,27 @@ export function lerMigrations(arquivos: readonly ArquivoSql[]): BancoNasMigratio
         continue;
       }
 
+      // Apagar uma tabela (T1 da Ticketeria: a plateia, os convidados, a porta, o borderô e o site saíram da produção) tira a
+      // tabela do desenho; só vale sem `cascade`, que levaria junto o que o teste não vê. As chaves que apontavam para ela saem
+      // com as tabelas filhas, que a mesma migration apaga antes (o banco recusaria o drop se não).
+      const apagaTabela = /^drop table (?:if exists )?public\.(producao_\w+)(\s+\w+)?$/.exec(comando);
+      if (apagaTabela) {
+        if (apagaTabela[2]) throw new Error(`a migration ${arquivo.nome} apaga ${apagaTabela[1]} com ${apagaTabela[2].trim()}: o teste só lê o drop simples`);
+        e.tabelas.delete(apagaTabela[1]);
+        e.unicas.delete(apagaTabela[1]);
+        for (const tabela of e.tabelas.values()) {
+          if (tabela.chaves.some(chave => chave.tabelaDestino === apagaTabela[1])) throw new Error(`a migration ${arquivo.nome} apaga ${apagaTabela[1]}, mas ${tabela.nome} ainda aponta para ela`);
+        }
+        continue;
+      }
+      const apagaFuncao = /^drop function (?:if exists )?public\.((?:auth|fn)_producao_\w+)\(/.exec(comando);
+      if (apagaFuncao) {
+        funcoes.delete(apagaFuncao[1]);
+        executaveis.delete(apagaFuncao[1]);
+        continue;
+      }
       if (/^drop (?:table|function) (?:if exists )?public\.(?:producao_|auth_producao_|fn_producao_)/.test(comando)) {
-        throw new Error(`a migration ${arquivo.nome} apaga um objeto da produção: tire-o de lib/producao/banco.ts e ensine o teste`);
+        throw new Error(`a migration ${arquivo.nome} apaga um objeto da produção de um jeito que o teste não lê: ensine o teste`);
       }
       if (/^create (?:or replace )?(?:materialized )?view public\.producao_|^create type public\.producao_/.test(comando)) {
         throw new Error(`a migration ${arquivo.nome} cria uma view ou um tipo da produção: escreva-o em lib/producao/banco.ts (Views, Enums) e ensine o teste`);
@@ -199,9 +219,11 @@ export function lerMigrations(arquivos: readonly ArquivoSql[]): BancoNasMigratio
       const funcao = /^create (?:or replace )?function public\.((?:auth|fn)_producao_\w+)\(([^)]*)\) returns (.+?) language /.exec(comando);
       if (funcao) {
         const argumentos = itensDe(funcao[2]).map(a => {
-          const arg = /^(\w+) (.+)$/.exec(a);
-          if (!arg || /\bdefault\b/i.test(a)) throw new Error(`argumento que o teste não entende: ${funcao[1]}(${a})`);
-          return { nome: arg[1], tipoSql: arg[2] };
+          // `default` só é aceito em função que o navegador não executa (a limpeza de privacidade, por exemplo): lá o tipo não precisa dela.
+          const comPadrao = /\sdefault\s/i.test(a);
+          const arg = /^(\w+) (.+?)(?:\s+default\s+.+)?$/i.exec(a);
+          if (!arg) throw new Error(`argumento que o teste não entende: ${funcao[1]}(${a})`);
+          return { nome: arg[1], tipoSql: arg[2], comPadrao };
         });
         funcoes.set(funcao[1], { nome: funcao[1], argumentos, retornoSql: funcao[3], doNavegador: false });
         continue;
@@ -217,7 +239,9 @@ export function lerMigrations(arquivos: readonly ArquivoSql[]): BancoNasMigratio
 
   for (const [nome, funcao] of funcoes) funcao.doNavegador = executaveis.has(nome);
   for (const nome of executaveis) {
-    if (!funcoes.has(nome)) throw new Error(`grant execute de ${nome}, que nenhuma migration criou`);
+    const funcao = funcoes.get(nome);
+    if (!funcao) throw new Error(`grant execute de ${nome}, que nenhuma migration criou`);
+    if (funcao.argumentos.some(arg => arg.comPadrao)) throw new Error(`argumento que o teste não entende: ${nome} tem argumento com default e o navegador a executa (o tipo teria de marcá-lo como opcional)`);
   }
   // Uma chave é um-para-um quando as colunas dela são exatamente as de uma chave primária ou única da tabela.
   for (const [nome, tabela] of e.tabelas) {

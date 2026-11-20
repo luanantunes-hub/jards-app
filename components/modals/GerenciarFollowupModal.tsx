@@ -63,11 +63,11 @@ export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4" onClick={() => { if (!saving) onClose(); }}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-md rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()}>
-        <header className="flex items-start justify-between gap-4 border-b border-black/[.08] px-6 py-4">
+    <div className="fixed inset-0 z-[70] flex justify-center veu items-start" onClick={() => { if (!saving) onClose(); }}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-desce folha-vidro w-full max-w-md max-h-[96dvh]" onClick={event => event.stopPropagation()}>
+        <header className="flex items-start justify-between gap-4 border-b border-black/[.08] px-6 py-5 sm:px-8 sm:py-6">
           <div>
-            <p id={titleId} className="text-[0.875rem] font-bold text-[#282525]">{followup.status === "pendente" ? "Gerenciar follow-up" : "Follow-up"}</p>
+            <p id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">{followup.status === "pendente" ? "Gerenciar follow-up" : "Follow-up"}</p>
             <p className="mt-1 text-[0.75rem] text-black/55">{followup.titulo}</p>
           </div>
           <button type="button" onClick={onClose} disabled={saving} aria-label="Fechar" className="text-black/35 hover:text-black/60 disabled:opacity-40"><X size={16} /></button>
@@ -88,10 +88,10 @@ export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
           )}
           {error && <p role="alert" className="text-[0.6875rem] font-medium text-[#D94E4E]">{error}</p>}
         </div>
-        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-black/[.08] px-6 py-4">
+        <footer className="folha-rodape rounded-b-[var(--raio-folha)] flex flex-wrap items-center justify-between gap-3 border-t border-black/[.08] px-6 py-4">
           <button type="button" onClick={remove} disabled={saving} className="inline-flex items-center gap-1.5 text-[0.6875rem] font-medium text-[#D94E4E] hover:underline disabled:opacity-40"><Trash2 size={13} /> Excluir</button>
           {followup.status === "pendente" && (
-            <button type="button" onClick={() => void complete()} disabled={saving} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-semibold text-white hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">
+            <button type="button" onClick={() => void complete()} disabled={saving} className="inline-flex items-center gap-1.5 rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed">
               <Check size={14} /> {saving ? "Salvando…" : "Concluir sem interação"}
             </button>
           )}

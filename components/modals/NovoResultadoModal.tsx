@@ -117,21 +117,20 @@ export function NovoResultadoModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,.45)" }}
+      className="fixed inset-0 z-50 flex justify-center veu items-start"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded w-full flex flex-col overflow-hidden border elevacao-3"
+        className="folha-desce folha-vidro w-full flex flex-col overflow-hidden max-h-[96dvh]"
         style={{ maxWidth: "26.25rem", maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 id={titleId} className="text-[0.875rem] font-semibold text-black/80">
+          <h2 id={titleId} className="text-black/80 font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">
             {editData ? "Editar captação" : "Registrar captação"}
           </h2>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.05] transition">
@@ -211,7 +210,7 @@ export function NovoResultadoModal({
           <button
             onClick={handleSalvar}
             disabled={saving}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded acao-salvar px-4 py-2 text-[0.75rem] font-semibold text-white transition active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
           </button>

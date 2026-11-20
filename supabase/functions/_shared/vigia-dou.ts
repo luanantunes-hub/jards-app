@@ -1,7 +1,7 @@
 // Vigia normativo mínimo (P1.10): leitura dos atos do Diário Oficial da União
-// em XML (INLABS, da Imprensa Nacional) e triagem sem IA.
+// em XML (INLABS ou base de dados aberta, as duas da Imprensa Nacional) e triagem sem IA.
 //
-// O INLABS publica, por dia e por seção, um .zip com um XML por ato
+// A Imprensa Nacional publica, por dia e por seção, um .zip com um XML por ato
 // (<article ...><body><Identifica/><Ementa/><Texto/></body></article>). A
 // triagem descarta a maior parte do Diário: fica o ato normativo que cita uma
 // norma dos regimes do módulo (Lei Rouanet, Lei de Incentivo ao Esporte,

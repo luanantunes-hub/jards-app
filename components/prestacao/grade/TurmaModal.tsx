@@ -81,7 +81,7 @@ export function TurmaModal({ prestacaoId, turma, locais, modalidades, ordem, onC
             type="button"
             onClick={salvar}
             disabled={salvando}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
             {t ? "Salvar" : "Adicionar à grade"}
@@ -125,8 +125,8 @@ export function TurmaModal({ prestacaoId, turma, locais, modalidades, ordem, onC
                   onClick={() => alternar(d.dia)}
                   aria-pressed={ativo}
                   aria-label={d.nome}
-                  className={`h-10 min-w-11 rounded border px-2.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${ativo ? "bg-[#282525] text-white" : "bg-white text-black/55 hover:bg-black/[.04] hover:text-black/80"}`}
-                  style={{ borderColor: ativo ? "#282525" : "rgba(13,13,13,.12)" }}
+                  className={`h-10 min-w-11 rounded border px-2.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${ativo ? "bg-[#1C0E33] text-white" : "bg-white text-black/55 hover:bg-black/[.04] hover:text-black/80"}`}
+                  style={{ borderColor: ativo ? "#1C0E33" : "rgba(13,13,13,.12)" }}
                 >
                   {d.curto}
                 </button>

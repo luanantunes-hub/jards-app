@@ -78,7 +78,7 @@ export function MinutaAlteracao({ minuta, onClose, planilha }: {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center veu p-4" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
@@ -151,7 +151,7 @@ export function MinutaAlteracao({ minuta, onClose, planilha }: {
           <button type="button" onClick={() => imprimir(minuta)} className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] text-black/65 transition hover:border-black/25 hover:text-black/85 focus-visible:outline-2 focus-visible:outline-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.14)" }}>
             <Printer size={13} aria-hidden /> Imprimir
           </button>
-          <button type="button" onClick={copiar} className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
+          <button type="button" onClick={copiar} className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
             {copiado ? <><Check size={13} aria-hidden /> Copiado</> : <><Copy size={13} aria-hidden /> Copiar texto</>}
           </button>
         </div>

@@ -7,7 +7,7 @@ import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { SITUACOES_DA_PAUTA, type SituacaoDaPauta } from "@/lib/producao/estados";
-import { lerPauta, ROTULO_DA_SITUACAO_DA_PAUTA, type PautaDaGrade } from "@/lib/producao/pauta";
+import { lerPauta, proximaOrdemNaFila, ROTULO_DA_SITUACAO_DA_PAUTA, type PautaDaGrade } from "@/lib/producao/pauta";
 
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
@@ -15,8 +15,8 @@ const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
 export type SalaDaPauta = { id: string; rotulo: string };
 
 /** Cadastro e edição de uma pauta: a sala, o período, o contratante e a situação (a fila e a validade são da pré-reserva). */
-export function PautaSheet({ organizationId, salas, pauta, salaInicial, diaInicial, onClose, onSaved }: {
-  organizationId: string; salas: SalaDaPauta[]; pauta?: PautaDaGrade; salaInicial?: string; diaInicial?: string; onClose: () => void; onSaved: () => void;
+export function PautaSheet({ organizationId, salas, pautas = [], pauta, salaInicial, diaInicial, onClose, onSaved }: {
+  organizationId: string; salas: SalaDaPauta[]; pautas?: PautaDaGrade[]; pauta?: PautaDaGrade; salaInicial?: string; diaInicial?: string; onClose: () => void; onSaved: () => void;
 }) {
   const { confirmDelete } = useDeleteConfirm();
   const [salaId, setSalaId] = useState(pauta?.sala_id ?? salaInicial ?? salas[0]?.id ?? "");
@@ -34,6 +34,11 @@ export function PautaSheet({ organizationId, salas, pauta, salaInicial, diaInici
     if (!salaId) { setErro("Escolha a sala."); return; }
     const leitura = lerPauta({ titulo, contratante, inicio, fim, situacao, ordem, validade });
     if (!leitura.ok) { setErro(leitura.erro); return; }
+    // A pré-reserva entra no fim da fila do período; se mudou de sala ou de datas, entra no fim da fila nova.
+    const mudouDeLugar = Boolean(pauta) && (pauta?.sala_id !== salaId || pauta?.inicio !== leitura.pauta.inicio || pauta?.fim !== leitura.pauta.fim);
+    if (leitura.pauta.situacao === "pre_reserva" && (leitura.pauta.ordem_na_fila === null || mudouDeLugar)) {
+      leitura.pauta.ordem_na_fila = proximaOrdemNaFila(pautas, salaId, leitura.pauta.inicio, leitura.pauta.fim, pauta?.id);
+    }
     setSalvando(true);
     setErro(null);
     const producao = clienteDaProducao(createClient());
@@ -71,7 +76,7 @@ export function PautaSheet({ organizationId, salas, pauta, salaInicial, diaInici
         <>
           {pauta && <button type="button" onClick={() => apagar(fechar)} disabled={salvando} className="mr-auto rounded px-4 py-2.5 text-[0.75rem] font-medium text-[#B23B3B] transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Apagar</button>}
           <button type="button" onClick={fechar} disabled={salvando} className="rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
-          <button type="button" onClick={() => void salvar(fechar)} disabled={salvando} className="rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Salvando…" : pauta ? "Salvar" : "Criar pauta"}</button>
+          <button type="button" onClick={() => void salvar(fechar)} disabled={salvando} className="rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Salvando…" : pauta ? "Salvar" : "Criar pauta"}</button>
         </>
       )}
     >

@@ -279,7 +279,7 @@ export function AjudaFlutuante() {
                   Prefere o WhatsApp?
                 </a>
                 <button type="button" onClick={() => void enviarParaEquipe()} disabled={enviando || !mensagem.trim()}
-                  className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:cursor-not-allowed disabled:opacity-50">
+                  className="flex items-center gap-1.5 rounded acao-salvar px-4 py-2 text-[0.75rem] font-bold text-white transition active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] disabled:cursor-not-allowed disabled:opacity-50">
                   {enviando ? "Enviando…" : "Enviar"}
                 </button>
               </footer>

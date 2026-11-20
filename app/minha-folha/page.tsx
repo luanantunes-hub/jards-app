@@ -1,13 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, BedDouble, Bus, Check } from "lucide-react";
+import { ArrowLeft, BedDouble, Bus, Check, Route } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { diaDaSemana, diaEMes, ROTULO_DO_TIPO_DE_DATA } from "@/lib/producao/agenda";
 import { instanteParaHoraLocal, rotuloDaHora, ROTULO_DO_TIPO_DE_BLOCO } from "@/lib/producao/dia";
 import { ROTULO_DA_CONFIRMACAO, rotuloDoHorario } from "@/lib/producao/escala";
 import { apagarDoCelular, arquivosDaCasca, CACHE_DA_CASCA, CHAVE_DAS_DATAS, chaveDaData, falhaDeRede, lerDoCelular, salvarNoCelular } from "@/lib/producao/folha-cache";
 import { agoraEProximo, type FolhaDaEquipe, type MinhaData } from "@/lib/producao/folha";
+import { ROTULO_DO_DESLOCAMENTO } from "@/lib/producao/deslocamentos";
+import { periodoDaHospedagem } from "@/lib/producao/hospedagem";
+import { placaParaExibir } from "@/lib/producao/veiculos";
+import { TEXTO_DO_MOTIVO, type RegistroDaViagem } from "@/lib/producao/viagem-motorista";
+import { RegistroDaViagemDoMotorista } from "./RegistroDaViagem";
 import type { TipoBloco } from "@/lib/producao/vocabulario";
 
 type RespostaDaFuncao = PromiseLike<{ data: unknown; error: { message: string } | null }>;
@@ -118,6 +123,15 @@ export default function MinhaFolhaPage() {
     if (error) { setErro("Não foi possível guardar sua resposta. Tente de novo."); return; }
     setFolha({ ...folha, escala: { ...folha.escala, confirmacao: resposta } });
     setDatas(atual => atual?.map(item => (item.escala_id === folha.escala.id ? { ...item, confirmacao: resposta } : item)) ?? atual);
+  }
+
+  /** O registro do motorista (PD6.4): odômetro e abastecimento. Devolve "ok" ou o texto para a pessoa; no fim, relê a folha. */
+  async function registrarViagem(deslocamentoId: string, args: RegistroDaViagem): Promise<string> {
+    const { data, error } = await chamar("fn_equipe_registrar_viagem", { p_deslocamento: deslocamentoId, ...args });
+    if (error) return falhaDeRede(error, navigator.onLine) ? "Sem internet agora. Tente de novo quando tiver sinal." : "Não foi possível enviar. Tente de novo.";
+    if (data !== "ok") return TEXTO_DO_MOTIVO[typeof data === "string" ? data : ""] ?? "Não foi possível enviar agora.";
+    if (aberta) await abrir(aberta);
+    return "ok";
   }
 
   const proximas = useMemo(() => {
@@ -231,6 +245,46 @@ export default function MinhaFolhaPage() {
                   </li>
                 ))}
               </ul>
+            </section>
+          )}
+
+          {(folha.deslocamentos ?? []).length > 0 && (
+            <section className="space-y-3">
+              <h2 className={ROTULO}>Seus deslocamentos</h2>
+              {(folha.deslocamentos ?? []).map(deslocamento => {
+                const horas = [deslocamento.saida, deslocamento.chegada].map(instante => (instante ? instanteParaHoraLocal(instante, folha.data.fuso) : null));
+                const trecho = [deslocamento.origem, deslocamento.destino].filter(Boolean).join(" → ");
+                return (
+                  <div key={deslocamento.id} className="flex gap-2.5 text-[0.75rem] text-[#282525]">
+                    <Route size={14} aria-hidden="true" className="mt-0.5 shrink-0 text-black/40" />
+                    <div className="min-w-0">
+                      <p className="font-medium">{ROTULO_DO_DESLOCAMENTO[deslocamento.tipo]}{trecho ? ` · ${trecho}` : ""}{deslocamento.motorista ? " · você dirige" : ""}</p>
+                      {horas[0] && <p className="text-black/60">{`saída ${horas[0].hora}`}{horas[1] ? ` · chegada ${horas[1].hora}${horas[1].dia > horas[0].dia ? " (+1)" : ""}` : ""}</p>}
+                      {(deslocamento.veiculo || deslocamento.companhia) && <p className="text-black/60">{[deslocamento.veiculo ? `${deslocamento.veiculo}${deslocamento.placa ? ` (${placaParaExibir(deslocamento.placa)})` : ""}` : null, deslocamento.companhia].filter(Boolean).join(" · ")}</p>}
+                      {deslocamento.localizador && <p className="text-black/60">Reserva: {deslocamento.localizador}</p>}
+                      {deslocamento.notas && <p className="whitespace-pre-line break-words text-black/60">{deslocamento.notas}</p>}
+                      {deslocamento.motorista && <RegistroDaViagemDoMotorista deslocamento={deslocamento} onEnviar={args => registrarViagem(deslocamento.id, args)} />}
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+          )}
+
+          {(folha.hospedagens ?? []).length > 0 && (
+            <section className="space-y-3">
+              <h2 className={ROTULO}>Seu quarto</h2>
+              {(folha.hospedagens ?? []).map(hospedagem => (
+                <div key={hospedagem.id} className="flex gap-2.5 text-[0.75rem] text-[#282525]">
+                  <BedDouble size={14} aria-hidden="true" className="mt-0.5 shrink-0 text-black/40" />
+                  <div className="min-w-0">
+                    <p className="font-medium">{hospedagem.hotel} · quarto {hospedagem.quarto}</p>
+                    {periodoDaHospedagem(hospedagem.entrada, hospedagem.saida) && <p className="text-black/60">{periodoDaHospedagem(hospedagem.entrada, hospedagem.saida)}</p>}
+                    {hospedagem.endereco && <p className="break-words text-black/60">{hospedagem.endereco}</p>}
+                    {hospedagem.localizador && <p className="text-black/60">Reserva: {hospedagem.localizador}</p>}
+                  </div>
+                </div>
+              ))}
             </section>
           )}
 

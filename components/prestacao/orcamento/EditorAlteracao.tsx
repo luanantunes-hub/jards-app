@@ -145,7 +145,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center veu p-2 sm:p-4" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
@@ -349,7 +349,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
               type="button"
               onClick={salvar}
               disabled={salvando}
-              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded acao-salvar px-5 py-2 text-[0.8125rem] font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
               Salvar rascunho

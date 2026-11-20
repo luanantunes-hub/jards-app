@@ -247,15 +247,15 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={close}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[90vh] w-full max-w-[35rem] flex-col overflow-hidden rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex justify-center veu items-start" onClick={close}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="folha-desce folha-vidro flex max-h-[90vh] w-full max-w-[35rem] flex-col overflow-hidden" onClick={event => event.stopPropagation()}>
         <div className="flex shrink-0 items-center justify-between border-b px-6 pb-4 pt-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.04]">
               <Users size={16} className="text-[#7259B5]" />
             </div>
             <div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Equipe e usuários extras</h2>
+              <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">Equipe e usuários extras</h2>
               <p className="text-[0.6875rem] text-black/40">Compre a capacidade e depois envie os convites.</p>
             </div>
           </div>
@@ -439,9 +439,9 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
         <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button onClick={close} className="px-4 py-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
           {mode === "invite" ? (
-            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || semVaga.length > 0 || semLeitura.length > 0} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Enviando…" : "Enviar convite"}</button>
+            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || semVaga.length > 0 || semLeitura.length > 0} className="rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-semibold text-white transition disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Enviando…" : "Enviar convite"}</button>
           ) : (
-            <button onClick={buySeats} disabled={saving || loading} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Processando…" : `Comprar ${quantity} usuário${quantity > 1 ? "s" : ""} extra${quantity > 1 ? "s" : ""}`}</button>
+            <button onClick={buySeats} disabled={saving || loading} className="rounded acao-salvar px-5 py-2.5 text-[0.75rem] font-semibold text-white transition disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Processando…" : `Comprar ${quantity} usuário${quantity > 1 ? "s" : ""} extra${quantity > 1 ? "s" : ""}`}</button>
           )}
         </div>
       </div>

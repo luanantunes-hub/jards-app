@@ -30,7 +30,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -306,12 +306,12 @@
     .edital-btn-export:active { transform: scale(0.97); }
     .ver-btn:active { transform: scale(0.90); }
 
-    /* ── Slot animado (BI) ── */
+    /* ── Slot animado (BI): o cartão do patrocinador vira e mostra o verso ── */
     .bi-slot {
       position: relative;
       border-radius: 4px;
-      overflow: hidden;
-      min-height: 204px;
+      min-height: 244px;
+      perspective: 1100px;
     }
     .bi-inner {
       position: absolute;
@@ -320,33 +320,65 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: opacity 0.38s cubic-bezier(.4,0,.2,1), transform 0.38s cubic-bezier(.4,0,.2,1);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transition: transform .85s cubic-bezier(.3,.8,.25,1), border-color .2s ease, box-shadow .2s ease;
     }
     .bi-sponsor {
       background: linear-gradient(145deg,#fff 0%,#F7F7F5 100%);
       border: 1px solid rgba(40,37,37,.08);
       box-shadow: 0 1px 2px rgba(40,37,37,.025);
-      transition: opacity .38s cubic-bezier(.4,0,.2,1), transform .38s cubic-bezier(.4,0,.2,1), border-color .2s ease, box-shadow .2s ease;
     }
     .bi-slot:hover .bi-sponsor { border-color: rgba(40,37,37,.12); box-shadow: 0 10px 28px rgba(40,37,37,.08); }
     .bi-feature {
-      background: var(--cream);
-      border: 1.5px solid rgba(40,37,37,0.10);
-      padding: 16px;
+      background: #1C0E33;
+      border: 1px solid rgba(199,182,238,.22);
+      box-shadow: 0 16px 34px -12px rgba(28,14,51,.55);
+      padding: 18px 18px 16px;
       justify-content: space-between;
-      opacity: 0;
-      transform: translateY(10px) scale(0.97);
+      transform: rotateY(180deg);
       pointer-events: none;
     }
-    .bi-feature.visible {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      pointer-events: auto;
+    .bi-feature.visible { transform: rotateY(0); pointer-events: auto; }
+    .bi-sponsor.hidden-card { transform: rotateY(-180deg); pointer-events: none; }
+    /* o cartão que vira também se embaralha: sobe, inclina e assenta */
+    .bi-slot.is-embaralha { animation: bi-embaralha .9s cubic-bezier(.3,.7,.25,1); }
+    @keyframes bi-embaralha {
+      0% { transform: translateY(0) rotate(0); }
+      28% { transform: translateY(-16px) rotate(-3.2deg) scale(1.025); }
+      62% { transform: translateY(-5px) rotate(1.8deg) scale(1.01); }
+      100% { transform: translateY(0) rotate(0) scale(1); }
     }
-    .bi-sponsor.hidden-card {
+    /* troca de conteúdo no mesmo cartão: vira de lado e volta com o texto novo */
+    .bi-feature.is-troca { animation: bi-troca .56s cubic-bezier(.4,0,.2,1); }
+    @keyframes bi-troca { 0% { transform: rotateY(0); } 50% { transform: rotateY(-90deg); } 100% { transform: rotateY(0); } }
+
+    /* texto do verso: mais corpo e mais destaque */
+    .bi-fk { font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.62); }
+    .bi-fstat { font-family: 'Google Sans',system-ui,sans-serif; font-weight: 700; letter-spacing: -.03em; font-size: 3.1rem; line-height: 1; color: #fff; }
+    .bi-ft { font-family: 'Google Sans',system-ui,sans-serif; font-size: 1.28rem; font-weight: 700; line-height: 1.12; letter-spacing: -.02em; color: #fff; }
+    .bi-fs { margin-top: 6px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,.82); }
+    .bi-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 12px; }
+    .bi-chips span { display: inline-flex; align-items: center; min-height: 22px; padding: 0 6px; border: 1px solid rgba(255,255,255,.26); border-radius: 4px; background: rgba(255,255,255,.07); font-size: 10px; font-weight: 600; color: rgba(255,255,255,.9); }
+
+    /* chegada: os quatro cartões entram empilhados e inclinados e se distribuem na grade */
+    html.js .bi-cards .grid > * {
       opacity: 0;
-      transform: translateY(-8px) scale(0.97);
-      pointer-events: none;
+      transform: translate(var(--bx, 0), var(--by, 0)) rotate(var(--br, 0deg)) scale(.9);
+      transition: transform 1s cubic-bezier(.2,.9,.2,1) var(--bd, 0s), opacity .5s ease var(--bd, 0s);
+    }
+    html.js .bi-cards.in .grid > * { opacity: 1; transform: none; }
+    .bi-cards .grid > :nth-child(1) { --bx: 52%; --by: 54%; --br: -7deg; --bd: 0s; z-index: 1; }
+    .bi-cards .grid > :nth-child(2) { --bx: -52%; --by: 54%; --br: 6deg; --bd: .09s; z-index: 2; }
+    .bi-cards .grid > :nth-child(3) { --bx: 52%; --by: -54%; --br: 5deg; --bd: .18s; z-index: 3; }
+    .bi-cards .grid > :nth-child(4) { --bx: -52%; --by: -54%; --br: -6deg; --bd: .27s; z-index: 4; }
+    @media (prefers-reduced-motion: reduce) {
+      html.js .bi-cards .grid > * { opacity: 1; transform: none; transition: none; }
+      .bi-inner { transition: opacity .2s ease; }
+      .bi-feature { transform: none; opacity: 0; }
+      .bi-feature.visible { opacity: 1; }
+      .bi-sponsor.hidden-card { transform: none; opacity: 0; }
+      .bi-slot.is-embaralha, .bi-feature.is-troca { animation: none; }
     }
 
     /* ── Accordion ── */
@@ -476,7 +508,7 @@
     .fs-stage[data-pose="2"] img { transform:scale(1.16) translate(1.5%,1.2%); }
     .fs-stage[data-pose="3"] img { transform:scale(1.08) translate(-1%,1.6%); }
     .fs-card { position:absolute; left:-28px; bottom:34px; z-index:3; width:min(330px,80%); }
-    .fs-card-inner { position:absolute; left:0; right:0; bottom:0; overflow:hidden; border:1px solid rgba(40,37,37,.12); border-radius:12px; background:rgba(255,255,255,.96); box-shadow:0 22px 58px rgba(52,42,78,.17),0 5px 16px rgba(40,37,37,.09); opacity:0; transform:translateY(10px); transition:opacity .35s ease, transform .45s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    .fs-card-inner { position:absolute; left:0; right:0; bottom:0; overflow:hidden; border:1px solid rgba(40,37,37,.12); border-radius:4px; background:rgba(255,255,255,.96); box-shadow:0 22px 58px rgba(52,42,78,.17),0 5px 16px rgba(40,37,37,.09); opacity:0; transform:translateY(10px); transition:opacity .35s ease, transform .45s cubic-bezier(.4,0,.2,1); pointer-events:none; }
     .fs-card-inner.is-active { position:relative; opacity:1; transform:none; }
     .fs-card-topo { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 15px; border-bottom:1px solid rgba(40,37,37,.09); }
     .fs-card-topo strong { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#282525; }
@@ -600,12 +632,58 @@
     /* sem a linha do tempo (o fluxo já conta a jornada) e sem numerais: o texto fica centrado na altura das três forças */
     .ledger-main { position:relative; display:flex; flex-direction:column; justify-content:center; padding:56px 52px; border-right:1px solid rgba(40,37,37,.10); }
     .ledger-side { display:grid; grid-template-rows:repeat(3,auto); }
+    /* versão com foto à esquerda: a foto é um quadro com o arredondamento padrão (4px) */
+    .feature-ledger--foto { grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr); }
+    /* sem moldura: a foto e o texto ficam direto no fundo branco da seção */
+    .feature-ledger--foto { align-items:center; column-gap:64px; overflow:visible; border:0; background:transparent; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
+    .platform-forces:has(.feature-ledger--foto)::after { display:none; }
+    .ledger-foto { position:relative; margin:0; padding:0; }
+    .ledger-foto img { display:block; width:100%; height:100%; min-height:360px; object-fit:cover; object-position:50% 42%; border-radius:4px; }
+    .ledger-body { display:flex; flex-direction:column; justify-content:center; }
+    /* Os dois balões sobre a foto: um por vez, o do tamanduá (Relacionamento = CRM, acima da cabeça) e depois o da mulher (Dados = Inteligência, abaixo do queixo).
+       A foto usa object-fit:cover, então cada balão é posicionado pelo ponto da foto original (960×1200, em --x e --y) onde fica a PONTA da setinha, e o corpo do balão
+       sai dali (--tx e --ty). O balão é uma forma só (retângulo com a setinha, num único recorte) em vidro escuro: fundo translúcido que desfoca a foto, texto branco.
+       O fade anima --ba (0 a 1) em vez de opacity, porque opacity impediria o desfoque do fundo. */
+    @property --ba { syntax:'<number>'; inherits:true; initial-value:1; }
+    .ledger-balaos { position:absolute; inset:0; container-type:size; pointer-events:none; }
+    .ledger-balao { --s:max(calc(100cqw / 960), calc(100cqh / 1200)); --cauda:50%; --tx:calc(var(--cauda) * -1); position:absolute; left:calc((100cqw - 960 * var(--s)) * .5 + var(--x) * var(--s)); top:calc((100cqh - 1200 * var(--s)) * .42 + var(--y) * var(--s)); transform:translate(var(--tx),var(--ty)); padding:.75em 1.15em; color:rgba(255,255,255,var(--ba)); font-family:'Geist','Google Sans',system-ui,sans-serif; font-size:clamp(9px,3.7cqw,12.5px); font-weight:500; line-height:1; letter-spacing:-.005em; white-space:nowrap; }
+    .ledger-balao::before { content:""; position:absolute; z-index:-1; background:rgba(32,32,35,calc(.78 * var(--ba))); -webkit-backdrop-filter:blur(calc(16px * var(--ba))) saturate(1.5); backdrop-filter:blur(calc(16px * var(--ba))) saturate(1.5); }
+    .ledger-balao--a { --ty:calc(-100% - 7px); }
+    .ledger-balao--a::before { inset:0 0 -7px 0; clip-path:polygon(0 4px,1.2px 1.2px,4px 0,calc(100% - 4px) 0,calc(100% - 1.2px) 1.2px,100% 4px,100% calc(100% - 11px),calc(100% - 1.2px) calc(100% - 8.2px),calc(100% - 4px) calc(100% - 7px),calc(var(--cauda) + 6px) calc(100% - 7px),var(--cauda) 100%,calc(var(--cauda) - 6px) calc(100% - 7px),4px calc(100% - 7px),1.2px calc(100% - 8.2px),0 calc(100% - 11px)); }
+    .ledger-balao--b { --cauda:18%; --ty:7px; }
+    .ledger-balao--b::before { inset:-7px 0 0 0; clip-path:polygon(0 11px,1.2px 8.2px,4px 7px,calc(var(--cauda) - 6px) 7px,var(--cauda) 0,calc(var(--cauda) + 6px) 7px,calc(100% - 4px) 7px,calc(100% - 1.2px) 8.2px,100% 11px,100% calc(100% - 4px),calc(100% - 1.2px) calc(100% - 1.2px),calc(100% - 4px) 100%,4px 100%,1.2px calc(100% - 1.2px),0 calc(100% - 4px)); }
+    @keyframes ledger-balao-a { 0% { --ba:0; transform:translate(var(--tx),calc(var(--ty) + 6px)); } 6%, 38% { --ba:1; transform:translate(var(--tx),var(--ty)); } 46%, 100% { --ba:0; transform:translate(var(--tx),var(--ty)); } }
+    @keyframes ledger-balao-b { 0%, 50% { --ba:0; transform:translate(var(--tx),calc(var(--ty) + 6px)); } 56%, 88% { --ba:1; transform:translate(var(--tx),var(--ty)); } 96%, 100% { --ba:0; transform:translate(var(--tx),var(--ty)); } }
+    @media (prefers-reduced-motion: no-preference) {
+      .ledger-balao--a { animation:ledger-balao-a 10s cubic-bezier(.4,0,.2,1) infinite; }
+      .ledger-balao--b { animation:ledger-balao-b 10s cubic-bezier(.4,0,.2,1) infinite; }
+    }
+    .feature-ledger--foto .ledger-main { padding:0 0 36px; border-right:0; border-bottom:1px solid rgba(40,37,37,.10); }
+    .feature-ledger--foto .ledger-item { padding-left:0; padding-right:0; }
+    .feature-ledger--foto .ledger-side { grid-template-rows:repeat(2,auto); }
     .ledger-item { padding:36px 40px; border-bottom:1px solid rgba(40,37,37,.10); transition:background-color .25s ease; }
     .ledger-item:hover { background:rgba(13,13,13,.025); }
     .ledger-item:last-child { border-bottom:0; }
     .ledger-item .ledger-num { margin-bottom:10px; font-size:11px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:rgba(40,37,37,.48); }
     .ledger-item h3 { font-family:'Google Sans',system-ui,sans-serif; font-size:clamp(19px,1.55vw,23px); font-weight:700; line-height:1.1; letter-spacing:-.015em; margin-bottom:8px; }
     .ledger-item p { max-width:40ch; font-size:13px; line-height:1.6; color:rgba(40,37,37,.55); }
+    /* Módulos: dois boxes verticais, cada um com a sua ilustração (16/11/2026). */
+    .feature-ledger--foto .ledger-side { grid-template-rows:none; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin-top:32px; }
+    .feature-ledger--foto .ledger-item { display:flex; flex-direction:column; padding:24px 24px 28px; border:1px solid rgba(40,37,37,.10); border-radius:4px; background:#fff; transition:border-color .25s ease; }
+    .feature-ledger--foto .ledger-item:last-child { border-bottom:1px solid rgba(40,37,37,.10); }
+    .feature-ledger--foto .ledger-item:hover { background:#fff; border-color:rgba(40,37,37,.22); }
+    @media (min-width: 640px) { .feature-ledger--foto .ledger-item h3 { min-height:2.2em; } }
+    .ledger-item--link { color:inherit; text-decoration:none; cursor:pointer; }
+    .ledger-item--link:focus-visible { outline:2px solid #684DB0; outline-offset:3px; }
+    .ledger-ir { display:inline-flex; align-items:center; gap:8px; margin-top:auto; padding-top:20px; font-size:13px; font-weight:500; color:var(--alt-ink,#282525); }
+    .ledger-ir .ph { font-size:14px; transition:transform .2s ease; }
+    .ledger-item--link:hover .ledger-ir .ph, .ledger-item--link:focus-visible .ledger-ir .ph { transform:translateX(3px); }
+    .feature-ledger--foto .ledger-item--link:hover { border-color:rgba(104,77,176,.45); }
+    .ledger-ilustra { display:block; width:100%; height:168px; margin:0 0 24px; object-fit:contain; object-position:center; }
+    @media (max-width: 639px) {
+      .feature-ledger--foto .ledger-side { grid-template-columns:1fr; gap:16px; margin-top:24px; }
+      .ledger-ilustra { height:150px; margin-bottom:18px; }
+    }
 
     @media (max-width: 767px) {
       .kanban-art { grid-template-columns:repeat(4,150px); overflow-x:auto; }
@@ -614,6 +692,9 @@
       .assignment-row { grid-template-columns:1fr 1fr; }
       .platform-forces { min-height:auto; padding-top:56px; padding-bottom:56px; }
       .feature-ledger { grid-template-columns:1fr; }
+      .feature-ledger--foto { row-gap:28px; }
+      .ledger-foto img { height:auto; min-height:0; aspect-ratio:4/3; }
+      .feature-ledger--foto .ledger-main { padding:0 0 26px; }
       .ledger-main { padding:34px 24px 32px; border-right:0; border-bottom:1px solid rgba(40,37,37,.10); }
       .ledger-main>p { max-width:34ch; font-size:14px; }
       /* as três forças empilhadas, sem carrossel */
@@ -733,7 +814,7 @@
     .art-desktop-frame::after { position:absolute; right:-4.5%; bottom:-11px; left:-4.5%; height:19px; border:1px solid #94979b; border-top-color:#f3f4f5; border-radius:2px 2px 50% 50% / 2px 2px 12px 12px; background:linear-gradient(90deg,rgba(52,56,62,.6),transparent 5% 95%,rgba(52,56,62,.6)),linear-gradient(180deg,#e7e8ea 0%,#c8cbcf 30%,#aaadb2 54%,#797d83 82%,#575b61 100%); box-shadow:inset 0 1px 0 #fff,0 2px 2px rgba(36,38,43,.22),0 12px 15px -8px rgba(36,38,43,.3); content:""; }
     .art-laptop-notch { position:absolute; z-index:2; bottom:0; left:42%; width:16%; height:8px; border-radius:0 0 9px 9px; background:linear-gradient(90deg,#90949a,#b9bdc2 12% 88%,#90949a); box-shadow:inset 0 2px 3px rgba(32,35,39,.3),0 1px 0 rgba(255,255,255,.6); pointer-events:none; }
     .art-workspace { position:relative; z-index:1; width:100%; overflow:hidden; border:1px solid rgba(40,37,37,.13); border-radius:9px 9px 3px 3px; background:#fff; text-align:left; }
-    .art-float { position:absolute; z-index:4; overflow:hidden; border:1px solid rgba(40,37,37,.12); border-radius:12px; background:rgba(255,255,255,.96); box-shadow:0 22px 58px rgba(52,42,78,.17),0 5px 16px rgba(40,37,37,.09); text-align:left; }
+    .art-float { position:absolute; z-index:4; overflow:hidden; border:1px solid rgba(40,37,37,.12); border-radius:4px; background:rgba(255,255,255,.96); box-shadow:0 22px 58px rgba(52,42,78,.17),0 5px 16px rgba(40,37,37,.09); text-align:left; }
     .art-report-card { z-index:1; top:20px; left:2.2%; width:270px; padding:17px 18px 15px; }
     .art-report-head { display:flex; align-items:center; gap:8px; padding-bottom:12px; border-bottom:1px solid rgba(40,37,37,.09); font-size:11px; font-weight:700; }
     .art-report-icon { display:grid; width:22px; height:22px; place-items:center; border:1px solid rgba(104,77,176,.28); border-radius:50%; color:#684DB0; font-size:11px; }
@@ -948,13 +1029,13 @@
     .prova-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:32px; margin:0; }
     .prova-item { position:relative; display:flex; flex-direction:column-reverse; justify-content:flex-end; gap:10px; padding:26px 0; }
     .prova-item:nth-child(even)::before { content:""; position:absolute; top:0; bottom:0; left:-16px; width:1px; background:rgba(13,13,13,.1); }
-    .prova-num { margin:0; font-size:clamp(26px,7vw,48px); line-height:1; white-space:nowrap; }
+    .prova-num { margin:0; font-size:clamp(22px,5.4vw,32px); line-height:1; white-space:nowrap; }
     .prova-texto { max-width:22ch; font-size:14px; line-height:1.45; color:rgba(13,13,13,.58); text-wrap:balance; }
     @media (min-width:1024px) {
       .prova-grid { grid-template-columns:repeat(4,minmax(0,1fr)); column-gap:56px; }
       .prova-item { padding:44px 0; }
       .prova-item:not(:first-child)::before { content:""; position:absolute; top:0; bottom:0; left:-28px; width:1px; background:rgba(13,13,13,.1); }
-      .prova-num { font-size:clamp(40px,4.2vw,52px); }
+      .prova-num { font-size:clamp(28px,2.8vw,36px); }
       .prova-texto { font-size:15px; }
     }
     .proof-rotulo { margin:0 0 18px; font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.08em; line-height:1.3; text-transform:uppercase; color:rgba(13,13,13,.55); }
@@ -991,8 +1072,14 @@
     .alt-scroll-x.is-fade-l.is-fade-r { -webkit-mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent); mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent); }
 
     /* BI: kicker e h2 no topo; acordeão à esquerda, cartões à direita */
+    .bi-cards .sponsor-card { min-height:244px; }
     .bi-head { max-width:760px; margin-bottom:56px; }
     .bi-head .alt-h2 { margin:0; }
+    .bi-acc .acc-content { padding-left:56px; }
+    @media (max-width:640px) { .bi-acc .acc-content { padding-left:0; } }
+    .bi-acc .acc-ilustra { width:44px; height:44px; flex-shrink:0; margin:-8px 0; object-fit:contain; opacity:.55; filter:grayscale(.5); transition:opacity .18s ease, filter .18s ease; }
+    .bi-acc button[aria-expanded="true"] .acc-ilustra, .bi-acc button:hover .acc-ilustra { opacity:1; filter:none; }
+    @media (prefers-reduced-motion: reduce) { .bi-acc .acc-ilustra { transition:none; } }
     .bi-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.08fr); gap:64px; align-items:start; }
     .bi-destaque { display:none; }
     @media (max-width:767px) {
@@ -1029,19 +1116,20 @@
     .lei-card-btn { position:relative; display:flex; flex:1; align-items:center; gap:14px; width:100%; padding:14px 16px 14px 14px; border:0; border-bottom:1px solid rgba(13,13,13,.12); border-radius:0; background:transparent; color:rgba(13,13,13,.6); text-align:left; cursor:pointer; transition:background-color .18s ease, color .18s ease; }
     .lei-card-btn:hover { background:rgba(255,255,255,.6); color:var(--alt-ink); }
     .lei-card-btn.is-active { background:#fff; color:var(--alt-ink); }
-    .lei-card-btn::before { content:''; position:absolute; top:50%; left:-24px; width:24px; height:1px; background:repeating-linear-gradient(90deg, var(--lei-cor) 0 3px, transparent 3px 7px); transform:scaleX(0); transform-origin:right center; transition:transform .3s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    .lei-card-btn::before { content:''; position:absolute; top:50%; left:-24px; width:24px; height:1px; background:repeating-linear-gradient(90deg, #9A9AA4 0 3px, transparent 3px 7px); transform:scaleX(0); transform-origin:right center; transition:transform .3s cubic-bezier(.4,0,.2,1); pointer-events:none; }
     .lei-card-btn::after { content:''; position:absolute; top:calc(50% - 4px); left:-28px; width:9px; height:9px; opacity:0; pointer-events:none; transition:opacity .2s ease .2s;
       background:linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 1px 100% no-repeat,
                  linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 100% 1px no-repeat; }
     .lei-card-btn.is-active::before { transform:scaleX(1); }
     .lei-card-btn.is-active::after { opacity:1; }
     .lei-card-btn:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:-2px; }
-    .lei-icone { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:36px; height:36px; border:1px solid rgba(13,13,13,.14); border-radius:4px; background:#fff; color:rgba(13,13,13,.58); font-size:19px; transition:background-color .18s ease, border-color .18s ease, color .18s ease; }
-    .lei-card-btn:hover .lei-icone { border-color:var(--lei-cor); color:var(--lei-cor); }
-    .lei-card-btn.is-active .lei-icone { border-color:var(--lei-cor); background:var(--lei-cor); color:#fff; }
+    .lei-icone { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:52px; height:52px; }
+    .lei-icone img { display:block; width:100%; height:100%; object-fit:contain; opacity:.62; filter:grayscale(.55); transition:opacity .18s ease, filter .18s ease, transform .24s ease; }
+    .lei-card-btn:hover .lei-icone img { opacity:.9; filter:none; }
+    .lei-card-btn.is-active .lei-icone img { opacity:1; filter:none; }
     .lei-nome { font-size:17px; font-weight:500; line-height:1.3; letter-spacing:-.01em; }
-    .lei-progresso { position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--lei-cor); transform:scaleX(0); transform-origin:left center; transition:transform .6s cubic-bezier(.4,0,.2,1); pointer-events:none; }
-    @media (prefers-reduced-motion: reduce) { .lei-icone, .lei-card-btn::before, .lei-card-btn::after, .lei-progresso { transition:none; } }
+    .lei-progresso { position:absolute; left:0; right:0; bottom:-1px; height:2px; background:#9A9AA4; transform:scaleX(0); transform-origin:left center; transition:transform .6s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    @media (prefers-reduced-motion: reduce) { .lei-icone img, .lei-card-btn::before, .lei-card-btn::after, .lei-progresso { transition:none; } }
     @media (min-width:768px) { .leis-seletor.alt-scroll-x { overflow:visible; -webkit-mask-image:none; mask-image:none; } }
     @media (max-width:767px) {
       .leis-legenda-topo, .leis-registro { display:none; }
@@ -1050,7 +1138,7 @@
       .lei-card-btn:hover, .lei-card-btn.is-active { background:none; color:var(--alt-ink); }
       .lei-card-btn::before, .lei-card-btn::after { display:none; }
       .lei-progresso { bottom:0; }
-      .lei-icone { width:26px; height:26px; font-size:14px; }
+      .lei-icone { width:34px; height:34px; }
       .lei-nome { font-size:14px; font-weight:500; white-space:nowrap; }
     }
 
@@ -1149,9 +1237,9 @@
 <section id="top" class="landing-hero">
   <div class="hero-layout">
     <div class="hero-copy">
-    <p class="alt-kicker alt-kicker--on-dark mb-6">Para projetos de leis de incentivo</p>
+    <p class="alt-kicker alt-kicker--on-dark mb-6">Para patrocínios incentivados</p>
     <h1 class="font-display">
-      Projetos avançam quando tudo se conecta.
+      Patrocínios acontecem quando tudo se conecta.
     </h1>
     <p class="hero-description">
       No CRM do Jards, você acompanha cada negociação de patrocínio do primeiro contato à renovação, encontra as empresas que investem em cada lei e fala com quem decide, sem planilha.
@@ -1278,7 +1366,7 @@
     <dl class="prova-grid">
       <div class="prova-item">
         <dt class="prova-texto">captadores e produtores já estão por aqui</dt>
-        <dd class="stat-num stat-accent prova-num">140+</dd>
+        <dd class="stat-num stat-accent prova-num">160+</dd>
       </div>
       <div class="prova-item">
         <dt class="prova-texto">em patrocínios negociados no Jards</dt>
@@ -1328,7 +1416,7 @@
         <div class="border-t border-black/10 py-5">
           <button onclick="toggleAcc(this)" aria-expanded="true" class="w-full flex items-center justify-between text-left acc-open">
             <span class="flex items-center gap-3 font-semibold text-[#282525] text-sm">
-              <img src="assets/ph-user-circle.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              <img src="/illustrations/leis/passo-patrocina.png?v=3" alt="" class="acc-ilustra" width="192" height="192" loading="lazy" />
               Encontre quem patrocina
             </span>
             <span class="text-2xl text-black/30 font-light flex-shrink-0 ml-4 acc-icon">−</span>
@@ -1342,7 +1430,7 @@
         <div class="border-t border-black/10 py-5">
           <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
             <span class="flex items-center gap-3 font-semibold text-black/40 text-sm">
-              <img src="assets/ph-map-pin.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              <img src="/illustrations/leis/passo-projeto.png?v=3" alt="" class="acc-ilustra" width="192" height="192" loading="lazy" />
               Prepare o projeto
             </span>
             <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
@@ -1356,7 +1444,7 @@
         <div class="border-t border-black/10 py-5">
           <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
             <span class="flex items-center gap-3 font-semibold text-black/40 text-sm">
-              <img src="assets/ph-calendar-check.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              <img src="/illustrations/leis/passo-negociacao.png?v=3" alt="" class="acc-ilustra" width="192" height="192" loading="lazy" />
               Acompanhe cada negociação
             </span>
             <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
@@ -1370,7 +1458,7 @@
         <div class="border-t border-b border-black/10 py-5">
           <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
             <span class="flex items-center gap-3 font-semibold text-black/40 text-sm">
-              <img src="assets/ph-lightning.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              <img src="/illustrations/leis/passo-entrega.png?v=3" alt="" class="acc-ilustra" width="192" height="192" loading="lazy" />
               Entregue e renove
             </span>
             <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
@@ -1522,23 +1610,23 @@
       <!-- Leis cobertas: coluna ao lado da tabela no desktop, abas roláveis acima dela no celular -->
       <div class="leis-seletor alt-scroll-x reveal" role="group" aria-label="Lei de incentivo">
         <div class="leis-legenda-topo" aria-hidden="true"><span>Lei</span><span class="leis-contador"><span class="leis-contador-atual">01</span><span>/ 04</span></span></div>
-        <button type="button" class="lei-card-btn is-active" style="--lei-cor:#D94A4A" data-lei="cultura" aria-pressed="true" onclick="selecionarLei('cultura',this)">
-          <span class="lei-icone"><i class="ph ph-piano-keys" aria-hidden="true"></i></span>
+        <button type="button" class="lei-card-btn is-active" data-lei="cultura" aria-pressed="true" onclick="selecionarLei('cultura',this)">
+          <span class="lei-icone"><img src="/illustrations/leis/cultura.png?v=2" alt="" width="192" height="192" loading="lazy"></span>
           <span class="lei-nome font-display">Cultura</span>
           <span class="lei-progresso" aria-hidden="true"></span>
         </button>
-        <button type="button" class="lei-card-btn" style="--lei-cor:#E5482B" data-lei="esporte" aria-pressed="false" onclick="selecionarLei('esporte',this)">
-          <span class="lei-icone"><i class="ph ph-soccer-ball" aria-hidden="true"></i></span>
+        <button type="button" class="lei-card-btn" data-lei="esporte" aria-pressed="false" onclick="selecionarLei('esporte',this)">
+          <span class="lei-icone"><img src="/illustrations/leis/esporte.png?v=2" alt="" width="192" height="192" loading="lazy"></span>
           <span class="lei-nome font-display">Esporte</span>
           <span class="lei-progresso" aria-hidden="true"></span>
         </button>
-        <button type="button" class="lei-card-btn" style="--lei-cor:#D6336C" data-lei="audiovisual" aria-pressed="false" onclick="selecionarLei('audiovisual',this)">
-          <span class="lei-icone"><i class="ph ph-film-slate" aria-hidden="true"></i></span>
+        <button type="button" class="lei-card-btn" data-lei="audiovisual" aria-pressed="false" onclick="selecionarLei('audiovisual',this)">
+          <span class="lei-icone"><img src="/illustrations/leis/audiovisual.png?v=3" alt="" width="192" height="192" loading="lazy"></span>
           <span class="lei-nome font-display">Audiovisual</span>
           <span class="lei-progresso" aria-hidden="true"></span>
         </button>
-        <button type="button" class="lei-card-btn" style="--lei-cor:#B23A3A" data-lei="saude" aria-pressed="false" onclick="selecionarLei('saude',this)">
-          <span class="lei-icone"><i class="ph ph-stethoscope" aria-hidden="true"></i></span>
+        <button type="button" class="lei-card-btn" data-lei="saude" aria-pressed="false" onclick="selecionarLei('saude',this)">
+          <span class="lei-icone"><img src="/illustrations/leis/saude.png?v=2" alt="" width="192" height="192" loading="lazy"></span>
           <span class="lei-nome font-display">Saúde</span>
           <span class="lei-progresso" aria-hidden="true"></span>
         </button>
@@ -1904,7 +1992,7 @@
     sairCursor(alvo);
   }
 
-  // A cor da lei ativa vem de --lei-cor: quadrado do ícone e linha até a demo no desktop, sublinhado nas abas do celular
+  // A lei ativa se marca em prata: quadrado do ícone com degradê diagonal e linha até a demo no desktop, sublinhado nas abas do celular
   // A régua de 2px da lei ativa acompanha a demo: linhas → cursor → perfil
   function andamento(v){
     var r = document.querySelector('.lei-card-btn.is-active .lei-progresso');
@@ -2009,33 +2097,42 @@
 
 <!-- ════════════════════════ PILARES DA PLATAFORMA ════════════════════════ -->
 <section id="plataforma-forcas" class="platform-forces section-space px-6">
-  <div class="max-w-6xl mx-auto feature-ledger reveal">
-    <div class="ledger-main">
-      <p class="alt-kicker">Módulos</p>
-      <h2 class="alt-h2 alt-h2--section font-display mb-5">
-        <span class="alt-h2-line">Uma plataforma.</span>
-        <span class="alt-h2-line">Três módulos.</span>
-      </h2>
-      <p class="text-black/55 text-[15px] leading-relaxed max-w-lg">
-        Cada módulo resolve uma parte do trabalho. Use só o que precisar.
-      </p>
-    </div>
-    <div class="ledger-side">
-      <article class="ledger-item">
-        <p class="ledger-num">INTELIGÊNCIA</p>
-        <h3>Saiba onde buscar.</h3>
-        <p>Quem patrocina cada lei, quanto investiu e os editais abertos.</p>
-      </article>
-      <article class="ledger-item">
-        <p class="ledger-num">CRM</p>
-        <h3>Acompanhe cada negociação.</h3>
-        <p>Empresas, contatos, propostas, atividades e prazos, até a renovação.</p>
-      </article>
-      <article class="ledger-item">
-        <p class="ledger-num">PRESTAÇÃO DE CONTAS</p>
-        <h3>Preste contas sem susto.</h3>
-        <p>Orçamento, extrato e comprovantes conferidos pelas regras da lei do projeto.</p>
-      </article>
+  <div class="max-w-6xl mx-auto feature-ledger feature-ledger--foto reveal">
+    <figure class="ledger-foto">
+      <img src="assets/brand/cafe-tamandua-conversa.jpg" width="960" height="1200" loading="lazy" decoding="async"
+           alt="Mulher de cabelo grisalho em um café, pensativa, ouvindo o tamanduá do Jards de terno conversar na mesa ao lado" />
+      <div class="ledger-balaos" aria-hidden="true">
+        <span class="ledger-balao ledger-balao--a" style="--x:262;--y:354">relacionamento...</span>
+        <span class="ledger-balao ledger-balao--b" style="--x:562;--y:486">dados!</span>
+      </div>
+    </figure>
+    <div class="ledger-body">
+      <div class="ledger-main">
+        <p class="alt-kicker">Módulos</p>
+        <h2 class="alt-h2 alt-h2--section font-display mb-5">
+          <span class="alt-h2-line">Encontre quem patrocina.</span>
+          <span class="alt-h2-line">Conduza até a renovação.</span>
+        </h2>
+        <p class="text-black/55 text-[15px] leading-relaxed max-w-lg">
+          Dois módulos que se completam. Use só o que precisar.
+        </p>
+      </div>
+      <div class="ledger-side">
+        <a class="ledger-item ledger-item--link" href="/incentivadores">
+          <img class="ledger-ilustra" src="assets/brand/ilustracao-disco-voador.webp" width="760" height="659" loading="lazy" decoding="async" alt="" />
+          <p class="ledger-num">INTELIGÊNCIA</p>
+          <h3>Saiba onde buscar.</h3>
+          <p>Quem patrocina cada lei, quanto investiu e os editais abertos.</p>
+          <span class="ledger-ir">Conhecer a Inteligência <i class="ph ph-arrow-right" aria-hidden="true"></i></span>
+        </a>
+        <a class="ledger-item ledger-item--link" href="/crm">
+          <img class="ledger-ilustra" src="assets/brand/ilustracao-lampada.webp" width="660" height="772" loading="lazy" decoding="async" alt="" />
+          <p class="ledger-num">CRM</p>
+          <h3>Acompanhe cada negociação.</h3>
+          <p>Empresas, contatos, propostas, atividades e prazos, até a renovação.</p>
+          <span class="ledger-ir">Conhecer o CRM <i class="ph ph-arrow-right" aria-hidden="true"></i></span>
+        </a>
+      </div>
     </div>
   </div>
 </section>
@@ -3068,10 +3165,10 @@
 
   // ── BI: feature card dinâmica com animação de slot ──
   const biConfig = [
-    { slot: 2, stat: '+1.900', title: 'Empresas incentivadoras', sub: 'Quanto cada uma investiu, em qual lei e em que ano.' },
-    { slot: 1, stat: null, title: 'Projeto pronto para enviar', sub: 'Orçamento, documentos, cotas e pitch em um cadastro só.' },
-    { slot: 4, stat: null, title: 'Funil do seu jeito', sub: 'Etapas, valores, responsáveis e próximo passo de cada negociação.' },
-    { slot: 1, stat: null, title: 'Parceria em dia', sub: 'Contratos, entregas e comprovantes no prazo, até a renovação.' },
+    { slot: 2, kicker: 'Encontrar', stat: '+1.900', title: 'Empresas incentivadoras', sub: 'Quanto cada uma investiu, em qual lei e em que ano.', chips: ['Rouanet', 'Esporte', 'Audiovisual', 'Saúde'] },
+    { slot: 1, kicker: 'Preparar', stat: null, title: 'Projeto pronto para enviar', sub: 'Orçamento, documentos, cotas e pitch em um cadastro só.', chips: ['Orçamento', 'Documentos', 'Cotas', 'Pitch'] },
+    { slot: 4, kicker: 'Negociar', stat: null, title: 'Funil do seu jeito', sub: 'Etapas, valores, responsáveis e próximo passo de cada negociação.', chips: ['Prospecção', 'Contato', 'Proposta', 'Fechamento'] },
+    { slot: 1, kicker: 'Entregar', stat: null, title: 'Parceria em dia', sub: 'Contratos, entregas e comprovantes no prazo, até a renovação.', chips: ['Contrato', 'Entregas', 'Comprovantes', 'Renovação'] },
   ];
   let biActiveSlot = null;
 
@@ -3091,21 +3188,27 @@
   }
 
   function renderBiContent(el, cfg) {
-    if (cfg.stat) {
-      el.innerHTML =
-        '<div class="stat-accent" style="font-family:\'Google Sans\',system-ui,sans-serif;font-weight:700;letter-spacing:-.03em;font-size:2.8rem;line-height:1;">' + cfg.stat + '</div>' +
-        '<div>' +
-          '<div style="font-size:12px;font-weight:700;color:#282525;margin-bottom:4px;">' + cfg.title + '</div>' +
-          '<p style="font-size:9.5px;color:rgba(40,37,37,0.45);line-height:1.6;">' + cfg.sub + '</p>' +
-        '</div>';
-    } else {
-      el.innerHTML =
-        '<div></div>' +
-        '<div>' +
-          '<div style="font-size:13px;font-weight:700;color:#282525;margin-bottom:6px;">' + cfg.title + '</div>' +
-          '<p style="font-size:11px;color:rgba(40,37,37,0.55);line-height:1.55;">' + cfg.sub + '</p>' +
-        '</div>';
-    }
+    const chips = '<div class="bi-chips">' + cfg.chips.map(function(c) { return '<span>' + c + '</span>'; }).join('') + '</div>';
+    el.innerHTML =
+      '<div>' +
+        '<div class="bi-fk">' + cfg.kicker + '</div>' +
+        (cfg.stat ? '<div class="bi-fstat" style="margin-top:8px;">' + cfg.stat + '</div>' : '') +
+      '</div>' +
+      '<div>' +
+        '<div class="bi-ft">' + cfg.title + '</div>' +
+        '<p class="bi-fs">' + cfg.sub + '</p>' +
+        chips +
+      '</div>';
+  }
+
+  // O cartão sobe, inclina e assenta enquanto vira
+  function embaralhaSlot(slot) {
+    const el = document.getElementById('bi-slot-' + slot);
+    if (!el) return;
+    el.classList.remove('is-embaralha');
+    void el.offsetWidth;
+    el.classList.add('is-embaralha');
+    el.addEventListener('animationend', function() { el.classList.remove('is-embaralha'); }, { once: true });
   }
 
   function updateBiFeature(idx) {
@@ -3120,6 +3223,7 @@
       const prevF = document.getElementById('bi-s' + biActiveSlot + '-f');
       if (prevF) prevF.classList.remove('visible');
       if (prevS) prevS.classList.remove('hidden-card');
+      embaralhaSlot(biActiveSlot);
     }
 
     const sponsor = document.getElementById('bi-s' + newSlot + '-s');
@@ -3127,15 +3231,15 @@
     if (!sponsor || !feature) return;
 
     if (biActiveSlot === newSlot) {
-      feature.style.opacity = '0.15';
-      feature.style.transform = 'scale(0.96)';
-      setTimeout(function() {
-        renderBiContent(feature, cfg);
-        feature.style.opacity = '';
-        feature.style.transform = '';
-      }, 200);
+      // mesmo cartão com outro assunto: vira de lado e volta com o texto novo
+      feature.classList.remove('is-troca');
+      void feature.offsetWidth;
+      feature.classList.add('is-troca');
+      feature.addEventListener('animationend', function() { feature.classList.remove('is-troca'); }, { once: true });
+      setTimeout(function() { renderBiContent(feature, cfg); }, 280);
     } else {
       renderBiContent(feature, cfg);
+      embaralhaSlot(newSlot);
       requestAnimationFrame(function() {
         sponsor.classList.add('hidden-card');
         feature.classList.add('visible');
@@ -3169,8 +3273,19 @@
     }
   }
 
-  // Inicializa: acc 1 ativo (idx 0)
-  updateBiFeature(0);
+  // Inicializa: os cartões se distribuem ao chegar na seção e, logo depois, o primeiro vira
+  // e mostra o +1.900 (sem a observação de tela, ou com movimento reduzido, já começa virado)
+  (function() {
+    const cartoes = document.querySelector('.bi-cards');
+    const reduzido = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!cartoes || reduzido || !('IntersectionObserver' in window)) { updateBiFeature(0); return; }
+    const olho = new IntersectionObserver(function(entradas) {
+      if (!entradas[0].isIntersecting) return;
+      olho.disconnect();
+      setTimeout(function() { updateBiFeature(0); }, 1300);
+    }, { threshold: 0.35 });
+    olho.observe(cartoes);
+  })();
 
   const heroVisual = document.querySelector('.hero-visual');
   if (heroVisual) {
@@ -3681,12 +3796,20 @@
     no = tela2d(Math.round(360 * k), Math.round(300 * k));
     var n = no.getContext('2d');
     n.setTransform(k, 0, 0, k, 0, 0); n.translate(-680, -30);
-    halo(n, 886, 186, 130, '246,176,156', .2);
-    halo(n, 880, 178, 80, '240,132,112', .72);
-    halo(n, 834, 186, 58, '124,102,214', .74);
-    halo(n, 840, 166, 40, '124,102,214', .6);
-    n.strokeStyle = 'rgba(246,190,180,.45)'; n.lineWidth = .8;
-    n.beginPath(); n.arc(BX + 4, BY - 1, 43, 0, 6.2832); n.stroke();
+    // Halo nas cores da marca (roxo #684DB0 e coral #D94A4A), com luz um pouco
+    // mais contida e grão de papel só por cima dele.
+    halo(n, 886, 186, 130, '236,150,138', .15);
+    halo(n, 880, 178, 80, '217,74,74', .68);
+    halo(n, 834, 186, 58, '104,77,176', .72);
+    halo(n, 840, 166, 40, '104,77,176', .56);
+    var ag = sorteio(31);
+    n.globalCompositeOperation = 'destination-out';
+    for(var gr = 0; gr < 9000; gr++){
+      n.fillStyle = 'rgba(0,0,0,' + (.18 + ag() * .3).toFixed(2) + ')';
+      var tam = .5 + ag() * .8;
+      n.fillRect(680 + ag() * 360, 30 + ag() * 300, tam, tam);
+    }
+    n.globalCompositeOperation = 'source-over';
 
     // Bola de luz: miolo branco cheio e brilho em volta. O miolo ocupa 42% do
     // raio do desenho; serve para a bola principal e para a semente.

@@ -44,5 +44,5 @@ test("a página Minha folha só fala com o banco pelas funções da pessoa convi
   const pagina = await readFile("app/minha-folha/page.tsx", "utf8");
   assert.doesNotMatch(pagina, /\.from\(/, "a pessoa convidada não é membro: tabela nenhuma lhe responde, só as funções fn_equipe_*");
   const funcoes = [...pagina.matchAll(/chamar\("(\w+)"/g)].map(m => m[1]).sort();
-  assert.deepEqual([...new Set(funcoes)], ["fn_equipe_aceitar", "fn_equipe_folha", "fn_equipe_minhas_datas", "fn_equipe_responder"]);
+  assert.deepEqual([...new Set(funcoes)], ["fn_equipe_aceitar", "fn_equipe_folha", "fn_equipe_minhas_datas", "fn_equipe_registrar_viagem", "fn_equipe_responder"]);
 });

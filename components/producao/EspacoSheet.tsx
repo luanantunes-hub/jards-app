@@ -21,7 +21,7 @@ function Rodape({ fechar, salvando, rotulo, onSalvar }: { fechar: () => void; sa
   return (
     <>
       <button type="button" onClick={fechar} disabled={salvando} className="rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
-      <button type="button" onClick={onSalvar} disabled={salvando} className="rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Salvando…" : rotulo}</button>
+      <button type="button" onClick={onSalvar} disabled={salvando} className="rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Salvando…" : rotulo}</button>
     </>
   );
 }
@@ -114,7 +114,6 @@ export function EspacoSheet({ organizationId, espaco, onClose, onSaved }: { orga
           <div>
             <label className={ROTULO} htmlFor="espaco-municipio">Município</label>
             <MunicipioCombobox id="espaco-municipio" uf={uf} valor={municipio} onChange={setMunicipio} />
-            <p className="mt-1.5 text-[0.6875rem] text-black/45">Com o município escolhido, o espaço aparece no mapa da turnê.</p>
           </div>
         )}
         <div className="flex flex-wrap gap-x-6 gap-y-2">

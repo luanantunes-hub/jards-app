@@ -66,7 +66,7 @@ export default async function AdminCampanhasPage() {
           <a
             href="/api/admin/conversoes-google-ads"
             download
-            className="inline-flex shrink-0 items-center gap-2 rounded bg-[#282525] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#3A3535] active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+            className="inline-flex shrink-0 items-center gap-2 rounded bg-[#1C0E33] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2D1A53] active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
           >
             <Download size={15} /> Baixar lista ({paraEnviar})
           </a>

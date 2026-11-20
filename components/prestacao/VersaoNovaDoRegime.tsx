@@ -152,7 +152,7 @@ export function VersaoNovaDoRegime({ prestacao, regimes, podeDecidir, onPassou }
             {podeDecidir ? (
               <>
                 <button type="button" onClick={passar} disabled={passando}
-                  className="h-10 rounded bg-[#2E8932] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-60">
+                  className="h-10 rounded acao-salvar px-4 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-60">
                   {passando ? "Passando…" : `Passar para a versão ${nova.regime.versao}`}
                 </button>
                 <span className="text-[0.6875rem] text-black/45">A troca fica no histórico, e as checagens são refeitas.</span>

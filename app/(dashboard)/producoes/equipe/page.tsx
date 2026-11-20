@@ -53,7 +53,6 @@ export default function EquipePage() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Equipe</h1>
-              <p className="mt-1 text-[0.75rem] text-black/45">As pessoas que trabalham nas suas produções, com ou sem conta no Jards.</p>
             </div>
             {podeEditar && (
               <div className="flex flex-wrap items-center gap-2">

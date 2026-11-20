@@ -94,9 +94,8 @@ test("o rótulo de criar concorda em gênero", () => {
   assert.equal(rotuloNovo(vocabularioDe("audiovisual").temporada), "Novo período de filmagem");
 });
 
-test("rótulo de painel muda onde a palavra tem outro sentido", () => {
-  assert.equal(rotuloDoPainel("literatura", "convidados"), "Cortesias");
-  assert.equal(rotuloDoPainel("show", "convidados"), ROTULO_DO_PAINEL.convidados);
+test("rótulo de painel: o geral, quando o tipo não muda a palavra", () => {
+  assert.equal(rotuloDoPainel("literatura", "publico"), ROTULO_DO_PAINEL.publico);
 });
 
 test("tipo desconhecido cai em \"outro\"", () => {
@@ -106,7 +105,6 @@ test("tipo desconhecido cai em \"outro\"", () => {
 const BASE: ContextoDaData = {
   tipo: "show",
   alguemViaja: false,
-  temCotaDeConvidados: false,
   podeVerDinheiro: false,
   temOutraParte: false,
 };
@@ -122,7 +120,6 @@ test("os sinais da data valem para qualquer tipo", () => {
   for (const tipo of TIPOS_DE_PRODUCAO) {
     const viaja = paineisDaData({ ...BASE, tipo: tipo.id, alguemViaja: true });
     assert.ok(viaja.includes("viagem") && viaja.includes("hospedagem"), `${tipo.id}: viagem`);
-    assert.ok(paineisDaData({ ...BASE, tipo: tipo.id, temCotaDeConvidados: true }).includes("convidados"), `${tipo.id}: convidados`);
     assert.ok(paineisDaData({ ...BASE, tipo: tipo.id, temOutraParte: true }).includes("acerto"), `${tipo.id}: acerto`);
   }
   // O festival que recebe atrações também faz o acerto técnico.
@@ -132,24 +129,23 @@ test("os sinais da data valem para qualquer tipo", () => {
 test("painel com conteúdo ou ligado à mão não some, nem quando o tipo muda", () => {
   const formacao = paineisDaData({ ...BASE, tipo: "formacao", comConteudo: ["hospedagem", "viagem"] });
   assert.ok(formacao.includes("hospedagem") && formacao.includes("viagem"));
-  assert.ok(paineisDaData({ ...BASE, tipo: "outro", escolhidos: ["convidados"] }).includes("convidados"));
+  assert.ok(paineisDaData({ ...BASE, tipo: "outro", escolhidos: ["obras"] }).includes("obras"));
   assert.ok(paineisDaData({ ...BASE, tipo: "rua", comConteudo: ["acerto"] }).includes("acerto"));
 });
 
-test("dinheiro e receita do borderô só com permissão; o público não depende dela", () => {
-  const sem = paineisDaData({ ...BASE, comConteudo: ["dinheiro", "bordero"], escolhidos: ["dinheiro"] });
-  assert.ok(!sem.includes("dinheiro") && !sem.includes("bordero"));
+test("dinheiro só com permissão; o público não depende dela (o borderô saiu da Produção na T1 da Ticketeria)", () => {
+  const sem = paineisDaData({ ...BASE, comConteudo: ["dinheiro"], escolhidos: ["dinheiro"] });
+  assert.ok(!sem.includes("dinheiro"));
   assert.ok(sem.includes("publico"));
-  const com = paineisDaData({ ...BASE, podeVerDinheiro: true });
-  assert.ok(com.includes("dinheiro") && com.includes("bordero"));
-  assert.ok(paineisDaData({ ...BASE, tipo: "exposicao", podeVerDinheiro: true }).includes("bordero"));
+  assert.ok(paineisDaData({ ...BASE, podeVerDinheiro: true }).includes("dinheiro"));
+  assert.ok(!(ORDEM_DOS_PAINEIS as readonly string[]).includes("bordero") && !(ORDEM_DOS_PAINEIS as readonly string[]).includes("convidados"), "nenhum painel de ingresso");
 });
 
 test("os painéis saem sempre na mesma ordem, e o que falta pode ser ligado", () => {
-  const todos = paineisDaData({ ...BASE, alguemViaja: true, temCotaDeConvidados: true, temOutraParte: true, podeVerDinheiro: true });
+  const todos = paineisDaData({ ...BASE, alguemViaja: true, temOutraParte: true, podeVerDinheiro: true });
   assert.deepEqual(todos, ORDEM_DOS_PAINEIS.filter(p => todos.includes(p)));
   const paraLigar = paineisParaLigar(BASE);
-  assert.ok(paraLigar.includes("convidados") && paraLigar.includes("hospedagem"));
+  assert.ok(paraLigar.includes("obras") && paraLigar.includes("hospedagem"));
   assert.ok(!paraLigar.includes("dinheiro"), "sem permissão, o dinheiro não se liga à mão");
   for (const painel of paraLigar) assert.ok(!paineisDaData(BASE).includes(painel));
 });

@@ -53,7 +53,7 @@ export function ImpersonationBanner() {
     // Sem isso, qualquer saída que não passe pelo botão "Encerrar sessão" (o botão
     // normal de sair, fechar a aba, sessão expirar) deixa o e-mail marcado no
     // sessionStorage, e o próximo login normal com esse mesmo e-mail nessa aba
-    // reativa o banner por engano — foi o que aconteceu com adm@walkmar.com.br.
+    // reativa o banner por engano — foi o que aconteceu com um usuário real.
     // Comparar o access_token garante que um login/logout normal (novo token)
     // invalida a marca sozinho, mesmo sem clicar em nada.
     supabase.auth.getSession().then(({ data: { session } }) => {

@@ -136,7 +136,7 @@ export default function FornecedoresPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <ListPageHeader
+      <ListPageHeader secao="fornecedores"
         eyebrow="Prestação de contas"
         title="Fornecedores"
         description="Situação na Receita e sanções consultadas no TCU."

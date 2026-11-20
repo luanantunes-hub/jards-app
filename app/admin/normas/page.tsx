@@ -262,7 +262,7 @@ function CartaoDoAto({ d, ocupado, onDecidir, onCopia, regimes, sugeridos, propo
               className="h-9 rounded px-3 text-[0.75rem] text-black/55 transition hover:text-black/80 focus-visible:outline-2 focus-visible:outline-[#7259B5]">Cancelar</button>
             <button type="button" disabled={ocupado || escolhidos.length === 0}
               onClick={() => { setEscolhendo(false); onDecidir("conferido", nota, escolhidos); }}
-              className="h-9 rounded bg-[#2E8932] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50">
+              className="h-9 rounded acao-salvar px-4 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50">
               Confirmar e propor mudanças
             </button>
           </div>
@@ -408,6 +408,7 @@ export default function AdminNormasPage() {
     if (error && !r?.situacao) setErro("Não foi possível coletar o Diário agora.");
     else if (r?.situacao === "falhou") setErro(`A coleta falhou: ${r.detalhe ?? "sem detalhe"}.`);
     else if (r?.situacao === "sem_edicao") setAviso(`Sem Diário Oficial da seção 1 em ${dataBr(dia)}.`);
+    else if (r?.situacao === "aguardando") setAviso(`${dataBr(dia)} ainda não está na base aberta do Diário Oficial: ela se atualiza uma vez por dia, perto do meio-dia.`);
     else if (r) setAviso(`${dataBr(dia)}: ${r.lidos} atos lidos, ${r.relevantes} na triagem, ${r.novos} ${r.novos === 1 ? "novo" : "novos"}.`);
     await recarregar();
   }
@@ -425,7 +426,7 @@ export default function AdminNormasPage() {
         <div className="min-w-0">
           <h1 className="text-xl font-bold text-[#282525]">Vigia normativo</h1>
           <p className="mt-0.5 max-w-[48rem] text-sm text-black/45">
-            Todo dia às 8h, a seção 1 do Diário Oficial da União é lida no INLABS: ficam os atos que citam as normas dos regimes ou que vêm do Ministério da Cultura, da ANCINE e do Ministério do Esporte tratando de prestação de contas ou de incentivo. Às 9h37, as leis compiladas, as normas consolidadas e as páginas de manuais e modelos dos órgãos são comparadas com a última versão guardada.
+            Todo dia às 8h, a seção 1 do Diário Oficial da União é lida na base de dados aberta da Imprensa Nacional, que se atualiza perto do meio-dia (por isso o Diário de hoje costuma entrar só no dia seguinte): ficam os atos que citam as normas dos regimes ou que vêm do Ministério da Cultura, da ANCINE e do Ministério do Esporte tratando de prestação de contas ou de incentivo. Às 9h37, as leis compiladas, as normas consolidadas e as páginas de manuais e modelos dos órgãos são comparadas com a última versão guardada.
           </p>
         </div>
         <div className="flex items-end gap-2">
@@ -435,7 +436,7 @@ export default function AdminNormasPage() {
               className="h-9 rounded border border-black/[.12] bg-white px-3 text-[0.75rem] tabular-nums text-[#282525] outline-none focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
           </label>
           <button type="button" onClick={coletar} disabled={!!ocupado || !dia}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50">
+            className="flex h-9 items-center gap-1.5 rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50">
             <RefreshCw size={13} className={ocupado === "coleta" ? "animate-spin motion-reduce:animate-none" : ""} aria-hidden />
             {ocupado === "coleta" ? "Lendo o Diário…" : "Coletar o Diário"}
           </button>

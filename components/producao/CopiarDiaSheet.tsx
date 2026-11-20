@@ -67,7 +67,7 @@ export function CopiarDiaSheet({ organizationId, temporadaId, dataId, dia, fuso,
       footer={fechar => (
         <>
           <button type="button" onClick={fechar} disabled={copiando} className="rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
-          <button type="button" onClick={() => void copiar(fechar)} disabled={copiando || marcadas.size === 0} className="rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{copiando ? "Copiando…" : `Copiar para ${marcadas.size || ""} ${marcadas.size === 1 ? "data" : "datas"}`.replace("  ", " ")}</button>
+          <button type="button" onClick={() => void copiar(fechar)} disabled={copiando || marcadas.size === 0} className="rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{copiando ? "Copiando…" : `Copiar para ${marcadas.size || ""} ${marcadas.size === 1 ? "data" : "datas"}`.replace(" ", " ")}</button>
         </>
       )}
     >

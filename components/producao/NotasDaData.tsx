@@ -41,7 +41,7 @@ function NovaNotaSheet({ organizationId, dataId, onClose, onCreated }: { organiz
       footer={fechar => (
         <>
           <button type="button" onClick={fechar} disabled={salvando} className="rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
-          <button type="button" onClick={() => void salvar(fechar)} disabled={salvando} className="rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Guardando…" : "Guardar nota"}</button>
+          <button type="button" onClick={() => void salvar(fechar)} disabled={salvando} className="rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Guardando…" : "Guardar nota"}</button>
         </>
       )}
     >
@@ -107,7 +107,6 @@ export function NotasDaData({ organizationId, dataId, podeEditar }: { organizati
       ) : notas.length === 0 ? (
         <div className="rounded border bg-white px-5 py-6 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <p className="text-[0.8125rem] font-medium text-black/55">Nenhuma nota nesta data</p>
-          <p className="mx-auto mt-1 max-w-sm text-[0.75rem] text-black/45">Anote o que foi combinado por telefone, lembretes e pedidos do contratante.</p>
           {podeEditar && <div className="mt-4 flex justify-center">{botao}</div>}
         </div>
       ) : (

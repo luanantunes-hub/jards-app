@@ -196,15 +196,14 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{ background: "rgba(0,0,0,.45)" }}
+        className="fixed inset-0 z-50 flex justify-center veu items-start"
         onClick={handleClose}
       >
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="bg-white rounded w-full overflow-hidden flex flex-col border elevacao-3"
+          className="folha-desce folha-vidro w-full overflow-hidden flex flex-col max-h-[96dvh]"
           style={{ maxWidth: "35rem", maxHeight: "90vh" }}
           onClick={e => e.stopPropagation()}
         >
@@ -214,7 +213,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
               <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-[#282525]">
                 {isEdit ? <Pencil size={15} /> : <UserPlus size={16} />}
               </div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">
+              <h2 id={titleId} className="text-[#282525] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">
                 {isEdit ? "Editar agência" : step === "form" ? "Adicionar agência" : "Agência cadastrada"}
               </h2>
             </div>
@@ -385,7 +384,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
               <button
                 onClick={handleSalvar}
                 disabled={saving || !nome.trim()}
-                className="rounded bg-[#2E8932] px-5 py-2 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] disabled:opacity-35 disabled:cursor-not-allowed"
+                className="rounded acao-salvar px-5 py-2 text-[0.75rem] font-medium text-white transition disabled:opacity-35 disabled:cursor-not-allowed"
               >
                 {saving ? "Salvando…" : isEdit ? "Salvar alterações" : "Cadastrar agência"}
               </button>

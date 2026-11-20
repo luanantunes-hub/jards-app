@@ -121,7 +121,7 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
 
       {opts && (
         <div
-          className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-colors duration-200 motion-reduce:transition-none ${visible ? "bg-black/40" : "bg-black/0"}`}
+          className={`fixed inset-0 z-[200] flex justify-center transition-colors duration-200 motion-reduce:transition-none ${visible ? "bg-black/40" : "bg-black/0"} items-start`}
           onClick={handleClose}
           onKeyDown={handleKeyDown}
         >
@@ -131,7 +131,7 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={opts.description === "" ? undefined : descriptionId}
-            className={`w-full max-w-[22.5rem] overflow-hidden rounded bg-white shadow-2xl transition duration-200 ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none ${visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-3 scale-[.97] opacity-0"}`}
+            className={`folha-desce folha-vidro w-full max-w-[22.5rem] overflow-hidden transition-opacity duration-200 motion-reduce:transition-none ${visible ? "opacity-100" : "opacity-0"} max-h-[96dvh]`}
             onClick={e => e.stopPropagation()}
           >
             {showIllustration && (
@@ -146,7 +146,7 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
             )}
 
             <div className={`px-6 text-center ${showIllustration ? "pb-4 pt-5" : "pb-4 pt-8"}`}>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black/80 [text-wrap:balance]">
+              <h2 id={titleId} className="text-black/80 [text-wrap:balance] font-display text-[1.25rem] font-extrabold leading-[1.1] tracking-[-.04em] sm:text-[1.5rem]">
                 {opts.title ?? "Excluir este item?"}
               </h2>
               {opts.description !== "" && (

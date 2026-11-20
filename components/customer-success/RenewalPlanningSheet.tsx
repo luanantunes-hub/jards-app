@@ -215,8 +215,8 @@ export function RenewalPlanningSheet({ open, contaId, organizationId, contracts,
   const agencyOptions = [{ value: "", label: "Sem agência vinculada" }, ...agencies.map(agency => ({ value: agency.id, label: agency.nome }))];
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-start justify-center bg-black/40 px-4" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-      <div role="dialog" aria-modal="true" aria-labelledby="renewal-sheet-title" className="max-h-[92dvh] w-full max-w-[42.5rem] overflow-y-auto rounded-b bg-white border-x border-b elevacao-2">
+    <div className="fixed inset-0 z-[1000] flex items-start justify-center veu px-4" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+      <div role="dialog" aria-modal="true" aria-labelledby="renewal-sheet-title" className="folha-vidro max-h-[92dvh] w-full max-w-[42.5rem] overflow-y-auto">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/[.07] bg-white px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><RefreshCw size={16} /></span>
@@ -249,9 +249,9 @@ export function RenewalPlanningSheet({ open, contaId, organizationId, contracts,
           {error && <p role="alert" className="rounded border border-[#D94E4E]/20 bg-white px-3 py-2 text-[0.6875rem] text-[#D94E4E]">{error}</p>}
         </div>
 
-        <footer className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-black/[.07] bg-white px-5 py-4 sm:px-6">
+        <footer className="folha-rodape rounded-b-[var(--raio-folha)] sticky bottom-0 flex items-center justify-end gap-3 border-t border-black/[.07] bg-white px-5 py-4 sm:px-6">
           <button type="button" onClick={onClose} className="px-2 py-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
-          <button type="button" onClick={save} disabled={saving || !contractId || !startDate} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-40"><Save size={12}/>{saving ? "Salvando…" : "Salvar"}</button>
+          <button type="button" onClick={save} disabled={saving || !contractId || !startDate} className="inline-flex items-center gap-1.5 rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-semibold text-white transition active:translate-y-px disabled:opacity-40"><Save size={12}/>{saving ? "Salvando…" : "Salvar"}</button>
         </footer>
       </div>
       <RenewalDecisionSheet open={decisionOpen} tree={decisionTree} value={evaluation} onChange={setEvaluation} onClose={() => setDecisionOpen(false)}/>

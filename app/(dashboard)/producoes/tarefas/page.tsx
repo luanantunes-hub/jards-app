@@ -61,7 +61,6 @@ export default function TarefasPage() {
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
           <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Tarefas</h1>
-          <p className="mt-1 text-[0.75rem] text-black/45">O que falta fazer em todas as datas, pelo prazo. Crie as tarefas dentro de cada data.</p>
         </div>
       </header>
       <DetailPageContent>

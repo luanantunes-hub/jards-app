@@ -94,8 +94,7 @@ export default function PermissoesProducaoModal({ organizationId, membro, atual,
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,.45)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 veu"
       onMouseDown={evento => { clicouNoFundo.current = evento.target === evento.currentTarget; }}
       onClick={() => { if (clicouNoFundo.current) fechar(); }}
     >
@@ -159,7 +158,7 @@ export default function PermissoesProducaoModal({ organizationId, membro, atual,
               ref={botaoSalvar}
               type="submit"
               disabled={salvando}
-              className="rounded bg-[#2E8932] px-5 py-2 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded acao-salvar px-5 py-2 text-[0.75rem] font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-40"
             >
               {salvando ? "Salvando…" : "Salvar"}
             </button>
