@@ -6,7 +6,7 @@
   <script src="/origem-campanha.js" defer></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#F4F3EF" />
+  <meta name="theme-color" content="#FFFFFF" />
   <title>Ticketeria: infraestrutura de ingressos</title>
   <meta name="description" content="Infraestrutura de ingressos para qualquer tipo de evento: venda online, presencialmente e por meio de agentes, com o repasse direto à conta do organizador. A Ticketeria cobra uma taxa por ingresso vendido." />
   <link rel="canonical" href="https://jards.com.br/ticketeria" />
@@ -40,9 +40,9 @@
 @font-face { font-family:'Gambetta'; src:url('assets/fontes/gambetta-italic-400.woff2') format('woff2'); font-weight:400; font-style:italic; font-display:swap; }
 @font-face { font-family:'Geist Mono'; src:url('assets/fontes/geist-mono-latin.woff2') format('woff2'); font-weight:400 500; font-style:normal; font-display:swap; unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
 /* ── Landing da Ticketeria: concreto claro, tipografia condensada e fios finos ──
-   Tudo com o prefixo tku-. Violeta iris #6450D2, laranja #FF5528 e lima #DCFF00 sobre concreto #F4F3EF; texto e superfícies escuras no roxo noite #1C0E33 (o dos botões do app).
+   Tudo com o prefixo tku-. Violeta iris #6450D2, laranja #FF5528 e lima #DCFF00 sobre branco; texto e superfícies escuras no roxo noite #1C0E33 (o dos botões do app).
    Cantos de 12px e fios de 1px em tom suave, sem borda dura ou sombra seca. Menu e rodapé são os de todas as páginas do site. */
-.tku { --tku-ink:#1C0E33; --tku-papel:#F4F3EF; --tku-linha:rgba(28,14,51,.12); --tku-raio:12px; --tku-sup:rgba(255,255,255,.78); --tku-mudo:#66655F; --tku-vio:#6450D2; --tku-amb:#FF5528; --tku-ambl:rgba(255,85,40,.13); --tku-lil:#E6E1FA; --tku-lima:#DCFF00;
+.tku { --tku-ink:#1C0E33; --tku-papel:#FFFFFF; --tku-linha:rgba(28,14,51,.12); --tku-raio:12px; --tku-sup:#FAFAF8; --tku-mudo:#66655F; --tku-vio:#6450D2; --tku-amb:#FF5528; --tku-ambl:rgba(255,85,40,.13); --tku-lil:#E6E1FA; --tku-lima:#DCFF00;
   background:var(--tku-papel); color:var(--tku-ink); font-family:'Satoshi',system-ui,-apple-system,'Segoe UI',sans-serif; font-weight:400; }
 .tku *, .tku *::before, .tku *::after { box-sizing:border-box; }
 :where(.tku) :is(h1,h2,h3,p,ul,pre) { margin:0; padding:0; }
@@ -78,7 +78,7 @@
 .tku-hero h1 .tku-vio { color:var(--tku-vio); }
 .tku-sub { margin-top:48px; padding-bottom:80px; }
 .tku-acoes { display:flex; flex-wrap:wrap; gap:12px; }
-.tku-arte { align-self:start; border-radius:var(--tku-raio); overflow:hidden; background:#E9E5DF; aspect-ratio:626/600; }
+.tku-arte { align-self:start; border-radius:var(--tku-raio); overflow:hidden; background:#F2F1EE; aspect-ratio:626/600; }
 .tku-arte img { display:block; width:100%; height:100%; object-fit:cover; object-position:50% 46%; }
 .tku-arte video { display:block; width:100%; height:100%; object-fit:cover; object-position:50% 24%; }
 
@@ -105,10 +105,10 @@
 .tku-lista--tres { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 28px; max-width:none; margin-top:40px; }
 .tku-lista--tres li { max-width:none; border-bottom:1px solid var(--tku-linha); }
 .tku-janela { border:1px solid var(--tku-linha); border-radius:var(--tku-raio); overflow:hidden; background:#fff; box-shadow:0 1px 2px rgba(28,14,51,.04), 0 24px 48px -28px rgba(28,14,51,.28); }
-.tku-janela .tku-h { display:flex; justify-content:space-between; gap:12px; padding:12px 16px; background:#FAF9F7; color:var(--tku-mudo); border-bottom:1px solid var(--tku-linha); }
+.tku-janela .tku-h { display:flex; justify-content:space-between; gap:12px; padding:12px 16px; background:#F6F6F3; color:var(--tku-mudo); border-bottom:1px solid var(--tku-linha); }
 .tku-janela .tku-b { padding:16px; }
 .tku-url { margin:16px; border:1px solid var(--tku-linha); border-radius:8px; overflow:hidden; }
-.tku-url .tku-bar { padding:8px 12px; background:var(--tku-papel); border-bottom:1px solid var(--tku-linha); font-size:11.5px; }
+.tku-url .tku-bar { padding:8px 12px; background:#F6F6F3; border-bottom:1px solid var(--tku-linha); font-size:11.5px; }
 .tku-tab { width:100%; border-collapse:collapse; font-size:13.5px; }
 .tku-tab th { text-align:left; padding:9px 14px; border-bottom:1px solid var(--tku-linha); }
 .tku-tab td { padding:10px 14px; border-top:1px solid var(--tku-linha); font-weight:400; }
@@ -219,7 +219,7 @@ section[id] { scroll-margin-top:72px; }
 .tku-simbolo { width:18px; height:auto; flex:none; }
 .tku-marca { font-family:'Cabinet Grotesk','Satoshi',sans-serif; font-weight:800; letter-spacing:-.015em; }
 .tku-marca-sub { padding-left:12px; border-left:1px solid var(--tku-linha); color:var(--tku-mudo); letter-spacing:.08em; }
-.tku-nav { position:fixed; inset:0 0 auto 0; z-index:50; height:64px; background:rgba(244,243,239,.88); backdrop-filter:blur(14px) saturate(140%); -webkit-backdrop-filter:blur(14px) saturate(140%); border-bottom:1px solid var(--tku-linha); }
+.tku-nav { position:fixed; inset:0 0 auto 0; z-index:50; height:64px; background:rgba(255,255,255,.88); backdrop-filter:blur(14px) saturate(140%); -webkit-backdrop-filter:blur(14px) saturate(140%); border-bottom:1px solid var(--tku-linha); }
 .tku-nav-in { max-width:1280px; height:100%; margin:0 auto; padding:0 64px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
 .tku-nav-links { display:flex; gap:28px; }
 .tku-nav-links a { color:var(--tku-mudo); transition:color .16s ease; }
