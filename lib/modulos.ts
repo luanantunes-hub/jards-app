@@ -105,6 +105,16 @@ export function modulosDisponiveis(acesso: AcessoModulos): ModuloId[] {
 export type VinculoModulos = { modulosOrganizacao: readonly ModuloId[]; modulosMembro: readonly ModuloId[] };
 
 /** Para o bloqueio no servidor, que não sabe qual organização está aberta no navegador. */
+/**
+ * Página inicial do primeiro módulo que a pessoa usa, deixando de fora `exceto`.
+ * É o destino de "Sair da Ticketeria", que não tem seletor de módulo; sem outro
+ * módulo, a página inicial da captação.
+ */
+export function inicioDeOutroModulo(acesso: AcessoModulos, exceto: ModuloId): string {
+  const outro = modulosDisponiveis(acesso).find(modulo => modulo !== exceto);
+  return INICIO_DO_MODULO[outro ?? "captacao"];
+}
+
 export function usaModuloEmAlgumaOrganizacao(
   superAdmin: boolean,
   vinculos: readonly VinculoModulos[],
