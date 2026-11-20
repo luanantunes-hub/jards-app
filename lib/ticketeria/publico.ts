@@ -15,9 +15,11 @@ export type EntradaDoPublico = {
   espera: EsperaParaOPublico[];
   /** O título do evento de cada sessão, pelo id da sessão. */
   eventoDaSessao: Record<string, string>;
+  /** Os e-mails (em minúsculas) de quem saiu da lista de novidades da loja. */
+  saidas?: string[];
 };
 
-export type NovidadesDoContato = "aceitou" | "sem_aceite" | "so_espera";
+export type NovidadesDoContato = "aceitou" | "sem_aceite" | "so_espera" | "saiu";
 export type ContatoDoPublico = {
   email: string; nome: string;
   /** Só com o aceite de novidades (o número nem é guardado sem ele). */
@@ -26,7 +28,7 @@ export type ContatoDoPublico = {
   /** A data da compra mais recente (ISO), ou null para quem só está na lista de espera. */
   ultima_compra: string | null; atividade_em: string; novidades: NovidadesDoContato;
 };
-export type ResumoDoPublico = { contatos: number; aceitaram: number; aceitaram_porcento: number; com_whatsapp: number };
+export type ResumoDoPublico = { contatos: number; aceitaram: number; aceitaram_porcento: number; com_whatsapp: number; sairam: number };
 export type PublicoDaLoja = { contatos: ContatoDoPublico[]; resumo: ResumoDoPublico };
 
 const quando = (p: PedidoParaOPublico) => p.pago_em ?? p.created_at;
@@ -57,12 +59,13 @@ export function montarPublico(e: EntradaDoPublico): PublicoDaLoja {
     if (!email || porEmail.has(email)) continue;
     porEmail.set(email, { email, nome: w.nome, whatsapp: null, veio_de: "espera", evento: e.eventoDaSessao[w.sessao_id] ?? "", ingressos: 0, ultima_compra: null, atividade_em: w.created_at, novidades: "so_espera", _whatsappEm: "" });
   }
-  const contatos: ContatoDoPublico[] = [...porEmail.values()].map(c => ({ email: c.email, nome: c.nome, whatsapp: c.whatsapp, veio_de: c.veio_de, evento: c.evento, ingressos: c.ingressos, ultima_compra: c.ultima_compra, atividade_em: c.atividade_em, novidades: c.novidades }))
+  const saiu = new Set((e.saidas ?? []).map(x => x.trim().toLowerCase()));
+  const contatos: ContatoDoPublico[] = [...porEmail.values()].map(c => ({ email: c.email, nome: c.nome, whatsapp: saiu.has(c.email) ? null : c.whatsapp, veio_de: c.veio_de, evento: c.evento, ingressos: c.ingressos, ultima_compra: c.ultima_compra, atividade_em: c.atividade_em, novidades: saiu.has(c.email) ? ("saiu" as NovidadesDoContato) : c.novidades }))
     .sort((a, b) => Date.parse(b.atividade_em) - Date.parse(a.atividade_em) || a.email.localeCompare(b.email));
   const aceitaram = contatos.filter(c => c.novidades === "aceitou").length;
   return {
     contatos,
-    resumo: { contatos: contatos.length, aceitaram, aceitaram_porcento: contatos.length === 0 ? 0 : Math.round((aceitaram / contatos.length) * 100), com_whatsapp: contatos.filter(c => c.whatsapp).length },
+    resumo: { contatos: contatos.length, aceitaram, aceitaram_porcento: contatos.length === 0 ? 0 : Math.round((aceitaram / contatos.length) * 100), com_whatsapp: contatos.filter(c => c.whatsapp).length, sairam: contatos.filter(c => c.novidades === "saiu").length },
   };
 }
 
