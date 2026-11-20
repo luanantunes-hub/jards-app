@@ -647,8 +647,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setExpanded(false); }}
         onClick={event => { if ((event.target as HTMLElement).closest("a")) setMobileOpen(false); }}
       >
-        {/* Logo */}
-        <div
+        {/* Logo (na Ticketeria o menu começa direto no perfil, sem o logo no topo) */}
+        {!menuFixoAberto && <div
           className="flex items-center flex-shrink-0 border-b overflow-hidden"
           style={{
             height: "3.5rem",
@@ -663,10 +663,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ) : (
             <img src="/jards-icon.svg" alt="Jards" className="h-7 w-7" />
           )}
-        </div>
+        </div>}
 
-        {/* User pill */}
-        <div className="px-2 py-2.5 border-b flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+        {/* User pill (na Ticketeria o menu não mostra nome nem plano) */}
+        {!menuFixoAberto && <div className="px-2 py-2.5 border-b flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           {isWorkspaceCaptador ? (
             <div
               className="flex rounded overflow-hidden"
@@ -718,7 +718,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </Link>
           )}
-        </div>
+        </div>}
 
         {/* Módulo: captação (o CRM) e prestação de contas */}
         {!isWorkspaceCaptador && (
