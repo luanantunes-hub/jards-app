@@ -71,16 +71,11 @@
 .tku-hero h1 { font-size:min(116px,9.4vw); line-height:.98; margin-top:22px; letter-spacing:-.055em; }
 .tku-hero h1 span { display:block; }
 .tku-hero h1 .tku-vio { color:var(--tku-vio); }
-.tku-sub { display:grid; grid-template-columns:minmax(0,470px) minmax(0,1fr); gap:56px; margin-top:44px; padding-bottom:64px; }
-.tku-desc { font-size:17px; line-height:1.6; color:#3A3935; max-width:470px; }
-.tku-acoes { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
-.tku-spec { border:1px solid var(--tku-linha); border-radius:var(--tku-raio); overflow:hidden; background:var(--tku-sup); }
+.tku-sub { margin-top:48px; padding-bottom:80px; }
+.tku-acoes { display:flex; flex-wrap:wrap; gap:12px; }
 .tku-arte { align-self:start; border-radius:var(--tku-raio); overflow:hidden; background:#E9E5DF; aspect-ratio:626/600; }
 .tku-arte img { display:block; width:100%; height:100%; object-fit:cover; object-position:50% 46%; }
 .tku-arte video { display:block; width:100%; height:100%; object-fit:cover; object-position:50% 24%; }
-.tku-spec li { display:flex; gap:14px; padding:9px 14px; border-top:1px solid var(--tku-linha); font-size:13.5px; line-height:1.45; font-weight:400; }
-.tku-spec li:first-child { border-top:0; }
-.tku-spec b { font-family:'Geist Mono',monospace; font-weight:500; color:var(--tku-vio); min-width:22px; }
 
 /* seções */
 .tku-sec { padding:40px 0 80px; border-bottom:1px solid var(--tku-linha); }
@@ -259,20 +254,10 @@ section[id] { scroll-margin-top:72px; }
     <h1 id="abertura-titulo" class="tku-cond"><span>A infraestrutura</span><span>por trás de</span><span class="tku-vio">todo ingresso.</span></h1>
     <div class="tku-sub">
       <div>
-        <p class="tku-desc">Uma plataforma de ingressos para qualquer tipo de evento. Venda online, presencialmente e por meio de agentes, com o repasse direto à conta do organizador. A Ticketeria cobra uma taxa por ingresso vendido.</p>
         <div class="tku-acoes">
           <a href="https://wa.me/5515997160914?text=Ol%C3%A1!%20Vim%20pela%20p%C3%A1gina%20da%20Ticketeria%20e%20quero%20solicitar%20acesso." target="_blank" rel="noopener noreferrer" class="tku-btn tku-btn--pr">Solicitar acesso <i aria-hidden="true">↗</i></a>
           <a href="#base" class="tku-btn tku-btn--ln">Explorar a plataforma</a>
         </div>
-      </div>
-      <div>
-        <ul class="tku-spec">
-          <li><b>01</b>Loja e compra no domínio do organizador</li>
-          <li><b>02</b>Repasse direto à conta do organizador</li>
-          <li><b>03</b>Leitura de ingressos por QR, com ou sem conexão</li>
-          <li><b>04</b>API, widget e webhooks para integração</li>
-          <li><b>05</b>Em construção: acesso por convite para o primeiro grupo</li>
-        </ul>
       </div>
     </div>
   </div>
