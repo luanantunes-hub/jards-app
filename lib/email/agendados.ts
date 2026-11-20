@@ -1,6 +1,7 @@
 import type { EmailProvider } from "./config";
-import { depoisDaFalha, type FonteDeEmail } from "./envio";
+import { depoisDaFalha, type AnexoDoEmail, type FonteDeEmail } from "./envio";
 import { enviarPelaConta, ErroDeEnvio, type MensagemRespondida } from "./enviar";
+import { apagarAnexos, resolverAnexos } from "./anexos-storage";
 import type { BancoDaTriagem } from "./sincronizar-desconhecidos";
 
 const POR_RODADA = 20;
@@ -17,6 +18,7 @@ type Agendado = {
   assunto: string;
   texto: string;
   fonte: FonteDeEmail;
+  anexos: AnexoDoEmail[];
   responder_a_email_id: string | null;
   tentativas: number;
 };
@@ -39,7 +41,7 @@ export async function processarAgendados(banco: BancoDaTriagem, agora: Date = ne
 
   const { data, error } = await banco
     .from("email_agendados")
-    .select("id, user_id, provider, para, cc, cco, assunto, texto, fonte, responder_a_email_id, tentativas")
+    .select("id, user_id, provider, para, cc, cco, assunto, texto, fonte, anexos, responder_a_email_id, tentativas")
     .eq("estado", "pendente")
     .lte("enviar_em", agora.toISOString())
     .order("enviar_em", { ascending: true })
@@ -65,7 +67,11 @@ export async function processarAgendados(banco: BancoDaTriagem, agora: Date = ne
           .maybeSingle();
         if (original) resposta = { messageId: original.message_id, threadId: original.thread_id, internetMessageId: original.internet_message_id };
       }
-      await enviar(item.user_id, item.provider, { para: item.para, cc: item.cc, cco: item.cco, assunto: item.assunto, texto: item.texto, fonte: item.fonte }, resposta);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const anexosResolvidos = await resolverAnexos(banco as any, item.anexos);
+      await enviar(item.user_id, item.provider, { para: item.para, cc: item.cc, cco: item.cco, assunto: item.assunto, texto: item.texto, fonte: item.fonte, anexos: anexosResolvidos }, resposta);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await apagarAnexos(banco as any, item.anexos);
       await banco
         .from("email_agendados")
         .update({ estado: "enviado", enviado_em: agora.toISOString(), erro: null, updated_at: agora.toISOString() })

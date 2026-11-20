@@ -32,12 +32,22 @@ test("pedido válido: endereços em minúsculas, assunto e texto limpos", () => 
   assert.equal(pedido.enviarEm, null);
   assert.equal(pedido.responderAEmailId, null);
   assert.equal(pedido.fonte, "padrao");
+  assert.deepEqual(pedido.anexos, []);
 });
 
 test("fonte: aceita uma das conhecidas, e cai para a padrão se vier vazia ou desconhecida", () => {
   assert.equal(ok({ ...base, fonte: "georgia" }).fonte, "georgia");
   assert.equal(ok({ ...base, fonte: "helvetica-que-nao-existe" }).fonte, "padrao");
   assert.equal(ok({ ...base }).fonte, "padrao");
+});
+
+test("anexos: aceita a lista com os campos certos, recusa item malformado, limita quantidade e tamanho total", () => {
+  const anexo = (tamanho: number) => ({ nome: "foto.png", tipo: "image/png", path: "u1/abc.png", tamanho });
+  assert.deepEqual(ok({ ...base, anexos: [anexo(1000)] }).anexos, [anexo(1000)]);
+  assert.match(erro({ ...base, anexos: [{ nome: "x" }] }), /anexo/i);
+  assert.match(erro({ ...base, anexos: "não é lista" }), /anexo/i);
+  assert.match(erro({ ...base, anexos: Array.from({ length: 6 }, () => anexo(10)) }), /5 anexos/);
+  assert.match(erro({ ...base, anexos: [anexo(3 * 1024 * 1024 + 1)] }), /3MB/);
 });
 
 test("recusa pedido sem destinatário, com endereço inválido, sem assunto ou sem texto", () => {
@@ -102,7 +112,7 @@ function decodificar(bruta: string) {
 
 test("mensagem do Gmail: cabeçalhos, assunto com acento, e texto puro + HTML na fonte escolhida", () => {
   const { cabecalhos, texto, html } = decodificar(montarMensagemDoGmail({
-    de: "luan@platibanda.com", para: ["ana@x.com", "b@y.com"], cc: ["c@z.com"], cco: [], assunto: "Proposta: Rota do Som — ação", texto: "Olá!\nSegue a proposta.", fonte: "georgia",
+    de: "luan@platibanda.com", para: ["ana@x.com", "b@y.com"], cc: ["c@z.com"], cco: [], assunto: "Proposta: Rota do Som — ação", texto: "Olá!\nSegue a proposta.", fonte: "georgia", anexos: [],
   }));
   assert.ok(cabecalhos.includes("From: luan@platibanda.com"));
   assert.ok(cabecalhos.includes("To: ana@x.com, b@y.com"));
@@ -118,7 +128,7 @@ test("mensagem do Gmail: cabeçalhos, assunto com acento, e texto puro + HTML na
 
 test("mensagem do Gmail: resposta leva In-Reply-To e References; quebra de linha em cabeçalho não passa", () => {
   const { cabecalhos } = decodificar(montarMensagemDoGmail({
-    de: "luan@platibanda.com", para: ["ana@x.com"], cc: [], cco: [], assunto: "Re: Oi\r\nBcc: espiao@x.com", texto: "ok", fonte: "padrao", respondendoA: "<abc@mail.x.com>",
+    de: "luan@platibanda.com", para: ["ana@x.com"], cc: [], cco: [], assunto: "Re: Oi\r\nBcc: espiao@x.com", texto: "ok", fonte: "padrao", anexos: [], respondendoA: "<abc@mail.x.com>",
   }));
   assert.ok(cabecalhos.includes("In-Reply-To: <abc@mail.x.com>"));
   assert.ok(cabecalhos.includes("References: <abc@mail.x.com>"));
@@ -128,10 +138,35 @@ test("mensagem do Gmail: resposta leva In-Reply-To e References; quebra de linha
 
 test("mensagem do Gmail: Cco vira cabeçalho Bcc, sem quebra de linha escapar para outro cabeçalho", () => {
   const { cabecalhos } = decodificar(montarMensagemDoGmail({
-    de: "luan@platibanda.com", para: ["ana@x.com"], cc: [], cco: ["oculto@x.com", "chefe@x.com\r\nX-Injetado: 1"], assunto: "Oi", texto: "ok", fonte: "padrao",
+    de: "luan@platibanda.com", para: ["ana@x.com"], cc: [], cco: ["oculto@x.com", "chefe@x.com\r\nX-Injetado: 1"], assunto: "Oi", texto: "ok", fonte: "padrao", anexos: [],
   }));
   assert.ok(cabecalhos.includes("Bcc: oculto@x.com, chefe@x.com X-Injetado: 1"));
   assert.ok(!cabecalhos.some((linha) => linha.startsWith("X-Injetado:")), "quebra de linha no endereço não cria cabeçalho novo");
+});
+
+test("mensagem do Gmail: com anexo, vira multipart/mixed, com o texto+HTML dentro e o anexo ao lado", () => {
+  const bruta = montarMensagemDoGmail({
+    de: "luan@platibanda.com", para: ["ana@x.com"], cc: [], cco: [], assunto: "Proposta", texto: "Segue o PDF.", fonte: "padrao",
+    anexos: [{ nome: "proposta.pdf", tipo: "application/pdf", conteudoBase64: Buffer.from("conteúdo do pdf").toString("base64") }],
+  });
+  const bufferCompleto = Buffer.from(bruta, "base64url").toString("utf8");
+  const [cabecalhosBrutos, ...resto] = bufferCompleto.split("\r\n\r\n");
+  const cabecalhos = cabecalhosBrutos.split("\r\n");
+  assert.ok(cabecalhos.some((linha) => linha.startsWith("Content-Type: multipart/mixed")));
+  const boundaryMista = cabecalhos.find((linha) => linha.startsWith("Content-Type:"))!.match(/boundary="([^"]+)"/)![1];
+  const [parteAlternativa, parteAnexo] = resto.join("\r\n\r\n").split(`--${boundaryMista}`).slice(1, -1);
+  assert.ok(parteAlternativa.includes("multipart/alternative"));
+  assert.ok(parteAnexo.includes('Content-Disposition: attachment; filename="proposta.pdf"'));
+  assert.ok(parteAnexo.includes("Content-Type: application/pdf"));
+  const [, ...corpoDoAnexo] = parteAnexo.trim().split("\r\n\r\n");
+  assert.equal(Buffer.from(corpoDoAnexo.join("\r\n\r\n").replace(/\r\n/g, ""), "base64").toString("utf8"), "conteúdo do pdf");
+});
+
+test("mensagem do Gmail: sem anexo, continua multipart/alternative simples", () => {
+  const { cabecalhos } = decodificar(montarMensagemDoGmail({
+    de: "luan@platibanda.com", para: ["ana@x.com"], cc: [], cco: [], assunto: "Oi", texto: "ok", fonte: "padrao", anexos: [],
+  }));
+  assert.ok(cabecalhos.some((linha) => linha.startsWith("Content-Type: multipart/alternative")));
 });
 
 test("corpo em HTML: linha em branco separa parágrafos, uma quebra sozinha vira <br>, e tags viram texto (sem injeção)", () => {

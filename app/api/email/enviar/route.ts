@@ -5,6 +5,7 @@ import { getEmailConnection, listEmailConnections } from "@/lib/email/connection
 import { provedorDaMensagem } from "@/lib/email/conversas";
 import { MAXIMO_DE_AGENDADOS_POR_PESSOA, podeEnviarPelaConexao, validarPedidoDeEnvio } from "@/lib/email/envio";
 import { enviarPelaConta, ErroDeEnvio, type MensagemRespondida } from "@/lib/email/enviar";
+import { apagarAnexos, resolverAnexos } from "@/lib/email/anexos-storage";
 import { podeConectarEmail } from "@/lib/email/liberacao";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -24,6 +25,10 @@ export async function POST(req: NextRequest) {
   const validacao = validarPedidoDeEnvio(corpo);
   if (!validacao.ok) return NextResponse.json({ error: validacao.erro }, { status: 400 });
   const { pedido } = validacao;
+  // Cada anexo tem que ser da própria pasta da pessoa: ninguém manda por e-mail um arquivo de outra caixa.
+  if (pedido.anexos.some((anexo) => !anexo.path.startsWith(`${user.id}/`))) {
+    return NextResponse.json({ error: "Pedido de anexo inválido." }, { status: 400 });
+  }
 
   try {
     const admin = createAdminClient();
@@ -83,6 +88,7 @@ export async function POST(req: NextRequest) {
           assunto: pedido.assunto,
           texto: pedido.texto,
           fonte: pedido.fonte,
+          anexos: pedido.anexos,
           responder_a_email_id: pedido.responderAEmailId,
           enviar_em: pedido.enviarEm.toISOString(),
         })
@@ -92,7 +98,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ agendado: true, id: criado.id, enviarEm: pedido.enviarEm.toISOString() });
     }
 
-    await enviarPelaConta(user.id, provider, pedido, resposta);
+    const anexos = await resolverAnexos(admin, pedido.anexos);
+    await enviarPelaConta(user.id, provider, { ...pedido, anexos }, resposta);
+    await apagarAnexos(admin, pedido.anexos);
     return NextResponse.json({ enviado: true });
   } catch (err) {
     if (err instanceof ErroDeEnvio) {

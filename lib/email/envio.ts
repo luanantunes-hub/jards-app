@@ -25,6 +25,13 @@ export const FONTES_DE_EMAIL = {
 export type FonteDeEmail = keyof typeof FONTES_DE_EMAIL;
 const FONTE_PADRAO: FonteDeEmail = "padrao";
 
+/** Até aqui cabe num envio direto, sem precisar de upload em partes (Gmail e Outlook aceitam tranquilo). */
+export const MAXIMO_DE_ANEXOS = 5;
+export const MAXIMO_TOTAL_DOS_ANEXOS = 3 * 1024 * 1024;
+
+/** Um anexo já enviado ao Storage antes do e-mail: `path` é o caminho de onde o conteúdo é baixado na hora de enviar. */
+export type AnexoDoEmail = { nome: string; tipo: string; path: string; tamanho: number };
+
 export type PedidoDeEnvio = {
   para: string[];
   cc: string[];
@@ -32,6 +39,7 @@ export type PedidoDeEnvio = {
   assunto: string;
   texto: string;
   fonte: FonteDeEmail;
+  anexos: AnexoDoEmail[];
   /** Agendar para esta hora (ISO). Sem isso, envia agora. */
   enviarEm: Date | null;
   /** Responder a este e-mail (id do e-mail no Jards): mantém a conversa no mesmo fio. */
@@ -76,6 +84,12 @@ export function validarPedidoDeEnvio(corpo: unknown, agora: Date = new Date()): 
 
   const fonte: FonteDeEmail = typeof dados.fonte === "string" && dados.fonte in FONTES_DE_EMAIL ? (dados.fonte as FonteDeEmail) : FONTE_PADRAO;
 
+  const anexos = anexosValidos(dados.anexos);
+  if (anexos === null) return { ok: false, erro: "Pedido de anexo inválido." };
+  if (anexos.length > MAXIMO_DE_ANEXOS) return { ok: false, erro: `No máximo ${MAXIMO_DE_ANEXOS} anexos por e-mail.` };
+  const tamanhoTotal = anexos.reduce((soma, anexo) => soma + anexo.tamanho, 0);
+  if (tamanhoTotal > MAXIMO_TOTAL_DOS_ANEXOS) return { ok: false, erro: `Os anexos juntos passam de ${Math.floor(MAXIMO_TOTAL_DOS_ANEXOS / (1024 * 1024))}MB.` };
+
   let enviarEm: Date | null = null;
   if (dados.enviarEm !== undefined && dados.enviarEm !== null && dados.enviarEm !== "") {
     const quando = typeof dados.enviarEm === "string" ? new Date(dados.enviarEm) : null;
@@ -92,7 +106,24 @@ export function validarPedidoDeEnvio(corpo: unknown, agora: Date = new Date()): 
     responderAEmailId = dados.responderAEmailId;
   }
 
-  return { ok: true, pedido: { para, cc, cco, assunto, texto, fonte, enviarEm, responderAEmailId } };
+  return { ok: true, pedido: { para, cc, cco, assunto, texto, fonte, anexos, enviarEm, responderAEmailId } };
+}
+
+/** Cada anexo precisa ter nome, tipo, caminho e tamanho — o resto (o conteúdo) só é lido do Storage na hora de enviar. */
+function anexosValidos(valor: unknown): AnexoDoEmail[] | null {
+  if (valor === undefined || valor === null) return [];
+  if (!Array.isArray(valor)) return null;
+  const anexos: AnexoDoEmail[] = [];
+  for (const item of valor) {
+    if (!item || typeof item !== "object") return null;
+    const { nome, tipo, path, tamanho } = item as Record<string, unknown>;
+    if (typeof nome !== "string" || !nome.trim()) return null;
+    if (typeof tipo !== "string") return null;
+    if (typeof path !== "string" || !path.trim()) return null;
+    if (typeof tamanho !== "number" || !Number.isFinite(tamanho) || tamanho < 0) return null;
+    anexos.push({ nome: nome.trim(), tipo, path, tamanho });
+  }
+  return anexos;
 }
 
 /** "Re: assunto", sem empilhar "Re: Re:". */
@@ -146,6 +177,23 @@ function parteDoMime(boundary: string, contentType: string, conteudo: string): s
   return [`--${boundary}`, `Content-Type: ${contentType}`, "Content-Transfer-Encoding: base64", "", corpo].join("\r\n");
 }
 
+/** O conteúdo de um anexo já em base64, pronto para entrar na mensagem (resolvido a partir do Storage antes de chamar isso). */
+export type AnexoResolvido = { nome: string; tipo: string; conteudoBase64: string };
+
+function parteDoAnexo(boundary: string, anexo: AnexoResolvido): string {
+  const nome = cabecalhoCodificado(anexo.nome);
+  const tipo = anexo.tipo || "application/octet-stream";
+  const corpo = anexo.conteudoBase64.replace(/(.{76})/g, "$1\r\n");
+  return [
+    `--${boundary}`,
+    `Content-Type: ${tipo}; name="${nome}"`,
+    `Content-Disposition: attachment; filename="${nome}"`,
+    "Content-Transfer-Encoding: base64",
+    "",
+    corpo,
+  ].join("\r\n");
+}
+
 export type EntradaDoMime = {
   de: string;
   para: readonly string[];
@@ -154,18 +202,29 @@ export type EntradaDoMime = {
   assunto: string;
   texto: string;
   fonte: FonteDeEmail;
+  anexos: readonly AnexoResolvido[];
   /** Message-ID (RFC) da mensagem respondida: o Gmail só encadeia a resposta no fio com esses cabeçalhos. */
   respondendoA?: string | null;
 };
 
 /**
  * A mensagem no formato que o Gmail aceita (RFC 2822), em base64 "url safe". "multipart/alternative" leva o texto
- * puro e a versão em HTML (com a fonte escolhida) juntos: cada leitor de e-mail mostra a que sabe exibir. O
- * cabeçalho "Bcc" vai no que é enviado: o próprio Gmail o remove da cópia que os outros destinatários recebem, mas
- * ainda entrega a quem está nele.
+ * puro e a versão em HTML (com a fonte escolhida) juntos: cada leitor de e-mail mostra a que sabe exibir. Com
+ * anexos, essa dupla entra dentro de um "multipart/mixed" que carrega cada anexo ao lado. O cabeçalho "Bcc" vai no
+ * que é enviado: o próprio Gmail o remove da cópia que os outros destinatários recebem, mas ainda entrega a quem
+ * está nele.
  */
-export function montarMensagemDoGmail({ de, para, cc, cco, assunto, texto, fonte, respondendoA }: EntradaDoMime): string {
-  const boundary = `jards_${Buffer.from(`${de}${assunto}${texto.length}`).toString("hex").slice(0, 20)}`;
+export function montarMensagemDoGmail({ de, para, cc, cco, assunto, texto, fonte, anexos, respondendoA }: EntradaDoMime): string {
+  const semente = Buffer.from(`${de}${assunto}${texto.length}`).toString("hex").slice(0, 20);
+  const boundaryAlternativa = `jards_alt_${semente}`;
+  const boundaryMista = `jards_mix_${semente}`;
+
+  const alternativa = [
+    parteDoMime(boundaryAlternativa, 'text/plain; charset="UTF-8"', texto.replace(/\r?\n/g, "\r\n")),
+    parteDoMime(boundaryAlternativa, 'text/html; charset="UTF-8"', corpoEmHtml(texto, fonte)),
+    `--${boundaryAlternativa}--`,
+  ].join("\r\n");
+
   const cabecalhos = [
     `From: ${semQuebras(de)}`,
     `To: ${para.map(semQuebras).join(", ")}`,
@@ -174,13 +233,24 @@ export function montarMensagemDoGmail({ de, para, cc, cco, assunto, texto, fonte
     `Subject: ${cabecalhoCodificado(assunto)}`,
     ...(respondendoA ? [`In-Reply-To: ${semQuebras(respondendoA)}`, `References: ${semQuebras(respondendoA)}`] : []),
     "MIME-Version: 1.0",
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
   ];
-  const corpo = [
-    parteDoMime(boundary, 'text/plain; charset="UTF-8"', texto.replace(/\r?\n/g, "\r\n")),
-    parteDoMime(boundary, 'text/html; charset="UTF-8"', corpoEmHtml(texto, fonte)),
-    `--${boundary}--`,
-  ].join("\r\n");
+
+  let corpo: string;
+  if (anexos.length === 0) {
+    cabecalhos.push(`Content-Type: multipart/alternative; boundary="${boundaryAlternativa}"`);
+    corpo = alternativa;
+  } else {
+    cabecalhos.push(`Content-Type: multipart/mixed; boundary="${boundaryMista}"`);
+    corpo = [
+      `--${boundaryMista}`,
+      `Content-Type: multipart/alternative; boundary="${boundaryAlternativa}"`,
+      "",
+      alternativa,
+      ...anexos.map((anexo) => parteDoAnexo(boundaryMista, anexo)),
+      `--${boundaryMista}--`,
+    ].join("\r\n");
+  }
+
   return Buffer.from(`${cabecalhos.join("\r\n")}\r\n\r\n${corpo}`, "utf8").toString("base64url");
 }
 

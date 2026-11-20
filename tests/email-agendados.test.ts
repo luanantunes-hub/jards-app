@@ -9,7 +9,7 @@ const USUARIO = "11111111-1111-4111-8111-111111111111";
 
 function item(campos: Record<string, unknown> = {}) {
   return {
-    id: "ag1", user_id: USUARIO, provider: "microsoft", para: ["ana@x.com"], cc: [], cco: [], assunto: "Oi", texto: "Olá", fonte: "padrao", responder_a_email_id: null, tentativas: 0, ...campos,
+    id: "ag1", user_id: USUARIO, provider: "microsoft", para: ["ana@x.com"], cc: [], cco: [], assunto: "Oi", texto: "Olá", fonte: "padrao", anexos: [], responder_a_email_id: null, tentativas: 0, ...campos,
   };
 }
 
@@ -33,7 +33,7 @@ test("envia o que venceu, reserva antes e marca como enviado", async () => {
   const enviados: unknown[] = [];
   const resultado = await processarAgendados(admin, AGORA, async (...args) => { enviados.push(args); });
   assert.deepEqual(resultado, { enviados: 1, falhas: 0, reagendados: 0 });
-  assert.deepEqual(enviados[0], [USUARIO, "microsoft", { para: ["ana@x.com"], cc: [], cco: [], assunto: "Oi", texto: "Olá", fonte: "padrao" }, null]);
+  assert.deepEqual(enviados[0], [USUARIO, "microsoft", { para: ["ana@x.com"], cc: [], cco: [], assunto: "Oi", texto: "Olá", fonte: "padrao", anexos: [] }, null]);
   const estados = atualizacoes(consultas).map((valores) => valores.estado);
   assert.deepEqual(estados, ["pendente", "enviando", "enviado"]); // destrava presos, reserva, conclui
   const busca = consultasDe(consultas, "email_agendados", "select")[0];
