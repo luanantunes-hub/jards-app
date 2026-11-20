@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Check, Tag, UserRound, X } from "lucide-react";
+import { AlertCircle, Tag, UserRound, X } from "lucide-react";
 import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
 import { AvatarDaPessoa } from "@/components/ui/AvatarDaPessoa";
 import { CampoDeTags, useTagsDoTime } from "@/components/ui/Tags";
@@ -11,8 +11,9 @@ import { createClient } from "@/lib/supabase/client";
 import { membrosDaEquipe, type MembroDaEquipe } from "@/lib/equipe/responsavel";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { adicionarEmpresasAoCrm } from "@/lib/patrocinadores-lote";
-import { MAX_SELECAO, enderecoDoResultado, mensagemDoLote, type PedidoDoLote } from "@/lib/patrocinadores-selecao";
+import { MAX_SELECAO, aplicouAlgo, enderecoDoResultado, mensagemDoLote, notaDoLote, type PedidoDoLote } from "@/lib/patrocinadores-selecao";
 import { acrescentarTag } from "@/lib/tags";
+import { SucessoDoLote } from "./SucessoDoLote";
 import type { SelecaoDeEmpresas } from "./useSelecaoDeEmpresas";
 
 // A barra de seleção é toda no roxo noite do app (a cor dos botões de criar). As duas ações têm o mesmo peso (levam as
@@ -20,12 +21,15 @@ import type { SelecaoDeEmpresas } from "./useSelecaoDeEmpresas";
 // brancos, borda fina clara. Um branco e um roxo lado a lado sugeriam uma ação principal que não existe.
 const BOTAO = "inline-flex h-9 shrink-0 items-center gap-1.5 rounded border border-white/30 px-2.5 text-[0.75rem] font-medium text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:h-8";
 const BOTAO_ICONE_NO_ROXO = "flex h-9 w-9 shrink-0 items-center justify-center rounded text-white/60 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:h-8 sm:w-8";
-// O ✕ do aviso do fim do lote, que é branco com borda verde.
-const BOTAO_ICONE ="flex h-9 w-9 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.04] hover:text-black/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25 sm:h-8 sm:w-8";
+// O ✕ do aviso de "nada mudou", que é branco com borda âmbar.
+const BOTAO_ICONE = "flex h-9 w-9 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.04] hover:text-black/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25 sm:h-8 sm:w-8";
 const TITULO_DO_MENU = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const ERRO = "rounded border border-[#D94A4A]/30 bg-white px-2.5 py-2 text-[0.6875rem] text-[#D94A4A]";
 
-type Aviso = { texto: string; href: string };
+// O lote deu certo: a tela de sucesso (o check que sobe) e, no fim dela, a lista do que a pessoa acabou de fazer.
+type Sucesso = { texto: string; nota: string | null; href: string };
+// O lote não mudou nada (tudo é de outra pessoa da equipe): não há lista para mostrar, só o aviso.
+type Aviso = { texto: string };
 type Aplicar = (pedido: PedidoDoLote, vocabulario: readonly string[], fechar: () => void, aoConcluir?: () => void) => Promise<void>;
 
 function empresas(n: number): string {
@@ -147,6 +151,8 @@ export function BarraDeSelecao({ selecao, marcadasNaPagina, totalNaPagina, onAlt
   const [aplicando, setAplicando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<Aviso | null>(null);
+  const [sucesso, setSucesso] = useState<Sucesso | null>(null);
+  const router = useRouter();
 
   // O aviso do lote anterior sai quando a pessoa começa a marcar de novo.
   const [totalAnterior, setTotalAnterior] = useState(selecao.total);
@@ -203,7 +209,14 @@ export function BarraDeSelecao({ selecao, marcadasNaPagina, totalNaPagina, onAlt
       aoConcluir?.();
       fechar();
       selecao.limpar();
-      setAviso({ texto: mensagemDoLote(resumo, pedido), href: enderecoDoResultado(pedido) });
+      const texto = mensagemDoLote(resumo, pedido);
+      if (aplicouAlgo(resumo)) {
+        const href = enderecoDoResultado(pedido);
+        router.prefetch(href);
+        setSucesso({ texto, nota: notaDoLote(resumo), href });
+      } else {
+        setAviso({ texto });
+      }
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : "Não foi possível adicionar as empresas ao CRM.");
     } finally {
@@ -224,7 +237,7 @@ export function BarraDeSelecao({ selecao, marcadasNaPagina, totalNaPagina, onAlt
           className={`absolute top-0 flex min-h-[2.5625rem] w-fit items-center gap-2 rounded border pr-2 elevacao-1 ${
             marcando ? "left-0 max-w-full bg-[#1C0E33] text-white" : "left-10 max-w-[calc(100%-2.5rem)] bg-white"
           } ${visivel ? "opacity-100 transition-opacity duration-200 motion-reduce:transition-none" : "pointer-events-none opacity-0"}`}
-          style={marcando ? { borderColor: "#1C0E33" } : aviso ? { borderColor: "rgba(46,137,50,.45)" } : undefined}
+          style={marcando ? { borderColor: "#1C0E33" } : aviso ? { borderColor: "rgba(176,122,20,.45)" } : undefined}
         >
           {marcando ? (
             <>
@@ -257,11 +270,8 @@ export function BarraDeSelecao({ selecao, marcadasNaPagina, totalNaPagina, onAlt
             </>
           ) : aviso ? (
             <>
-              <span className="flex h-10 w-9 shrink-0 items-center justify-center text-[#2E8932]"><Check size={16} aria-hidden="true" /></span>
-              <p className="min-w-0 py-2 text-[0.8125rem] leading-snug text-[#2E8932]">{aviso.texto}</p>
-              <Link href={aviso.href} className="shrink-0 rounded px-2 py-2 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25">
-                Ver no CRM
-              </Link>
+              <span className="flex h-10 w-9 shrink-0 items-center justify-center text-[#B07A14]"><AlertCircle size={16} aria-hidden="true" /></span>
+              <p className="min-w-0 py-2 text-[0.8125rem] leading-snug text-[#B07A14]">{aviso.texto}</p>
               <button type="button" onClick={() => setAviso(null)} aria-label="Fechar aviso" title="Fechar aviso" className={BOTAO_ICONE}>
                 <X size={14} aria-hidden="true" />
               </button>
@@ -286,6 +296,7 @@ export function BarraDeSelecao({ selecao, marcadasNaPagina, totalNaPagina, onAlt
           onAplicar={aplicar}
         />
       )}
+      {sucesso && <SucessoDoLote texto={sucesso.texto} nota={sucesso.nota} onConcluido={() => router.push(sucesso.href)} />}
     </>
   );
 }

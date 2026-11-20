@@ -664,6 +664,48 @@ table thead th > span > span {
   }
 }
 
+/* Sucesso da seleção em lote (components/patrocinadores/SucessoDoLote.tsx): um círculo verde com o check branco
+   sobe do fundo da tela, o check se desenha (o traço tem pathLength 1, então o tracejado vai de 1 a 0) e, no
+   fim, a tela troca para a lista do que a pessoa acabou de fazer. Com movimento reduzido, tudo aparece de uma vez. */
+@keyframes sucesso-veu-entra {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sucesso-sobe {
+  0% { transform: translateY(55vh) scale(.6); opacity: 0; }
+  35% { opacity: 1; }
+  72% { transform: translateY(-.75rem) scale(1.06); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes sucesso-risca {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes sucesso-aro {
+  from { transform: scale(1); opacity: .45; }
+  to { transform: scale(1.8); opacity: 0; }
+}
+
+.sucesso-veu {
+  animation: sucesso-veu-entra 180ms ease-out both;
+}
+.sucesso-circulo {
+  animation: sucesso-sobe 640ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.sucesso-check {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: sucesso-risca 340ms cubic-bezier(.65, 0, .35, 1) 430ms forwards;
+}
+.sucesso-aro {
+  animation: sucesso-aro 700ms ease-out 560ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sucesso-circulo { animation: none; }
+  .sucesso-check { animation: none; stroke-dashoffset: 0; }
+  .sucesso-aro { animation: none; opacity: 0; }
+}
+
 /* Tamanduá no divã: cena abaixo do leque, espelhada, mais à direita e levemente inclinada. */
 .auth-oblique-scene {
   display: block;

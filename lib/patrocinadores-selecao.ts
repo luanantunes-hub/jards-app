@@ -206,6 +206,10 @@ function listaDeTags(tags: readonly string[]): string {
   return `${flexao(tags.length, "a tag", "as tags")} ${quais}`;
 }
 
+function fraseDeOutraPessoa(n: number): string {
+  return `${quantas(n, "empresa é", "empresas são")} de outra pessoa da equipe e ${flexao(n, "ficou", "ficaram")} como ${flexao(n, "estava", "estavam")}`;
+}
+
 /** A frase do aviso depois do lote, em português corrido: o que entrou, o que mudou e o que ficou como estava. */
 export function mensagemDoLote(resumo: ResumoDoLote, pedido: PedidoDoLote): string {
   const { criadas: c, atualizadas: a, semMudanca: s, deOutraPessoa: o } = resumo;
@@ -229,15 +233,23 @@ export function mensagemDoLote(resumo: ResumoDoLote, pedido: PedidoDoLote): stri
     }
   }
 
-  if (o > 0) {
-    frases.push(`${quantas(o, "empresa é", "empresas são")} de outra pessoa da equipe e ${flexao(o, "ficou", "ficaram")} como ${flexao(o, "estava", "estavam")}`);
-  }
+  if (o > 0) frases.push(fraseDeOutraPessoa(o));
 
   if (frases.length === 0) return "Nenhuma empresa para adicionar.";
   return `${frases.join(". ")}.`;
 }
 
-/** Para onde o aviso leva: as empresas do CRM já filtradas pela tag ou pelo responsável do lote. */
+/** O lote deixou alguma empresa no CRM do jeito pedido (entrou, mudou ou já estava)? Só então há uma lista para mostrar. */
+export function aplicouAlgo(resumo: ResumoDoLote): boolean {
+  return resumo.criadas + resumo.atualizadas + resumo.semMudanca > 0;
+}
+
+/** O que ficou de fora, para a tela de sucesso avisar; null quando tudo foi aplicado. */
+export function notaDoLote(resumo: ResumoDoLote): string | null {
+  return resumo.deOutraPessoa > 0 ? `${fraseDeOutraPessoa(resumo.deOutraPessoa)}.` : null;
+}
+
+/** Para onde o fim do lote leva: as empresas do CRM já filtradas pela tag ou pelo responsável do lote. */
 export function enderecoDoResultado(pedido: PedidoDoLote): string {
   if (pedido.tipo === "tag") return `/empresas-crm?tag=${encodeURIComponent(pedido.tags[0] ?? "")}`;
   return `/empresas-crm?responsavel=${encodeURIComponent(pedido.pessoaId)}`;

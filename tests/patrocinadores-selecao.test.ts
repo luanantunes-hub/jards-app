@@ -4,8 +4,10 @@ import {
   MAX_SELECAO,
   alternarNaSelecao,
   alternarPaginaNaSelecao,
+  aplicouAlgo,
   enderecoDoResultado,
   mensagemDoLote,
+  notaDoLote,
   planejarLote,
   podeAdicionarAoCrm,
   traduzirErroDoLote,
@@ -211,4 +213,20 @@ test("o aviso leva para as empresas do CRM já filtradas pela tag ou pelo respon
 test("o limite de criações por minuto vira um pedido para esperar; o resto leva a mensagem do banco", () => {
   assert.equal(traduzirErroDoLote("RATE_LIMIT: Limite de criação atingido. Aguarde 1 minuto."), "Muitas empresas criadas em pouco tempo. Espere 1 minuto e tente de novo.");
   assert.equal(traduzirErroDoLote("falha de rede"), "Não foi possível adicionar ao CRM. falha de rede");
+});
+
+test("só há lista para mostrar quando o lote deixou alguma empresa no CRM do jeito pedido", () => {
+  assert.equal(aplicouAlgo(resumo(1, 0, 0, 0)), true, "entrou");
+  assert.equal(aplicouAlgo(resumo(0, 2, 0, 0)), true, "mudou");
+  assert.equal(aplicouAlgo(resumo(0, 0, 3, 0)), true, "já estava assim");
+  assert.equal(aplicouAlgo(resumo(0, 0, 0, 2)), false, "tudo é de outra pessoa: nada mudou, a tela de sucesso mentiria");
+  assert.equal(aplicouAlgo(resumo(0, 0, 0, 0)), false);
+});
+
+test("a tela de sucesso só escreve o que ficou de fora", () => {
+  assert.equal(notaDoLote(resumo(5, 2, 1, 0)), null, "tudo aplicado: só o check");
+  assert.equal(notaDoLote(resumo(5, 0, 0, 1)), "1 empresa é de outra pessoa da equipe e ficou como estava.");
+  assert.equal(notaDoLote(resumo(0, 3, 0, 2)), "2 empresas são de outra pessoa da equipe e ficaram como estavam.");
+  // é a mesma frase do aviso completo
+  assert.ok(mensagemDoLote(resumo(4, 0, 0, 1), { tipo: "tag", tags: ["Q1"] }).endsWith(notaDoLote(resumo(4, 0, 0, 1)) as string));
 });
