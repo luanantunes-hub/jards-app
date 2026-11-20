@@ -166,7 +166,7 @@ test("o seletor Acrescentar bloco: três grupos, programação e ingressos só q
 });
 
 test("as folhas dos blocos novos montam com os campos desenhados", () => {
-  const folha = (tipo: Parameters<typeof BlocoNovoSheet>[0]["tipo"], bloco?: Bloco) => renderToStaticMarkup(createElement(BlocoNovoSheet, { tipo, bloco, onClose: () => {}, onSalvar: async () => null }));
+  const folha = (tipo: Parameters<typeof BlocoNovoSheet>[0]["tipo"], bloco?: Bloco) => renderToStaticMarkup(createElement(BlocoNovoSheet, { tipo, bloco, organizationId: "o1", onClose: () => {}, onSalvar: async () => null }));
   assert.deepEqual([...TIPOS_DAS_FOLHAS_NOVAS].sort(), ["capa", "colunas", "contagem", "faq", "galeria", "mapa", "patrocinadores", "video"]);
   const capa = folha("capa");
   for (const t of ["Novo bloco: Capa", "Título", "Subtítulo (opcional)", "Imagem de fundo (https://…, opcional)", "Botão: texto (opcional)", "Botão: para onde leva", "Acrescentar", "Cancelar"]) assert.ok(capa.includes(t), t);

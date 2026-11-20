@@ -11,6 +11,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { partesNoFuso } from "@/lib/ticketeria/eventos";
 import { copiaDeUmaPagina, duplicarBloco, enderecoDaPrevia, moverBloco } from "@/lib/ticketeria/editor-site";
 import { PreviaDoSite } from "@/components/ticketeria/PreviaDoSite";
+import { CampoDeImagem } from "@/components/ticketeria/CampoDeImagem";
 import { VersoesSheet } from "@/components/ticketeria/VersoesDoSite";
 import { blocosDoJson, lerBloco, lerSeo, ordemDasPaginas, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
 import { AcrescentarBlocoSheet, BlocoNovoSheet, TIPOS_DAS_FOLHAS_NOVAS } from "@/components/ticketeria/BlocosNovosSheet";
@@ -53,7 +54,7 @@ const resumoDoBloco = (bloco: Bloco, espacos: readonly EspacoDaProgramacao[], ev
   }
 };
 
-export function BlocoSheet({ bloco, tipoInicial, espacos, eventos = [], onClose, onSalvar }: { bloco?: Bloco; tipoInicial: TipoDeBloco; espacos: readonly EspacoDaProgramacao[]; eventos?: readonly EventoParaBloco[]; onClose: () => void; onSalvar: (bloco: Bloco) => Promise<string | null> }) {
+export function BlocoSheet({ bloco, tipoInicial, organizationId, espacos, eventos = [], onClose, onSalvar }: { bloco?: Bloco; organizationId: string; tipoInicial: TipoDeBloco; espacos: readonly EspacoDaProgramacao[]; eventos?: readonly EventoParaBloco[]; onClose: () => void; onSalvar: (bloco: Bloco) => Promise<string | null> }) {
   const tipo = bloco?.tipo ?? tipoInicial;
   const [texto, setTexto] = useState(bloco && (bloco.tipo === "titulo" || bloco.tipo === "texto") ? bloco.texto : "");
   const [url, setUrl] = useState(bloco && (bloco.tipo === "imagem" || bloco.tipo === "botao") ? bloco.url : "https://");
@@ -98,7 +99,7 @@ export function BlocoSheet({ bloco, tipoInicial, espacos, eventos = [], onClose,
         {tipo === "texto" && <div><label className={ROTULO} htmlFor="bl-texto">Texto (uma linha em branco separa os parágrafos)</label><textarea id="bl-texto" autoFocus rows={8} className={AREA} value={texto} onChange={event => setTexto(event.target.value)} maxLength={5000} disabled={salvando} /></div>}
         {tipo === "imagem" && (
           <>
-            <div><label className={ROTULO} htmlFor="bl-url">Endereço da imagem (https://…)</label><input id="bl-url" autoFocus className={CAMPO} value={url} onChange={event => setUrl(event.target.value)} maxLength={500} disabled={salvando} /></div>
+            <CampoDeImagem id="bl-url" rotulo="Endereço da imagem (https://…) ou da biblioteca" valor={url} onChange={setUrl} organizationId={organizationId} desabilitado={salvando} />
             <div><label className={ROTULO} htmlFor="bl-alt">Descreva a imagem (texto alternativo)</label><input id="bl-alt" className={CAMPO} value={alt} onChange={event => setAlt(event.target.value)} maxLength={200} placeholder="Fachada do teatro à noite" disabled={salvando} /></div>
           </>
         )}
@@ -183,7 +184,7 @@ function NovaPaginaSheet({ siteId, organizationId, existentes, onClose, onCreate
 }
 
 /** A descrição e a imagem de compartilhamento de uma página: o que buscadores e redes sociais mostram. Salvam na hora, sem publicar de novo. */
-function SeoDaPagina({ pagina, podeEditar, onSalvo }: { pagina: Pagina; podeEditar: boolean; onSalvo: () => void }) {
+function SeoDaPagina({ pagina, organizationId, podeEditar, onSalvo }: { pagina: Pagina; organizationId: string; podeEditar: boolean; onSalvo: () => void }) {
   const [descricao, setDescricao] = useState(pagina.descricao ?? "");
   const [imagem, setImagem] = useState(pagina.imagem_url ?? "");
   const [salvando, setSalvando] = useState(false);
@@ -207,7 +208,7 @@ function SeoDaPagina({ pagina, podeEditar, onSalvo }: { pagina: Pagina; podeEdit
       <summary className="cursor-pointer px-4 py-3 text-[0.75rem] font-normal text-black/60 hover:text-black/80">Buscadores e redes sociais</summary>
       <div className="space-y-3 border-t px-4 py-4" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div><label className={ROTULO} htmlFor="seo-descricao">Descrição (até 300 letras)</label><textarea id="seo-descricao" rows={3} className={AREA} value={descricao} onChange={event => setDescricao(event.target.value)} maxLength={300} disabled={!podeEditar || salvando} /></div>
-        <div><label className={ROTULO} htmlFor="seo-imagem">Imagem de compartilhamento (https://…)</label><input id="seo-imagem" className={CAMPO} value={imagem} onChange={event => setImagem(event.target.value)} maxLength={500} placeholder="https://…/capa.jpg" disabled={!podeEditar || salvando} /></div>
+        <CampoDeImagem id="seo-imagem" rotulo="Imagem de compartilhamento (https://…) ou da biblioteca" valor={imagem} onChange={setImagem} organizationId={organizationId} desabilitado={!podeEditar} placeholder="https://…/capa.jpg" />
         {aviso && <p role={aviso.erro ? "alert" : "status"} className={`text-[0.75rem] ${aviso.erro ? "text-[#B23B3B]" : "text-black/55"}`}>{aviso.texto}</p>}
         {podeEditar && <button type="button" onClick={() => void salvar()} disabled={salvando || !mudou} className="inline-flex h-9 items-center rounded-xl acao-salvar px-3.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">{salvando ? "Salvando…" : "Salvar"}</button>}
       </div>
@@ -372,7 +373,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
                   ))}
                 </ol>
               )}
-              <SeoDaPagina key={`${atual.id}-${atual.descricao ?? ""}-${atual.imagem_url ?? ""}`} pagina={atual} podeEditar={podeEditar} onSalvo={recarregar} />
+              <SeoDaPagina key={`${atual.id}-${atual.descricao ?? ""}-${atual.imagem_url ?? ""}`} pagina={atual} organizationId={organizationId} podeEditar={podeEditar} onSalvo={recarregar} />
               {podeEditar && atual.blocos.length < 60 && (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <button type="button" onClick={() => setFolha({ tipo: "escolher" })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Acrescentar bloco</button>
@@ -393,12 +394,14 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
       )}
       {folha?.tipo === "bloco" && atual && TIPOS_DAS_FOLHAS_NOVAS.includes(folha.tipoDeBloco) && (
         <BlocoNovoSheet
+          organizationId={organizationId}
           bloco={folha.indice === null ? undefined : atual.blocos[folha.indice]} tipo={folha.tipoDeBloco} onClose={() => setFolha(null)}
           onSalvar={novo => gravar(folha.indice === null ? [...atual.blocos, novo] : atual.blocos.map((existente, i) => (i === folha.indice ? novo : existente)))}
         />
       )}
       {folha?.tipo === "bloco" && atual && !TIPOS_DAS_FOLHAS_NOVAS.includes(folha.tipoDeBloco) && (
         <BlocoSheet
+          organizationId={organizationId}
           bloco={folha.indice === null ? undefined : atual.blocos[folha.indice]} tipoInicial={folha.tipoDeBloco} espacos={espacos} eventos={eventos} onClose={() => setFolha(null)}
           onSalvar={novo => gravar(folha.indice === null ? [...atual.blocos, novo] : atual.blocos.map((existente, i) => (i === folha.indice ? novo : existente)))}
         />
