@@ -846,6 +846,70 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_acoes_divulgacao: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          evento_id: string | null;
+          nome: string;
+          canal: string;
+          inicio: string;
+          fim: string;
+          gasto_centavos: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          evento_id?: string | null;
+          nome: string;
+          canal: string;
+          inicio: string;
+          fim: string;
+          gasto_centavos?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          evento_id?: string | null;
+          nome?: string;
+          canal?: string;
+          inicio?: string;
+          fim?: string;
+          gasto_centavos?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_acoes_divulgacao_evento_id_fkey";
+            columns: ["evento_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_eventos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_acoes_divulgacao_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_acoes_divulgacao_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_cupons: {
         Row: {
           id: string;
