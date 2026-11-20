@@ -64,7 +64,7 @@ export default function IngressosPage() {
     <>
       <ListPageHeader eyebrow="Ticketeria" title="Eventos" actions={eventos && eventos.length > 0 ? novo : undefined} />
       <ListContent>
-        {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         <ListTableSurface>
           {eventos === null ? (
             <div className="h-32 bg-black/[.02] motion-safe:animate-pulse" />
@@ -76,14 +76,14 @@ export default function IngressosPage() {
                 <li key={evento.id}>
                   <Link href={`/ingressos/eventos/${evento.id}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 transition hover:bg-black/[.02] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                     <span className="min-w-0 flex-1 basis-60">
-                      <span className="block truncate text-[0.8125rem] font-medium text-[#282525]">{evento.titulo}</span>
+                      <span className="block truncate text-[0.8125rem] font-normal text-[#282525]">{evento.titulo}</span>
                       <span className="flex items-center gap-1.5 truncate text-[0.6875rem] text-black/45">
                         <CalendarDays size={12} aria-hidden="true" className="shrink-0 text-black/40" />
                         {proxima ?? (total === 0 ? "Sem sessões" : "Nenhuma sessão por vir")}
                       </span>
                     </span>
                     <span className="text-[0.6875rem] tabular-nums text-black/45">{total} {total === 1 ? "sessão" : "sessões"}</span>
-                    <span className="rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={{ borderColor: COR_DA_SITUACAO[evento.situacao] + "47", color: COR_DA_SITUACAO[evento.situacao] }}>{ROTULO_DA_SITUACAO_DO_EVENTO[evento.situacao]}</span>
+                    <span className="rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal" style={{ borderColor: COR_DA_SITUACAO[evento.situacao] + "47", color: COR_DA_SITUACAO[evento.situacao] }}>{ROTULO_DA_SITUACAO_DO_EVENTO[evento.situacao]}</span>
                   </Link>
                 </li>
               ))}

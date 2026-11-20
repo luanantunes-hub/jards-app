@@ -63,7 +63,7 @@ export default function VendasPage() {
     <>
       <ListPageHeader eyebrow="Ticketeria" title="Vendas" />
       <ListContent>
-        {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {estado.vendas ? (
           <VendasView resumo={estado.vendas.resumo} sessoes={estado.vendas.sessoes} compras={compras} filtro={filtro} onFiltrar={setFiltro} onAbrir={setAberta} reembolsos={estado.vendas.reembolsos} onTentarDeNovo={id => void tentarDeNovo(id)} tentando={tentando} />
         ) : !erro && (

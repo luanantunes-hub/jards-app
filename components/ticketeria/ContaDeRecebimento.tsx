@@ -20,7 +20,7 @@ const TIPOS_DE_EMPRESA = [
   { value: "MEI", label: "MEI" }, { value: "LIMITED", label: "Ltda" }, { value: "INDIVIDUAL", label: "Empresário individual" }, { value: "ASSOCIATION", label: "Associação" },
 ];
 const OPCOES_DE_BANCO = [...BANCOS.map(b => ({ value: b.codigo, label: `${b.codigo} · ${b.nome}` })), { value: OUTRO_BANCO, label: "Outro banco" }];
-const GRUPO = "mt-2 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
+const GRUPO = "mt-2 text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45";
 
 export type ContaCadastrada = { situacao: string; cpf_cnpj: string; banco_codigo: string | null; agencia: string | null; conta: string | null; conta_digito: string | null };
 
@@ -95,7 +95,7 @@ export function CadastroDaContaSheet({ organizationId, nomeDaOrganizacao, onClos
         <p className="text-[0.75rem] text-black/55">Os saques só saem para esta conta.</p>
 
         <div>
-          <button type="button" onClick={() => setMaisDetalhes(aberto => !aberto)} aria-expanded={maisDetalhes} className="inline-flex items-center gap-1.5 rounded text-[0.8125rem] text-black/55 transition hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+          <button type="button" onClick={() => setMaisDetalhes(aberto => !aberto)} aria-expanded={maisDetalhes} className="inline-flex items-center gap-1.5 rounded-xl text-[0.8125rem] text-black/55 transition hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
             <ChevronRight size={14} aria-hidden="true" className={`transition-transform motion-reduce:transition-none ${maisDetalhes ? "rotate-90" : ""}`} />Mais detalhes
           </button>
           {maisDetalhes && <div className="mt-3"><label className={ROTULO} htmlFor={`${id}-comp`}>Complemento do endereço</label><input id={`${id}-comp`} className={CAMPO} value={f.complemento} onChange={e => muda("complemento", e.target.value)} maxLength={150} disabled={salvando} /></div>}
@@ -179,7 +179,7 @@ export function TrocaDaContaSheet({ lojaId, retomar, onClose, onDone }: { lojaId
           <>
             <div><label className={ROTULO} htmlFor={`${id}-cod`}>Código de 6 números</label><input id={`${id}-cod`} autoFocus inputMode="numeric" autoComplete="one-time-code" className={`${CAMPO} tabular-nums tracking-[.3em]`} value={codigo} onChange={e => setCodigo(somenteNumeros(e.target.value).slice(0, 6))} placeholder="000000" disabled={trabalhando} /></div>
             <p className="text-[0.75rem] text-black/55">Enviamos o código para o seu e-mail. Ele vale por 15 minutos.</p>
-            <button type="button" onClick={() => { setErro(null); setPasso("conta"); }} disabled={trabalhando} className="rounded text-[0.8125rem] text-black/55 transition hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Pedir outro código</button>
+            <button type="button" onClick={() => { setErro(null); setPasso("conta"); }} disabled={trabalhando} className="rounded-xl text-[0.8125rem] text-black/55 transition hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Pedir outro código</button>
           </>
         )}
       </div>
@@ -187,13 +187,13 @@ export function TrocaDaContaSheet({ lojaId, retomar, onClose, onDone }: { lojaId
   );
 }
 
-const ROTULO_PEQUENO = "mb-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
+const ROTULO_PEQUENO = "mb-1 text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45";
 
 function Etiqueta({ cor, texto }: { cor: string; texto: string }) {
-  return <span className="shrink-0 rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={{ borderColor: cor + "47", color: cor }}>{texto}</span>;
+  return <span className="shrink-0 rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal" style={{ borderColor: cor + "47", color: cor }}>{texto}</span>;
 }
 
-const LINK = "rounded text-[0.8125rem] text-black/55 underline-offset-2 transition hover:text-black/75 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
+const LINK = "rounded-xl text-[0.8125rem] text-black/55 underline-offset-2 transition hover:text-black/75 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
 
 /** O cartão da conta depois do cadastro: em análise, ativa ou com atenção. Com a conta ativa, quem edita pode alterar a conta de saques. */
 export function CartaoDaConta({ conta, troca = null, podeEditar = false, onAlterar, onCancelarTroca }: { conta: ContaCadastrada; troca?: (EstadoDaTroca & { minha?: boolean }) | null; podeEditar?: boolean; onAlterar?: () => void; onCancelarTroca?: () => void }) {
@@ -201,10 +201,10 @@ export function CartaoDaConta({ conta, troca = null, podeEditar = false, onAlter
   const aprovada = conta.situacao === "aprovada";
   const bloqueada = conta.situacao === "bloqueada";
   return (
-    <section aria-label="Conta de recebimento" className="rounded border border-black/[.1] bg-white px-5 py-4">
+    <section aria-label="Conta de recebimento" className="rounded-xl border border-black/[.1] bg-white px-5 py-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-[0.9375rem] font-medium text-[#282525]">Conta de recebimento</h2>
+          <h2 className="text-[0.9375rem] font-normal text-[#282525]">Conta de recebimento</h2>
           {!aprovada && <p className="mt-1 max-w-xl text-[0.8125rem] text-black/60">{bloqueada ? "O Asaas pediu os documentos do titular ou não aceitou o cadastro. As vendas ficam pausadas. Fale com o suporte do Jards." : "O Asaas está conferindo os dados e os documentos."}</p>}
         </div>
         {aprovada ? <Etiqueta cor="#2E8932" texto="ATIVA" /> : bloqueada ? <Etiqueta cor="#D94A4A" texto="PRECISA DE ATENÇÃO" /> : <Etiqueta cor="#B07A14" texto="EM ANÁLISE" />}
@@ -228,7 +228,7 @@ export function CartaoDaConta({ conta, troca = null, podeEditar = false, onAlter
 function TrocaEmAndamento({ troca, podeEditar, onAlterar, onCancelarTroca }: { troca: EstadoDaTroca & { minha?: boolean }; podeEditar: boolean; onAlterar?: () => void; onCancelarTroca?: () => void }) {
   const nova = resumoDaContaDeSaque({ banco_codigo: troca.banco, agencia: troca.agencia, conta: troca.conta, conta_digito: troca.digito });
   return (
-    <div role="status" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded border bg-white px-4 py-3" style={{ borderColor: "#B07A1447" }}>
+    <div role="status" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white px-4 py-3" style={{ borderColor: "#B07A1447" }}>
       <p className="max-w-xl text-[0.8125rem] text-black/70">
         {troca.confirmada && troca.efetiva_em
           ? <>Troca pedida para <span className="text-[#282525]">{nova}</span>. Vale em {dataEHora(new Date(troca.efetiva_em))}; até lá, os saques seguem para a conta atual.</>

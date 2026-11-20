@@ -18,10 +18,10 @@ export type EspacoDaProgramacao = { id: string; nome: string };
 
 type Pagina = { id: string; slug: string; titulo: string; ordem: number; blocos: Bloco[]; blocos_publicados: Bloco[] | null; publicada_em: string | null; descricao: string | null; imagem_url: string | null };
 
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
-const AREA = "w-full rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
-const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
-const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border border-black/[.12] px-3 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
+const CAMPO = "h-10 w-full rounded-xl border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
+const AREA = "w-full rounded-xl border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
+const ROTULO = "mb-1.5 block text-[0.6875rem] font-normal text-black/55";
+const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded-xl border border-black/[.12] px-3 text-[0.75rem] font-normal text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 
 const resumoDoBloco = (bloco: Bloco, espacos: readonly EspacoDaProgramacao[], eventos: readonly EventoParaBloco[] = []): string => {
   switch (bloco.tipo) {
@@ -74,13 +74,13 @@ export function BlocoSheet({ bloco, tipoInicial, espacos, eventos = [], onClose,
       onClose={onClose}
       footer={fechar => (
         <>
-          <button type="button" onClick={fechar} disabled={salvando} className="rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
-          <button type="button" onClick={() => void salvar(fechar)} disabled={salvando} className="rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Salvando…" : bloco ? "Salvar" : "Acrescentar"}</button>
+          <button type="button" onClick={fechar} disabled={salvando} className="rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
+          <button type="button" onClick={() => void salvar(fechar)} disabled={salvando} className="rounded-xl acao-salvar px-4 py-2.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Salvando…" : bloco ? "Salvar" : "Acrescentar"}</button>
         </>
       )}
     >
       <div className="space-y-4">
-        {erro && <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {erro && <p role="alert" className="rounded-xl border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {tipo === "titulo" && <div><label className={ROTULO} htmlFor="bl-texto">Título</label><input id="bl-texto" autoFocus className={CAMPO} value={texto} onChange={event => setTexto(event.target.value)} maxLength={120} disabled={salvando} /></div>}
         {tipo === "texto" && <div><label className={ROTULO} htmlFor="bl-texto">Texto (uma linha em branco separa os parágrafos)</label><textarea id="bl-texto" autoFocus rows={8} className={AREA} value={texto} onChange={event => setTexto(event.target.value)} maxLength={5000} disabled={salvando} /></div>}
         {tipo === "imagem" && (
@@ -155,13 +155,13 @@ function NovaPaginaSheet({ siteId, organizationId, existentes, onClose, onCreate
       onClose={onClose}
       footer={fechar => (
         <>
-          <button type="button" onClick={fechar} disabled={salvando} className="rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
-          <button type="button" onClick={() => void criar(fechar)} disabled={salvando} className="rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Criando…" : "Criar página"}</button>
+          <button type="button" onClick={fechar} disabled={salvando} className="rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
+          <button type="button" onClick={() => void criar(fechar)} disabled={salvando} className="rounded-xl acao-salvar px-4 py-2.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Criando…" : "Criar página"}</button>
         </>
       )}
     >
       <div className="space-y-4">
-        {erro && <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {erro && <p role="alert" className="rounded-xl border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         <div><label className={ROTULO} htmlFor="pg-titulo">Título da página</label><input id="pg-titulo" autoFocus className={CAMPO} value={titulo} onChange={event => setTitulo(event.target.value)} placeholder="Quem somos" maxLength={120} disabled={salvando} /></div>
         <p className="text-[0.75rem] text-black/55">O endereço sai do título (Quem somos fica em /quem-somos).</p>
       </div>
@@ -190,13 +190,13 @@ function SeoDaPagina({ pagina, podeEditar, onSalvo }: { pagina: Pagina; podeEdit
   }
 
   return (
-    <details className="mt-6 rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-      <summary className="cursor-pointer px-4 py-3 text-[0.75rem] font-medium text-black/60 hover:text-black/80">Buscadores e redes sociais</summary>
+    <details className="mt-6 rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+      <summary className="cursor-pointer px-4 py-3 text-[0.75rem] font-normal text-black/60 hover:text-black/80">Buscadores e redes sociais</summary>
       <div className="space-y-3 border-t px-4 py-4" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div><label className={ROTULO} htmlFor="seo-descricao">Descrição (até 300 letras)</label><textarea id="seo-descricao" rows={3} className={AREA} value={descricao} onChange={event => setDescricao(event.target.value)} maxLength={300} disabled={!podeEditar || salvando} /></div>
         <div><label className={ROTULO} htmlFor="seo-imagem">Imagem de compartilhamento (https://…)</label><input id="seo-imagem" className={CAMPO} value={imagem} onChange={event => setImagem(event.target.value)} maxLength={500} placeholder="https://…/capa.jpg" disabled={!podeEditar || salvando} /></div>
         {aviso && <p role={aviso.erro ? "alert" : "status"} className={`text-[0.75rem] ${aviso.erro ? "text-[#B23B3B]" : "text-black/55"}`}>{aviso.texto}</p>}
-        {podeEditar && <button type="button" onClick={() => void salvar()} disabled={salvando || !mudou} className="inline-flex h-9 items-center rounded acao-salvar px-3.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">{salvando ? "Salvando…" : "Salvar"}</button>}
+        {podeEditar && <button type="button" onClick={() => void salvar()} disabled={salvando || !mudou} className="inline-flex h-9 items-center rounded-xl acao-salvar px-3.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">{salvando ? "Salvando…" : "Salvar"}</button>}
       </div>
     </details>
   );
@@ -270,17 +270,17 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
   return (
     <section aria-labelledby="paginas-do-site">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 id="paginas-do-site" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Páginas</h2>
+        <h2 id="paginas-do-site" className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Páginas</h2>
         {podeEditar && <PrimaryListAction onClick={() => setFolha({ tipo: "pagina" })}><Plus size={13} aria-hidden="true" /> Nova página</PrimaryListAction>}
       </div>
-      {erro && <p role="alert" className="mb-3 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+      {erro && <p role="alert" className="mb-3 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
       {paginas === null ? (
-        <div className="h-24 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
+        <div className="h-24 rounded-xl border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
       ) : (
         <>
           <div role="tablist" aria-label="Páginas do site" className="mb-4 flex gap-1 overflow-x-auto">
             {paginas.map(pagina => (
-              <button key={pagina.id} type="button" role="tab" aria-selected={atual?.id === pagina.id} onClick={() => setSlug(pagina.slug)} className={`h-10 shrink-0 rounded border px-3.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${atual?.id === pagina.id ? "border-[#282525] bg-black/[.06] font-medium text-[#282525]" : "border-black/[.12] text-black/55 hover:bg-black/[.04]"}`}>{pagina.titulo}</button>
+              <button key={pagina.id} type="button" role="tab" aria-selected={atual?.id === pagina.id} onClick={() => setSlug(pagina.slug)} className={`h-10 shrink-0 rounded-xl border px-3.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${atual?.id === pagina.id ? "border-[#282525] bg-black/[.06] font-normal text-[#282525]" : "border-black/[.12] text-black/55 hover:bg-black/[.04]"}`}>{pagina.titulo}</button>
             ))}
           </div>
           {atual && (
@@ -288,24 +288,24 @@ export function EditorDoSite({ siteId, organizationId, podeEditar, espacos, even
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <p className="mr-auto text-[0.75rem] text-black/55">{atual.publicada_em === null ? "Ainda não publicada." : publicadaIgual ? "Publicada, sem mudanças." : "Há mudanças que ainda não estão no ar."}</p>
                 <a href={`/previa-site/${siteId}${atual.slug === "inicio" ? "" : `/${atual.slug}`}`} target="_blank" rel="noopener noreferrer" className={BOTAO}><ExternalLink size={13} aria-hidden="true" /> Ver a prévia</a>
-                {podeEditar && <button type="button" onClick={() => void publicar()} disabled={publicadaIgual} className="inline-flex h-9 items-center rounded acao-salvar px-3.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">Publicar esta página</button>}
+                {podeEditar && <button type="button" onClick={() => void publicar()} disabled={publicadaIgual} className="inline-flex h-9 items-center rounded-xl acao-salvar px-3.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">Publicar esta página</button>}
                 {podeEditar && atual.slug !== "inicio" && <button type="button" onClick={apagarPagina} className={BOTAO}>Apagar a página</button>}
               </div>
               {atual.blocos.length === 0 ? (
-                <p className="rounded border bg-white px-4 py-5 text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Página vazia. Acrescente títulos, textos, imagens, botões e o contato.</p>
+                <p className="rounded-xl border bg-white px-4 py-5 text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Página vazia. Acrescente títulos, textos, imagens, botões e o contato.</p>
               ) : (
-                <ol className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                <ol className="divide-y divide-black/[.06] overflow-hidden rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   {atual.blocos.map((bloco, indice) => (
                     <li key={indice} className="flex items-center gap-2 px-3 py-2">
-                      <button type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "bloco", indice, tipoDeBloco: bloco.tipo })} className="min-w-0 flex-1 rounded px-1 py-1 text-left transition enabled:hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
-                        <span className="block text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{ROTULO_DO_TIPO_DE_BLOCO[bloco.tipo]}</span>
+                      <button type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "bloco", indice, tipoDeBloco: bloco.tipo })} className="min-w-0 flex-1 rounded-xl px-1 py-1 text-left transition enabled:hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                        <span className="block text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">{ROTULO_DO_TIPO_DE_BLOCO[bloco.tipo]}</span>
                         <span className="block truncate text-[0.8125rem] text-[#282525]">{resumoDoBloco(bloco, espacos, eventos)}</span>
                       </button>
                       {podeEditar && (
                         <span className="flex shrink-0 items-center">
-                          <button type="button" onClick={() => void mover(indice, -1)} disabled={indice === 0} aria-label="Subir o bloco" className="flex h-8 w-8 items-center justify-center rounded text-black/45 hover:bg-black/[.05] disabled:opacity-30"><ArrowUp size={14} aria-hidden="true" /></button>
-                          <button type="button" onClick={() => void mover(indice, 1)} disabled={indice === atual.blocos.length - 1} aria-label="Descer o bloco" className="flex h-8 w-8 items-center justify-center rounded text-black/45 hover:bg-black/[.05] disabled:opacity-30"><ArrowDown size={14} aria-hidden="true" /></button>
-                          <button type="button" onClick={() => void gravar(atual.blocos.filter((_, i) => i !== indice)).then(setErro)} aria-label="Tirar o bloco" className="flex h-8 w-8 items-center justify-center rounded text-black/35 hover:bg-black/[.05] hover:text-[#B23B3B]"><Trash2 size={14} aria-hidden="true" /></button>
+                          <button type="button" onClick={() => void mover(indice, -1)} disabled={indice === 0} aria-label="Subir o bloco" className="flex h-8 w-8 items-center justify-center rounded-xl text-black/45 hover:bg-black/[.05] disabled:opacity-30"><ArrowUp size={14} aria-hidden="true" /></button>
+                          <button type="button" onClick={() => void mover(indice, 1)} disabled={indice === atual.blocos.length - 1} aria-label="Descer o bloco" className="flex h-8 w-8 items-center justify-center rounded-xl text-black/45 hover:bg-black/[.05] disabled:opacity-30"><ArrowDown size={14} aria-hidden="true" /></button>
+                          <button type="button" onClick={() => void gravar(atual.blocos.filter((_, i) => i !== indice)).then(setErro)} aria-label="Tirar o bloco" className="flex h-8 w-8 items-center justify-center rounded-xl text-black/35 hover:bg-black/[.05] hover:text-[#B23B3B]"><Trash2 size={14} aria-hidden="true" /></button>
                         </span>
                       )}
                     </li>

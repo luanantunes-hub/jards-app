@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, ExternalLink, Link2 } from "lucide-react";
 
-const BOTAO = "inline-flex h-8 items-center gap-1.5 rounded px-2.5 text-[0.6875rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]";
+const BOTAO = "inline-flex h-8 items-center gap-1.5 rounded-xl px-2.5 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]";
 
 /** O endereço da página de compra de uma sessão (sem login, no endereço do Jards). */
 export const enderecoDeVenda = (origem: string, sessaoId: string) => `${origem.replace(/\/$/, "")}/comprar/${sessaoId}`;

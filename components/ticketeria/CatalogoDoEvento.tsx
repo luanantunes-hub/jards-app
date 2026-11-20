@@ -24,7 +24,7 @@ type Lote = { id: string; ingresso_id: string; nome: string; ordem: number; prec
 type Folha = { tipo: "ingresso"; ingresso?: Ingresso } | { tipo: "lote"; ingresso: Ingresso; lote?: Lote };
 
 const numero = (n: number) => n.toLocaleString("pt-BR");
-const PEQUENO = "h-8 rounded px-2.5 text-[0.6875rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]";
+const PEQUENO = "h-8 rounded-xl px-2.5 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]";
 
 // ─── Folhas ─────────────────────────────────────────────────────────────────
 
@@ -80,7 +80,7 @@ function IngressoSheet({ organizationId, eventoId, setores, locais, ingresso, or
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
         {opcoes.length === 0 ? (
-          <p className="rounded border border-black/[.08] px-3 py-3 text-[0.75rem] text-black/55">O ingresso é de um setor de um local. Cadastre o local e os setores em Locais, no menu.</p>
+          <p className="rounded-xl border border-black/[.08] px-3 py-3 text-[0.75rem] text-black/55">O ingresso é de um setor de um local. Cadastre o local e os setores em Locais, no menu.</p>
         ) : (
           <div><span className={ROTULO}>Setor</span><Dropdown ariaLabel="Setor do ingresso" value={setorId} onChange={setSetorId} disabled={salvando} options={opcoes.map(setor => ({ value: setor.id, label: `${locais.find(local => local.id === setor.local_id)?.nome ?? "Local"} · ${setor.nome}` }))} /></div>
         )}
@@ -151,8 +151,8 @@ function LoteSheet({ organizationId, ingresso, fuso, lote, quantosLotes, sugesta
           <div><label className={ROTULO} htmlFor="lo-qtd">Por sessão</label><input id="lo-qtd" inputMode="numeric" className={CAMPO} value={quantidade} onChange={e => setQuantidade(e.target.value)} placeholder="100" disabled={salvando} /></div>
         </div>
         {ingresso.categoria === "meia" && sugestao !== null && <p className="text-[0.75rem] text-black/55">Metade da inteira deste setor: {precoParaMostrar(sugestao)}.</p>}
-        <details className="rounded border border-black/[.08]" open={Boolean(lote?.vendas_inicio || lote?.vendas_fim)}>
-          <summary className="cursor-pointer px-3 py-2.5 text-[0.75rem] font-medium text-black/60">Período de venda</summary>
+        <details className="rounded-xl border border-black/[.08]" open={Boolean(lote?.vendas_inicio || lote?.vendas_fim)}>
+          <summary className="cursor-pointer px-3 py-2.5 text-[0.75rem] font-normal text-black/60">Período de venda</summary>
           <div className="space-y-3 border-t border-black/[.06] px-3 py-3">
             <div className="grid grid-cols-[1fr_7rem] gap-3">
               <div><label className={ROTULO} htmlFor="lo-ini-dia">Começa em</label><input id="lo-ini-dia" type="date" className={CAMPO} value={inicioDia} onChange={e => setInicioDia(e.target.value)} disabled={salvando} /></div>
@@ -234,23 +234,23 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
   return (
     <section aria-labelledby="ingressos-do-evento" className="mt-10">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 id="ingressos-do-evento" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Ingressos</h2>
+        <h2 id="ingressos-do-evento" className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Ingressos</h2>
         {podeEditar && dados && <SecondaryListAction onClick={() => setFolha({ tipo: "ingresso" })}><Plus size={13} aria-hidden="true" /> Novo ingresso</SecondaryListAction>}
       </div>
       {erro && <div className="mb-3"><Aviso texto={erro} /></div>}
       {dados === null ? (
-        <div className="h-24 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
+        <div className="h-24 rounded-xl border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
       ) : grupos.length === 0 ? (
-        <div className="rounded border bg-white px-5 py-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <p className="text-[0.8125rem] font-medium text-black/55">Nenhum ingresso ainda</p>
+        <div className="rounded-xl border bg-white px-5 py-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <p className="text-[0.8125rem] font-normal text-black/55">Nenhum ingresso ainda</p>
           <p className="mx-auto mt-1 max-w-sm text-[0.75rem] text-black/45">Cada ingresso é de um setor (Inteira na Plateia, Meia no Balcão) e tem lotes com preço, quantidade por sessão e período de venda.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {grupos.map(({ setor, local, oferta, ingressos }) => (
-            <div key={setor?.id ?? "sem-setor"} className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+            <div key={setor?.id ?? "sem-setor"} className="overflow-hidden rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b bg-black/[.015] px-4 py-2.5" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <p className="text-[0.75rem] font-medium text-[#282525]">{local?.nome ?? "Local"} · {setor?.nome ?? "Setor"}</p>
+                <p className="text-[0.75rem] font-normal text-[#282525]">{local?.nome ?? "Local"} · {setor?.nome ?? "Setor"}</p>
                 {oferta && (
                   <p className="text-[0.6875rem] tabular-nums text-black/50">
                     {numero(oferta.lugares)} lugares · {numero(oferta.ofertados)} no catálogo · {oferta.livres >= 0 ? `${numero(oferta.livres)} sem ingresso` : `${numero(-oferta.livres)} a mais que os lugares`}
@@ -264,7 +264,7 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
                     <li key={ingresso.id} className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <span className="min-w-0 flex-1 basis-48">
-                          <span className={`block text-[0.8125rem] font-medium ${ingresso.arquivado ? "text-black/40 line-through" : "text-[#282525]"}`}>{ingresso.nome}</span>
+                          <span className={`block text-[0.8125rem] font-normal ${ingresso.arquivado ? "text-black/40 line-through" : "text-[#282525]"}`}>{ingresso.nome}</span>
                           <span className="flex items-center gap-1.5 text-[0.6875rem] text-black/45">
                             {[ingresso.nome === ROTULO_DA_CATEGORIA[ingresso.categoria] ? null : ROTULO_DA_CATEGORIA[ingresso.categoria], `até ${ingresso.limite_por_pedido} por pedido`].filter(Boolean).join(" · ")}
                             {!ingresso.publico && <><EyeOff size={12} aria-hidden="true" className="text-black/40" /> não aparece ao público</>}
@@ -283,8 +283,8 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
                         <ul className="mt-2 flex flex-wrap gap-2">
                           {lotes.map(lote => (
                             <li key={lote.id}>
-                              <button type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "lote", ingresso, lote })} className={`rounded border border-black/[.12] bg-white px-2.5 py-1.5 text-left text-[0.6875rem] transition enabled:hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${situacaoDoLote(lote) === "encerrado" ? "text-black/40" : "text-black/65"}`}>
-                                <span className="block font-medium text-[#282525]">{lote.nome} · {precoParaMostrar(lote.preco_centavos)}</span>
+                              <button type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "lote", ingresso, lote })} className={`rounded-xl border border-black/[.12] bg-white px-2.5 py-1.5 text-left text-[0.6875rem] transition enabled:hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${situacaoDoLote(lote) === "encerrado" ? "text-black/40" : "text-black/65"}`}>
+                                <span className="block font-normal text-[#282525]">{lote.nome} · {precoParaMostrar(lote.preco_centavos)}</span>
                                 <span className="block tabular-nums">{numero(lote.quantidade)} por sessão · {janela(lote, fuso)}</span>
                               </button>
                             </li>

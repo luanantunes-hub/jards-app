@@ -58,6 +58,7 @@ Princípios:
 ## Forma e espaçamento
 
 - raio padrão do produto: `rounded` (4px);
+- exceção, módulo Ticketeria (painel em `/ingressos`, páginas públicas de compra e pedido): `rounded-xl` (12px) e fonte mais leve (`font-normal` no lugar de `font-medium`, `font-medium` no lugar de `font-semibold`), a pedido do dono em 19/11/2026; o menu lateral fica sempre aberto nesse módulo;
 - raios maiores ficam restritos a experiências de marca, autenticação, ilustrações e às folhas (veja "Modais, sheets e menus");
 - alturas usuais de controle: 36–44px;
 - áreas clicáveis devem ter pelo menos 40px quando isoladas;

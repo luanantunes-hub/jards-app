@@ -499,7 +499,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }));
   const usaCaptacao = podeUsarModulo(acessoModulos, "captacao");
   // No celular o menu lateral vira gaveta: sempre com rótulos quando aberto.
-  const isExpanded  = expanded || mobileOpen || seletorAberto;
+  // Na Ticketeria o menu fica sempre aberto (com rótulos) e o conteúdo se afasta dele; nos outros módulos abre ao passar o mouse.
+  const menuFixoAberto = moduloDoMenu === "ticketeria";
+  const isExpanded  = expanded || mobileOpen || seletorAberto || menuFixoAberto;
   const menuPath    = itemAtivoDoMenu(path);
   const hrefAtivo   = hrefAtivoDoMenu(menuPath, navGroups.flatMap(grupo => grupo.items.map(item => item.href)));
   // Os grupos com `icone` viram seções que abrem e fecham. Com o menu recolhido (só ícones) cada seção mostra apenas o ícone; o da página aberta fica aceso.
@@ -906,7 +908,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
       {/* Main */}
-      <div className="flex flex-col h-full overflow-hidden md:pl-14">
+      <div className={`flex flex-col h-full overflow-hidden transition-[padding] duration-200 motion-reduce:transition-none ${menuFixoAberto ? "md:pl-56" : "md:pl-14"}`}>
 
         {/* Top bar */}
         <header
