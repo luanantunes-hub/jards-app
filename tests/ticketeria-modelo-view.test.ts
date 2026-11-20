@@ -46,8 +46,8 @@ const resultado = (extra: Partial<ResultadoParaATela> = {}, semanas = 58, confia
 
 test("o resultado do modelo: confiança, tabela com o modelo ao lado dos links, avisos de margem e de gasto constante", () => {
   const h = html(createElement(ResultadoDoModelo, { resultado: resultado() }));
-  for (const t of ["Confiança média.", "58 semanas de histórico (o ideal são 104)", "58 de 104 semanas", "Venderia de qualquer jeito", "41%", "±8", "Meta Ads", "R$ 7.800,00", "27%", "±11", "Google Ads", "margem grande", "gasto quase constante", "Instagram", "22%", "E-mail", "13%", "R$ 22,50", "R$ 18,20",
-    "Anúncios pagos (Meta e Google juntos", "modelo 36% · links 27%", "Meta Ads: acima de R$ 300,00 por semana, cada real a mais rende pouco.", "costuma ser otimista", "desconfie do modelo"]) assert.ok(h.includes(t), `falta: ${t}`);
+  for (const t of ["Confiança média.", "58 semanas de histórico (o ideal são 104)", "58 de 104 semanas", "Venderia de qualquer jeito", "41%", "±24", "Meta Ads", "R$ 7.800,00", "27%", "±33", "Google Ads", "margem grande", "gasto quase constante", "Instagram", "22%", "E-mail", "13%", "R$ 22,50", "R$ 18,20",
+    "Anúncios pagos (Meta e Google juntos", "modelo 36% · links 27%", "Meta Ads: acima de R$ 300,00 por semana, cada real a mais rende pouco.", "já alargado 3 vezes", "desconfie do modelo"]) assert.ok(h.includes(t), `falta: ${t}`);
   assert.ok(!h.includes("Google Ads: acima de"), "sem ponto de saturação, sem frase");
   assert.ok(!h.includes("não deu"));
 });
@@ -142,4 +142,19 @@ test("simular orçamento: o gasto de hoje, a divisão sugerida, o que esperar e 
   const ruim = html(createElement(SimularOrcamentoSheet, { canais: comCurva, gastoSemanal: gasto, valorInicial: "abc", onClose: () => {} }));
   assert.ok(ruim.includes("Digite um valor em reais") && !ruim.includes("Dividindo como sugerido"));
   assert.ok(html(createElement(SimularOrcamentoSheet, { canais: [comCurva[2]], gastoSemanal: {}, onClose: () => {} })).includes("Ainda não há canal com anúncio e curva para simular"));
+});
+
+test("a cautela: com menos de 104 semanas a tela não recomenda canal, só mostra a tabela como indício; com confiança boa recomenda", () => {
+  const media = html(createElement(RecomendacaoDeInvestimento, { canais: comCurva, gastoSemanal: gasto, confianca: "media", semanas: 58 }));
+  assert.ok(media.includes("Com 58 semanas ainda não dá para recomendar um canal com segurança.") && media.includes("A tabela abaixo é um indício"));
+  assert.ok(!media.includes("rende mais no") && media.includes("Onde vale investir mais") && media.includes("Ingressos por R$ 100 a mais"), "a tabela continua");
+  const boa = html(createElement(RecomendacaoDeInvestimento, { canais: comCurva, gastoSemanal: gasto, confianca: "boa", semanas: 104 }));
+  assert.ok(boa.includes("Hoje o próximo real rende mais no Google Ads.") && !boa.includes("ainda não dá para recomendar"));
+});
+
+test("a cautela no simulador: aviso de indício com pouco histórico e faixa com margem alargada", () => {
+  const media = html(createElement(SimularOrcamentoSheet, { canais: comCurva, gastoSemanal: gasto, valorInicial: "300", confianca: "media", semanas: 58, onClose: () => {} }));
+  assert.ok(media.includes("Com 58 semanas de dados, trate este resultado como indício") && media.includes("com margem alargada"));
+  const boa = html(createElement(SimularOrcamentoSheet, { canais: comCurva, gastoSemanal: gasto, valorInicial: "300", confianca: "boa", semanas: 104, onClose: () => {} }));
+  assert.ok(!boa.includes("trate este resultado como indício"));
 });

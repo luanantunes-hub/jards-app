@@ -50,6 +50,14 @@ export function lerPartesDaBase(entrada: unknown): ParteDaBase[] | null {
   return partes;
 }
 
+/**
+ * O quanto a margem de erro do modelo (o ±) é alargada na tela. Nos testes com dados inventados, em que a resposta certa é conhecida, o erro real do modelo foi até 3 vezes o que o ± dizia
+ * (a verdade ficou fora do intervalo de 80% em 4 de 5 estimativas): o intervalo que o cálculo devolve é otimista. PROVISÓRIO: sai quando houver dado real para calibrar (teste de pausa).
+ */
+export const FATOR_DE_CAUTELA = 3;
+/** A margem (±, em pontos) que a tela mostra: a maior distância da estimativa a uma ponta do intervalo, vezes FATOR_DE_CAUTELA. */
+export const margemMostrada = (baixo: number, alto: number, meio: number): number => Math.round(FATOR_DE_CAUTELA * Math.max(meio - baixo, alto - meio));
+
 /** "Margem grande": o intervalo é mais largo que a própria contribuição (e passa de 5 pontos). */
 export const temMargemGrande = (porcento: number, baixo: number, alto: number): boolean => alto - baixo > Math.max(porcento, 5);
 
