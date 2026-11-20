@@ -8,11 +8,11 @@ import { disponivelNasFaixas, totalNasFaixas, type IngressoDaVitrine } from "@/l
 // A compra de ingressos desenhada (passo C da T5): quatro telas de quem compra, sem login, no celular primeiro. Só desenho: os dados e as ações chegam por
 // props (a página busca no servidor e liga os botões). Segue o site da pessoa (fundo branco, cabeçalho na cor dela, ação principal em tinta #282525).
 
-const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded bg-[#282525] px-5 py-3 text-[0.9375rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] disabled:cursor-not-allowed disabled:bg-black/20";
-const BOTAO_SECUNDARIO = "inline-flex min-h-11 items-center justify-center rounded border border-black/15 bg-white px-4 py-2.5 text-[0.875rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
-const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium uppercase tracking-[.08em] text-black/50";
-const CAMPO = "h-12 w-full rounded border border-black/15 bg-white px-3.5 text-[1rem] text-[#282525] placeholder:text-black/30 focus:border-[#282525] focus:outline-none";
-const ETIQUETA = "inline-flex rounded border bg-white px-2 py-1 text-[0.625rem] font-medium uppercase tracking-[.08em]";
+const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#282525] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] disabled:cursor-not-allowed disabled:bg-black/20";
+const BOTAO_SECUNDARIO = "inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-[0.875rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
+const ROTULO = "mb-1.5 block text-[0.6875rem] font-normal uppercase tracking-[.08em] text-black/50";
+const CAMPO = "h-12 w-full rounded-xl border border-black/15 bg-white px-3.5 text-[1rem] text-[#282525] placeholder:text-black/30 focus:border-[#282525] focus:outline-none";
+const ETIQUETA = "inline-flex rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal uppercase tracking-[.08em]";
 
 /** A moldura das telas: cabeçalho na cor do site da pessoa e o miolo estreito (34rem), que no celular ocupa a largura toda. */
 export function Moldura({ titulo, cor = "#1C0E33", passo, children, rodape }: { titulo: string; cor?: string; passo?: { atual: number; total: number }; children: ReactNode; rodape?: ReactNode }) {
@@ -21,8 +21,8 @@ export function Moldura({ titulo, cor = "#1C0E33", passo, children, rodape }: { 
     <div className="min-h-screen bg-white text-[#282525]">
       <header style={{ backgroundColor: cor, color: texto }}>
         <div className="mx-auto flex w-full max-w-[34rem] items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <span className="text-[1.0625rem] font-semibold tracking-[-.01em]">{titulo}</span>
-          {passo && <span className="text-[0.6875rem] font-medium uppercase tracking-[.08em] opacity-70">Passo {passo.atual} de {passo.total}</span>}
+          <span className="text-[1.0625rem] font-medium tracking-[-.01em]">{titulo}</span>
+          {passo && <span className="text-[0.6875rem] font-normal uppercase tracking-[.08em] opacity-70">Passo {passo.atual} de {passo.total}</span>}
         </div>
       </header>
       <main className="mx-auto w-full max-w-[34rem] px-4 pb-32 pt-6 sm:px-6">{children}</main>
@@ -37,7 +37,7 @@ function Cabecalho({ evento }: { evento: EventoParaComprar }) {
   return (
     <section aria-label="Evento" className="mb-6">
       {evento.classificacao && <span className={ETIQUETA} style={{ borderColor: "#28252547", color: "#282525" }}>{evento.classificacao}</span>}
-      <h1 className="mt-2 text-[1.75rem] font-semibold leading-[1.1] tracking-[-.03em] sm:text-[2rem]">{evento.titulo}</h1>
+      <h1 className="mt-2 text-[1.75rem] font-medium leading-[1.1] tracking-[-.03em] sm:text-[2rem]">{evento.titulo}</h1>
       <p className="mt-2 text-[0.9375rem] text-black/70">{evento.quando}</p>
       <p className="text-[0.9375rem] text-black/70">{evento.local}</p>
       {evento.descricao && <p className="mt-3 text-[0.9375rem] leading-relaxed text-black/70">{evento.descricao}</p>}
@@ -50,11 +50,11 @@ function Cabecalho({ evento }: { evento: EventoParaComprar }) {
 export type IngressoParaComprar = IngressoDaVitrine;
 
 function Contador({ valor, max, nome, onMudar }: { valor: number; max: number; nome: string; onMudar?: (novo: number) => void }) {
-  const botao = "flex h-11 w-11 items-center justify-center rounded border border-black/15 bg-white text-[1.25rem] leading-none text-[#282525] transition hover:bg-black/[.04] disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
+  const botao = "flex h-11 w-11 items-center justify-center rounded-xl border border-black/15 bg-white text-[1.25rem] leading-none text-[#282525] transition hover:bg-black/[.04] disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
   return (
     <div className="flex items-center gap-3" role="group" aria-label={`Quantidade de ${nome}`}>
       <button type="button" className={botao} disabled={valor <= 0} onClick={() => onMudar?.(valor - 1)} aria-label={`Menos um ${nome}`}>−</button>
-      <span className="w-6 text-center text-[1.0625rem] font-medium tabular-nums" aria-live="polite">{valor}</span>
+      <span className="w-6 text-center text-[1.0625rem] font-normal tabular-nums" aria-live="polite">{valor}</span>
       <button type="button" className={botao} disabled={valor >= max} onClick={() => onMudar?.(valor + 1)} aria-label={`Mais um ${nome}`}>+</button>
     </div>
   );
@@ -77,14 +77,14 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
           <div className="min-w-0 flex-1">
             <p className="text-[0.75rem] text-black/55">{qtd === 0 ? "Nenhum ingresso" : qtd === 1 ? "1 ingresso" : `${qtd} ingressos`}</p>
             {desconto > 0 && <p className="text-[0.75rem] tabular-nums text-black/55">{cupom?.codigo} · −{formatarMoeda(desconto)}</p>}
-            <p className="text-[1.25rem] font-semibold tabular-nums tracking-[-.02em]">{formatarMoeda(total - desconto)}</p>
+            <p className="text-[1.25rem] font-medium tabular-nums tracking-[-.02em]">{formatarMoeda(total - desconto)}</p>
           </div>
           <button type="button" className={`${BOTAO} !w-auto min-w-40`} disabled={qtd === 0} onClick={onContinuar}>Continuar</button>
         </div>
       }>
       <Cabecalho evento={evento} />
-      <h2 className="mb-2 text-[0.6875rem] font-medium uppercase tracking-[.08em] text-black/50">Ingressos</h2>
-      <ul className="divide-y divide-black/10 overflow-hidden rounded border border-black/10">
+      <h2 className="mb-2 text-[0.6875rem] font-normal uppercase tracking-[.08em] text-black/50">Ingressos</h2>
+      <ul className="divide-y divide-black/10 overflow-hidden rounded-xl border border-black/10">
         {ingressos.map(i => {
           const disponivel = disponivelNasFaixas(i.faixas);
           const esgotado = disponivel <= 0;
@@ -93,7 +93,7 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
           return (
             <li key={i.id} className="flex items-center justify-between gap-4 px-4 py-4">
               <div className="min-w-0">
-                <p className="text-[1rem] font-medium">{i.nome}</p>
+                <p className="text-[1rem] font-normal">{i.nome}</p>
                 {i.descricao && <p className="mt-0.5 text-[0.8125rem] text-black/55">{i.descricao}</p>}
                 <p className="mt-1 text-[0.9375rem] tabular-nums">{preco === 0 ? "Gratuito" : formatarMoeda(preco)}</p>
               </div>
@@ -107,9 +107,9 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
       <p className="mt-3 text-[0.75rem] text-black/50">O preço é o que você paga: não há taxa somada.</p>
       <section aria-label="Cupom de desconto" className="mt-5">
         {cupom ? (
-          <div className="flex items-center justify-between gap-3 rounded border px-4 py-3" style={{ borderColor: "#2E893247" }}>
-            <div className="min-w-0"><p className="text-[0.875rem] font-medium tracking-[.04em]">{cupom.codigo}</p><p className="text-[0.75rem] text-black/60">{cupom.descricao}</p></div>
-            <button type="button" onClick={onRemoverCupom} className="shrink-0 rounded text-[0.8125rem] text-black/55 underline underline-offset-2 hover:text-black/75">Remover</button>
+          <div className="flex items-center justify-between gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "#2E893247" }}>
+            <div className="min-w-0"><p className="text-[0.875rem] font-normal tracking-[.04em]">{cupom.codigo}</p><p className="text-[0.75rem] text-black/60">{cupom.descricao}</p></div>
+            <button type="button" onClick={onRemoverCupom} className="shrink-0 rounded-xl text-[0.8125rem] text-black/55 underline underline-offset-2 hover:text-black/75">Remover</button>
           </div>
         ) : cupomAberto ? (
           <form onSubmit={e => { e.preventDefault(); onAplicarCupom?.(); }}>
@@ -121,7 +121,7 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
             {cupomErro && <p role="alert" className="mt-2 text-[0.8125rem] text-[#B23B3B]">{cupomErro}</p>}
           </form>
         ) : (
-          <button type="button" onClick={onAbrirCupom} className="rounded text-[0.875rem] text-black/60 underline underline-offset-2 hover:text-black/80">Tem um cupom?</button>
+          <button type="button" onClick={onAbrirCupom} className="rounded-xl text-[0.875rem] text-black/60 underline underline-offset-2 hover:text-black/80">Tem um cupom?</button>
         )}
       </section>
     </Moldura>
@@ -142,18 +142,18 @@ export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, ac
   return (
     <Moldura titulo={site.titulo} cor={site.cor} passo={{ atual: 2, total: 3 }}
       rodape={<div className="flex items-center gap-3"><button type="button" className={`${BOTAO_SECUNDARIO} shrink-0`} onClick={onVoltar} disabled={trabalhando}>Voltar</button><button type="button" className={BOTAO} onClick={onGerarPix} disabled={trabalhando}>{trabalhando ? (meio === "cartao" ? "Abrindo o pagamento…" : "Gerando o Pix…") : meio === "cartao" ? "Pagar com cartão" : "Gerar Pix"}</button></div>}>
-      <h1 className="text-[1.5rem] font-semibold tracking-[-.025em]">Seus dados</h1>
+      <h1 className="text-[1.5rem] font-medium tracking-[-.025em]">Seus dados</h1>
       <p className="mt-1 text-[0.875rem] text-black/60">{evento.titulo} · {evento.quando}</p>
-      <section aria-label="Resumo do pedido" className="mt-5 rounded border border-black/10 px-4 py-3">
+      <section aria-label="Resumo do pedido" className="mt-5 rounded-xl border border-black/10 px-4 py-3">
         <ul className="space-y-1.5">
           {resumo.linhas.map(l => (
             <li key={l.nome} className="flex justify-between gap-4 text-[0.9375rem]"><span>{l.quantidade} × {l.nome}</span><span className="tabular-nums">{formatarMoeda(l.total_centavos)}</span></li>
           ))}
         </ul>
         {resumo.desconto && resumo.desconto.centavos > 0 && <p className="mt-1.5 flex justify-between gap-4 text-[0.9375rem] text-[#2E8932]"><span>Cupom {resumo.desconto.codigo}</span><span className="tabular-nums">−{formatarMoeda(resumo.desconto.centavos)}</span></p>}
-        <p className="mt-2 flex justify-between border-t border-black/10 pt-2 text-[1rem] font-semibold"><span>Total</span><span className="tabular-nums">{formatarMoeda(resumo.total_centavos)}</span></p>
+        <p className="mt-2 flex justify-between border-t border-black/10 pt-2 text-[1rem] font-medium"><span>Total</span><span className="tabular-nums">{formatarMoeda(resumo.total_centavos)}</span></p>
       </section>
-      {erro && <p role="alert" className="mt-4 rounded border px-4 py-2.5 text-[0.8125rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+      {erro && <p role="alert" className="mt-4 rounded-xl border px-4 py-2.5 text-[0.8125rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
       <form className="mt-5 space-y-4" onSubmit={e => { e.preventDefault(); onGerarPix?.(); }}>
         <div><label className={ROTULO} htmlFor="c-nome">Nome completo</label><input id="c-nome" className={CAMPO} value={valores.nome} onChange={e => onMudar?.("nome", e.target.value)} autoComplete="name" maxLength={120} disabled={trabalhando} /></div>
         <div><label className={ROTULO} htmlFor="c-email">E-mail</label><input id="c-email" type="email" inputMode="email" className={CAMPO} value={valores.email} onChange={e => onMudar?.("email", e.target.value)} autoComplete="email" maxLength={200} placeholder="seus ingressos chegam aqui" disabled={trabalhando} /></div>
@@ -163,9 +163,9 @@ export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, ac
         <legend className={ROTULO}>Como pagar</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           {([["pix", "Pix", "O código aparece na hora e o ingresso chega assim que o pagamento cai."], ["cartao", "Cartão de crédito", parcelasMax > 1 ? `À vista ou em até ${parcelasMax}x, sem juros para você.` : "À vista."]] as const).map(([id, titulo, texto]) => (
-            <label key={id} className={`flex cursor-pointer items-start gap-3 rounded border px-4 py-3.5 transition ${meio === id ? "border-[#282525] bg-black/[.02]" : "border-black/15 hover:bg-black/[.02]"}`}>
+            <label key={id} className={`flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3.5 transition ${meio === id ? "border-[#282525] bg-black/[.02]" : "border-black/15 hover:bg-black/[.02]"}`}>
               <input type="radio" name="meio" value={id} checked={meio === id} onChange={() => onMeio?.(id)} className="mt-1 h-4 w-4 shrink-0 accent-[#282525]" />
-              <span><span className="block text-[0.9375rem] font-medium">{titulo}</span><span className="mt-0.5 block text-[0.75rem] leading-snug text-black/55">{texto}</span></span>
+              <span><span className="block text-[0.9375rem] font-normal">{titulo}</span><span className="mt-0.5 block text-[0.75rem] leading-snug text-black/55">{texto}</span></span>
             </label>
           ))}
         </div>
@@ -181,9 +181,9 @@ export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, ac
           </div>
         )}
       </fieldset>
-      <label className="mt-5 flex cursor-pointer items-start gap-3 rounded border border-black/10 px-4 py-3.5 text-[0.875rem] leading-snug">
+      <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-black/10 px-4 py-3.5 text-[0.875rem] leading-snug">
         <input type="checkbox" checked={aceito} onChange={e => onAceitar?.(e.target.checked)} disabled={trabalhando} className="mt-0.5 h-5 w-5 shrink-0 accent-[#282525]" />
-        <span>Li e concordo com os <a href="/termos-de-compra" target="_blank" rel="noopener noreferrer" className="font-medium underline underline-offset-2">Termos de compra</a>.</span>
+        <span>Li e concordo com os <a href="/termos-de-compra" target="_blank" rel="noopener noreferrer" className="font-normal underline underline-offset-2">Termos de compra</a>.</span>
       </label>
       <p className="mt-4 text-[0.75rem] leading-relaxed text-black/50">{meio === "cartao" ? "Os lugares ficam reservados por 15 minutos para você pagar." : "Os lugares ficam reservados por 15 minutos depois que você gera o código."}</p>
     </Moldura>
@@ -210,7 +210,7 @@ export function QrCode({ valor, tamanho = 220, rotulo }: { valor: string; tamanh
   }
   const lado = n + margem * 2;
   return (
-    <svg role="img" aria-label={rotulo} width={tamanho} height={tamanho} viewBox={`0 0 ${lado} ${lado}`} shapeRendering="crispEdges" className="rounded bg-white">
+    <svg role="img" aria-label={rotulo} width={tamanho} height={tamanho} viewBox={`0 0 ${lado} ${lado}`} shapeRendering="crispEdges" className="rounded-xl bg-white">
       <path d={caminhos.join("")} fill="#282525" />
     </svg>
   );
@@ -222,21 +222,21 @@ export function TelaPagarPix({ site, evento, pedido, onCopiar, copiado, onVoltar
 }) {
   return (
     <Moldura titulo={site.titulo} cor={site.cor} passo={{ atual: 3, total: 3 }}>
-      <h1 className="text-[1.5rem] font-semibold tracking-[-.025em]">Pague com Pix</h1>
+      <h1 className="text-[1.5rem] font-medium tracking-[-.025em]">Pague com Pix</h1>
       <p className="mt-1 text-[0.875rem] text-black/60">{evento.titulo} · {evento.quando}</p>
-      <p className="mt-5 text-[0.6875rem] font-medium uppercase tracking-[.08em] text-black/50">Valor</p>
-      <p className="text-[2rem] font-semibold tabular-nums tracking-[-.03em]">{formatarMoeda(pedido.total_centavos)}</p>
-      <div className="mt-4 flex flex-col items-center rounded border border-black/10 px-4 py-5">
+      <p className="mt-5 text-[0.6875rem] font-normal uppercase tracking-[.08em] text-black/50">Valor</p>
+      <p className="text-[2rem] font-medium tabular-nums tracking-[-.03em]">{formatarMoeda(pedido.total_centavos)}</p>
+      <div className="mt-4 flex flex-col items-center rounded-xl border border-black/10 px-4 py-5">
         <QrCode valor={pedido.pix_copia_e_cola} rotulo="QR Code do Pix" />
         <p className="mt-3 text-center text-[0.8125rem] text-black/60">Aponte a câmera do app do seu banco para o QR Code.</p>
       </div>
-      <p className="mt-5 text-[0.6875rem] font-medium uppercase tracking-[.08em] text-black/50">Ou use o Pix copia e cola</p>
-      <p className="mt-1.5 break-all rounded border border-black/10 bg-black/[.03] px-3 py-2.5 font-mono text-[0.75rem] leading-relaxed text-black/70" aria-label="Código Pix copia e cola">{pedido.pix_copia_e_cola.slice(0, 96)}…</p>
+      <p className="mt-5 text-[0.6875rem] font-normal uppercase tracking-[.08em] text-black/50">Ou use o Pix copia e cola</p>
+      <p className="mt-1.5 break-all rounded-xl border border-black/10 bg-black/[.03] px-3 py-2.5 font-mono text-[0.75rem] leading-relaxed text-black/70" aria-label="Código Pix copia e cola">{pedido.pix_copia_e_cola.slice(0, 96)}…</p>
       <button type="button" className={`${BOTAO} mt-3`} onClick={onCopiar}>{copiado ? "Código copiado" : "Copiar código Pix"}</button>
-      <div role="status" className="mt-5 flex items-start gap-3 rounded border px-4 py-3" style={{ borderColor: "#B07A1447" }}>
+      <div role="status" className="mt-5 flex items-start gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "#B07A1447" }}>
         <span aria-hidden="true" className="mt-1 h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-[#B07A14] motion-reduce:animate-none" />
         <div>
-          <p className="text-[0.9375rem] font-medium">Aguardando o pagamento</p>
+          <p className="text-[0.9375rem] font-normal">Aguardando o pagamento</p>
           <p className="text-[0.8125rem] text-black/60">Seus lugares estão reservados até {pedido.reservado_ate} (faltam {pedido.restante}). Quando o Pix cair, os ingressos aparecem aqui e chegam por e-mail.</p>
         </div>
       </div>
@@ -255,28 +255,28 @@ export function TelaIngressos({ site, evento, comprador, pedido, ingressos, emai
   return (
     <Moldura titulo={site.titulo} cor={site.cor}>
       <span className={ETIQUETA} style={{ borderColor: "#2E893247", color: "#2E8932" }}>Pagamento confirmado</span>
-      <h1 className="mt-2 text-[1.5rem] font-semibold tracking-[-.025em]">Seus ingressos</h1>
+      <h1 className="mt-2 text-[1.5rem] font-medium tracking-[-.025em]">Seus ingressos</h1>
       <p className="mt-1 text-[0.9375rem] text-black/70">Olá, {comprador}. Mostre o QR Code ou o código na entrada.</p>
-      <p className="mt-3 text-[1.0625rem] font-medium">{evento.titulo}</p>
+      <p className="mt-3 text-[1.0625rem] font-normal">{evento.titulo}</p>
       <p className="text-[0.9375rem] text-black/70">{evento.quando}</p>
       <p className="text-[0.9375rem] text-black/70">{evento.local}</p>
       <ul className="mt-5 space-y-4">
         {ingressos.map(i => (
-          <li key={i.codigo} className={`rounded border border-black/15 px-4 py-5 ${i.cancelado ? "opacity-50" : ""}`}>
+          <li key={i.codigo} className={`rounded-xl border border-black/15 px-4 py-5 ${i.cancelado ? "opacity-50" : ""}`}>
             <div className="flex items-start justify-between gap-3">
-              <p className="text-[1rem] font-medium">{i.nome}</p>
+              <p className="text-[1rem] font-normal">{i.nome}</p>
               {i.cancelado && <span className={ETIQUETA} style={{ borderColor: "#D94A4A47", color: "#D94A4A" }}>Cancelado</span>}
               {i.usado && !i.cancelado && <span className={ETIQUETA} style={{ borderColor: "#6b676747", color: "#6b6767" }}>Já usado</span>}
             </div>
             <div className="mt-3 flex flex-col items-center">
               <QrCode valor={i.codigo} tamanho={200} rotulo={`QR Code do ingresso ${i.codigo}`} />
-              <p className="mt-2 text-[1.25rem] font-semibold tabular-nums tracking-[.18em]">{i.codigo}</p>
+              <p className="mt-2 text-[1.25rem] font-medium tabular-nums tracking-[.18em]">{i.codigo}</p>
             </div>
           </li>
         ))}
       </ul>
-      <section aria-label="Reembolso" className="mt-6 rounded border border-black/10 px-4 py-3">
-        <p className="text-[0.8125rem] font-medium">Precisa de reembolso?</p>
+      <section aria-label="Reembolso" className="mt-6 rounded-xl border border-black/10 px-4 py-3">
+        <p className="text-[0.8125rem] font-normal">Precisa de reembolso?</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-black/60">Em até 7 dias da compra, escreva para {emailDeReembolso} com o assunto “reembolso - código do ingresso”, do mesmo e-mail que usou aqui. Pedido {pedido}.</p>
       </section>
     </Moldura>
@@ -288,7 +288,7 @@ export function TelaIngressos({ site, evento, comprador, pedido, ingressos, emai
 export function TelaAviso({ site, titulo, texto, acao }: { site: { titulo: string; cor?: string }; titulo: string; texto: string; acao?: { rotulo: string; onClick?: () => void } }) {
   return (
     <Moldura titulo={site.titulo} cor={site.cor}>
-      <h1 className="text-[1.5rem] font-semibold tracking-[-.025em]">{titulo}</h1>
+      <h1 className="text-[1.5rem] font-medium tracking-[-.025em]">{titulo}</h1>
       <p className="mt-2 text-[0.9375rem] leading-relaxed text-black/65">{texto}</p>
       {acao && <button type="button" className={`${BOTAO} mt-6`} onClick={acao.onClick}>{acao.rotulo}</button>}
     </Moldura>
@@ -302,15 +302,15 @@ export function TelaTermosDeCompra({ secoes, atualizadoEm, email }: { secoes: { 
     <div className="min-h-screen bg-white text-[#282525]">
       <header className="border-b border-black/10">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-4 px-4 sm:px-6">
-          <span className="text-[0.9375rem] font-semibold tracking-[-.01em]">Jards</span>
+          <span className="text-[0.9375rem] font-medium tracking-[-.01em]">Jards</span>
           <span className="text-[0.75rem] text-black/45">Atualizado em {atualizadoEm}</span>
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-4 pb-20 pt-10 sm:px-6">
-        <p className="text-[0.6875rem] font-semibold uppercase tracking-[.12em] text-black/45">Compra de ingressos</p>
-        <h1 className="mt-2 text-[2rem] font-bold leading-[1.1] tracking-[-.03em] sm:text-[2.5rem]">Termos de compra</h1>
+        <p className="text-[0.6875rem] font-medium uppercase tracking-[.12em] text-black/45">Compra de ingressos</p>
+        <h1 className="mt-2 text-[2rem] font-semibold leading-[1.1] tracking-[-.03em] sm:text-[2.5rem]">Termos de compra</h1>
         <p className="mt-3 text-[1rem] leading-relaxed text-black/60">O que vale quando você compra um ingresso pela plataforma Jards. Leia antes de gerar o Pix.</p>
-        <nav aria-label="Seções" className="mt-8 rounded border border-black/10 px-4 py-3.5">
+        <nav aria-label="Seções" className="mt-8 rounded-xl border border-black/10 px-4 py-3.5">
           <ol className="space-y-1 text-[0.875rem]">
             {secoes.map((s, i) => <li key={s.id}><a href={`#${s.id}`} className="text-black/60 underline-offset-2 hover:text-[#282525] hover:underline">{i + 1}. {s.titulo}</a></li>)}
           </ol>
@@ -318,7 +318,7 @@ export function TelaTermosDeCompra({ secoes, atualizadoEm, email }: { secoes: { 
         <div className="mt-10 space-y-10">
           {secoes.map((s, i) => (
             <section key={s.id} id={s.id} aria-labelledby={`${s.id}-t`}>
-              <h2 id={`${s.id}-t`} className="text-[1.25rem] font-semibold tracking-[-.015em]">{i + 1}. {s.titulo}</h2>
+              <h2 id={`${s.id}-t`} className="text-[1.25rem] font-medium tracking-[-.015em]">{i + 1}. {s.titulo}</h2>
               <div className="mt-3 space-y-3 text-[0.9375rem] leading-7 text-black/70">{s.paragrafos.map((p, j) => <p key={j}>{p.replaceAll("{email}", email)}</p>)}</div>
             </section>
           ))}
@@ -333,25 +333,25 @@ export function TelaTermosDeCompra({ secoes, atualizadoEm, email }: { secoes: { 
 export function TelaAbrindoPagamento({ site, evento, resumo, endereco, enderecoDoPedido }: { site: { titulo: string; cor?: string }; evento: EventoParaComprar; resumo: ResumoDoPedido; endereco: string; enderecoDoPedido?: string }) {
   return (
     <Moldura titulo={site.titulo} cor={site.cor} passo={{ atual: 3, total: 3 }}>
-      <h1 className="text-[1.5rem] font-semibold tracking-[-.025em]">Abrindo o pagamento</h1>
+      <h1 className="text-[1.5rem] font-medium tracking-[-.025em]">Abrindo o pagamento</h1>
       <p className="mt-1 text-[0.875rem] text-black/60">{evento.titulo} · {evento.quando}</p>
-      <div role="status" className="mt-6 flex items-start gap-3 rounded border px-4 py-3.5" style={{ borderColor: "#B07A1447" }}>
+      <div role="status" className="mt-6 flex items-start gap-3 rounded-xl border px-4 py-3.5" style={{ borderColor: "#B07A1447" }}>
         <span aria-hidden="true" className="mt-1 h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-[#B07A14] motion-reduce:animate-none" />
         <div>
-          <p className="text-[0.9375rem] font-medium">Levando você à página segura de pagamento</p>
+          <p className="text-[0.9375rem] font-normal">Levando você à página segura de pagamento</p>
           <p className="mt-0.5 text-[0.8125rem] text-black/60">Pague com o cartão por lá. Quando o pagamento for aprovado, os seus ingressos aparecem na página do pedido e chegam por e-mail.</p>
         </div>
       </div>
-      <section aria-label="Resumo do pedido" className="mt-5 rounded border border-black/10 px-4 py-3">
+      <section aria-label="Resumo do pedido" className="mt-5 rounded-xl border border-black/10 px-4 py-3">
         <ul className="space-y-1.5">
           {resumo.linhas.map(l => <li key={l.nome} className="flex justify-between gap-4 text-[0.9375rem]"><span>{l.quantidade} × {l.nome}</span><span className="tabular-nums">{formatarMoeda(l.total_centavos)}</span></li>)}
         </ul>
         {resumo.desconto && resumo.desconto.centavos > 0 && <p className="mt-1.5 flex justify-between gap-4 text-[0.9375rem] text-[#2E8932]"><span>Cupom {resumo.desconto.codigo}</span><span className="tabular-nums">−{formatarMoeda(resumo.desconto.centavos)}</span></p>}
-        <p className="mt-2 flex justify-between border-t border-black/10 pt-2 text-[1rem] font-semibold"><span>Total</span><span className="tabular-nums">{formatarMoeda(resumo.total_centavos)}</span></p>
+        <p className="mt-2 flex justify-between border-t border-black/10 pt-2 text-[1rem] font-medium"><span>Total</span><span className="tabular-nums">{formatarMoeda(resumo.total_centavos)}</span></p>
       </section>
       <a href={endereco} className={`${BOTAO} mt-5`}>Abrir a página de pagamento</a>
       <p className="mt-3 text-[0.75rem] text-black/50">Se a página não abrir sozinha, toque no botão. Depois de pagar, volte para esta página.</p>
-      {enderecoDoPedido && <p className="mt-2 text-[0.75rem] text-black/50">Já pagou? <a href={enderecoDoPedido} className="font-medium underline underline-offset-2">Ver o meu pedido</a>.</p>}
+      {enderecoDoPedido && <p className="mt-2 text-[0.75rem] text-black/50">Já pagou? <a href={enderecoDoPedido} className="font-normal underline underline-offset-2">Ver o meu pedido</a>.</p>}
     </Moldura>
   );
 }

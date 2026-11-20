@@ -112,11 +112,11 @@ export default function CuponsPage() {
     <>
       <ListPageHeader eyebrow="Ticketeria" title="Cupons" actions={novo} />
       <ListContent>
-        {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {dados === null ? (
-          <div className="h-32 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
+          <div className="h-32 rounded-xl border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
         ) : semEvento ? (
-          <p className="rounded border bg-white px-4 py-10 text-center text-[0.8125rem] text-black/55" style={{ borderColor: "rgba(13,13,13,.08)" }}>Crie um evento primeiro: o cupom vale para os ingressos de um evento.</p>
+          <p className="rounded-xl border bg-white px-4 py-10 text-center text-[0.8125rem] text-black/55" style={{ borderColor: "rgba(13,13,13,.08)" }}>Crie um evento primeiro: o cupom vale para os ingressos de um evento.</p>
         ) : (
           <CuponsDaLoja cupons={lista} onEditar={podeEditar ? abrirEdicao : undefined} />
         )}

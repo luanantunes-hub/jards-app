@@ -9,7 +9,7 @@ import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosE
 // Os cupons de desconto (a tela do produtor): a lista e a folha de criar ou editar. Só desenho: os dados e as ações chegam por props.
 
 const BORDA = "rgba(13,13,13,.08)";
-const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35";
+const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
 const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
 
 export type { SituacaoDoCupom } from "@/lib/ticketeria/cupom";
@@ -20,30 +20,30 @@ const ETIQUETA: Record<SituacaoDoCupom, { texto: string; cor: string }> = {
 };
 
 function Etiqueta({ texto, cor }: { texto: string; cor: string }) {
-  return <span className="inline-flex shrink-0 rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={{ borderColor: cor + "47", color: cor }}>{texto}</span>;
+  return <span className="inline-flex shrink-0 rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal" style={{ borderColor: cor + "47", color: cor }}>{texto}</span>;
 }
 
 /** Os cupons da loja: código, desconto, a que vale, quantas vezes foi usado, até quando e a situação. */
 export function CuponsDaLoja({ cupons, onEditar }: { cupons: CupomDaLista[]; onEditar?: (id: string) => void }) {
   if (cupons.length === 0) {
     return (
-      <div className="rounded border bg-white" style={{ borderColor: BORDA }}>
+      <div className="rounded-xl border bg-white" style={{ borderColor: BORDA }}>
         <div className="flex flex-col items-center px-4 py-20 text-center">
           <Tag size={28} className="mb-3 text-black/15" aria-hidden="true" />
-          <p className="text-[0.875rem] font-semibold text-black/55">Nenhum cupom ainda</p>
+          <p className="text-[0.875rem] font-medium text-black/55">Nenhum cupom ainda</p>
           <p className="mt-1.5 max-w-sm text-[0.75rem] leading-relaxed text-black/35">Crie um código de desconto para divulgar. Quem digitar o código na compra paga menos.</p>
         </div>
       </div>
     );
   }
   return (
-    <div className="overflow-x-auto rounded border bg-white" style={{ borderColor: BORDA }}>
+    <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>
       <table className="w-full min-w-[44rem] border-collapse">
         <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Cupom</th><th className={CABECALHO}>Desconto</th><th className={CABECALHO}>Vale para</th><th className={`${CABECALHO} text-right`}>Usos</th><th className={CABECALHO}>Validade</th><th className={CABECALHO}><span className="sr-only">Situação</span></th></tr></thead>
         <tbody className="divide-y divide-black/[.08]">
           {cupons.map(c => (
             <tr key={c.id}>
-              <td className={CELULA}><button type="button" onClick={() => onEditar?.(c.id)} className="rounded font-medium tracking-[.06em] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{c.codigo}</button></td>
+              <td className={CELULA}><button type="button" onClick={() => onEditar?.(c.id)} className="rounded-xl font-normal tracking-[.06em] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{c.codigo}</button></td>
               <td className={CELULA}>{c.desconto}</td>
               <td className={`${CELULA} text-black/70`}>{c.alcance}</td>
               <td className={`${CELULA} text-right tabular-nums`}>{c.usos}{c.limite !== null && <span className="text-black/45"> de {c.limite}</span>}</td>

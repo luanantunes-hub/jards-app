@@ -19,8 +19,8 @@ import { DominiosDoSite } from "@/components/ticketeria/DominiosDoSite";
 type Loja = { id: string; nome: string };
 type Site = { id: string; nome: string; titulo: string | null; cor: string; situacao: SituacaoDoSite };
 
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
-const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
+const CAMPO = "h-10 w-full rounded-xl border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
+const ROTULO = "mb-1.5 block text-[0.6875rem] font-normal text-black/55";
 
 /** Cria a loja (se ainda não houver) e o site dela, com a página de início já começada. */
 function NovoSiteSheet({ organizationId, loja, espacos, onClose, onCreated }: { organizationId: string; loja: Loja | null; espacos: readonly EspacoDaProgramacao[]; onClose: () => void; onCreated: () => void }) {
@@ -61,15 +61,15 @@ function NovoSiteSheet({ organizationId, loja, espacos, onClose, onCreated }: { 
       onClose={onClose}
       footer={fechar => (
         <>
-          <button type="button" onClick={fechar} disabled={salvando} className="rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
-          <button type="button" onClick={() => void criar()} disabled={salvando} className="rounded acao-salvar px-4 py-2.5 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Criando…" : "Criar site"}</button>
+          <button type="button" onClick={fechar} disabled={salvando} className="rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
+          <button type="button" onClick={() => void criar()} disabled={salvando} className="rounded-xl acao-salvar px-4 py-2.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Criando…" : "Criar site"}</button>
         </>
       )}
     >
       <div className="space-y-4">
-        {erro && <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {erro && <p role="alert" className="rounded-xl border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         <div><label className={ROTULO} htmlFor="site-nome">Nome do site</label><input id="site-nome" autoFocus className={CAMPO} value={nome} onChange={event => setNome(event.target.value)} placeholder="Teatro Central" maxLength={120} disabled={salvando} /></div>
-        <div className="flex items-center gap-3"><label className={`${ROTULO} mb-0`} htmlFor="site-cor">Cor do cabeçalho</label><input id="site-cor" type="color" value={cor} onChange={event => setCor(event.target.value)} className="h-10 w-14 cursor-pointer rounded border border-black/[.12] bg-white p-1" disabled={salvando} /></div>
+        <div className="flex items-center gap-3"><label className={`${ROTULO} mb-0`} htmlFor="site-cor">Cor do cabeçalho</label><input id="site-cor" type="color" value={cor} onChange={event => setCor(event.target.value)} className="h-10 w-14 cursor-pointer rounded-xl border border-black/[.12] bg-white p-1" disabled={salvando} /></div>
         <p className="text-[0.75rem] text-black/55">O site abre só no domínio da sua casa, festival ou companhia. Você liga o domínio depois de criar.</p>
       </div>
     </TopSheet>
@@ -157,7 +157,7 @@ export default function SiteDaLojaPage() {
       <>
         <ListPageHeader eyebrow="Ticketeria" title="Site" />
         <ListContent>
-          {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+          {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
           <ListTableSurface>
             <ListEmptyState
               icon={Globe}
@@ -181,28 +181,28 @@ export default function SiteDaLojaPage() {
         actions={podeEditar ? (
           <button type="button" disabled={salvando} onClick={() => void atualizar({ situacao: site.situacao === "publicado" ? "rascunho" : "publicado" })}
             className={site.situacao === "publicado"
-              ? "inline-flex h-10 items-center rounded border border-black/[.12] px-4 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"
-              : "inline-flex h-10 items-center rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"}>
+              ? "inline-flex h-10 items-center rounded-xl border border-black/[.12] px-4 text-[0.75rem] font-normal text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"
+              : "inline-flex h-10 items-center rounded-xl bg-[#1C0E33] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"}>
             {site.situacao === "publicado" ? "Tirar do ar" : "Pôr o site no ar"}
           </button>
         ) : undefined}
       />
       <DetailPageContent>
-        {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         <section aria-label="Aparência do site" className="mb-10 grid max-w-2xl gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
           <div>
-            <label htmlFor="site-titulo" className="mb-1.5 block text-[0.6875rem] font-medium text-black/55">Título no cabeçalho</label>
+            <label htmlFor="site-titulo" className="mb-1.5 block text-[0.6875rem] font-normal text-black/55">Título no cabeçalho</label>
             <input id="site-titulo" className={CAMPO} value={titulo} onChange={event => setTitulo(event.target.value)} placeholder={site.nome} maxLength={120} disabled={!podeEditar || salvando} />
           </div>
           <div>
-            <label htmlFor="site-cor" className="mb-1.5 block text-[0.6875rem] font-medium text-black/55">Cor</label>
-            <input id="site-cor" type="color" value={cor} onChange={event => setCor(event.target.value)} className="h-10 w-14 cursor-pointer rounded border border-black/[.12] bg-white p-1" disabled={!podeEditar || salvando} />
+            <label htmlFor="site-cor" className="mb-1.5 block text-[0.6875rem] font-normal text-black/55">Cor</label>
+            <input id="site-cor" type="color" value={cor} onChange={event => setCor(event.target.value)} className="h-10 w-14 cursor-pointer rounded-xl border border-black/[.12] bg-white p-1" disabled={!podeEditar || salvando} />
           </div>
-          {podeEditar && <button type="button" disabled={salvando || (titulo.trim() === (site.titulo ?? "") && cor === corDoTema(site.cor))} onClick={() => void atualizar({ titulo: titulo.trim() === "" ? null : titulo.trim(), cor })} className="inline-flex h-10 items-center rounded acao-salvar px-4 text-[0.75rem] font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">Salvar</button>}
+          {podeEditar && <button type="button" disabled={salvando || (titulo.trim() === (site.titulo ?? "") && cor === corDoTema(site.cor))} onClick={() => void atualizar({ titulo: titulo.trim() === "" ? null : titulo.trim(), cor })} className="inline-flex h-10 items-center rounded-xl acao-salvar px-4 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">Salvar</button>}
         </section>
         <EditorDoSite siteId={site.id} organizationId={organizationId} podeEditar={podeEditar} espacos={espacos} eventos={eventos} />
         <DominiosDoSite siteId={site.id} podeEditar={podeEditar} />
-        {podeEditar && <div className="mt-12"><button type="button" onClick={apagar} className="text-[0.75rem] font-medium text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Apagar este site</button></div>}
+        {podeEditar && <div className="mt-12"><button type="button" onClick={apagar} className="text-[0.75rem] font-normal text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Apagar este site</button></div>}
       </DetailPageContent>
     </div>
   );

@@ -11,14 +11,14 @@ import { lerDominio, registrosDeDns, type RegistroDeDns } from "@/lib/ticketeria
 
 type Dominio = { id: string; dominio: string; situacao: SituacaoDoDominio; token_verificacao: string; erro: string | null; conferido_em: string | null };
 
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
-const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border border-black/[.12] px-3 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
+const CAMPO = "h-10 w-full rounded-xl border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
+const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded-xl border border-black/[.12] px-3 text-[0.75rem] font-normal text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const ROTULO_DA_SITUACAO: Record<SituacaoDoDominio, string> = { aguardando: "Aguardando o DNS", verificando: "Conferindo", ativo: "No ar", erro: "Com problema" };
 
 function Copiar({ valor }: { valor: string }) {
   const [copiado, setCopiado] = useState(false);
   return (
-    <button type="button" aria-label={`Copiar ${valor}`} onClick={() => { void navigator.clipboard.writeText(valor).then(() => setCopiado(true)); }} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-black/45 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+    <button type="button" aria-label={`Copiar ${valor}`} onClick={() => { void navigator.clipboard.writeText(valor).then(() => setCopiado(true)); }} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-black/45 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
       {copiado ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
     </button>
   );
@@ -27,15 +27,15 @@ function Copiar({ valor }: { valor: string }) {
 /** Os dois registros que a pessoa cria no DNS do domínio dela (quem registrou o domínio: Registro.br, GoDaddy, Hostinger, Cloudflare...). */
 function RegistrosDeDns({ registros }: { registros: RegistroDeDns[] }) {
   return (
-    <div className="overflow-x-auto rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.1)" }}>
+    <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.1)" }}>
       <table className="w-full min-w-[34rem] border-collapse text-left">
         <caption className="sr-only">Registros para criar no DNS do domínio</caption>
-        <thead><tr className="border-b border-black/[.06]">{["Para que serve", "Tipo", "Nome (host)", "Valor"].map(titulo => <th key={titulo} scope="col" className="px-3 py-2 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{titulo}</th>)}</tr></thead>
+        <thead><tr className="border-b border-black/[.06]">{["Para que serve", "Tipo", "Nome (host)", "Valor"].map(titulo => <th key={titulo} scope="col" className="px-3 py-2 text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">{titulo}</th>)}</tr></thead>
         <tbody>
           {registros.map(registro => (
             <tr key={`${registro.tipo}-${registro.nome}`} className="border-b border-black/[.06] last:border-b-0">
               <td className="px-3 py-2 text-[0.75rem] text-black/60">{registro.para === "apontar" ? "Apontar o domínio para o Jards" : "Provar que o domínio é seu"}</td>
-              <td className="px-3 py-2 text-[0.8125rem] font-medium text-[#282525]">{registro.tipo}</td>
+              <td className="px-3 py-2 text-[0.8125rem] font-normal text-[#282525]">{registro.tipo}</td>
               <td className="px-3 py-2 font-mono text-[0.75rem] text-[#282525]"><span className="inline-flex items-center gap-1">{registro.nome}{registro.nome.startsWith("@") ? null : <Copiar valor={registro.nome} />}</span></td>
               <td className="px-3 py-2 font-mono text-[0.75rem] text-[#282525]"><span className="inline-flex items-center gap-1 break-all">{registro.valor}<Copiar valor={registro.valor} /></span></td>
             </tr>
@@ -119,30 +119,30 @@ export function DominiosDoSite({ siteId, podeEditar }: { siteId: string; podeEdi
   return (
     <section aria-labelledby="dominios-do-site" className="mt-10">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 id="dominios-do-site" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Domínio do site</h2>
+        <h2 id="dominios-do-site" className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Domínio do site</h2>
       </div>
       <p className="mb-3 max-w-2xl text-[0.75rem] text-black/55">O site abre só no domínio que é seu, como www.casa.com.br, nunca num endereço do Jards. Cadastre o domínio, crie os dois registros no DNS dele (onde você registrou o domínio) e confira. O endereço seguro (https) é emitido sozinho.</p>
-      {erro && <p role="alert" className="mb-3 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+      {erro && <p role="alert" className="mb-3 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
       {podeEditar && (
         <form className="mb-4 flex flex-wrap items-end gap-2" onSubmit={event => { event.preventDefault(); void adicionar(); }}>
           <div className="min-w-0 flex-1 basis-64">
-            <label htmlFor="novo-dominio" className="mb-1.5 block text-[0.6875rem] font-medium text-black/55">Seu domínio</label>
+            <label htmlFor="novo-dominio" className="mb-1.5 block text-[0.6875rem] font-normal text-black/55">Seu domínio</label>
             <input id="novo-dominio" className={CAMPO} value={novo} onChange={event => setNovo(event.target.value)} placeholder="www.casa.com.br" disabled={adicionando} autoComplete="off" />
           </div>
           <PrimaryListAction onClick={() => void adicionar()} disabled={adicionando}><Plus size={13} aria-hidden="true" /> {adicionando ? "Cadastrando…" : "Conectar domínio"}</PrimaryListAction>
         </form>
       )}
       {dominios === null ? (
-        <div className="h-16 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
+        <div className="h-16 rounded-xl border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
       ) : dominios.length === 0 ? (
-        <p className="rounded border bg-white px-4 py-5 text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nenhum domínio ligado. Sem ele, só você vê o site, pela prévia.</p>
+        <p className="rounded-xl border bg-white px-4 py-5 text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nenhum domínio ligado. Sem ele, só você vê o site, pela prévia.</p>
       ) : (
         <ul className="space-y-3">
           {dominios.map(dominio => (
-            <li key={dominio.id} className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+            <li key={dominio.id} className="rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
                 <div className="min-w-0 flex-1 basis-56">
-                  <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{dominio.dominio}</p>
+                  <p className="truncate text-[0.8125rem] font-normal text-[#282525]">{dominio.dominio}</p>
                   <p className="text-[0.6875rem] text-black/45">{ROTULO_DA_SITUACAO[dominio.situacao]}{dominio.conferido_em ? ` · conferido em ${dominio.conferido_em.slice(8, 10)}/${dominio.conferido_em.slice(5, 7)}` : ""}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">

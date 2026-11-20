@@ -19,18 +19,18 @@ const caminhoDe = (base: string, slug: string) => (slug === "inicio" ? base || "
 function Programacao({ titulo, dias }: { titulo: string; dias: DiaPublico[] | null }) {
   return (
     <section aria-label={titulo || "Programação"}>
-      {titulo && <h2 className="mb-3 text-[1.25rem] font-semibold tracking-[-.01em]">{titulo}</h2>}
+      {titulo && <h2 className="mb-3 text-[1.25rem] font-medium tracking-[-.01em]">{titulo}</h2>}
       {!dias || dias.length === 0 ? (
-        <p className="rounded border border-black/10 px-4 py-5 text-[0.9375rem] opacity-70">Nenhuma sessão marcada por enquanto. Volte em breve.</p>
+        <p className="rounded-xl border border-black/10 px-4 py-5 text-[0.9375rem] opacity-70">Nenhuma sessão marcada por enquanto. Volte em breve.</p>
       ) : (
         <div className="space-y-4">
           {dias.map(dia => (
             <div key={dia.dia}>
-              <h3 className="mb-1.5 text-[0.75rem] font-medium uppercase tracking-[.08em] opacity-60">{diaPorExtenso(dia.dia)}</h3>
-              <ul className="divide-y divide-black/10 overflow-hidden rounded border border-black/10">
+              <h3 className="mb-1.5 text-[0.75rem] font-normal uppercase tracking-[.08em] opacity-60">{diaPorExtenso(dia.dia)}</h3>
+              <ul className="divide-y divide-black/10 overflow-hidden rounded-xl border border-black/10">
                 {dia.sessoes.map((sessao, indice) => (
                   <li key={`${sessao.inicio}-${sessao.sala}-${indice}`} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-4 py-3">
-                    <span className="w-28 shrink-0 text-[0.9375rem] font-medium tabular-nums">{sessao.inicio} às {sessao.fim}</span>
+                    <span className="w-28 shrink-0 text-[0.9375rem] font-normal tabular-nums">{sessao.inicio} às {sessao.fim}</span>
                     <span className="min-w-0 flex-1 basis-40 text-[0.9375rem]">{sessao.titulo}{sessao.marca && <MarcaDaSessao marca={sessao.marca} />}</span>
                     <span className="text-[0.8125rem] opacity-60">{sessao.sala}</span>
                   </li>
@@ -48,18 +48,18 @@ function Programacao({ titulo, dias }: { titulo: string; dias: DiaPublico[] | nu
 export function IngressosDoEvento({ titulo, sessoes }: { titulo: string; sessoes: { id: string; quando: string; local: string; url: string }[] | null }) {
   return (
     <section aria-label={titulo || "Ingressos"}>
-      {titulo && <h2 className="mb-3 text-[1.25rem] font-semibold tracking-[-.01em]">{titulo}</h2>}
+      {titulo && <h2 className="mb-3 text-[1.25rem] font-medium tracking-[-.01em]">{titulo}</h2>}
       {!sessoes || sessoes.length === 0 ? (
-        <p className="rounded border border-black/10 px-4 py-5 text-[0.9375rem] opacity-70">Nenhuma sessão à venda por enquanto. Volte em breve.</p>
+        <p className="rounded-xl border border-black/10 px-4 py-5 text-[0.9375rem] opacity-70">Nenhuma sessão à venda por enquanto. Volte em breve.</p>
       ) : (
-        <ul className="divide-y divide-black/10 overflow-hidden rounded border border-black/10">
+        <ul className="divide-y divide-black/10 overflow-hidden rounded-xl border border-black/10">
           {sessoes.map(sessao => (
             <li key={sessao.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5">
               <span className="min-w-0 flex-1 basis-56">
-                <span className="block text-[0.9375rem] font-medium">{sessao.quando}</span>
+                <span className="block text-[0.9375rem] font-normal">{sessao.quando}</span>
                 {sessao.local && <span className="block text-[0.8125rem] opacity-60">{sessao.local}</span>}
               </span>
-              <a href={sessao.url} className="inline-flex min-h-11 items-center rounded bg-[#282525] px-5 py-2.5 text-[0.875rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2">Comprar ingressos</a>
+              <a href={sessao.url} className="inline-flex min-h-11 items-center rounded-xl bg-[#282525] px-5 py-2.5 text-[0.875rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2">Comprar ingressos</a>
             </li>
           ))}
         </ul>
@@ -71,14 +71,14 @@ export function IngressosDoEvento({ titulo, sessoes }: { titulo: string; sessoes
 function BlocoDoSite({ bloco, programacoes, ingressos }: { bloco: Bloco; programacoes: Record<string, DiaPublico[]>; ingressos: Record<string, { id: string; quando: string; local: string; url: string }[]> }) {
   switch (bloco.tipo) {
     case "titulo":
-      return <h2 className="text-[1.5rem] font-semibold tracking-[-.02em]">{bloco.texto}</h2>;
+      return <h2 className="text-[1.5rem] font-medium tracking-[-.02em]">{bloco.texto}</h2>;
     case "texto":
       return <div className="space-y-3 text-[1rem] leading-relaxed">{bloco.texto.split(/\n{2,}/).map((paragrafo, indice) => <p key={indice} className="whitespace-pre-line">{paragrafo}</p>)}</div>;
     case "imagem":
       // eslint-disable-next-line @next/next/no-img-element -- imagem de endereço externo (https), sem otimização do Next
-      return <img src={bloco.url} alt={bloco.alt} loading="lazy" referrerPolicy="no-referrer" className="h-auto max-w-full rounded" />;
+      return <img src={bloco.url} alt={bloco.alt} loading="lazy" referrerPolicy="no-referrer" className="h-auto max-w-full rounded-xl" />;
     case "botao":
-      return <a href={bloco.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded bg-[#282525] px-5 py-2.5 text-[0.9375rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{bloco.rotulo}</a>;
+      return <a href={bloco.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl bg-[#282525] px-5 py-2.5 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{bloco.rotulo}</a>;
     case "programacao":
       return <Programacao titulo={bloco.titulo} dias={bloco.espaco_id ? programacoes[bloco.espaco_id] ?? null : null} />;
     case "ingressos":
@@ -105,7 +105,7 @@ export function SiteView({ site, base, previa }: { site: SiteParaDesenhar; base:
       {previa && <p role="status" className="bg-[#282525] px-4 py-2 text-center text-[0.75rem] text-white">Prévia do rascunho: só quem está logado vê esta página.</p>}
       <header style={{ backgroundColor: site.cor, color: texto }}>
         <div className="mx-auto flex w-full max-w-[56rem] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 sm:px-6">
-          <a href={caminhoDe(base, "inicio")} className="text-[1.125rem] font-semibold tracking-[-.01em] focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: texto }}>{site.titulo}</a>
+          <a href={caminhoDe(base, "inicio")} className="text-[1.125rem] font-medium tracking-[-.01em] focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: texto }}>{site.titulo}</a>
           {site.menu.length > 1 && (
             <nav aria-label="Páginas do site">
               <ul className="flex flex-wrap gap-x-5 gap-y-1">

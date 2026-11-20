@@ -83,7 +83,7 @@ export default function RecebimentosPage() {
         actions={podeEditar && !estado.conta ? <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Cadastrar conta</PrimaryListAction> : undefined}
       />
       <ListContent>
-        {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {estado.conta
           ? <CartaoDaConta conta={estado.conta} troca={troca} podeEditar={podeEditar} onAlterar={() => setFolhaDaTroca({ retomar: Boolean(troca && !troca.confirmada && troca.minha) })} onCancelarTroca={() => void cancelarTroca()} />
           : (
