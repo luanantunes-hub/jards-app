@@ -9,12 +9,14 @@ import { ListContent, ListPageHeader, PrimaryListAction, SecondaryListAction } f
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from "@/components/ticketeria/DivulgacaoView";
 import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
+import { ModeloDaLoja } from "@/components/ticketeria/ModeloView";
+import type { ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
 import type { CorpoDaImportacao, ImportacaoDaLista, TipoDeHistorico } from "@/lib/ticketeria/historico";
 import { CARTOES, ConexoesDaLoja, EscolherContaSheet, type ContaParaEscolher, type EstadoDeMidia, type ProvedorDoCartao } from "@/components/ticketeria/ConexoesView";
 import { gastoParaCampo, lerAcao, type CamposDaAcao, type DivulgacaoDaLoja as DadosDaDivulgacao } from "@/lib/ticketeria/divulgacao";
 
-type Aba = "origem" | "acoes" | "conexoes" | "historico";
-const ABAS: { valor: Aba; rotulo: string }[] = [{ valor: "origem", rotulo: "De onde vieram" }, { valor: "acoes", rotulo: "Ações e gasto" }, { valor: "conexoes", rotulo: "Conexões" }, { valor: "historico", rotulo: "Histórico" }];
+type Aba = "origem" | "acoes" | "conexoes" | "historico" | "modelo";
+const ABAS: { valor: Aba; rotulo: string }[] = [{ valor: "origem", rotulo: "De onde vieram" }, { valor: "acoes", rotulo: "Ações e gasto" }, { valor: "conexoes", rotulo: "Conexões" }, { valor: "historico", rotulo: "Histórico" }, { valor: "modelo", rotulo: "Modelo" }];
 /** O que a volta do login da Meta conta (?meta=…): a frase quando não deu certo. */
 const AVISO_DO_RETORNO = (fonte: string): Record<string, string> => ({
   negado: `O ${fonte} não liberou o acesso. Conecte de novo e aceite a leitura dos anúncios.`, invalido: `Não foi possível confirmar o login do ${fonte}. Conecte de novo.`,
@@ -48,6 +50,9 @@ export default function DivulgacaoPage() {
   const [folhaDeImportar, setFolhaDeImportar] = useState(false);
   const [erroDeImportar, setErroDeImportar] = useState<string | null>(null);
   const [desfazendo, setDesfazendo] = useState<string | null>(null);
+  // A prontidão do modelo (aba Modelo): lida só quando a aba é aberta (junta várias fontes).
+  const [prontidao, setProntidao] = useState<ProntidaoDoModelo | null>(null);
+  const [prontidaoErro, setProntidaoErro] = useState(false);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -85,6 +90,17 @@ export default function DivulgacaoPage() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estado?.lojaId]);
+
+  // A prontidão do modelo junta vendas, gasto e visitas: só se lê quando a aba é aberta (e de novo depois de importar ou ler uma conexão: `versao`).
+  useEffect(() => {
+    if (aba !== "modelo" || !estado?.lojaId) return;
+    let ativo = true;
+    void fetch(`/api/ticketeria/lojas/${estado.lojaId}/modelo`, { cache: "no-store" })
+      .then(r => (r.ok ? (r.json() as Promise<ProntidaoDoModelo>) : Promise.reject(new Error(String(r.status)))))
+      .then(p => { if (ativo) { setProntidao(p); setProntidaoErro(false); } })
+      .catch(() => { if (ativo) setProntidaoErro(true); });
+    return () => { ativo = false; };
+  }, [aba, estado?.lojaId, versao]);
 
   const abrirNova = useCallback((hoje: string) => { setAcaoErro(null); setAcao({ id: null, valores: { nome: "", canal: "instagram", inicio: hoje, fim: hoje, gasto: "" } }); }, []);
 
@@ -208,6 +224,10 @@ export default function DivulgacaoPage() {
             </div>
             {aba === "origem"
               ? <DivulgacaoDaLoja linhas={dados.linhas} sessoes={dados.sessoes} sessaoId={sessaoId} onSessao={setSessaoId} onCriarLink={() => setCriando(true)} />
+              : aba === "modelo"
+              ? (prontidaoErro ? <p role="alert" className="rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>Não foi possível conferir os dados do modelo agora. Recarregue a página.</p>
+                : prontidao ? <ModeloDaLoja prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} />
+                : <p className="text-[0.8125rem] text-black/40" aria-live="polite">Conferindo os dados…</p>)
               : aba === "historico"
               ? <HistoricoDaLoja importacoes={historico.importacoes} semanas={historico.semanas} desfazendo={desfazendo} onDesfazer={id => void desfazerImportacao(id)} onImportar={() => { setErroDeImportar(null); setFolhaDeImportar(true); }} />
               : aba === "conexoes"
