@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { create as criarQr } from "qrcode";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { TEXTO_DAS_NOVIDADES } from "@/lib/ticketeria/novidades";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 import { textoSobreCor } from "@/lib/ticketeria/site";
 import { disponivelNasFaixas, totalNasFaixas, type IngressoDaVitrine } from "@/lib/ticketeria/vitrine";
@@ -167,9 +168,11 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
 /** `total_centavos` é o que a pessoa paga (já com o desconto); `desconto` é o cupom aplicado, que sai da soma das linhas. */
 export type ResumoDoPedido = { linhas: { nome: string; quantidade: number; total_centavos: number }[]; total_centavos: number; desconto?: { codigo: string; centavos: number } };
 
-export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, aceito = false, onAceitar, meio = "pix", onMeio, parcelasMax = 1, parcelas = 1, onParcelas, onMudar, onVoltar, onGerarPix }: {
+export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, aceito = false, onAceitar, novidades = false, onNovidades, whatsapp = "", onWhatsapp, meio = "pix", onMeio, parcelasMax = 1, parcelas = 1, onParcelas, onMudar, onVoltar, onGerarPix }: {
   site: { titulo: string; cor?: string }; evento: EventoParaComprar; resumo: ResumoDoPedido; valores: { nome: string; email: string; documento: string };
   erro?: string | null; trabalhando?: boolean; aceito?: boolean; onAceitar?: (aceito: boolean) => void;
+  /** O aceite de novidades do produtor (desmarcado de início) e o WhatsApp opcional, que só aparece com a caixa marcada. */
+  novidades?: boolean; onNovidades?: (aceito: boolean) => void; whatsapp?: string; onWhatsapp?: (valor: string) => void;
   /** Como pagar: Pix (o código aparece na hora) ou cartão (a pessoa paga na página segura do provedor). `parcelasMax` é até quantas vezes a loja oferece, sem juros para quem compra. */
   meio?: "pix" | "cartao"; onMeio?: (meio: "pix" | "cartao") => void; parcelasMax?: number; parcelas?: number; onParcelas?: (parcelas: number) => void; onMudar?: (campo: "nome" | "email" | "documento", valor: string) => void; onVoltar?: () => void; onGerarPix?: () => void;
 }) {
@@ -219,6 +222,13 @@ export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, ac
         <input type="checkbox" checked={aceito} onChange={e => onAceitar?.(e.target.checked)} disabled={trabalhando} className="mt-0.5 h-5 w-5 shrink-0 accent-[#282525]" />
         <span>Li e concordo com os <a href="/termos-de-compra" target="_blank" rel="noopener noreferrer" className="font-normal underline underline-offset-2">Termos de compra</a>.</span>
       </label>
+      <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-black/10 px-4 py-3.5 text-[0.875rem] leading-snug">
+        <input type="checkbox" checked={novidades} onChange={e => onNovidades?.(e.target.checked)} disabled={trabalhando} className="mt-0.5 h-5 w-5 shrink-0 accent-[#282525]" />
+        <span>{TEXTO_DAS_NOVIDADES}</span>
+      </label>
+      {novidades && (
+        <div className="mt-3"><label className={ROTULO} htmlFor="c-whatsapp">WhatsApp (opcional)</label><input id="c-whatsapp" type="tel" inputMode="tel" className={CAMPO} value={whatsapp} onChange={e => onWhatsapp?.(e.target.value)} autoComplete="tel-national" placeholder="(00) 00000-0000" maxLength={16} disabled={trabalhando} /></div>
+      )}
       <p className="mt-4 text-[0.75rem] leading-relaxed text-black/50">{meio === "cartao" ? "Os lugares ficam reservados por 15 minutos para você pagar." : "Os lugares ficam reservados por 15 minutos depois que você gera o código."}</p>
     </Moldura>
   );
