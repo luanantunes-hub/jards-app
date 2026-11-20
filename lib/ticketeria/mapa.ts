@@ -1,0 +1,126 @@
+// O mapa de assentos de um setor (assentos marcados, etapa 1): as contas do editor (adicionar fileira, mais e menos lugares, bloquear), o resumo, a ida e a volta do
+// formato do banco (fn_ticketeria_salvar_mapa e fn_ticketeria_mapa_do_setor) e as frases dos erros. Só lógica: sem banco, sem tela e sem import de servidor.
+// As regras de formato são as mesmas do banco: fileira de 1 a 4 letras ou números, até 60 fileiras e 80 lugares por fileira (o banco ainda guarda um teto de 5.000 no setor).
+
+export type EstadoDoAssento = "livre" | "ocupado" | "selecionado" | "bloqueado";
+export type AssentoDoMapa = { numero: number; estado: EstadoDoAssento };
+/** `vaos`: depois de quais lugares (pelo número) há um corredor. */
+export type FileiraDoMapa = { nome: string; assentos: AssentoDoMapa[]; vaos?: number[] };
+
+export const MAX_FILEIRAS = 60;
+export const MAX_LUGARES_NA_FILEIRA = 80;
+export const MAX_LUGARES_NO_SETOR = 5000;
+/** O mapa de um setor novo: 5 fileiras de 10 lugares. */
+export const FILEIRAS_INICIAIS = 5;
+export const LUGARES_INICIAIS = 10;
+
+/** O nome da fileira depois de `atual`: A, B, ... Z, AA, AB, ... ("" começa em A). */
+export function proximoNomeDeFileira(atual: string): string {
+  if (atual === "") return "A";
+  const letras = atual.split("");
+  let i = letras.length - 1;
+  while (i >= 0) {
+    if (letras[i] === "Z") { letras[i] = "A"; i--; } else { letras[i] = String.fromCharCode(letras[i].charCodeAt(0) + 1); return letras.join(""); }
+  }
+  return "A" + letras.join("");
+}
+
+const fileira = (nome: string, quantos: number): FileiraDoMapa => ({ nome, assentos: Array.from({ length: quantos }, (_, i) => ({ numero: i + 1, estado: "livre" as const })) });
+
+/** Um mapa novo: `fileiras` fileiras (A, B, C...) com `lugares` lugares cada, todos livres. */
+export function mapaNovo(fileiras: number = FILEIRAS_INICIAIS, lugares: number = LUGARES_INICIAIS): FileiraDoMapa[] {
+  const saida: FileiraDoMapa[] = [];
+  let nome = "";
+  for (let i = 0; i < fileiras; i++) { nome = proximoNomeDeFileira(nome); saida.push(fileira(nome, lugares)); }
+  return saida;
+}
+
+/** Acrescenta uma fileira com o mesmo tanto de lugares da última (ou 10). Sem efeito no limite de fileiras ou de lugares do setor. */
+export function adicionarFileira(mapa: readonly FileiraDoMapa[]): FileiraDoMapa[] {
+  const ultima = mapa[mapa.length - 1];
+  const quantos = ultima ? ultima.assentos.length : LUGARES_INICIAIS;
+  if (mapa.length >= MAX_FILEIRAS || totalDeLugares(mapa) + quantos > MAX_LUGARES_NO_SETOR) return [...mapa];
+  return [...mapa, fileira(proximoNomeDeFileira(ultima?.nome ?? ""), quantos)];
+}
+
+/** Um lugar a mais no fim da fileira. */
+export function maisLugares(mapa: readonly FileiraDoMapa[], nome: string): FileiraDoMapa[] {
+  return mapa.map(f => {
+    if (f.nome !== nome || f.assentos.length >= MAX_LUGARES_NA_FILEIRA || totalDeLugares(mapa) >= MAX_LUGARES_NO_SETOR) return f;
+    return { ...f, assentos: [...f.assentos, { numero: (f.assentos[f.assentos.length - 1]?.numero ?? 0) + 1, estado: "livre" as const }] };
+  });
+}
+
+/** Um lugar a menos no fim da fileira (a fileira some quando fica sem lugar nenhum). Um lugar já vendido não sai. */
+export function menosLugares(mapa: readonly FileiraDoMapa[], nome: string): FileiraDoMapa[] {
+  return mapa.flatMap(f => {
+    if (f.nome !== nome) return [f];
+    const ultimo = f.assentos[f.assentos.length - 1];
+    if (!ultimo || ultimo.estado === "ocupado") return [f];
+    const assentos = f.assentos.slice(0, -1);
+    return assentos.length === 0 ? [] : [{ ...f, assentos }];
+  });
+}
+
+/** Bloqueia o lugar, ou o libera se já estava bloqueado. Lugar vendido não se mexe. */
+export function alternarBloqueio(mapa: readonly FileiraDoMapa[], nome: string, numero: number): FileiraDoMapa[] {
+  return mapa.map(f => f.nome !== nome ? f : { ...f, assentos: f.assentos.map(a => a.numero !== numero || a.estado === "ocupado" ? a : { ...a, estado: a.estado === "bloqueado" ? "livre" as const : "bloqueado" as const }) });
+}
+
+export const totalDeLugares = (mapa: readonly FileiraDoMapa[]) => mapa.reduce((soma, f) => soma + f.assentos.length, 0);
+
+export type ResumoDoMapa = { fileiras: number; lugares: number; bloqueados: number; aVenda: number; vendidos: number };
+export function resumoDoMapa(mapa: readonly FileiraDoMapa[]): ResumoDoMapa {
+  let bloqueados = 0;
+  let vendidos = 0;
+  for (const f of mapa) for (const a of f.assentos) { if (a.estado === "bloqueado") bloqueados++; else if (a.estado === "ocupado") vendidos++; }
+  const lugares = totalDeLugares(mapa);
+  return { fileiras: mapa.length, lugares, bloqueados, aVenda: lugares - bloqueados, vendidos };
+}
+
+/** "8 fileiras · 85 lugares à venda · 5 bloqueados" (sem a parte dos bloqueados quando não há nenhum). */
+export function resumoEmTexto(r: Pick<ResumoDoMapa, "fileiras" | "aVenda" | "bloqueados">): string {
+  const partes = [`${r.fileiras} ${r.fileiras === 1 ? "fileira" : "fileiras"}`, `${r.aVenda} ${r.aVenda === 1 ? "lugar à venda" : "lugares à venda"}`];
+  if (r.bloqueados > 0) partes.push(`${r.bloqueados} ${r.bloqueados === 1 ? "bloqueado" : "bloqueados"}`);
+  return partes.join(" · ");
+}
+
+/** O corredor no meio de cada fileira de 6 lugares ou mais (depois do lugar do meio); sem ele, as fileiras vão sem vão. */
+export function comCorredor(mapa: readonly FileiraDoMapa[], ligado: boolean): FileiraDoMapa[] {
+  return mapa.map(f => ({ ...f, vaos: ligado && f.assentos.length >= 6 ? [f.assentos[Math.floor(f.assentos.length / 2) - 1].numero] : undefined }));
+}
+
+/** O que a função do banco recebe: fileiras e lugares com o bloqueio de cada um. */
+export function paraSalvar(mapa: readonly FileiraDoMapa[]): { nome: string; assentos: { numero: number; bloqueado: boolean }[] }[] {
+  return mapa.map(f => ({ nome: f.nome, assentos: f.assentos.map(a => ({ numero: a.numero, bloqueado: a.estado === "bloqueado" })) }));
+}
+
+/** O que o banco devolve (fn_ticketeria_mapa_do_setor), conferido; fileira ou lugar fora do formato é ignorado. */
+export function lerMapa(resposta: unknown): FileiraDoMapa[] {
+  if (!Array.isArray(resposta)) return [];
+  const saida: FileiraDoMapa[] = [];
+  for (const bruta of resposta) {
+    const f = (bruta && typeof bruta === "object" ? bruta : {}) as { nome?: unknown; assentos?: unknown };
+    if (typeof f.nome !== "string" || !Array.isArray(f.assentos)) continue;
+    const assentos: AssentoDoMapa[] = [];
+    for (const x of f.assentos) {
+      const a = (x && typeof x === "object" ? x : {}) as { numero?: unknown; bloqueado?: unknown };
+      if (typeof a.numero === "number" && Number.isInteger(a.numero)) assentos.push({ numero: a.numero, estado: a.bloqueado === true ? "bloqueado" : "livre" });
+    }
+    if (assentos.length > 0) saida.push({ nome: f.nome, assentos });
+  }
+  return saida;
+}
+
+/** O erro do banco ao salvar o mapa ou ligar os lugares numerados, numa frase. */
+export function mensagemDoErroDoMapa(erro: { code?: string; message?: string }): string {
+  const m = erro.message ?? "";
+  if (erro.code === "42501") return "Você não pode mudar a Ticketeria desta organização.";
+  if (m.includes("mapa_sem_lugares")) return "Todos os lugares estão bloqueados. Deixe ao menos um à venda.";
+  if (m.includes("mapa_vazio")) return "Monte o mapa antes de ligar os lugares numerados.";
+  if (m.includes("setor_com_vendas")) return "Este setor já tem ingressos vendidos sem lugar marcado para uma sessão que ainda vai acontecer. Os lugares numerados valem para setores sem vendas.";
+  if (m.includes("lugares_excedidos")) return "Os ingressos deste setor oferecem mais lugares do que o mapa tem. Diminua as quantidades dos lotes ou aumente o mapa.";
+  if (m.includes("setor_arquivado")) return "Esse setor está arquivado. Tire-o do arquivo antes de montar o mapa.";
+  if (m.includes("mapa_invalido")) return "O mapa não está no formato aceito: fileiras de 1 a 4 letras ou números, até 60 fileiras e 80 lugares por fileira.";
+  return "Não foi possível salvar o mapa. Tente de novo.";
+}
