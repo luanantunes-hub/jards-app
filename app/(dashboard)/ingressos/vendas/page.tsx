@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Receipt } from "lucide-react";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,15 @@ export default function VendasPage() {
   const [aberta, setAberta] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
   const [tentando, setTentando] = useState<string | null>(null);
+  const abriuDaBusca = useRef(false);
+
+  // A busca do topo leva a ?compra=<id>: abre a compra uma vez, quando a lista chega.
+  useEffect(() => {
+    if (abriuDaBusca.current || !estado?.vendas) return;
+    abriuDaBusca.current = true;
+    const id = new URLSearchParams(window.location.search).get("compra");
+    if (id && estado.vendas.compras.some(c => c.id === id)) setAberta(id);
+  }, [estado]);
 
   useEffect(() => {
     if (!organizationId) return;
