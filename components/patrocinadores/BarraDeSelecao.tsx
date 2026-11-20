@@ -15,8 +15,13 @@ import { MAX_SELECAO, enderecoDoResultado, mensagemDoLote, type PedidoDoLote } f
 import { acrescentarTag } from "@/lib/tags";
 import type { SelecaoDeEmpresas } from "./useSelecaoDeEmpresas";
 
-const BOTAO = "inline-flex h-9 shrink-0 items-center gap-1.5 rounded border border-black/10 bg-white px-2.5 text-[0.75rem] font-medium text-black/65 transition-colors hover:bg-black/[.04] hover:text-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25 sm:h-8";
-const BOTAO_ICONE = "flex h-9 w-9 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.04] hover:text-black/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25 sm:h-8 sm:w-8";
+// A barra de seleção é toda no roxo noite do app (a cor dos botões de criar). As duas ações têm o mesmo peso (levam as
+// empresas ao CRM, uma com tag, a outra com responsável), então os dois botões são iguais e vazados: texto e ícone
+// brancos, borda fina clara. Um branco e um roxo lado a lado sugeriam uma ação principal que não existe.
+const BOTAO = "inline-flex h-9 shrink-0 items-center gap-1.5 rounded border border-white/30 px-2.5 text-[0.75rem] font-medium text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:h-8";
+const BOTAO_ICONE_NO_ROXO = "flex h-9 w-9 shrink-0 items-center justify-center rounded text-white/60 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:h-8 sm:w-8";
+// O ✕ do aviso do fim do lote, que é branco com borda verde.
+const BOTAO_ICONE ="flex h-9 w-9 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.04] hover:text-black/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25 sm:h-8 sm:w-8";
 const TITULO_DO_MENU = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const ERRO = "rounded border border-[#D94A4A]/30 bg-white px-2.5 py-2 text-[0.6875rem] text-[#D94A4A]";
 
@@ -167,12 +172,12 @@ export function BarraDeSelecao({ selecao, marcadasNaPagina, totalNaPagina, onAlt
 
   function abrirTag(evento: React.MouseEvent<HTMLElement>) {
     setErro(null);
-    menuDaTag.abrir(evento, 320);
+    menuDaTag.abrir(evento, 320, "esquerda");
   }
 
   async function abrirResponsavel(evento: React.MouseEvent<HTMLElement>) {
     setErro(null);
-    menuDoResponsavel.abrir(evento, 320);
+    menuDoResponsavel.abrir(evento, 320, "esquerda");
     if (equipe || !organizationId) return;
     setEquipeFalhou(false);
     try {
@@ -214,12 +219,12 @@ export function BarraDeSelecao({ selecao, marcadasNaPagina, totalNaPagina, onAlt
           role="toolbar"
           aria-label="Empresas selecionadas"
           inert={!visivel}
-          // O aviso do lote deixa a caixa do cabeçalho livre (começa depois da coluna da caixa); a barra de
-          // seleção cobre o cabeçalho inteiro e leva a caixa da página no lugar dela.
-          className={`absolute top-0 flex min-h-[2.5625rem] items-center gap-2 rounded border bg-white pr-2 elevacao-1 ${marcando ? "inset-x-0" : "left-10 right-0"} ${
-            visivel ? "opacity-100 transition-opacity duration-200 motion-reduce:transition-none" : "pointer-events-none opacity-0"
-          }`}
-          style={!marcando && aviso ? { borderColor: "rgba(46,137,50,.45)" } : undefined}
+          // Só do tamanho do que cabe nela, encostada no começo do cabeçalho. O aviso do lote deixa a caixa do
+          // cabeçalho livre (começa depois da coluna da caixa); a barra de seleção leva a caixa da página no lugar dela.
+          className={`absolute top-0 flex min-h-[2.5625rem] w-fit items-center gap-2 rounded border pr-2 elevacao-1 ${
+            marcando ? "left-0 max-w-full bg-[#1C0E33] text-white" : "left-10 max-w-[calc(100%-2.5rem)] bg-white"
+          } ${visivel ? "opacity-100 transition-opacity duration-200 motion-reduce:transition-none" : "pointer-events-none opacity-0"}`}
+          style={marcando ? { borderColor: "#1C0E33" } : aviso ? { borderColor: "rgba(46,137,50,.45)" } : undefined}
         >
           {marcando ? (
             <>
@@ -231,12 +236,12 @@ export function BarraDeSelecao({ selecao, marcadasNaPagina, totalNaPagina, onAlt
                   disabled={totalNaPagina === 0}
                   onChange={onAlternarPagina}
                   aria-label="Selecionar todas as empresas da página"
-                  className="h-4 w-4 cursor-pointer accent-[#684DB0] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                  className="h-4 w-4 cursor-pointer accent-white [color-scheme:dark] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 />
               </label>
-              <p className="min-w-0 flex-1 truncate text-[0.8125rem] font-medium text-[#282525]">
-                {selecao.total} <span className="font-normal text-black/55">{selecao.total === 1 ? "selecionada" : "selecionadas"}</span>
-                {selecao.noLimite && <span className="ml-2 text-[0.6875rem] font-normal text-black/40">máximo de {MAX_SELECAO} por vez</span>}
+              <p className="mr-2 whitespace-nowrap text-[0.8125rem] font-medium text-white">
+                {selecao.total} <span className="font-normal text-white/65">{selecao.total === 1 ? "selecionada" : "selecionadas"}</span>
+                {selecao.noLimite && <span className="ml-2 text-[0.6875rem] font-normal text-white/55">máximo de {MAX_SELECAO} por vez</span>}
               </p>
               <button type="button" onClick={abrirTag} aria-haspopup="dialog" aria-expanded={menuDaTag.pos !== null} aria-label="Criar tag" title="Criar tag" className={BOTAO}>
                 <Tag size={14} aria-hidden="true" />
@@ -246,14 +251,14 @@ export function BarraDeSelecao({ selecao, marcadasNaPagina, totalNaPagina, onAlt
                 <UserRound size={14} aria-hidden="true" />
                 <span className="hidden sm:inline">Atribuir responsável</span>
               </button>
-              <button type="button" onClick={selecao.limpar} aria-label="Limpar seleção" title="Limpar seleção" className={BOTAO_ICONE}>
+              <button type="button" onClick={selecao.limpar} aria-label="Limpar seleção" title="Limpar seleção" className={BOTAO_ICONE_NO_ROXO}>
                 <X size={14} aria-hidden="true" />
               </button>
             </>
           ) : aviso ? (
             <>
               <span className="flex h-10 w-9 shrink-0 items-center justify-center text-[#2E8932]"><Check size={16} aria-hidden="true" /></span>
-              <p className="min-w-0 flex-1 py-2 text-[0.8125rem] leading-snug text-[#2E8932]">{aviso.texto}</p>
+              <p className="min-w-0 py-2 text-[0.8125rem] leading-snug text-[#2E8932]">{aviso.texto}</p>
               <Link href={aviso.href} className="shrink-0 rounded px-2 py-2 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25">
                 Ver no CRM
               </Link>
