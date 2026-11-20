@@ -11,10 +11,10 @@ import { enderecoDoRemetente, enderecosDeReembolso, lerAssuntoDoReembolso, trata
 
 export type EmailRecebido = { email_id?: string; from?: string; to?: string[]; cc?: string[]; received_for?: string[]; subject?: string; created_at?: string };
 
-type EmailDeReembolso = { email_id: string; remetente: string; assunto: string; recebido_em: string };
+export type EmailDeReembolso = { email_id: string; remetente: string; assunto: string; recebido_em: string };
 
 /** Roda a lógica do reembolso com as portas reais (banco, Asaas pela chave da subconta e e-mail). */
-async function executar(email: EmailDeReembolso): Promise<{ status: number; corpo: object }> {
+export async function executar(email: EmailDeReembolso): Promise<{ status: number; corpo: object }> {
   const base = ambienteDoAsaas();
   // Sem Asaas não há pedido pago para estornar; 503 faz o Resend tentar de novo mais tarde.
   if (!base) return { status: 503, corpo: { error: "asaas_nao_configurado" } };

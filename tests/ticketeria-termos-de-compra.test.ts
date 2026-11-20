@@ -20,7 +20,7 @@ test("a versão dos termos é uma data AAAA-MM-DD (é o que o banco aceita) e o 
 
 test("o texto segue o que o sistema faz de verdade (se um número muda no sistema, muda aqui)", () => {
   const tudo = SECOES_DOS_TERMOS_DE_COMPRA.flatMap(s => s.paragrafos).join("\n");
-  for (const trecho of ["15 minutos", "7 dias corridos", "art. 49", "mesmo e-mail que você usou", "valor total pelo mesmo Pix", "12 meses", "não fica guardado pelo Jards", "sem você precisar pedir", "reembolso - código do ingresso", "Não somamos taxa de conveniência"]) assert.ok(tudo.includes(trecho), `falta: ${trecho}`);
+  for (const trecho of ["15 minutos", "7 dias corridos", "art. 49", "mesmo e-mail que você usou", "valor total pelo mesmo meio", "Pedir reembolso", "só pode ser usado uma vez", "48 horas", "12 meses", "não fica guardado pelo Jards", "sem você precisar pedir", "reembolso - código do ingresso", "Não somamos taxa de conveniência"]) assert.ok(tudo.includes(trecho), `falta: ${trecho}`);
 });
 
 test("o texto não usa o vocabulário que o produto proíbe", () => {
@@ -37,7 +37,7 @@ test("o e-mail entra no lugar de {email}", () => {
 
 test("a página: título, índice com âncoras, as seções e o link da privacidade", () => {
   const pagina = html(createElement(TelaTermosDeCompra, { secoes: SECOES_DOS_TERMOS_DE_COMPRA, atualizadoEm: ATUALIZADO_EM_DOS_TERMOS_DE_COMPRA, email: "x@y.co" }));
-  for (const t of ["Termos de compra", "Atualizado em 19 de novembro de 2026", "1. Quem vende e quem é o Jards", "8. Dúvidas", 'href="#desistir"', 'id="desistir"', 'href="/privacidade"']) assert.ok(pagina.includes(t), `falta: ${t}`);
+  for (const t of ["Termos de compra", "Atualizado em 20 de novembro de 2026", "1. Quem vende e quem é o Jards", "8. Dúvidas", 'href="#desistir"', 'id="desistir"', 'href="/privacidade"']) assert.ok(pagina.includes(t), `falta: ${t}`);
 });
 
 const site = { titulo: "Cia Atores de Mar", cor: "#1C0E33" };

@@ -9,8 +9,8 @@ import { disponivelNasFaixas, totalNasFaixas, type IngressoDaVitrine } from "@/l
 // A compra de ingressos desenhada (passo C da T5): quatro telas de quem compra, sem login, no celular primeiro. Só desenho: os dados e as ações chegam por
 // props (a página busca no servidor e liga os botões). Segue o site da pessoa (fundo branco, cabeçalho na cor dela, ação principal em tinta #282525).
 
-const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#282525] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] disabled:cursor-not-allowed disabled:bg-black/20";
-const BOTAO_SECUNDARIO = "inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-[0.875rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
+export const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#282525] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] disabled:cursor-not-allowed disabled:bg-black/20";
+export const BOTAO_SECUNDARIO = "inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-[0.875rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-normal uppercase tracking-[.08em] text-black/50";
 const CAMPO = "h-12 w-full rounded-xl border border-black/15 bg-white px-3.5 text-[1rem] text-[#282525] placeholder:text-black/30 focus:border-[#282525] focus:outline-none";
 const ETIQUETA = "inline-flex rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal uppercase tracking-[.08em]";
@@ -294,8 +294,11 @@ export function TelaPagarPix({ site, evento, pedido, onCopiar, copiado, onVoltar
 /** `assento` só vem quando o ingresso é de um setor com lugares numerados: "Fileira C · lugar 7". */
 export type IngressoDaPagina = { codigo: string; nome: string; assento?: string | null; usado?: boolean; cancelado?: boolean };
 
-export function TelaIngressos({ site, evento, comprador, pedido, ingressos, emailDeReembolso }: {
-  site: { titulo: string; cor?: string }; evento: EventoParaComprar; comprador: string; pedido: string; ingressos: IngressoDaPagina[]; emailDeReembolso: string;
+/** O que a seção de reembolso mostra: "pode" (o botão de pedir pela página, em `acao`, com o e-mail como reserva), "prazo_passou" (os 7 dias da compra acabaram) ou "indisponivel" (só o e-mail: por exemplo, um ingresso já usado). */
+export type ReembolsoDaPagina = { estado: "pode"; acao: ReactNode } | { estado: "prazo_passou" } | { estado: "indisponivel" };
+
+export function TelaIngressos({ site, evento, comprador, pedido, ingressos, emailDeReembolso, reembolso = { estado: "indisponivel" } }: {
+  site: { titulo: string; cor?: string }; evento: EventoParaComprar; comprador: string; pedido: string; ingressos: IngressoDaPagina[]; emailDeReembolso: string; reembolso?: ReembolsoDaPagina;
 }) {
   return (
     <Moldura titulo={site.titulo} cor={site.cor}>
@@ -322,7 +325,17 @@ export function TelaIngressos({ site, evento, comprador, pedido, ingressos, emai
       </ul>
       <section aria-label="Reembolso" className="mt-6 rounded-xl border border-black/10 px-4 py-3">
         <p className="text-[0.8125rem] font-normal">Precisa de reembolso?</p>
-        <p className="mt-1 text-[0.8125rem] leading-relaxed text-black/60">Em até 7 dias da compra, escreva para {emailDeReembolso} com o assunto “reembolso - código do ingresso”, do mesmo e-mail que usou aqui. Pedido {pedido}.</p>
+        {reembolso.estado === "pode" ? (
+          <>
+            <p className="mt-1 text-[0.8125rem] leading-relaxed text-black/60">Você pode desistir da compra em até 7 dias. Peça aqui: enviamos um link de confirmação ao e-mail da compra, e o reembolso sai quando você confirmar. Pedido {pedido}.</p>
+            <div className="mt-3">{reembolso.acao}</div>
+            <p className="mt-3 text-[0.75rem] leading-relaxed text-black/50">Se preferir, escreva para {emailDeReembolso} com o assunto “reembolso - código do ingresso”, do mesmo e-mail que usou na compra.</p>
+          </>
+        ) : reembolso.estado === "prazo_passou" ? (
+          <p className="mt-1 text-[0.8125rem] leading-relaxed text-black/60">O prazo de 7 dias da compra para pedir reembolso já passou. Se o evento for cancelado ou adiado, avisaremos por e-mail. Pedido {pedido}.</p>
+        ) : (
+          <p className="mt-1 text-[0.8125rem] leading-relaxed text-black/60">Em até 7 dias da compra, escreva para {emailDeReembolso} com o assunto “reembolso - código do ingresso”, do mesmo e-mail que usou aqui. Pedido {pedido}.</p>
+        )}
       </section>
     </Moldura>
   );

@@ -15,7 +15,7 @@ export type LinhaDePedido = {
 export type LinhaDeSessao = { id: string; evento_id: string; local_id: string; inicio: string; cancelada_em: string | null };
 export type LinhaDeIngressoEmitido = { codigo: string; nome: string; assento_rotulo?: string | null; pedido_id: string; usado_em: string | null; cancelado_em: string | null };
 
-export type LinhaDeReembolso = { id: string; pedido_id: string | null; remetente: string; recebido_em: string; situacao: string; valor_centavos: number | null };
+export type LinhaDeReembolso = { id: string; pedido_id: string | null; remetente: string; recebido_em: string; situacao: string; valor_centavos: number | null; origem?: string };
 
 export type EntradaDasVendas = {
   pedidos: LinhaDePedido[];
@@ -108,6 +108,6 @@ export function montarVendas(e: EntradaDasVendas): VendasDaLoja {
   const reembolsos: ReembolsoDaLista[] = [...(e.reembolsos ?? [])]
     .filter(r => r.pedido_id !== null && codigoDoPedido.has(r.pedido_id) && r.situacao in SITUACOES)
     .sort((a, b) => Date.parse(b.recebido_em) - Date.parse(a.recebido_em))
-    .map(r => ({ id: r.id, codigo: codigoDoPedido.get(r.pedido_id as string) ?? "", remetente: r.remetente, recebido: diaCurtoEHora(r.recebido_em), situacao: SITUACOES[r.situacao], motivo: null, valor_centavos: r.valor_centavos }));
+    .map(r => ({ id: r.id, codigo: codigoDoPedido.get(r.pedido_id as string) ?? "", remetente: r.remetente, recebido: diaCurtoEHora(r.recebido_em), situacao: SITUACOES[r.situacao], motivo: null, valor_centavos: r.valor_centavos, origem: r.origem === "pagina" ? "pagina" : "email" }));
   return { resumo, sessoes, reembolsos, compras };
 }

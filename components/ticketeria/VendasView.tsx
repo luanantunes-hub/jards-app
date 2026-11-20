@@ -201,7 +201,7 @@ export function DetalheDaCompraSheet({ compra, onClose }: { compra: DetalheDaCom
 }
 
 export type SituacaoDoReembolso = "estornado" | "estornando" | "falhou" | "fora_do_prazo" | "remetente_diferente" | "nao_elegivel" | "ja_reembolsado";
-export type ReembolsoDaLista = { id: string; codigo: string; remetente: string; recebido: string; situacao: SituacaoDoReembolso; motivo: string | null; valor_centavos: number | null };
+export type ReembolsoDaLista = { id: string; codigo: string; remetente: string; recebido: string; situacao: SituacaoDoReembolso; motivo: string | null; valor_centavos: number | null; /** De onde veio o pedido: o e-mail, ou o botão da página do pedido (o comprador confirmou pelo link). */ origem?: "email" | "pagina" };
 
 const ETIQUETA_DO_REEMBOLSO: Record<SituacaoDoReembolso, { texto: string; cor: string }> = {
   estornado: { texto: "REEMBOLSADO", cor: "#2E8932" }, estornando: { texto: "ESTORNANDO", cor: "#B07A14" }, falhou: { texto: "FALHOU", cor: "#D94A4A" },
@@ -226,7 +226,7 @@ export function ReembolsosDeVendas({ reembolsos, onTentarDeNovo, tentando }: { r
               <tr key={r.id}>
                 <td className={CELULA}><p className="font-normal tabular-nums tracking-[.04em]">{r.codigo}</p><p className="text-[0.6875rem] text-black/45">{r.recebido}</p></td>
                 <td className={CELULA}>
-                  <p className="text-[0.8125rem]">{r.remetente}</p>
+                  <p className="text-[0.8125rem]">{r.remetente}{r.origem === "pagina" && <span className="ml-1.5 text-[0.6875rem] text-black/45">· pedido pela página</span>}</p>
                   <p className="mt-0.5 max-w-md text-[0.6875rem] leading-snug text-black/50">{FRASE_DO_REEMBOLSO[r.situacao]}</p>
                   {r.situacao === "falhou" && onTentarDeNovo && <button type="button" onClick={() => onTentarDeNovo(r.id)} disabled={tentando === r.id} className={`mt-1.5 ${LINK}`}>{tentando === r.id ? "Tentando…" : "Tentar de novo"}</button>}
                 </td>
