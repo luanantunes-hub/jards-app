@@ -12,6 +12,7 @@ import {
   Search,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { notificacaoDoModulo, type ModuloDeNotificacao } from "@/lib/notificacoes-modulo";
 
 type NotificationPreview = {
   id: string;
@@ -114,7 +115,8 @@ function relativeTime(value: string) {
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(value));
 }
 
-export function NotificationBell({ userId }: { userId: string }) {
+/** Com `modulo`, o sino mostra só as notificações desse módulo (sem os editais com prazo perto, que são da captação). */
+export function NotificationBell({ userId, modulo }: { userId: string; modulo?: ModuloDeNotificacao }) {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -122,6 +124,7 @@ export function NotificationBell({ userId }: { userId: string }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [items, setItems] = useState<NotificationPreview[]>([]);
   const dismissedEditalIdsRef = useRef<Set<string>>(readDismissedEditalIds());
+  const naoLidasDoModuloRef = useRef<string[]>([]);
 
   const load = useCallback(async () => {
     const supabase = createClient();
@@ -133,7 +136,7 @@ export function NotificationBell({ userId }: { userId: string }) {
       .is("arquivada_em", null)
       .or(`adiada_ate.is.null,adiada_ate.lte.${now}`)
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(modulo ? 100 : 6);
 
     // A interface continua funcional enquanto a migration v2 não foi aplicada.
     if (result.error) {
@@ -142,14 +145,16 @@ export function NotificationBell({ userId }: { userId: string }) {
         .select(LEGACY_FIELDS)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(modulo ? 100 : 6);
     }
 
-    const realItems = (result.data ?? []).map((row: Record<string, unknown>) => normalizeNotification(row));
+    const todasAsReais = (result.data ?? []).map((row: Record<string, unknown>) => normalizeNotification(row));
+    const realItems = modulo ? todasAsReais.filter(n => notificacaoDoModulo(n, modulo)) : todasAsReais;
+    naoLidasDoModuloRef.current = realItems.filter(n => !n.lida).map(n => n.id);
 
     // Editais com prazo de fechamento perto (<=14 dias) entram na mesma lista,
     // como itens sintéticos — não existe linha em `notificacoes` para eles.
-    const { data: editaisData } = await supabase
+    const { data: editaisData } = modulo ? { data: [] } : await supabase
       .from("editais")
       .select("id, data_fechamento, empresas(nome)")
       .eq("ativo", true)
@@ -195,6 +200,11 @@ export function NotificationBell({ userId }: { userId: string }) {
     });
     setItems(combined.slice(0, 6));
 
+    if (modulo) {
+      setUnreadCount(naoLidasDoModuloRef.current.length);
+      setLoading(false);
+      return;
+    }
     let countResult = await supabase
       .from("notificacoes")
       .select("id", { count: "exact", head: true })
@@ -212,7 +222,7 @@ export function NotificationBell({ userId }: { userId: string }) {
     const unreadEditais = syntheticItems.filter((item) => !item.lida).length;
     setUnreadCount((countResult.count ?? 0) + unreadEditais);
     setLoading(false);
-  }, [userId]);
+  }, [userId, modulo]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -258,10 +268,9 @@ export function NotificationBell({ userId }: { userId: string }) {
   async function markAllRead() {
     const supabase = createClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from("notificacoes") as any)
-      .update({ lida: true })
-      .eq("user_id", userId)
-      .eq("lida", false);
+    await (modulo
+      ? (supabase.from("notificacoes") as any).update({ lida: true }).in("id", naoLidasDoModuloRef.current)
+      : (supabase.from("notificacoes") as any).update({ lida: true }).eq("user_id", userId).eq("lida", false));
     items.forEach(item => {
       if (isEditalPrazoId(item.id)) dismissedEditalIdsRef.current.add(item.id);
     });
@@ -351,7 +360,7 @@ export function NotificationBell({ userId }: { userId: string }) {
 
           <button
             type="button"
-            onClick={() => { setOpen(false); router.push("/notificacoes"); }}
+            onClick={() => { setOpen(false); router.push(modulo ? `/notificacoes?modulo=${modulo}` : "/notificacoes"); }}
             className="w-full border-t border-black/[.07] bg-white px-4 py-3 text-center text-[0.6875rem] font-semibold text-[#7259B5] transition hover:bg-black/[.025]"
           >
             Ver todas as notificações
