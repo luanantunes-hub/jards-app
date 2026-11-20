@@ -663,6 +663,10 @@ export type BancoDaTicketeria = {
           cupom_id: string | null;
           cupom_codigo: string | null;
           desconto_centavos: number;
+          origem_canal: string | null;
+          origem_acao: string | null;
+          origem_referencia: string | null;
+          origem_utm: Json | null;
         };
         Insert: {
           id?: string;
@@ -693,6 +697,10 @@ export type BancoDaTicketeria = {
           termos_aceitos_em?: string | null;
           cupom_id?: string | null;
           cupom_codigo?: string | null;
+          origem_canal?: string | null;
+          origem_acao?: string | null;
+          origem_referencia?: string | null;
+          origem_utm?: Json | null;
           desconto_centavos?: number;
         };
         Update: {
@@ -724,6 +732,10 @@ export type BancoDaTicketeria = {
           termos_aceitos_em?: string | null;
           cupom_id?: string | null;
           cupom_codigo?: string | null;
+          origem_canal?: string | null;
+          origem_acao?: string | null;
+          origem_referencia?: string | null;
+          origem_utm?: Json | null;
           desconto_centavos?: number;
         };
         Relationships: [
@@ -1832,6 +1844,10 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_registrar_aceite: {
         Args: { p_pedido: string; p_versao: string };
+        Returns: undefined;
+      };
+      fn_ticketeria_registrar_origem: {
+        Args: { p_pedido: string; p_canal: string | null; p_acao: string | null; p_referencia: string | null; p_utm: Json | null };
         Returns: undefined;
       };
       fn_ticketeria_emitir_ingressos: {
