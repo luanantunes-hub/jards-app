@@ -1,7 +1,8 @@
 // POST /api/ticketeria/compra: o comprador (sem login) escolhe os ingressos de uma sessão e recebe o Pix (passo C1 da T5).
 //
-//   { sessao_id, itens: [{ ingresso_id, quantidade }], nome, email, documento }
-//   → 201 { situacao: "aguardando_pagamento", pedido_id, codigo, total_centavos, reservado_ate, pix_copia_e_cola }
+//   { sessao_id, itens: [{ ingresso_id, quantidade }], nome, email, documento, termos, meio?: "pix" | "cartao", parcelas? }
+//   → 201 { situacao: "aguardando_pagamento", meio: "pix", pedido_id, codigo, total_centavos, reservado_ate, pix_copia_e_cola }
+//   → 201 { situacao: "aguardando_pagamento", meio: "cartao", ..., url_de_pagamento }   (cartão: a pessoa paga na página segura do Asaas)
 //   → 201 { situacao: "pago", pedido_id, codigo, total_centavos: 0 }                 (ingresso gratuito: nasce pago)
 //
 // O CPF ou CNPJ vai ao Asaas e não é guardado (D17). A cobrança nasce na subconta do produtor, com a comissão do Jards dividida para a carteira do
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     const compra = await iniciarCompra(leitura.corpo, { ...portas, aposPagamento: mandarIngressosDoPedido });
     return resposta(compra, 201);
   } catch (erro) {
-    if (erro instanceof ErroDaCompra) return resposta({ error: erro.codigo, mensagem: erro.mensagem }, erro.codigo === "reserva_recusada" ? 409 : erro.codigo === "vendas_indisponiveis" ? 503 : 502);
+    if (erro instanceof ErroDaCompra) return resposta({ error: erro.codigo, mensagem: erro.mensagem }, erro.codigo === "reserva_recusada" || erro.codigo === "meio_indisponivel" ? 409 : erro.codigo === "vendas_indisponiveis" ? 503 : 502);
     console.error("[ticketeria] compra falhou:", erro instanceof Error ? erro.message : erro);
     return resposta({ error: "falha_na_compra", mensagem: "Não foi possível concluir agora. Tente de novo em instantes." }, 500);
   }

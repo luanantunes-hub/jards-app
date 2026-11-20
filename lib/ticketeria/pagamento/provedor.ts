@@ -36,6 +36,11 @@ export interface ProvedorDePagamento {
   readonly nome: string;
   /** Abre a cobrança do pedido no provedor. */
   criarCobranca(pedido: PedidoParaCobrar): Promise<Cobranca>;
+  /**
+   * Abre a cobrança no CARTÃO: o comprador paga na página segura do provedor (os dados do cartão nunca passam pelo Jards). Devolve o endereço dessa página. Opcional: nem todo provedor tem.
+   * `parcelas` 1 = à vista.
+   */
+  criarCobrancaCartao?(pedido: PedidoParaCobrar & { parcelas: number }): Promise<{ ref: string; url: string; expira_em: string }>;
   /** Pede o estorno (total ou parcial) de uma cobrança paga. `ok: false` quando o provedor recusa (ex.: sem saldo); o motivo vai junto. */
   estornar(ref: string, valorCentavos: number): Promise<{ ok: boolean; motivo?: string }>;
   /** Cancela uma cobrança que ninguém pagou (a reserva venceu). Opcional: nem todo provedor deixa. */

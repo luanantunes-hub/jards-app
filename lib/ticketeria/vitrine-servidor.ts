@@ -5,6 +5,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { corDoTema } from "@/lib/ticketeria/site";
 import { ROTULO_DA_CLASSIFICACAO } from "@/lib/ticketeria/eventos";
 import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
+import { MAX_PARCELAS, PARCELAMENTO_LIBERADO } from "@/lib/ticketeria/pagamento/compra";
 import { estadoDaVenda, faixasDoIngresso, type IngressoDaVitrine, type VitrineDaSessao } from "@/lib/ticketeria/vitrine";
 
 type Admin = SupabaseClient<Database>;
@@ -29,11 +30,11 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
     t.from("ticketeria_locais").select("nome, cidade, uf, fuso").eq("id", sessao.local_id).maybeSingle(),
   ]);
   if (!evento || !local) return null;
-  const [site, { data: conta }] = await Promise.all([siteDaLoja(admin, evento.loja_id), t.from("ticketeria_contas_asaas").select("situacao").eq("loja_id", evento.loja_id).maybeSingle()]);
+  const [site, { data: conta }, { data: lojaDoEvento }] = await Promise.all([siteDaLoja(admin, evento.loja_id), t.from("ticketeria_contas_asaas").select("situacao").eq("loja_id", evento.loja_id).maybeSingle(), t.from("ticketeria_lojas").select("parcelas_max").eq("id", evento.loja_id).maybeSingle()]);
   const estado = estadoDaVenda({ eventoPublicado: evento.situacao === "publicado", canceladaEm: sessao.cancelada_em, inicio: sessao.inicio, contaAprovada: conta?.situacao === "aprovada" }, agora);
   const quando = diaEHoraDoEvento(sessao.inicio, local.fuso);
   const vitrine: VitrineDaSessao = {
-    estado, sessao_id: sessao.id, site,
+    estado, sessao_id: sessao.id, site, parcelas_max: Math.max(1, Math.min(lojaDoEvento?.parcelas_max ?? 1, PARCELAMENTO_LIBERADO ? MAX_PARCELAS : 1)),
     evento: {
       titulo: evento.titulo, descricao: evento.descricao, classificacao: evento.classificacao ? ROTULO_DA_CLASSIFICACAO[evento.classificacao] ?? null : null,
       quando: quando.charAt(0).toUpperCase() + quando.slice(1), local: [local.nome, [local.cidade, local.uf].filter(Boolean).join("/")].filter(Boolean).join(", "),

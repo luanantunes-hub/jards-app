@@ -91,15 +91,20 @@ export class ProvedorAsaas implements ProvedorDePagamento {
     return dados as T;
   }
 
-  async criarCobranca(pedido: PedidoParaCobrar): Promise<Cobranca> {
+  /** O cliente do Asaas para a cobrança: o CPF ou CNPJ é exigido e só passa por aqui (nunca é guardado). */
+  private async criarCliente(pedido: PedidoParaCobrar): Promise<{ id: string }> {
     const documento = apenasNumeros(pedido.comprador_documento ?? "");
     if (documento.length !== 11 && documento.length !== 14) {
       throw new Error("o Asaas exige o CPF ou o CNPJ de quem paga: o pedido não tem");
     }
     // notificationDisabled: o ingresso e o aviso ao comprador são nossos, o Asaas não manda e-mail a ele.
-    const cliente = await this.chamar<{ id: string }>("POST", "/customers", {
+    return this.chamar<{ id: string }>("POST", "/customers", {
       name: pedido.comprador_nome, cpfCnpj: documento, email: pedido.comprador_email, externalReference: pedido.id, notificationDisabled: true,
     });
+  }
+
+  async criarCobranca(pedido: PedidoParaCobrar): Promise<Cobranca> {
+    const cliente = await this.criarCliente(pedido);
     const cobranca = await this.chamar<{ id: string; invoiceUrl?: string }>("POST", "/payments", {
       customer: cliente.id,
       billingType: "PIX",
@@ -111,6 +116,28 @@ export class ProvedorAsaas implements ProvedorDePagamento {
     });
     const qr = await this.qrDoPix(cobranca.id);
     return { ref: cobranca.id, pix_copia_e_cola: qr.payload, url: cobranca.invoiceUrl ?? null, expira_em: pedido.expira_em };
+  }
+
+  /**
+   * A cobrança no CARTÃO: o Asaas devolve o endereço da página segura (`invoiceUrl`), onde a pessoa digita o cartão; nenhum dado de cartão passa pelo Jards.
+   * À vista (1x): uma cobrança com `value` e a comissão em `fixedValue`. Parcelado: `installmentCount` e `totalValue`, com a comissão em `totalFixedValue` (a divisão do
+   * parcelamento) — **ainda sem prova no sandbox** e, no parcelamento, o Asaas manda um aviso por parcela, que o processamento do aviso ainda não soma: por isso a compra só
+   * libera à vista (`PARCELAMENTO_LIBERADO` em compra.ts).
+   */
+  async criarCobrancaCartao(pedido: PedidoParaCobrar & { parcelas: number }): Promise<{ ref: string; url: string; expira_em: string }> {
+    const cliente = await this.criarCliente(pedido);
+    const parcelado = pedido.parcelas > 1;
+    const cobranca = await this.chamar<{ id: string; invoiceUrl?: string }>("POST", "/payments", {
+      customer: cliente.id,
+      billingType: "CREDIT_CARD",
+      ...(parcelado ? { installmentCount: pedido.parcelas, totalValue: reais(pedido.total_centavos) } : { value: reais(pedido.total_centavos) }),
+      dueDate: partesNoFuso(pedido.expira_em, "America/Sao_Paulo").dia,
+      externalReference: pedido.id,
+      description: `Ingressos, pedido ${pedido.codigo}`.slice(0, 500),
+      ...(pedido.split && pedido.split.length > 0 ? { split: pedido.split.map(parte => ({ walletId: parte.carteira, ...(parcelado ? { totalFixedValue: reais(parte.valor_centavos) } : { fixedValue: reais(parte.valor_centavos) }) })) } : {}),
+    });
+    if (typeof cobranca.invoiceUrl !== "string" || !/^https:\/\//.test(cobranca.invoiceUrl)) throw new Error("o Asaas não devolveu a página de pagamento do cartão");
+    return { ref: cobranca.id, url: cobranca.invoiceUrl, expira_em: pedido.expira_em };
   }
 
   /**
