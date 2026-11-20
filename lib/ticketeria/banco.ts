@@ -1333,6 +1333,154 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_mmm_execucoes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          situacao: string;
+          motivo: string | null;
+          motor: string | null;
+          versao_motor: string | null;
+          semanas: number | null;
+          confianca: string | null;
+          r_hat_maximo: number | null;
+          divergencias: number | null;
+          ess_minimo: number | null;
+          base_porcento: number | null;
+          base_baixo: number | null;
+          base_alto: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          situacao: string;
+          motivo?: string | null;
+          motor?: string | null;
+          versao_motor?: string | null;
+          semanas?: number | null;
+          confianca?: string | null;
+          r_hat_maximo?: number | null;
+          divergencias?: number | null;
+          ess_minimo?: number | null;
+          base_porcento?: number | null;
+          base_baixo?: number | null;
+          base_alto?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          situacao?: string;
+          motivo?: string | null;
+          motor?: string | null;
+          versao_motor?: string | null;
+          semanas?: number | null;
+          confianca?: string | null;
+          r_hat_maximo?: number | null;
+          divergencias?: number | null;
+          ess_minimo?: number | null;
+          base_porcento?: number | null;
+          base_baixo?: number | null;
+          base_alto?: number | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_mmm_execucoes_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_mmm_execucoes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_mmm_canais: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          execucao_id: string;
+          canal: string;
+          porcento: number;
+          intervalo_baixo: number;
+          intervalo_alto: number;
+          ingressos: number;
+          gasto_centavos: number;
+          custo_por_ingresso_centavos: number | null;
+          saturacao_gasto_centavos: number | null;
+          margem_grande: boolean;
+          gasto_constante: boolean;
+          curva: Json;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          execucao_id: string;
+          canal: string;
+          porcento: number;
+          intervalo_baixo: number;
+          intervalo_alto: number;
+          ingressos?: number;
+          gasto_centavos?: number;
+          custo_por_ingresso_centavos?: number | null;
+          saturacao_gasto_centavos?: number | null;
+          margem_grande?: boolean;
+          gasto_constante?: boolean;
+          curva?: Json;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          execucao_id?: string;
+          canal?: string;
+          porcento?: number;
+          intervalo_baixo?: number;
+          intervalo_alto?: number;
+          ingressos?: number;
+          gasto_centavos?: number;
+          custo_por_ingresso_centavos?: number | null;
+          saturacao_gasto_centavos?: number | null;
+          margem_grande?: boolean;
+          gasto_constante?: boolean;
+          curva?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_mmm_canais_execucao_id_fkey";
+            columns: ["execucao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_mmm_execucoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_mmm_canais_loja_id_fkey";
+            columns: ["loja_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lojas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_mmm_canais_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_midia_diaria: {
         Row: {
           id: string;
@@ -2817,6 +2965,14 @@ export type BancoDaTicketeria = {
       fn_ticketeria_historico_desfazer: {
         Args: { p_importacao: string; p_loja: string };
         Returns: undefined;
+      };
+      fn_ticketeria_mmm_gravar: {
+        Args: { p_loja: string; p_resultado: Json };
+        Returns: string;
+      };
+      fn_ticketeria_mmm_falhou: {
+        Args: { p_loja: string; p_motivo: string };
+        Returns: string;
       };
       fn_ticketeria_midia_desconectar: {
         Args: { p_conexao: string };
