@@ -71,7 +71,9 @@ test("assentos são comprados em lote e convites apenas consomem capacidade", as
   const migration = await readFile(path.join(root, "supabase/migrations/20260830051530_organization_seats_and_invitations.sql"), "utf8");
   const captadorMigration = await readFile(path.join(root, "supabase/migrations/20260830073000_captadores_nao_consumem_assentos.sql"), "utf8");
   const roleMigration = await readFile(path.join(root, "supabase/migrations/20260830080000_team_access_roles.sql"), "utf8");
-  assert.match(purchaseRoute, /resultingQuantity = summary\.purchased \+ quantity/);
+  // A compra parte da quantidade que o Stripe cobra, não da que o banco guarda.
+  assert.match(purchaseRoute, /previousQuantity = currentItem\?\.quantity \?\? 0/);
+  assert.match(purchaseRoute, /resultingQuantity = previousQuantity \+ quantity/);
   assert.match(purchaseRoute, /quantity: resultingQuantity/);
   assert.match(purchaseRoute, /payment_behavior: "error_if_incomplete"/);
   assert.doesNotMatch(memberRoute, /subscriptionItems/);

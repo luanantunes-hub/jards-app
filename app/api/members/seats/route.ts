@@ -23,33 +23,41 @@ async function requireAdmin(organizationId: string, userId: string) {
   return data?.papel === "admin";
 }
 
+/**
+ * Vagas da captação. O total vem de modulo_vagas_limite, a mesma conta que o banco
+ * faz ao convidar: as compradas só valem com a assinatura em vigor
+ * (20261106120000), então quem voltou ao Gratuito vê só a vaga incluída.
+ */
 async function seatSummary(organizationId: string) {
   const admin = adminClient();
   const [
     { data: seats, error: seatError },
+    { data: limite, error: limiteError },
     { count, error: countError },
     { count: pendingCount, error: pendingError },
   ] = await Promise.all([
     admin.from("organization_seats").select("purchased_seats, billing_user_id, stripe_subscription_item_id").eq("organization_id", organizationId).maybeSingle(),
+    admin.rpc("modulo_vagas_limite", { p_org: organizationId, p_modulo: "captacao" }),
     // Mesma contagem de modulo_vagas_em_uso (20261005130000): só quem usa a
     // captação, sem captador e proponente, que não consomem assento.
     admin.from("organization_members").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).contains("modulos_acesso", ["captacao"]).not("papel", "in", "(captador,proponente)"),
     admin.from("organization_invitations").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("status", "pending").contains("modulos_acesso", ["captacao"]).not("role", "in", "(captador,proponente)"),
   ]);
   if (seatError) throw seatError;
+  if (limiteError) throw limiteError;
   if (countError) throw countError;
   if (pendingError) throw pendingError;
-  const purchased = seats?.purchased_seats ?? 0;
+  const total = Math.max(1, Number(limite ?? 1));
   const occupied = count ?? 0;
   const pending = pendingCount ?? 0;
   return {
     modulo: "captacao" as const,
     included: 1,
-    purchased,
-    total: 1 + purchased,
+    purchased: total - 1,
+    total,
     occupied,
     pending,
-    available: Math.max(0, 1 + purchased - occupied - pending),
+    available: Math.max(0, total - occupied - pending),
     unit_price: UNIT_PRICE,
     billing_user_id: seats?.billing_user_id ?? null,
     stripe_subscription_item_id: seats?.stripe_subscription_item_id ?? null,
@@ -166,13 +174,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "É necessário ter um plano pago ativo para comprar usuários extras" }, { status: 402 });
   }
 
-  const resultingQuantity = summary.purchased + quantity;
+  // Estimativa pelo banco; a quantidade que vale é a do Stripe, lida abaixo com a compra já travada.
+  let previousQuantity = summary.purchased;
+  let resultingQuantity = previousQuantity + quantity;
   const { error: purchaseError } = await admin.from("organization_seat_purchases").upsert({
     id: requestId,
     organization_id: organizationId,
     billing_user_id: user.id,
     quantity,
-    previous_quantity: summary.purchased,
+    previous_quantity: previousQuantity,
     resulting_quantity: resultingQuantity,
     status: "pending",
     error: null,
@@ -186,12 +196,16 @@ export async function POST(req: NextRequest) {
   }
 
   const stripe = novoStripe() ?? new Stripe(process.env.STRIPE_SECRET_KEY);
-  let itemId = summary.stripe_subscription_item_id;
+  let itemId: string | null = null;
   let createdItem = false;
   try {
     const subscription = await stripe.subscriptions.retrieve(profile.stripe_subscription_id, { expand: ["items"] });
-    const currentItem = subscription.items.data.find(item => item.id === itemId || item.price.id === SEAT_PRICE_ID);
+    const currentItem = subscription.items.data.find(item => item.id === summary.stripe_subscription_item_id || item.price.id === SEAT_PRICE_ID);
     itemId = currentItem?.id ?? null;
+    // Parte do que o Stripe cobra hoje: numa assinatura nova, sem o item de vaga, começa do zero, mesmo
+    // que o banco ainda guarde vagas de uma assinatura que acabou.
+    previousQuantity = currentItem?.quantity ?? 0;
+    resultingQuantity = previousQuantity + quantity;
 
     if (itemId) {
       await stripe.subscriptionItems.update(itemId, {
@@ -222,6 +236,8 @@ export async function POST(req: NextRequest) {
 
     const { error: completeError } = await admin.from("organization_seat_purchases").update({
       status: "completed",
+      previous_quantity: previousQuantity,
+      resulting_quantity: resultingQuantity,
       completed_at: new Date().toISOString(),
     }).eq("id", requestId);
     if (completeError) throw completeError;
@@ -233,7 +249,7 @@ export async function POST(req: NextRequest) {
         await stripe.subscriptionItems.del(itemId, { proration_behavior: "none" });
       } else if (itemId) {
         await stripe.subscriptionItems.update(itemId, {
-          quantity: summary.purchased,
+          quantity: previousQuantity,
           proration_behavior: "none",
         });
       }
