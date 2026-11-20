@@ -8,7 +8,8 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface } from "@/components/list/ListPagePrimitives";
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PortaView, type EntradaRecente, type ResultadoDaConferencia } from "@/components/ticketeria/PortaView";
-import { horaNoFuso, normalizarCodigo, type ResumoDaPorta } from "@/lib/ticketeria/porta";
+import type { IngressoAchado } from "@/components/ticketeria/PortaExtrasView";
+import { frasesDoDesfazer, horaNoFuso, normalizarCodigo, resultadoDaBusca, resultadoDoDesfazer, type ResumoDaPorta } from "@/lib/ticketeria/porta";
 
 type SessaoNaLista = { id: string; rotulo: string; inicio: number };
 
@@ -34,6 +35,12 @@ export default function PortaPage() {
   const video = useRef<HTMLVideoElement>(null);
   const fluxo = useRef<MediaStream | null>(null);
   const conferindoAgora = useRef(false);
+  // Buscar pelo nome e desfazer uma entrada.
+  const [termo, setTermo] = useState("");
+  const [achados, setAchados] = useState<IngressoAchado[] | null>(null);
+  const [buscando, setBuscando] = useState(false);
+  const [desfazer, setDesfazer] = useState<{ codigo: string; comprador: string; ingresso: string; trabalhando?: boolean; erro?: string | null } | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   useEffect(() => {
     queueMicrotask(() => setSemCamera(!(typeof navigator !== "undefined" && Boolean(navigator.mediaDevices) && criarDetector() !== null)));
@@ -81,6 +88,47 @@ export default function PortaPage() {
 
   useEffect(() => { queueMicrotask(() => { setResumo(null); setResultado(null); void atualizarResumo(); }); }, [atualizarResumo]);
 
+  const buscar = useCallback(async (texto: string) => {
+    if (!lojaId || !sessaoId || texto.trim().length < 2) { setAchados(null); setBuscando(false); return; }
+    try {
+      const r = await fetch(`/api/ticketeria/lojas/${lojaId}/porta/buscar?sessao=${sessaoId}&q=${encodeURIComponent(texto.trim())}`, { cache: "no-store" });
+      const achado = r.ok ? resultadoDaBusca(await r.json().catch(() => null)) : null;
+      setAchados(achado ? achado.achados : null);
+      if (!achado) setErro("Não foi possível buscar agora. Tente de novo.");
+    } catch {
+      setErro("Sem conexão. Tente de novo.");
+    } finally {
+      setBuscando(false);
+    }
+  }, [lojaId, sessaoId]);
+
+  // A busca espera a pessoa parar de digitar.
+  useEffect(() => {
+    if (termo.trim().length < 2) { queueMicrotask(() => { setAchados(null); setBuscando(false); }); return; }
+    queueMicrotask(() => setBuscando(true));
+    const espera = setTimeout(() => void buscar(termo), 350);
+    return () => clearTimeout(espera);
+  }, [termo, buscar]);
+
+  const confirmarDesfazer = useCallback(async () => {
+    if (!lojaId || !sessaoId || !desfazer) return;
+    setDesfazer({ ...desfazer, trabalhando: true, erro: null });
+    try {
+      const r = await fetch(`/api/ticketeria/lojas/${lojaId}/porta/desfazer`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessao_id: sessaoId, codigo: desfazer.codigo }) });
+      const d = r.ok ? resultadoDoDesfazer(await r.json().catch(() => null)) : null;
+      if (!d) { setDesfazer({ ...desfazer, trabalhando: false, erro: r.status === 403 ? "Só quem edita a Ticketeria desfaz entradas." : "Não foi possível desfazer agora. Tente de novo." }); return; }
+      const frase = frasesDoDesfazer(d);
+      if (frase) { setDesfazer({ ...desfazer, trabalhando: false, erro: frase }); return; }
+      setDesfazer(null);
+      setAviso(`Entrada de ${desfazer.comprador} desfeita.`);
+      setResultado(atual => (atual && "codigo" in atual && atual.codigo === desfazer.codigo ? null : atual));
+      void atualizarResumo();
+      if (termo.trim().length >= 2) void buscar(termo);
+    } catch {
+      setDesfazer({ ...desfazer, trabalhando: false, erro: "Sem conexão. Tente de novo." });
+    }
+  }, [lojaId, sessaoId, desfazer, atualizarResumo, buscar, termo]);
+
   const pararCamera = useCallback(() => {
     fluxo.current?.getTracks().forEach(t => t.stop());
     fluxo.current = null;
@@ -100,6 +148,8 @@ export default function PortaPage() {
       if (!r.ok || !("tipo" in d)) { setErro(r.status === 403 ? "Só quem edita a Ticketeria confere ingressos." : "Não foi possível conferir agora. Tente de novo."); return; }
       setResultado(d);
       setCodigo("");
+      setAviso(null);
+      if (termo.trim().length >= 2) void buscar(termo);
       try { navigator.vibrate?.(d.tipo === "pode_entrar" ? 80 : [120, 60, 120]); } catch { /* sem vibração */ }
       void atualizarResumo();
     } catch {
@@ -108,7 +158,7 @@ export default function PortaPage() {
       conferindoAgora.current = false;
       setConferindo(false);
     }
-  }, [lojaId, sessaoId, atualizarResumo]);
+  }, [lojaId, sessaoId, atualizarResumo, buscar, termo]);
 
   const lerQr = useCallback(async () => {
     if (lendo) { pararCamera(); return; }
@@ -144,6 +194,7 @@ export default function PortaPage() {
     <>
       <ListPageHeader eyebrow="Ticketeria" title="Porta" />
       <ListContent>
+        {aviso && <p role="status" className="mx-auto mb-4 max-w-[34rem] rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#2E8932]" style={{ borderColor: "#2E893247" }}>{aviso}</p>}
         {erro && <p role="alert" className="mx-auto mb-4 max-w-[34rem] rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {opcoes.length === 0 ? (
           <ListTableSurface><ListEmptyState icon={ScanLine} title="Nenhuma sessão para conferir" description="As sessões que ainda vão acontecer (e as das últimas 12 horas) aparecem aqui." /></ListTableSurface>
@@ -153,6 +204,10 @@ export default function PortaPage() {
             entraram={resumo?.entraram ?? 0} lugares={resumo?.validos ?? 0} recentes={resumo?.recentes ?? ([] as EntradaRecente[])}
             codigo={codigo} onCodigo={setCodigo} onConferir={() => void conferir(codigo)} onLerQr={() => void lerQr()} lendo={lendo} conferindo={conferindo} semCamera={semCamera}
             resultado={resultado} onProximo={() => setResultado(null)}
+            busca={{ termo, resultados: achados, buscando }} onBusca={setTermo} onDarEntrada={codigoDoIngresso => void conferir(codigoDoIngresso)}
+            desfazer={desfazer} onDesfazer={codigoDaEntrada => { const e = resumo?.recentes.find(x => x.codigo === codigoDaEntrada); if (e) { setAviso(null); setDesfazer({ codigo: e.codigo, comprador: e.comprador, ingresso: e.ingresso }); } }}
+            onConfirmarDesfazer={() => void confirmarDesfazer()} onCancelarDesfazer={() => setDesfazer(null)}
+            relatorioHref={`/ingressos/porta/relatorio?sessao=${sessaoId}`}
             previa={lendo ? <video ref={video} muted playsInline className="mb-3 aspect-video w-full rounded-xl border border-black/10 bg-[#1C0E33] object-cover" aria-label="Câmera lendo o QR Code" /> : undefined}
           />
         )}
