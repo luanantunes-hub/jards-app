@@ -1,6 +1,7 @@
 // A porta (passo C5 da T5): o que a conferência de ingressos devolve do banco, em frases e horas para a tela. Só a conta, sem banco e sem imports de servidor: roda no
 // navegador e nos testes (tests/ticketeria-porta.test.ts). O banco decide tudo (fn_ticketeria_conferir_ingresso); aqui só se lê e se formata.
 
+import type { IngressoAchado, RelatorioDaSessao } from "@/components/ticketeria/PortaExtrasView";
 import type { EntradaRecente, ResultadoDaConferencia } from "@/components/ticketeria/PortaView";
 import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
 
@@ -48,4 +49,75 @@ export function resumoDaPorta(bruto: unknown): ResumoDaPorta | null {
     validos: r.validos, entraram: r.entraram,
     recentes: r.recentes.map(x => { const e = (x && typeof x === "object" ? x : {}) as Record<string, unknown>; return { codigo: texto(e.codigo), ingresso: texto(e.ingresso), assento: texto(e.assento) || null, comprador: texto(e.comprador), hora: horaNoFuso(texto(e.usado_em), fuso) }; }),
   };
+}
+
+// ─── A porta melhor: buscar pelo nome, desfazer uma entrada, o relatório e a lista ──
+
+const registro = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
+
+/** A resposta de fn_ticketeria_porta_buscar como a tela mostra; null se veio algo que não se entende. */
+export function resultadoDaBusca(bruto: unknown): { achados: IngressoAchado[]; mais: boolean } | null {
+  const r = registro(bruto);
+  if (!Array.isArray(r.achados)) return null;
+  const fuso = texto(r.fuso) || "America/Sao_Paulo";
+  const achados: IngressoAchado[] = [];
+  for (const x of r.achados) {
+    const a = registro(x);
+    if (a.situacao !== "nao_entrou" && a.situacao !== "entrou" && a.situacao !== "cancelado") return null;
+    achados.push({ codigo: texto(a.codigo), ingresso: texto(a.ingresso), assento: texto(a.assento) || null, comprador: texto(a.comprador), situacao: a.situacao, hora: a.situacao === "entrou" && texto(a.usado_em) ? horaNoFuso(texto(a.usado_em), fuso) : null });
+  }
+  return { achados, mais: r.mais === true };
+}
+
+export type ResultadoDoDesfazer = { tipo: "desfeita"; ingresso: string; comprador: string; restantes: number } | { tipo: "nao_usado" | "cancelado" | "outra_sessao" | "nao_encontrado" };
+
+/** A resposta de fn_ticketeria_porta_desfazer; null se veio algo que não se entende (a tela diz "tente de novo", nunca "desfeita"). */
+export function resultadoDoDesfazer(bruto: unknown): ResultadoDoDesfazer | null {
+  const r = registro(bruto);
+  if (r.tipo === "desfeita") return typeof r.restantes === "number" ? { tipo: "desfeita", ingresso: texto(r.ingresso), comprador: texto(r.comprador), restantes: r.restantes } : null;
+  return r.tipo === "nao_usado" || r.tipo === "cancelado" || r.tipo === "outra_sessao" || r.tipo === "nao_encontrado" ? { tipo: r.tipo } : null;
+}
+
+/** A frase para a pessoa da porta quando desfazer não deu. */
+export function frasesDoDesfazer(r: ResultadoDoDesfazer): string | null {
+  if (r.tipo === "desfeita") return null;
+  if (r.tipo === "nao_usado") return "Este ingresso não estava marcado como usado.";
+  if (r.tipo === "cancelado") return "Este ingresso foi cancelado (compra reembolsada).";
+  if (r.tipo === "outra_sessao") return "Este ingresso é de outra sessão.";
+  return "Ingresso não encontrado.";
+}
+
+/** A resposta de fn_ticketeria_porta_relatorio; null se veio algo que não se entende. */
+export function relatorioDaSessao(bruto: unknown): RelatorioDaSessao | null {
+  const r = registro(bruto);
+  const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : null);
+  const [validos, entraram, cancelados] = [n(r.validos), n(r.entraram), n(r.cancelados)];
+  if (validos === null || entraram === null || cancelados === null || !Array.isArray(r.por_ingresso) || !Array.isArray(r.por_horario)) return null;
+  const porIngresso = r.por_ingresso.map(x => { const i = registro(x); return { nome: texto(i.nome), validos: n(i.validos) ?? 0, entraram: n(i.entraram) ?? 0 }; });
+  const porHorario = r.por_horario.map(x => { const h = registro(x); return { faixa: texto(h.faixa), entradas: n(h.entradas) ?? 0 }; });
+  return { validos, entraram, cancelados, porIngresso, porHorario };
+}
+
+const SITUACAO_DO_CSV: Record<string, string> = { entrou: "Entrou", nao_entrou: "Não entrou", cancelado: "Cancelado" };
+
+/** Uma célula do CSV: entre aspas se preciso, e sem poder virar fórmula na planilha (= + - @ no começo ganham um apóstrofo). */
+export function celulaDoCsv(valor: string): string {
+  const seguro = /^[=+\-@\t\r]/.test(valor) ? `'${valor}` : valor;
+  return /[";\r\n]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
+}
+
+/** A lista da sessão em CSV (ponto e vírgula, como o Excel em português lê; com BOM para os acentos). Dado pessoal: quem chama já conferiu quem pode. */
+export function csvDaLista(bruto: unknown): string | null {
+  const r = registro(bruto);
+  if (!Array.isArray(r.ingressos)) return null;
+  const fuso = texto(r.fuso) || "America/Sao_Paulo";
+  const dataHora = (iso: string) => {
+    try { return new Intl.DateTimeFormat("pt-BR", { timeZone: fuso, day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso)).replace(", ", " "); } catch { return iso; }
+  };
+  const linhas = [["Comprador", "Ingresso", "Lugar", "Situação", "Entrou em"]];
+  for (const x of r.ingressos) {
+    const i = registro(x);
+    linhas.push([texto(i.comprador), texto(i.ingresso), texto(i.assento), SITUACAO_DO_CSV[texto(i.situacao)] ?? "", i.situacao === "entrou" && texto(i.usado_em) ? dataHora(texto(i.usado_em)) : ""]);
+  }
+  return "\uFEFF" + linhas.map(l => l.map(celulaDoCsv).join(";")).join("\r\n") + "\r\n";
 }
