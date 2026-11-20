@@ -38,6 +38,10 @@ export const SITUACOES_DO_PEDIDO: readonly SituacaoDoPedido[] = ["aguardando_pag
 export type TipoDeTransacao = "pagamento" | "estorno" | "repasse" | "ajuste";
 export const TIPOS_DE_TRANSACAO: readonly TipoDeTransacao[] = ["pagamento", "estorno", "repasse", "ajuste"];
 
+/** Como um cupom desconta: porcentagem do preço (1 a 100) ou valor fixo por ingresso, em centavos. */
+export type TipoDoCupom = "percentual" | "valor";
+export const TIPOS_DO_CUPOM: readonly TipoDoCupom[] = ["percentual", "valor"];
+
 /** `ticketeria_partidas.conta`: o que o provedor recebeu (positivo), o que é do produtor e o que é do Jards (negativos). */
 export type ContaDoRazao = "psp_a_receber" | "produtor" | "plataforma";
 export const CONTAS_DO_RAZAO: readonly ContaDoRazao[] = ["psp_a_receber", "produtor", "plataforma"];

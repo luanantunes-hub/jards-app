@@ -122,7 +122,8 @@ export function portasDaCompraDoSupabase(admin: SupabaseClient<Database>, config
       return { chave, aprovada: conta.situacao === "aprovada" };
     },
     async reservar(corpo: CorpoDaCompra, minutos) {
-      const { data, error } = await ticketeria.rpc("fn_ticketeria_reservar", { p_sessao: corpo.sessao_id, p_itens: corpo.itens as unknown as Json, p_nome: corpo.nome, p_email: corpo.email, p_minutos: minutos });
+      const base = { p_sessao: corpo.sessao_id, p_itens: corpo.itens as unknown as Json, p_nome: corpo.nome, p_email: corpo.email, p_minutos: minutos };
+      const { data, error } = corpo.cupom ? await ticketeria.rpc("fn_ticketeria_reservar_com_cupom", { ...base, p_codigo: corpo.cupom }) : await ticketeria.rpc("fn_ticketeria_reservar", base);
       if (error) throw new ErroDaCompra("reserva_recusada", mensagemDoErroDaReserva(error));
       const pedido = lerPedidoReservado(data);
       if (!pedido) throw new Error("resposta inesperada do banco ao reservar");

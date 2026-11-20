@@ -1,6 +1,7 @@
 // A reserva de um pedido (T4), do lado do servidor: chama fn_ticketeria_reservar com a chave de serviço e traduz a resposta e os
 // erros para a página de compra (T5). O banco decide tudo (lote da vez, estoque, taxa, limite); aqui só se lê e se explica.
 
+import { mensagemDoErroDoCupom } from "@/lib/ticketeria/cupom";
 import type { SituacaoDoPedido } from "@/lib/ticketeria/estados";
 
 export type PedidoReservado = {
@@ -22,6 +23,8 @@ export function lerPedidoReservado(resposta: unknown): PedidoReservado | null {
 /** O erro da reserva numa frase para o comprador. */
 export function mensagemDoErroDaReserva(erro: { message?: string }): string {
   const m = erro.message ?? "";
+  const cupom = mensagemDoErroDoCupom(m);
+  if (cupom) return cupom;
   if (m.includes("esgotado")) return "Não há mais lugares nesta quantidade. Escolha menos ingressos ou outra sessão.";
   if (m.includes("sessao_indisponivel")) return "Esta sessão não está mais à venda.";
   if (m.includes("evento_nao_publicado")) return "Este evento ainda não está à venda.";

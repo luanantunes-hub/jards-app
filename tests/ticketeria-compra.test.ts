@@ -22,7 +22,7 @@ test("CPF e CNPJ: só com os dígitos verificadores certos", () => {
 test("o corpo da compra: lido, aparado e conferido", () => {
   const r = lerCorpoDaCompra(bom);
   assert.ok(r.ok);
-  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: "pix", parcelas: 1 });
+  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: "pix", parcelas: 1, cupom: null });
   const ruim = (mudanca: object) => lerCorpoDaCompra({ ...bom, ...mudanca });
   for (const [mudanca, problema] of [
     [{ sessao_id: "x" }, "sessão"], [{ itens: [] }, "ingressos"], [{ itens: "x" }, "ingressos"],
