@@ -60,19 +60,24 @@ function Contador({ valor, max, nome, onMudar }: { valor: number; max: number; n
   );
 }
 
-export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, onMudar, onContinuar }: {
+export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, onMudar, onContinuar, cupom = null, cupomErro = null, codigoDoCupom = "", onCodigoDoCupom, onAbrirCupom, onAplicarCupom, onRemoverCupom, aplicandoCupom = false, cupomAberto = false }: {
   site: { titulo: string; cor?: string }; evento: EventoParaComprar; ingressos: IngressoParaComprar[]; quantidades: Record<string, number>;
   onMudar?: (id: string, novo: number) => void; onContinuar?: () => void;
+  /** O cupom já aplicado (o desconto do pedido, em centavos), a frase de erro do código digitado, e as ações. `cupomAberto`: mostra o campo (a pessoa tocou em "Tem um cupom?"). */
+  cupom?: { codigo: string; descricao: string; desconto_centavos: number } | null; cupomErro?: string | null; codigoDoCupom?: string;
+  onCodigoDoCupom?: (codigo: string) => void; onAbrirCupom?: () => void; onAplicarCupom?: () => void; onRemoverCupom?: () => void; aplicandoCupom?: boolean; cupomAberto?: boolean;
 }) {
   const total = ingressos.reduce((soma, i) => soma + (totalNasFaixas(i.faixas, quantidades[i.id] ?? 0) ?? 0), 0);
   const qtd = ingressos.reduce((soma, i) => soma + (quantidades[i.id] ?? 0), 0);
+  const desconto = cupom ? Math.min(cupom.desconto_centavos, total) : 0;
   return (
     <Moldura titulo={site.titulo} cor={site.cor} passo={{ atual: 1, total: 3 }}
       rodape={
         <div className="flex items-center gap-4">
           <div className="min-w-0 flex-1">
             <p className="text-[0.75rem] text-black/55">{qtd === 0 ? "Nenhum ingresso" : qtd === 1 ? "1 ingresso" : `${qtd} ingressos`}</p>
-            <p className="text-[1.25rem] font-semibold tabular-nums tracking-[-.02em]">{formatarMoeda(total)}</p>
+            {desconto > 0 && <p className="text-[0.75rem] tabular-nums text-black/55">{cupom?.codigo} · −{formatarMoeda(desconto)}</p>}
+            <p className="text-[1.25rem] font-semibold tabular-nums tracking-[-.02em]">{formatarMoeda(total - desconto)}</p>
           </div>
           <button type="button" className={`${BOTAO} !w-auto min-w-40`} disabled={qtd === 0} onClick={onContinuar}>Continuar</button>
         </div>
@@ -100,13 +105,33 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
         })}
       </ul>
       <p className="mt-3 text-[0.75rem] text-black/50">O preço é o que você paga: não há taxa somada.</p>
+      <section aria-label="Cupom de desconto" className="mt-5">
+        {cupom ? (
+          <div className="flex items-center justify-between gap-3 rounded border px-4 py-3" style={{ borderColor: "#2E893247" }}>
+            <div className="min-w-0"><p className="text-[0.875rem] font-medium tracking-[.04em]">{cupom.codigo}</p><p className="text-[0.75rem] text-black/60">{cupom.descricao}</p></div>
+            <button type="button" onClick={onRemoverCupom} className="shrink-0 rounded text-[0.8125rem] text-black/55 underline underline-offset-2 hover:text-black/75">Remover</button>
+          </div>
+        ) : cupomAberto ? (
+          <form onSubmit={e => { e.preventDefault(); onAplicarCupom?.(); }}>
+            <label htmlFor="cupom" className={ROTULO}>Código do cupom</label>
+            <div className="flex gap-2">
+              <input id="cupom" className={`${CAMPO} uppercase tracking-[.08em]`} value={codigoDoCupom} onChange={e => onCodigoDoCupom?.(e.target.value)} autoCapitalize="characters" autoComplete="off" maxLength={20} disabled={aplicandoCupom} aria-invalid={cupomErro ? true : undefined} />
+              <button type="submit" disabled={aplicandoCupom || codigoDoCupom.trim() === ""} className={`${BOTAO_SECUNDARIO} shrink-0 disabled:opacity-40`}>{aplicandoCupom ? "Conferindo…" : "Aplicar"}</button>
+            </div>
+            {cupomErro && <p role="alert" className="mt-2 text-[0.8125rem] text-[#B23B3B]">{cupomErro}</p>}
+          </form>
+        ) : (
+          <button type="button" onClick={onAbrirCupom} className="rounded text-[0.875rem] text-black/60 underline underline-offset-2 hover:text-black/80">Tem um cupom?</button>
+        )}
+      </section>
     </Moldura>
   );
 }
 
 // ─── 2. Os dados de quem compra ─────────────────────────────────────────────
 
-export type ResumoDoPedido = { linhas: { nome: string; quantidade: number; total_centavos: number }[]; total_centavos: number };
+/** `total_centavos` é o que a pessoa paga (já com o desconto); `desconto` é o cupom aplicado, que sai da soma das linhas. */
+export type ResumoDoPedido = { linhas: { nome: string; quantidade: number; total_centavos: number }[]; total_centavos: number; desconto?: { codigo: string; centavos: number } };
 
 export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, aceito = false, onAceitar, meio = "pix", onMeio, parcelasMax = 1, parcelas = 1, onParcelas, onMudar, onVoltar, onGerarPix }: {
   site: { titulo: string; cor?: string }; evento: EventoParaComprar; resumo: ResumoDoPedido; valores: { nome: string; email: string; documento: string };
@@ -125,6 +150,7 @@ export function TelaDados({ site, evento, resumo, valores, erro, trabalhando, ac
             <li key={l.nome} className="flex justify-between gap-4 text-[0.9375rem]"><span>{l.quantidade} × {l.nome}</span><span className="tabular-nums">{formatarMoeda(l.total_centavos)}</span></li>
           ))}
         </ul>
+        {resumo.desconto && resumo.desconto.centavos > 0 && <p className="mt-1.5 flex justify-between gap-4 text-[0.9375rem] text-[#2E8932]"><span>Cupom {resumo.desconto.codigo}</span><span className="tabular-nums">−{formatarMoeda(resumo.desconto.centavos)}</span></p>}
         <p className="mt-2 flex justify-between border-t border-black/10 pt-2 text-[1rem] font-semibold"><span>Total</span><span className="tabular-nums">{formatarMoeda(resumo.total_centavos)}</span></p>
       </section>
       {erro && <p role="alert" className="mt-4 rounded border px-4 py-2.5 text-[0.8125rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
@@ -320,6 +346,7 @@ export function TelaAbrindoPagamento({ site, evento, resumo, endereco, enderecoD
         <ul className="space-y-1.5">
           {resumo.linhas.map(l => <li key={l.nome} className="flex justify-between gap-4 text-[0.9375rem]"><span>{l.quantidade} × {l.nome}</span><span className="tabular-nums">{formatarMoeda(l.total_centavos)}</span></li>)}
         </ul>
+        {resumo.desconto && resumo.desconto.centavos > 0 && <p className="mt-1.5 flex justify-between gap-4 text-[0.9375rem] text-[#2E8932]"><span>Cupom {resumo.desconto.codigo}</span><span className="tabular-nums">−{formatarMoeda(resumo.desconto.centavos)}</span></p>}
         <p className="mt-2 flex justify-between border-t border-black/10 pt-2 text-[1rem] font-semibold"><span>Total</span><span className="tabular-nums">{formatarMoeda(resumo.total_centavos)}</span></p>
       </section>
       <a href={endereco} className={`${BOTAO} mt-5`}>Abrir a página de pagamento</a>

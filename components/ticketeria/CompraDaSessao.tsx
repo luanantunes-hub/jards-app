@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TelaAbrindoPagamento, TelaAviso, TelaDados, TelaEscolherIngressos, TelaPagarPix } from "@/components/ticketeria/CompraView";
 import { lerCorpoDaCompra } from "@/lib/ticketeria/pagamento/compra";
+import { codigoDoCupomValido, descontoEmTexto, descontoNasFaixas, normalizarCodigo, type CupomConferido } from "@/lib/ticketeria/cupom";
 import { VERSAO_DOS_TERMOS_DE_COMPRA } from "@/lib/ticketeria/termos-de-compra";
 import { mascararDocumento } from "@/lib/ticketeria/recebimentos";
 import { totalNasFaixas, type VitrineDaSessao } from "@/lib/ticketeria/vitrine";
@@ -46,6 +47,12 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
   const [pedido, setPedido] = useState<PedidoComPix | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [agora, setAgora] = useState(() => Date.now());
+  // O cupom: o código digitado, o que o servidor conferiu e o aviso quando não vale. O desconto mostrado é só a conta da tela; o valor de verdade o banco calcula ao reservar.
+  const [cupom, setCupom] = useState<CupomConferido | null>(null);
+  const [cupomAberto, setCupomAberto] = useState(false);
+  const [codigoDoCupom, setCodigoDoCupom] = useState("");
+  const [cupomErro, setCupomErro] = useState<string | null>(null);
+  const [aplicandoCupom, setAplicandoCupom] = useState(false);
 
   // Recarregou no meio do Pix: volta a ele (o servidor não sabe do armazenamento do navegador, então só dá para ler depois de montar).
   useEffect(() => {
@@ -75,12 +82,14 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     const q = quantidades[i.id] ?? 0;
     return q > 0 ? [{ nome: i.nome, quantidade: q, total_centavos: totalNasFaixas(i.faixas, q) ?? 0 }] : [];
   });
-  const total = linhas.reduce((soma, l) => soma + l.total_centavos, 0);
+  const bruto = linhas.reduce((soma, l) => soma + l.total_centavos, 0);
+  const desconto = cupom ? Math.min(bruto, ingressos.reduce((soma, i) => soma + descontoNasFaixas(i.faixas, quantidades[i.id] ?? 0, cupom, i.id), 0)) : 0;
+  const total = bruto - desconto;
 
   const gerarPix = useCallback(async () => {
     setErro(null);
     if (!aceito) { setErro("Aceite os Termos de compra para continuar."); return; }
-    const leitura = lerCorpoDaCompra({ sessao_id: sessao, itens: Object.entries(quantidades).filter(([, q]) => q > 0).map(([ingresso_id, quantidade]) => ({ ingresso_id, quantidade })), ...valores, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio, parcelas: meio === "cartao" ? parcelas : 1 });
+    const leitura = lerCorpoDaCompra({ sessao_id: sessao, itens: Object.entries(quantidades).filter(([, q]) => q > 0).map(([ingresso_id, quantidade]) => ({ ingresso_id, quantidade })), ...valores, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio, parcelas: meio === "cartao" ? parcelas : 1, cupom: cupom?.codigo ?? null });
     if (!leitura.ok) { setErro(`Confira: ${leitura.problemas.join(", ")}.`); return; }
     setTrabalhando(true);
     try {
@@ -103,7 +112,30 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     } finally {
       setTrabalhando(false);
     }
-  }, [sessao, quantidades, valores, aceito, meio, parcelas, router]);
+  }, [sessao, quantidades, valores, aceito, meio, parcelas, cupom, router]);
+
+  const aplicarCupom = useCallback(async () => {
+    const codigo = normalizarCodigo(codigoDoCupom);
+    if (!codigoDoCupomValido(codigo)) { setCupomErro("Esse cupom não existe ou não está mais valendo."); return; }
+    setCupomErro(null);
+    setAplicandoCupom(true);
+    try {
+      const r = await fetch("/api/ticketeria/compra/cupom", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessao_id: sessao, codigo }) });
+      const d = (await r.json().catch(() => ({}))) as Partial<CupomConferido> & { mensagem?: string };
+      if (r.status === 200 && typeof d.codigo === "string" && (d.tipo === "percentual" || d.tipo === "valor") && typeof d.valor === "number") {
+        setCupom({ codigo: d.codigo, tipo: d.tipo, valor: d.valor, ingresso_id: d.ingresso_id ?? null });
+        setCodigoDoCupom("");
+        setCupomAberto(false);
+      } else setCupomErro(d.mensagem ?? (r.status === 429 ? "Muitas tentativas. Espere um instante." : "Não foi possível conferir o cupom agora. Tente de novo."));
+    } catch {
+      setCupomErro("Sem conexão. Tente de novo.");
+    } finally {
+      setAplicandoCupom(false);
+    }
+  }, [codigoDoCupom, sessao]);
+
+  const cupomParaMostrar = cupom ? { codigo: cupom.codigo, descricao: `${descontoEmTexto(cupom.tipo, cupom.valor)}${cupom.ingresso_id ? ` · só em ${ingressos.find(i => i.id === cupom.ingresso_id)?.nome ?? "um ingresso"}` : ""}`, desconto_centavos: desconto } : null;
+  const resumoDoDesconto = cupom && desconto > 0 ? { codigo: cupom.codigo, centavos: desconto } : undefined;
 
   const copiar = useCallback(async () => {
     if (!pedido?.pix_copia_e_cola) return;
@@ -114,17 +146,20 @@ export function CompraDaSessao({ vitrine }: { vitrine: VitrineDaSessao }) {
     return <TelaAviso site={site} titulo="O tempo para pagar acabou" texto="A reserva dos seus lugares venceu e eles voltaram para a venda. Se você já pagou o Pix, os ingressos chegam por e-mail em instantes. Se não, escolha de novo." acao={{ rotulo: "Escolher os ingressos de novo", onClick: () => { setPedido(null); setPasso("escolher"); } }} />;
   }
   if (passo === "cartao" && pedido?.url_de_pagamento) {
-    return <TelaAbrindoPagamento site={site} evento={evento} resumo={{ linhas, total_centavos: pedido.total_centavos }} endereco={pedido.url_de_pagamento} enderecoDoPedido={`/pedido/${pedido.pedido_id}`} />;
+    return <TelaAbrindoPagamento site={site} evento={evento} resumo={{ linhas, total_centavos: pedido.total_centavos, desconto: resumoDoDesconto }} endereco={pedido.url_de_pagamento} enderecoDoPedido={`/pedido/${pedido.pedido_id}`} />;
   }
   if (passo === "pix" && pedido?.pix_copia_e_cola) {
     return <TelaPagarPix site={site} evento={evento} pedido={{ codigo: pedido.codigo, total_centavos: pedido.total_centavos, pix_copia_e_cola: pedido.pix_copia_e_cola, reservado_ate: horaDe(pedido.reservado_ate), restante: faltam(pedido.reservado_ate, agora) }} onCopiar={() => void copiar()} copiado={copiado} />;
   }
   if (passo === "dados") {
-    return <TelaDados site={site} evento={evento} resumo={{ linhas, total_centavos: total }} valores={valores} erro={erro} trabalhando={trabalhando} aceito={aceito} onAceitar={setAceito} meio={meio} onMeio={setMeio} parcelasMax={parcelasMax} parcelas={parcelas} onParcelas={setParcelas}
+    return <TelaDados site={site} evento={evento} resumo={{ linhas, total_centavos: total, desconto: resumoDoDesconto }} valores={valores} erro={erro} trabalhando={trabalhando} aceito={aceito} onAceitar={setAceito} meio={meio} onMeio={setMeio} parcelasMax={parcelasMax} parcelas={parcelas} onParcelas={setParcelas}
       onMudar={(campo, valor) => setValores(v => ({ ...v, [campo]: campo === "documento" ? mascararDocumento(valor) : valor }))}
       onVoltar={() => { setErro(null); setPasso("escolher"); }} onGerarPix={() => void gerarPix()} />;
   }
   if (ingressos.length === 0) return <TelaAviso site={site} titulo="Ainda não há ingressos à venda" texto="Volte em breve." />;
   return <TelaEscolherIngressos site={site} evento={evento} ingressos={ingressos} quantidades={quantidades}
-    onMudar={(id, novo) => setQuantidades(q => ({ ...q, [id]: Math.max(0, novo) }))} onContinuar={() => { setErro(null); setPasso("dados"); }} />;
+    onMudar={(id, novo) => setQuantidades(q => ({ ...q, [id]: Math.max(0, novo) }))} onContinuar={() => { setErro(null); setPasso("dados"); }}
+    cupom={cupomParaMostrar} cupomErro={cupomErro} codigoDoCupom={codigoDoCupom} cupomAberto={cupomAberto} aplicandoCupom={aplicandoCupom}
+    onCodigoDoCupom={codigo => { setCodigoDoCupom(codigo); setCupomErro(null); }} onAbrirCupom={() => setCupomAberto(true)} onAplicarCupom={() => void aplicarCupom()}
+    onRemoverCupom={() => { setCupom(null); setCupomErro(null); }} />;
 }

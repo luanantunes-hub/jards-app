@@ -8,7 +8,7 @@
 // (supabase gen types) em 18/11/2026, depois de aplicada: as mesmas colunas e anulabilidade. tests/ticketeria-banco-tipos.test.ts compara este arquivo com a migration.
 // Relationships não lista as chaves para auth.users (`criado_por`): o PostgREST só expõe o schema public.
 
-import type { CategoriaDoIngresso, ClassificacaoIndicativa, ContaDoRazao, MeioDePagamento, QuemPagaATaxa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoPedido, SituacaoDoSite, TipoDeTransacao } from "@/lib/ticketeria/estados";
+import type { CategoriaDoIngresso, ClassificacaoIndicativa, ContaDoRazao, MeioDePagamento, QuemPagaATaxa, SituacaoDoDominio, SituacaoDoEvento, SituacaoDoPedido, SituacaoDoSite, TipoDeTransacao, TipoDoCupom } from "@/lib/ticketeria/estados";
 import type { Json } from "@/lib/supabase/types";
 
 export type BancoDaTicketeria = {
@@ -654,6 +654,9 @@ export type BancoDaTicketeria = {
           reembolsado_em: string | null;
           termos_versao: string | null;
           termos_aceitos_em: string | null;
+          cupom_id: string | null;
+          cupom_codigo: string | null;
+          desconto_centavos: number;
         };
         Insert: {
           id?: string;
@@ -682,6 +685,9 @@ export type BancoDaTicketeria = {
           reembolsado_em?: string | null;
           termos_versao?: string | null;
           termos_aceitos_em?: string | null;
+          cupom_id?: string | null;
+          cupom_codigo?: string | null;
+          desconto_centavos?: number;
         };
         Update: {
           id?: string;
@@ -710,8 +716,18 @@ export type BancoDaTicketeria = {
           reembolsado_em?: string | null;
           termos_versao?: string | null;
           termos_aceitos_em?: string | null;
+          cupom_id?: string | null;
+          cupom_codigo?: string | null;
+          desconto_centavos?: number;
         };
         Relationships: [
+          {
+            foreignKeyName: "ticketeria_pedidos_cupom_id_fkey";
+            columns: ["cupom_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_cupons";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "ticketeria_pedidos_loja_id_fkey";
             columns: ["loja_id"];
@@ -745,6 +761,7 @@ export type BancoDaTicketeria = {
           quantidade: number;
           preco_centavos: number;
           taxa_centavos: number;
+          desconto_centavos: number;
           created_at: string;
         };
         Insert: {
@@ -756,6 +773,7 @@ export type BancoDaTicketeria = {
           quantidade: number;
           preco_centavos: number;
           taxa_centavos: number;
+          desconto_centavos?: number;
           created_at?: string;
         };
         Update: {
@@ -767,6 +785,7 @@ export type BancoDaTicketeria = {
           quantidade?: number;
           preco_centavos?: number;
           taxa_centavos?: number;
+          desconto_centavos?: number;
           created_at?: string;
         };
         Relationships: [
@@ -796,6 +815,73 @@ export type BancoDaTicketeria = {
             columns: ["pedido_id"];
             isOneToOne: false;
             referencedRelation: "ticketeria_pedidos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_cupons: {
+        Row: {
+          id: string;
+          organization_id: string;
+          evento_id: string;
+          ingresso_id: string | null;
+          codigo: string;
+          tipo: TipoDoCupom;
+          valor: number;
+          limite_usos: number | null;
+          valido_ate: string | null;
+          ativo: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          evento_id: string;
+          ingresso_id?: string | null;
+          codigo: string;
+          tipo: TipoDoCupom;
+          valor: number;
+          limite_usos?: number | null;
+          valido_ate?: string | null;
+          ativo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          evento_id?: string;
+          ingresso_id?: string | null;
+          codigo?: string;
+          tipo?: TipoDoCupom;
+          valor?: number;
+          limite_usos?: number | null;
+          valido_ate?: string | null;
+          ativo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_cupons_evento_id_fkey";
+            columns: ["evento_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_eventos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_cupons_ingresso_id_fkey";
+            columns: ["ingresso_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_ingressos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_cupons_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];
@@ -1269,6 +1355,18 @@ export type BancoDaTicketeria = {
       // As duas abaixo só o servidor executa (chave de serviço); o navegador recebe "permissão negada".
       fn_ticketeria_reservar: {
         Args: { p_sessao: string; p_itens: Json; p_nome: string; p_email: string; p_minutos: number };
+        Returns: Json;
+      };
+      fn_ticketeria_reservar_com_cupom: {
+        Args: { p_sessao: string; p_itens: Json; p_nome: string; p_email: string; p_minutos: number; p_codigo: string | null };
+        Returns: Json;
+      };
+      fn_ticketeria_aplicar_cupom: {
+        Args: { p_pedido: string; p_codigo: string };
+        Returns: Json;
+      };
+      fn_ticketeria_cupom_conferir: {
+        Args: { p_sessao: string; p_codigo: string; p_fora?: string | null; p_travar?: boolean };
         Returns: Json;
       };
       fn_ticketeria_definir_meio: {
