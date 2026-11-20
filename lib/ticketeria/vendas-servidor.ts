@@ -32,7 +32,7 @@ export async function vendasDaLoja(admin: Admin, lojaId: string, agora: number =
     const lote = idsDosPedidos.slice(i, i + 150);
     const [{ data: itens }, { data: ing }, { data: reemb }] = await Promise.all([
       t.from("ticketeria_pedido_itens").select("pedido_id, quantidade").in("pedido_id", lote),
-      t.from("ticketeria_ingressos_emitidos").select("codigo, nome, pedido_id, usado_em, cancelado_em").in("pedido_id", lote),
+      t.from("ticketeria_ingressos_emitidos").select("codigo, nome, assento_rotulo, pedido_id, usado_em, cancelado_em").in("pedido_id", lote),
       t.from("ticketeria_reembolsos").select("id, pedido_id, remetente, recebido_em, situacao, valor_centavos").in("pedido_id", lote),
     ]);
     for (const it of itens ?? []) quantidadePorPedido[it.pedido_id] = (quantidadePorPedido[it.pedido_id] ?? 0) + it.quantidade;

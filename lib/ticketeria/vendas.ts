@@ -13,7 +13,7 @@ export type LinhaDePedido = {
   pago_em: string | null; created_at: string;
 };
 export type LinhaDeSessao = { id: string; evento_id: string; local_id: string; inicio: string; cancelada_em: string | null };
-export type LinhaDeIngressoEmitido = { codigo: string; nome: string; pedido_id: string; usado_em: string | null; cancelado_em: string | null };
+export type LinhaDeIngressoEmitido = { codigo: string; nome: string; assento_rotulo?: string | null; pedido_id: string; usado_em: string | null; cancelado_em: string | null };
 
 export type LinhaDeReembolso = { id: string; pedido_id: string | null; remetente: string; recebido_em: string; situacao: string; valor_centavos: number | null };
 
@@ -98,7 +98,7 @@ export function montarVendas(e: EntradaDasVendas): VendasDaLoja {
       detalhe: {
         codigo: p.codigo, comprador: p.comprador_nome, email: p.comprador_email, evento, quando: s ? maiuscula(diaEHoraDoEvento(s.inicio, fuso)) : "—", situacao,
         pago_em: p.pago_em ? `${partes(p.pago_em, FUSO_PADRAO, { day: "2-digit", month: "2-digit", year: "numeric" })} às ${partes(p.pago_em, FUSO_PADRAO, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" })}` : null,
-        ingressos: (ingressosDoPedido.get(p.id) ?? []).map(i => ({ codigo: i.codigo, nome: i.nome, usado: i.usado_em !== null, cancelado: i.cancelado_em !== null })),
+        ingressos: (ingressosDoPedido.get(p.id) ?? []).map(i => ({ codigo: i.codigo, nome: i.nome, assento: i.assento_rotulo ?? null, usado: i.usado_em !== null, cancelado: i.cancelado_em !== null })),
         total_centavos: p.total_centavos, taxa_centavos: p.taxa_centavos, custo_do_pix_centavos: situacao === "pago" ? custo : null, repasse_centavos: situacao === "pago" ? repasseDoPedido(p) : 0,
       },
     };
