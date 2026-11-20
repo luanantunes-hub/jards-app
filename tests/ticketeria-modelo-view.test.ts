@@ -94,3 +94,52 @@ test("o resultado mostra o que está dentro de “venderia de qualquer jeito”,
   for (const x of ["O que está dentro de “venderia de qualquer jeito”: 41% das vendas", "Nível normal da loja", "Tendência e época do ano", "Proximidade da sessão", "18% <span", "Preço e lotes", "−4%", "margem grande"]) assert.ok(p.includes(x), `falta: ${x}`);
   assert.ok(!html(createElement(ResultadoDoModelo, { resultado: r })).includes("O que está dentro de"), "sem partes (resultado antigo) a quebra não aparece");
 });
+
+// ─── A previsão: onde investir e o simulador de orçamento ───────────────────
+
+import { RecomendacaoDeInvestimento } from "../components/ticketeria/ModeloView";
+import { SimularOrcamentoSheet } from "../components/ticketeria/SimularOrcamentoSheet";
+import { FATOR_DA_CURVA } from "../lib/ticketeria/modelo-recomendacao";
+
+const curvaDe = (beta: number, lam: number, testado: number) => Array.from({ length: 16 }, (_, i) => {
+  const g = Math.round((i / 15) * FATOR_DA_CURVA * testado);
+  return { gasto_centavos: g, ingressos: Math.round(beta * (1 - Math.exp((-lam * g) / testado)) * 100) / 100 };
+});
+const comCurva = [
+  canal("meta-ads", 27, 16, 38, 780000, 2250, { saturacao_gasto_centavos: 18000, curva: curvaDe(40, 3, 30000) }),
+  canal("google-ads", 9, 5, 14, 210000, 1820, { curva: curvaDe(20, 1, 15000) }),
+  canal("instagram", 14, 5, 23, 0, null),
+];
+const gasto = { "meta-ads": 20000, "google-ads": 4000 };
+
+test("onde investir: a frase com o canal que mais rende, a tabela, a barra de limite e o aviso de previsão", () => {
+  const p = html(createElement(RecomendacaoDeInvestimento, { canais: comCurva, gastoSemanal: gasto }));
+  for (const x of ["Hoje o próximo real rende mais no Google Ads.", "Mais R$ 100 por semana no Google Ads trazem cerca de", "no Meta Ads, cerca de", "O Meta Ads já está perto do limite: acima de R$ 180,00 por semana", "Onde vale investir mais", "Ingressos por R$ 100 a mais", "Custo do ingresso extra", "R$ 200,00", "R$ 40,00", "perto do limite", "espaço para crescer", "Isto é uma previsão, não uma garantia"]) assert.ok(p.includes(x), `falta: ${x}`);
+  assert.ok(!p.includes("Instagram"), "sem gasto e sem curva, o canal não entra");
+  assert.ok(p.indexOf("Google Ads</td>") < p.indexOf("Meta Ads</td>"), "o que mais rende vem primeiro");
+  assert.equal(html(createElement(RecomendacaoDeInvestimento, { canais: comCurva, gastoSemanal: {} })), "", "sem gasto por semana não há o que prever");
+});
+
+test("todos os canais perto do limite: a frase diz que gastar mais rende pouco", () => {
+  const p = html(createElement(RecomendacaoDeInvestimento, { canais: [comCurva[0]], gastoSemanal: { "meta-ads": 20000 } }));
+  assert.ok(p.includes("estão perto do limite") && p.includes("Gastar mais neles rende pouco"));
+  assert.ok(!p.includes("rende mais no"));
+});
+
+test("o resultado mostra a recomendação só quando recebe o gasto por semana", () => {
+  const com = html(createElement(ResultadoDoModelo, { resultado: resultado({ canais: comCurva }), gastoSemanal: gasto }));
+  assert.ok(com.includes("Onde vale investir mais"));
+  assert.ok(!html(createElement(ResultadoDoModelo, { resultado: resultado({ canais: comCurva }) })).includes("Onde vale investir mais"));
+});
+
+test("simular orçamento: o gasto de hoje, a divisão sugerida, o que esperar e o que a frase diz de gastar mais ou menos", () => {
+  const p = html(createElement(SimularOrcamentoSheet, { canais: comCurva, gastoSemanal: gasto, valorInicial: "300", onClose: () => {} }));
+  for (const x of ["Simular orçamento", "Gasto por semana (todos os canais, em reais)", "Em geral você gasta R$ 240,00 por semana", "Hoje", "Dividindo como sugerido", "Meta Ads", "Google Ads", "Ingressos esperados por semana, pelos anúncios", "Custo por ingresso", "entre ", "Sobre os R$ 60,00 a mais por semana, o modelo espera", "É uma previsão, não uma garantia"]) assert.ok(p.includes(x), `falta: ${x}`);
+  const menos = html(createElement(SimularOrcamentoSheet, { canais: comCurva, gastoSemanal: gasto, valorInicial: "100", onClose: () => {} }));
+  assert.ok(menos.includes("Com R$ 140,00 a menos por semana, o modelo espera"));
+  const alto = html(createElement(SimularOrcamentoSheet, { canais: comCurva, gastoSemanal: gasto, valorInicial: "400", onClose: () => {} }));
+  assert.ok(alto.includes("passa do que você já testou") || alto.includes("passam do que você já testou") || alto.includes("a mais por semana"), "ou avisa da faixa, ou só diz o ganho");
+  const ruim = html(createElement(SimularOrcamentoSheet, { canais: comCurva, gastoSemanal: gasto, valorInicial: "abc", onClose: () => {} }));
+  assert.ok(ruim.includes("Digite um valor em reais") && !ruim.includes("Dividindo como sugerido"));
+  assert.ok(html(createElement(SimularOrcamentoSheet, { canais: [comCurva[2]], gastoSemanal: {}, onClose: () => {} })).includes("Ainda não há canal com anúncio e curva para simular"));
+});

@@ -10,6 +10,7 @@ import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from "@/components/ticketeria/DivulgacaoView";
 import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
 import { DatasDePicoSheet } from "@/components/ticketeria/DatasDePicoSheet";
+import { SimularOrcamentoSheet } from "@/components/ticketeria/SimularOrcamentoSheet";
 import { lerDataDePico, type CamposDaDataDePico, type DataDePico } from "@/lib/ticketeria/modelo-controles";
 import { ModeloDaLoja, ResultadoDoModelo } from "@/components/ticketeria/ModeloView";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
@@ -59,6 +60,7 @@ export default function DivulgacaoPage() {
   const [resultadoDoModelo, setResultadoDoModelo] = useState<ResultadoParaATela | null>(null);
   // As datas de pico da loja (a folha "Adicionar uma data sua" da aba Modelo).
   const [datasDePico, setDatasDePico] = useState<DataDePico[]>([]);
+  const [simulando, setSimulando] = useState(false);
   const [folhaDeDatas, setFolhaDeDatas] = useState<{ valores: CamposDaDataDePico; erro: string | null } | null>(null);
 
   useEffect(() => {
@@ -234,9 +236,12 @@ export default function DivulgacaoPage() {
 
   if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   const dados = estado.dados;
+  // O gasto por semana de cada canal (o mais comum nas semanas com gasto): a base da previsão e do simulador.
+  const gastoSemanal: Record<string, number> = Object.fromEntries((prontidao?.canais ?? []).filter(c => c.medianaCentavos > 0).map(c => [c.canal, c.medianaCentavos]));
   const acoes = (
     <>
       {dados && aba === "acoes" && <SecondaryListAction onClick={() => abrirNova(dados.hoje)}>Registrar ação</SecondaryListAction>}
+      {dados && aba === "modelo" && resultadoDoModelo && Object.keys(gastoSemanal).length > 0 && <SecondaryListAction onClick={() => setSimulando(true)}>Simular orçamento</SecondaryListAction>}
       {dados && aba === "historico" && <SecondaryListAction onClick={() => { setErroDeImportar(null); setFolhaDeImportar(true); }}>Importar planilha</SecondaryListAction>}
       {dados && <PrimaryListAction onClick={() => setCriando(true)}><Link2 size={13} aria-hidden="true" /> Criar link de divulgação</PrimaryListAction>}
     </>
@@ -261,7 +266,7 @@ export default function DivulgacaoPage() {
               ? (prontidaoErro ? <p role="alert" className="rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>Não foi possível conferir os dados do modelo agora. Recarregue a página.</p>
                 : prontidao ? (
                   <div className="space-y-4">
-                    {resultadoDoModelo && <ResultadoDoModelo resultado={resultadoDoModelo} />}
+                    {resultadoDoModelo && <ResultadoDoModelo resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} />}
                     {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} />}
                   </div>)
                 : <p className="text-[0.8125rem] text-black/40" aria-live="polite">Conferindo os dados…</p>)
@@ -277,6 +282,7 @@ export default function DivulgacaoPage() {
       {criando && dados && <LinkDeDivulgacaoSheet sessoes={dados.sessoes} origem={window.location.origin} sessaoInicial={sessaoId} onClose={() => setCriando(false)} />}
       {folhaDeImportar && <ImportarPlanilhaSheet existentes={historico.importacoes} erro={erroDeImportar} importando={importando} onClose={() => setFolhaDeImportar(false)} onImportar={c => void importar(c)} />}
       {escolhendo && <EscolherContaSheet fonte={CARTOES[escolhendo.provedor].fonte} tipo={escolhendo.provedor === "ga4" ? "visitas" : "gasto"} contas={escolhendo.contas} escolhida={escolhendo.escolhida} erro={escolhendo.erro} salvando={salvando} onEscolher={id => setEscolhendo(e => (e ? { ...e, escolhida: id } : e))} onClose={() => setEscolhendo(null)} onSalvar={() => void confirmarConta()} />}
+      {simulando && resultadoDoModelo && <SimularOrcamentoSheet canais={resultadoDoModelo.canais} gastoSemanal={gastoSemanal} onClose={() => setSimulando(false)} />}
       {folhaDeDatas && <DatasDePicoSheet datas={datasDePico} valores={folhaDeDatas.valores} erro={folhaDeDatas.erro} salvando={salvando} onMudar={(campo, valor) => setFolhaDeDatas(f => (f ? { ...f, valores: { ...f.valores, [campo]: valor } } : f))} onClose={() => setFolhaDeDatas(null)} onAdicionar={() => void adicionarData()} onApagar={id => void apagarData(id)} />}
       {acao && <AcaoSheet editando={acao.id !== null} valores={acao.valores} erro={acaoErro} salvando={salvando} onMudar={(campo, valor) => setAcao(a => (a ? { ...a, valores: { ...a.valores, [campo]: valor } } : a))} onClose={() => setAcao(null)} onSalvar={() => void salvar()} onApagar={() => void apagar()} />}
     </>

@@ -4,7 +4,8 @@ import { Check } from "lucide-react";
 import { SEMANAS_IDEAIS, rotuloDoCanalDeGasto, type Confianca, type ProntidaoDoModelo, type Verificacao } from "@/lib/ticketeria/modelo";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
 import { SEMANAS_DOS_CONTROLES_EXTRAS, type ControleDaTela } from "@/lib/ticketeria/modelo-controles";
-import { temMargemGrande, type ChaveDaParte } from "@/lib/ticketeria/modelo-resultado";
+import { temMargemGrande, type CanalDoResultado, type ChaveDaParte } from "@/lib/ticketeria/modelo-resultado";
+import { canaisComCurva, linhasDeInvestimento, recomendar } from "@/lib/ticketeria/modelo-recomendacao";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 
 // A aba Modelo da Divulgação (fatia M-A): se já há dado para o modelo de marketing rodar, e o que falta. Ainda não há o cálculo do modelo (é a fatia seguinte). Só desenho: os dados
@@ -98,6 +99,70 @@ const pontos = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).re
 const margem = (baixo: number, alto: number, meio: number) => Math.round(Math.max(meio - baixo, alto - meio));
 
 
+// ─── De onde vale investir mais (previsão) ──────────────────────────────────
+
+/** A recomendação e a tabela "onde vale investir mais": o que R$ 100 a mais por semana trazem em cada canal, o custo do ingresso extra e se o canal está perto do limite. Previsão, não garantia. */
+export function RecomendacaoDeInvestimento({ canais, gastoSemanal }: { canais: CanalDoResultado[]; gastoSemanal: Record<string, number> }) {
+  const comCurva = canaisComCurva(canais);
+  const linhas = linhasDeInvestimento(comCurva, gastoSemanal).filter(l => l.gastoCentavos > 0);
+  if (linhas.length === 0) return null;
+  const r = recomendar(linhas);
+  const rotulo = (c: string) => rotuloDoCanalDeGasto(c);
+  const noLimite = linhas.filter(l => l.estado === "limite");
+  const limiteDe = (c: string) => comCurva.find(x => x.canal === c)?.saturacaoCentavos ?? null;
+  return (
+    <section className="space-y-3" aria-label="De onde vale investir mais">
+      <div className="flex items-start gap-3.5 rounded-xl border px-5 py-4" style={{ borderColor: "rgba(46,137,50,.28)", background: "#F8FCF8" }}>
+        <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[0.6875rem] text-white" style={{ background: VERDE }} aria-hidden="true">↑</span>
+        <div className="min-w-0">
+          {r.tipo === "sem_espaco" ? (
+            <>
+              <p className="text-[0.875rem] text-[#282525]">Os canais com anúncio estão perto do limite.</p>
+              <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/50">Gastar mais neles rende pouco. Vale testar um canal novo ou melhorar o que já anuncia.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-[0.875rem] text-[#282525]">Hoje o próximo real rende mais no {rotulo(r.canal as string)}.</p>
+              <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/50">
+                Mais R$ 100 por semana no {rotulo(r.canal as string)} trazem cerca de {pontos(r.ingressosPorCem)} ingressos a mais{r.segundo ? `; no ${rotulo(r.segundo)}, cerca de ${pontos(r.ingressosPorCemDoSegundo as number)}` : ""}.
+                {noLimite.map(l => limiteDe(l.canal) !== null ? ` O ${rotulo(l.canal)} já está perto do limite: acima de ${formatarMoeda(limiteDe(l.canal) as number)} por semana, cada real a mais rende pouco.` : "").join("")}
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+      <h3 className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Onde vale investir mais</h3>
+      <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>
+        <table className="w-full min-w-[46rem] border-collapse">
+          <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Canal</th><th className={`${CABECALHO} text-right`}>Gasto por semana</th><th className={`${CABECALHO} text-right`}>Ingressos por R$ 100 a mais</th><th className={`${CABECALHO} text-right`}>Custo do ingresso extra</th><th className={CABECALHO}>Perto do limite</th><th className={CABECALHO}><span className="sr-only">Situação</span></th></tr></thead>
+          <tbody className="divide-y divide-black/[.08]">
+            {linhas.map(l => (
+              <tr key={l.canal}>
+                <td className={CELULA}>{rotulo(l.canal)}</td>
+                <td className={`${CELULA} text-right tabular-nums`}>{formatarMoeda(l.gastoCentavos)}</td>
+                <td className={`${CELULA} text-right tabular-nums`}>{pontos(l.ingressosPorCem)}</td>
+                <td className={`${CELULA} text-right tabular-nums`}>{l.custoDoExtraCentavos === null ? <span className="text-black/30">—</span> : formatarMoeda(l.custoDoExtraCentavos)}</td>
+                <td className="px-4 py-3">
+                  <div className="relative h-2 w-48 rounded bg-[#EFECF6]" role="img" aria-label={`${l.posicao}% da curva${l.limite !== null ? `; o limite fica em ${l.limite}%` : ""}`}>
+                    <div className="h-2 rounded" style={{ width: `${l.posicao}%`, background: l.estado === "limite" ? AMBAR : "#7259B5" }} />
+                    {l.limite !== null && <span className="absolute -top-[3px] -bottom-[3px] w-0.5 bg-black/45" style={{ left: `${l.limite}%` }} />}
+                  </div>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <span className="inline-flex rounded-xl border bg-white px-2 py-0.5 text-[0.625rem]" style={l.estado === "limite" ? { borderColor: "rgba(176,122,20,.3)", color: AMBAR } : { borderColor: `${VERDE}4D`, color: VERDE }}>{l.estado === "limite" ? "perto do limite" : "espaço para crescer"}</span>
+                  {l.margemGrande && <span className="ml-2 inline-flex rounded-xl border px-2 py-0.5 text-[0.625rem] text-black/50" style={{ borderColor: BORDA }}>margem grande</span>}
+                  {l.foraDaFaixa && <span className="ml-2 inline-flex rounded-xl border px-2 py-0.5 text-[0.625rem] text-black/50" style={{ borderColor: BORDA }}>acima do que já testou</span>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Isto é uma previsão, não uma garantia: vem da curva que o modelo estimou de cada canal e vale perto do que você já gastou (o gasto por semana é o mais comum nas semanas com gasto). Fora dessa faixa, como dobrar o gasto de um canal, a estimativa fica bem menos firme. Só canais com gasto entram.</p>
+    </section>
+  );
+}
+
 const PARTES: Record<ChaveDaParte, { rotulo: string; dica: string; cor: string }> = {
   nivel: { rotulo: "Nível normal da loja", dica: "o que a loja vende sem nada especial acontecendo", cor: "#1C0E33" },
   tendencia: { rotulo: "Tendência e época do ano", dica: "a loja vem crescendo ou caindo; as estações", cor: "#3A2466" },
@@ -141,7 +206,7 @@ export function QuebraDaBase({ base }: { base: ResultadoParaATela["execucao"]["b
 }
 
 /** O que o modelo estimou: o selo de confiança, a tabela canal a canal com o modelo ao lado dos links e, para cada canal, o gasto semanal a partir do qual rende pouco. */
-export function ResultadoDoModelo({ resultado }: { resultado: ResultadoParaATela }) {
+export function ResultadoDoModelo({ resultado, gastoSemanal }: { resultado: ResultadoParaATela; gastoSemanal?: Record<string, number> }) {
   const { execucao: e, comparacao, canais, ultimaFalha } = resultado;
   const parte = Math.min(100, Math.round((e.semanas / SEMANAS_IDEAIS) * 100));
   const saturacoes = canais.filter(c => c.saturacao_gasto_centavos !== null && c.gasto_centavos > 0);
@@ -155,6 +220,7 @@ export function ResultadoDoModelo({ resultado }: { resultado: ResultadoParaATela
         <div className="mt-2.5 h-2 rounded bg-[#F1E6C8]" aria-hidden="true"><div className="h-2 rounded" style={{ width: `${parte}%`, background: AMBAR }} /></div>
         {e.confianca === "baixa" && (e.r_hat_maximo > 1.05 || e.divergencias > 0) && <p className="mt-2 text-[0.75rem] text-black/50">O cálculo ainda não se firmou direito com estes dados: leia os números como indício.</p>}
       </div>
+      {gastoSemanal && <RecomendacaoDeInvestimento canais={canais} gastoSemanal={gastoSemanal} />}
       {ultimaFalha && <p role="alert" className="rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-black/55" style={{ borderColor: "rgba(176,122,20,.25)" }}>A rodada de {dataBr(ultimaFalha.created_at)} não deu: {ultimaFalha.motivo} Esta tela mostra a anterior.</p>}
       <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>
         <table className="w-full min-w-[46rem] border-collapse">
