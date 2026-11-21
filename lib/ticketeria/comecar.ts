@@ -31,7 +31,8 @@ export const PERFIL: Record<PerfilDoProdutor, {
     titulo: "Faço um evento único", descricao: "Uma festa, um show, uma palestra.",
     pergunta: "Conta do seu evento", apoio: "Só o essencial. O resto fica para depois.",
     rotuloDoNome: "Nome do evento", exemploDoNome: "Show de lançamento",
-    rotuloDoLugar: "Onde", exemploDoLugar: "Casa de Cultura", rotuloDaData: "Quando", ilustracao: null,
+    rotuloDoLugar: "Onde", exemploDoLugar: "Casa de Cultura", rotuloDaData: "Quando",
+    ilustracao: "/ilustracoes/ticketeria/perfil-unico.webp",
   },
   festival: {
     titulo: "Organizo um festival", descricao: "Vários dias ou atrações, no mesmo lugar.",
