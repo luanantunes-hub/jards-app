@@ -70,14 +70,12 @@
 /* abertura */
 .tku-hero { position:relative; padding:104px 0 24px; border-bottom:1px solid var(--tku-linha); overflow:hidden; }
 .tku-hero .tku-in { position:relative; z-index:1; }
-.tku-hero-grade { display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:16px; align-items:center; }
-.tku-hero h1 { font-size:min(64px,5vw); line-height:1.02; margin:0; letter-spacing:-.05em; text-wrap:balance; }
+.tku-hero-grade { display:grid; grid-template-columns:minmax(0,7fr) minmax(0,5fr); gap:24px; align-items:center; }
+.tku-hero h1 { font-size:min(64px,5vw); line-height:1.06; margin:0; letter-spacing:-.05em; text-wrap:pretty; }
 /* a arena é desenhada com margem de ar em volta; aqui ela é recortada para encostar nas bordas */
 .tku-hero-arte { display:flex; justify-content:center; }
-.tku-hero-arte .tku-iso { display:block; width:88%; max-width:none; height:auto; margin:0 auto; overflow:visible; }
-.tku-hero h1 span { display:block; }
+.tku-hero-arte .tku-iso { display:block; width:116%; max-width:none; height:auto; margin:0 -8% 0 -8%; overflow:visible; }
 .tku-hero h1 .tku-vio { color:var(--tku-vio); }
-.tku-hero-sub { margin:22px 0 0; max-width:30em; font-size:19px; line-height:1.5; color:#3A3935; text-wrap:pretty; }
 .tku-sub { margin-top:28px; }
 .tku-hero .tku-acoes { justify-content:flex-start; }
 .tku-acoes { display:flex; flex-wrap:wrap; gap:12px; }
@@ -170,7 +168,6 @@
   .tku-in { padding:0 20px; }
   .tku-hero { padding-top:88px; }
   .tku-hero h1 { font-size:clamp(34px,9.4vw,48px); }
-  .tku-hero-sub { font-size:16.5px; margin-top:16px; }
   .tku-dois { grid-template-columns:minmax(0,1fr); }
   .tku-bar2 { grid-template-columns:76px minmax(0,1fr) 92px; }
   .tku-quem b { font-size:clamp(30px,10vw,46px); }
@@ -384,8 +381,7 @@ section[id] { scroll-margin-top:72px; }
 <section id="top" class="tku-hero" aria-labelledby="abertura-titulo">
   <div class="tku-in tku-hero-grade">
     <div class="tku-hero-txt">
-      <h1 id="abertura-titulo" class="tku-cond"><span>A infraestrutura por trás de</span><span class="tku-vio">todo ingresso.</span></h1>
-        <p class="tku-hero-sub">Venda ingressos, controle o acesso e implemente modelos de venda personalizados, desde o primeiro ingresso até o milionésimo.</p>
+      <h1 id="abertura-titulo" class="tku-cond">A infraestrutura por trás de <span class="tku-vio">todo ingresso.</span> Venda ingressos, controle o acesso e implemente modelos de venda personalizados, desde o primeiro ingresso até o milionésimo.</h1>
     <div class="tku-sub">
         <div>
           <div class="tku-acoes">
