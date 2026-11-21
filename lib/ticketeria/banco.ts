@@ -2897,6 +2897,15 @@ export type BancoDaTicketeria = {
         Args: { p_org: string; p_acao: "ler" | "editar" };
         Returns: boolean;
       };
+      // O onboarding ("Começar"): cria loja, local, setor, evento em rascunho, sessões, ingressos e lotes numa só chamada.
+      // Roda com a permissão de quem chama (lib/ticketeria/comecar.ts monta os argumentos).
+      fn_ticketeria_comecar: {
+        Args: {
+          p_org: string; p_perfil: "espaco" | "turne" | "unico" | "festival"; p_evento: string; p_local: string; p_cidade: string | null;
+          p_lugares: number; p_data: string; p_hora: string; p_dias: number | null; p_preco_centavos: number; p_meia: boolean;
+        };
+        Returns: Json;
+      };
       // A pessoa logada chama: as lojas em que ela é bilheteira ligada ([{ id, loja_id, loja, nome }]).
       fn_ticketeria_bilheteiro_atual: {
         Args: Record<string, never>;
