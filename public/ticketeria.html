@@ -212,7 +212,7 @@
 .tku-mos { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:16px; margin-top:48px; }
 .tku-mc { position:relative; overflow:hidden; grid-column:span 4; display:flex; flex-direction:column; min-height:392px;
   padding:26px; background:var(--tku-papel); border:1px solid var(--tku-linha); border-radius:var(--tku-raio); }
-.tku-mc--7 { grid-column:span 7; } .tku-mc--5 { grid-column:span 5; } .tku-mc--8 { grid-column:span 8; } .tku-mc--12 { grid-column:span 12; min-height:0; }
+.tku-mc--7 { grid-column:span 7; } .tku-mc--5 { grid-column:span 5; } .tku-mc--8 { grid-column:span 8; } .tku-mc--6 { grid-column:span 6; } .tku-mc--12 { grid-column:span 12; min-height:0; }
 .tku-mc::before { content:""; position:absolute; inset:0; pointer-events:none; }
 .tku-mc--amb::before { background:radial-gradient(130% 88% at 100% 0%, rgba(255,85,40,.20), rgba(255,85,40,0) 56%); }
 .tku-mc--lil::before { background:radial-gradient(120% 96% at 0% 100%, rgba(100,80,210,.18), rgba(100,80,210,0) 58%); }
@@ -242,13 +242,13 @@
 .tku-fluxo i { flex:1; height:1px; background:rgba(28,14,51,.18); }
 .tku-iso { display:block; width:100%; height:auto; margin-top:10px; overflow:visible; }
 /* a primeira peça: a loja flutua sobre a arena, à esquerda e um pouco acima */
-.tku-dupla { display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); align-items:start; }
-.tku-dupla-loja { position:relative; z-index:2; grid-column:1; grid-row:1; margin:4% -16% 0 0; }
+.tku-dupla { display:grid; grid-template-columns:minmax(0,4fr) minmax(0,6fr); align-items:start; }
+.tku-dupla-loja { position:relative; z-index:2; grid-column:1; grid-row:1; margin:2% -8% 0 0; }
 .tku-dupla-arena { grid-column:2; grid-row:1; }
-.tku-dupla-arena .tku-iso { margin-top:0; }
+.tku-dupla-arena .tku-iso { margin-top:0; width:122%; max-width:none; margin-left:-9%; }   /* sem as margens vazias da imagem */
 .tku-iso .palco-r { fill:var(--tku-ink); font-family:'Satoshi',system-ui,sans-serif; font-weight:600; font-size:.66px; letter-spacing:.24em; text-anchor:middle; }
 .tku-dupla-loja .tku-tab td:nth-child(2) { white-space:nowrap; }
-.tku-mc--12 h3 { max-width:28ch; }
+.tku-mc--8 h3, .tku-mc--12 h3 { max-width:28ch; }
 @media (max-width:1023px) { .tku-dupla { grid-template-columns:minmax(0,1fr); } .tku-dupla-loja { margin:0; } .tku-dupla-arena { grid-column:1; grid-row:2; margin-top:-8px; } }
 @media (max-width:640px) { .tku-iso { width:124%; max-width:none; margin-left:-12%; } }   /* no celular, a arena ocupa a largura toda */
 .tku-iso .palco-t { fill:#fff; font-family:'Satoshi',system-ui,sans-serif; font-weight:600; font-size:11px; letter-spacing:.24em; text-anchor:middle; }
@@ -312,7 +312,7 @@
 @media (max-width:1023px) {
   .tku-seis { grid-template-columns:minmax(0,1fr); }
   .tku-mos { grid-template-columns:minmax(0,1fr); }
-  .tku-mc, .tku-mc--7, .tku-mc--5, .tku-mc--8, .tku-mc--12 { grid-column:auto; min-height:0; }
+  .tku-mc, .tku-mc--7, .tku-mc--6, .tku-mc--5, .tku-mc--8, .tku-mc--12 { grid-column:auto; min-height:0; }
   .tku-par { grid-template-columns:minmax(0,1fr); }
   .tku-quem--d li > div { flex-direction:column; align-items:flex-start; gap:6px; padding-bottom:14px; }
 }
@@ -391,7 +391,7 @@ section[id] { scroll-margin-top:72px; }
     <h2 id="base-titulo" class="tku-h2 tku-cond">Uma base flexível <span class="tku-vio">para cada tipo de evento.</span></h2>
     <p class="tku-lede">Sessão única, temporada ou turnê, com ou sem assento marcado. As mesmas peças, configuradas para cada modelo de venda.</p>
     <div class="tku-mos" data-mosaico>
-  <article class="tku-mc tku-mc--12">
+  <article class="tku-mc tku-mc--8">
     <div class="tku-mc-cab"><span class="tku-st">Em teste</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Venda na sua marca, com lotes, assentos e categorias"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
     <h3 class="tku-cond">Venda na sua marca, com lotes, assentos e categorias</h3>
     <p class="tku-t tku-sr" data-txt>Loja, agenda e compra no domínio do organizador, com assento marcado, setores e categorias de preço, cortesias, cupons e lotes que avançam quando esgotam. O comprador não precisa criar conta e recebe o ingresso por e-mail.</p>
@@ -411,7 +411,23 @@ section[id] { scroll-margin-top:72px; }
       </div>
     </div>
   </article>
-  <article class="tku-mc tku-mc--lil">
+  <article class="tku-mc tku-mc--amb">
+    <div class="tku-mc-cab"><span class="tku-st tku-st--c">Em construção</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Venda presencialmente"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
+    <h3 class="tku-cond">Venda presencialmente</h3>
+    <p class="tku-t tku-sr" data-txt>Cobrança por Pix, cartão e terminal de pagamento no ponto de venda, com o mesmo controle de assentos e de público.</p>
+    <div class="tku-mc-art">
+      <div class="tku-fone" aria-hidden="true">
+        <div class="tku-fone-tela">
+          <svg viewBox="0 0 24 24"><path d="M8.5 6.5a7.5 7.5 0 0 1 0 11M12.5 4a11 11 0 0 1 0 16M4.5 9a3.6 3.6 0 0 1 0 6"/></svg>
+          <p class="tku-mono tku-mudo">Cia. de Teatro do Porto</p>
+          <p class="tku-val tku-cond">R$ 60,00</p>
+          <p class="tku-mono tku-mudo" style="margin-top:10px">Aproxime o cartão<br />ou pague por Pix</p>
+          <div class="tku-fone-btn">Cobrar</div>
+        </div>
+      </div>
+    </div>
+  </article>
+  <article class="tku-mc tku-mc--6 tku-mc--lil">
     <div class="tku-mc-cab"><span class="tku-st">Em teste</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Controle o acesso, mesmo sem conexão"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
     <h3 class="tku-cond">Controle o acesso, mesmo sem conexão</h3>
     <p class="tku-t tku-sr" data-txt>Cada ingresso tem um QR assinado. A leitura valida na hora e sincroniza quando a conexão volta.</p>
@@ -426,7 +442,7 @@ section[id] { scroll-margin-top:72px; }
       </div>
     </div>
   </article>
-  <article class="tku-mc">
+  <article class="tku-mc tku-mc--6">
     <div class="tku-mc-cab"><span class="tku-st">Em teste</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Receba direto, sem custódia"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
     <h3 class="tku-cond">Receba direto, sem custódia</h3>
     <p class="tku-t tku-sr" data-txt>O pagamento é dividido no momento da compra: o valor do ingresso vai para o organizador e só a taxa fica com a Ticketeria. A Ticketeria não retém o dinheiro.</p>
@@ -440,22 +456,6 @@ section[id] { scroll-margin-top:72px; }
           <li><span>Taxa da Ticketeria · 2,5%</span><b>R$ 1,50</b></li>
         </ul>
         <div class="tku-fluxo tku-mono"><span>Compra</span><i></i><span>Divisão</span><i></i><span>Repasse</span></div>
-      </div>
-    </div>
-  </article>
-  <article class="tku-mc tku-mc--amb">
-    <div class="tku-mc-cab"><span class="tku-st tku-st--c">Em construção</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Venda presencialmente"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
-    <h3 class="tku-cond">Venda presencialmente</h3>
-    <p class="tku-t tku-sr" data-txt>Cobrança por Pix, cartão e terminal de pagamento no ponto de venda, com o mesmo controle de assentos e de público.</p>
-    <div class="tku-mc-art">
-      <div class="tku-fone" aria-hidden="true">
-        <div class="tku-fone-tela">
-          <svg viewBox="0 0 24 24"><path d="M8.5 6.5a7.5 7.5 0 0 1 0 11M12.5 4a11 11 0 0 1 0 16M4.5 9a3.6 3.6 0 0 1 0 6"/></svg>
-          <p class="tku-mono tku-mudo">Cia. de Teatro do Porto</p>
-          <p class="tku-val tku-cond">R$ 60,00</p>
-          <p class="tku-mono tku-mudo" style="margin-top:10px">Aproxime o cartão<br />ou pague por Pix</p>
-          <div class="tku-fone-btn">Cobrar</div>
-        </div>
       </div>
     </div>
   </article>
