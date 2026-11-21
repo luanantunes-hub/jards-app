@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { LIMITE_DE_DESTINATARIOS, SEGMENTO_TODOS, acaoDoEnvio, comNome, destinatariosDoSegmento, emailDeDivulgacao, enderecoDeCompraDoEnvio, enviarDivulgacao, lerEnvio, segmentosDoPublico, vendasPorAcao, type EntradaParaEnvio, type PortasDoEnvio } from "../lib/ticketeria/envios";
+import { LIMITE_DE_DESTINATARIOS, SEGMENTO_TODOS, processarFila, acaoDoEnvio, comNome, destinatariosDoSegmento, emailDeDivulgacao, enderecoDeCompraDoEnvio, lerEnvio, segmentosDoPublico, vendasPorAcao, type EntradaParaEnvio, type MarcaDaFila, type PortasDaFila } from "../lib/ticketeria/envios";
 
 const E1 = "0d760000-0000-4000-8000-0000000000a1";
 const E2 = "0d760000-0000-4000-8000-0000000000a2";
@@ -44,7 +44,7 @@ test("o corpo do envio: lido e conferido", () => {
     if (!r.ok) assert.ok(r.problemas.includes(problema), problema);
   }
   assert.equal(lerEnvio(null).ok, false);
-  assert.equal(LIMITE_DE_DESTINATARIOS, 300);
+  assert.equal(LIMITE_DE_DESTINATARIOS, 5000);
 });
 
 test("a ação do link: o assunto em minúsculas, sem acento, com o dia e o mês", () => {
@@ -69,41 +69,62 @@ test("o e-mail: o nome, o botão de comprar, o rodapé e o link de sair; nada do
   assert.ok(e.texto.includes("aceitou receber novidades de Cia <Atores>"));
 });
 
-function portas(sobre: Partial<PortasDoEnvio> = {}) {
-  const chamadas = { criar: [] as unknown[], enviados: [] as { para: string; token: string; chave: string; texto: string }[], marcados: [] as [string, boolean][], concluido: null as null | [string, number, number], erros: 0 };
-  const p: PortasDoEnvio = {
-    async criar(dados) { chamadas.criar.push(dados); return { envio: "env1", destinatarios: dados.destinatarios.map((d, i) => ({ id: `d${i}`, email: d.email, nome: d.nome, token: `tok${i}` })) }; },
-    async enviar(e) { chamadas.enviados.push({ para: e.para, token: e.token, chave: e.chave, texto: e.texto }); return { ok: true, id: `r-${e.para}` }; },
-    async marcar(id, ok) { chamadas.marcados.push([id, ok]); },
-    async concluir(envio, enviados, falhas) { chamadas.concluido = [envio, enviados, falhas]; },
+function fila(pessoas: number, sobre: Partial<PortasDaFila> = {}, agoraInicial = 0) {
+  const todas = Array.from({ length: pessoas }, (_, i) => ({ id: `d${i}`, email: `p${i}@x.com`, nome: `Pessoa ${i}`, token: `tok${i}` }));
+  let proxima = 0;
+  let relogio = agoraInicial;
+  const chamadas = { reivindicar: [] as number[], lotes: [] as { chave: string; para: string[] }[], unicos: [] as string[], marcas: [] as MarcaDaFila[], atualizacoes: 0, erros: 0, textos: [] as string[] };
+  const p: PortasDaFila = {
+    async reivindicar(n) { chamadas.reivindicar.push(n); const lote = todas.slice(proxima, proxima + n); proxima += lote.length; return lote; },
+    async enviarLote(emails, chave) { chamadas.lotes.push({ chave, para: emails.map(e => e.para) }); chamadas.textos.push(emails[0].texto); return { ok: true, ids: emails.map(e => `re_${e.para}`) }; },
+    async enviarUm(email) { chamadas.unicos.push(email.para); return { ok: true, id: `re_${email.para}` }; },
+    async marcar(m) { chamadas.marcas.push(...m); },
+    async atualizar() { chamadas.atualizacoes++; return todas.length - proxima + chamadas.marcas.filter(m => !m.ok).length * 0; },
+    agora: () => (relogio += 1000),
     registrarErro() { chamadas.erros++; },
     ...sobre,
   };
   return { p, chamadas };
 }
-const pedido = { loja: "Cia", origem: "https://jards.com.br", assunto: "Vagas", mensagem: "Oi, {nome}!", sessao_id: SESSAO, segmento: SEGMENTO_TODOS, destinatarios: [{ email: "a@x.com", nome: "Ana Souza" }, { email: "b@x.com", nome: "Beto" }, { email: "c@x.com", nome: "Cris" }], agora: new Date("2026-11-20T15:00:00Z"), enderecoParaSair: (t: string) => `https://jards.com.br/novidades/${t}` };
+const dados = { loja: "Cia", origem: "https://jards.com.br", assunto: "Vagas", mensagem: "Oi, {nome}!", sessao_id: SESSAO, acao: "vagas-20-11", enderecoParaSair: (t: string) => `https://jards.com.br/novidades/${t}` };
 
-test("o fluxo: um e-mail por pessoa, cada um com o seu token, o link marcado e a chave de idempotência; conta e conclui", async () => {
-  const { p, chamadas } = portas();
-  const r = await enviarDivulgacao(pedido, p);
-  assert.deepEqual(r, { envio: "env1", enviados: 3, falhas: 0 });
-  assert.deepEqual(chamadas.enviados.map(e => [e.para, e.token, e.chave]), [["a@x.com", "tok0", "ticketeria-envio-d0"], ["b@x.com", "tok1", "ticketeria-envio-d1"], ["c@x.com", "tok2", "ticketeria-envio-d2"]]);
-  assert.ok(chamadas.enviados[0].texto.includes("Oi, Ana!"));
-  assert.ok(chamadas.enviados[0].texto.includes(`https://jards.com.br/comprar/${SESSAO}?canal=email&acao=vagas-20-11`));
-  assert.ok(chamadas.enviados[2].texto.includes("https://jards.com.br/novidades/tok2"));
-  assert.deepEqual(chamadas.concluido, ["env1", 3, 0]);
-  assert.deepEqual(chamadas.marcados.length, 3);
+test("a fila: lotes de 100 numa chamada só, cada e-mail com o seu token, o link marcado e o nome; marca todo mundo e conclui", async () => {
+  const { p, chamadas } = fila(250);
+  const r = await processarFila(dados, p);
+  assert.deepEqual(r, { enviados: 250, falhas: 0, faltam: 0 });
+  assert.deepEqual(chamadas.reivindicar, [100, 100, 100], "pede 100 por vez; quando a atualização diz que não falta ninguém, para");
+  assert.deepEqual(chamadas.lotes.map(l => l.para.length), [100, 100, 50]);
+  assert.equal(chamadas.unicos.length, 0, "lote que funciona não manda um por um");
+  assert.equal(chamadas.lotes[0].chave, "ticketeria-lote-d0-100");
+  assert.ok(chamadas.textos[0].includes("Oi, Pessoa!") && chamadas.textos[0].includes(`https://jards.com.br/comprar/${SESSAO}?canal=email&acao=vagas-20-11`) && chamadas.textos[0].includes("https://jards.com.br/novidades/tok0"));
+  assert.equal(chamadas.marcas.length, 250);
+  assert.ok(chamadas.marcas.every(m => m.ok && m.provedorId === `re_${m.id.replace("d", "p")}@x.com`), "cada pessoa guarda o id do e-mail dela, na ordem do lote");
 });
 
-test("o fluxo: quem falha conta como falha e não derruba os outros; erro ao marcar vai ao registro", async () => {
-  const { p, chamadas } = portas({
-    async enviar(e) { if (e.para === "b@x.com") throw new Error("provedor fora"); return { ok: e.para !== "c@x.com", id: "r" }; },
-    async marcar(id) { if (id === "d0") throw new Error("banco"); },
+test("a fila: lote que falha manda um por um; quem falha conta como falha e não derruba os outros; erro ao mandar vai ao registro", async () => {
+  const { p, chamadas } = fila(4, {
+    async enviarLote() { return { ok: false }; },
+    async enviarUm(email) { if (email.para === "p1@x.com") throw new Error("provedor"); return { ok: email.para !== "p2@x.com", id: "re_ok" }; },
   });
-  const r = await enviarDivulgacao(pedido, p);
-  assert.deepEqual(r, { envio: "env1", enviados: 1, falhas: 2 });
-  assert.deepEqual(chamadas.concluido, ["env1", 1, 2]);
-  assert.equal(chamadas.erros, 2, "o provedor que lançou e o banco que falhou");
+  const r = await processarFila(dados, p);
+  assert.deepEqual(r, { enviados: 2, falhas: 2, faltam: 0 });
+  assert.deepEqual(chamadas.marcas.map(m => [m.id, m.ok]), [["d0", true], ["d1", false], ["d2", false], ["d3", true]]);
+  assert.equal(chamadas.erros, 1);
+  const torto = fila(2, { async enviarLote() { return { ok: true, ids: ["so-um"] }; } });
+  const r2 = await processarFila(dados, torto.p);
+  assert.equal(r2.enviados, 2, "lote com resposta que não confere vira um por um");
+  assert.equal(torto.chamadas.unicos.length, 2);
+});
+
+test("a fila: acabou o tempo da rodada, larga o resto para a próxima; fila vazia só atualiza", async () => {
+  const curta = fila(500);
+  const r = await processarFila({ ...dados, orcamentoMs: 2500 }, curta.p);
+  assert.ok(r.enviados > 0 && r.enviados < 500, "mandou só o que coube no tempo");
+  assert.ok(r.faltam > 0, "e diz quantas faltam");
+  const vazia = fila(0);
+  assert.deepEqual(await processarFila(dados, vazia.p), { enviados: 0, falhas: 0, faltam: 0 });
+  assert.equal(vazia.chamadas.atualizacoes, 1);
+  assert.equal(vazia.chamadas.lotes.length, 0);
 });
 
 test("as vendas de cada envio: as compras pagas que voltaram pela ação", () => {
@@ -149,4 +170,35 @@ test("o envio de divulgação sai por remetente próprio, com o clique único de
   const rota = await readFile("app/api/ticketeria/lojas/[id]/envios/route.ts", "utf8");
   assert.match(rota, /envio_desligado/);
   assert.match(rota, /autorizarLoja/);
+});
+
+test("a fila no servidor: o POST só cria e dispara depois da resposta, o cron é protegido e roda a cada minuto, e o lote usa o endpoint de lote", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const rota = await readFile("app/api/ticketeria/lojas/[id]/envios/route.ts", "utf8");
+  assert.match(rota, /import \{ after, type NextRequest \}/);
+  assert.match(rota, /after\(async \(\) => \{/);
+  assert.match(rota, /resposta\(\{ envio: criado, total: destinatarios\.length, enviando: true \}, 202\)/);
+  assert.doesNotMatch(rota, /enviarDivulgacao/, "não manda mais e-mail dentro do pedido");
+  const cron = await readFile("app/api/ticketeria/envios/processar/route.ts", "utf8");
+  assert.match(cron, /cron_indisponivel"\s*\}, 503/);
+  assert.match(cron, /nao_autorizado"\s*\}, 401/);
+  assert.match(cron, /timingSafeEqual/);
+  assert.match(cron, /\.eq\("canal", "email"\)\.eq\("situacao", "enviando"\)/, "só e-mail em andamento");
+  const vercel = JSON.parse(await readFile("vercel.json", "utf8")) as { crons: { path: string; schedule: string }[] };
+  assert.ok(vercel.crons.some(c => c.path === "/api/ticketeria/envios/processar" && c.schedule === "* * * * *"));
+  const lib = await readFile("lib/email/divulgacao.ts", "utf8");
+  assert.match(lib, /"\/emails\/batch"/);
+  assert.match(lib, /emails\.length > 100/, "o lote tem no máximo 100");
+  assert.match(lib, /resposta\.status !== 429 && resposta\.status < 500/, "tenta de novo só quando o Resend pede calma ou falha do lado dele");
+  const sql = (await readFile("supabase/tests/ticketeria_envios_fila.test.sql", "utf8"));
+  assert.match(sql, /select plan\(16\)/);
+});
+
+test("a tela mostra 'N de M' enquanto o e-mail está na fila", async () => {
+  const { createElement } = await import("react");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const { EnviosDaLoja } = await import("../components/ticketeria/EnviosView");
+  const h = renderToStaticMarkup(createElement(EnviosDaLoja, { envios: [{ id: "e1", assunto: "Grande", canal: "email", quando: "2026-11-14T13:00:00Z", destinatarios: 1200, enviados: 400, falhas: 0, situacao: "enviando", ingressos: 0, vendido_centavos: 0 }] }));
+  assert.ok(h.includes("400 de 1.200"));
+  assert.ok(h.includes("enviando…"));
 });

@@ -151,6 +151,14 @@ export default function PublicoPage() {
     }
   }
 
+  // Enquanto um envio de e-mail está na fila ("enviando"), a lista se atualiza sozinha a cada 5 segundos.
+  const enviandoEmail = envios.envios.some(e => e.canal === "email" && e.situacao === "enviando");
+  useEffect(() => {
+    if (!enviandoEmail || !lojaId) return;
+    const timer = setInterval(() => { void carregarEnvios(lojaId); }, 5000);
+    return () => clearInterval(timer);
+  }, [enviandoEmail, lojaId, carregarEnvios]);
+
   const dados = estado?.dados ?? null;
   const contatos = useMemo(() => (dados ? filtrarPublico(dados.contatos, filtro, busca) : []), [dados, filtro, busca]);
 

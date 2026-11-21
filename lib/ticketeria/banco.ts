@@ -1002,6 +1002,7 @@ export type BancoDaTicketeria = {
           clicou_em: string | null;
           devolvido_em: string | null;
           reclamou_em: string | null;
+          reivindicado_em: string | null;
         };
         Insert: {
           id?: string;
@@ -1019,6 +1020,7 @@ export type BancoDaTicketeria = {
           clicou_em?: string | null;
           devolvido_em?: string | null;
           reclamou_em?: string | null;
+          reivindicado_em?: string | null;
         };
         Update: {
           id?: string;
@@ -1036,6 +1038,7 @@ export type BancoDaTicketeria = {
           clicou_em?: string | null;
           devolvido_em?: string | null;
           reclamou_em?: string | null;
+          reivindicado_em?: string | null;
         };
         Relationships: [];
       };
@@ -2862,6 +2865,18 @@ export type BancoDaTicketeria = {
       fn_ticketeria_espera_sair: {
         Args: { p_token: string };
         Returns: boolean;
+      };
+      fn_ticketeria_reivindicar_destinatarios: {
+        Args: { p_envio: string; p_n: number };
+        Returns: { id: string; email: string; nome: string; token: string }[];
+      };
+      fn_ticketeria_marcar_destinatarios: {
+        Args: { p_itens: Json };
+        Returns: number;
+      };
+      fn_ticketeria_atualizar_envio: {
+        Args: { p_envio: string };
+        Returns: number;
       };
       fn_ticketeria_registrar_evento_envio: {
         Args: { p_provedor_id: string; p_tipo: string; p_quando: string | null; p_permanente: boolean };

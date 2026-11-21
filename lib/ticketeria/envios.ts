@@ -7,8 +7,8 @@
 import { enderecoDeDivulgacao } from "@/lib/ticketeria/divulgacao";
 import { montarPublico, recebeNovidades, type EntradaDoPublico } from "@/lib/ticketeria/publico";
 
-/** O máximo de pessoas num envio de e-mail (por enquanto, para o envio caber numa chamada). */
-export const LIMITE_DE_DESTINATARIOS = 300;
+/** O máximo de pessoas num envio de e-mail: a fila manda em lotes de 100 e leva uns minutos. */
+export const LIMITE_DE_DESTINATARIOS = 5000;
 /** No WhatsApp cada conversa é aberta à mão pelo produtor, então o envio é menor. */
 export const LIMITE_DE_DESTINATARIOS_WHATSAPP = 100;
 export type CanalDoEnvio = "email" | "whatsapp";
@@ -126,35 +126,71 @@ export type PessoaDoWhatsapp = { id: string; nome: string; whatsapp: string; lin
 
 export type DestinatarioCriado = { id: string; email: string; nome: string; token: string };
 export type PortasDoEnvio = {
-  /** Grava o envio e as pessoas (cada uma com o seu token do link de sair) e devolve o id do envio e as pessoas. */
+  /** Grava o envio e as pessoas (cada uma com o seu token do link de sair, todas "pendente") e devolve o id do envio e as pessoas. */
   criar(dados: { canal: CanalDoEnvio; assunto: string; mensagem: string; sessao_id: string; acao: string; segmento: string; destinatarios: Destinatario[] }): Promise<{ envio: string; destinatarios: DestinatarioCriado[] }>;
-  /** Manda um e-mail; `ok` diz se o provedor aceitou. Nunca lança. */
-  enviar(e: { para: string; assunto: string; html: string; texto: string; token: string; chave: string }): Promise<{ ok: boolean; id?: string }>;
-  marcar(destinatario: string, ok: boolean, provedorId?: string): Promise<void>;
-  concluir(envio: string, enviados: number, falhas: number): Promise<void>;
+};
+
+// ─── A fila do e-mail ───────────────────────────────────────────────────────
+
+/** Quantas pessoas vão num lote do Resend (o máximo da API é 100 por chamada). */
+export const TAMANHO_DO_LOTE = 100;
+/** O tempo que uma rodada da fila trabalha antes de largar o resto para a próxima (a função da Vercel dura até 300 s). */
+export const ORCAMENTO_DA_RODADA_MS = 240_000;
+
+export type EmailDaFila = { para: string; assunto: string; html: string; texto: string; token: string };
+export type MarcaDaFila = { id: string; ok: boolean; provedorId?: string };
+export type PortasDaFila = {
+  /** Reivindica até `n` pessoas pendentes do envio (ou as que ficaram travadas) e as devolve. Duas rodadas ao mesmo tempo nunca pegam a mesma pessoa. */
+  reivindicar(n: number): Promise<DestinatarioCriado[]>;
+  /** Manda o lote numa chamada só; `ids` vêm na mesma ordem. Nunca lança. */
+  enviarLote(emails: EmailDaFila[], chave: string): Promise<{ ok: true; ids: string[] } | { ok: false }>;
+  /** Manda um e-mail (para isolar quem fez o lote falhar). Nunca lança. */
+  enviarUm(email: EmailDaFila, chave: string): Promise<{ ok: boolean; id?: string }>;
+  marcar(marcas: MarcaDaFila[]): Promise<void>;
+  /** Refaz as contagens do envio, conclui se não sobrou ninguém e devolve quantas faltam. */
+  atualizar(): Promise<number>;
+  agora(): number;
   registrarErro?(erro: unknown): void;
 };
-export type ResultadoDoEnvio = { envio: string; enviados: number; falhas: number };
+export type ResultadoDaRodada = { enviados: number; falhas: number; faltam: number };
 
-const EM_PARALELO = 5;
-
-/** Cria o envio e manda um e-mail por pessoa, cinco de cada vez. Falha de uma pessoa não derruba as outras: conta como falha. */
-export async function enviarDivulgacao(p: { loja: string; origem: string; assunto: string; mensagem: string; sessao_id: string; segmento: string; destinatarios: Destinatario[]; agora?: Date; enderecoParaSair: (token: string) => string }, portas: PortasDoEnvio): Promise<ResultadoDoEnvio> {
-  const acao = acaoDoEnvio(p.assunto, p.agora);
-  const { envio, destinatarios } = await portas.criar({ canal: "email", assunto: p.assunto, mensagem: p.mensagem, sessao_id: p.sessao_id, acao, segmento: p.segmento, destinatarios: p.destinatarios });
+/**
+ * Uma rodada da fila de um envio por e-mail: reivindica um lote, manda numa chamada só, marca cada pessoa e atualiza as contagens, de novo e de novo até acabar a fila ou o tempo da rodada.
+ * Se o lote falha (um endereço torto pode derrubar o lote inteiro), cada pessoa dele é mandada sozinha: quem falha conta como falha, as outras saem. Falha de banco para a rodada
+ * (quem ficou "enviando" volta para a fila depois de 5 minutos), e o que já foi marcado fica.
+ */
+export async function processarFila(d: { loja: string; origem: string; assunto: string; mensagem: string; sessao_id: string; acao: string; enderecoParaSair: (token: string) => string; orcamentoMs?: number }, portas: PortasDaFila): Promise<ResultadoDaRodada> {
+  const limite = portas.agora() + (d.orcamentoMs ?? ORCAMENTO_DA_RODADA_MS);
+  const enderecoDeCompra = enderecoDeCompraDoEnvio(d.origem, d.sessao_id, d.acao);
   let enviados = 0;
   let falhas = 0;
-  for (let i = 0; i < destinatarios.length; i += EM_PARALELO) {
-    await Promise.all(destinatarios.slice(i, i + EM_PARALELO).map(async d => {
-      const email = emailDeDivulgacao({ loja: p.loja, nome: d.nome, assunto: p.assunto, mensagem: p.mensagem, enderecoDeCompra: enderecoDeCompraDoEnvio(p.origem, p.sessao_id, acao), enderecoParaSair: p.enderecoParaSair(d.token) });
-      let resultado: { ok: boolean; id?: string } = { ok: false };
-      try { resultado = await portas.enviar({ para: d.email, assunto: email.assunto, html: email.html, texto: email.texto, token: d.token, chave: `ticketeria-envio-${d.id}` }); } catch (erro) { portas.registrarErro?.(erro); }
-      if (resultado.ok) enviados++; else falhas++;
-      try { await portas.marcar(d.id, resultado.ok, resultado.id); } catch (erro) { portas.registrarErro?.(erro); }
-    }));
+  let faltam = 0;
+  while (portas.agora() < limite) {
+    const pessoas = await portas.reivindicar(TAMANHO_DO_LOTE);
+    if (pessoas.length === 0) { faltam = await portas.atualizar(); break; }
+    const emails: EmailDaFila[] = pessoas.map(p => {
+      const e = emailDeDivulgacao({ loja: d.loja, nome: p.nome, assunto: d.assunto, mensagem: d.mensagem, enderecoDeCompra, enderecoParaSair: d.enderecoParaSair(p.token) });
+      return { para: p.email, assunto: e.assunto, html: e.html, texto: e.texto, token: p.token };
+    });
+    const chave = `ticketeria-lote-${pessoas[0].id}-${pessoas.length}`;
+    const marcas: MarcaDaFila[] = [];
+    const lote = await portas.enviarLote(emails, chave);
+    if (lote.ok && lote.ids.length === pessoas.length) {
+      pessoas.forEach((p, i) => marcas.push({ id: p.id, ok: true, provedorId: lote.ids[i] }));
+    } else {
+      for (let i = 0; i < pessoas.length; i++) {
+        let r: { ok: boolean; id?: string } = { ok: false };
+        try { r = await portas.enviarUm(emails[i], `ticketeria-envio-${pessoas[i].id}`); } catch (erro) { portas.registrarErro?.(erro); }
+        marcas.push({ id: pessoas[i].id, ok: r.ok, provedorId: r.id });
+      }
+    }
+    await portas.marcar(marcas);
+    enviados += marcas.filter(m => m.ok).length;
+    falhas += marcas.filter(m => !m.ok).length;
+    faltam = await portas.atualizar();
+    if (faltam === 0) break;
   }
-  await portas.concluir(envio, enviados, falhas);
-  return { envio, enviados, falhas };
+  return { enviados, falhas, faltam };
 }
 
 // ─── O resultado em vendas ──────────────────────────────────────────────────

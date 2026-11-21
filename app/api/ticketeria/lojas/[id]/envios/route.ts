@@ -4,17 +4,17 @@
 //   POST { canal?: "email" | "whatsapp", assunto, mensagem, sessao_id, segmento, teste? }
 //        canal "whatsapp" → 201 { envio, pessoas } sem mandar nada: cria o envio e a lista, com o link que abre cada conversa (máx. LIMITE_DE_DESTINATARIOS_WHATSAPP; 409 sem_whatsapp);
 //        teste: true → manda UM e-mail para quem pede, sem gravar nada;
-//        senão       → 201 { envio, enviados, falhas }; 503 envio_desligado; 409 sem_destinatarios | envio_repetido | sessao_indisponivel; 413 destinatarios_demais
+//        senão       → 202 { envio, total, enviando } (a fila manda em lotes de 100 logo depois da resposta e o cron continua o que sobrar); 503 envio_desligado; 409 sem_destinatarios | envio_repetido | sessao_indisponivel; 413 destinatarios_demais
 // Só recebe quem aceitou novidades e não saiu da lista. O limite é de LIMITE_DE_DESTINATARIOS pessoas por envio, por enquanto.
 
-import { type NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { appUrl } from "@/lib/email/config";
 import { divulgacaoConfigurada, enviarEmailDeDivulgacao } from "@/lib/email/divulgacao";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
-import { acaoDoEnvio, destinatariosDoSegmento, emailDeDivulgacao, enderecoDeCompraDoEnvio, enviarDivulgacao, lerEnvio, limiteDoCanal, segmentosDoPublico } from "@/lib/ticketeria/envios";
+import { acaoDoEnvio, destinatariosDoSegmento, emailDeDivulgacao, enderecoDeCompraDoEnvio, lerEnvio, limiteDoCanal, segmentosDoPublico } from "@/lib/ticketeria/envios";
 import { pessoasDoEnvioPorWhatsapp } from "@/lib/ticketeria/envios-whatsapp-servidor";
-import { enviosDaLoja, portasDoEnvioDoSupabase } from "@/lib/ticketeria/envios-servidor";
+import { enviosDaLoja, portasDoEnvioDoSupabase, processarEnvioDeEmail } from "@/lib/ticketeria/envios-servidor";
 import { autorizarLoja, resposta } from "@/lib/ticketeria/pagamento/autorizar-loja";
 import { entradaDoPublico } from "@/lib/ticketeria/publico-servidor";
 
@@ -77,15 +77,19 @@ export async function POST(req: NextRequest, rota: { params: Promise<{ id: strin
     const { data: repetido } = await t.from("ticketeria_envios").select("id").eq("loja_id", a.loja.id).eq("assunto", envio.assunto).eq("segmento", envio.segmento).eq("canal", envio.canal).gte("created_at", desde).limit(1);
     if ((repetido ?? []).length > 0) return resposta({ error: "envio_repetido" }, 409);
 
-    const portas = portasDoEnvioDoSupabase(admin, { organizationId: loja.organization_id, lojaId: a.loja.id, usuarioId: a.user.id, registrarErro: erro => console.error("[ticketeria] envio:", erro instanceof Error ? erro.message : erro) });
+    const portas = portasDoEnvioDoSupabase(admin, { organizationId: loja.organization_id, lojaId: a.loja.id, usuarioId: a.user.id });
     if (envio.canal === "whatsapp") {
       // O WhatsApp só prepara o envio: cria o envio e as pessoas (cada uma com o seu link de sair da lista) e devolve a lista, com o link que abre cada conversa.
       const { envio: criado } = await portas.criar({ canal: "whatsapp", assunto: envio.assunto, mensagem: envio.mensagem, sessao_id: envio.sessao_id, acao, segmento: envio.segmento, destinatarios });
       const lista = await pessoasDoEnvioPorWhatsapp(admin, a.loja.id, criado, origem);
       return resposta({ envio: criado, pessoas: lista?.pessoas ?? [] }, 201);
     }
-    const resultado = await enviarDivulgacao({ loja: loja.nome, origem, assunto: envio.assunto, mensagem: envio.mensagem, sessao_id: envio.sessao_id, segmento: envio.segmento, destinatarios, enderecoParaSair: token => `${origem}/novidades/${token}` }, portas);
-    return resposta(resultado, 201);
+    // O e-mail não é mandado aqui: o envio e as pessoas ficam "pendente" e a fila (lotes de 100) começa logo depois da resposta; se a rodada acabar antes (muita gente), o cron continua.
+    const { envio: criado } = await portas.criar({ canal: "email", assunto: envio.assunto, mensagem: envio.mensagem, sessao_id: envio.sessao_id, acao, segmento: envio.segmento, destinatarios });
+    after(async () => {
+      try { await processarEnvioDeEmail(admin, criado, origem); } catch (erro) { console.error("[ticketeria] fila do envio:", erro instanceof Error ? erro.message : erro); }
+    });
+    return resposta({ envio: criado, total: destinatarios.length, enviando: true }, 202);
   } catch (erro) {
     console.error("[ticketeria] envio falhou:", erro instanceof Error ? erro.message : erro);
     return resposta({ error: "falha_no_envio" }, 500);

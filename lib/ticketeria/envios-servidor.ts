@@ -1,17 +1,16 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
-import { appUrl } from "@/lib/email/config";
-import { enviarEmailDeDivulgacao } from "@/lib/email/divulgacao";
+import { enviarEmailDeDivulgacao, enviarLoteDeDivulgacao } from "@/lib/email/divulgacao";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
-import { vendasPorAcao, type PortasDoEnvio, type PedidoDoEnvio } from "@/lib/ticketeria/envios";
+import { processarFila, vendasPorAcao, type PedidoDoEnvio, type PortasDaFila, type PortasDoEnvio, type ResultadoDaRodada } from "@/lib/ticketeria/envios";
 import { diaCurtoEHora } from "@/lib/ticketeria/vendas";
 
 type Admin = SupabaseClient<Database>;
 const PAGINA = 1000;
 
-/** As portas do envio no Supabase (com a chave de serviço) e no Resend. `criar` grava o envio e as pessoas; `enviar` manda um e-mail com o clique único de sair da lista. */
-export function portasDoEnvioDoSupabase(admin: Admin, d: { organizationId: string; lojaId: string; usuarioId: string | null; registrarErro?: (erro: unknown) => void }): PortasDoEnvio {
+/** A porta de criar um envio no Supabase (com a chave de serviço): grava o envio e as pessoas, todas "pendente", cada uma com o seu token do link de sair da lista. */
+export function portasDoEnvioDoSupabase(admin: Admin, d: { organizationId: string; lojaId: string; usuarioId: string | null }): PortasDoEnvio {
   const t = clienteDaTicketeria(admin);
   return {
     async criar(dados) {
@@ -29,18 +28,52 @@ export function portasDoEnvioDoSupabase(admin: Admin, d: { organizationId: strin
       }
       return { envio: envio.id, destinatarios: criados };
     },
-    async enviar(e) {
-      const r = await enviarEmailDeDivulgacao({ to: e.para, subject: e.assunto, html: e.html, text: e.texto, enderecoDoCliqueUnico: `${appUrl()}/api/ticketeria/novidades/sair?token=${e.token}`, idempotencyKey: e.chave });
+  };
+}
+
+const rpc = async <T>(chamada: PromiseLike<{ data: T | null; error: { message: string } | null }>): Promise<T | null> => {
+  const { data, error } = await chamada;
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+/** As portas da fila de UM envio por e-mail: o banco reivindica e marca (duas rodadas nunca pegam a mesma pessoa) e o Resend manda em lotes de 100. */
+export function portasDaFilaDoSupabase(admin: Admin, envioId: string, enderecoDoCliqueUnico: (token: string) => string, registrarErro?: (erro: unknown) => void): PortasDaFila {
+  const t = clienteDaTicketeria(admin);
+  return {
+    async reivindicar(n) {
+      const linhas = await rpc(t.rpc("fn_ticketeria_reivindicar_destinatarios", { p_envio: envioId, p_n: n }));
+      return (linhas ?? []).map(l => ({ id: l.id, email: l.email, nome: l.nome, token: l.token }));
+    },
+    async enviarLote(emails, chave) {
+      const r = await enviarLoteDeDivulgacao(emails.map(e => ({ to: e.para, subject: e.assunto, html: e.html, text: e.texto, enderecoDoCliqueUnico: enderecoDoCliqueUnico(e.token), idempotencyKey: chave })), chave);
+      if (!r.ok) registrarErro?.(new Error(`lote recusado: ${r.erro}`));
+      return r.ok ? { ok: true, ids: r.ids } : { ok: false };
+    },
+    async enviarUm(e, chave) {
+      const r = await enviarEmailDeDivulgacao({ to: e.para, subject: e.assunto, html: e.html, text: e.texto, enderecoDoCliqueUnico: enderecoDoCliqueUnico(e.token), idempotencyKey: chave });
       return r.ok ? { ok: true, id: r.id } : { ok: false };
     },
-    async marcar(destinatario, ok, provedorId) {
-      await t.from("ticketeria_envio_destinatarios").update({ situacao: ok ? "enviado" : "falhou", provedor_id: provedorId ?? null, enviado_em: ok ? new Date().toISOString() : null }).eq("id", destinatario);
+    async marcar(marcas) {
+      for (let i = 0; i < marcas.length; i += 200) await rpc(t.rpc("fn_ticketeria_marcar_destinatarios", { p_itens: marcas.slice(i, i + 200).map(m => ({ id: m.id, ok: m.ok, provedor_id: m.provedorId ?? null })) }));
     },
-    async concluir(envio, enviados, falhas) {
-      await t.from("ticketeria_envios").update({ enviados, falhas, situacao: enviados === 0 && falhas > 0 ? "falhou" : "enviado", enviado_em: new Date().toISOString() }).eq("id", envio);
-    },
-    registrarErro: d.registrarErro,
+    async atualizar() { return Number((await rpc(t.rpc("fn_ticketeria_atualizar_envio", { p_envio: envioId }))) ?? 0); },
+    agora: () => Date.now(),
+    registrarErro,
   };
+}
+
+/** Roda a fila de um envio por e-mail: carrega o que ele diz (assunto, mensagem, sessão e ação do link, nome da loja) e manda o que estiver pendente, por até `orcamentoMs`. */
+export async function processarEnvioDeEmail(admin: Admin, envioId: string, origem: string, orcamentoMs?: number): Promise<ResultadoDaRodada | null> {
+  const t = clienteDaTicketeria(admin);
+  const { data: envio } = await t.from("ticketeria_envios").select("id, loja_id, assunto, mensagem, sessao_id, acao, canal, situacao").eq("id", envioId).maybeSingle();
+  if (!envio || envio.canal !== "email" || envio.situacao !== "enviando" || !envio.sessao_id || !envio.acao) return null;
+  const { data: loja } = await t.from("ticketeria_lojas").select("nome").eq("id", envio.loja_id).maybeSingle();
+  const registrarErro = (erro: unknown) => console.error("[ticketeria] fila do envio:", erro instanceof Error ? erro.message : erro);
+  return processarFila(
+    { loja: loja?.nome ?? "o organizador", origem, assunto: envio.assunto, mensagem: envio.mensagem, sessao_id: envio.sessao_id, acao: envio.acao, enderecoParaSair: token => `${origem}/novidades/${token}`, orcamentoMs },
+    portasDaFilaDoSupabase(admin, envio.id, token => `${origem}/api/ticketeria/novidades/sair?token=${token}`, registrarErro),
+  );
 }
 
 export type EnvioDaLista = { id: string; assunto: string; canal: string; quando: string; destinatarios: number; enviados: number; falhas: number; abertos: number; cliques: number; devolvidos: number; situacao: string; ingressos: number; vendido_centavos: number };
