@@ -116,7 +116,7 @@ test("a tela do Público: origem Importado e a etiqueta de declarado; a rota só
   assert.match(rota, /autorizarLoja/);
   assert.match(rota, /VERSAO_DA_DECLARACAO/);
   assert.match(rota, /corpo\.declaro \? \{ novidades_declaradas_em/);
-  const sql = (await readFile("supabase/migrations/20261125400000_ticketeria_contatos_importados.sql", "utf8")).replace(/--.*$/gm, "");
+  const sql = (await readFile("supabase/migrations/20261121040536_ticketeria_contatos_importados.sql", "utf8")).replace(/--.*$/gm, "");
   assert.match(sql, /revoke insert, update, delete on public\.ticketeria_contatos_importados from authenticated/);
   assert.doesNotMatch(sql, /\bdrop\b/i);
 });
