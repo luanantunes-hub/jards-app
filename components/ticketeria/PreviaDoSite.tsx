@@ -20,7 +20,7 @@ export function PreviaDoSite({ siteId, slug, versao, modoInicial = "celular", te
           <h3 className="text-[0.8125rem] font-normal text-[#282525]">Prévia do rascunho <span className="ml-1 text-[0.6875rem] text-black/45">a página de verdade, atualizada a cada mudança</span></h3>
           <div role="group" aria-label="Tamanho da prévia" className="flex overflow-hidden rounded-xl border border-black/[.12] text-[0.75rem]">
             {MODOS.map(({ modo: id, rotulo, Icone }) => (
-              <button key={id} type="button" aria-pressed={modo === id} onClick={() => setModo(id)} className={`inline-flex h-8 items-center gap-1.5 px-2.5 transition focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${modo === id ? "bg-[#1C0E33] text-white" : "bg-white text-black/60 hover:bg-black/[.04]"}`}>
+              <button key={id} type="button" aria-pressed={modo === id} onClick={() => setModo(id)} className={`inline-flex h-8 items-center gap-1.5 px-2.5 transition focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${modo === id ? "bg-[#6450D2] text-white" : "bg-white text-black/60 hover:bg-black/[.04]"}`}>
                 <Icone size={13} aria-hidden="true" />{rotulo}
               </button>
             ))}
@@ -40,7 +40,7 @@ export function PreviaDoSite({ siteId, slug, versao, modoInicial = "celular", te
         <h3 className="text-[0.8125rem] font-normal text-[#282525]">Prévia do rascunho</h3>
         <div role="group" aria-label="Tamanho da prévia" className="flex overflow-hidden rounded-xl border border-black/[.12] text-[0.75rem]">
           {MODOS.map(({ modo: id, rotulo, Icone }) => (
-            <button key={id} type="button" aria-pressed={modo === id} onClick={() => setModo(id)} className={`inline-flex h-8 items-center gap-1.5 px-2.5 transition focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${modo === id ? "bg-[#1C0E33] text-white" : "text-black/60 hover:bg-black/[.04]"}`}>
+            <button key={id} type="button" aria-pressed={modo === id} onClick={() => setModo(id)} className={`inline-flex h-8 items-center gap-1.5 px-2.5 transition focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${modo === id ? "bg-[#6450D2] text-white" : "text-black/60 hover:bg-black/[.04]"}`}>
               <Icone size={13} aria-hidden="true" />{rotulo}
             </button>
           ))}

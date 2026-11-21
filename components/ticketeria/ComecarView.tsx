@@ -184,7 +184,7 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
             <div className="mt-4 flex flex-wrap gap-2">
               {["18:00", "19:00", "20:00", "21:00"].map(h => (
                 <button key={h} type="button" aria-pressed={r.hora === h} onClick={() => muda({ hora: h })}
-                  className={`rounded-xl border px-4 py-2 text-[0.9375rem] tabular-nums transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${r.hora === h ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/[.12] bg-white text-[#282525] hover:bg-black/[.04]"}`}>{h}</button>
+                  className={`rounded-xl border px-4 py-2 text-[0.9375rem] tabular-nums transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${r.hora === h ? "border-[#6450D2] bg-[#6450D2] text-white" : "border-black/[.12] bg-white text-[#282525] hover:bg-black/[.04]"}`}>{h}</button>
               ))}
             </div>
           </div>

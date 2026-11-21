@@ -340,7 +340,7 @@ export function EditorDoSite({ siteId, nomeDoSite, organizationId, podeEditar, e
           <div className="flex items-center gap-2 border-t px-4 py-2" style={{ borderColor: "rgba(13,13,13,.06)" }}>
             <div role="tablist" aria-label="Páginas do site" className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
               {paginas.map(pagina => (
-                <button key={pagina.id} type="button" role="tab" aria-selected={atual?.id === pagina.id} onClick={() => { setSlug(pagina.slug); setAviso(null); }} className={`h-9 shrink-0 rounded-xl border px-3.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${atual?.id === pagina.id ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/[.12] bg-white text-black/60 hover:bg-black/[.04]"}`}>{pagina.titulo}</button>
+                <button key={pagina.id} type="button" role="tab" aria-selected={atual?.id === pagina.id} onClick={() => { setSlug(pagina.slug); setAviso(null); }} className={`h-9 shrink-0 rounded-xl border px-3.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${atual?.id === pagina.id ? "border-[#6450D2] bg-[#6450D2] text-white" : "border-black/[.12] bg-white text-black/60 hover:bg-black/[.04]"}`}>{pagina.titulo}</button>
               ))}
             </div>
             {podeEditar && <button type="button" onClick={() => setFolha({ tipo: "pagina" })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Nova página</button>}
