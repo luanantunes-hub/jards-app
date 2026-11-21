@@ -10,7 +10,7 @@ import { disponivelNasFaixas, totalNasFaixas, type IngressoDaVitrine } from "@/l
 // A compra de ingressos desenhada (passo C da T5): quatro telas de quem compra, sem login, no celular primeiro. Só desenho: os dados e as ações chegam por
 // props (a página busca no servidor e liga os botões). Segue o site da pessoa (fundo branco, cabeçalho na cor dela, ação principal em tinta #282525).
 
-export const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#FF5528] px-5 py-3 text-[0.9375rem] font-normal text-[#1C0E33] transition hover:bg-[#FF6C45] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6450D2] disabled:cursor-not-allowed disabled:bg-black/20";
+export const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#6450D2] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6450D2] disabled:cursor-not-allowed disabled:bg-black/20";
 export const BOTAO_SECUNDARIO = "inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-[0.875rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-normal uppercase tracking-[.08em] text-black/50";
 const CAMPO = "h-12 w-full rounded-xl border border-black/15 bg-white px-3.5 text-[1rem] text-[#282525] placeholder:text-black/30 focus:border-[#282525] focus:outline-none";
