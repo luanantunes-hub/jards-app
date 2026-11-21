@@ -48,7 +48,7 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/producoes/linhas-do-orcamento", "Linha do orçamento"],
   ["/producoes", "Produção"],
   ["/ingressos/comecar", "Começar"],
-  ["/ingressos/site", "Loja"],
+  ["/ingressos/site", "Site"],
   ["/ingressos/vendas", "Vendas"],
   ["/ingressos/porta/relatorio", "Relatório da porta"],
   ["/ingressos/porta", "Porta"],
@@ -84,12 +84,12 @@ const SECAO_DO_MENU: Record<string, string> = {
   "/producoes/linhas-do-orcamento": "/producoes/temporadas",
   // Ticketeria: seis itens no menu e abas dentro (SubmenuDaTicketeria). Cada página agrupada acende o item da sua aba-mãe.
   "/ingressos/porta": "/ingressos/vendas",
+  "/ingressos/site": "/ingressos/vendas",
   "/ingressos/bilheteria": "/ingressos/vendas",
   "/ingressos/cupons": "/ingressos/divulgacao",
   "/ingressos/espera": "/ingressos/divulgacao",
   "/ingressos/publico": "/ingressos/divulgacao",
-  "/ingressos/integracoes": "/ingressos/site",
-  "/ingressos/locais": "/ingressos/site",
+  "/ingressos/locais": "/ingressos/integracoes",
 };
 
 export function correspondeRota(path: string, prefixo: string): boolean {

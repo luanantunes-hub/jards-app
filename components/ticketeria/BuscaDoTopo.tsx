@@ -17,7 +17,7 @@ const PAGINAS: { rotulo: string; href: string }[] = [
   { rotulo: "Início", href: "/ingressos" }, { rotulo: "Programação", href: "/ingressos/eventos" }, { rotulo: "Vendas", href: "/ingressos/vendas" },
   { rotulo: "Porta", href: "/ingressos/porta" }, { rotulo: "Bilheteria", href: "/ingressos/bilheteria" }, { rotulo: "Financeiro", href: "/ingressos/recebimentos" },
   { rotulo: "Divulgação", href: "/ingressos/divulgacao" }, { rotulo: "Cupons", href: "/ingressos/cupons" }, { rotulo: "Lista de espera", href: "/ingressos/espera" },
-  { rotulo: "Público", href: "/ingressos/publico" }, { rotulo: "Loja", href: "/ingressos/site" }, { rotulo: "Integrações", href: "/ingressos/integracoes" }, { rotulo: "Espaços", href: "/ingressos/locais" },
+  { rotulo: "Público", href: "/ingressos/publico" }, { rotulo: "Site", href: "/ingressos/site" }, { rotulo: "Integrações", href: "/ingressos/integracoes" }, { rotulo: "Espaços", href: "/ingressos/locais" },
 ];
 
 /** Sem acento e em minúscula, para a busca não depender de como a pessoa digita. */

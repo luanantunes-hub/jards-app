@@ -7,6 +7,7 @@ export type GrupoDeAbas = { id: "vendas" | "divulgacao" | "configuracoes"; abas:
 export const GRUPOS_DE_ABAS: GrupoDeAbas[] = [
   { id: "vendas", abas: [
     { rotulo: "Pedidos", href: "/ingressos/vendas" },
+    { rotulo: "Site", href: "/ingressos/site" },
     { rotulo: "Porta", href: "/ingressos/porta" },
     { rotulo: "Bilheteria", href: "/ingressos/bilheteria" },
   ] },
@@ -17,7 +18,6 @@ export const GRUPOS_DE_ABAS: GrupoDeAbas[] = [
     { rotulo: "Público", href: "/ingressos/publico" },
   ] },
   { id: "configuracoes", abas: [
-    { rotulo: "Loja", href: "/ingressos/site" },
     { rotulo: "Integrações", href: "/ingressos/integracoes" },
     { rotulo: "Espaços", href: "/ingressos/locais" },
   ] },
