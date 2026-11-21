@@ -56,8 +56,8 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
       {passo === 0 && (
         <section aria-labelledby="comecar-titulo">
           <p className="text-[0.75rem] text-black/45">Bem-vindo à Ticketeria</p>
-          <h1 id="comecar-titulo" className="mt-1 text-[1.5rem] font-normal tracking-[-.02em] text-[#282525] [text-wrap:balance]">Como você costuma fazer seus eventos?</h1>
-          <p className="mt-1.5 text-[0.8125rem] text-black/50">Escolha o que mais se parece com você. Dá para fazer de tudo depois.</p>
+          <h1 id="comecar-titulo" className="mt-1 text-[1.875rem] font-normal leading-[1.15] tracking-[-.03em] md:text-[2.375rem] text-[#282525] [text-wrap:balance]">Como você costuma fazer seus eventos?</h1>
+          <p className="mt-2 text-[0.9375rem] text-black/55">Escolha o que mais se parece com você. Dá para fazer de tudo depois.</p>
           <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {PERFIS.map(id => {
               const Icone = ICONE[id];
@@ -72,7 +72,7 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
                       : <Icone size={32} strokeWidth={1.25} className="text-[#7259B5]/70" aria-hidden="true" />}
                     {escolhido && <Check size={16} className="absolute right-0 top-0 text-[#7259B5]" aria-hidden="true" />}
                   </span>
-                  <span className="mt-3 block text-[0.875rem] text-[#282525]">{PERFIL[id].titulo}</span>
+                  <span className="mt-3 block text-[1.125rem] leading-snug tracking-[-.01em] text-[#1C0E33]">{PERFIL[id].titulo}</span>
                   <span className="mt-0.5 block text-[0.75rem] leading-relaxed text-black/45">{PERFIL[id].descricao}</span>
                 </button>
               );
@@ -85,8 +85,8 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
         <section aria-labelledby="comecar-titulo" className="space-y-3">
           <div>
             <p className="text-[0.75rem] text-black/45">{perfil.titulo}</p>
-            <h1 id="comecar-titulo" className="mt-1 text-[1.5rem] font-normal tracking-[-.02em] text-[#282525]">{perfil.pergunta}</h1>
-            <p className="mt-1.5 text-[0.8125rem] text-black/50">{perfil.apoio}</p>
+            <h1 id="comecar-titulo" className="mt-1 text-[1.875rem] font-normal leading-[1.15] tracking-[-.03em] md:text-[2.375rem] text-[#282525]">{perfil.pergunta}</h1>
+            <p className="mt-2 text-[0.9375rem] text-black/55">{perfil.apoio}</p>
           </div>
           {r.perfil === "espaco" && <Campo id="co-lugar" rotulo={perfil.rotuloDoLugar} valor={r.lugar} exemplo={perfil.exemploDoLugar} onChange={lugar => muda({ lugar })} autoFocus />}
           <Campo id="co-evento" rotulo={perfil.rotuloDoNome} valor={r.evento} exemplo={perfil.exemploDoNome} onChange={evento => muda({ evento })} autoFocus={r.perfil !== "espaco"} />
@@ -108,8 +108,8 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
         <section aria-labelledby="comecar-titulo" className="space-y-3">
           <div>
             <p className="text-[0.75rem] text-black/45">Ingresso</p>
-            <h1 id="comecar-titulo" className="mt-1 text-[1.5rem] font-normal tracking-[-.02em] text-[#282525]">Quanto custa a entrada?</h1>
-            <p className="mt-1.5 text-[0.8125rem] text-black/50">Um preço basta para começar. Lotes e outros tipos você cria depois.</p>
+            <h1 id="comecar-titulo" className="mt-1 text-[1.875rem] font-normal leading-[1.15] tracking-[-.03em] md:text-[2.375rem] text-[#282525]">Quanto custa a entrada?</h1>
+            <p className="mt-2 text-[0.9375rem] text-black/55">Um preço basta para começar. Lotes e outros tipos você cria depois.</p>
           </div>
           <Marcar id="co-gratuito" marcado={r.gratuito} onChange={gratuito => muda({ gratuito })} texto="É gratuito, só quero controlar quem entra" />
           {!r.gratuito && (
@@ -151,8 +151,8 @@ function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resu
     <section aria-labelledby="pronto-titulo" className="mx-auto w-full max-w-[36rem]">
       <div className="mb-6 flex gap-1.5">{PASSOS.map(p => <span key={p} className="h-[3px] flex-1 rounded-full bg-[#7259B5]" />)}</div>
       <p className="text-[0.75rem] text-black/45">Pronto</p>
-      <h1 id="pronto-titulo" className="mt-1 text-[1.5rem] font-normal tracking-[-.02em] text-[#282525]">Seu evento está criado</h1>
-      <p className="mt-1.5 text-[0.8125rem] text-black/50">Ele fica em rascunho até você publicar.</p>
+      <h1 id="pronto-titulo" className="mt-1 text-[1.875rem] font-normal leading-[1.15] tracking-[-.03em] md:text-[2.375rem] text-[#282525]">Seu evento está criado</h1>
+      <p className="mt-2 text-[0.9375rem] text-black/55">Ele fica em rascunho até você publicar.</p>
 
       <div className="mt-5 overflow-hidden rounded-xl border border-black/[.12] bg-white">
         <div className="bg-[#1C0E33] px-4 py-3.5 text-white">
