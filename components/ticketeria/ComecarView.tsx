@@ -186,6 +186,8 @@ function CampoDoNome({ valor, exemplo, rotulo, onChange, onEnter }: { valor: str
 
 /** O lugar: o estado pelo mapa e a cidade da lista dele; digitando, a lista filtra. Sem estado, quem digita a cidade acha em todo o Brasil. Cidade fora da lista vale como digitada. */
 function EscolherOnde({ r, muda, municipios, rotuloDoLugar, exemploDoLugar }: { r: RespostasDoComecar; muda: (parte: Partial<RespostasDoComecar>) => void; municipios: TabelaMunicipios | null; rotuloDoLugar: string; exemploDoLugar: string }) {
+  // A lista recolhe quando a cidade é escolhida e reabre ao clicar no campo, digitar ou trocar o estado. Ao voltar a este passo com a cidade já escolhida, ela já vem recolhida.
+  const [aberta, setAberta] = useState(!r.cidade.trim());
   const lista = municipios
     ? (r.uf ? cidadesDoEstado(municipios, r.uf, r.cidade) : cidadesDoBrasil(municipios, r.cidade))
     : [];
@@ -193,25 +195,30 @@ function EscolherOnde({ r, muda, municipios, rotuloDoLugar, exemploDoLugar }: { 
   return (
     <div className="space-y-4">
       <div className="grid gap-5 sm:grid-cols-2 sm:items-start">
-        <MapaDoBrasil uf={r.uf} onChange={uf => muda({ uf, cidade: r.uf === uf ? r.cidade : "" })} />
+        <MapaDoBrasil uf={r.uf} onChange={uf => { muda({ uf, cidade: r.uf === uf ? r.cidade : "" }); if (r.uf !== uf) setAberta(true); }} />
         <div>
           <label className={ROTULO} htmlFor="co-cidade">{r.uf ? "Cidade" : "Cidade (ou escolha o estado no mapa)"}</label>
-          <input id="co-cidade" className={CAMPO} value={r.cidade} placeholder={r.uf ? "Digite para filtrar" : "Sorocaba"} autoComplete="off" onChange={e => muda({ cidade: e.target.value })} />
-          <ul role="listbox" aria-label="Cidades" className="mt-2 max-h-48 divide-y divide-black/[.06] overflow-y-auto rounded-xl border border-black/[.12] bg-white">
+          <div className="relative">
+            <input id="co-cidade" className={`${CAMPO} ${!aberta && exata ? "pr-9" : ""}`} value={r.cidade} placeholder={r.uf ? "Digite para filtrar" : "Sorocaba"} autoComplete="off" role="combobox" aria-expanded={aberta} aria-controls="co-cidades"
+              onFocus={() => setAberta(true)} onChange={e => { muda({ cidade: e.target.value }); setAberta(true); }}
+              onKeyDown={e => { if (e.key === "Escape" || (e.key === "Enter" && r.cidade.trim())) { e.preventDefault(); setAberta(false); } }} />
+            {!aberta && exata && <Check size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#7259B5]" aria-hidden="true" />}
+          </div>
+          {aberta && <ul id="co-cidades" role="listbox" aria-label="Cidades" className="mt-2 max-h-48 divide-y divide-black/[.06] overflow-y-auto rounded-xl border border-black/[.12] bg-white">
             {!municipios && <li className="px-3 py-2.5 text-[0.75rem] text-black/40">Carregando as cidades…</li>}
             {municipios && lista.length === 0 && <li className="px-3 py-2.5 text-[0.75rem] text-black/40">{r.cidade.trim() ? "Nenhuma cidade com esse nome na lista. Vale o que você digitou." : "Digite a cidade."}</li>}
             {lista.map(m => {
               const escolhida = !!exata && exata[0] === m[0];
               return (
                 <li key={m[0]} role="option" aria-selected={escolhida}>
-                  <button type="button" onClick={() => muda({ uf: m[2], cidade: m[1] })} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[0.8125rem] text-[#282525] transition hover:bg-black/[.04] focus-visible:bg-black/[.04] focus-visible:outline-none">
+                  <button type="button" onClick={() => { muda({ uf: m[2], cidade: m[1] }); setAberta(false); }} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[0.8125rem] text-[#282525] transition hover:bg-black/[.04] focus-visible:bg-black/[.04] focus-visible:outline-none">
                     <span>{m[1]}{!r.uf && <span className="text-black/40">, {m[2]}</span>}</span>
                     {escolhida && <Check size={14} className="shrink-0 text-[#7259B5]" aria-hidden="true" />}
                   </button>
                 </li>
               );
             })}
-          </ul>
+          </ul>}
         </div>
       </div>
       {rotuloDoLugar && <Campo id="co-lugar" rotulo={rotuloDoLugar} valor={r.lugar} exemplo={exemploDoLugar} onChange={lugar => muda({ lugar })} />}
