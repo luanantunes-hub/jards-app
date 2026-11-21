@@ -328,13 +328,13 @@ export function EditorDoSite({ siteId, nomeDoSite, organizationId, podeEditar, e
     <div role="dialog" aria-modal="false" aria-label="Editor do site" className="fixed inset-0 z-[45] flex flex-col bg-[#F7F6F4]">
       <header className="shrink-0 border-b bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="flex items-center gap-3 px-4 py-2.5">
-          <button type="button" onClick={onFechar} className={`${BOTAO} shrink-0`}><X size={13} aria-hidden="true" /> Fechar<span className="hidden sm:inline"> o editor</span></button>
+          <button type="button" onClick={onFechar} className={`${BOTAO} shrink-0`}><X size={13} aria-hidden="true" /><span className="sm:hidden">Fechar</span><span className="hidden sm:inline">Fechar o editor</span></button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[0.875rem] font-medium text-[#282525]">{nomeDoSite}</p>
             {atual && <p className="truncate text-[0.6875rem] text-black/50">{atual.publicada_em === null ? "Ainda não publicada." : publicadaIgual ? "Publicada, sem mudanças." : "Há mudanças que ainda não estão no ar."}</p>}
           </div>
           <button type="button" onClick={() => setMostrarPrevia(valor => !valor)} aria-pressed={mostrarPrevia} className={`${BOTAO} lg:hidden`}>{mostrarPrevia ? <><PencilLine size={13} aria-hidden="true" /> Editar</> : <><Eye size={13} aria-hidden="true" /> Prévia</>}</button>
-          {podeEditar && atual && <button type="button" onClick={() => void publicar()} disabled={publicadaIgual} className="inline-flex h-9 shrink-0 items-center rounded-xl acao-salvar px-3.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">Publicar<span className="hidden sm:inline"> esta página</span></button>}
+          {podeEditar && atual && <button type="button" onClick={() => void publicar()} disabled={publicadaIgual} className="inline-flex h-9 shrink-0 items-center rounded-xl acao-salvar px-3.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40"><span className="sm:hidden">Publicar</span><span className="hidden sm:inline">Publicar esta página</span></button>}
         </div>
         {paginas !== null && (
           <div className="flex items-center gap-2 border-t px-4 py-2" style={{ borderColor: "rgba(13,13,13,.06)" }}>

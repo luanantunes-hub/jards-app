@@ -12,8 +12,9 @@ const construirContentSecurityPolicy = (frameAncestors: string) => [
   `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://www.googletagmanager.com https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://pagead2.googlesyndication.com https://www.google.com https://google.com https://www.google.com.br https://*.doubleclick.net https://www.googleadservices.com${isDevelopment ? " http://localhost:* ws://localhost:*" : ""}`,
   "media-src 'self' data: blob: https:",
   "worker-src 'self' blob:",
-  // O site da loja (blocos de vídeo e de mapa) abre o player do YouTube (sem cookies de rastreio), o do Vimeo e o mapa do Google em quadros.
-  "frame-src https://js.stripe.com https://hooks.stripe.com https://td.doubleclick.net https://www.googletagmanager.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.google.com",
+  // O site da loja (blocos de vídeo e de mapa) abre o player do YouTube (sem cookies de rastreio), o do Vimeo e o mapa do Google em quadros. 'self': o painel abre a prévia do site
+  // (/previa-site/..., da mesma origem) num quadro ao lado do editor; sem ele o navegador bloqueava o quadro e a prévia ficava em branco (as outras páginas seguem sem poder ser abertas em quadro por X-Frame-Options).
+  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://td.doubleclick.net https://www.googletagmanager.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.google.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
