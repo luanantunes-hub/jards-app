@@ -41,13 +41,13 @@ export function EnviosDaLoja({ envios, onContinuar }: { envios: EnvioParaLista[]
           <p className="text-[0.875rem] font-medium text-black/55">Nenhum envio ainda</p>
         </div>
       ) : (
-        <table className="w-full min-w-[46rem] border-collapse">
+        <table className="w-full min-w-[52rem] border-collapse">
           <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Envio</th><th className={CABECALHO}>Canal</th><th className={`${CABECALHO} text-right`}>Enviados</th><th className={`${CABECALHO} text-right`}>Abriram</th><th className={`${CABECALHO} text-right`}>Clicaram</th><th className={`${CABECALHO} text-right`}>Ingressos vendidos</th><th className={`${CABECALHO} text-right`}>Vendido</th></tr></thead>
           <tbody className="divide-y divide-black/[.08]">
             {envios.map(e => (
               <tr key={e.id}>
                 <td className={CELULA}><p>{e.assunto}</p><p className="text-[0.6875rem] text-black/45">{dia(e.quando)}</p></td>
-                <td className={CELULA}>{e.canal === "whatsapp" ? "WhatsApp" : "E-mail"}</td>
+                <td className={`${CELULA} whitespace-nowrap`}>{e.canal === "whatsapp" ? "WhatsApp" : "E-mail"}</td>
                 <td className={`${CELULA} text-right tabular-nums`}>{e.canal === "whatsapp" ? `${e.enviados.toLocaleString("pt-BR")} de ${e.destinatarios.toLocaleString("pt-BR")}` : e.enviados.toLocaleString("pt-BR")}{e.canal === "whatsapp" && e.enviados < e.destinatarios && <button type="button" onClick={() => onContinuar?.(e.id)} className="mt-0.5 block w-full rounded-xl text-right text-[0.6875rem] text-[#7259B5] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Continuar</button>}{e.falhas > 0 && <span className="block text-[0.6875rem] text-[#B23B3B]">{e.falhas.toLocaleString("pt-BR")} não saíram</span>}{(e.devolvidos ?? 0) > 0 && <span className="block text-[0.6875rem] text-[#B23B3B]">{(e.devolvidos ?? 0).toLocaleString("pt-BR")} {e.devolvidos === 1 ? "voltou" : "voltaram"}</span>}{e.situacao === "enviando" && e.canal !== "whatsapp" && <span className="block text-[0.6875rem] text-black/45">enviando…</span>}</td>
                 <td className={`${CELULA} text-right tabular-nums`}><Taxa canal={e.canal} parte={e.abertos ?? 0} total={e.enviados} /></td>
                 <td className={`${CELULA} text-right tabular-nums`}><Taxa canal={e.canal} parte={e.cliques ?? 0} total={e.enviados} /></td>
