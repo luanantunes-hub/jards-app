@@ -960,7 +960,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Settings size={18} aria-hidden="true" />
               </Link>
             )}
-            {memberships.length > 1 ? (
+            {/* Na Ticketeria o nome da organização fica no topo do menu: aqui não há o botão de trocar. */}
+            {memberships.length > 1 && !menuFixoAberto ? (
               <div className="relative">
                 <button
                   type="button"
@@ -973,8 +974,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   {org.avatar_url ? (
                     <img src={org.avatar_url} alt="" className="w-full h-full object-cover bg-white" />
-                  ) : menuFixoAberto ? (
-                    <Building2 size={14} aria-hidden="true" />
                   ) : (
                     <span>{org.nome ? org.nome.charAt(0).toUpperCase() : "?"}</span>
                   )}
