@@ -1,48 +1,50 @@
 // O onboarding da Ticketeria ("Começar"): o produtor diz como trabalha, responde uma pergunta por tela (nome, lugar no mapa, quando
 // e preço) e sai com o primeiro evento pronto, em rascunho. Quem cria tudo é o banco, numa só chamada (fn_ticketeria_comecar, migration ticketeria_comecar); aqui
 // fica o que a tela precisa antes de chamar: as perguntas por perfil, a conferência dos campos, a divisão da meia-entrada
-// (a mesma conta do banco) e as mensagens de erro. Sem imports de servidor: roda nos testes (tests/ticketeria-comecar.test.ts).
+// (a mesma conta do banco), o auditório de lugares numerados e as mensagens de erro. Sem imports de servidor: roda nos testes (tests/ticketeria-comecar.test.ts).
+
+import { MAX_FILEIRAS, MAX_LUGARES_NA_FILEIRA, comCorredor, proximoNomeDeFileira, type FileiraDoMapa } from "@/lib/ticketeria/mapa";
 
 export type PerfilDoProdutor = "espaco" | "turne" | "unico" | "festival";
 
 export const PERFIS: readonly PerfilDoProdutor[] = ["espaco", "turne", "unico", "festival"];
 
-/** As perguntas de cada perfil, passo a passo: o nome, o lugar e o quando. Cada tela pergunta uma coisa só. */
+/** As perguntas de cada perfil. Cada tela pergunta uma coisa só; o subtítulo, quando há, diz só o que é a resposta. */
 export const PERFIL: Record<PerfilDoProdutor, {
   titulo: string; descricao: string;
   /** Ilustração do cartão (public/ilustracoes/ticketeria); sem ela, a tela usa um ícone. */
   ilustracao: string | null;
   nome: { pergunta: string; apoio: string; rotulo: string; exemplo: string };
   onde: { pergunta: string; apoio: string; rotuloDoLugar: string; exemploDoLugar: string };
-  quando: { pergunta: string; apoio: string; rotuloDaData: string };
+  data: { pergunta: string };
 }> = {
   espaco: {
     titulo: "Tenho um espaço", descricao: "Teatro, casa de show, galeria. Vários eventos no mesmo lugar.",
     ilustracao: "/ilustracoes/ticketeria/perfil-espaco.webp",
     nome: { pergunta: "Como se chama o seu espaço?", apoio: "O nome do lugar que aparece nos ingressos.", rotulo: "Nome do espaço", exemplo: "Teatro Municipal" },
     onde: { pergunta: "Onde fica o seu espaço?", apoio: "Escolha o estado no mapa e depois a cidade.", rotuloDoLugar: "", exemploDoLugar: "" },
-    quando: { pergunta: "Qual é o primeiro evento?", apoio: "Nome, data e quantos lugares. O resto você ajusta depois.", rotuloDaData: "Primeira data" },
+    data: { pergunta: "Quando é o primeiro evento?" },
   },
   turne: {
     titulo: "Circulo com um espetáculo", descricao: "A mesma obra em várias cidades e datas.",
     ilustracao: "/ilustracoes/ticketeria/perfil-turne.webp",
     nome: { pergunta: "Qual é o espetáculo?", apoio: "O nome que as pessoas vão ver no ingresso.", rotulo: "Nome do espetáculo", exemplo: "O Auto da Compadecida" },
     onde: { pergunta: "Onde é a primeira data?", apoio: "Escolha o estado no mapa e depois a cidade.", rotuloDoLugar: "Nome do lugar (se quiser)", exemploDoLugar: "Teatro Guaíra" },
-    quando: { pergunta: "Quando é a primeira data?", apoio: "Data, horário e quantos lugares.", rotuloDaData: "Primeira data" },
+    data: { pergunta: "Quando é a primeira data?" },
   },
   unico: {
     titulo: "Faço um evento único", descricao: "Uma festa, um show, uma palestra.",
     ilustracao: "/ilustracoes/ticketeria/perfil-unico.webp",
     nome: { pergunta: "Como se chama o seu evento?", apoio: "O nome que as pessoas vão ver no ingresso.", rotulo: "Nome do evento", exemplo: "Show de lançamento" },
     onde: { pergunta: "Onde vai ser?", apoio: "Escolha o estado no mapa e depois a cidade.", rotuloDoLugar: "Nome do lugar (se quiser)", exemploDoLugar: "Casa de Cultura" },
-    quando: { pergunta: "Quando vai ser?", apoio: "Data, horário e quantos lugares.", rotuloDaData: "Quando" },
+    data: { pergunta: "Quando vai ser?" },
   },
   festival: {
     titulo: "Organizo um festival", descricao: "Vários dias ou atrações, no mesmo lugar.",
     ilustracao: "/ilustracoes/ticketeria/perfil-festival.webp",
     nome: { pergunta: "Como se chama o festival?", apoio: "O nome que as pessoas vão ver no ingresso.", rotulo: "Nome do festival", exemplo: "Festival de Inverno" },
     onde: { pergunta: "Onde vai ser?", apoio: "Escolha o estado no mapa e depois a cidade.", rotuloDoLugar: "Nome do lugar (se quiser)", exemploDoLugar: "Parque da Cidade" },
-    quando: { pergunta: "Quando começa?", apoio: "Primeiro dia, horário, quantos dias e quantos lugares.", rotuloDaData: "Primeiro dia" },
+    data: { pergunta: "Quando começa?" },
   },
 };
 
@@ -57,18 +59,33 @@ export type RespostasDoComecar = {
   data: string; // AAAA-MM-DD
   hora: string; // HH:MM
   dias: string;
+  /** Lugares numerados: null enquanto a pessoa não respondeu. */
+  numerada: boolean | null;
+  /** Lugares por fileira do auditório (só com lugares numerados); vazio até a pessoa chegar nesse passo. */
+  porFileira: string;
+  corredor: boolean;
   gratuito: boolean;
   preco: string; // em reais, como digitado ("60" ou "59,90")
   meia: boolean;
 };
 
 export const RESPOSTAS_VAZIAS: RespostasDoComecar = {
-  perfil: null, evento: "", lugar: "", uf: "", cidade: "", lugares: "", data: "", hora: "20:00", dias: "2", gratuito: false, preco: "", meia: true,
+  perfil: null, evento: "", lugar: "", uf: "", cidade: "", lugares: "", data: "", hora: "20:00", dias: "2", numerada: null, porFileira: "", corredor: true, gratuito: false, preco: "", meia: true,
 };
 
-/** Os cinco passos com perguntas, uma coisa por tela (depois vem o evento pronto). */
-export type PassoDoComecar = "perfil" | "nome" | "onde" | "quando" | "ingresso";
-export const PASSOS_DO_COMECAR: readonly PassoDoComecar[] = ["perfil", "nome", "onde", "quando", "ingresso"];
+/** Os passos com perguntas, uma coisa por tela (depois vem o evento pronto). */
+export type PassoDoComecar = "perfil" | "nome" | "onde" | "evento" | "data" | "dias" | "horario" | "numerada" | "lugares" | "auditorio" | "ingresso";
+
+/** A sequência de passos: o nome do primeiro evento só para quem tem espaço, os dias só no festival e o auditório só com lugares numerados. */
+export function passosDoComecar(perfil: PerfilDoProdutor | null, numerada: boolean | null): PassoDoComecar[] {
+  return [
+    "perfil", "nome", "onde", ...(perfil === "espaco" ? ["evento" as const] : []), "data", ...(perfil === "festival" ? ["dias" as const] : []),
+    "horario", "numerada", "lugares", ...(numerada ? ["auditorio" as const] : []), "ingresso",
+  ];
+}
+
+/** O mapa de assentos tem até 60 fileiras de 80 lugares: 4.800 (o banco ainda guarda um teto de 5.000 por setor, que o formato não deixa chegar). */
+export const MAX_LUGARES_NUMERADOS = MAX_FILEIRAS * MAX_LUGARES_NA_FILEIRA;
 
 export const UFS_DO_COMECAR = ["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO"];
 
@@ -105,21 +122,34 @@ export function conferirPasso(passo: PassoDoComecar, r: RespostasDoComecar, hoje
     if (r.lugar.trim().length > 200) return "O nome do lugar pode ter até 200 caracteres";
     return null;
   }
-  if (passo === "quando") {
-    if (r.perfil === "espaco") {
-      if (!r.evento.trim()) return "Dê um nome ao primeiro evento";
-      if (r.evento.trim().length > 200) return "O nome pode ter até 200 caracteres";
-    }
+  if (passo === "evento") {
+    if (!r.evento.trim()) return "Dê um nome ao primeiro evento";
+    if (r.evento.trim().length > 200) return "O nome pode ter até 200 caracteres";
+    return null;
+  }
+  if (passo === "data") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(r.data)) return "Escolha o dia";
+    if (r.data < hoje) return "Esse dia já passou";
+    return null;
+  }
+  if (passo === "dias") {
+    const dias = inteiro(r.dias);
+    return !dias || dias < 1 || dias > 31 ? "O festival pode ter de 1 a 31 dias" : null;
+  }
+  if (passo === "horario") return /^\d{2}:\d{2}$/.test(r.hora) ? null : "Escolha o horário";
+  if (passo === "numerada") return r.numerada === null ? "Escolha sim ou não" : null;
+  if (passo === "lugares") {
     const lugares = inteiro(r.lugares);
     if (!lugares || lugares < 1) return "Diga quantos lugares há";
     if (lugares > 200000) return "São no máximo 200.000 lugares";
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(r.data)) return "Escolha a data";
-    if (r.data < hoje) return "A data já passou";
-    if (!/^\d{2}:\d{2}$/.test(r.hora)) return "Escolha o horário";
-    if (r.perfil === "festival") {
-      const dias = inteiro(r.dias);
-      if (!dias || dias < 1 || dias > 31) return "O festival pode ter de 1 a 31 dias";
-    }
+    if (r.numerada && lugares > MAX_LUGARES_NUMERADOS) return "Com lugares numerados, o máximo são 4.800 lugares";
+    return null;
+  }
+  if (passo === "auditorio") {
+    const porFileira = inteiro(r.porFileira);
+    if (!porFileira || porFileira < 1) return "Diga quantos lugares por fileira";
+    if (porFileira > MAX_LUGARES_NA_FILEIRA) return "São no máximo 80 lugares por fileira";
+    if (Math.ceil(Number(r.lugares) / porFileira) > MAX_FILEIRAS) return "Ficariam mais de 60 fileiras: aumente os lugares por fileira";
     return null;
   }
   if (r.gratuito) return null;
@@ -164,6 +194,25 @@ export function argumentosDoComecar(organizationId: string, r: RespostasDoComeca
     p_preco_centavos: r.gratuito ? 0 : (centavosDe(r.preco) ?? 0),
     p_meia: !r.gratuito && r.meia,
   };
+}
+
+/** Quantos lugares por fileira propor: mais largo que fundo, como um auditório (100 lugares: 16 por fileira). */
+export function sugestaoPorFileira(lugares: number): number {
+  if (lugares <= 6) return Math.max(1, lugares);
+  const largo = Math.max(6, Math.round(Math.sqrt(lugares * 2.5)));
+  return Math.min(MAX_LUGARES_NA_FILEIRA, Math.max(largo, Math.ceil(lugares / MAX_FILEIRAS)));
+}
+
+/** O auditório que a pessoa montou: fileiras A, B, C... com `porFileira` lugares; a última leva o que sobra, para o total ser exatamente `lugares`. */
+export function mapaDoAuditorio(lugares: number, porFileira: number, corredor: boolean): FileiraDoMapa[] {
+  const fileiras: FileiraDoMapa[] = [];
+  let nome = "";
+  for (let restante = lugares; restante > 0; restante -= porFileira) {
+    nome = proximoNomeDeFileira(nome);
+    const quantos = Math.min(porFileira, restante);
+    fileiras.push({ nome, assentos: Array.from({ length: quantos }, (_, i) => ({ numero: i + 1, estado: "livre" as const })) });
+  }
+  return comCorredor(fileiras, corredor);
 }
 
 export type ResultadoDoComecar = { loja_id: string; evento_id: string; local_id: string; sessoes: number; meia: number; inteira: number };

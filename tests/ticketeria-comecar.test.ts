@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import {
-  PASSOS_DO_COMECAR, PERFIL, PERFIS, RESPOSTAS_VAZIAS, UFS_DO_COMECAR, argumentosDoComecar, centavosDe, conferirPasso, divisaoDosLugares, mensagemDoErroDoComecar, nomeDoLocal, ondeDoEvento, precoDaMeia,
+  PERFIL, PERFIS, RESPOSTAS_VAZIAS, UFS_DO_COMECAR, argumentosDoComecar, centavosDe, conferirPasso, divisaoDosLugares, mapaDoAuditorio, mensagemDoErroDoComecar, nomeDoLocal, ondeDoEvento, passosDoComecar, precoDaMeia, sugestaoPorFileira,
   type RespostasDoComecar,
 } from "../lib/ticketeria/comecar";
 import { cidadeExata, cidadesDoBrasil, cidadesDoEstado, normalizar } from "../lib/ticketeria/local-do-evento";
 import { ESTADOS_DO_MAPA } from "../lib/ticketeria/mapa-estados";
+import { NOMES_DOS_MESES, dataPorExtenso, mesDaData, semanasDoMes, somarMeses } from "../lib/ticketeria/calendario";
 
 // O onboarding da Ticketeria ("Começar"). O teste de banco é supabase/tests/ticketeria_comecar.test.sql; estes conferem, sem
 // banco, a conferência dos passos, a conta da meia (igual à do banco) e a forma da migration.
@@ -14,7 +15,7 @@ import { ESTADOS_DO_MAPA } from "../lib/ticketeria/mapa-estados";
 const HOJE = "2026-11-21";
 const CHEIO: RespostasDoComecar = {
   ...RESPOSTAS_VAZIAS, perfil: "unico", evento: "Show de lançamento", lugar: "Casa de Cultura", uf: "RJ", cidade: "Rio de Janeiro",
-  lugares: "100", data: "2026-12-20", hora: "20:00", preco: "60",
+  lugares: "100", data: "2026-12-20", hora: "20:00", numerada: false, preco: "60",
 };
 
 async function migration(): Promise<string> {
@@ -31,7 +32,10 @@ test("os quatro perfis são os que o banco aceita, na ordem da tela", async () =
 });
 
 test("são cinco passos, uma coisa por tela, e cada passo diz o que falta", () => {
-  assert.deepEqual([...PASSOS_DO_COMECAR], ["perfil", "nome", "onde", "quando", "ingresso"]);
+  assert.deepEqual(passosDoComecar("unico", false), ["perfil", "nome", "onde", "data", "horario", "numerada", "lugares", "ingresso"]);
+  assert.deepEqual(passosDoComecar("espaco", false), ["perfil", "nome", "onde", "evento", "data", "horario", "numerada", "lugares", "ingresso"], "quem tem espaço dá o nome do primeiro evento num passo só dele");
+  assert.deepEqual(passosDoComecar("festival", null), ["perfil", "nome", "onde", "data", "dias", "horario", "numerada", "lugares", "ingresso"], "os dias só no festival");
+  assert.deepEqual(passosDoComecar("turne", true), ["perfil", "nome", "onde", "data", "horario", "numerada", "lugares", "auditorio", "ingresso"], "o auditório só com lugares numerados");
   assert.equal(conferirPasso("perfil", RESPOSTAS_VAZIAS, HOJE), "Escolha uma opção para continuar");
   assert.equal(conferirPasso("perfil", CHEIO, HOJE), null);
   // O nome: só o nome. Quem tem espaço dá o nome do espaço; os outros, o nome do evento.
@@ -46,20 +50,32 @@ test("são cinco passos, uma coisa por tela, e cada passo diz o que falta", () =
   assert.equal(conferirPasso("onde", { ...CHEIO, cidade: " " }, HOJE), "Escolha ou digite a cidade");
   assert.equal(conferirPasso("onde", { ...CHEIO, lugar: "" }, HOJE), null, "sem o nome do lugar vale a cidade");
   assert.equal(conferirPasso("onde", { ...CHEIO, cidade: "Cidade que não está na lista" }, HOJE), null, "cidade digitada vale");
-  // Quando e quantos lugares.
-  assert.equal(conferirPasso("quando", { ...CHEIO, lugares: "0" }, HOJE), "Diga quantos lugares há");
-  assert.equal(conferirPasso("quando", { ...CHEIO, lugares: "200001" }, HOJE), "São no máximo 200.000 lugares");
-  assert.equal(conferirPasso("quando", { ...CHEIO, data: "" }, HOJE), "Escolha a data");
-  assert.equal(conferirPasso("quando", { ...CHEIO, data: "2026-11-20" }, HOJE), "A data já passou");
-  assert.equal(conferirPasso("quando", { ...CHEIO, data: HOJE }, HOJE), null, "hoje ainda vale");
-  assert.equal(conferirPasso("quando", { ...CHEIO, perfil: "festival", dias: "40" }, HOJE), "O festival pode ter de 1 a 31 dias");
-  assert.equal(conferirPasso("quando", { ...CHEIO, perfil: "espaco", evento: "" }, HOJE), "Dê um nome ao primeiro evento");
-  assert.equal(conferirPasso("quando", CHEIO, HOJE), null);
+  // O primeiro evento (só quem tem espaço), o dia, os dias do festival, o horário, os lugares numerados, quantos lugares e o auditório.
+  assert.equal(conferirPasso("evento", { ...CHEIO, perfil: "espaco", evento: "" }, HOJE), "Dê um nome ao primeiro evento");
+  assert.equal(conferirPasso("evento", { ...CHEIO, perfil: "espaco" }, HOJE), null);
+  assert.equal(conferirPasso("data", { ...CHEIO, data: "" }, HOJE), "Escolha o dia");
+  assert.equal(conferirPasso("data", { ...CHEIO, data: "2026-11-20" }, HOJE), "Esse dia já passou");
+  assert.equal(conferirPasso("data", { ...CHEIO, data: HOJE }, HOJE), null, "hoje ainda vale");
+  assert.equal(conferirPasso("dias", { ...CHEIO, perfil: "festival", dias: "40" }, HOJE), "O festival pode ter de 1 a 31 dias");
+  assert.equal(conferirPasso("dias", { ...CHEIO, perfil: "festival", dias: "3" }, HOJE), null);
+  assert.equal(conferirPasso("horario", { ...CHEIO, hora: "" }, HOJE), "Escolha o horário");
+  assert.equal(conferirPasso("horario", CHEIO, HOJE), null);
+  assert.equal(conferirPasso("numerada", { ...CHEIO, numerada: null }, HOJE), "Escolha sim ou não");
+  assert.equal(conferirPasso("numerada", { ...CHEIO, numerada: true }, HOJE), null);
+  assert.equal(conferirPasso("lugares", { ...CHEIO, lugares: "0" }, HOJE), "Diga quantos lugares há");
+  assert.equal(conferirPasso("lugares", { ...CHEIO, lugares: "200001" }, HOJE), "São no máximo 200.000 lugares");
+  assert.equal(conferirPasso("lugares", { ...CHEIO, numerada: true, lugares: "4801" }, HOJE), "Com lugares numerados, o máximo são 4.800 lugares");
+  assert.equal(conferirPasso("lugares", { ...CHEIO, numerada: true, lugares: "4800" }, HOJE), null);
+  assert.equal(conferirPasso("lugares", { ...CHEIO, numerada: false, lugares: "5001" }, HOJE), null, "sem numeração o teto é maior");
+  assert.equal(conferirPasso("auditorio", { ...CHEIO, numerada: true, porFileira: "" }, HOJE), "Diga quantos lugares por fileira");
+  assert.equal(conferirPasso("auditorio", { ...CHEIO, numerada: true, porFileira: "81" }, HOJE), "São no máximo 80 lugares por fileira");
+  assert.equal(conferirPasso("auditorio", { ...CHEIO, numerada: true, lugares: "1000", porFileira: "10" }, HOJE), "Ficariam mais de 60 fileiras: aumente os lugares por fileira");
+  assert.equal(conferirPasso("auditorio", { ...CHEIO, numerada: true, porFileira: "16" }, HOJE), null);
   // O preço.
   assert.equal(conferirPasso("ingresso", { ...CHEIO, preco: "" }, HOJE), "Diga o preço da inteira, ou marque gratuito");
   assert.equal(conferirPasso("ingresso", { ...CHEIO, preco: "", gratuito: true }, HOJE), null);
   assert.equal(conferirPasso("ingresso", CHEIO, HOJE), null);
-  for (const passo of PASSOS_DO_COMECAR.slice(1)) assert.equal(conferirPasso(passo, RESPOSTAS_VAZIAS, HOJE), "Escolha como você trabalha", passo);
+  for (const passo of passosDoComecar("unico", true).slice(1)) assert.equal(conferirPasso(passo, RESPOSTAS_VAZIAS, HOJE), "Escolha como você trabalha", passo);
 });
 
 test("o nome do local e o texto do 'onde' seguem o que a pessoa disse", () => {
@@ -100,11 +116,55 @@ test("a busca de cidades ignora acento e caixa, filtra pelo estado e, sem estado
 test("o perfil tem uma pergunta por tela: nome, onde e quando", () => {
   for (const id of PERFIS) {
     const perfil = PERFIL[id];
-    for (const texto of [perfil.nome.pergunta, perfil.onde.pergunta, perfil.quando.pergunta]) assert.match(texto, /\?$/, `${id}: ${texto}`);
+    for (const texto of [perfil.nome.pergunta, perfil.onde.pergunta, perfil.data.pergunta]) assert.match(texto, /\?$/, `${id}: ${texto}`);
     assert.ok(perfil.nome.rotulo && perfil.nome.exemplo, id);
   }
   assert.equal(PERFIL.espaco.onde.rotuloDoLugar, "", "quem tem espaço já disse o nome do lugar no passo do nome");
   for (const id of ["turne", "unico", "festival"] as const) assert.ok(PERFIL[id].onde.rotuloDoLugar, id);
+});
+
+test("o auditório divide os lugares em fileiras, a última leva o que sobra, e o total é sempre o digitado", () => {
+  const mapa = mapaDoAuditorio(100, 16, true);
+  assert.deepEqual(mapa.map(f => f.nome), ["A", "B", "C", "D", "E", "F", "G"]);
+  assert.deepEqual(mapa.map(f => f.assentos.length), [16, 16, 16, 16, 16, 16, 4]);
+  assert.equal(mapa.reduce((t, f) => t + f.assentos.length, 0), 100);
+  assert.deepEqual(mapa[0].vaos, [8], "corredor depois da metade da fileira");
+  assert.equal(mapa[6].vaos, undefined, "fileira de 4 lugares é curta para ter corredor");
+  assert.equal(mapaDoAuditorio(100, 16, false)[0].vaos, undefined);
+  for (const [lugares, por] of [[1, 1], [7, 3], [350, 30], [4800, 80]] as const) assert.equal(mapaDoAuditorio(lugares, por, true).reduce((t, f) => t + f.assentos.length, 0), lugares);
+  assert.equal(mapaDoAuditorio(60, 10, true)[5].nome, "F");
+});
+
+test("a sugestão de lugares por fileira é mais larga que funda e cabe nos limites", () => {
+  assert.equal(sugestaoPorFileira(100), 16);
+  assert.equal(sugestaoPorFileira(350), 30);
+  assert.equal(sugestaoPorFileira(5), 5, "salas pequenas: uma fileira só");
+  assert.equal(sugestaoPorFileira(40), 10);
+  for (const n of [1, 6, 20, 200, 1000, 4800]) {
+    const por = sugestaoPorFileira(n);
+    assert.ok(por >= 1 && por <= 80, `${n}: ${por}`);
+    assert.ok(Math.ceil(n / por) <= 60, `${n} lugares: fileiras demais`);
+  }
+});
+
+test("o calendário do mês começa no domingo, completa as semanas e apaga o que já passou", () => {
+  const semanas = semanasDoMes(2026, 11, "2026-12-10"); // dezembro de 2026 começa numa terça-feira
+  assert.equal(semanas.length, 5);
+  assert.ok(semanas.every(sem => sem.length === 7));
+  assert.deepEqual(semanas[0].map(d => d?.dia ?? null), [null, null, 1, 2, 3, 4, 5]);
+  assert.deepEqual(semanas[4].map(d => d?.dia ?? null), [27, 28, 29, 30, 31, null, null]);
+  const dias = semanas.flat().filter((d): d is NonNullable<typeof d> => d !== null);
+  assert.equal(dias.length, 31);
+  assert.equal(dias.find(d => d.dia === 9)?.passou, true);
+  assert.equal(dias.find(d => d.dia === 10)?.passou, false, "hoje não passou");
+  assert.equal(dias.find(d => d.dia === 10)?.hoje, true);
+  assert.equal(dias.find(d => d.dia === 20)?.data, "2026-12-20");
+  assert.equal(semanasDoMes(2028, 1, "2026-01-01").flat().filter(Boolean).length, 29, "fevereiro bissexto");
+  assert.deepEqual(somarMeses(2026, 11, 1), { ano: 2027, mes: 0 });
+  assert.deepEqual(somarMeses(2026, 0, -1), { ano: 2025, mes: 11 });
+  assert.deepEqual(mesDaData("2026-12-20"), { ano: 2026, mes: 11 });
+  assert.equal(NOMES_DOS_MESES[11], "dezembro");
+  assert.equal(dataPorExtenso("2026-12-20"), "domingo, 20 de dezembro de 2026");
 });
 
 test("o preço digitado vira centavos, no jeito brasileiro", () => {

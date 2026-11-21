@@ -11,7 +11,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(24);
+select plan(32);
 
 create schema tc;
 grant usage on schema tc to authenticated, anon;
@@ -40,6 +40,10 @@ begin
   insert into public.organization_members (organization_id, user_id, papel, modulos_acesso)
   select tc.id(o), tc.id(p), papel, '{ticketeria}'::text[] from (values
     ('a0', 'a1', 'admin'), ('a0', 'a3', 'leitor'), ('b0', 'b1', 'admin')) as v(o, p, papel);
+  -- Um setor da organização B, para provar que quem edita A não confere os lugares dele.
+  insert into public.ticketeria_lojas (id, organization_id, nome) values (tc.id('6b'), tc.id('b0'), 'TC Loja B');
+  insert into public.ticketeria_locais (id, organization_id, loja_id, nome) values (tc.id('5b'), tc.id('b0'), tc.id('6b'), 'TC Local B');
+  insert into public.ticketeria_setores (id, organization_id, local_id, nome, lugares) values (tc.id('4b'), tc.id('b0'), tc.id('5b'), 'Geral', 50);
 end
 $dados$;
 
@@ -113,6 +117,38 @@ select is((select count(*)::int from public.ticketeria_locais where organization
           'o local de mesmo nome é reaproveitado');
 select is((select count(*)::int from public.ticketeria_setores s join public.ticketeria_locais lo on lo.id = s.local_id
            where lo.organization_id = tc.id('a0') and lower(btrim(lo.nome)) = 'casa de cultura'), 1, 'e o setor Geral também');
+
+-- ─── Lugares numerados: o evento nasce e o mapa do auditório é montado em seguida (o que a tela faz) ───────────
+
+insert into tc.r select 'r3', public.fn_ticketeria_comecar(tc.id('a0'), 'unico', 'Concerto numerado', 'Sala numerada', 'Sorocaba', 100, tc.dia(), '20:00', null, 6000, true);
+
+select lives_ok($t$select public.fn_ticketeria_salvar_mapa(
+    (select s.id from public.ticketeria_setores s where s.local_id = ((select r from tc.r where k = 'r3') ->> 'local_id')::uuid and s.nome = 'Geral'),
+    (select jsonb_agg(jsonb_build_object('nome', chr(64 + f), 'assentos',
+              (select jsonb_agg(jsonb_build_object('numero', n, 'bloqueado', false) order by n) from generate_series(1, case when f = 7 then 4 else 16 end) n)) order by f)
+     from generate_series(1, 7) f), true)$t$,
+  'auditório: o mapa de 7 fileiras (16 lugares, a última com 4) é salvo no setor que a função criou, com a meia e a inteira já nos lotes');
+
+select is((select numerado::text || ':' || lugares from public.ticketeria_setores
+           where local_id = ((select r from tc.r where k = 'r3') ->> 'local_id')::uuid and nome = 'Geral'),
+          'true:100', 'auditório: o setor fica numerado com os 100 lugares do mapa');
+select is((select count(*)::int from public.ticketeria_assentos a join public.ticketeria_setores s on s.id = a.setor_id
+           where s.local_id = ((select r from tc.r where k = 'r3') ->> 'local_id')::uuid), 100, 'auditório: são 100 lugares gravados');
+select is((select count(*)::int from public.ticketeria_assentos a join public.ticketeria_setores s on s.id = a.setor_id
+           where s.local_id = ((select r from tc.r where k = 'r3') ->> 'local_id')::uuid and a.fileira = 'G'), 4, 'auditório: a última fileira leva os 4 que sobram');
+
+select lives_ok($t$update public.ticketeria_locais set uf = 'SP' where id = ((select r from tc.r where k = 'r3') ->> 'local_id')::uuid$t$,
+  'o estado escolhido no mapa é gravado no local logo depois de criar o evento');
+select is((select uf from public.ticketeria_locais where id = ((select r from tc.r where k = 'r3') ->> 'local_id')::uuid), 'SP', 'o local guarda o estado');
+
+-- A conferência dos lugares só vale para setor da própria organização (o conserto da migration ticketeria_conferir_lugares_do_editor).
+select is(tc.tenta($t$select public.fn_ticketeria_conferir_lugares(
+              ((select r from tc.r where k = 'r3') ->> 'evento_id')::uuid,
+              (select s.id from public.ticketeria_setores s where s.local_id = ((select r from tc.r where k = 'r3') ->> 'local_id')::uuid and s.nome = 'Geral'))$t$),
+          'aceito', 'o editor confere os lugares do setor da própria organização');
+
+select is(tc.tenta($t$select public.fn_ticketeria_conferir_lugares(((select r from tc.r where k = 'r3') ->> 'evento_id')::uuid, tc.id('4b'))$t$),
+          'sem_permissao', 'quem edita A não confere os lugares do setor da organização B');
 
 -- ─── Poucos lugares: sem meia ───────────────────────────────────────────────
 
