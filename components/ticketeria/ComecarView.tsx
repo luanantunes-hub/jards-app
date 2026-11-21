@@ -6,10 +6,10 @@ import { ArrowLeft, Building2, Check, Landmark, PartyPopper, Route, Tent, type L
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria, type ClienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import {
-  PERFIL, PERFIS, RESPOSTAS_VAZIAS, argumentosDoComecar, centavosDe, conferirPasso, divisaoDosLugares, hojeEmBrasilia, mapaDoAuditorio, mensagemDoErroDoComecar, ondeDoEvento, passosDoComecar, precoDaMeia, sugestaoPorFileira,
-  type PerfilDoProdutor, type RespostasDoComecar, type ResultadoDoComecar,
+  PERFIL, PERFIS, RESPOSTAS_VAZIAS, argumentosDoComecar, centavosDe, conferirPasso, divisaoDosLugares, hojeEmBrasilia, mapaDoAuditorio, mensagemDoErroDoComecar, ondeDaPraca, passosDoComecar, pracasEfetivas, praca as pracaVazia, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
+  type PerfilDoProdutor, type Praca, type PracaCriada, type RespostasDoComecar, type ResultadoDoComecar,
 } from "@/lib/ticketeria/comecar";
-import { dataPorExtenso } from "@/lib/ticketeria/calendario";
+import { resumoDasDatas } from "@/lib/ticketeria/calendario";
 import { mensagemDoErroDoMapa, paraSalvar, type FileiraDoMapa } from "@/lib/ticketeria/mapa";
 import { CalendarioDoMes } from "@/components/ticketeria/CalendarioDoMes";
 import { MapaDeAssentos } from "@/components/ticketeria/AssentosView";
@@ -33,8 +33,8 @@ const LINK = "rounded-xl border border-black/[.12] bg-white px-3.5 py-2 text-[0.
 
 const reais = (centavos: number) => (centavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-/** O que a tela final precisa saber além da resposta do banco: o setor numerado e como terminou a montagem do mapa de assentos. */
-type Pronto = ResultadoDoComecar & { setor: SetorEditavel | null; mapa: "montado" | "falhou" | null; erroDoMapa: string | null };
+/** O que a tela final precisa saber além da resposta do banco: o setor numerado de cada cidade e como terminou a montagem dos mapas de assentos. */
+type Pronto = ResultadoDoComecar & { setores: (SetorEditavel & { local_id: string })[]; mapa: "montado" | "falhou" | null; erroDoMapa: string | null };
 
 export function ComecarView({ organizationId }: { organizationId: string }) {
   const [r, setR] = useState<RespostasDoComecar>(RESPOSTAS_VAZIAS);
@@ -44,9 +44,11 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
   const [pronto, setPronto] = useState<Pronto | null>(null);
   const [municipios, setMunicipios] = useState<TabelaMunicipios | null>(null);
 
-  const PASSOS = passosDoComecar(r.perfil, r.numerada, r.gratuito);
-
-  const passoAtual = PASSOS[passo];
+  const PASSOS = passosDoComecar(r.perfil, r.pracas, r.numerada, r.gratuito);
+  const atual = PASSOS[Math.min(passo, PASSOS.length - 1)];
+  const passoAtual = atual.id;
+  const ip = atual.praca;
+  const cidadeAtual = r.pracas[ip] ?? pracaVazia();
 
   // A lista de cidades do IBGE só é baixada quando a pessoa chega no passo do lugar (276 KB, uma vez por sessão).
   useEffect(() => {
@@ -56,27 +58,37 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
     return () => { ativo = false; };
   }, [passoAtual, municipios]);
 
-  const muda = (parte: Partial<RespostasDoComecar>) => { setErro(null); setR(atual => ({ ...atual, ...parte })); };
+  const muda = (parte: Partial<RespostasDoComecar>) => { setErro(null); setR(anterior => ({ ...anterior, ...parte })); };
+  /** Muda a praça `i` (a cidade com as suas datas), criando as que faltam. */
+  const mudaPraca = (i: number, parte: Partial<Praca>) => {
+    setErro(null);
+    setR(anterior => {
+      const pracas = [...anterior.pracas];
+      while (pracas.length <= i) pracas.push(pracaVazia());
+      pracas[i] = { ...pracas[i], ...parte };
+      return { ...anterior, pracas };
+    });
+  };
 
   async function seguir() {
-    const problema = conferirPasso(passoAtual, r);
+    const problema = conferirPasso(atual, r);
     if (problema) { setErro(problema); return; }
     // O auditório já vem com uma sugestão de lugares por fileira, para a pessoa só ajustar.
-    if (passoAtual === "lugares" && r.numerada && !r.porFileira) setR(atual => ({ ...atual, porFileira: String(sugestaoPorFileira(Number(atual.lugares))) }));
-    if (passo < PASSOS.length - 1) { setPasso(passo + 1); return; }
+    if (passoAtual === "lugares" && r.numerada && !r.porFileira) setR(anterior => ({ ...anterior, porFileira: String(sugestaoPorFileira(Number(anterior.lugares))) }));
+    // "Tem outra cidade?" sim: abre a próxima cidade (a sequência de passos ganha o onde e o data dela).
+    if (passoAtual === "outra" && cidadeAtual.outra === true && r.pracas.length <= ip + 1) setR(anterior => ({ ...anterior, pracas: [...anterior.pracas, pracaVazia()] }));
+    if (passo < PASSOS.length - 1 || (passoAtual === "outra" && cidadeAtual.outra === true)) { setPasso(passo + 1); return; }
     setSalvando(true);
     const ticketeria = clienteDaTicketeria(createClient());
-    const { data, error } = await ticketeria.rpc("fn_ticketeria_comecar", argumentosDoComecar(organizationId, r));
+    const { data, error } = await ticketeria.rpc("fn_ticketeria_comecar_pracas", argumentosDoComecar(organizationId, r));
     if (error || !data) { setSalvando(false); setErro(mensagemDoErroDoComecar(error)); return; }
     const resultado = data as unknown as ResultadoDoComecar;
-    // O banco cria o local sem o estado (a função não o recebe): grava aqui. Se falhar, o evento já está criado e o estado se corrige na tela de Locais.
-    await ticketeria.from("ticketeria_locais").update({ uf: r.uf }).eq("id", resultado.local_id);
-    const montagem = r.numerada ? await montarAuditorio(ticketeria, resultado.local_id, r) : { setor: null, mapa: null, erroDoMapa: null };
+    const montagem = r.numerada ? await montarAuditorio(ticketeria, resultado.pracas, r) : { setores: [], mapa: null, erroDoMapa: null };
     setSalvando(false);
     setPronto({ ...resultado, ...montagem });
   }
 
-  if (pronto) return <EventoPronto r={r} resultado={pronto} organizationId={organizationId} recomecar={() => { setPronto(null); setR(RESPOSTAS_VAZIAS); setPasso(0); }} />;
+  if (pronto) return <EventoPronto r={r} resultado={pronto} organizationId={organizationId} recomecar={() => { setPronto(null); setR({ ...RESPOSTAS_VAZIAS, pracas: [pracaVazia()] }); setPasso(0); }} />;
 
   const perfil = r.perfil ? PERFIL[r.perfil] : null;
   return (
@@ -113,29 +125,29 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
         </section>
       )}
 
-      {PASSOS[passo] === "nome" && perfil && r.perfil && (
+      {passoAtual === "nome" && perfil && r.perfil && (
         <section aria-labelledby="comecar-titulo">
           <h1 id="comecar-titulo" className={TITULO}>{perfil.nome.pergunta}</h1>
           <p className={APOIO}>{perfil.nome.apoio}</p>
           <div className="mt-12 md:mt-16">
-            <CampoGrande valor={r.perfil === "espaco" ? r.lugar : r.evento} exemplo={perfil.nome.exemplo} rotulo={perfil.nome.rotulo}
-              onChange={nome => muda(r.perfil === "espaco" ? { lugar: nome } : { evento: nome })} onEnter={() => void seguir()} />
+            <CampoGrande valor={r.perfil === "espaco" ? r.pracas[0]?.lugar ?? "" : r.evento} exemplo={perfil.nome.exemplo} rotulo={perfil.nome.rotulo}
+              onChange={nome => (r.perfil === "espaco" ? mudaPraca(0, { lugar: nome }) : muda({ evento: nome }))} onEnter={() => void seguir()} />
           </div>
         </section>
       )}
 
-      {PASSOS[passo] === "onde" && perfil && r.perfil && (
+      {passoAtual === "onde" && perfil && r.perfil && (
         <section aria-labelledby="comecar-titulo" className="space-y-4">
           <div>
-            <p className="text-[0.75rem] text-black/45">{perfil.titulo}</p>
-            <h1 id="comecar-titulo" className={TITULO}>{perfil.onde.pergunta}</h1>
+            <p className="text-[0.75rem] text-black/45">{r.perfil === "turne" ? `Cidade ${ip + 1}` : perfil.titulo}</p>
+            <h1 id="comecar-titulo" className={TITULO}>{r.perfil === "turne" && ip > 0 ? "Onde é a próxima cidade?" : perfil.onde.pergunta}</h1>
             <p className={APOIO}>{perfil.onde.apoio}</p>
           </div>
-          <EscolherOnde r={r} muda={muda} municipios={municipios} rotuloDoLugar={perfil.onde.rotuloDoLugar} exemploDoLugar={perfil.onde.exemploDoLugar} />
+          <EscolherOnde praca={cidadeAtual} mudaPraca={parte => mudaPraca(ip, parte)} municipios={municipios} rotuloDoLugar={r.perfil === "espaco" ? "" : perfil.onde.rotuloDoLugar} exemploDoLugar={perfil.onde.exemploDoLugar} />
         </section>
       )}
 
-      {PASSOS[passo] === "evento" && (
+      {passoAtual === "evento" && (
         <section aria-labelledby="comecar-titulo">
           <h1 id="comecar-titulo" className={TITULO}>Qual é o primeiro evento?</h1>
           <p className={APOIO}>O nome que as pessoas vão ver no ingresso.</p>
@@ -143,21 +155,23 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
         </section>
       )}
 
-      {PASSOS[passo] === "data" && perfil && (
+      {passoAtual === "data" && perfil && r.perfil && (
         <section aria-labelledby="comecar-titulo">
-          <h1 id="comecar-titulo" className={TITULO}>{perfil.data.pergunta}</h1>
-          <div className="mt-8 md:mt-12"><CalendarioDoMes valor={r.data} hoje={hojeEmBrasilia()} onChange={data => muda({ data })} /></div>
+          {r.perfil === "turne" && <p className="text-[0.75rem] text-black/45">{cidadeAtual.cidade ? `${cidadeAtual.cidade}, ${cidadeAtual.uf}` : `Cidade ${ip + 1}`}</p>}
+          <h1 id="comecar-titulo" className={TITULO}>{r.perfil === "turne" ? "Quais dias nessa cidade?" : perfil.data.pergunta}</h1>
+          <div className="mt-8 md:mt-12"><CalendarioDoMes valores={cidadeAtual.datas} hoje={hojeEmBrasilia()} onChange={datas => mudaPraca(ip, { datas })} /></div>
         </section>
       )}
 
-      {PASSOS[passo] === "dias" && (
+      {passoAtual === "outra" && (
         <section aria-labelledby="comecar-titulo">
-          <h1 id="comecar-titulo" className={TITULO}>Quantos dias tem o festival?</h1>
-          <div className="mt-12 md:mt-16"><CampoGrande numerico valor={r.dias} exemplo="3" rotulo="Quantos dias" onChange={dias => muda({ dias: dias.replace(/\D/g, "") })} onEnter={() => void seguir()} /></div>
+          <p className="text-[0.75rem] text-black/45">{`${cidadeAtual.cidade}, ${cidadeAtual.uf} · ${resumoDasDatas(cidadeAtual.datas)}`}</p>
+          <h1 id="comecar-titulo" className={TITULO}>Tem outra cidade na turnê?</h1>
+          <div className="mt-12 md:mt-16"><SimOuNao valor={cidadeAtual.outra} onChange={outra => mudaPraca(ip, { outra })} dicaSim="Você marca o lugar e os dias dela." dicaNao="Essa é a última." /></div>
         </section>
       )}
 
-      {PASSOS[passo] === "horario" && (
+      {passoAtual === "horario" && (
         <section aria-labelledby="comecar-titulo">
           <h1 id="comecar-titulo" className={TITULO}>A que horas começa?</h1>
           <div className="mt-12 md:mt-16">
@@ -179,14 +193,14 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
         </section>
       )}
 
-      {PASSOS[passo] === "lugares" && (
+      {passoAtual === "lugares" && (
         <section aria-labelledby="comecar-titulo">
           <h1 id="comecar-titulo" className={TITULO}>Quantos lugares tem?</h1>
           <div className="mt-12 md:mt-16"><CampoGrande numerico valor={r.lugares} exemplo="200" rotulo="Quantos lugares" onChange={lugares => muda({ lugares: lugares.replace(/\D/g, "") })} onEnter={() => void seguir()} /></div>
         </section>
       )}
 
-      {PASSOS[passo] === "auditorio" && (
+      {passoAtual === "auditorio" && (
         <section aria-labelledby="comecar-titulo">
           <h1 id="comecar-titulo" className={TITULO}>Monte o auditório</h1>
           <div className="mt-8 md:mt-10"><MontarAuditorio r={r} muda={muda} /></div>
@@ -260,34 +274,34 @@ function SimOuNao({ valor, onChange, dicaSim, dicaNao }: { valor: boolean | null
 }
 
 /** O lugar: o estado pelo mapa e a cidade da lista dele; digitando, a lista filtra. Sem estado, quem digita a cidade acha em todo o Brasil. Cidade fora da lista vale como digitada. */
-function EscolherOnde({ r, muda, municipios, rotuloDoLugar, exemploDoLugar }: { r: RespostasDoComecar; muda: (parte: Partial<RespostasDoComecar>) => void; municipios: TabelaMunicipios | null; rotuloDoLugar: string; exemploDoLugar: string }) {
+function EscolherOnde({ praca, mudaPraca, municipios, rotuloDoLugar, exemploDoLugar }: { praca: Praca; mudaPraca: (parte: Partial<Praca>) => void; municipios: TabelaMunicipios | null; rotuloDoLugar: string; exemploDoLugar: string }) {
   // A lista recolhe quando a cidade é escolhida e reabre ao clicar no campo, digitar ou trocar o estado. Ao voltar a este passo com a cidade já escolhida, ela já vem recolhida.
-  const [aberta, setAberta] = useState(!r.cidade.trim());
+  const [aberta, setAberta] = useState(!praca.cidade.trim());
   const lista = municipios
-    ? (r.uf ? cidadesDoEstado(municipios, r.uf, r.cidade) : cidadesDoBrasil(municipios, r.cidade))
+    ? (praca.uf ? cidadesDoEstado(municipios, praca.uf, praca.cidade) : cidadesDoBrasil(municipios, praca.cidade))
     : [];
-  const exata = municipios && r.uf ? cidadeExata(municipios, r.uf, r.cidade) : null;
+  const exata = municipios && praca.uf ? cidadeExata(municipios, praca.uf, praca.cidade) : null;
   return (
     <div className="space-y-4">
       <div className="grid gap-5 sm:grid-cols-2 sm:items-start">
-        <MapaDoBrasil uf={r.uf} onChange={uf => { muda({ uf, cidade: r.uf === uf ? r.cidade : "" }); if (r.uf !== uf) setAberta(true); }} />
+        <MapaDoBrasil uf={praca.uf} onChange={uf => { mudaPraca({ uf, cidade: praca.uf === uf ? praca.cidade : "" }); if (praca.uf !== uf) setAberta(true); }} />
         <div>
-          <label className={ROTULO} htmlFor="co-cidade">{r.uf ? "Cidade" : "Cidade (ou escolha o estado no mapa)"}</label>
+          <label className={ROTULO} htmlFor="co-cidade">{praca.uf ? "Cidade" : "Cidade (ou escolha o estado no mapa)"}</label>
           <div className="relative">
-            <input id="co-cidade" className={`${CAMPO} ${!aberta && exata ? "pr-9" : ""}`} value={r.cidade} placeholder={r.uf ? "Digite para filtrar" : "Sorocaba"} autoComplete="off" role="combobox" aria-expanded={aberta} aria-controls="co-cidades"
-              onFocus={() => setAberta(true)} onChange={e => { muda({ cidade: e.target.value }); setAberta(true); }}
-              onKeyDown={e => { if (e.key === "Escape" || (e.key === "Enter" && r.cidade.trim())) { e.preventDefault(); setAberta(false); } }} />
+            <input id="co-cidade" className={`${CAMPO} ${!aberta && exata ? "pr-9" : ""}`} value={praca.cidade} placeholder={praca.uf ? "Digite para filtrar" : "Sorocaba"} autoComplete="off" role="combobox" aria-expanded={aberta} aria-controls="co-cidades"
+              onFocus={() => setAberta(true)} onChange={e => { mudaPraca({ cidade: e.target.value }); setAberta(true); }}
+              onKeyDown={e => { if (e.key === "Escape" || (e.key === "Enter" && praca.cidade.trim())) { e.preventDefault(); setAberta(false); } }} />
             {!aberta && exata && <Check size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#7259B5]" aria-hidden="true" />}
           </div>
           {aberta && <ul id="co-cidades" role="listbox" aria-label="Cidades" className="mt-2 max-h-48 divide-y divide-black/[.06] overflow-y-auto rounded-xl border border-black/[.12] bg-white">
             {!municipios && <li className="px-3 py-2.5 text-[0.75rem] text-black/40">Carregando as cidades…</li>}
-            {municipios && lista.length === 0 && <li className="px-3 py-2.5 text-[0.75rem] text-black/40">{r.cidade.trim() ? "Nenhuma cidade com esse nome na lista. Vale o que você digitou." : "Digite a cidade."}</li>}
+            {municipios && lista.length === 0 && <li className="px-3 py-2.5 text-[0.75rem] text-black/40">{praca.cidade.trim() ? "Nenhuma cidade com esse nome na lista. Vale o que você digitou." : "Digite a cidade."}</li>}
             {lista.map(m => {
               const escolhida = !!exata && exata[0] === m[0];
               return (
                 <li key={m[0]} role="option" aria-selected={escolhida}>
-                  <button type="button" onClick={() => { muda({ uf: m[2], cidade: m[1] }); setAberta(false); }} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[0.8125rem] text-[#282525] transition hover:bg-black/[.04] focus-visible:bg-black/[.04] focus-visible:outline-none">
-                    <span>{m[1]}{!r.uf && <span className="text-black/40">, {m[2]}</span>}</span>
+                  <button type="button" onClick={() => { mudaPraca({ uf: m[2], cidade: m[1] }); setAberta(false); }} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[0.8125rem] text-[#282525] transition hover:bg-black/[.04] focus-visible:bg-black/[.04] focus-visible:outline-none">
+                    <span>{m[1]}{!praca.uf && <span className="text-black/40">, {m[2]}</span>}</span>
                     {escolhida && <Check size={14} className="shrink-0 text-[#7259B5]" aria-hidden="true" />}
                   </button>
                 </li>
@@ -296,7 +310,7 @@ function EscolherOnde({ r, muda, municipios, rotuloDoLugar, exemploDoLugar }: { 
           </ul>}
         </div>
       </div>
-      {rotuloDoLugar && <Campo id="co-lugar" rotulo={rotuloDoLugar} valor={r.lugar} exemplo={exemploDoLugar} onChange={lugar => muda({ lugar })} />}
+      {rotuloDoLugar && <Campo id="co-lugar" rotulo={rotuloDoLugar} valor={praca.lugar} exemplo={exemploDoLugar} onChange={lugar => mudaPraca({ lugar })} />}
     </div>
   );
 }
@@ -326,15 +340,25 @@ function MontarAuditorio({ r, muda }: { r: RespostasDoComecar; muda: (parte: Par
   );
 }
 
-/** Monta o mapa de assentos do setor "Geral" que a função do banco criou. Um setor que já era numerado, ou de outro tamanho (espaço refeito), fica como está: o mapa se ajusta no editor. */
-async function montarAuditorio(ticketeria: ClienteDaTicketeria, localId: string, r: RespostasDoComecar): Promise<Pick<Pronto, "setor" | "mapa" | "erroDoMapa">> {
-  const { data: setor } = await ticketeria.from("ticketeria_setores").select("id, nome, lugares, arquivado, numerado, corredor_no_meio").eq("local_id", localId).eq("nome", "Geral").eq("arquivado", false).maybeSingle();
-  if (!setor) return { setor: null, mapa: null, erroDoMapa: null };
-  if (setor.numerado || setor.lugares !== Number(r.lugares)) return { setor, mapa: null, erroDoMapa: null };
-  const fileiras = mapaDoAuditorio(Number(r.lugares), Number(r.porFileira), r.corredor);
-  const { error } = await ticketeria.rpc("fn_ticketeria_salvar_mapa", { p_setor: setor.id, p_fileiras: paraSalvar(fileiras), p_corredor: r.corredor });
-  if (error) return { setor, mapa: "falhou", erroDoMapa: mensagemDoErroDoMapa(error) };
-  return { setor: { ...setor, numerado: true, corredor_no_meio: r.corredor }, mapa: "montado", erroDoMapa: null };
+/**
+ * Monta o mapa de assentos do setor "Geral" de cada cidade (o mesmo desenho em todas: o produtor ajusta por cidade depois). Um setor que já era numerado,
+ * ou de outro tamanho (espaço refeito), fica como está: o mapa se ajusta no editor.
+ */
+async function montarAuditorio(ticketeria: ClienteDaTicketeria, pracas: PracaCriada[], r: RespostasDoComecar): Promise<Pick<Pronto, "setores" | "mapa" | "erroDoMapa">> {
+  const lugares = Number(r.lugares);
+  const setores: Pronto["setores"] = [];
+  let tentou = false;
+  let erro: string | null = null;
+  for (const p of pracas) {
+    let numerado = p.setor_numerado;
+    if (!numerado && p.setor_lugares === lugares) {
+      tentou = true;
+      const { error } = await ticketeria.rpc("fn_ticketeria_salvar_mapa", { p_setor: p.setor_id, p_fileiras: paraSalvar(mapaDoAuditorio(lugares, Number(r.porFileira), r.corredor)), p_corredor: r.corredor });
+      if (error) erro ??= mensagemDoErroDoMapa(error); else numerado = true;
+    }
+    setores.push({ id: p.setor_id, nome: "Geral", lugares: p.setor_lugares, arquivado: false, numerado, corredor_no_meio: r.corredor, local_id: p.local_id });
+  }
+  return { setores, mapa: erro ? "falhou" : tentou ? "montado" : null, erroDoMapa: erro };
 }
 
 function Marcar({ id, marcado, onChange, texto }: { id: string; marcado: boolean; onChange: (marcado: boolean) => void; texto: string }) {
@@ -342,16 +366,24 @@ function Marcar({ id, marcado, onChange, texto }: { id: string; marcado: boolean
 }
 
 function EventoPronto({ r, resultado, recomecar, organizationId }: { r: RespostasDoComecar; resultado: Pronto; recomecar: () => void; organizationId: string }) {
-  const [editandoMapa, setEditandoMapa] = useState(false);
+  const [editandoMapa, setEditandoMapa] = useState<number | null>(null);
   const gratuito = r.gratuito === true;
   const inteira = gratuito ? 0 : (centavosDe(r.preco) ?? 0);
   const lugares = Number(r.lugares);
   const divisao = divisaoDosLugares(lugares, r.meia === true, gratuito);
-  const onde = ondeDoEvento(r);
-  const linhas: [string, string][] = gratuito
-    ? [["Entrada gratuita", `${lugares} lugares`]]
-    : [["Inteira", `${reais(inteira)} · ${divisao.inteira} lugares`], ...(divisao.meia > 0 ? [["Meia-entrada", `${reais(precoDaMeia(inteira))} · ${divisao.meia} lugares`] as [string, string]] : [])];
+  const cidades = pracasEfetivas(r.perfil, r.pracas);
+  const varias = cidades.length > 1;
+  const linhas: [string, string][] = [
+    ...(varias ? cidades.map(c => [`${c.cidade}, ${c.uf}`, resumoDasDatas(c.datas)] as [string, string]) : []),
+    ...(gratuito
+      ? [["Entrada gratuita", `${lugares} lugares${varias ? " por cidade" : ""}`] as [string, string]]
+      : [["Inteira", `${reais(inteira)} · ${divisao.inteira} lugares`] as [string, string], ...(divisao.meia > 0 ? [["Meia-entrada", `${reais(precoDaMeia(inteira))} · ${divisao.meia} lugares`] as [string, string]] : [])]),
+  ];
   if (resultado.mapa === "montado") linhas.push(["Auditório", `${Math.ceil(lugares / (Number(r.porFileira) || 1))} fileiras · ${lugares} lugares numerados`]);
+  const cabecalho = varias
+    ? `${cidades.length} cidades · ${totalDeSessoes(r)} datas · ${r.hora}`
+    : `${resumoDasDatas(cidades[0].datas)}, ${r.hora} · ${ondeDaPraca(cidades[0])}`;
+  const aberto = editandoMapa === null ? null : resultado.setores[editandoMapa] ?? null;
   return (
     <section aria-labelledby="pronto-titulo" className="mx-auto w-full max-w-[36rem]">
       <div className="mb-6 h-[3px] rounded-full bg-[#7259B5]" aria-hidden="true" />
@@ -362,13 +394,11 @@ function EventoPronto({ r, resultado, recomecar, organizationId }: { r: Resposta
       <div className="mt-5 overflow-hidden rounded-xl border border-black/[.12] bg-white">
         <div className="bg-[#1C0E33] px-4 py-3.5 text-white">
           <p className="text-[1rem] font-normal">{r.evento.trim()}</p>
-          <p className="mt-0.5 text-[0.75rem] text-white/70">
-            {dataPorExtenso(r.data)}, {r.hora}{resultado.sessoes > 1 ? ` · ${resultado.sessoes} dias` : ""} · {onde}
-          </p>
+          <p className="mt-0.5 text-[0.75rem] text-white/70">{cabecalho}</p>
         </div>
         {linhas.map(([rotulo, valor]) => (
-          <div key={rotulo} className="flex justify-between border-t border-dashed border-black/[.12] px-4 py-2.5 text-[0.8125rem]">
-            <span className="text-black/55">{rotulo}</span><span className="tabular-nums text-[#282525]">{valor}</span>
+          <div key={rotulo} className="flex justify-between gap-4 border-t border-dashed border-black/[.12] px-4 py-2.5 text-[0.8125rem]">
+            <span className="text-black/55">{rotulo}</span><span className="text-right tabular-nums text-[#282525]">{valor}</span>
           </div>
         ))}
       </div>
@@ -384,12 +414,14 @@ function EventoPronto({ r, resultado, recomecar, organizationId }: { r: Resposta
 
       <div className="mt-6 flex flex-wrap items-center gap-2.5">
         {!gratuito && <Link href="/ingressos/recebimentos" className={CTA}>Cadastrar conta</Link>}
-        {r.numerada && resultado.setor && <button type="button" onClick={() => setEditandoMapa(true)} className={LINK}>Desenhar o mapa de assentos</button>}
+        {r.numerada && resultado.setores.map((setor, i) => (
+          <button key={setor.id} type="button" onClick={() => setEditandoMapa(i)} className={LINK}>{varias ? `Desenhar o mapa de ${cidades[i]?.cidade ?? "assentos"}` : "Desenhar o mapa de assentos"}</button>
+        ))}
         <Link href={`/ingressos/eventos/${resultado.evento_id}`} className={gratuito ? CTA : LINK}>{gratuito ? "Abrir o evento para publicar" : "Abrir o evento"}</Link>
         <button type="button" onClick={recomecar} className={VOLTAR}>Criar outro</button>
       </div>
-      {editandoMapa && resultado.setor && (
-        <SetorSheet organizationId={organizationId} localId={resultado.local_id} nomeDoLocal={ondeDoEvento(r)} setor={resultado.setor} onClose={() => setEditandoMapa(false)} onSaved={() => setEditandoMapa(false)} />
+      {aberto && (
+        <SetorSheet organizationId={organizationId} localId={aberto.local_id} nomeDoLocal={ondeDaPraca(cidades[editandoMapa ?? 0])} setor={aberto} onClose={() => setEditandoMapa(null)} onSaved={() => setEditandoMapa(null)} />
       )}
     </section>
   );

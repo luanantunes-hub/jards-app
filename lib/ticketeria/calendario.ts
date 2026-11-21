@@ -43,3 +43,36 @@ export function dataPorExtenso(data: string): string {
   const semana = new Date(Date.UTC(ano, mes, dia)).getUTCDay();
   return `${NOMES_DOS_DIAS[semana]}, ${dia} de ${NOMES_DOS_MESES[mes]} de ${ano}`;
 }
+
+/** Os dias de `de` até `ate` (AAAA-MM-DD, os dois incluídos), em ordem; vazio se `ate` vem antes de `de`. */
+export function diasEntre(de: string, ate: string): string[] {
+  const saida: string[] = [];
+  const fim = Date.parse(`${ate}T00:00:00Z`);
+  for (let t = Date.parse(`${de}T00:00:00Z`); t <= fim && saida.length < 400; t += 86_400_000) saida.push(new Date(t).toISOString().slice(0, 10));
+  return saida;
+}
+
+/** Marca ou desmarca um dia; com `ate` (o clique com Shift), marca todos os dias de um ao outro (os que já passaram ficam de fora). Devolve a lista em ordem. */
+export function alternarDia(datas: readonly string[], dia: string, opcoes: { ate?: string; hoje: string }): string[] {
+  const conjunto = new Set(datas);
+  if (opcoes.ate && opcoes.ate !== dia) {
+    const [de, ate] = dia < opcoes.ate ? [dia, opcoes.ate] : [opcoes.ate, dia];
+    for (const d of diasEntre(de, ate)) if (d >= opcoes.hoje) conjunto.add(d);
+  } else if (conjunto.has(dia)) conjunto.delete(dia);
+  else conjunto.add(dia);
+  return [...conjunto].sort();
+}
+
+/** "domingo, 20 de dezembro de 2026" para um dia; "3 dias: 20, 21 e 27 de dezembro" para vários (mês a mês quando atravessam meses). */
+export function resumoDasDatas(datas: readonly string[]): string {
+  const ordenadas = [...datas].sort();
+  if (ordenadas.length === 0) return "";
+  if (ordenadas.length === 1) return dataPorExtenso(ordenadas[0]);
+  const porMes = new Map<string, number[]>();
+  for (const d of ordenadas) porMes.set(d.slice(0, 7), [...(porMes.get(d.slice(0, 7)) ?? []), Number(d.slice(8, 10))]);
+  const partes = [...porMes.entries()].map(([mes, dias]) => {
+    const lista = dias.length > 1 ? `${dias.slice(0, -1).join(", ")} e ${dias[dias.length - 1]}` : String(dias[0]);
+    return `${lista} de ${NOMES_DOS_MESES[Number(mes.slice(5, 7)) - 1]}`;
+  });
+  return `${ordenadas.length} dias: ${partes.join(" · ")}`;
+}

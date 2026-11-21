@@ -48,17 +48,21 @@ export const PERFIL: Record<PerfilDoProdutor, {
   },
 };
 
+/**
+ * Uma praça: um lugar com as suas datas. Evento único, temporada, festival e espaço têm uma só; a turnê tem uma por cidade. As datas são as que a
+ * pessoa marcou no calendário, seguidas ou alternadas. `outra` (só na turnê): "tem outra cidade?", null enquanto não respondeu.
+ */
+export type Praca = { uf: string; cidade: string; lugar: string; datas: string[]; outra: boolean | null };
+
+export const praca = (): Praca => ({ uf: "", cidade: "", lugar: "", datas: [], outra: null });
+
 export type RespostasDoComecar = {
   perfil: PerfilDoProdutor | null;
   evento: string;
-  /** O nome do espaço (perfil "espaço") ou do lugar do evento (os outros, opcional). */
-  lugar: string;
-  uf: string;
-  cidade: string;
+  /** As praças. O nome do espaço (perfil "espaço") fica em `pracas[0].lugar`; nos outros perfis, `lugar` é o nome do lugar (opcional). */
+  pracas: Praca[];
   lugares: string;
-  data: string; // AAAA-MM-DD
-  hora: string; // HH:MM
-  dias: string;
+  hora: string; // HH:MM, o mesmo em todas as datas
   /** Lugares numerados: null enquanto a pessoa não respondeu. */
   numerada: boolean | null;
   /** Lugares por fileira do auditório (só com lugares numerados); vazio até a pessoa chegar nesse passo. */
@@ -72,21 +76,45 @@ export type RespostasDoComecar = {
 };
 
 export const RESPOSTAS_VAZIAS: RespostasDoComecar = {
-  perfil: null, evento: "", lugar: "", uf: "", cidade: "", lugares: "", data: "", hora: "20:00", dias: "2", numerada: null, porFileira: "", corredor: true, gratuito: null, preco: "", meia: null,
+  perfil: null, evento: "", pracas: [praca()], lugares: "", hora: "20:00", numerada: null, porFileira: "", corredor: true, gratuito: null, preco: "", meia: null,
 };
 
+export const MAX_PRACAS = 20;
+export const MAX_DATAS_POR_PRACA = 60;
+export const MAX_SESSOES = 200;
+
 /** Os passos com perguntas, uma coisa por tela (depois vem o evento pronto). */
-export type PassoDoComecar = "perfil" | "nome" | "onde" | "evento" | "data" | "dias" | "horario" | "numerada" | "lugares" | "auditorio" | "gratuito" | "preco" | "meia";
+export type PassoId = "perfil" | "nome" | "onde" | "evento" | "data" | "outra" | "horario" | "numerada" | "lugares" | "auditorio" | "gratuito" | "preco" | "meia";
+/** Um passo e, nos que se repetem por cidade (onde, data, outra), qual é a praça. */
+export type Passo = { id: PassoId; praca: number };
+
+/** As praças que valem: só a primeira, ou, na turnê, a sequência em que cada cidade responde "tem outra cidade?" com sim. */
+export function pracasEfetivas(perfil: PerfilDoProdutor | null, pracas: readonly Praca[]): Praca[] {
+  if (perfil !== "turne") return pracas.slice(0, 1);
+  const saida: Praca[] = [];
+  for (const p of pracas) {
+    saida.push(p);
+    if (p.outra !== true) break;
+  }
+  return saida;
+}
 
 /**
- * A sequência de passos: o nome do primeiro evento só para quem tem espaço, os dias só no festival, o auditório só com lugares numerados e o preço e a
- * meia-entrada só se o ingresso não for gratuito. Enquanto uma resposta não vem, vale o caminho mais comum (sem auditório; ingresso pago).
+ * A sequência de passos: o nome do primeiro evento só para quem tem espaço; onde e quais dias (e, na turnê, "tem outra cidade?") uma vez por cidade; o
+ * auditório só com lugares numerados; e o preço e a meia-entrada só se o ingresso não for gratuito. Enquanto uma resposta não vem, vale o caminho mais
+ * comum (uma cidade; sem auditório; ingresso pago).
  */
-export function passosDoComecar(perfil: PerfilDoProdutor | null, numerada: boolean | null, gratuito: boolean | null): PassoDoComecar[] {
-  return [
-    "perfil", "nome", "onde", ...(perfil === "espaco" ? ["evento" as const] : []), "data", ...(perfil === "festival" ? ["dias" as const] : []),
-    "horario", "numerada", "lugares", ...(numerada ? ["auditorio" as const] : []), "gratuito", ...(gratuito === true ? [] : ["preco" as const, "meia" as const]),
-  ];
+export function passosDoComecar(perfil: PerfilDoProdutor | null, pracas: readonly Praca[], numerada: boolean | null, gratuito: boolean | null): Passo[] {
+  const lista: Passo[] = [{ id: "perfil", praca: 0 }, { id: "nome", praca: 0 }];
+  const cidades = pracasEfetivas(perfil, pracas.length ? pracas : [praca()]);
+  cidades.forEach((_, i) => {
+    lista.push({ id: "onde", praca: i });
+    if (i === 0 && perfil === "espaco") lista.push({ id: "evento", praca: 0 });
+    lista.push({ id: "data", praca: i });
+    if (perfil === "turne") lista.push({ id: "outra", praca: i });
+  });
+  for (const id of ["horario", "numerada", "lugares", ...(numerada ? ["auditorio"] : []), "gratuito", ...(gratuito === true ? [] : ["preco", "meia"])] as PassoId[]) lista.push({ id, praca: 0 });
+  return lista;
 }
 
 /** O mapa de assentos tem até 60 fileiras de 80 lugares: 4.800 (o banco ainda guarda um teto de 5.000 por setor, que o formato não deixa chegar). */
@@ -111,68 +139,73 @@ export function centavosDe(texto: string): number | null {
 const inteiro = (texto: string) => (/^\d+$/.test(texto.trim()) ? Number(texto.trim()) : null);
 
 /** A mensagem do primeiro campo a acertar no passo, ou null quando dá para seguir. */
-export function conferirPasso(passo: PassoDoComecar, r: RespostasDoComecar, hoje: string = hojeEmBrasilia()): string | null {
-  if (passo === "perfil") return r.perfil ? null : "Escolha uma opção para continuar";
+export function conferirPasso(passo: Passo, r: RespostasDoComecar, hoje: string = hojeEmBrasilia()): string | null {
+  const id = passo.id;
+  if (id === "perfil") return r.perfil ? null : "Escolha uma opção para continuar";
   if (!r.perfil) return "Escolha como você trabalha";
-  if (passo === "nome") {
-    const nome = (r.perfil === "espaco" ? r.lugar : r.evento).trim();
+  const cidade = r.pracas[passo.praca] ?? praca();
+  if (id === "nome") {
+    const nome = (r.perfil === "espaco" ? r.pracas[0]?.lugar ?? "" : r.evento).trim();
     if (!nome) return r.perfil === "espaco" ? "Diga o nome do espaço" : "Dê um nome ao evento";
     if (nome.length > 200) return "O nome pode ter até 200 caracteres";
     return null;
   }
-  if (passo === "onde") {
-    if (!UFS_DO_COMECAR.includes(r.uf)) return "Escolha o estado no mapa";
-    if (!r.cidade.trim()) return "Escolha ou digite a cidade";
-    if (r.cidade.trim().length > 120) return "O nome da cidade pode ter até 120 caracteres";
-    if (r.lugar.trim().length > 200) return "O nome do lugar pode ter até 200 caracteres";
+  if (id === "onde") {
+    if (!UFS_DO_COMECAR.includes(cidade.uf)) return "Escolha o estado no mapa";
+    if (!cidade.cidade.trim()) return "Escolha ou digite a cidade";
+    if (cidade.cidade.trim().length > 120) return "O nome da cidade pode ter até 120 caracteres";
+    if (cidade.lugar.trim().length > 200) return "O nome do lugar pode ter até 200 caracteres";
     return null;
   }
-  if (passo === "evento") {
+  if (id === "evento") {
     if (!r.evento.trim()) return "Dê um nome ao primeiro evento";
     if (r.evento.trim().length > 200) return "O nome pode ter até 200 caracteres";
     return null;
   }
-  if (passo === "data") {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(r.data)) return "Escolha o dia";
-    if (r.data < hoje) return "Esse dia já passou";
+  if (id === "data") {
+    if (cidade.datas.length === 0) return r.perfil === "turne" ? "Escolha pelo menos um dia nessa cidade" : "Escolha pelo menos um dia";
+    if (cidade.datas.some(d => !/^\d{4}-\d{2}-\d{2}$/.test(d))) return "Escolha o dia";
+    if (cidade.datas.some(d => d < hoje)) return "Esse dia já passou";
+    if (cidade.datas.length > MAX_DATAS_POR_PRACA) return "São no máximo 60 dias por cidade";
+    if (totalDeSessoes(r) > MAX_SESSOES) return "São no máximo 200 datas no total";
     return null;
   }
-  if (passo === "dias") {
-    const dias = inteiro(r.dias);
-    return !dias || dias < 1 || dias > 31 ? "O festival pode ter de 1 a 31 dias" : null;
-  }
-  if (passo === "horario") return /^\d{2}:\d{2}$/.test(r.hora) ? null : "Escolha o horário";
-  if (passo === "numerada") return r.numerada === null ? "Escolha sim ou não" : null;
-  if (passo === "lugares") {
+  if (id === "outra") return cidade.outra === null ? "Escolha sim ou não" : cidade.outra && passo.praca + 1 >= MAX_PRACAS ? "São no máximo 20 cidades" : null;
+  if (id === "horario") return /^\d{2}:\d{2}$/.test(r.hora) ? null : "Escolha o horário";
+  if (id === "numerada") return r.numerada === null ? "Escolha sim ou não" : null;
+  if (id === "lugares") {
     const lugares = inteiro(r.lugares);
     if (!lugares || lugares < 1) return "Diga quantos lugares há";
     if (lugares > 200000) return "São no máximo 200.000 lugares";
     if (r.numerada && lugares > MAX_LUGARES_NUMERADOS) return "Com lugares numerados, o máximo são 4.800 lugares";
     return null;
   }
-  if (passo === "auditorio") {
+  if (id === "auditorio") {
     const porFileira = inteiro(r.porFileira);
     if (!porFileira || porFileira < 1) return "Diga quantos lugares por fileira";
     if (porFileira > MAX_LUGARES_NA_FILEIRA) return "São no máximo 80 lugares por fileira";
     if (Math.ceil(Number(r.lugares) / porFileira) > MAX_FILEIRAS) return "Ficariam mais de 60 fileiras: aumente os lugares por fileira";
     return null;
   }
-  if (passo === "gratuito") return r.gratuito === null ? "Escolha sim ou não" : null;
-  if (passo === "meia") return r.meia === null ? "Escolha sim ou não" : null;
+  if (id === "gratuito") return r.gratuito === null ? "Escolha sim ou não" : null;
+  if (id === "meia") return r.meia === null ? "Escolha sim ou não" : null;
   const centavos = centavosDe(r.preco);
   if (centavos === null || centavos <= 0) return "Diga o preço da inteira";
   if (centavos > 10000000) return "O preço pode ir até R$ 100.000";
   return null;
 }
 
+/** Quantas sessões (datas em cidades) o evento vai ter. */
+export const totalDeSessoes = (r: RespostasDoComecar) => pracasEfetivas(r.perfil, r.pracas).reduce((t, p) => t + p.datas.length, 0);
+
 /** O nome do local que vai para o banco: o do espaço, o do lugar (se a pessoa disse) ou, na falta dele, a cidade. */
-export const nomeDoLocal = (r: RespostasDoComecar) => r.lugar.trim() || r.cidade.trim();
+export const nomeDoLocal = (p: Praca) => p.lugar.trim() || p.cidade.trim();
 
 /** "Teatro Municipal, Sorocaba, SP" para a tela final. */
-export function ondeDoEvento(r: RespostasDoComecar): string {
-  const lugar = r.lugar.trim();
-  const cidade = [r.cidade.trim(), r.uf].filter(Boolean).join(", ");
-  return lugar && lugar !== r.cidade.trim() ? `${lugar}, ${cidade}` : cidade;
+export function ondeDaPraca(p: Praca): string {
+  const lugar = p.lugar.trim();
+  const cidade = [p.cidade.trim(), p.uf].filter(Boolean).join(", ");
+  return lugar && lugar !== p.cidade.trim() ? `${lugar}, ${cidade}` : cidade;
 }
 
 /** Como o banco divide os lugares: 40% meia (Lei 12.933/2013) e o resto inteira; sem meia abaixo de 3 lugares ou no gratuito. */
@@ -185,18 +218,15 @@ export function divisaoDosLugares(lugares: number, meia: boolean, gratuito: bool
 /** O preço da meia: metade da inteira, arredondada, nunca abaixo de 1 centavo (a mesma conta do banco). */
 export const precoDaMeia = (inteira: number) => Math.max(1, Math.round(inteira / 2));
 
-/** Os argumentos de fn_ticketeria_comecar. Chamar só depois de conferirPasso devolver null nos cinco passos. O estado (uf) não vai: o banco não o recebe, a tela o grava no local depois. */
+/** Os argumentos de fn_ticketeria_comecar_pracas. Chamar só depois de conferirPasso devolver null em todos os passos. */
 export function argumentosDoComecar(organizationId: string, r: RespostasDoComecar) {
   return {
     p_org: organizationId,
     p_perfil: r.perfil as PerfilDoProdutor,
     p_evento: r.evento.trim(),
-    p_local: nomeDoLocal(r),
-    p_cidade: r.cidade.trim() || null,
+    p_pracas: pracasEfetivas(r.perfil, r.pracas).map(p => ({ local: nomeDoLocal(p), cidade: p.cidade.trim(), uf: p.uf, datas: [...new Set(p.datas)].sort() })),
     p_lugares: Number(r.lugares.trim()),
-    p_data: r.data,
     p_hora: r.hora,
-    p_dias: r.perfil === "festival" ? Number(r.dias.trim()) : null,
     p_preco_centavos: r.gratuito === true ? 0 : (centavosDe(r.preco) ?? 0),
     p_meia: r.gratuito === false && r.meia === true,
   };
@@ -221,7 +251,9 @@ export function mapaDoAuditorio(lugares: number, porFileira: number, corredor: b
   return comCorredor(fileiras, corredor);
 }
 
-export type ResultadoDoComecar = { loja_id: string; evento_id: string; local_id: string; sessoes: number; meia: number; inteira: number };
+/** O que a função do banco devolve: o evento, e por praça o local, o setor "Geral" (para montar o mapa de assentos) e quantas sessões saíram. */
+export type PracaCriada = { local_id: string; setor_id: string; setor_lugares: number; setor_numerado: boolean; sessoes: number; inteira: number; meia: number };
+export type ResultadoDoComecar = { loja_id: string; evento_id: string; sessoes: number; pracas: PracaCriada[] };
 
 const ERROS: Record<string, string> = {
   sem_permissao: "Só quem edita a Ticketeria pode criar eventos. Peça a quem administra a organização.",
@@ -231,8 +263,14 @@ const ERROS: Record<string, string> = {
   local_sem_nome: "Diga onde vai ser.",
   lugares_invalidos: "Diga quantos lugares há.",
   sem_data: "Escolha a data e o horário.",
-  dias_invalidos: "O festival pode ter de 1 a 31 dias.",
   preco_invalido: "Confira o preço.",
+  cidade_sem_nome: "Escolha ou digite a cidade.",
+  uf_invalida: "Escolha o estado no mapa.",
+  data_repetida: "Tem um dia marcado duas vezes na mesma cidade.",
+  praca_repetida: "O mesmo lugar aparece duas vezes na turnê.",
+  datas_demais: "São no máximo 60 dias por cidade.",
+  sessoes_demais: "São no máximo 200 datas no total.",
+  pracas_invalidas: "Escolha pelo menos uma cidade (no máximo 20).",
 };
 
 export function mensagemDoErroDoComecar(erro: { message?: string } | null | undefined): string {

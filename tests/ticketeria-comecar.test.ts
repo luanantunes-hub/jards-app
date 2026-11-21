@@ -2,25 +2,29 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import {
-  PERFIL, PERFIS, RESPOSTAS_VAZIAS, UFS_DO_COMECAR, argumentosDoComecar, centavosDe, conferirPasso, divisaoDosLugares, mapaDoAuditorio, mensagemDoErroDoComecar, nomeDoLocal, ondeDoEvento, passosDoComecar, precoDaMeia, sugestaoPorFileira,
-  type RespostasDoComecar,
+  MAX_DATAS_POR_PRACA, MAX_PRACAS, MAX_SESSOES, PERFIL, PERFIS, RESPOSTAS_VAZIAS, UFS_DO_COMECAR, argumentosDoComecar, centavosDe, conferirPasso, divisaoDosLugares, mapaDoAuditorio, mensagemDoErroDoComecar, nomeDoLocal, ondeDaPraca, passosDoComecar, praca, pracasEfetivas, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
+  type Passo, type PassoId, type Praca, type RespostasDoComecar,
 } from "../lib/ticketeria/comecar";
 import { cidadeExata, cidadesDoBrasil, cidadesDoEstado, normalizar } from "../lib/ticketeria/local-do-evento";
 import { ESTADOS_DO_MAPA } from "../lib/ticketeria/mapa-estados";
-import { NOMES_DOS_MESES, dataPorExtenso, mesDaData, semanasDoMes, somarMeses } from "../lib/ticketeria/calendario";
+import { NOMES_DOS_MESES, alternarDia, dataPorExtenso, diasEntre, mesDaData, resumoDasDatas, semanasDoMes, somarMeses } from "../lib/ticketeria/calendario";
 
 // O onboarding da Ticketeria ("Começar"). O teste de banco é supabase/tests/ticketeria_comecar.test.sql; estes conferem, sem
 // banco, a conferência dos passos, a conta da meia (igual à do banco) e a forma da migration.
 
 const HOJE = "2026-11-21";
+const praca1 = (parte: Partial<Praca> = {}): Praca => ({ ...praca(), uf: "RJ", cidade: "Rio de Janeiro", lugar: "Casa de Cultura", datas: ["2026-12-20"], outra: null, ...parte });
 const CHEIO: RespostasDoComecar = {
-  ...RESPOSTAS_VAZIAS, perfil: "unico", evento: "Show de lançamento", lugar: "Casa de Cultura", uf: "RJ", cidade: "Rio de Janeiro",
-  lugares: "100", data: "2026-12-20", hora: "20:00", numerada: false, gratuito: false, preco: "60", meia: true,
+  ...RESPOSTAS_VAZIAS, perfil: "unico", evento: "Show de lançamento", pracas: [praca1()],
+  lugares: "100", hora: "20:00", numerada: false, gratuito: false, preco: "60", meia: true,
 };
+/** Um passo sem praça (as perguntas que valem para o evento todo) ou da praça `i`. */
+const p = (id: PassoId, i = 0): Passo => ({ id, praca: i });
+const ids = (passos: Passo[]) => passos.map(x => x.id + (x.id === "onde" || x.id === "data" || x.id === "outra" ? `#${x.praca}` : ""));
 
-async function migration(): Promise<string> {
-  const nome = (await readdir("supabase/migrations")).find(n => n.endsWith("_ticketeria_comecar.sql"));
-  assert.ok(nome, "migration ticketeria_comecar.sql não encontrada");
+async function migration(sufixo = "_ticketeria_comecar.sql"): Promise<string> {
+  const nome = (await readdir("supabase/migrations")).find(n => n.endsWith(sufixo));
+  assert.ok(nome, `migration ${sufixo} não encontrada`);
   return readFile(`supabase/migrations/${nome}`, "utf8");
 }
 const semComentarios = (sql: string) => sql.replace(/--.*$/gm, "");
@@ -31,64 +35,91 @@ test("os quatro perfis são os que o banco aceita, na ordem da tela", async () =
   assert.match(sql, /check \(perfil is null or perfil in \('espaco', 'turne', 'unico', 'festival'\)\)/);
 });
 
-test("cada passo é uma pergunta só, e cada um diz o que falta", () => {
-  assert.deepEqual(passosDoComecar("unico", false, false), ["perfil", "nome", "onde", "data", "horario", "numerada", "lugares", "gratuito", "preco", "meia"]);
-  assert.deepEqual(passosDoComecar("espaco", false, false), ["perfil", "nome", "onde", "evento", "data", "horario", "numerada", "lugares", "gratuito", "preco", "meia"], "quem tem espaço dá o nome do primeiro evento num passo só dele");
-  assert.deepEqual(passosDoComecar("festival", null, null), ["perfil", "nome", "onde", "data", "dias", "horario", "numerada", "lugares", "gratuito", "preco", "meia"], "os dias só no festival; sem resposta ainda, vale o caminho comum");
-  assert.deepEqual(passosDoComecar("turne", true, false), ["perfil", "nome", "onde", "data", "horario", "numerada", "lugares", "auditorio", "gratuito", "preco", "meia"], "o auditório só com lugares numerados");
-  assert.deepEqual(passosDoComecar("unico", false, true), ["perfil", "nome", "onde", "data", "horario", "numerada", "lugares", "gratuito"], "gratuito: acaba na pergunta do gratuito, sem preço nem meia-entrada");
-  assert.equal(conferirPasso("perfil", RESPOSTAS_VAZIAS, HOJE), "Escolha uma opção para continuar");
-  assert.equal(conferirPasso("perfil", CHEIO, HOJE), null);
+test("a sequência de passos: uma pergunta por tela, as cidades e os dias em laço só na turnê", () => {
+  const um = [praca1()];
+  assert.deepEqual(ids(passosDoComecar("unico", um, false, false)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia"]);
+  assert.deepEqual(ids(passosDoComecar("espaco", um, false, false)), ["perfil", "nome", "onde#0", "evento", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia"], "quem tem espaço dá o nome do primeiro evento num passo só dele");
+  assert.deepEqual(ids(passosDoComecar("festival", um, null, null)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia"], "sem passo de dias: as datas marcadas dizem quantos são");
+  assert.deepEqual(ids(passosDoComecar("unico", um, true, false)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "auditorio", "gratuito", "preco", "meia"], "o auditório só com lugares numerados");
+  assert.deepEqual(ids(passosDoComecar("unico", um, false, true)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito"], "gratuito: acaba na pergunta do gratuito, sem preço nem meia-entrada");
+  // Turnê: cada cidade pergunta "tem outra?"; com sim, vem a próxima cidade; com não, segue.
+  assert.deepEqual(ids(passosDoComecar("turne", [praca1()], false, false)), ["perfil", "nome", "onde#0", "data#0", "outra#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia"]);
+  assert.deepEqual(ids(passosDoComecar("turne", [praca1({ outra: false })], false, false)).slice(2, 6), ["onde#0", "data#0", "outra#0", "horario"]);
+  assert.deepEqual(ids(passosDoComecar("turne", [praca1({ outra: true }), praca1({ cidade: "Curitiba", uf: "PR" })], false, false)).slice(2, 9), ["onde#0", "data#0", "outra#0", "onde#1", "data#1", "outra#1", "horario"]);
+  assert.deepEqual(ids(passosDoComecar("turne", [praca1({ outra: true }), praca1({ outra: true }), praca1({ outra: false })], false, false)).filter(x => x.startsWith("onde")), ["onde#0", "onde#1", "onde#2"]);
+  assert.deepEqual(ids(passosDoComecar("unico", [praca1({ outra: true }), praca1()], false, false)).filter(x => x.startsWith("onde")), ["onde#0"], "só a turnê tem mais de uma cidade");
+  assert.deepEqual(passosDoComecar(null, [], null, null)[2], { id: "onde", praca: 0 }, "sem perfil nem praças, o caminho comum");
+});
+
+test("pracasEfetivas e totalDeSessoes contam só as cidades que a pessoa deixou valer", () => {
+  const tres = [praca1({ outra: true, datas: ["2026-12-20", "2026-12-21"] }), praca1({ cidade: "Curitiba", uf: "PR", outra: false, datas: ["2026-12-30"] }), praca1({ cidade: "Sobrou", datas: ["2027-01-01"] })];
+  assert.deepEqual(pracasEfetivas("turne", tres).map(x => x.cidade), ["Rio de Janeiro", "Curitiba"], "a terceira ficou para trás quando a segunda disse que não há outra");
+  assert.deepEqual(pracasEfetivas("unico", tres).map(x => x.cidade), ["Rio de Janeiro"]);
+  assert.equal(totalDeSessoes({ ...CHEIO, perfil: "turne", pracas: tres }), 3);
+  assert.equal(totalDeSessoes({ ...CHEIO, perfil: "festival", pracas: [praca1({ datas: ["2026-12-20", "2026-12-21", "2026-12-23"] })] }), 3);
+});
+
+test("cada passo diz o que falta, um campo por vez", () => {
+  assert.equal(conferirPasso(p("perfil"), RESPOSTAS_VAZIAS, HOJE), "Escolha uma opção para continuar");
+  assert.equal(conferirPasso(p("perfil"), CHEIO, HOJE), null);
   // O nome: só o nome. Quem tem espaço dá o nome do espaço; os outros, o nome do evento.
-  assert.equal(conferirPasso("nome", { ...CHEIO, evento: "  " }, HOJE), "Dê um nome ao evento");
-  assert.equal(conferirPasso("nome", { ...CHEIO, perfil: "espaco", lugar: "", evento: "Hamlet" }, HOJE), "Diga o nome do espaço");
-  assert.equal(conferirPasso("nome", { ...CHEIO, perfil: "espaco", lugar: "Teatro Municipal", evento: "" }, HOJE), null, "o primeiro evento do espaço só é pedido no passo do quando");
-  assert.equal(conferirPasso("nome", { ...CHEIO, evento: "x".repeat(201) }, HOJE), "O nome pode ter até 200 caracteres");
-  assert.equal(conferirPasso("nome", CHEIO, HOJE), null);
-  // O lugar: o estado no mapa e a cidade; o nome do lugar é opcional.
-  assert.equal(conferirPasso("onde", { ...CHEIO, uf: "" }, HOJE), "Escolha o estado no mapa");
-  assert.equal(conferirPasso("onde", { ...CHEIO, uf: "XX" }, HOJE), "Escolha o estado no mapa");
-  assert.equal(conferirPasso("onde", { ...CHEIO, cidade: " " }, HOJE), "Escolha ou digite a cidade");
-  assert.equal(conferirPasso("onde", { ...CHEIO, lugar: "" }, HOJE), null, "sem o nome do lugar vale a cidade");
-  assert.equal(conferirPasso("onde", { ...CHEIO, cidade: "Cidade que não está na lista" }, HOJE), null, "cidade digitada vale");
-  // O primeiro evento (só quem tem espaço), o dia, os dias do festival, o horário, os lugares numerados, quantos lugares e o auditório.
-  assert.equal(conferirPasso("evento", { ...CHEIO, perfil: "espaco", evento: "" }, HOJE), "Dê um nome ao primeiro evento");
-  assert.equal(conferirPasso("evento", { ...CHEIO, perfil: "espaco" }, HOJE), null);
-  assert.equal(conferirPasso("data", { ...CHEIO, data: "" }, HOJE), "Escolha o dia");
-  assert.equal(conferirPasso("data", { ...CHEIO, data: "2026-11-20" }, HOJE), "Esse dia já passou");
-  assert.equal(conferirPasso("data", { ...CHEIO, data: HOJE }, HOJE), null, "hoje ainda vale");
-  assert.equal(conferirPasso("dias", { ...CHEIO, perfil: "festival", dias: "40" }, HOJE), "O festival pode ter de 1 a 31 dias");
-  assert.equal(conferirPasso("dias", { ...CHEIO, perfil: "festival", dias: "3" }, HOJE), null);
-  assert.equal(conferirPasso("horario", { ...CHEIO, hora: "" }, HOJE), "Escolha o horário");
-  assert.equal(conferirPasso("horario", CHEIO, HOJE), null);
-  assert.equal(conferirPasso("numerada", { ...CHEIO, numerada: null }, HOJE), "Escolha sim ou não");
-  assert.equal(conferirPasso("numerada", { ...CHEIO, numerada: true }, HOJE), null);
-  assert.equal(conferirPasso("lugares", { ...CHEIO, lugares: "0" }, HOJE), "Diga quantos lugares há");
-  assert.equal(conferirPasso("lugares", { ...CHEIO, lugares: "200001" }, HOJE), "São no máximo 200.000 lugares");
-  assert.equal(conferirPasso("lugares", { ...CHEIO, numerada: true, lugares: "4801" }, HOJE), "Com lugares numerados, o máximo são 4.800 lugares");
-  assert.equal(conferirPasso("lugares", { ...CHEIO, numerada: true, lugares: "4800" }, HOJE), null);
-  assert.equal(conferirPasso("lugares", { ...CHEIO, numerada: false, lugares: "5001" }, HOJE), null, "sem numeração o teto é maior");
-  assert.equal(conferirPasso("auditorio", { ...CHEIO, numerada: true, porFileira: "" }, HOJE), "Diga quantos lugares por fileira");
-  assert.equal(conferirPasso("auditorio", { ...CHEIO, numerada: true, porFileira: "81" }, HOJE), "São no máximo 80 lugares por fileira");
-  assert.equal(conferirPasso("auditorio", { ...CHEIO, numerada: true, lugares: "1000", porFileira: "10" }, HOJE), "Ficariam mais de 60 fileiras: aumente os lugares por fileira");
-  assert.equal(conferirPasso("auditorio", { ...CHEIO, numerada: true, porFileira: "16" }, HOJE), null);
+  assert.equal(conferirPasso(p("nome"), { ...CHEIO, evento: "  " }, HOJE), "Dê um nome ao evento");
+  assert.equal(conferirPasso(p("nome"), { ...CHEIO, perfil: "espaco", pracas: [praca1({ lugar: "" })], evento: "Hamlet" }, HOJE), "Diga o nome do espaço");
+  assert.equal(conferirPasso(p("nome"), { ...CHEIO, perfil: "espaco", pracas: [praca1({ lugar: "Teatro Municipal" })], evento: "" }, HOJE), null, "o primeiro evento do espaço só é pedido no passo próprio");
+  assert.equal(conferirPasso(p("nome"), { ...CHEIO, evento: "x".repeat(201) }, HOJE), "O nome pode ter até 200 caracteres");
+  assert.equal(conferirPasso(p("nome"), CHEIO, HOJE), null);
+  // O lugar: o estado no mapa e a cidade; o nome do lugar é opcional. Cada cidade da turnê é conferida pela própria praça.
+  assert.equal(conferirPasso(p("onde"), { ...CHEIO, pracas: [praca1({ uf: "" })] }, HOJE), "Escolha o estado no mapa");
+  assert.equal(conferirPasso(p("onde"), { ...CHEIO, pracas: [praca1({ uf: "XX" })] }, HOJE), "Escolha o estado no mapa");
+  assert.equal(conferirPasso(p("onde"), { ...CHEIO, pracas: [praca1({ cidade: " " })] }, HOJE), "Escolha ou digite a cidade");
+  assert.equal(conferirPasso(p("onde"), { ...CHEIO, pracas: [praca1({ lugar: "" })] }, HOJE), null, "sem o nome do lugar vale a cidade");
+  assert.equal(conferirPasso(p("onde"), { ...CHEIO, pracas: [praca1({ cidade: "Cidade que não está na lista" })] }, HOJE), null, "cidade digitada vale");
+  assert.equal(conferirPasso(p("onde", 1), { ...CHEIO, perfil: "turne", pracas: [praca1(), praca1({ uf: "" })] }, HOJE), "Escolha o estado no mapa", "a segunda cidade é conferida na própria praça");
+  // O primeiro evento (só quem tem espaço) e os dias.
+  assert.equal(conferirPasso(p("evento"), { ...CHEIO, perfil: "espaco", evento: "" }, HOJE), "Dê um nome ao primeiro evento");
+  assert.equal(conferirPasso(p("evento"), { ...CHEIO, perfil: "espaco" }, HOJE), null);
+  assert.equal(conferirPasso(p("data"), { ...CHEIO, pracas: [praca1({ datas: [] })] }, HOJE), "Escolha pelo menos um dia");
+  assert.equal(conferirPasso(p("data"), { ...CHEIO, perfil: "turne", pracas: [praca1({ datas: [] })] }, HOJE), "Escolha pelo menos um dia nessa cidade");
+  assert.equal(conferirPasso(p("data"), { ...CHEIO, pracas: [praca1({ datas: ["2026-11-20"] })] }, HOJE), "Esse dia já passou");
+  assert.equal(conferirPasso(p("data"), { ...CHEIO, pracas: [praca1({ datas: ["2026-12-20", "2026-11-20"] })] }, HOJE), "Esse dia já passou", "um dia passado no meio dos outros também");
+  assert.equal(conferirPasso(p("data"), { ...CHEIO, pracas: [praca1({ datas: [HOJE] })] }, HOJE), null, "hoje ainda vale");
+  assert.equal(conferirPasso(p("data"), { ...CHEIO, pracas: [praca1({ datas: ["2026-12-20", "2026-12-27", "2027-01-03"] })] }, HOJE), null, "datas alternadas, até em meses diferentes");
+  assert.equal(conferirPasso(p("data"), { ...CHEIO, pracas: [praca1({ datas: diasEntre("2026-12-01", "2027-02-10") })] }, HOJE), "São no máximo 60 dias por cidade");
+  assert.equal(conferirPasso(p("data"), { ...CHEIO, perfil: "turne", pracas: Array.from({ length: 4 }, () => praca1({ outra: true, datas: diasEntre("2026-12-01", "2027-01-29") })) }, HOJE), "São no máximo 200 datas no total");
+  assert.equal(conferirPasso(p("outra"), { ...CHEIO, perfil: "turne", pracas: [praca1()] }, HOJE), "Escolha sim ou não");
+  assert.equal(conferirPasso(p("outra"), { ...CHEIO, perfil: "turne", pracas: [praca1({ outra: true })] }, HOJE), null);
+  assert.equal(conferirPasso(p("outra", 19), { ...CHEIO, perfil: "turne", pracas: Array.from({ length: 20 }, () => praca1({ outra: true })) }, HOJE), "São no máximo 20 cidades");
+  // O horário, os lugares numerados, quantos lugares e o auditório.
+  assert.equal(conferirPasso(p("horario"), { ...CHEIO, hora: "" }, HOJE), "Escolha o horário");
+  assert.equal(conferirPasso(p("horario"), CHEIO, HOJE), null);
+  assert.equal(conferirPasso(p("numerada"), { ...CHEIO, numerada: null }, HOJE), "Escolha sim ou não");
+  assert.equal(conferirPasso(p("numerada"), { ...CHEIO, numerada: true }, HOJE), null);
+  assert.equal(conferirPasso(p("lugares"), { ...CHEIO, lugares: "0" }, HOJE), "Diga quantos lugares há");
+  assert.equal(conferirPasso(p("lugares"), { ...CHEIO, lugares: "200001" }, HOJE), "São no máximo 200.000 lugares");
+  assert.equal(conferirPasso(p("lugares"), { ...CHEIO, numerada: true, lugares: "4801" }, HOJE), "Com lugares numerados, o máximo são 4.800 lugares");
+  assert.equal(conferirPasso(p("lugares"), { ...CHEIO, numerada: true, lugares: "4800" }, HOJE), null);
+  assert.equal(conferirPasso(p("lugares"), { ...CHEIO, numerada: false, lugares: "5001" }, HOJE), null, "sem numeração o teto é maior");
+  assert.equal(conferirPasso(p("auditorio"), { ...CHEIO, numerada: true, porFileira: "" }, HOJE), "Diga quantos lugares por fileira");
+  assert.equal(conferirPasso(p("auditorio"), { ...CHEIO, numerada: true, porFileira: "81" }, HOJE), "São no máximo 80 lugares por fileira");
+  assert.equal(conferirPasso(p("auditorio"), { ...CHEIO, numerada: true, lugares: "1000", porFileira: "10" }, HOJE), "Ficariam mais de 60 fileiras: aumente os lugares por fileira");
+  assert.equal(conferirPasso(p("auditorio"), { ...CHEIO, numerada: true, porFileira: "16" }, HOJE), null);
   // Gratuito, preço e meia-entrada: três perguntas.
-  assert.equal(conferirPasso("gratuito", { ...CHEIO, gratuito: null }, HOJE), "Escolha sim ou não");
-  assert.equal(conferirPasso("gratuito", CHEIO, HOJE), null);
-  assert.equal(conferirPasso("preco", { ...CHEIO, preco: "" }, HOJE), "Diga o preço da inteira");
-  assert.equal(conferirPasso("preco", { ...CHEIO, preco: "0" }, HOJE), "Diga o preço da inteira");
-  assert.equal(conferirPasso("preco", { ...CHEIO, preco: "100001" }, HOJE), "O preço pode ir até R$ 100.000");
-  assert.equal(conferirPasso("preco", CHEIO, HOJE), null);
-  assert.equal(conferirPasso("meia", { ...CHEIO, meia: null }, HOJE), "Escolha sim ou não");
-  assert.equal(conferirPasso("meia", CHEIO, HOJE), null);
-  for (const passo of passosDoComecar("unico", true, false).slice(1)) assert.equal(conferirPasso(passo, RESPOSTAS_VAZIAS, HOJE), "Escolha como você trabalha", passo);
+  assert.equal(conferirPasso(p("gratuito"), { ...CHEIO, gratuito: null }, HOJE), "Escolha sim ou não");
+  assert.equal(conferirPasso(p("gratuito"), CHEIO, HOJE), null);
+  assert.equal(conferirPasso(p("preco"), { ...CHEIO, preco: "" }, HOJE), "Diga o preço da inteira");
+  assert.equal(conferirPasso(p("preco"), { ...CHEIO, preco: "0" }, HOJE), "Diga o preço da inteira");
+  assert.equal(conferirPasso(p("preco"), { ...CHEIO, preco: "100001" }, HOJE), "O preço pode ir até R$ 100.000");
+  assert.equal(conferirPasso(p("preco"), CHEIO, HOJE), null);
+  assert.equal(conferirPasso(p("meia"), { ...CHEIO, meia: null }, HOJE), "Escolha sim ou não");
+  assert.equal(conferirPasso(p("meia"), CHEIO, HOJE), null);
+  for (const passo of passosDoComecar("unico", [praca1()], true, false).slice(1)) assert.equal(conferirPasso(passo, RESPOSTAS_VAZIAS, HOJE), "Escolha como você trabalha", passo.id);
 });
 
 test("o nome do local e o texto do 'onde' seguem o que a pessoa disse", () => {
-  assert.equal(nomeDoLocal(CHEIO), "Casa de Cultura");
-  assert.equal(nomeDoLocal({ ...CHEIO, lugar: " " }), "Rio de Janeiro", "sem o nome do lugar, a cidade dá nome ao local");
-  assert.equal(ondeDoEvento(CHEIO), "Casa de Cultura, Rio de Janeiro, RJ");
-  assert.equal(ondeDoEvento({ ...CHEIO, lugar: "" }), "Rio de Janeiro, RJ");
+  assert.equal(nomeDoLocal(praca1()), "Casa de Cultura");
+  assert.equal(nomeDoLocal(praca1({ lugar: " " })), "Rio de Janeiro", "sem o nome do lugar, a cidade dá nome ao local");
+  assert.equal(ondeDaPraca(praca1()), "Casa de Cultura, Rio de Janeiro, RJ");
+  assert.equal(ondeDaPraca(praca1({ lugar: "" })), "Rio de Janeiro, RJ");
 });
 
 test("o mapa tem os 27 estados, os mesmos da lista do onboarding, cada um com desenho e nome", () => {
@@ -198,13 +229,15 @@ test("a conta da meia no banco é a mesma da tela", async () => {
   assert.match(sql, /greatest\(1, round\(p_preco_centavos \/ 2\.0\)::integer\)/);
 });
 
-test("os argumentos da chamada saem limpos", () => {
-  assert.deepEqual(argumentosDoComecar("org", { ...CHEIO, cidade: " ", evento: " Show " }), {
-    p_org: "org", p_perfil: "unico", p_evento: "Show", p_local: "Casa de Cultura", p_cidade: null, p_lugares: 100,
-    p_data: "2026-12-20", p_hora: "20:00", p_dias: null, p_preco_centavos: 6000, p_meia: true,
+test("os argumentos da chamada saem limpos: uma praça por cidade, datas em ordem e sem repetir", () => {
+  assert.deepEqual(argumentosDoComecar("org", { ...CHEIO, evento: " Show ", pracas: [praca1({ cidade: " Rio de Janeiro ", datas: ["2026-12-27", "2026-12-20", "2026-12-20"] })] }), {
+    p_org: "org", p_perfil: "unico", p_evento: "Show",
+    p_pracas: [{ local: "Casa de Cultura", cidade: "Rio de Janeiro", uf: "RJ", datas: ["2026-12-20", "2026-12-27"] }],
+    p_lugares: 100, p_hora: "20:00", p_preco_centavos: 6000, p_meia: true,
   });
-  const festival = argumentosDoComecar("org", { ...CHEIO, perfil: "festival", dias: "3", gratuito: true });
-  assert.equal(festival.p_dias, 3);
+  const turne = argumentosDoComecar("org", { ...CHEIO, perfil: "turne", pracas: [praca1({ outra: true, lugar: "" }), praca1({ cidade: "Curitiba", uf: "PR", lugar: "Teatro Guaíra", outra: false, datas: ["2026-12-30", "2026-12-31"] }), praca1({ cidade: "Fora" })] });
+  assert.deepEqual(turne.p_pracas.map(x => `${x.local}|${x.cidade}|${x.uf}|${x.datas.length}`), ["Rio de Janeiro|Rio de Janeiro|RJ|1", "Teatro Guaíra|Curitiba|PR|2"], "só as cidades que valem, e sem o nome do lugar o local leva o da cidade");
+  const festival = argumentosDoComecar("org", { ...CHEIO, perfil: "festival", gratuito: true });
   assert.equal(festival.p_preco_centavos, 0);
   assert.equal(festival.p_meia, false, "gratuito não pede meia");
 });
@@ -216,27 +249,59 @@ test("os erros do banco viram texto da tela", () => {
   assert.equal(mensagemDoErroDoComecar(null), "Não foi possível criar o evento. Tente de novo.");
 });
 
-test("a migration é aditiva, a função roda com a permissão de quem chama e o gatilho do slug é consertado", async () => {
+test("a migration da primeira versão é aditiva, a função roda com a permissão de quem chama e o gatilho do slug é consertado", async () => {
   const sql = await migration();
   const codigo = semComentarios(sql).replace(/\s+/g, " ");
   assert.doesNotMatch(codigo, /\bdrop\b/i, "sem DROP");
   assert.match(codigo, /set local lock_timeout = '10s'/);
   assert.match(codigo, /create or replace function public\.fn_ticketeria_comecar\([^)]*\) returns jsonb language plpgsql security invoker set search_path = public, pg_temp/);
   assert.match(codigo, /if not public\.auth_ticketeria_pode\(p_org, 'editar'\) then raise exception 'sem_permissao'/);
-  assert.match(codigo, /revoke execute on function public\.fn_ticketeria_comecar\(uuid, text, text, text, text, integer, date, time, integer, integer, boolean\) from public, anon;/);
-  assert.match(codigo, /grant execute on function public\.fn_ticketeria_comecar\(uuid, text, text, text, text, integer, date, time, integer, integer, boolean\) to authenticated;/);
   assert.match(codigo, /alter function public\.fn_ticketeria_evento_slug\(\) security definer;/);
   assert.match(codigo, /insert into public\.ticketeria_eventos \(organization_id, loja_id, titulo, criado_por\)/, "o evento nasce em rascunho (padrão da tabela)");
+});
+
+test("a função de várias cidades tem outro nome (sem sobrecarga), roda com a permissão de quem chama e confere antes de gravar", async () => {
+  const codigo = semComentarios(await migration("_ticketeria_comecar_pracas.sql")).replace(/\s+/g, " ");
+  assert.doesNotMatch(codigo, /\bdrop\b/i, "sem DROP");
+  assert.match(codigo, /create or replace function public\.fn_ticketeria_comecar_pracas\( p_org uuid, p_perfil text, p_evento text, p_pracas jsonb, p_lugares integer, p_hora time, p_preco_centavos integer, p_meia boolean\) returns jsonb language plpgsql security invoker set search_path = public, pg_temp/);
+  assert.match(codigo, /revoke execute on function public\.fn_ticketeria_comecar_pracas\(uuid, text, text, jsonb, integer, time, integer, boolean\) from public, anon;/);
+  assert.match(codigo, /grant execute on function public\.fn_ticketeria_comecar_pracas\(uuid, text, text, jsonb, integer, time, integer, boolean\) to authenticated;/);
+  // Os mesmos limites da tela (MAX_PRACAS, MAX_DATAS_POR_PRACA, MAX_SESSOES).
+  assert.match(codigo, new RegExp(`jsonb_array_length\\(p_pracas\\) > ${MAX_PRACAS}`));
+  assert.match(codigo, new RegExp(`jsonb_array_length\\(v_praca -> 'datas'\\) > ${MAX_DATAS_POR_PRACA}`));
+  assert.match(codigo, new RegExp(`v_total > ${MAX_SESSOES}`));
+  // Tudo é conferido (o primeiro "for") antes de a loja e o evento serem gravados.
+  assert.ok(codigo.indexOf("raise exception 'data_no_passado'") < codigo.indexOf("insert into public.ticketeria_eventos"), "confere antes de gravar");
+  assert.ok(codigo.indexOf("raise exception 'sessoes_demais'") < codigo.indexOf("insert into public.ticketeria_lojas"), "confere antes de gravar");
+  const antiga = await migration();
+  assert.match(antiga, /create or replace function public\.fn_ticketeria_comecar\(/, "a antiga continua, sem uso pelo app");
 });
 
 test("a tela vazia da Ticketeria leva ao onboarding, e o onboarding chama a função do banco", async () => {
   const inicio = await readFile("app/(dashboard)/ingressos/page.tsx", "utf8");
   assert.match(inicio, /href="\/ingressos\/comecar"/);
   const tela = await readFile("components/ticketeria/ComecarView.tsx", "utf8");
-  assert.match(tela, /\.rpc\("fn_ticketeria_comecar", argumentosDoComecar\(organizationId, r\)\)/);
+  assert.match(tela, /\.rpc\("fn_ticketeria_comecar_pracas", argumentosDoComecar\(organizationId, r\)\)/);
   assert.match(tela, /href="\/ingressos\/recebimentos"/, "a conta de recebimento fica para o fim, sem travar");
-  const teste = await readFile("supabase/tests/ticketeria_comecar.test.sql", "utf8");
-  const plano = Number(/select plan\((\d+)\);/.exec(teste)?.[1]);
-  assert.equal(teste.match(/^select (is|isnt|ok|throws_ok|lives_ok)\(/gm)?.length, plano, "o plano do teste de banco bate");
-  assert.doesNotMatch(semComentarios(teste), /\bdelete\b/i);
+  for (const arquivo of ["ticketeria_comecar", "ticketeria_comecar_pracas"]) {
+    const teste = await readFile(`supabase/tests/${arquivo}.test.sql`, "utf8");
+    const plano = Number(/select plan\((\d+)\);/.exec(teste)?.[1]);
+    assert.equal(teste.match(/^select (is|isnt|ok|throws_ok|lives_ok)\(/gm)?.length, plano, `o plano do teste de banco ${arquivo} bate`);
+    assert.doesNotMatch(semComentarios(teste), /\bdelete\b/i);
+  }
+});
+
+test("o calendário aceita vários dias, seguidos ou alternados, e o resumo os conta", () => {
+  assert.deepEqual(diasEntre("2026-12-30", "2027-01-02"), ["2026-12-30", "2026-12-31", "2027-01-01", "2027-01-02"], "vira o ano");
+  assert.deepEqual(diasEntre("2026-12-05", "2026-12-01"), []);
+  const hoje = "2026-12-10";
+  assert.deepEqual(alternarDia([], "2026-12-20", { hoje }), ["2026-12-20"]);
+  assert.deepEqual(alternarDia(["2026-12-20"], "2026-12-27", { hoje }), ["2026-12-20", "2026-12-27"], "alternados");
+  assert.deepEqual(alternarDia(["2026-12-20", "2026-12-27"], "2026-12-20", { hoje }), ["2026-12-27"], "tocar de novo desmarca");
+  assert.deepEqual(alternarDia(["2026-12-20"], "2026-12-23", { hoje, ate: "2026-12-20" }), ["2026-12-20", "2026-12-21", "2026-12-22", "2026-12-23"], "Shift: dias seguidos");
+  assert.deepEqual(alternarDia([], "2026-12-08", { hoje, ate: "2026-12-12" }), ["2026-12-10", "2026-12-11", "2026-12-12"], "os dias que já passaram ficam de fora do intervalo");
+  assert.equal(resumoDasDatas([]), "");
+  assert.equal(resumoDasDatas(["2026-12-20"]), "domingo, 20 de dezembro de 2026");
+  assert.equal(resumoDasDatas(["2026-12-27", "2026-12-20", "2026-12-21"]), "3 dias: 20, 21 e 27 de dezembro");
+  assert.equal(resumoDasDatas(["2026-12-20", "2027-01-03"]), "2 dias: 20 de dezembro · 3 de janeiro");
 });
