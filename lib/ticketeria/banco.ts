@@ -1042,6 +1042,75 @@ export type BancoDaTicketeria = {
         };
         Relationships: [];
       };
+      ticketeria_remetentes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          dominio: string | null;
+          endereco_local: string;
+          nome_exibicao: string | null;
+          responder_para: string | null;
+          resend_domain_id: string | null;
+          situacao: string;
+          registros: Json | null;
+          verificado_em: string | null;
+          assinatura: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          periodo_inicio: string | null;
+          periodo_fim: string | null;
+          cancela_no_fim: boolean;
+          cota_mensal: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          dominio?: string | null;
+          endereco_local?: string;
+          nome_exibicao?: string | null;
+          responder_para?: string | null;
+          resend_domain_id?: string | null;
+          situacao?: string;
+          registros?: Json | null;
+          verificado_em?: string | null;
+          assinatura?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          periodo_inicio?: string | null;
+          periodo_fim?: string | null;
+          cancela_no_fim?: boolean;
+          cota_mensal?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          dominio?: string | null;
+          endereco_local?: string;
+          nome_exibicao?: string | null;
+          responder_para?: string | null;
+          resend_domain_id?: string | null;
+          situacao?: string;
+          registros?: Json | null;
+          verificado_em?: string | null;
+          assinatura?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          periodo_inicio?: string | null;
+          periodo_fim?: string | null;
+          cancela_no_fim?: boolean;
+          cota_mensal?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       ticketeria_saidas: {
         Row: {
           id: string;
@@ -2865,6 +2934,10 @@ export type BancoDaTicketeria = {
       fn_ticketeria_espera_sair: {
         Args: { p_token: string };
         Returns: boolean;
+      };
+      fn_ticketeria_emails_do_periodo: {
+        Args: { p_loja: string; p_desde: string };
+        Returns: number;
       };
       fn_ticketeria_reivindicar_destinatarios: {
         Args: { p_envio: string; p_n: number };
