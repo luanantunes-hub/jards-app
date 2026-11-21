@@ -14,6 +14,7 @@ const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase t
 const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
 const CANCELAR = "rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const SECUNDARIO = "rounded-xl border bg-white px-3.5 py-2.5 text-[0.75rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
+const CTA = "rounded-xl bg-[#1C0E33] px-4 py-2.5 text-[0.75rem] font-normal text-white transition hover:bg-[#2A1750] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
 const FINAL = "rounded-xl bg-[#7259B5] px-4 py-2.5 text-[0.75rem] font-normal text-white transition hover:bg-[#6349A6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
 const numero = (n: number) => n.toLocaleString("pt-BR");
 const preco = formatarMoeda(PRECO_DO_EMAIL_CENTAVOS);
@@ -74,7 +75,7 @@ function Oferta({ email, onAtivar }: { email: RemetenteParaATela; onAtivar?: () 
       {email.assinatura === "cancelada" && <p className="mt-4 text-[0.75rem] text-black/55">Sua assinatura foi cancelada. Você pode ativar de novo quando quiser.</p>}
       <div className="mt-5 flex items-center gap-4">
         <p className="text-[0.8125rem] text-[#282525]"><span className="text-[1.25rem] font-medium">{preco}</span> por mês</p>
-        <button type="button" onClick={onAtivar} className={FINAL}>Ativar e-mail</button>
+        <button type="button" onClick={onAtivar} className={CTA}>Ativar e-mail</button>
       </div>
     </div>
   );
@@ -85,7 +86,7 @@ function EscolherDominio({ onEscolher }: { onEscolher?: () => void }) {
     <div className="rounded-xl border bg-white px-6 py-8" style={{ borderColor: BORDA }}>
       <h2 className="text-[1rem] font-medium text-[#282525]">Agora, o seu domínio</h2>
       <p className="mt-1 max-w-[34rem] text-[0.8125rem] text-black/55">O e-mail sai de um endereço seu, como ingressos@novidades.seusite.com.br. Escolha o domínio e o Jards diz quais registros adicionar no provedor dele.</p>
-      <button type="button" onClick={onEscolher} className={`${FINAL} mt-5`}>Escolher domínio</button>
+      <button type="button" onClick={onEscolher} className={`${CTA} mt-5`}>Escolher domínio</button>
     </div>
   );
 }

@@ -29,7 +29,7 @@ async function postar(caminho: string, corpo: unknown, chave: string, tempoMs: n
   let erro = "Falha inesperada no envio";
   for (let tentativa = 0; tentativa < 3; tentativa++) {
     try {
-      const resposta = await fetch(`https://api.resend.com${caminho}`, {
+      const resposta = await fetch(`${process.env.RESEND_API_URL || "https://api.resend.com"}${caminho}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "Idempotency-Key": chave.slice(0, 256) },
         body: JSON.stringify(corpo),

@@ -18,7 +18,7 @@ async function chamar(metodo: "GET" | "POST" | "PATCH" | "DELETE", caminho: stri
   const apiKey = chave();
   if (!apiKey) return { ok: false, erro: "Resend não configurado", semChave: true };
   try {
-    const resposta = await fetch(`https://api.resend.com${caminho}`, {
+    const resposta = await fetch(`${process.env.RESEND_API_URL || "https://api.resend.com"}${caminho}`, {
       method: metodo,
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: corpo === undefined ? undefined : JSON.stringify(corpo),

@@ -65,8 +65,8 @@ export function EnviosDaLoja({ envios, onContinuar }: { envios: EnvioParaLista[]
 export type DadosDoNovoEnvio = { canal: CanalDoEnvio; assunto: string; mensagem: string; sessao_id: string; segmento: string };
 
 /** A folha de um novo envio: para quem, a sessão, o assunto e a mensagem; o teste para você e o envio, que pede uma confirmação com o número de pessoas. */
-export function NovoEnvioSheet({ segmentos, segmentosWhatsapp = [], canalInicial = "email", sessoes, ligado, origem, erro, aviso, trabalhando, onTeste, onEnviar, onClose }: {
-  segmentos: Segmento[]; segmentosWhatsapp?: Segmento[]; canalInicial?: CanalDoEnvio; sessoes: SessaoParaEscolher[]; ligado: boolean; origem: string; erro?: string | null; aviso?: string | null; trabalhando?: boolean;
+export function NovoEnvioSheet({ segmentos, segmentosWhatsapp = [], canalInicial = "email", sessoes, ligado, motivoDoBloqueio, origem, erro, aviso, trabalhando, onTeste, onEnviar, onClose }: {
+  segmentos: Segmento[]; segmentosWhatsapp?: Segmento[]; canalInicial?: CanalDoEnvio; sessoes: SessaoParaEscolher[]; ligado: boolean; /** Por que o e-mail não pode sair agora (assinatura, domínio…); sem isso, o texto padrão de "não está ligado". */ motivoDoBloqueio?: string | null; origem: string; erro?: string | null; aviso?: string | null; trabalhando?: boolean;
   onTeste?: (d: DadosDoNovoEnvio) => void; onEnviar?: (d: DadosDoNovoEnvio) => void; onClose: () => void;
 }) {
   const [canal, setCanal] = useState<CanalDoEnvio>(canalInicial);
@@ -115,7 +115,7 @@ export function NovoEnvioSheet({ segmentos, segmentosWhatsapp = [], canalInicial
             ))}
           </div>
         </div>
-        {!ligado && !whatsapp && <Aviso texto="O envio de e-mail ainda não está ligado. Fale com o suporte do Jards." />}
+        {!ligado && !whatsapp && <Aviso texto={motivoDoBloqueio ?? "O envio de e-mail ainda não está ligado. Fale com o suporte do Jards."} />}
         {erro && <Aviso texto={erro} />}
         {aviso && <p role="status" className="rounded-xl border bg-white px-3 py-2 text-[0.75rem] text-[#2E8932]" style={{ borderColor: "#2E893247" }}>{aviso}</p>}
         <div><span className={ROTULO}>Para quem</span>{lista.length === 0 ? <p className="text-[0.8125rem] text-black/45">{whatsapp ? "Ninguém aceitou novidades e informou o WhatsApp ainda." : "Ninguém aceitou receber novidades ainda."}</p> : <Dropdown ariaLabel="Para quem" value={segmento} onChange={setSegmento} options={lista.map(s => ({ value: s.id, label: `${s.rotulo} (${s.total.toLocaleString("pt-BR")})` }))} disabled={trabalhando || confirmando} />}</div>
