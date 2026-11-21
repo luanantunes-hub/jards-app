@@ -33,7 +33,7 @@ const LINK = "rounded-xl border border-black/[.12] bg-white px-3.5 py-2 text-[0.
 const reais = (centavos: number) => (centavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 /** O que a tela final precisa saber além da resposta do banco: como terminou a gravação do mapa de assentos desenhado (em todas as cidades). */
-type Pronto = ResultadoDoComecar & { mapa: "montado" | "falhou" | null; erroDoMapa: string | null };
+type Pronto = ResultadoDoComecar & { mapa: "montado" | "falhou" | "mantido" | null; erroDoMapa: string | null };
 
 export function ComecarView({ organizationId }: { organizationId: string }) {
   const [r, setR] = useState<RespostasDoComecar>(RESPOSTAS_VAZIAS);
@@ -366,14 +366,17 @@ function AuditorioDoEvento({ r, muda }: { r: RespostasDoComecar; muda: (parte: P
 async function montarAuditorio(ticketeria: ClienteDaTicketeria, pracas: PracaCriada[], r: RespostasDoComecar): Promise<Pick<Pronto, "mapa" | "erroDoMapa">> {
   const lugares = lugaresParaVender(r);
   let tentou = false;
+  let mantido = false;
   let erro: string | null = null;
   for (const p of pracas) {
-    if (p.setor_numerado || p.setor_lugares !== lugares || !r.mapa) continue;
+    if (!r.mapa) continue;
+    // O espaço já existia (de outro evento) já numerado ou com outro tamanho: fica como está, mas a pessoa precisa saber que o desenho dela não entrou.
+    if (p.setor_numerado || p.setor_lugares !== lugares) { mantido = true; continue; }
     tentou = true;
     const { error } = await ticketeria.rpc("fn_ticketeria_salvar_mapa", { p_setor: p.setor_id, p_fileiras: paraSalvar(r.mapa), p_corredor: r.corredor });
     if (error) erro ??= mensagemDoErroDoMapa(error);
   }
-  return { mapa: erro ? "falhou" : tentou ? "montado" : null, erroDoMapa: erro };
+  return { mapa: erro ? "falhou" : mantido ? "mantido" : tentou ? "montado" : null, erroDoMapa: erro };
 }
 
 function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resultado: Pronto; recomecar: () => void }) {
@@ -419,6 +422,13 @@ function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resu
         <div className="mt-4 flex items-start gap-2.5 rounded-xl border bg-white px-3.5 py-3 text-[0.8125rem] text-[#9A6A10]" style={{ borderColor: "#B07A1447" }}>
           <Landmark size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
           <span>Para vender, falta dizer em qual conta você recebe. Leva dois minutos e pode ser agora ou depois.</span>
+        </div>
+      )}
+
+      {resultado.mapa === "mantido" && (
+        <div className="mt-4 space-y-2">
+          <Aviso texto="O espaço já existia com outro tamanho (ou já tinha mapa), então ficou como estava e o auditório que você desenhou não foi gravado nele." />
+          <Link href="/ingressos/locais" className={LINK}>Abrir os espaços e montar o mapa</Link>
         </div>
       )}
 
