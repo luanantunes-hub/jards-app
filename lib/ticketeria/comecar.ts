@@ -38,7 +38,8 @@ export const PERFIL: Record<PerfilDoProdutor, {
     titulo: "Organizo um festival", descricao: "Vários dias ou atrações, no mesmo lugar.",
     pergunta: "Qual é o festival?", apoio: "Um evento com uma sessão por dia, no mesmo lugar.",
     rotuloDoNome: "Nome do festival", exemploDoNome: "Festival de Inverno",
-    rotuloDoLugar: "Onde", exemploDoLugar: "Parque da Cidade", rotuloDaData: "Primeiro dia", ilustracao: null,
+    rotuloDoLugar: "Onde", exemploDoLugar: "Parque da Cidade", rotuloDaData: "Primeiro dia",
+    ilustracao: "/ilustracoes/ticketeria/perfil-festival.webp",
   },
 };
 
