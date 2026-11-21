@@ -75,3 +75,46 @@ test("podeEnviar exige assinatura ativa, domínio verificado e cota", () => {
   for (const situacao of ["aguardando_dns", "falhou"] as const) assert.equal((podeEnviar({ ...bom, situacao }, 0, 1) as { motivo: string }).motivo, "dominio_nao_verificado", situacao);
   assert.equal(podeEnviar(bom, 9000, 1).ok, false, "cota estourada não dá restante negativo");
 });
+
+import { assinaturaDoStatus, dadosDaAssinatura, devoAplicar, lojaDoMetadado, PRODUTO_DO_EMAIL } from "../lib/ticketeria/assinatura-email";
+
+const LOJA = "0d770000-0000-4000-8000-000000000061";
+const ORG = "0d770000-0000-4000-8000-0000000000a0";
+
+test("o status do Stripe vira a assinatura do e-mail: só ativa e teste deixam enviar", () => {
+  assert.equal(assinaturaDoStatus("active"), "ativa");
+  assert.equal(assinaturaDoStatus("trialing"), "ativa");
+  for (const s of ["past_due", "unpaid", "paused"]) assert.equal(assinaturaDoStatus(s), "inadimplente", s);
+  for (const s of ["canceled", "incomplete_expired"]) assert.equal(assinaturaDoStatus(s), "cancelada", s);
+  for (const s of ["incomplete", "qualquer-coisa"]) assert.equal(assinaturaDoStatus(s), "pendente", s);
+});
+
+test("dadosDaAssinatura lê o período do item (API nova) ou da assinatura (antiga) e o cancelamento no fim", () => {
+  const novo = dadosDaAssinatura({ id: "sub_1", status: "active", customer: "cus_1", items: { data: [{ current_period_start: 1_700_000_000, current_period_end: 1_702_592_000 }] } });
+  assert.deepEqual(novo, { assinatura: "ativa", stripe_customer_id: "cus_1", stripe_subscription_id: "sub_1", periodo_inicio: "2023-11-14T22:13:20.000Z", periodo_fim: "2023-12-14T22:13:20.000Z", cancela_no_fim: false });
+  const antigo = dadosDaAssinatura({ id: "sub_2", status: "past_due", customer: { id: "cus_2" }, current_period_start: 1_700_000_000, current_period_end: 1_702_592_000, cancel_at_period_end: true });
+  assert.equal(antigo.stripe_customer_id, "cus_2");
+  assert.equal(antigo.periodo_inicio, "2023-11-14T22:13:20.000Z");
+  assert.equal(antigo.cancela_no_fim, true);
+  assert.equal(antigo.assinatura, "inadimplente");
+  assert.equal(dadosDaAssinatura({ id: "sub_3", status: "active", customer: null, cancel_at: 1_800_000_000 }).cancela_no_fim, true, "cancelamento marcado para uma data também conta");
+  assert.equal(dadosDaAssinatura({ id: "sub_4", status: "active", customer: null }).periodo_fim, null);
+});
+
+test("lojaDoMetadado só reconhece a assinatura do e-mail, com ids de verdade", () => {
+  assert.deepEqual(lojaDoMetadado({ produto: PRODUTO_DO_EMAIL, ticketeria_loja_id: LOJA, organization_id: ORG }), { lojaId: LOJA, organizationId: ORG });
+  assert.equal(lojaDoMetadado({ produto: "prestacao", ticketeria_loja_id: LOJA, organization_id: ORG }), null, "assinatura de outro produto");
+  assert.equal(lojaDoMetadado({ produto: PRODUTO_DO_EMAIL, ticketeria_loja_id: "x", organization_id: ORG }), null);
+  assert.equal(lojaDoMetadado({ produto: PRODUTO_DO_EMAIL, organization_id: ORG }), null);
+  assert.equal(lojaDoMetadado(null), null);
+});
+
+test("devoAplicar: o 'cancelada' atrasado da assinatura antiga não derruba a nova", () => {
+  const novaAtiva = { assinatura: "ativa" as const, stripe_subscription_id: "sub_nova", stripe_customer_id: null, periodo_inicio: null, periodo_fim: null, cancela_no_fim: false };
+  const antigaCancelada = { ...novaAtiva, assinatura: "cancelada" as const, stripe_subscription_id: "sub_antiga" };
+  assert.equal(devoAplicar(null, antigaCancelada), true);
+  assert.equal(devoAplicar({ assinatura: "ativa", stripe_subscription_id: "sub_nova" }, antigaCancelada), false);
+  assert.equal(devoAplicar({ assinatura: "ativa", stripe_subscription_id: "sub_nova" }, { ...novaAtiva, assinatura: "cancelada" }), true, "a mesma assinatura sempre atualiza");
+  assert.equal(devoAplicar({ assinatura: "cancelada", stripe_subscription_id: "sub_antiga" }, novaAtiva), true, "a nova entra no lugar da cancelada");
+  assert.equal(devoAplicar({ assinatura: "pendente", stripe_subscription_id: null }, novaAtiva), true);
+});

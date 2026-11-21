@@ -14,7 +14,7 @@ const chave = () => process.env.RESEND_DOMAINS_API_KEY || process.env.RESEND_API
 /** As contas de domínio estão ligadas: existe uma chave do Resend. */
 export const dominiosConfigurados = (): boolean => Boolean(chave());
 
-async function chamar(metodo: "GET" | "POST" | "PATCH", caminho: string, corpo?: unknown): Promise<{ ok: true; corpo: Record<string, unknown> } | Falha> {
+async function chamar(metodo: "GET" | "POST" | "PATCH" | "DELETE", caminho: string, corpo?: unknown): Promise<{ ok: true; corpo: Record<string, unknown> } | Falha> {
   const apiKey = chave();
   if (!apiKey) return { ok: false, erro: "Resend não configurado", semChave: true };
   try {
@@ -53,4 +53,9 @@ export async function conferirDominio(id: string): Promise<{ ok: true; dominio: 
   if (!r.ok) return r;
   const d = doProvedor(r.corpo);
   return d ? { ok: true, dominio: d } : { ok: false, erro: "O provedor não devolveu o domínio" };
+}
+
+/** Apaga o domínio no provedor (quando o produtor troca de domínio): a conta do provedor tem limite de domínios, então o que não serve mais sai. Falhar aqui não impede nada. */
+export async function removerDominio(id: string): Promise<void> {
+  await chamar("DELETE", `/domains/${encodeURIComponent(id)}`);
 }
