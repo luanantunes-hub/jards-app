@@ -76,7 +76,7 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
         <section aria-labelledby="comecar-titulo">
           <p className="text-[0.75rem] text-black/45">Bem-vindo à Ticketeria</p>
           <h1 id="comecar-titulo" className="mt-1 text-[1.875rem] font-normal leading-[1.15] tracking-[-.03em] md:text-[2.375rem] text-[#282525] [text-wrap:balance]">Como você costuma fazer seus eventos?</h1>
-          <p className="mt-2 text-[0.9375rem] text-black/55">Escolha o que mais se parece com você. Dá para fazer de tudo depois.</p>
+          <p className="mt-2 text-[0.9375rem] text-black/55">Escolha o que mais se parece com você.</p>
           <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {PERFIS.map(id => {
               const Icone = ICONE[id];
