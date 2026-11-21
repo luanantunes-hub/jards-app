@@ -1,20 +1,23 @@
 import "server-only";
 import type { TransactionalEmailResult } from "@/lib/email/transactional";
 
-// O e-mail de DIVULGAÇÃO dos organizadores (o envio do Público da Ticketeria). Sai por um remetente próprio (`TICKETERIA_NOVIDADES_EMAIL_FROM`, de preferência num subdomínio), separado
-// do remetente transacional dos ingressos e do login: se uma divulgação cair em spam, os e-mails que a pessoa precisa receber não pagam por isso. Cada e-mail leva o cabeçalho
-// List-Unsubscribe (clique único, RFC 8058) que aponta para a rota de sair da lista. Sem a variável, o envio fica desligado: nada sai.
+// O e-mail de DIVULGAÇÃO dos organizadores (o envio do Público da Ticketeria). Sai do DOMÍNIO DO PRODUTOR (lib/ticketeria/remetente.ts, o domínio verificado de cada loja), nunca de um domínio do
+// Jards: o CRM é do cliente, e a reputação de uma divulgação fica com quem a mandou, separada do remetente transacional dos ingressos e do login. Cada e-mail leva o cabeçalho
+// List-Unsubscribe (clique único, RFC 8058) que aponta para a rota de sair da lista. Sem a chave do Resend, o envio fica desligado: nada sai.
 
-/** O envio de divulgação está ligado: a chave do Resend e o remetente próprio existem. */
+/** O envio de divulgação está ligado: a chave do Resend existe (o remetente de cada loja vem do banco). */
 export function divulgacaoConfigurada(): boolean {
-  return Boolean(process.env.RESEND_API_KEY && process.env.TICKETERIA_NOVIDADES_EMAIL_FROM);
+  return Boolean(process.env.RESEND_API_KEY);
 }
+
+/** De quem o e-mail sai: o `from` já montado (`Nome <endereco@dominio>`) e, se houver, o e-mail para onde vão as respostas. */
+export type RemetenteDoEnvio = { from: string; replyTo?: string | null };
 
 export type EmailDeDivulgacao = {
   to: string; subject: string; html: string; text: string;
   /** O endereço que recebe o POST de clique único de sair da lista (a rota, com o token). */
   enderecoDoCliqueUnico: string;
-  idempotencyKey: string; replyTo?: string;
+  idempotencyKey: string;
 };
 
 const esperar = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
@@ -45,27 +48,25 @@ async function postar(caminho: string, corpo: unknown, chave: string, tempoMs: n
   return { ok: false, erro };
 }
 
-const itemDoEmail = (e: EmailDeDivulgacao, from: string) => ({
-  from, to: [e.to.trim().toLowerCase()], subject: e.subject, html: e.html, text: e.text,
+const itemDoEmail = (e: EmailDeDivulgacao, de: RemetenteDoEnvio) => ({
+  from: de.from, to: [e.to.trim().toLowerCase()], subject: e.subject, html: e.html, text: e.text,
   headers: { "List-Unsubscribe": `<${e.enderecoDoCliqueUnico}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
-  ...(e.replyTo ? { reply_to: e.replyTo } : {}),
+  ...(de.replyTo ? { reply_to: de.replyTo } : {}),
 });
 
-export async function enviarEmailDeDivulgacao(e: EmailDeDivulgacao): Promise<TransactionalEmailResult> {
-  const from = process.env.TICKETERIA_NOVIDADES_EMAIL_FROM;
-  if (!process.env.RESEND_API_KEY || !from) return { ok: false, notConfigured: true, error: "Envio de divulgação não configurado" };
-  const r = await postar("/emails", itemDoEmail(e, from), e.idempotencyKey, 10_000);
+export async function enviarEmailDeDivulgacao(e: EmailDeDivulgacao, de: RemetenteDoEnvio): Promise<TransactionalEmailResult> {
+  if (!process.env.RESEND_API_KEY || !de.from) return { ok: false, notConfigured: true, error: "Envio de divulgação não configurado" };
+  const r = await postar("/emails", itemDoEmail(e, de), e.idempotencyKey, 10_000);
   if (!r.ok) return { ok: false, error: r.erro };
   const id = (r.corpo as { id?: string }).id;
   return id ? { ok: true, id } : { ok: false, error: "O Resend não devolveu o id do e-mail" };
 }
 
 /** Até 100 e-mails numa chamada só (POST /emails/batch). `ids` voltam na mesma ordem. Se o lote inteiro falha, `ok: false`: quem chama manda um por um para achar o endereço que quebrou. */
-export async function enviarLoteDeDivulgacao(emails: EmailDeDivulgacao[], idempotencyKey: string): Promise<{ ok: true; ids: string[] } | { ok: false; erro: string }> {
-  const from = process.env.TICKETERIA_NOVIDADES_EMAIL_FROM;
-  if (!process.env.RESEND_API_KEY || !from) return { ok: false, erro: "Envio de divulgação não configurado" };
+export async function enviarLoteDeDivulgacao(emails: EmailDeDivulgacao[], de: RemetenteDoEnvio, idempotencyKey: string): Promise<{ ok: true; ids: string[] } | { ok: false; erro: string }> {
+  if (!process.env.RESEND_API_KEY || !de.from) return { ok: false, erro: "Envio de divulgação não configurado" };
   if (emails.length === 0 || emails.length > 100) return { ok: false, erro: "O lote tem de ter de 1 a 100 e-mails" };
-  const r = await postar("/emails/batch", emails.map(e => itemDoEmail(e, from)), idempotencyKey, 30_000);
+  const r = await postar("/emails/batch", emails.map(e => itemDoEmail(e, de)), idempotencyKey, 30_000);
   if (!r.ok) return { ok: false, erro: r.erro };
   const dados = (r.corpo as { data?: { id?: string }[] }).data;
   if (!Array.isArray(dados) || dados.length !== emails.length || dados.some(d => typeof d?.id !== "string")) return { ok: false, erro: "O Resend devolveu uma resposta que não confere com o lote" };

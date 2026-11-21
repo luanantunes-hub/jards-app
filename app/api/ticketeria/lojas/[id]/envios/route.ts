@@ -1,10 +1,11 @@
 // /api/ticketeria/lojas/{id}/envios: os envios de divulgação do Público, por e-mail ou por WhatsApp. Quem pede precisa EDITAR a Ticketeria da organização (tem e-mail de comprador).
 //
-//   GET  → { ligado, segmentos, segmentos_whatsapp, sessoes, envios }   (o envio está ligado quando o remetente próprio existe; os envios vêm com o resultado em vendas)
+//   GET  → { ligado, email, segmentos, segmentos_whatsapp, sessoes, envios }   (`email` é o remetente da loja: assinatura, domínio e cota do mês; os envios vêm com o resultado em vendas)
 //   POST { canal?: "email" | "whatsapp", assunto, mensagem, sessao_id, segmento, teste? }
 //        canal "whatsapp" → 201 { envio, pessoas } sem mandar nada: cria o envio e a lista, com o link que abre cada conversa (máx. LIMITE_DE_DESTINATARIOS_WHATSAPP; 409 sem_whatsapp);
 //        teste: true → manda UM e-mail para quem pede, sem gravar nada;
-//        senão       → 202 { envio, total, enviando } (a fila manda em lotes de 100 logo depois da resposta e o cron continua o que sobrar); 503 envio_desligado; 409 sem_destinatarios | envio_repetido | sessao_indisponivel; 413 destinatarios_demais
+//        senão       → 202 { envio, total, enviando } (a fila manda em lotes de 100 logo depois da resposta e o cron continua o que sobrar); 503 envio_desligado; 409 sem_destinatarios | envio_repetido | sessao_indisponivel; 413 destinatarios_demais;
+//                      402 { error: "email_nao_ativo", motivo: sem_assinatura | sem_dominio | dominio_nao_verificado | cota_do_mes, restante }: o e-mail sai do domínio da loja, com a assinatura em dia e dentro da cota do mês
 // Só recebe quem aceitou novidades e não saiu da lista. O limite é de LIMITE_DE_DESTINATARIOS pessoas por envio, por enquanto.
 
 import { after, type NextRequest } from "next/server";
@@ -17,6 +18,7 @@ import { pessoasDoEnvioPorWhatsapp } from "@/lib/ticketeria/envios-whatsapp-serv
 import { enviosDaLoja, portasDoEnvioDoSupabase, processarEnvioDeEmail } from "@/lib/ticketeria/envios-servidor";
 import { autorizarLoja, resposta } from "@/lib/ticketeria/pagamento/autorizar-loja";
 import { entradaDoPublico } from "@/lib/ticketeria/publico-servidor";
+import { conferirEnvio, emailsDoPeriodo, remetenteDaLoja, remetenteParaATela, remetenteParaEnviar } from "@/lib/ticketeria/remetente-servidor";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -27,8 +29,9 @@ export async function GET(_req: NextRequest, rota: { params: Promise<{ id: strin
   if (a.erro) return a.erro;
   try {
     const admin = createAdminClient();
-    const [{ envios, sessoes }, entrada] = await Promise.all([enviosDaLoja(admin, a.loja.id), entradaDoPublico(admin, a.loja.id)]);
-    return resposta({ ligado: divulgacaoConfigurada(), segmentos: segmentosDoPublico(entrada), segmentos_whatsapp: segmentosDoPublico(entrada, "whatsapp"), sessoes, envios });
+    const [{ envios, sessoes }, entrada, remetente] = await Promise.all([enviosDaLoja(admin, a.loja.id), entradaDoPublico(admin, a.loja.id), remetenteDaLoja(admin, a.loja.id)]);
+    const email = remetenteParaATela(remetente, remetente ? await emailsDoPeriodo(admin, a.loja.id, remetente) : 0);
+    return resposta({ ligado: divulgacaoConfigurada(), email, segmentos: segmentosDoPublico(entrada), segmentos_whatsapp: segmentosDoPublico(entrada, "whatsapp"), sessoes, envios });
   } catch (erro) {
     console.error("[ticketeria] envios da loja:", erro instanceof Error ? erro.message : erro);
     return resposta({ error: "falha_ao_ler" }, 500);
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest, rota: { params: Promise<{ id: strin
   const leitura = lerEnvio(bruto);
   if (!leitura.ok) return resposta({ error: "dados_invalidos", problemas: leitura.problemas }, 400);
   const { envio } = leitura;
-  // O e-mail só sai com o remetente próprio configurado; o WhatsApp não manda nada (o produtor abre cada conversa), então não depende dele.
+  // O e-mail só sai com a chave do provedor e do domínio da loja (conferido abaixo); o WhatsApp não manda nada (o produtor abre cada conversa), então não depende deles.
   if (envio.canal === "email" && !divulgacaoConfigurada()) return resposta({ error: "envio_desligado" }, 503);
   try {
     const admin = createAdminClient();
@@ -62,8 +65,10 @@ export async function POST(req: NextRequest, rota: { params: Promise<{ id: strin
     if (envio.teste) {
       const email = a.user.email;
       if (!email) return resposta({ error: "sem_email_para_o_teste" }, 409);
+      const de = await remetenteParaEnviar(admin, a.loja.id);
+      if (!de) return resposta({ error: "email_nao_ativo", motivo: "dominio_nao_verificado" }, 402);
       const e = emailDeDivulgacao({ loja: loja.nome, nome: email.split("@")[0], assunto: `[Teste] ${envio.assunto}`, mensagem: envio.mensagem, enderecoDeCompra: enderecoDeCompraDoEnvio(origem, envio.sessao_id, acao), enderecoParaSair: `${origem}/novidades/teste` });
-      const r = await enviarEmailDeDivulgacao({ to: email, subject: e.assunto, html: e.html, text: e.texto, enderecoDoCliqueUnico: `${origem}/api/ticketeria/novidades/sair?token=teste`, idempotencyKey: `ticketeria-envio-teste-${a.user.id}-${Date.now()}` });
+      const r = await enviarEmailDeDivulgacao({ to: email, subject: e.assunto, html: e.html, text: e.texto, enderecoDoCliqueUnico: `${origem}/api/ticketeria/novidades/sair?token=teste`, idempotencyKey: `ticketeria-envio-teste-${a.user.id}-${Date.now()}` }, de);
       return r.ok ? resposta({ teste: true }, 200) : resposta({ error: "teste_falhou" }, 502);
     }
 
@@ -72,6 +77,11 @@ export async function POST(req: NextRequest, rota: { params: Promise<{ id: strin
     if (destinatarios.length === 0) return resposta({ error: envio.canal === "whatsapp" ? "sem_whatsapp" : "sem_destinatarios" }, 409);
     const limite = limiteDoCanal(envio.canal);
     if (destinatarios.length > limite) return resposta({ error: "destinatarios_demais", total: destinatarios.length, limite }, 413);
+    // O e-mail sai do domínio da loja: assinatura em dia, domínio verificado e cota do mês (o WhatsApp não gasta cota nem depende disso).
+    if (envio.canal === "email") {
+      const pode = await conferirEnvio(admin, a.loja.id, destinatarios.length);
+      if (!pode.ok) return resposta({ error: "email_nao_ativo", motivo: pode.motivo, restante: pode.restante }, 402);
+    }
     // O mesmo envio repetido em poucos minutos (duplo clique, aba reaberta): recusa.
     const desde = new Date(Date.now() - 2 * 60_000).toISOString();
     const { data: repetido } = await t.from("ticketeria_envios").select("id").eq("loja_id", a.loja.id).eq("assunto", envio.assunto).eq("segmento", envio.segmento).eq("canal", envio.canal).gte("created_at", desde).limit(1);

@@ -160,15 +160,18 @@ test("as mensagens de erro do envio e a página de privacidade", async () => {
   for (const t of ['id="s13"', "Ingressos e novidades dos organizadores", "Quero receber novidades e ofertas deste produtor", 'id="s14" num="14" title="Contato"', "20 de novembro de 2026"]) assert.ok(pagina.includes(t), t);
 });
 
-test("o envio de divulgação sai por remetente próprio, com o clique único de sair da lista, e fica desligado sem ele", async () => {
+test("o envio de divulgação sai do domínio da loja (nunca de um domínio do Jards), com o clique único de sair da lista, e fica desligado sem a chave", async () => {
   const { readFile } = await import("node:fs/promises");
   const fonte = await readFile("lib/email/divulgacao.ts", "utf8");
-  assert.match(fonte, /TICKETERIA_NOVIDADES_EMAIL_FROM/);
+  assert.doesNotMatch(fonte, /TICKETERIA_NOVIDADES_EMAIL_FROM/, "o remetente vem de cada loja, não de uma variável única");
+  assert.match(fonte, /de: RemetenteDoEnvio/);
   assert.doesNotMatch(fonte, /TRANSACTIONAL_EMAIL_FROM/, "não usa o remetente dos ingressos e do login");
   assert.match(fonte, /"List-Unsubscribe-Post": "List-Unsubscribe=One-Click"/);
   assert.match(fonte, /notConfigured: true/);
   const rota = await readFile("app/api/ticketeria/lojas/[id]/envios/route.ts", "utf8");
   assert.match(rota, /envio_desligado/);
+  assert.match(rota, /email_nao_ativo/);
+  assert.match(rota, /conferirEnvio/);
   assert.match(rota, /autorizarLoja/);
 });
 
