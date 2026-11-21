@@ -229,19 +229,17 @@
 /* a primeira peça: a loja flutua sobre a arena, à esquerda e um pouco acima */
 .tku-dupla { display:grid; grid-template-columns:minmax(0,4fr) minmax(0,6fr); align-items:start; }
 .tku-dupla-loja { position:relative; z-index:2; grid-column:1; grid-row:1; margin:2% -8% 0 0; }
-.tku-dupla-arena { grid-column:2; grid-row:1; }
+.tku-dupla-arena { grid-column:2; grid-row:1; position:relative; z-index:3; pointer-events:none; }
 .tku-dupla--abre { margin:48px auto 0; text-align:left; max-width:900px; grid-template-columns:292px minmax(0,560px); justify-content:center; align-items:start; }
 .tku-dupla--abre .tku-iso { margin-top:-4%; }
-.tku-dupla--abre .tku-dupla-loja { margin:0 -28px 0 0; transform:translateX(16px); }
+.tku-dupla--abre .tku-dupla-loja { margin:0 -28px 0 0; transform:translateX(30px); }
 /* o celular da loja: moldura clara, ilha, barra de status e a capa com a tinta do ingresso */
 /* vidro: moldura e tela translúcidas, com borrão do que está atrás, borda clara e brilho em cima */
 .tku-cel-caixa { position:relative; }
-.tku-cel-brilho { position:absolute; inset:-34px 2px -26px -40px; z-index:-1; pointer-events:none; filter:blur(26px); opacity:.85;
-  background:radial-gradient(60% 46% at 28% 18%, rgba(244,114,233,.75), transparent 70%), radial-gradient(52% 50% at 56% 52%, rgba(181,87,243,.6), transparent 72%), radial-gradient(60% 46% at 38% 92%, rgba(255,150,112,.7), transparent 70%); }
 .tku-cel { position:relative; width:100%; max-width:300px; padding:9px; border-radius:50px;
-  background:linear-gradient(150deg, rgba(255,255,255,.62) 0%, rgba(255,255,255,.2) 46%, rgba(255,255,255,.4) 100%);
+  background:linear-gradient(150deg, rgba(226,208,252,.62) 0%, rgba(255,255,255,.3) 46%, rgba(252,214,236,.55) 100%);
   -webkit-backdrop-filter:blur(20px) saturate(1.7); backdrop-filter:blur(20px) saturate(1.7);
-  box-shadow:0 0 0 1px rgba(255,255,255,.7), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 22px rgba(255,255,255,.22), 0 34px 60px -34px rgba(110,50,170,.5); }
+  box-shadow:0 0 0 1px rgba(28,14,51,.10), inset 0 0 0 1px rgba(255,255,255,.75), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.4), inset 0 0 22px rgba(255,255,255,.3), 0 34px 60px -34px rgba(110,50,170,.5); }
 .tku-cel::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
   background:linear-gradient(118deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 34%); mix-blend-mode:soft-light; }
 .tku-cel-tela { position:relative; border-radius:42px; overflow:hidden; background:rgba(255,255,255,.66); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); box-shadow:inset 0 0 0 1px rgba(255,255,255,.6), inset 0 1px 0 rgba(255,255,255,.9); padding-bottom:12px; }
@@ -395,7 +393,6 @@ section[id] { scroll-margin-top:72px; }
     </div>
     <div class="tku-dupla tku-dupla--abre" aria-hidden="true">
         <div class="tku-dupla-loja tku-cel-caixa">
-          <i class="tku-cel-brilho" aria-hidden="true"></i>
           <div class="tku-cel">
           <div class="tku-cel-tela">
             <div class="tku-cel-barra"><span>9:41</span><i class="tku-cel-ilha"></i><span class="tku-cel-ic"><svg viewBox="0 0 58 12" aria-hidden="true"><g fill="#1C0E33"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="6" width="3" height="6" rx="1"/><rect x="10" y="3.5" width="3" height="8.5" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/><path d="M28.5 10.6 26 8.1a3.6 3.6 0 0 1 5 0Zm-4.3-4.3-1.4-1.4a8.2 8.2 0 0 1 11.4 0l-1.4 1.4a6.2 6.2 0 0 0-8.6 0Z"/><rect x="38" y="1.5" width="17" height="9" rx="2.6" fill="none" stroke="#1C0E33" stroke-opacity=".45"/><rect x="39.6" y="3.1" width="12" height="5.8" rx="1.4"/><rect x="55.8" y="4.4" width="1.6" height="3.2" rx=".8" fill-opacity=".45"/></g></svg></span></div>
