@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Building2, Check, Landmark, PartyPopper, Route, Tent, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
@@ -101,15 +101,10 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
       )}
 
       {PASSOS[passo] === "nome" && perfil && r.perfil && (
-        <section aria-labelledby="comecar-titulo" className="space-y-4">
-          <div>
-            <p className="text-[0.75rem] text-black/45">{perfil.titulo}</p>
-            <h1 id="comecar-titulo" className={TITULO}>{perfil.nome.pergunta}</h1>
-            <p className={APOIO}>{perfil.nome.apoio}</p>
-          </div>
-          {r.perfil === "espaco"
-            ? <Campo id="co-nome" rotulo={perfil.nome.rotulo} valor={r.lugar} exemplo={perfil.nome.exemplo} onChange={lugar => muda({ lugar })} autoFocus onEnter={() => void seguir()} />
-            : <Campo id="co-nome" rotulo={perfil.nome.rotulo} valor={r.evento} exemplo={perfil.nome.exemplo} onChange={evento => muda({ evento })} autoFocus onEnter={() => void seguir()} />}
+        <section aria-labelledby="comecar-titulo" className="space-y-6">
+          <h1 id="comecar-titulo" className={TITULO}>{perfil.nome.pergunta}</h1>
+          <CampoDoNome valor={r.perfil === "espaco" ? r.lugar : r.evento} exemplo={perfil.nome.exemplo} rotulo={perfil.nome.rotulo}
+            onChange={nome => muda(r.perfil === "espaco" ? { lugar: nome } : { evento: nome })} onEnter={() => void seguir()} />
         </section>
       )}
 
@@ -170,6 +165,20 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
 
 function Campo({ id, rotulo, valor, exemplo, onChange, autoFocus = false, numerico = false, onEnter }: { id: string; rotulo: string; valor: string; exemplo: string; onChange: (valor: string) => void; autoFocus?: boolean; numerico?: boolean; onEnter?: () => void }) {
   return <div><label className={ROTULO} htmlFor={id}>{rotulo}</label><input id={id} autoFocus={autoFocus} inputMode={numerico ? "decimal" : undefined} className={CAMPO} value={valor} placeholder={exemplo} onChange={e => onChange(e.target.value)} onKeyDown={onEnter ? (e => { if (e.key === "Enter") { e.preventDefault(); onEnter(); } }) : undefined} /></div>;
+}
+
+/** O campo do nome: grande e em negrito (peso 700 direto: a Ticketeria limita font-bold a 500 em globals.css), sem rótulo nem explicação (a pergunta já é o rótulo). O cursor já entra nele; Enter segue. */
+function CampoDoNome({ valor, exemplo, rotulo, onChange, onEnter }: { valor: string; exemplo: string; rotulo: string; onChange: (valor: string) => void; onEnter: () => void }) {
+  const campo = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const t = setTimeout(() => campo.current?.focus(), 60);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <input ref={campo} autoFocus aria-label={rotulo} value={valor} placeholder={exemplo} maxLength={200} autoComplete="off"
+      className="w-full border-0 border-b-2 border-black/[.12] bg-transparent px-0 pb-3 pt-1 text-[1.75rem] font-[700] leading-tight tracking-[-.02em] text-[#1C0E33] outline-none transition-colors placeholder:font-[700] placeholder:text-black/20 focus:border-[#7259B5] md:text-[2.25rem]"
+      onChange={e => onChange(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); onEnter(); } }} />
+  );
 }
 
 /** O lugar: o estado pelo mapa e a cidade da lista dele; digitando, a lista filtra. Sem estado, quem digita a cidade acha em todo o Brasil. Cidade fora da lista vale como digitada. */
