@@ -4,6 +4,7 @@ import type { Database } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { diaNoFuso } from "@/lib/ticketeria/divulgacao";
 import { divulgacaoDaLoja } from "@/lib/ticketeria/divulgacao-servidor";
+import { ritmoDoEvento, type RitmoDoEvento } from "@/lib/ticketeria/modelo-painel";
 import { controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
 import { compararComOsLinks, lerPartesDaBase, type CanalDoResultado, type ParteDaBase } from "@/lib/ticketeria/modelo-resultado";
 import type { Confianca } from "@/lib/ticketeria/modelo";
@@ -141,4 +142,45 @@ export async function resultadoDaLoja(admin: Admin, lojaId: string): Promise<Res
     comparacao: compararComOsLinks(canais, porCanalDoLink), canais,
     ultimaFalha: falha && Date.parse(falha.created_at) > Date.parse(e.created_at) ? { motivo: String(falha.motivo ?? ""), created_at: falha.created_at } : null,
   };
+}
+
+/**
+ * O ritmo de venda da próxima sessão que já vendeu: o que vendeu, a lotação (a soma dos lugares dos setores em uso do local), as vendas por dia e o ritmo dos últimos 7 dias. null se não há sessão
+ * por vir com venda. É a conta simples do painel evolutivo, não uma previsão do modelo. Lido com a chave de serviço.
+ */
+export async function ritmoDoProximoEvento(admin: Admin, lojaId: string, agora: number = Date.now()): Promise<RitmoDoEvento | null> {
+  const t = clienteDaTicketeria(admin);
+  const { data: eventos } = await t.from("ticketeria_eventos").select("id, titulo").eq("loja_id", lojaId);
+  const idsDosEventos = (eventos ?? []).map(e => e.id);
+  if (idsDosEventos.length === 0) return null;
+  const { data: sessoesBrutas } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").in("evento_id", idsDosEventos);
+  const futuras = (sessoesBrutas ?? []).filter(s => !s.cancelada_em && Date.parse(s.inicio) > agora).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
+  if (futuras.length === 0) return null;
+  const pagos = (await todas(async (de, ate) => t.from("ticketeria_pedidos").select("id, sessao_id, pago_em").eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, ate))).filter(p => p.pago_em);
+  const idsDasFuturas = new Set(futuras.map(s => s.id));
+  const dasFuturas = pagos.filter(p => idsDasFuturas.has(p.sessao_id));
+  const quantidade = new Map<string, number>();
+  for (let i = 0; i < dasFuturas.length; i += 150) {
+    const { data } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade").in("pedido_id", dasFuturas.slice(i, i + 150).map(p => p.id));
+    for (const it of data ?? []) quantidade.set(it.pedido_id, (quantidade.get(it.pedido_id) ?? 0) + it.quantidade);
+  }
+  const escolhida = futuras.find(s => dasFuturas.some(p => p.sessao_id === s.id));
+  if (!escolhida) return null;
+  const [{ data: local }, { data: setores }] = await Promise.all([
+    t.from("ticketeria_locais").select("fuso").eq("id", escolhida.local_id).maybeSingle(),
+    t.from("ticketeria_setores").select("lugares").eq("local_id", escolhida.local_id).eq("arquivado", false),
+  ]);
+  const fuso = local?.fuso ?? undefined;
+  const vendasPorDia: Record<string, number> = {};
+  let vendidos = 0;
+  for (const p of dasFuturas.filter(x => x.sessao_id === escolhida.id)) {
+    const n = quantidade.get(p.id) ?? 0;
+    vendidos += n;
+    const dia = diaNoFuso(p.pago_em as string, fuso);
+    vendasPorDia[dia] = (vendasPorDia[dia] ?? 0) + n;
+  }
+  return ritmoDoEvento({
+    evento: (eventos ?? []).find(e => e.id === escolhida.evento_id)?.titulo ?? "Evento", vendasPorDia, vendidos, lugares: (setores ?? []).reduce((s, x) => s + x.lugares, 0),
+    hoje: diaNoFuso(new Date(agora), fuso), diaDaSessao: diaNoFuso(escolhida.inicio, fuso),
+  });
 }

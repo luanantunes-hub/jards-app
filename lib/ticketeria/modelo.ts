@@ -9,6 +9,7 @@
 
 import { rotuloDoCanal } from "@/lib/ticketeria/divulgacao";
 import type { ChaveDoControle, ControleDaTela, ResumoDosControles } from "@/lib/ticketeria/modelo-controles";
+import type { RitmoDoEvento } from "@/lib/ticketeria/modelo-painel";
 
 export const MIN_SEMANAS_DE_VENDAS = 26;
 export const MIN_SEMANAS_COM_GASTO = 26;
@@ -155,6 +156,8 @@ export type ProntidaoDoModelo = {
   controles: ControleDaTela[];
   /** O que a loja tem de eventos, sessões, lotes e cupons (para o texto da confiança); null quando quem chamou não calculou. */
   resumo: ResumoDosControles | null;
+  /** O ritmo de venda da próxima sessão que já vendeu (só a rota calcula; a prontidão pura deixa vazio). */
+  ritmo?: RitmoDoEvento | null;
 };
 
 const semanasTexto = (n: number) => `${n} ${n === 1 ? "semana" : "semanas"}`;

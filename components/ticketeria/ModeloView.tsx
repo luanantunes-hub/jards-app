@@ -7,6 +7,8 @@ import { SEMANAS_DOS_CONTROLES_EXTRAS, type ControleDaTela } from "@/lib/tickete
 import { FATOR_DE_CAUTELA, margemMostrada, temMargemGrande, type CanalDoResultado, type ChaveDaParte } from "@/lib/ticketeria/modelo-resultado";
 import { canaisComCurva, linhasDeInvestimento, recomendar } from "@/lib/ticketeria/modelo-recomendacao";
 import { confiancaMostrada, fatoresDaConfianca, oQueAConfiancaPermite } from "@/lib/ticketeria/modelo-confianca";
+import { blocoDeInvestir, blocoDoTamanhoDosCanais } from "@/lib/ticketeria/modelo-painel";
+import { PreviaComExemplo, SeloDePrecisao } from "@/components/ticketeria/PainelView";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 
 // A aba Modelo da Divulgação (fatia M-A): se já há dado para o modelo de marketing rodar, e o que falta. Ainda não há o cálculo do modelo (é a fatia seguinte). Só desenho: os dados
@@ -258,14 +260,22 @@ export function QuebraDaBase({ base }: { base: ResultadoParaATela["execucao"]["b
 }
 
 /** O que o modelo estimou: o selo de confiança, a tabela canal a canal com o modelo ao lado dos links e, para cada canal, o gasto semanal a partir do qual rende pouco. */
-export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eventos = null }: { resultado: ResultadoParaATela; gastoSemanal?: Record<string, number>; sessoes?: number | null; eventos?: number | null }) {
+export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eventos = null, onImportar }: { resultado: ResultadoParaATela; gastoSemanal?: Record<string, number>; sessoes?: number | null; eventos?: number | null; onImportar?: () => void }) {
   const { execucao: e, comparacao, canais, ultimaFalha } = resultado;
-  const saturacoes = canais.filter(c => c.saturacao_gasto_centavos !== null && c.gasto_centavos > 0);
+  const mostrada = confiancaMostrada(e.confianca, sessoes);
+  const tamanho = blocoDoTamanhoDosCanais(e.semanas, mostrada);
+  const investir = blocoDeInvestir(mostrada, e.semanas, canais.some(c => c.gasto_constante));
+  const saturacoes = investir.aberto ? canais.filter(c => c.saturacao_gasto_centavos !== null && c.gasto_centavos > 0) : [];
   return (
     <div className="space-y-4">
       <ConfiancaDoModelo resultado={resultado} sessoes={sessoes} eventos={eventos} />
-      {gastoSemanal && <RecomendacaoDeInvestimento canais={canais} gastoSemanal={gastoSemanal} confianca={confiancaMostrada(e.confianca, sessoes)} semanas={e.semanas} />}
+      {investir.aberto
+        ? gastoSemanal && <RecomendacaoDeInvestimento canais={canais} gastoSemanal={gastoSemanal} confianca={mostrada} semanas={e.semanas} />
+        : <PreviaComExemplo tipo="investir" motivo={investir.motivo ?? ""} acao={e.semanas < SEMANAS_IDEAIS ? "Importar vendas anteriores encurta isso." : undefined} onAcao={onImportar} />}
       {ultimaFalha && <p role="alert" className="rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-black/55" style={{ borderColor: "rgba(176,122,20,.25)" }}>A rodada de {dataBr(ultimaFalha.created_at)} não deu: {ultimaFalha.motivo} Esta tela mostra a anterior.</p>}
+      {tamanho.aberto && tamanho.selo ? (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2.5"><h3 className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Quanto cada canal vendeu</h3><SeloDePrecisao selo={tamanho.selo} /></div>
       <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>
         <table className="w-full min-w-[46rem] border-collapse">
           <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Canal</th><th className={`${CABECALHO} text-right`}>Gasto</th><th className={`${CABECALHO} text-right`}>Ingressos, segundo o modelo</th><th className={`${CABECALHO} text-right`}>Ingressos, segundo os links</th><th className={`${CABECALHO} text-right`}>Custo por ingresso</th></tr></thead>
@@ -295,6 +305,8 @@ export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eve
         </ul>
       )}
       <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Os links só contam quem clicou e comprou. O modelo também enxerga quem viu o anúncio e comprou depois por outro caminho. Quando os dois números se parecem, a leitura é mais segura; quando diferem muito, desconfie do modelo até ter mais semanas. É uma estimativa, não uma prova: o ± é o quanto o modelo acha que ainda pode errar, já alargado {FATOR_DE_CAUTELA} vezes: nos testes com dados inventados ele errou até {FATOR_DE_CAUTELA} vezes mais do que dizia. Leia a margem como o mínimo de incerteza.</p>
+        </div>
+      ) : <PreviaComExemplo tipo="canais" motivo={tamanho.motivo ?? ""} acao="Importar vendas anteriores encurta isso." onAcao={onImportar} />}
     </div>
   );
 }

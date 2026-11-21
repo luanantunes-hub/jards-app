@@ -12,13 +12,16 @@ import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/
 import { DatasDePicoSheet } from "@/components/ticketeria/DatasDePicoSheet";
 import { SimularOrcamentoSheet } from "@/components/ticketeria/SimularOrcamentoSheet";
 import { PlanoBDoModelo } from "@/components/ticketeria/PlanoBView";
+import { CabecalhoDoPainel, PreviaComExemplo, PrimeirosDados } from "@/components/ticketeria/PainelView";
+import { confiancaMostrada } from "@/lib/ticketeria/modelo-confianca";
+import { blocoDeInvestir, blocoDoTamanhoDosCanais } from "@/lib/ticketeria/modelo-painel";
 import { lerDataDePico, type CamposDaDataDePico, type DataDePico } from "@/lib/ticketeria/modelo-controles";
 import { ModeloDaLoja, ResultadoDoModelo } from "@/components/ticketeria/ModeloView";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
 import type { ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
 import type { CorpoDaImportacao, ImportacaoDaLista, TipoDeHistorico } from "@/lib/ticketeria/historico";
 import { CARTOES, ConexoesDaLoja, EscolherContaSheet, type ContaParaEscolher, type EstadoDeMidia, type ProvedorDoCartao } from "@/components/ticketeria/ConexoesView";
-import { gastoParaCampo, lerAcao, type CamposDaAcao, type DivulgacaoDaLoja as DadosDaDivulgacao } from "@/lib/ticketeria/divulgacao";
+import { gastoParaCampo, lerAcao, resumirDivulgacao, type CamposDaAcao, type DivulgacaoDaLoja as DadosDaDivulgacao } from "@/lib/ticketeria/divulgacao";
 
 type Aba = "origem" | "acoes" | "conexoes" | "historico" | "modelo";
 const ABAS: { valor: Aba; rotulo: string }[] = [{ valor: "origem", rotulo: "De onde vieram" }, { valor: "acoes", rotulo: "Ações e gasto" }, { valor: "conexoes", rotulo: "Conexões" }, { valor: "historico", rotulo: "Histórico" }, { valor: "modelo", rotulo: "Modelo" }];
@@ -241,10 +244,12 @@ export default function DivulgacaoPage() {
   const gastoSemanal: Record<string, number> = Object.fromEntries((prontidao?.canais ?? []).filter(c => c.medianaCentavos > 0).map(c => [c.canal, c.medianaCentavos]));
   // O dia da próxima sessão à venda: o plano B não sugere experimento perto de uma sessão.
   const proximaSessao = (dados?.sessoes ?? []).filter(x => x.a_venda && x.dia && x.dia >= (dados?.hoje ?? "")).map(x => x.dia as string).sort()[0] ?? null;
+  // O ranking de canais e o simulador só abrem com confiança boa (ver lib/ticketeria/modelo-painel.ts).
+  const podeSimular = !!resultadoDoModelo && blocoDeInvestir(confiancaMostrada(resultadoDoModelo.execucao.confianca, prontidao?.resumo?.sessoes ?? null), resultadoDoModelo.execucao.semanas, resultadoDoModelo.canais.some(c => c.gasto_constante)).aberto;
   const acoes = (
     <>
       {dados && aba === "acoes" && <SecondaryListAction onClick={() => abrirNova(dados.hoje)}>Registrar ação</SecondaryListAction>}
-      {dados && aba === "modelo" && resultadoDoModelo && Object.keys(gastoSemanal).length > 0 && <SecondaryListAction onClick={() => setSimulando(true)}>Simular orçamento</SecondaryListAction>}
+      {dados && aba === "modelo" && podeSimular && Object.keys(gastoSemanal).length > 0 && <SecondaryListAction onClick={() => setSimulando(true)}>Simular orçamento</SecondaryListAction>}
       {dados && aba === "historico" && <SecondaryListAction onClick={() => { setErroDeImportar(null); setFolhaDeImportar(true); }}>Importar planilha</SecondaryListAction>}
       {dados && <PrimaryListAction onClick={() => setCriando(true)}><Link2 size={13} aria-hidden="true" /> Criar link de divulgação</PrimaryListAction>}
     </>
@@ -269,7 +274,18 @@ export default function DivulgacaoPage() {
               ? (prontidaoErro ? <p role="alert" className="rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>Não foi possível conferir os dados do modelo agora. Recarregue a página.</p>
                 : prontidao ? (
                   <div className="space-y-4">
-                    {resultadoDoModelo && <ResultadoDoModelo resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} sessoes={prontidao.resumo?.sessoes ?? null} eventos={prontidao.resumo?.eventos ?? null} />}
+                    <CabecalhoDoPainel
+                      resumo={[prontidao.resumo ? `${prontidao.resumo.eventos} ${prontidao.resumo.eventos === 1 ? "evento" : "eventos"}` : null, resultadoDoModelo ? `${resultadoDoModelo.execucao.semanas} semanas` : prontidao.semanas > 0 ? `${prontidao.semanas} semanas` : null].filter(Boolean).join(" · ") || "primeiros dados"}
+                      frase={resultadoDoModelo && blocoDoTamanhoDosCanais(resultadoDoModelo.execucao.semanas, confiancaMostrada(resultadoDoModelo.execucao.confianca, prontidao.resumo?.sessoes ?? null)).aberto ? "O modelo já estima o tamanho de cada canal, com margem larga." : "Já dá para ver o que é medido, e cada integração que você faz deixa o resto mais preciso."} />
+                    <PrimeirosDados ritmo={prontidao.ritmo ?? null} origem={resumirDivulgacao(dados.linhas, null).canais.map(c => ({ rotulo: c.rotulo, ingressos: c.ingressos }))} />
+                    {resultadoDoModelo && <ResultadoDoModelo resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} sessoes={prontidao.resumo?.sessoes ?? null} eventos={prontidao.resumo?.eventos ?? null} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />}
+                    {!resultadoDoModelo && (
+                      <div className="space-y-3">
+                        <h3 className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">O que abre com mais dados (prévia com exemplo)</h3>
+                        <PreviaComExemplo tipo="canais" motivo={blocoDoTamanhoDosCanais(prontidao.semanas, "baixa").motivo ?? ""} acao="Conectar o Meta e o Google Ads" onAcao={() => setAba("conexoes")} />
+                        <PreviaComExemplo tipo="investir" motivo={blocoDeInvestir("baixa", prontidao.semanas, false).motivo ?? ""} acao="Importar vendas anteriores encurta isso." onAcao={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />
+                      </div>
+                    )}
                     {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} />}
                     {(!resultadoDoModelo || !prontidao.pronto || resultadoDoModelo.execucao.confianca !== "boa") && <PlanoBDoModelo acoes={dados.acoes} canais={prontidao.canais} hoje={dados.hoje} proximaSessao={proximaSessao} onRegistrar={valores => { setAcaoErro(null); setAcao({ id: null, valores }); }} />}
                   </div>)

@@ -1,5 +1,6 @@
 "use client";
 
+import { SeloDePrecisao } from "@/components/ticketeria/PainelView";
 import { MIN_INGRESSOS_DO_CUSTO, acaoDoExperimento, custoMedidoPorCanal, sugerirExperimento, variacaoDosCanais } from "@/lib/ticketeria/modelo-plano-b";
 import type { AcaoComResultado, CamposDaAcao } from "@/lib/ticketeria/divulgacao";
 import type { ResumoDoCanal } from "@/lib/ticketeria/modelo";
@@ -24,7 +25,7 @@ export function CustoMedido({ acoes }: { acoes: AcaoComResultado[] }) {
   if (linhas.length === 0) return null;
   return (
     <section className="space-y-2.5" aria-label="O que já dá para medir">
-      <h3 className={TITULO}>O que já dá para medir: custo por ingresso</h3>
+      <div className="flex items-center gap-2.5"><h3 className={TITULO}>O que já dá para medir: custo por ingresso</h3><SeloDePrecisao selo="medido" /></div>
       <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>
         <table className="w-full min-w-[34rem] border-collapse">
           <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Canal</th><th className={`${CABECALHO} text-right`}>Gasto nas ações</th><th className={`${CABECALHO} text-right`}>Ingressos medidos</th><th className={`${CABECALHO} text-right`}>Custo por ingresso</th><th className={`${CABECALHO} text-right`}>Ações</th></tr></thead>
