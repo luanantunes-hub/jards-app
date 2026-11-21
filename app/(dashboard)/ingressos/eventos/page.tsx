@@ -62,7 +62,7 @@ export default function IngressosPage() {
 
   return (
     <>
-      <ListPageHeader title="Eventos" actions={eventos && eventos.length > 0 ? novo : undefined} />
+      <ListPageHeader title="Programação" actions={eventos && eventos.length > 0 ? novo : undefined} />
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         <ListTableSurface>

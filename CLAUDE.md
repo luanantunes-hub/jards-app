@@ -14,3 +14,7 @@ A Vercel só constrói quando a mensagem do ÚLTIMO commit pede, para não gerar
 - Um PR por assunto (por exemplo, Ticketeria ou Editais), empurrando em lotes. Cada push roda os testes do GitHub (grátis: o repositório é público).
 - Entre uma prévia e outra, mostre o resultado com prints feitos localmente.
 - A marca vale em qualquer parte da mensagem do commit (título ou corpo): não a escreva sem querer o build, nem ao citar a regra. No merge por squash, confira o título e o corpo antes.
+
+## Idiomas (módulo Ingressos)
+
+Telas da Ticketeria que já têm tradução (hoje: `/espera/{token}` e `/novidades/{token}`) leem os textos de `messages/<idioma>/ticketeria.json` em vez de tê-los no código. Texto novo nessas telas entra nos 10 idiomas, e o teste `tests/i18n-mensagens.test.ts` barra chave faltando. Antes de mexer, leia `docs/i18n/README.md` (como pôr um texto, regras do árabe, fontes) e `docs/i18n/glossario-ticketeria.md`. O resto do Jards segue só em português do Brasil.

@@ -247,7 +247,7 @@ export default function PortaPage() {
   if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   return (
     <>
-      <ListPageHeader title="Porta" />
+      <ListPageHeader title="Controle de entrada" />
       <ListContent>
         {aviso && <p role="status" className="mx-auto mb-4 max-w-[34rem] rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#2E8932]" style={{ borderColor: "#2E893247" }}>{aviso}</p>}
         {erro && <p role="alert" className="mx-auto mb-4 max-w-[34rem] rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}

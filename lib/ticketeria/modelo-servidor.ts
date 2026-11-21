@@ -5,6 +5,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { diaNoFuso } from "@/lib/ticketeria/divulgacao";
 import { divulgacaoDaLoja } from "@/lib/ticketeria/divulgacao-servidor";
 import { ritmoDoEvento, type RitmoDoEvento } from "@/lib/ticketeria/modelo-painel";
+import { acumuladoDaSessao, type CurvaDoEvento } from "@/lib/ticketeria/ritmo-comparado";
 import { controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
 import { compararComOsLinks, lerPartesDaBase, type CanalDoResultado, type ParteDaBase } from "@/lib/ticketeria/modelo-resultado";
 import type { Confianca } from "@/lib/ticketeria/modelo";
@@ -154,33 +155,60 @@ export async function ritmoDoProximoEvento(admin: Admin, lojaId: string, agora: 
   const idsDosEventos = (eventos ?? []).map(e => e.id);
   if (idsDosEventos.length === 0) return null;
   const { data: sessoesBrutas } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").in("evento_id", idsDosEventos);
-  const futuras = (sessoesBrutas ?? []).filter(s => !s.cancelada_em && Date.parse(s.inicio) > agora).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
+  const validas = (sessoesBrutas ?? []).filter(s => !s.cancelada_em);
+  const futuras = validas.filter(s => Date.parse(s.inicio) > agora).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
   if (futuras.length === 0) return null;
   const pagos = (await todas(async (de, ate) => t.from("ticketeria_pedidos").select("id, sessao_id, pago_em").eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, ate))).filter(p => p.pago_em);
-  const idsDasFuturas = new Set(futuras.map(s => s.id));
-  const dasFuturas = pagos.filter(p => idsDasFuturas.has(p.sessao_id));
+  const idsDasSessoes = new Set(validas.map(s => s.id));
+  const dasSessoes = pagos.filter(p => idsDasSessoes.has(p.sessao_id));
+  // Quantidade e valor de cada pedido (preço médio só de ingresso pago: cortesia e gratuito não dizem do preço).
   const quantidade = new Map<string, number>();
-  for (let i = 0; i < dasFuturas.length; i += 150) {
-    const { data } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade").in("pedido_id", dasFuturas.slice(i, i + 150).map(p => p.id));
-    for (const it of data ?? []) quantidade.set(it.pedido_id, (quantidade.get(it.pedido_id) ?? 0) + it.quantidade);
+  const valorPago = new Map<string, { qtd: number; valor: number }>();
+  for (let i = 0; i < dasSessoes.length; i += 150) {
+    const { data } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade, preco_centavos").in("pedido_id", dasSessoes.slice(i, i + 150).map(p => p.id));
+    for (const it of data ?? []) {
+      quantidade.set(it.pedido_id, (quantidade.get(it.pedido_id) ?? 0) + it.quantidade);
+      if (it.preco_centavos > 0) { const v = valorPago.get(it.pedido_id) ?? { qtd: 0, valor: 0 }; v.qtd += it.quantidade; v.valor += it.quantidade * it.preco_centavos; valorPago.set(it.pedido_id, v); }
+    }
   }
-  const escolhida = futuras.find(s => dasFuturas.some(p => p.sessao_id === s.id));
+  const escolhida = futuras.find(s => dasSessoes.some(p => p.sessao_id === s.id));
   if (!escolhida) return null;
-  const [{ data: local }, { data: setores }] = await Promise.all([
-    t.from("ticketeria_locais").select("fuso").eq("id", escolhida.local_id).maybeSingle(),
-    t.from("ticketeria_setores").select("lugares").eq("local_id", escolhida.local_id).eq("arquivado", false),
+  const idsDosLocais = [...new Set(validas.map(s => s.local_id))];
+  const [{ data: locais }, { data: setores }] = await Promise.all([
+    t.from("ticketeria_locais").select("id, nome, fuso").in("id", idsDosLocais),
+    t.from("ticketeria_setores").select("local_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false),
   ]);
-  const fuso = local?.fuso ?? undefined;
-  const vendasPorDia: Record<string, number> = {};
-  let vendidos = 0;
-  for (const p of dasFuturas.filter(x => x.sessao_id === escolhida.id)) {
-    const n = quantidade.get(p.id) ?? 0;
-    vendidos += n;
-    const dia = diaNoFuso(p.pago_em as string, fuso);
-    vendasPorDia[dia] = (vendasPorDia[dia] ?? 0) + n;
+  const lugaresDoLocal = new Map<string, number>();
+  for (const x of setores ?? []) lugaresDoLocal.set(x.local_id, (lugaresDoLocal.get(x.local_id) ?? 0) + x.lugares);
+  const doLocal = new Map((locais ?? []).map(l => [l.id, l]));
+  const titulo = new Map((eventos ?? []).map(e => [e.id, e.titulo]));
+  // As vendas de uma sessão: por dia (do pagamento, no fuso do local), o total e o preço médio.
+  const vendasDaSessao = (sessao: (typeof validas)[number]) => {
+    const fuso = doLocal.get(sessao.local_id)?.fuso ?? undefined;
+    const porDia: Record<string, number> = {};
+    let total = 0, qtdPaga = 0, valor = 0;
+    for (const p of dasSessoes.filter(x => x.sessao_id === sessao.id)) {
+      const n = quantidade.get(p.id) ?? 0;
+      total += n;
+      porDia[diaNoFuso(p.pago_em as string, fuso)] = (porDia[diaNoFuso(p.pago_em as string, fuso)] ?? 0) + n;
+      const v = valorPago.get(p.id);
+      if (v) { qtdPaga += v.qtd; valor += v.valor; }
+    }
+    return { fuso, porDia, total, precoMedioCentavos: qtdPaga > 0 ? Math.round(valor / qtdPaga) : 0, diaDaSessao: diaNoFuso(sessao.inicio, fuso) };
+  };
+  const atual = vendasDaSessao(escolhida);
+  const lugares = lugaresDoLocal.get(escolhida.local_id) ?? 0;
+  const ritmo = ritmoDoEvento({ evento: titulo.get(escolhida.evento_id) ?? "Evento", vendasPorDia: atual.porDia, vendidos: atual.total, lugares, hoje: diaNoFuso(new Date(agora), atual.fuso), diaDaSessao: atual.diaDaSessao });
+  if (!ritmo) return null;
+  // As curvas dos eventos que já aconteceram (para a comparação): cada sessão passada que vendeu.
+  const curvas: CurvaDoEvento[] = [];
+  for (const s of validas.filter(x => Date.parse(x.inicio) <= agora)) {
+    const v = vendasDaSessao(s);
+    if (v.total <= 0) continue;
+    curvas.push({
+      id: s.id, nome: titulo.get(s.evento_id) ?? "Evento", quando: new Intl.DateTimeFormat("pt-BR", { month: "short", year: "numeric", timeZone: v.fuso ?? "America/Sao_Paulo" }).format(new Date(s.inicio)).replace(" de ", "/").replace(".", ""),
+      local: doLocal.get(s.local_id)?.nome ?? "Local", localId: s.local_id, precoMedioCentavos: v.precoMedioCentavos, lugares: lugaresDoLocal.get(s.local_id) ?? 0, acumulado: acumuladoDaSessao(v.diaDaSessao, v.porDia),
+    });
   }
-  return ritmoDoEvento({
-    evento: (eventos ?? []).find(e => e.id === escolhida.evento_id)?.titulo ?? "Evento", vendasPorDia, vendidos, lugares: (setores ?? []).reduce((s, x) => s + x.lugares, 0),
-    hoje: diaNoFuso(new Date(agora), fuso), diaDaSessao: diaNoFuso(escolhida.inicio, fuso),
-  });
+  return { ...ritmo, comparacao: { sessaoId: escolhida.id, localId: escolhida.local_id, precoMedioCentavos: atual.precoMedioCentavos, acumulado: acumuladoDaSessao(atual.diaDaSessao, atual.porDia), curvas } };
 }

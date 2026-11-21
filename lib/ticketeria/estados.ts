@@ -66,3 +66,11 @@ export const MEIOS_DE_PAGAMENTO: readonly MeioDePagamento[] = ["pix", "cartao"];
 
 /** `ticketeria_lojas.parcelas_max`: até quantas parcelas o produtor oferece no cartão (1 = só à vista). As faixas de custo cadastradas vão até 6. */
 export const PARCELAS_MAXIMAS = 6;
+
+/** Onde está o domínio de e-mail da loja: "sem_dominio" (ainda não escolheu), "aguardando_dns" (criado no provedor, faltam os registros), "verificado" (pode enviar), "falhou". */
+export type SituacaoDoRemetente = "sem_dominio" | "aguardando_dns" | "verificado" | "falhou";
+export const SITUACOES_DO_REMETENTE: readonly SituacaoDoRemetente[] = ["sem_dominio", "aguardando_dns", "verificado", "falhou"];
+
+/** A assinatura do e-mail (R$ 32,90 por mês no cartão): "nenhuma" (nunca assinou), "pendente" (checkout aberto), "ativa", "inadimplente" (cartão recusou), "cancelada". */
+export type AssinaturaDoEmail = "nenhuma" | "pendente" | "ativa" | "inadimplente" | "cancelada";
+export const ASSINATURAS_DO_EMAIL: readonly AssinaturaDoEmail[] = ["nenhuma", "pendente", "ativa", "inadimplente", "cancelada"];

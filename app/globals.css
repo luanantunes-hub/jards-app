@@ -779,6 +779,17 @@ table thead th > span > span {
   font-family: var(--font-jakarta), var(--font-google-sans), system-ui, sans-serif;
   font-weight: 300;
 }
+/* Idiomas de outra escrita (lib/i18n/fontes.ts): a fonte da escrita vem primeiro e cobre também o latim (números, nomes em letras latinas), para
+   a página inteira ter uma voz só. Com a Jakarta na frente, o navegador usaria a fonte de reserva dela (que declara todos os caracteres) em vez da
+   fonte da escrita. O russo fica na Google Sans, que já cobre o cirílico. As variáveis --font-noto-* vêm do ProvedorDeIdioma. */
+.fonte-ticketeria:lang(zh),
+.fonte-ticketeria:lang(zh) :is(h1, h2, .font-display) { font-family: var(--font-noto-sc), var(--font-jakarta), var(--font-google-sans), system-ui, sans-serif; }
+.fonte-ticketeria:lang(ja),
+.fonte-ticketeria:lang(ja) :is(h1, h2, .font-display) { font-family: var(--font-noto-jp), var(--font-jakarta), var(--font-google-sans), system-ui, sans-serif; }
+.fonte-ticketeria:lang(ar),
+.fonte-ticketeria:lang(ar) :is(h1, h2, .font-display) { font-family: var(--font-noto-ar), var(--font-jakarta), var(--font-google-sans), system-ui, sans-serif; }
+/* Japonês não tem espaço entre palavras: onde o navegador sabe (auto-phrase), a linha quebra entre frases, não no meio de uma palavra. */
+.fonte-ticketeria:lang(ja) { word-break: auto-phrase; }
 .fonte-ticketeria .font-normal { font-weight: 300; }
 .fonte-ticketeria .font-medium { font-weight: 400; }
 .fonte-ticketeria .font-semibold { font-weight: 500; }

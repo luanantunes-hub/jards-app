@@ -1,0 +1,26 @@
+{
+  "seletor": {
+    "rotulo": "Language"
+  },
+  "sair": {
+    "botao": "Leave the list",
+    "saindo": "Leaving…",
+    "erro": "We couldn't remove you right now. Please try again in a moment.",
+    "feito": "Done, you have left the list",
+    "espera": {
+      "titulo": "Waitlist",
+      "pergunta": "Leave the waitlist?",
+      "explicacao": "You will stop getting alerts when tickets become available again. If you change your mind, you can join the list again at any time.",
+      "feitoExplicacao": "We will no longer notify you about this ticket."
+    },
+    "novidades": {
+      "titulo": "Updates",
+      "organizador": "Organizer",
+      "pergunta": "Unsubscribe from updates?",
+      "explicacao": "You will stop receiving news and offers from {loja}. Tickets you have already bought remain valid.",
+      "explicacaoSemLoja": "You will stop receiving news and offers from the organizer. Tickets you have already bought remain valid.",
+      "feitoExplicacao": "We will no longer send news from {loja} to your email.",
+      "feitoExplicacaoSemLoja": "We will no longer send news from the organizer to your email."
+    }
+  }
+}

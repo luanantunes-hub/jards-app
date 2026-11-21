@@ -7,6 +7,20 @@
 export const TIPOS_DE_BLOCO = ["capa", "titulo", "texto", "colunas", "imagem", "galeria", "video", "mapa", "botao", "contagem", "faq", "patrocinadores", "programacao", "ingressos", "agenda", "contato"] as const;
 export type TipoDeBloco = (typeof TIPOS_DE_BLOCO)[number];
 
+/** Os cinco jeitos do destaque do alto da página (a biblioteca de seções, passo 3; desenhos aprovados pelo dono em 20/11/2026). O bloco segue com o tipo "capa" no banco. */
+export const LAYOUTS_DO_DESTAQUE = ["tela_cheia", "dividido", "carrossel", "proximo", "cartao"] as const;
+export type LayoutDoDestaque = (typeof LAYOUTS_DO_DESTAQUE)[number];
+export const LAYOUT_PADRAO_DO_DESTAQUE: LayoutDoDestaque = "tela_cheia";
+export const ROTULO_DO_LAYOUT_DO_DESTAQUE: Record<LayoutDoDestaque, { nome: string; frase: string }> = {
+  tela_cheia: { nome: "Imagem de tela cheia", frase: "Foto, título, uma frase e até dois botões." },
+  dividido: { nome: "Dividido", frase: "Texto e imagem lado a lado, com data e local." },
+  carrossel: { nome: "Carrossel", frase: "Até cinco destaques que passam sozinhos." },
+  proximo: { nome: "Próximo evento", frase: "Puxa sozinho o próximo evento publicado." },
+  cartao: { nome: "Cartão sobreposto", frase: "Imagem com um cartão que apresenta a companhia." },
+};
+export const MAX_SLIDES_DO_DESTAQUE = 5;
+export type SlideDoDestaque = { titulo: string; frase: string; imagem: string; botao_rotulo: string; botao_url: string };
+
 /** Os cinco jeitos de mostrar a agenda de eventos (a biblioteca de seções, passo 2; desenhos aprovados pelo dono em 20/11/2026). */
 export const LAYOUTS_DA_AGENDA = ["carrossel", "grade", "lista", "calendario", "filtros"] as const;
 export type LayoutDaAgenda = (typeof LAYOUTS_DA_AGENDA)[number];
@@ -20,7 +34,7 @@ export const ROTULO_DO_LAYOUT_DA_AGENDA: Record<LayoutDaAgenda, { nome: string; 
 };
 
 export const ROTULO_DO_TIPO_DE_BLOCO: Record<TipoDeBloco, string> = {
-  capa: "Capa", titulo: "Título", texto: "Texto", colunas: "Duas colunas", imagem: "Imagem", galeria: "Galeria", video: "Vídeo", mapa: "Mapa", botao: "Botão com link",
+  capa: "Destaque do alto", titulo: "Título", texto: "Texto", colunas: "Duas colunas", imagem: "Imagem", galeria: "Galeria", video: "Vídeo", mapa: "Mapa", botao: "Botão com link",
   agenda: "Agenda de eventos", contagem: "Contagem regressiva", faq: "Perguntas frequentes", patrocinadores: "Patrocinadores", programacao: "Programação de um espaço (Produção)", ingressos: "Ingressos de um evento", contato: "Contato",
 };
 
@@ -43,7 +57,7 @@ export type Bloco =
   | { tipo: "imagem"; url: string; alt: string }
   | { tipo: "botao"; rotulo: string; url: string }
   /** A faixa de abertura da página: título, subtítulo, imagem de fundo (https, opcional) e um botão (opcional, rótulo e endereço juntos). */
-  | { tipo: "capa"; titulo: string; subtitulo: string; imagem: string; botao_rotulo: string; botao_url: string }
+  | { tipo: "capa"; layout: LayoutDoDestaque; titulo: string; subtitulo: string; imagem: string; botao_rotulo: string; botao_url: string; botao2_rotulo: string; botao2_url: string; chamada: string; info: string; slides: SlideDoDestaque[] }
   | { tipo: "colunas"; esquerda: ColunaDoBloco; direita: ColunaDoBloco }
   | { tipo: "galeria"; titulo: string; imagens: ImagemDaGaleria[] }
   /** Só YouTube e Vimeo: guarda o provedor e o id do vídeo (nunca um endereço livre); o endereço do player sai de `enderecoDoVideo`. */
@@ -136,6 +150,60 @@ export const enderecoDoMapa = (endereco: string) => `https://www.google.com/maps
 export type LeituraDoBloco = { ok: true; bloco: Bloco } | { ok: false; erro: string };
 
 /** Um bloco como o site guarda: o tipo vem da lista, os textos têm limite, link e imagem só em https, e a imagem exige texto alternativo. */
+/** Lê o botão de um destaque: o texto e o endereço (https) vêm juntos, ou nenhum dos dois. */
+function lerBotaoDoDestaque(rotulo: unknown, url: unknown, nome: string): { ok: true; rotulo: string; url: string } | { ok: false; erro: string } {
+  const r = texto(rotulo), u = texto(url);
+  if ((r === "") !== (u === "")) return { ok: false, erro: `O ${nome} precisa do texto e do endereço juntos (ou de nenhum dos dois).` };
+  if (r === "") return { ok: true, rotulo: "", url: "" };
+  if (r.length > 60) return { ok: false, erro: `O texto do ${nome} tem de ter de 1 a 60 letras.` };
+  const l = lerUrlHttps(u);
+  return l.ok ? { ok: true, rotulo: r, url: l.url } : { ok: false, erro: `O endereço do ${nome} tem de começar com https://.` };
+}
+
+function lerImagemDoDestaque(bruto: unknown, nome: string): { ok: true; url: string } | { ok: false; erro: string } {
+  const i = texto(bruto);
+  if (i === "") return { ok: true, url: "" };
+  const l = lerUrlHttps(i);
+  return l.ok ? { ok: true, url: l.url } : { ok: false, erro: `O endereço da ${nome} tem de começar com https://.` };
+}
+
+/** O destaque do alto: o layout (sem ele, a imagem de tela cheia) e os campos que ele usa. O carrossel tem de 1 a 5 destaques; o "próximo evento" não pede título (vem do evento). */
+function lerDestaque(e: Record<string, unknown>): LeituraDoBloco {
+  if (e.layout !== undefined && e.layout !== null && typeof e.layout !== "string") return { ok: false, erro: "Escolha um dos layouts do destaque." };
+  const bruto = typeof e.layout === "string" ? e.layout.trim() : "";
+  if (bruto !== "" && !(LAYOUTS_DO_DESTAQUE as readonly string[]).includes(bruto)) return { ok: false, erro: "Escolha um dos layouts do destaque." };
+  const layout = bruto === "" ? LAYOUT_PADRAO_DO_DESTAQUE : (bruto as LayoutDoDestaque);
+  const titulo = texto(e.titulo), subtitulo = texto(e.subtitulo), chamada = texto(e.chamada), info = texto(e.info);
+  const semTitulo = layout === "proximo" || layout === "carrossel";
+  if (titulo.length > 120 || (titulo === "" && !semTitulo)) return { ok: false, erro: "O título da capa tem de ter de 1 a 120 letras." };
+  if (subtitulo.length > 200) return { ok: false, erro: "O subtítulo da capa pode ter até 200 letras." };
+  if (chamada.length > 40) return { ok: false, erro: "A chamada pode ter até 40 letras." };
+  if (info.length > 120) return { ok: false, erro: "A linha de informação pode ter até 120 letras." };
+  const imagem = lerImagemDoDestaque(e.imagem, "imagem de fundo");
+  if (!imagem.ok) return imagem;
+  const botao = lerBotaoDoDestaque(e.botao_rotulo, e.botao_url, "botão da capa");
+  if (!botao.ok) return botao;
+  const botao2 = lerBotaoDoDestaque(e.botao2_rotulo, e.botao2_url, "segundo botão");
+  if (!botao2.ok) return botao2;
+  const slides: SlideDoDestaque[] = [];
+  if (layout === "carrossel") {
+    const lista = Array.isArray(e.slides) ? e.slides : [];
+    if (lista.length < 1 || lista.length > MAX_SLIDES_DO_DESTAQUE) return { ok: false, erro: `O carrossel precisa de 1 a ${MAX_SLIDES_DO_DESTAQUE} destaques.` };
+    for (const [n, bruto] of lista.entries()) {
+      const x = (bruto && typeof bruto === "object" ? bruto : {}) as Record<string, unknown>;
+      const t = texto(x.titulo), f = texto(x.frase);
+      if (t === "" || t.length > 120) return { ok: false, erro: `Destaque ${n + 1}: o título tem de ter de 1 a 120 letras.` };
+      if (f.length > 200) return { ok: false, erro: `Destaque ${n + 1}: a frase pode ter até 200 letras.` };
+      const im = lerImagemDoDestaque(x.imagem, `imagem do destaque ${n + 1}`);
+      if (!im.ok) return im;
+      const bt = lerBotaoDoDestaque(x.botao_rotulo, x.botao_url, `botão do destaque ${n + 1}`);
+      if (!bt.ok) return bt;
+      slides.push({ titulo: t, frase: f, imagem: im.url, botao_rotulo: bt.rotulo, botao_url: bt.url });
+    }
+  }
+  return { ok: true, bloco: { tipo: "capa", layout, titulo, subtitulo, imagem: imagem.url, botao_rotulo: botao.rotulo, botao_url: botao.url, botao2_rotulo: botao2.rotulo, botao2_url: botao2.url, chamada, info, slides } };
+}
+
 export function lerBloco(entrada: unknown): LeituraDoBloco {
   const e = (entrada && typeof entrada === "object" ? entrada : {}) as Record<string, unknown>;
   switch (e.tipo) {
@@ -179,22 +247,7 @@ export function lerBloco(entrada: unknown): LeituraDoBloco {
       if (endereco.length > 200) return { ok: false, erro: "O endereço pode ter até 200 letras." };
       return { ok: true, bloco: { tipo: "contato", email, telefone, endereco } };
     }
-    case "capa": {
-      const titulo = texto(e.titulo), subtitulo = texto(e.subtitulo), imagem = texto(e.imagem), rotulo = texto(e.botao_rotulo), botao = texto(e.botao_url);
-      if (titulo === "" || titulo.length > 120) return { ok: false, erro: "O título da capa tem de ter de 1 a 120 letras." };
-      if (subtitulo.length > 200) return { ok: false, erro: "O subtítulo da capa pode ter até 200 letras." };
-      let urlDaImagem = "";
-      if (imagem !== "") { const u = lerUrlHttps(imagem); if (!u.ok) return { ok: false, erro: "O endereço da imagem de fundo tem de começar com https://." }; urlDaImagem = u.url; }
-      if ((rotulo === "") !== (botao === "")) return { ok: false, erro: "O botão da capa precisa do texto e do endereço juntos (ou de nenhum dos dois)." };
-      let urlDoBotao = "";
-      if (rotulo !== "") {
-        if (rotulo.length > 60) return { ok: false, erro: "O texto do botão tem de ter de 1 a 60 letras." };
-        const u = lerUrlHttps(botao);
-        if (!u.ok) return { ok: false, erro: "O endereço do botão tem de começar com https://." };
-        urlDoBotao = u.url;
-      }
-      return { ok: true, bloco: { tipo: "capa", titulo, subtitulo, imagem: urlDaImagem, botao_rotulo: rotulo, botao_url: urlDoBotao } };
-    }
+    case "capa": return lerDestaque(e);
     case "colunas": {
       const esquerda = lerColuna(e.esquerda, "da esquerda"), direita = lerColuna(e.direita, "da direita");
       if (!esquerda.ok) return esquerda;

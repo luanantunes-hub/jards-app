@@ -20,6 +20,8 @@ export type BancoDaTicketeria = {
           organization_id: string;
           nome: string;
           parcelas_max: number;
+          canais: string[] | null;
+          usa_espacos: boolean | null;
           criado_por: string | null;
           created_at: string;
           updated_at: string;
@@ -29,6 +31,8 @@ export type BancoDaTicketeria = {
           organization_id: string;
           nome: string;
           parcelas_max?: number;
+          canais?: string[] | null;
+          usa_espacos?: boolean | null;
           criado_por?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -38,6 +42,8 @@ export type BancoDaTicketeria = {
           organization_id?: string;
           nome?: string;
           parcelas_max?: number;
+          canais?: string[] | null;
+          usa_espacos?: boolean | null;
           criado_por?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -61,6 +67,7 @@ export type BancoDaTicketeria = {
           titulo: string | null;
           cor: string;
           tema: TemaDoSite;
+          aparencia: Json;
           situacao: SituacaoDoSite;
           criado_por: string | null;
           created_at: string;
@@ -74,6 +81,7 @@ export type BancoDaTicketeria = {
           titulo?: string | null;
           cor?: string;
           tema?: TemaDoSite;
+          aparencia?: Json;
           situacao?: SituacaoDoSite;
           criado_por?: string | null;
           created_at?: string;
@@ -87,6 +95,7 @@ export type BancoDaTicketeria = {
           titulo?: string | null;
           cor?: string;
           tema?: TemaDoSite;
+          aparencia?: Json;
           situacao?: SituacaoDoSite;
           criado_por?: string | null;
           created_at?: string;
@@ -483,6 +492,7 @@ export type BancoDaTicketeria = {
           publico: boolean;
           ordem: number;
           arquivado: boolean;
+          meia_de: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -498,6 +508,7 @@ export type BancoDaTicketeria = {
           publico?: boolean;
           ordem?: number;
           arquivado?: boolean;
+          meia_de?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -513,10 +524,18 @@ export type BancoDaTicketeria = {
           publico?: boolean;
           ordem?: number;
           arquivado?: boolean;
+          meia_de?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "ticketeria_ingressos_meia_de_fkey";
+            columns: ["meia_de"];
+            isOneToOne: true;
+            referencedRelation: "ticketeria_ingressos";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "ticketeria_ingressos_evento_id_fkey";
             columns: ["evento_id"];
@@ -545,6 +564,7 @@ export type BancoDaTicketeria = {
           id: string;
           organization_id: string;
           ingresso_id: string;
+          espelho_de: string | null;
           nome: string;
           ordem: number;
           preco_centavos: number;
@@ -558,6 +578,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id: string;
           ingresso_id: string;
+          espelho_de?: string | null;
           nome: string;
           ordem?: number;
           preco_centavos: number;
@@ -571,6 +592,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id?: string;
           ingresso_id?: string;
+          espelho_de?: string | null;
           nome?: string;
           ordem?: number;
           preco_centavos?: number;
@@ -581,6 +603,13 @@ export type BancoDaTicketeria = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "ticketeria_lotes_espelho_de_fkey";
+            columns: ["espelho_de"];
+            isOneToOne: true;
+            referencedRelation: "ticketeria_lotes";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "ticketeria_lotes_ingresso_id_fkey";
             columns: ["ingresso_id"];
@@ -934,6 +963,9 @@ export type BancoDaTicketeria = {
           created_by: string | null;
           created_at: string;
           enviado_em: string | null;
+          abertos: number;
+          cliques: number;
+          devolvidos: number;
         };
         Insert: {
           id?: string;
@@ -952,6 +984,9 @@ export type BancoDaTicketeria = {
           created_by?: string | null;
           created_at?: string;
           enviado_em?: string | null;
+          abertos?: number;
+          cliques?: number;
+          devolvidos?: number;
         };
         Update: {
           id?: string;
@@ -970,6 +1005,9 @@ export type BancoDaTicketeria = {
           created_by?: string | null;
           created_at?: string;
           enviado_em?: string | null;
+          abertos?: number;
+          cliques?: number;
+          devolvidos?: number;
         };
         Relationships: [];
       };
@@ -985,6 +1023,12 @@ export type BancoDaTicketeria = {
           provedor_id: string | null;
           enviado_em: string | null;
           created_at: string;
+          entregue_em: string | null;
+          aberto_em: string | null;
+          clicou_em: string | null;
+          devolvido_em: string | null;
+          reclamou_em: string | null;
+          reivindicado_em: string | null;
         };
         Insert: {
           id?: string;
@@ -997,6 +1041,12 @@ export type BancoDaTicketeria = {
           provedor_id?: string | null;
           enviado_em?: string | null;
           created_at?: string;
+          entregue_em?: string | null;
+          aberto_em?: string | null;
+          clicou_em?: string | null;
+          devolvido_em?: string | null;
+          reclamou_em?: string | null;
+          reivindicado_em?: string | null;
         };
         Update: {
           id?: string;
@@ -1009,6 +1059,81 @@ export type BancoDaTicketeria = {
           provedor_id?: string | null;
           enviado_em?: string | null;
           created_at?: string;
+          entregue_em?: string | null;
+          aberto_em?: string | null;
+          clicou_em?: string | null;
+          devolvido_em?: string | null;
+          reclamou_em?: string | null;
+          reivindicado_em?: string | null;
+        };
+        Relationships: [];
+      };
+      ticketeria_remetentes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          dominio: string | null;
+          endereco_local: string;
+          nome_exibicao: string | null;
+          responder_para: string | null;
+          resend_domain_id: string | null;
+          situacao: string;
+          registros: Json | null;
+          verificado_em: string | null;
+          assinatura: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          periodo_inicio: string | null;
+          periodo_fim: string | null;
+          cancela_no_fim: boolean;
+          cota_mensal: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          dominio?: string | null;
+          endereco_local?: string;
+          nome_exibicao?: string | null;
+          responder_para?: string | null;
+          resend_domain_id?: string | null;
+          situacao?: string;
+          registros?: Json | null;
+          verificado_em?: string | null;
+          assinatura?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          periodo_inicio?: string | null;
+          periodo_fim?: string | null;
+          cancela_no_fim?: boolean;
+          cota_mensal?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          dominio?: string | null;
+          endereco_local?: string;
+          nome_exibicao?: string | null;
+          responder_para?: string | null;
+          resend_domain_id?: string | null;
+          situacao?: string;
+          registros?: Json | null;
+          verificado_em?: string | null;
+          assinatura?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          periodo_inicio?: string | null;
+          periodo_fim?: string | null;
+          cancela_no_fim?: boolean;
+          cota_mensal?: number;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -1595,6 +1720,48 @@ export type BancoDaTicketeria = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      ticketeria_contatos_importados: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          email: string;
+          nome: string;
+          whatsapp: string | null;
+          arquivo: string | null;
+          novidades_declaradas_em: string | null;
+          declarado_por: string | null;
+          declaracao_versao: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          email: string;
+          nome: string;
+          whatsapp?: string | null;
+          arquivo?: string | null;
+          novidades_declaradas_em?: string | null;
+          declarado_por?: string | null;
+          declaracao_versao?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          email?: string;
+          nome?: string;
+          whatsapp?: string | null;
+          arquivo?: string | null;
+          novidades_declaradas_em?: string | null;
+          declarado_por?: string | null;
+          declaracao_versao?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       ticketeria_cupons: {
         Row: {
@@ -2756,6 +2923,20 @@ export type BancoDaTicketeria = {
         Args: { p_org: string; p_acao: "ler" | "editar" };
         Returns: boolean;
       };
+      // O onboarding ("Começar"): cria loja, local, setor, evento em rascunho, sessões, ingressos e lotes numa só chamada.
+      // Roda com a permissão de quem chama (lib/ticketeria/comecar.ts monta os argumentos).
+      // O onboarding com várias cidades e datas: [{ local, cidade, uf, datas }] por praça; devolve o evento e, por praça, o local e o setor "Geral".
+      fn_ticketeria_comecar_pracas: {
+        Args: { p_org: string; p_perfil: "espaco" | "turne" | "unico" | "festival"; p_evento: string; p_pracas: Json; p_lugares: number; p_hora: string; p_preco_centavos: number; p_meia: boolean };
+        Returns: Json;
+      };
+      fn_ticketeria_comecar: {
+        Args: {
+          p_org: string; p_perfil: "espaco" | "turne" | "unico" | "festival"; p_evento: string; p_local: string; p_cidade: string | null;
+          p_lugares: number; p_data: string; p_hora: string; p_dias: number | null; p_preco_centavos: number; p_meia: boolean;
+        };
+        Returns: Json;
+      };
       // A pessoa logada chama: as lojas em que ela é bilheteira ligada ([{ id, loja_id, loja, nome }]).
       fn_ticketeria_bilheteiro_atual: {
         Args: Record<string, never>;
@@ -2793,6 +2974,26 @@ export type BancoDaTicketeria = {
       fn_ticketeria_espera_sair: {
         Args: { p_token: string };
         Returns: boolean;
+      };
+      fn_ticketeria_emails_do_periodo: {
+        Args: { p_loja: string; p_desde: string };
+        Returns: number;
+      };
+      fn_ticketeria_reivindicar_destinatarios: {
+        Args: { p_envio: string; p_n: number };
+        Returns: { id: string; email: string; nome: string; token: string }[];
+      };
+      fn_ticketeria_marcar_destinatarios: {
+        Args: { p_itens: Json };
+        Returns: number;
+      };
+      fn_ticketeria_atualizar_envio: {
+        Args: { p_envio: string };
+        Returns: number;
+      };
+      fn_ticketeria_registrar_evento_envio: {
+        Args: { p_provedor_id: string; p_tipo: string; p_quando: string | null; p_permanente: boolean };
+        Returns: string;
       };
       fn_ticketeria_novidades_sair: {
         Args: { p_token: string };
@@ -2976,6 +3177,10 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_ocupados: {
         Args: { p_sessao: string; p_lote: string; p_fora?: string | null };
+        Returns: number;
+      };
+      fn_ticketeria_ocupados_do_setor: {
+        Args: { p_sessao: string; p_setor: string; p_fora?: string | null };
         Returns: number;
       };
       fn_ticketeria_reembolso_registrar: {

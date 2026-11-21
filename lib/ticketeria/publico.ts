@@ -6,6 +6,7 @@ export type PedidoParaOPublico = {
   id: string; sessao_id: string; comprador_nome: string; comprador_email: string; comprador_whatsapp: string | null; novidades_aceitas_em: string | null; pago_em: string | null; created_at: string;
 };
 export type EsperaParaOPublico = { sessao_id: string; nome: string; email: string; created_at: string };
+export type ContatoImportadoParaOPublico = { email: string; nome: string; whatsapp: string | null; arquivo: string | null; declarado_em: string | null; created_at: string };
 
 export type EntradaDoPublico = {
   /** Só as compras pagas e não reembolsadas. */
@@ -17,14 +18,19 @@ export type EntradaDoPublico = {
   eventoDaSessao: Record<string, string>;
   /** Os e-mails (em minúsculas) de quem saiu da lista de novidades da loja. */
   saidas?: string[];
+  /** Os contatos importados de planilha; `declarado` é quando o produtor declarou que as pessoas aceitaram receber (ISO), ou null. */
+  importados?: ContatoImportadoParaOPublico[];
 };
 
-export type NovidadesDoContato = "aceitou" | "sem_aceite" | "so_espera" | "saiu";
+/** `declarado`: veio de planilha e o produtor declarou que a pessoa aceitou (recebe como quem aceitou, mas a etiqueta diz de onde vem o aceite). */
+export type NovidadesDoContato = "aceitou" | "declarado" | "sem_aceite" | "so_espera" | "saiu";
+/** Recebe divulgação: aceitou na compra ou foi declarado pelo produtor (e não saiu da lista). */
+export const recebeNovidades = (c: { novidades: NovidadesDoContato }) => c.novidades === "aceitou" || c.novidades === "declarado";
 export type ContatoDoPublico = {
   email: string; nome: string;
   /** Só com o aceite de novidades (o número nem é guardado sem ele). */
   whatsapp: string | null;
-  veio_de: "compra" | "espera"; evento: string; ingressos: number;
+  veio_de: "compra" | "espera" | "importado"; evento: string; ingressos: number;
   /** A data da compra mais recente (ISO), ou null para quem só está na lista de espera. */
   ultima_compra: string | null; atividade_em: string; novidades: NovidadesDoContato;
 };
@@ -59,18 +65,30 @@ export function montarPublico(e: EntradaDoPublico): PublicoDaLoja {
     if (!email || porEmail.has(email)) continue;
     porEmail.set(email, { email, nome: w.nome, whatsapp: null, veio_de: "espera", evento: e.eventoDaSessao[w.sessao_id] ?? "", ingressos: 0, ultima_compra: null, atividade_em: w.created_at, novidades: "so_espera", _whatsappEm: "" });
   }
+  for (const i of e.importados ?? []) {
+    const email = i.email.trim().toLowerCase();
+    if (!email) continue;
+    const declarado = i.declarado_em !== null;
+    const atual = porEmail.get(email);
+    if (!atual) {
+      porEmail.set(email, { email, nome: i.nome, whatsapp: declarado ? i.whatsapp : null, veio_de: "importado", evento: i.arquivo ?? "", ingressos: 0, ultima_compra: null, atividade_em: i.created_at, novidades: declarado ? "declarado" : "sem_aceite", _whatsappEm: "" });
+    } else if (declarado && !recebeNovidades(atual)) {
+      atual.novidades = "declarado";
+      if (!atual.whatsapp) atual.whatsapp = i.whatsapp;
+    }
+  }
   const saiu = new Set((e.saidas ?? []).map(x => x.trim().toLowerCase()));
   const contatos: ContatoDoPublico[] = [...porEmail.values()].map(c => ({ email: c.email, nome: c.nome, whatsapp: saiu.has(c.email) ? null : c.whatsapp, veio_de: c.veio_de, evento: c.evento, ingressos: c.ingressos, ultima_compra: c.ultima_compra, atividade_em: c.atividade_em, novidades: saiu.has(c.email) ? ("saiu" as NovidadesDoContato) : c.novidades }))
     .sort((a, b) => Date.parse(b.atividade_em) - Date.parse(a.atividade_em) || a.email.localeCompare(b.email));
-  const aceitaram = contatos.filter(c => c.novidades === "aceitou").length;
+  const aceitaram = contatos.filter(recebeNovidades).length;
   return {
     contatos,
     resumo: { contatos: contatos.length, aceitaram, aceitaram_porcento: contatos.length === 0 ? 0 : Math.round((aceitaram / contatos.length) * 100), com_whatsapp: contatos.filter(c => c.whatsapp).length, sairam: contatos.filter(c => c.novidades === "saiu").length },
   };
 }
 
-export type FiltroDoPublico = "todos" | "aceitaram" | "compraram" | "espera";
-export const FILTROS_DO_PUBLICO: [FiltroDoPublico, string][] = [["todos", "Todos"], ["aceitaram", "Aceitaram novidades"], ["compraram", "Compraram"], ["espera", "Lista de espera"]];
+export type FiltroDoPublico = "todos" | "aceitaram" | "compraram" | "espera" | "importados";
+export const FILTROS_DO_PUBLICO: [FiltroDoPublico, string][] = [["todos", "Todos"], ["aceitaram", "Aceitaram novidades"], ["compraram", "Compraram"], ["espera", "Lista de espera"], ["importados", "Importados"]];
 
 const simples = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
@@ -78,9 +96,10 @@ const simples = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowe
 export function filtrarPublico(contatos: ContatoDoPublico[], filtro: FiltroDoPublico, busca: string): ContatoDoPublico[] {
   const termo = simples(busca.trim());
   return contatos.filter(c => {
-    if (filtro === "aceitaram" && c.novidades !== "aceitou") return false;
+    if (filtro === "aceitaram" && !recebeNovidades(c)) return false;
     if (filtro === "compraram" && c.veio_de !== "compra") return false;
     if (filtro === "espera" && c.veio_de !== "espera") return false;
+    if (filtro === "importados" && c.veio_de !== "importado") return false;
     return termo === "" || simples(c.nome).includes(termo) || c.email.includes(termo);
   });
 }

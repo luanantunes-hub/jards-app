@@ -117,20 +117,20 @@ select is((select string_agg(tablename || '=' || n, ' ' order by tablename) from
 select is((select count(*)::int from pg_class where oid in ('public.ticketeria_ingressos'::regclass, 'public.ticketeria_lotes'::regclass) and relrowsecurity), 2, 'segurança por linha ligada nas duas');
 select is((select string_agg(conrelid::regclass::text || '.' || conname::text || '=' || confdeltype::text, ', ' order by conrelid::regclass::text collate "C", conname::text collate "C") from pg_constraint
            where contype = 'f' and conrelid in ('public.ticketeria_ingressos'::regclass, 'public.ticketeria_lotes'::regclass)),
-          'ticketeria_ingressos.ticketeria_ingressos_evento_id_fkey=c, ticketeria_ingressos.ticketeria_ingressos_organization_id_fkey=c, ticketeria_ingressos.ticketeria_ingressos_setor_id_fkey=a, '
-          || 'ticketeria_lotes.ticketeria_lotes_ingresso_id_fkey=c, ticketeria_lotes.ticketeria_lotes_organization_id_fkey=c',
-          'o ingresso sai com o evento e leva os lotes; o setor com ingresso não sai (no action)');
+          'ticketeria_ingressos.ticketeria_ingressos_evento_id_fkey=c, ticketeria_ingressos.ticketeria_ingressos_meia_de_fkey=c, ticketeria_ingressos.ticketeria_ingressos_organization_id_fkey=c, ticketeria_ingressos.ticketeria_ingressos_setor_id_fkey=a, '
+          || 'ticketeria_lotes.ticketeria_lotes_espelho_de_fkey=c, ticketeria_lotes.ticketeria_lotes_ingresso_id_fkey=c, ticketeria_lotes.ticketeria_lotes_organization_id_fkey=c',
+          'o ingresso sai com o evento e leva os lotes (e a meia ligada, e os lotes espelhados); o setor com ingresso não sai (no action)');
 select ok(not has_table_privilege('anon', 'public.ticketeria_ingressos', 'select') and not has_table_privilege('anon', 'public.ticketeria_lotes', 'select')
           and not has_function_privilege('authenticated', 'public.fn_ticketeria_preco_combina(text, integer)', 'execute')
-          and not has_function_privilege('authenticated', 'public.fn_ticketeria_conferir_lugares(uuid, uuid)', 'execute')
           and not has_function_privilege('authenticated', 'public.fn_ticketeria_ingresso_coerencia()', 'execute')
           and not has_function_privilege('authenticated', 'public.fn_ticketeria_ingresso_lugares()', 'execute')
           and not has_function_privilege('authenticated', 'public.fn_ticketeria_lote_coerencia()', 'execute')
           and not has_function_privilege('authenticated', 'public.fn_ticketeria_lote_lugares()', 'execute'), 'o visitante não toca em nada; as funções internas não são chamáveis');
 select is((select string_agg(tgrelid::regclass::text || '.' || tgname::text, ' ' order by tgrelid::regclass::text collate "C", tgname::text collate "C") from pg_trigger
            where not tgisinternal and tgrelid in ('public.ticketeria_ingressos'::regclass, 'public.ticketeria_lotes'::regclass)),
-          'ticketeria_ingressos.ticketeria_ingressos_coerencia ticketeria_ingressos.ticketeria_ingressos_lugares ticketeria_ingressos.ticketeria_ingressos_updated_at '
-          || 'ticketeria_lotes.ticketeria_lotes_coerencia ticketeria_lotes.ticketeria_lotes_lugares ticketeria_lotes.ticketeria_lotes_updated_at', 'os gatilhos de cada tabela');
+          'ticketeria_ingressos.ticketeria_ingressos_coerencia ticketeria_ingressos.ticketeria_ingressos_lugares ticketeria_ingressos.ticketeria_ingressos_meia_acompanha '
+          || 'ticketeria_ingressos.ticketeria_ingressos_meia_coerencia ticketeria_ingressos.ticketeria_ingressos_meia_nova ticketeria_ingressos.ticketeria_ingressos_updated_at '
+          || 'ticketeria_lotes.ticketeria_lotes_coerencia ticketeria_lotes.ticketeria_lotes_espelhar ticketeria_lotes.ticketeria_lotes_lugares ticketeria_lotes.ticketeria_lotes_updated_at', 'os gatilhos de cada tabela (com os da meia ligada à inteira)');
 
 -- ─── Quem vê ────────────────────────────────────────────────────────────────
 
@@ -149,8 +149,8 @@ select tc.como('a2');
 select is(array[
             tc.tenta(format('insert into public.ticketeria_ingressos (id, organization_id, evento_id, setor_id, nome, categoria) values (%L, %L, %L, %L, %L, %L)', tc.id('34'), tc.id('a0'), tc.id('71'), tc.id('41'), 'Meia-entrada', 'meia')),
             tc.tenta(format('insert into public.ticketeria_lotes (organization_id, ingresso_id, nome, preco_centavos, quantidade, vendas_inicio, vendas_fim) values (%L, %L, %L, 2500, 40, now(), now() + interval %L)', tc.id('a0'), tc.id('31'), '2º lote', '10 days'))],
-          array['aceito', 'aceito'], 'colaborador cria ingresso e lote (60 + 40 = os 100 lugares)');
-select is(tc.tenta(format('insert into public.ticketeria_lotes (organization_id, ingresso_id, nome, preco_centavos, quantidade) values (%L, %L, %L, 2500, 41)', tc.id('a0'), tc.id('31'), 'Demais')), '23514 lugares_excedidos', 'o colaborador também esbarra nos lugares (60 + 41 passa de 100)');
+          array['aceito', 'aceito'], 'colaborador cria ingresso e lote (cada lote cabe nos 100 lugares; a soma deixou de ser exigida)');
+select is(tc.tenta(format('insert into public.ticketeria_lotes (organization_id, ingresso_id, nome, preco_centavos, quantidade) values (%L, %L, %L, 2500, 101)', tc.id('a0'), tc.id('31'), 'Demais')), '23514 lugares_excedidos', 'o colaborador também esbarra nos lugares (um lote de 101 passa dos 100 do setor)');
 select tc.como('a3');
 select ok(tc.tenta(format('insert into public.ticketeria_lotes (organization_id, ingresso_id, nome, preco_centavos, quantidade) values (%L, %L, %L, 1000, 1)', tc.id('a0'), tc.id('31'), 'x')) like '42501%', 'leitor não cria lote');
 select is(tc.efeito(format('update public.ticketeria_ingressos set nome = %L where id = %L', 'x', tc.id('31'))), '', 'leitor não altera ingresso');
@@ -181,8 +181,8 @@ select is(array[
                 '23514 ticketeria_ingressos_categoria_check', '23514 ticketeria_ingressos_limite_check',
                 '23514 preco_incoerente', '23514 preco_incoerente', '23514 ticketeria_lotes_quantidade_check', '23514 ticketeria_lotes_janela_check',
                 '23514 ingresso_de_outra_organizacao', '23514 preco_incoerente', '23514 ingresso_nao_muda', '23514 evento_nao_muda',
-                '23514 lugares_excedidos', '23514 lugares_excedidos'],
-          'pais da organização; setor arquivado e evento cancelado; categoria e limite; preço que combina; quantidade e janela; o que não muda; lote que aumenta e ingresso que sai do arquivo passando dos lugares');
+                '23514 lugares_excedidos', 'aceito'],
+          'pais da organização; setor arquivado e evento cancelado; categoria e limite; preço que combina; quantidade e janela; o que não muda; lote que passa dos lugares do setor (sozinho) é recusado; ingresso que sai do arquivo vale: a soma dos lotes deixou de ser exigida (estoque único)');
 select is(array[
             tc.tenta(format('update public.ticketeria_lotes set quantidade = 10 where id = %L', tc.id('21'))),
             tc.tenta(format('update public.ticketeria_setores set lugares = 10 where id = %L', tc.id('41'))),

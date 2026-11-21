@@ -26,6 +26,8 @@ export type InicioDaLoja = {
   reembolsos: ReembolsoDaLista[];
   nao_concluidas: NaoConcluida[];
   tem_pedidos: boolean;
+  /** A conta de recebimento da loja (Asaas). Sem ela ativa as vendas ficam pausadas; quem a rota não preencheu (testes) não mostra o aviso. */
+  conta_situacao?: "sem_conta" | "pendente" | "aprovada" | "bloqueada";
 };
 
 const BRASILIA = -3 * 3_600_000;

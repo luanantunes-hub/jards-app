@@ -1,0 +1,26 @@
+{
+  "seletor": {
+    "rotulo": "Sprache"
+  },
+  "sair": {
+    "botao": "Von der Liste abmelden",
+    "saindo": "Wird abgemeldet…",
+    "erro": "Die Abmeldung war gerade nicht möglich. Bitte versuchen Sie es in einem Moment erneut.",
+    "feito": "Erledigt, Sie sind von der Liste abgemeldet",
+    "espera": {
+      "titulo": "Warteliste",
+      "pergunta": "Von der Warteliste abmelden?",
+      "explicacao": "Sie erhalten keine Benachrichtigung mehr, wenn wieder Tickets verfügbar sind. Wenn Sie es sich anders überlegen, können Sie sich jederzeit erneut eintragen.",
+      "feitoExplicacao": "Wir benachrichtigen Sie nicht mehr zu diesem Ticket."
+    },
+    "novidades": {
+      "titulo": "Neuigkeiten",
+      "organizador": "Veranstalter",
+      "pergunta": "Neuigkeiten abbestellen?",
+      "explicacao": "Sie erhalten keine Neuigkeiten und Angebote mehr von {loja}. Bereits gekaufte Tickets bleiben gültig.",
+      "explicacaoSemLoja": "Sie erhalten keine Neuigkeiten und Angebote mehr vom Veranstalter. Bereits gekaufte Tickets bleiben gültig.",
+      "feitoExplicacao": "Wir senden keine Neuigkeiten von {loja} mehr an Ihre E-Mail-Adresse.",
+      "feitoExplicacaoSemLoja": "Wir senden keine Neuigkeiten des Veranstalters mehr an Ihre E-Mail-Adresse."
+    }
+  }
+}

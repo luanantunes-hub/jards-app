@@ -18,7 +18,9 @@ const TAMANHO_AMPLIADO = "h-9 w-9 text-[0.75rem]";
 const TAMANHO_AJUSTADO = "aspect-square min-w-0 max-w-8 flex-1 text-[0.625rem]";
 const LISTRAS = { backgroundImage: "repeating-linear-gradient(135deg, rgba(13,13,13,.18) 0 2px, transparent 2px 5px)" } as const;
 
-function Assento({ fileira, numero, estado, modo, tamanho, onAlternar }: { fileira: string; numero: number; estado: EstadoDoAssento; modo: "comprador" | "produtor"; tamanho: string; onAlternar?: () => void }) {
+export type ModoDoMapa = "comprador" | "produtor";
+
+function Assento({ fileira, numero, estado, modo, tamanho, onAlternar }: { fileira: string; numero: number; estado: EstadoDoAssento; modo: ModoDoMapa; tamanho: string; onAlternar?: () => void }) {
   const nome = `Fileira ${fileira}, lugar ${numero}`;
   const desligado = modo === "comprador" ? estado === "ocupado" || estado === "bloqueado" : estado === "ocupado";
   const base = `flex ${tamanho} items-center justify-center rounded-lg tabular-nums transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]`;
@@ -28,11 +30,16 @@ function Assento({ fileira, numero, estado, modo, tamanho, onAlternar }: { filei
   return <button type="button" aria-pressed="false" aria-label={`${nome}, livre`} onClick={onAlternar} className={`${base} border border-black/25 bg-white text-[#282525] hover:bg-black/[.05]`}>{numero}</button>;
 }
 
+/** O palco. É o desenho de todos os mapas de assentos (compra, editor e prévia do onboarding): redesenhe aqui e vale em todos. */
+export function PalcoDoMapa({ nome = "Palco", largura = "max-w-[80%]" }: { nome?: string; largura?: string }) {
+  return <div className={`mx-auto mb-4 flex h-7 ${largura} items-center justify-center rounded-xl border border-black/15 bg-black/[.04] text-[0.625rem] uppercase tracking-[.16em] text-black/45`}>{nome}</div>;
+}
+
 /**
  * O mapa: o palco no alto e as fileiras abaixo. No modo "produtor" tocar num lugar o bloqueia ou libera; no do comprador, escolhe ou solta.
  * `ampliado` (só do comprador): lugares maiores, com rolagem para o lado; sem ele, os lugares encolhem para a fileira caber na tela.
  */
-export function MapaDeAssentos({ fileiras, modo, palco = "Palco", ampliado = false, onAlternar }: { fileiras: FileiraDoMapa[]; modo: "comprador" | "produtor"; palco?: string; ampliado?: boolean; onAlternar?: (fileira: string, numero: number) => void }) {
+export function MapaDeAssentos({ fileiras, modo, palco = "Palco", ampliado = false, onAlternar }: { fileiras: FileiraDoMapa[]; modo: ModoDoMapa; palco?: string; ampliado?: boolean; onAlternar?: (fileira: string, numero: number) => void }) {
   const ajustado = modo === "comprador" && !ampliado;
   const tamanho = ajustado ? TAMANHO_AJUSTADO : ampliado ? TAMANHO_AMPLIADO : TAMANHO_FIXO;
   const maisLonga = Math.max(0, ...fileiras.map(f => f.assentos.length));
@@ -42,7 +49,7 @@ export function MapaDeAssentos({ fileiras, modo, palco = "Palco", ampliado = fal
   return (
     <div className={ajustado ? "" : "overflow-x-auto pb-1"} role="group" aria-label="Mapa de lugares">
       <div className={ajustado ? "w-full" : "mx-auto w-max min-w-full"}>
-        <div className="mx-auto mb-4 flex h-7 max-w-[80%] items-center justify-center rounded-xl border border-black/15 bg-black/[.04] text-[0.625rem] uppercase tracking-[.16em] text-black/45">{palco}</div>
+        <PalcoDoMapa nome={palco} />
         <div className="space-y-1.5">
           {fileiras.map(f => (
             <div key={f.nome} className={`flex items-center gap-1 ${ajustado ? "" : "justify-center"}`}>
@@ -128,19 +135,24 @@ export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, e
 
 // ─── Quem produz ────────────────────────────────────────────────────────────
 
-/** O editor do mapa de um setor: as fileiras com a quantidade de lugares de cada uma, e os lugares que se bloqueiam tocando neles. */
-export function MapaEditorSheet({ setor, local, fileiras, lugares, bloqueados, vendidos, corredor = true, onCorredor, onAlternar, onAdicionarFileira, onMaisLugares, onMenosLugares, onClose, onSalvar, salvando, erro }: {
-  setor: string; local: string; fileiras: FileiraDoMapa[]; lugares: number; bloqueados: number; vendidos: number; corredor?: boolean; onCorredor?: (ligado: boolean) => void;
-  onAlternar?: (fileira: string, numero: number) => void; onAdicionarFileira?: () => void; onMaisLugares?: (fileira: string) => void; onMenosLugares?: (fileira: string) => void; onClose: () => void; onSalvar?: () => void; salvando?: boolean; erro?: string | null;
-}) {
+/** Os controles do editor de mapa: um lugar a mais ou a menos em cada fileira, + Fileira, o corredor e o resumo. As contas estão em lib/ticketeria/mapa.ts. */
+type PropsDoEditor = {
+  fileiras: FileiraDoMapa[]; lugares: number; bloqueados: number; vendidos: number; corredor?: boolean; onCorredor?: (ligado: boolean) => void;
+  onAlternar?: (fileira: string, numero: number) => void; onAdicionarFileira?: () => void; onMaisLugares?: (fileira: string) => void; onMenosLugares?: (fileira: string) => void; erro?: string | null;
+};
+
+/**
+ * O editor do mapa de um setor, sem moldura: as fileiras com a quantidade de lugares de cada uma, e os lugares que se bloqueiam tocando neles. É o mesmo na
+ * folha do setor (MapaEditorSheet) e no onboarding (passo "Monte o auditório"): o que se desenha num vale no outro.
+ */
+export function EditorDoMapa({ fileiras, lugares, bloqueados, vendidos, corredor = true, onCorredor, onAlternar, onAdicionarFileira, onMaisLugares, onMenosLugares, erro }: PropsDoEditor) {
   const botao = "flex h-7 w-7 items-center justify-center rounded-lg border border-black/[.12] bg-white text-[0.875rem] leading-none text-black/60 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
   return (
-    <TopSheet titulo={`Mapa de ${setor}`} etiqueta={local} largura="46rem" onClose={onClose} footer={fechar => <Rodape fechar={fechar} salvando={!!salvando} rotulo="Salvar mapa" onSalvar={() => onSalvar?.()} />}>
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
         <p className="text-[0.8125rem] text-black/60">Toque num lugar para bloqueá-lo: ele não vai à venda (cadeira de som e luz, lugar da produção, visão ruim). Use − e + para mudar quantos lugares tem cada fileira.</p>
         <div className="overflow-x-auto rounded-xl border bg-black/[.015] px-4 py-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <div className="mx-auto mb-4 flex h-7 max-w-[60%] items-center justify-center rounded-xl border border-black/15 bg-black/[.04] text-[0.625rem] uppercase tracking-[.16em] text-black/45">Palco</div>
+          <PalcoDoMapa largura="max-w-[60%]" />
           <div className="space-y-1.5">
             {fileiras.map(f => (
               <div key={f.nome} className="flex items-center gap-3">
@@ -171,6 +183,15 @@ export function MapaEditorSheet({ setor, local, fileiras, lugares, bloqueados, v
           <p className="text-[0.8125rem] tabular-nums text-black/60"><strong className="font-medium text-[#282525]">{lugares} lugares</strong> à venda · {bloqueados} bloqueados{vendidos > 0 ? ` · ${vendidos} já vendidos` : ""}</p>
         </div>
       </div>
+    
+  );
+}
+
+/** O editor do mapa numa folha: o mesmo EditorDoMapa, com o botão de salvar. */
+export function MapaEditorSheet({ setor, local, onClose, onSalvar, salvando, ...editor }: PropsDoEditor & { setor: string; local: string; onClose: () => void; onSalvar?: () => void; salvando?: boolean }) {
+  return (
+    <TopSheet titulo={`Mapa de ${setor}`} etiqueta={local} largura="46rem" onClose={onClose} footer={fechar => <Rodape fechar={fechar} salvando={!!salvando} rotulo="Salvar mapa" onSalvar={() => onSalvar?.()} />}>
+      <EditorDoMapa {...editor} />
     </TopSheet>
   );
 }

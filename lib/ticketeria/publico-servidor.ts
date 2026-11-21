@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import type { EntradaParaEnvio } from "@/lib/ticketeria/envios";
-import { montarPublico, type EsperaParaOPublico, type PedidoParaOPublico, type PublicoDaLoja } from "@/lib/ticketeria/publico";
+import { montarPublico, type ContatoImportadoParaOPublico, type EsperaParaOPublico, type PedidoParaOPublico, type PublicoDaLoja } from "@/lib/ticketeria/publico";
 
 type Admin = SupabaseClient<Database>;
 const PAGINA = 1000;
@@ -18,7 +18,7 @@ export async function entradaDoPublico(admin: Admin, lojaId: string): Promise<En
   const t = clienteDaTicketeria(admin);
   const { data: loja, error: erroDaLoja } = await t.from("ticketeria_lojas").select("organization_id").eq("id", lojaId).maybeSingle();
   if (erroDaLoja) throw new Error(erroDaLoja.message);
-  if (!loja) return { pedidos: [], quantidadePorPedido: {}, espera: [], eventoDaSessao: {}, eventoIdDaSessao: {}, saidas: [] };
+  if (!loja) return { pedidos: [], quantidadePorPedido: {}, espera: [], eventoDaSessao: {}, eventoIdDaSessao: {}, saidas: [], importados: [] };
   // Em páginas de 1.000: a consulta sem .range() corta em silêncio.
   const pedidos: PedidoParaOPublico[] = [];
   for (let de = 0; ; de += PAGINA) {
@@ -42,6 +42,13 @@ export async function entradaDoPublico(admin: Admin, lojaId: string): Promise<En
     saidas.push(...(data ?? []).map(x => x.email));
     if ((data ?? []).length < PAGINA) break;
   }
+  const importados: ContatoImportadoParaOPublico[] = [];
+  for (let de = 0; ; de += PAGINA) {
+    const { data, error } = await t.from("ticketeria_contatos_importados").select("email, nome, whatsapp, arquivo, novidades_declaradas_em, created_at").eq("loja_id", lojaId).order("created_at", { ascending: true }).range(de, de + PAGINA - 1);
+    if (error) throw new Error(error.message);
+    importados.push(...(data ?? []).map(c => ({ email: c.email, nome: c.nome, whatsapp: c.whatsapp, arquivo: c.arquivo, declarado_em: c.novidades_declaradas_em, created_at: c.created_at })));
+    if ((data ?? []).length < PAGINA) break;
+  }
   const quantidadePorPedido: Record<string, number> = {};
   for (let i = 0; i < pedidos.length; i += 150) {
     const { data } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade").in("pedido_id", pedidos.slice(i, i + 150).map(p => p.id));
@@ -53,5 +60,5 @@ export async function entradaDoPublico(admin: Admin, lojaId: string): Promise<En
   const titulo = new Map((eventos ?? []).map(e => [e.id, e.titulo]));
   const eventoDaSessao = Object.fromEntries((sessoes ?? []).map(s => [s.id, titulo.get(s.evento_id) ?? "Evento"]));
   const eventoIdDaSessao = Object.fromEntries((sessoes ?? []).map(s => [s.id, s.evento_id]));
-  return { pedidos, quantidadePorPedido, espera, eventoDaSessao, eventoIdDaSessao, saidas };
+  return { pedidos, quantidadePorPedido, espera, eventoDaSessao, eventoIdDaSessao, saidas, importados };
 }

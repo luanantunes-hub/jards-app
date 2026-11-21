@@ -11,7 +11,6 @@ import {
   CalendarCheck,
   CalendarClock,
   CalendarDays,
-  Globe,
   CalendarRange,
   UsersRound,
   ListChecks,
@@ -57,11 +56,7 @@ import {
   Mail,
   Megaphone,
   Receipt,
-  ScanLine,
-  Hourglass,
-  Tag,
   Wallet,
-  Plug,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -93,6 +88,9 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
 // Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
 // Conectar e-mail continua valendo a lista EMAIL_BETA_LIBERADO (lib/email/beta.ts).
 const ROTAS_SO_SUPER_ADMIN: string[] = [];
+
+// Telas de foco, sem menu lateral nem barra do topo: o onboarding da Ticketeria ocupa a tela toda (pedido do dono em 21/11/2026).
+const ROTAS_TELA_CHEIA = ["/ingressos/comecar"];
 
 // `icone`: o grupo aparece no menu como uma seção que abre e fecha para baixo (como no Apollo), com este ícone no título e as telas dele logo abaixo.
 const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementType; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
@@ -199,19 +197,13 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
     {
       section: "Ticketeria",
       items: [
-        { label: "Página inicial", href: "/ingressos", icon: Home },
-        { label: "Eventos", href: "/ingressos/eventos", icon: Ticket },
-        { label: "Locais", href: "/ingressos/locais", icon: MapPin },
-        { label: "Site", href: "/ingressos/site", icon: Globe },
+        { label: "Início", href: "/ingressos", icon: Home },
+        { label: "Programação", href: "/ingressos/eventos", icon: Ticket },
         { label: "Vendas", href: "/ingressos/vendas", icon: Receipt },
+        { label: "Financeiro", href: "/ingressos/recebimentos", icon: Wallet },
         { label: "Divulgação", href: "/ingressos/divulgacao", icon: Megaphone },
-        { label: "Público", href: "/ingressos/publico", icon: UsersRound },
-        { label: "Cupons", href: "/ingressos/cupons", icon: Tag },
-        { label: "Lista de espera", href: "/ingressos/espera", icon: Hourglass },
-        { label: "Porta", href: "/ingressos/porta", icon: ScanLine },
-        { label: "Bilheteria", href: "/ingressos/bilheteria", icon: Store },
-        { label: "Recebimentos", href: "/ingressos/recebimentos", icon: Wallet },
-        { label: "Integrações", href: "/ingressos/integracoes", icon: Plug },
+        // Integrações e espaços moram aqui; a barra de abas (SubmenuDaTicketeria) leva de um a outro. O href é o da primeira aba.
+        { label: "Configurações", href: "/ingressos/integracoes", icon: Settings },
       ],
     },
   ],
@@ -518,6 +510,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => document.body.classList.remove("cantos-ticketeria");
   }, [menuFixoAberto]);
   const menuPath    = itemAtivoDoMenu(path);
+  const telaCheia   = ROTAS_TELA_CHEIA.some(rota => correspondeRota(path, rota));
   const hrefAtivo   = hrefAtivoDoMenu(menuPath, navGroups.flatMap(grupo => grupo.items.map(item => item.href)));
   // Os grupos com `icone` viram seções que abrem e fecham. Com o menu recolhido (só ícones) cada seção mostra apenas o ícone; o da página aberta fica aceso.
   const gruposFixos = navGroups.filter(grupo => !grupo.icone && grupo.items.length > 0);
@@ -641,13 +634,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Sidebar */}
-      {mobileOpen && (
+      {mobileOpen && !telaCheia && (
         <div className="fixed inset-0 z-20 veu md:hidden" aria-hidden="true" onClick={() => setMobileOpen(false)} />
       )}
       <aside
         id="menu-principal"
         aria-label="Menu principal"
-        className={`fixed top-0 left-0 bottom-0 flex flex-col overflow-hidden z-30 motion-reduce:transition-none ${mobileOpen ? "" : "max-md:-translate-x-full"}`}
+        className={`fixed top-0 left-0 bottom-0 flex flex-col overflow-hidden z-30 motion-reduce:transition-none ${mobileOpen ? "" : "max-md:-translate-x-full"} ${telaCheia ? "hidden" : ""}`}
         style={{
           width: isExpanded ? EXPANDED_W : COLLAPSED_W,
           transition: "width 220ms cubic-bezier(0.4,0,0.2,1), transform 220ms cubic-bezier(0.4,0,0.2,1)",
@@ -662,8 +655,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setExpanded(false); }}
         onClick={event => { if ((event.target as HTMLElement).closest("a")) setMobileOpen(false); }}
       >
-        {/* Na Ticketeria não há logo: fica a faixa vazia, com a linha alinhada à da barra do topo, e a lista começa abaixo dela. */}
-        {menuFixoAberto && <div className="flex-shrink-0 border-b" style={{ height: "3.5rem", borderColor: "rgba(13,13,13,.07)" }} aria-hidden="true" />}
+        {/* Na Ticketeria não há logo: a faixa do topo, com a linha alinhada à da barra do topo, leva o nome da organização (alinhado aos ícones do menu) e a lista começa abaixo dela. */}
+        {menuFixoAberto && (
+          <div className="flex flex-shrink-0 items-center border-b px-[1.125rem]" style={{ height: "3.5rem", borderColor: "rgba(13,13,13,.07)" }}>
+            {org.nome && <p className="min-w-0 truncate text-[0.875rem] font-medium text-[#282525]" title={org.nome}>{org.nome}</p>}
+          </div>
+        )}
         {/* Logo */}
         {!menuFixoAberto && <div
           className="flex items-center flex-shrink-0 border-b overflow-hidden"
@@ -927,11 +924,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>}
       </aside>
       {/* Main */}
-      <div className={`flex flex-col h-full overflow-hidden transition-[padding] duration-200 motion-reduce:transition-none ${menuFixoAberto ? "md:pl-56" : "md:pl-14"}`}>
+      <div className={`flex flex-col h-full overflow-hidden transition-[padding] duration-200 motion-reduce:transition-none ${telaCheia ? "" : menuFixoAberto ? "md:pl-56" : "md:pl-14"}`}>
 
         {/* Top bar */}
         <header
-          className="flex-shrink-0 flex items-center justify-end px-4 md:px-8 border-b"
+          className={`flex-shrink-0 flex items-center justify-end px-4 md:px-8 border-b ${telaCheia ? "hidden" : ""}`}
           style={{ height: "3.5rem", background: "#FFFFFF", borderColor: "rgba(13,13,13,.08)" }}
         >
           <div className={`${menuFixoAberto ? "" : "mr-auto"} flex items-center gap-2 md:hidden`}>

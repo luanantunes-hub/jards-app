@@ -43,7 +43,7 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
   };
   if (estado !== "aberta") return vitrine;
 
-  const { data: setores } = await t.from("ticketeria_setores").select("id, nome, numerado").eq("local_id", sessao.local_id);
+  const { data: setores } = await t.from("ticketeria_setores").select("id, nome, numerado, lugares").eq("local_id", sessao.local_id);
   const { data: ingressos } = await t.from("ticketeria_ingressos").select("id, nome, descricao, limite_por_pedido, setor_id, ordem, created_at")
     .eq("evento_id", evento.id).eq("publico", true).eq("arquivado", false).in("setor_id", (setores ?? []).map(s => s.id)).order("ordem").order("created_at");
   const ids = (ingressos ?? []).map(i => i.id);
@@ -59,11 +59,17 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
     const { data } = await t.rpc("fn_ticketeria_lugares_livres_do_setor", { p_sessao: sessao.id, p_setor: s.id });
     return [s.id, Number(data ?? 0)] as const;
   })));
+  // O setor é um balde só: o que se compra não passa dos lugares que restam dele (inteira, meia e os outros tipos somados).
+  const baldeDoSetor = new Map<string, number>(await Promise.all((setores ?? []).map(async s => {
+    const { data } = await t.rpc("fn_ticketeria_ocupados_do_setor", { p_sessao: sessao.id, p_setor: s.id, p_fora: null });
+    const balde = Math.max(0, s.lugares - Number(data ?? 0));
+    return [s.id, s.numerado ? Math.min(balde, livresDoSetor.get(s.id) ?? balde) : balde] as const;
+  })));
   for (const i of ingressos ?? []) {
     if (!(lotes ?? []).some(l => l.ingresso_id === i.id)) continue; // sem nenhum lote, o ingresso ainda não tem o que vender
     let faixas = faixasDoIngresso((lotes ?? []).filter(l => l.ingresso_id === i.id).map(l => ({ ...l, ocupados: ocupados.get(l.id) ?? 0 })), agora);
     const setor = (setores ?? []).find(s => s.id === i.setor_id);
-    if (setor?.numerado) faixas = limitarFaixas(faixas, livresDoSetor.get(setor.id) ?? 0);
+    if (setor) faixas = limitarFaixas(faixas, baldeDoSetor.get(setor.id) ?? 0);
     const doIngresso: IngressoDaVitrine = { id: i.id, nome: i.nome, descricao: i.descricao, limite: i.limite_por_pedido, faixas, ...(setor?.numerado ? { numerado: { setor: setor.nome } } : {}) };
     vitrine.ingressos.push(doIngresso);
   }

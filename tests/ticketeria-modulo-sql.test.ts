@@ -78,7 +78,7 @@ test("cliente sem a ticketeria não a vê; o super admin e quem já tem, sim", (
 test("o seletor do layout tem a ticketeria, com rótulo, descrição e menu próprios", async () => {
   const layout = await readFile("app/(dashboard)/layout.tsx", "utf8");
   assert.match(layout, /\{ id: "ticketeria", label: "Ticketeria", +descricao: "[^"]+", +icone: \w+ *\}/);
-  assert.match(layout, /ticketeria: \[\s*\{\s*section: "[^"]+",\s*items: \[\s*\{ label: "Página inicial", href: "\/ingressos", icon: Home \},\s*\{ label: "Eventos", href: "\/ingressos\/eventos"/);
+  assert.match(layout, /ticketeria: \[\s*\{\s*section: "[^"]+",\s*items: \[\s*\{ label: "Início", href: "\/ingressos", icon: Home \},\s*\{ label: "Programação", href: "\/ingressos\/eventos"/);
   // O e2e por perfil acha o item do menu pelo nome: nenhum nome se repete entre módulos.
   const nomes = Object.values(ITENS_DO_MENU).flat();
   assert.equal(new Set(nomes).size, nomes.length, "nome de item de menu repetido entre módulos");

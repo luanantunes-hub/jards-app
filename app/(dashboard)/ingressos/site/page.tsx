@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe, PencilLine, Plus } from "lucide-react";
+import { FileText, Globe, Landmark, Music, PencilLine, Plus, Users, type LucideIcon } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
@@ -9,25 +9,31 @@ import { clienteDaProducao } from "@/lib/producao/cliente";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { podeEditarATicketeria } from "@/lib/ticketeria/permissoes";
 import type { SituacaoDoSite } from "@/lib/ticketeria/estados";
-import { corDoTema, type Bloco } from "@/lib/ticketeria/site";
+import { corDoTema } from "@/lib/ticketeria/site";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { TemaDoSiteSheet } from "@/components/ticketeria/TemaDoSiteSheet";
+import { MenuDoSiteSheet, RodapeDoSiteSheet } from "@/components/ticketeria/AparenciaDoSiteSheet";
+import { lerAparencia, ROTULO_DO_LAYOUT_DO_MENU, ROTULO_DO_LAYOUT_DO_RODAPE } from "@/lib/ticketeria/aparencia";
+import { IDS_DOS_MODELOS, MODELOS_DE_SITE, paginasDoModelo, type IdDoModelo } from "@/lib/ticketeria/modelos-de-site";
 import { temaDoSite } from "@/lib/ticketeria/temas";
 import { EditorDoSite, type EspacoDaProgramacao, type EventoParaBloco } from "@/components/ticketeria/EditorDoSite";
 import { DominiosDoSite } from "@/components/ticketeria/DominiosDoSite";
 
 type Loja = { id: string; nome: string };
-type Site = { id: string; nome: string; titulo: string | null; cor: string; tema: string; situacao: SituacaoDoSite };
+type Site = { id: string; nome: string; titulo: string | null; cor: string; tema: string; aparencia: unknown; situacao: SituacaoDoSite };
 
 const CAMPO = "h-10 w-full rounded-xl border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-normal text-black/55";
 
-/** Cria a loja (se ainda não houver) e o site dela, com a página de início já começada. */
+const ICONE_DO_MODELO: Record<IdDoModelo, LucideIcon> = { em_branco: FileText, companhia: Users, casa: Landmark, festival: Music };
+
+/** Cria a loja (se ainda não houver) e o site dela, a partir de um modelo: as páginas, as seções e os textos de exemplo já escritos, o tema, o menu e o rodapé. */
 function NovoSiteSheet({ organizationId, loja, espacos, onClose, onCreated }: { organizationId: string; loja: Loja | null; espacos: readonly EspacoDaProgramacao[]; onClose: () => void; onCreated: () => void }) {
   const [nome, setNome] = useState(loja?.nome ?? "");
-  const [cor, setCor] = useState("#282525");
+  const [modelo, setModelo] = useState<IdDoModelo>("companhia");
+  const [cor, setCor] = useState(MODELOS_DE_SITE.companhia.cor);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -43,17 +49,13 @@ function NovoSiteSheet({ organizationId, loja, espacos, onClose, onCreated }: { 
       if (error || !nova) { setSalvando(false); setErro(error?.code === "42501" ? "Você não pode criar a loja desta organização." : "Não foi possível criar a loja. Tente de novo."); return; }
       lojaId = nova.id;
     }
-    const { data: site, error } = await ticketeria.from("ticketeria_sites").insert({ organization_id: organizationId, loja_id: lojaId, nome: limpo, cor: corDoTema(cor) }).select("id").single();
+    const { data: site, error } = await ticketeria.from("ticketeria_sites").insert({ organization_id: organizationId, loja_id: lojaId, nome: limpo, cor: corDoTema(cor), tema: MODELOS_DE_SITE[modelo].tema, aparencia: MODELOS_DE_SITE[modelo].aparencia as never }).select("id").single();
     if (error || !site) { setSalvando(false); setErro(error?.code === "42501" ? "Você não pode criar o site." : error?.code === "23505" ? "A loja já tem um site. Recarregue a página." : "Não foi possível criar o site. Tente de novo."); return; }
-    // A página de início já nasce com um começo: um título, um texto e, se houver espaço na Produção, a programação dele.
-    const inicio: Bloco[] = [
-      { tipo: "titulo", texto: limpo },
-      { tipo: "texto", texto: "Escreva aqui uma apresentação: quem somos, o que fazemos e como chegar." },
-      ...(espacos[0] ? [{ tipo: "programacao", titulo: "Programação", espaco_id: espacos[0].id } as const] : []),
-    ];
-    const { error: erroDaPagina } = await ticketeria.from("ticketeria_site_paginas").insert({ organization_id: organizationId, site_id: site.id, slug: "inicio", titulo: "Início", ordem: 0, blocos: inicio });
+    // As páginas do modelo nascem em rascunho, com os textos de exemplo que a pessoa vai trocar.
+    const paginas = paginasDoModelo(modelo, { nome: limpo, agora: Date.now(), espacoId: espacos[0]?.id ?? null });
+    const { error: erroDaPagina } = await ticketeria.from("ticketeria_site_paginas").insert(paginas.map(p => ({ organization_id: organizationId, site_id: site.id, slug: p.slug, titulo: p.titulo, ordem: p.ordem, blocos: p.blocos as never })));
     setSalvando(false);
-    if (erroDaPagina) setErro("O site foi criado, mas a página inicial não. Crie a página no editor.");
+    if (erroDaPagina) setErro("O site foi criado, mas as páginas do modelo não. Crie as páginas no editor.");
     onCreated();
   }
 
@@ -70,9 +72,26 @@ function NovoSiteSheet({ organizationId, loja, espacos, onClose, onCreated }: { 
     >
       <div className="space-y-4">
         {erro && <p role="alert" className="rounded-xl border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        <fieldset>
+          <legend className={ROTULO}>Começar de um modelo</legend>
+          <div className="grid grid-cols-2 gap-2.5">
+            {IDS_DOS_MODELOS.map(id => {
+              const m = MODELOS_DE_SITE[id];
+              const Icone = ICONE_DO_MODELO[id];
+              return (
+                <label key={id} className={`flex cursor-pointer flex-col gap-1.5 rounded-xl border p-3 transition has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[#7259B5] ${modelo === id ? "border-[#7259B5] bg-[#7259B5]/[.06] ring-1 ring-[#7259B5]" : "border-black/[.12] hover:bg-black/[.02]"}`}>
+                  <input type="radio" name="modelo-do-site" value={id} checked={modelo === id} onChange={() => { setModelo(id); setCor(m.cor); }} disabled={salvando} className="sr-only" />
+                  <span className="flex items-center gap-2"><Icone size={15} aria-hidden="true" className="text-[#7259B5]" /><span className="text-[0.8125rem] font-normal text-[#282525]">{m.nome}</span></span>
+                  <span className="text-[0.6875rem] leading-snug text-black/60">{m.frase}</span>
+                  <span className="text-[0.6875rem] text-black/45">{m.contem}</span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
         <div><label className={ROTULO} htmlFor="site-nome">Nome do site</label><input id="site-nome" autoFocus className={CAMPO} value={nome} onChange={event => setNome(event.target.value)} placeholder="Teatro Central" maxLength={120} disabled={salvando} /></div>
         <div className="flex items-center gap-3"><label className={`${ROTULO} mb-0`} htmlFor="site-cor">Cor do cabeçalho</label><input id="site-cor" type="color" value={cor} onChange={event => setCor(event.target.value)} className="h-10 w-14 cursor-pointer rounded-xl border border-black/[.12] bg-white p-1" disabled={salvando} /></div>
-        <p className="text-[0.75rem] text-black/55">O site abre só no domínio da sua casa, festival ou companhia. Você liga o domínio depois de criar.</p>
+        <p className="text-[0.75rem] text-black/55">Os textos do modelo são exemplos: troque todos pelos seus antes de publicar. O site abre só no domínio da sua casa, festival ou companhia, que você liga depois de criar.</p>
       </div>
     </TopSheet>
   );
@@ -90,6 +109,7 @@ export default function SiteDaLojaPage() {
   const [cor, setCor] = useState("#282525");
   const [folha, setFolha] = useState(false);
   const [folhaDoTema, setFolhaDoTema] = useState(false);
+  const [folhaDoMenu, setFolhaDoMenu] = useState<"menu" | "rodape" | null>(null);
   // O editor das páginas abre em tela inteira (editor à esquerda, prévia à direita).
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -110,7 +130,7 @@ export default function SiteDaLojaPage() {
         clienteDaProducao(cliente).from("producao_espacos").select("id, nome").eq("organization_id", organizationId).eq("arquivado", false).order("nome"),
       ]);
       const loja = lojas.data ?? null;
-      const sites = loja ? await ticketeria.from("ticketeria_sites").select("id, nome, titulo, cor, tema, situacao").eq("loja_id", loja.id).maybeSingle() : { data: null, error: null };
+      const sites = loja ? await ticketeria.from("ticketeria_sites").select("id, nome, titulo, cor, tema, aparencia, situacao").eq("loja_id", loja.id).maybeSingle() : { data: null, error: null };
       if (!ativo) return;
       const site = (sites.data ?? null) as Site | null;
       const ev = loja ? await ticketeria.from("ticketeria_eventos").select("id, titulo, situacao").eq("loja_id", loja.id).neq("situacao", "cancelado").order("titulo") : { data: [] };
@@ -160,7 +180,7 @@ export default function SiteDaLojaPage() {
   if (!site) {
     return (
       <>
-        <ListPageHeader title="Site" />
+        <ListPageHeader title="Loja online" />
         <ListContent>
           {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
           <ListTableSurface>
@@ -207,6 +227,11 @@ export default function SiteDaLojaPage() {
           <span className="text-[#282525]">{temaDoSite(site.tema).nome}</span>
           {podeEditar && <button type="button" onClick={() => setFolhaDoTema(true)} className="rounded-xl text-[0.8125rem] text-black/55 underline underline-offset-2 transition hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Mudar</button>}
         </div>
+        <div className="-mt-6 mb-10 flex max-w-2xl flex-wrap items-center gap-x-8 gap-y-2 text-[0.8125rem]">
+          {([["Menu", "menu", ROTULO_DO_LAYOUT_DO_MENU[lerAparencia(site.aparencia).cabecalho.layout].nome], ["Rodapé", "rodape", ROTULO_DO_LAYOUT_DO_RODAPE[lerAparencia(site.aparencia).rodape.layout].nome]] as const).map(([rotulo, qual, nome]) => (
+            <span key={qual} className="flex items-center gap-3"><span className="text-[0.6875rem] font-normal text-black/55">{rotulo}</span><span className="text-[#282525]">{nome}</span>{podeEditar && <button type="button" onClick={() => setFolhaDoMenu(qual)} className="rounded-xl text-[0.8125rem] text-black/55 underline underline-offset-2 transition hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Mudar</button>}</span>
+          ))}
+        </div>
         <section aria-labelledby="paginas-do-site" className="mb-10 flex max-w-2xl flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border bg-white px-4 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="min-w-0 flex-1 basis-60">
             <h2 id="paginas-do-site" className="text-[0.875rem] font-medium text-[#282525]">Páginas do site</h2>
@@ -218,6 +243,8 @@ export default function SiteDaLojaPage() {
         {podeEditar && <div className="mt-12"><button type="button" onClick={apagar} className="text-[0.75rem] font-normal text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Apagar este site</button></div>}
       </DetailPageContent>
       {editando && <EditorDoSite siteId={site.id} nomeDoSite={site.titulo ?? site.nome} organizationId={organizationId} podeEditar={podeEditar} espacos={espacos} eventos={eventos} onFechar={() => setEditando(false)} />}
+      {folhaDoMenu === "menu" && <MenuDoSiteSheet siteId={site.id} aparenciaAtual={site.aparencia} onClose={() => setFolhaDoMenu(null)} onSaved={recarregar} />}
+      {folhaDoMenu === "rodape" && <RodapeDoSiteSheet siteId={site.id} aparenciaAtual={site.aparencia} nomeDoSite={site.titulo ?? site.nome} onClose={() => setFolhaDoMenu(null)} onSaved={recarregar} />}
       {folhaDoTema && <TemaDoSiteSheet siteId={site.id} temaAtual={site.tema} cor={corDoTema(site.cor)} onClose={() => setFolhaDoTema(false)} onSaved={recarregar} />}
     </div>
   );

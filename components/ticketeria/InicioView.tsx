@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 import type { DadosDoPeriodo, InicioDaLoja, NaoConcluida, PeriodoDoInicio } from "@/lib/ticketeria/inicio";
 import type { ReembolsoDaLista, SessaoDeVendas } from "@/components/ticketeria/VendasView";
@@ -134,12 +135,33 @@ function Linhas({ vazio, children }: { vazio: boolean; children: ReactNode }) {
 
 export const PERIODOS: { id: PeriodoDoInicio; rotulo: string }[] = [{ id: "tudo", rotulo: "Desde o início" }, { id: "30d", rotulo: "30 dias" }, { id: "7d", rotulo: "7 dias" }];
 
+const AVISOS_DA_CONTA = {
+  sem_conta: { titulo: "Cadastre a conta de recebimento", texto: "Sem ela, as vendas ficam pausadas e ninguém consegue comprar.", link: "Cadastrar conta", cor: "#B07A14" },
+  pendente: { titulo: "Ative sua conta no Asaas", texto: "Abra o e-mail que o Asaas enviou ao titular, crie a senha e envie os documentos. Até ficar ativa, as vendas ficam pausadas.", link: "Ver a conta", cor: "#B07A14" },
+  bloqueada: { titulo: "O Asaas precisa de mais informações", texto: "Um dado ou documento do titular não foi aceito. As vendas ficam pausadas até resolver.", link: "Ver a conta", cor: "#D94A4A" },
+} as const;
+
+/** O aviso do alto da página inicial enquanto a conta de recebimento não está ativa: o que fazer e para onde ir. */
+export function AvisoDaConta({ situacao }: { situacao: keyof typeof AVISOS_DA_CONTA }) {
+  const a = AVISOS_DA_CONTA[situacao];
+  return (
+    <section role="status" aria-label="Conta de recebimento" className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-xl border px-5 py-4" style={{ borderColor: a.cor + "47", background: a.cor + "0F" }}>
+      <div>
+        <h2 className="m-0 text-[0.9375rem] font-normal text-[#282525]">{a.titulo}</h2>
+        <p className="m-0 mt-0.5 max-w-xl text-[0.8125rem] text-black/60">{a.texto}</p>
+      </div>
+      <Link href="/ingressos/recebimentos" prefetch={false} className={ESTILO_DO_LINK}>{a.link}</Link>
+    </section>
+  );
+}
+
 export function InicioView({ dados, periodo, onPeriodo, ver }: { dados: InicioDaLoja; periodo: PeriodoDoInicio; onPeriodo: (p: PeriodoDoInicio) => void; ver: (destino: string) => ReactNode }) {
   const p = dados.periodos[periodo];
   const { hoje, saldos, proxima } = dados;
   const pctDaProxima = proxima && proxima.lugares > 0 ? Math.min(100, Math.round((proxima.vendidos / proxima.lugares) * 100)) : 0;
   return (
     <div className="space-y-10">
+      {dados.conta_situacao && dados.conta_situacao !== "aprovada" && <AvisoDaConta situacao={dados.conta_situacao} />}
       <section aria-label="Hoje" className="grid gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div>
           <div className="grid grid-cols-2 gap-6">
