@@ -104,6 +104,15 @@ export function loteDaVez<T extends { ordem: number; vendas_inicio: string | nul
   return [...lotes].sort((a, b) => a.ordem - b.ordem).find(lote => situacaoDoLote(lote, agora) === "na_janela") ?? null;
 }
 
+/** A meia-entrada é um desconto de 50% sobre a inteira: só quem é "inteira" ou "outra" pode oferecê-la (a meia de meia, de gratuito, de cortesia ou de social não existe). */
+export const podeTerMeia = (categoria: string) => categoria === "inteira" || categoria === "outra";
+
+/** O nome da meia de um ingresso: "Meia-entrada" para a "Inteira"; nos outros, "<nome> (meia)". */
+export const nomeDaMeia = (nomeDaInteira: string) => {
+  const nome = nomeDaInteira.trim();
+  return nome === "" || nome === NOME_PADRAO.inteira ? NOME_PADRAO.meia : `${nome} (meia)`.slice(0, 120);
+};
+
 /** O preço para mostrar: "R$ 50,00", ou "Grátis". */
 export const precoParaMostrar = (centavos: number) => (centavos === 0 ? "Grátis" : formatarReais(centavos));
 

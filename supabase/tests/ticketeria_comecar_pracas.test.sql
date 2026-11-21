@@ -10,7 +10,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(30);
+select plan(31);
 
 create schema tp;
 grant usage on schema tp to authenticated, anon;
@@ -74,6 +74,8 @@ select is((select string_agg(lo.cidade || ':' || i.nome || ':' || l.preco_centav
            from public.ticketeria_ingressos i join public.ticketeria_lotes l on l.ingresso_id = i.id join public.ticketeria_setores s on s.id = i.setor_id join public.ticketeria_locais lo on lo.id = s.local_id
            where i.evento_id = ((select r from tp.r where k = 'turne') ->> 'evento_id')::uuid),
           'Curitiba:Inteira:6000x100,Curitiba:Meia-entrada:3000x100,Sorocaba:Inteira:6000x100,Sorocaba:Meia-entrada:3000x100', 'turnê: inteira e meia em cada cidade, as duas com todos os lugares (sem limite de meia)');
+select is((select count(*)::int from public.ticketeria_ingressos m join public.ticketeria_ingressos i on i.id = m.meia_de where m.categoria = 'meia' and i.categoria = 'inteira' and m.setor_id = i.setor_id
+                  and m.evento_id = ((select r from tp.r where k = 'turne') ->> 'evento_id')::uuid), 2, 'turnê: a meia de cada cidade nasce ligada à inteira dela (o banco espelha os lotes)');
 select is((select perfil from public.ticketeria_lojas where organization_id = tp.id('a0')), 'turne', 'o perfil fica na loja');
 select is((select (r -> 'pracas' -> 1 ->> 'sessoes')::int from tp.r where k = 'turne'), 2, 'cada praça diz quantas sessões criou');
 

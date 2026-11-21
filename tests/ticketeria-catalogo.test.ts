@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  lerIngresso, lerLote, loteDaVez, mensagemDoErroDoCatalogo, nomeDoProximoLote, precoDaMeia, precoParaMostrar, publicoPorPadrao, semPreco, situacaoDoLote,
+  lerIngresso, lerLote, loteDaVez, mensagemDoErroDoCatalogo, nomeDaMeia, nomeDoProximoLote, podeTerMeia, precoDaMeia, precoParaMostrar, publicoPorPadrao, semPreco, situacaoDoLote,
 } from "../lib/ticketeria/catalogo";
 
 const FUSO = "America/Sao_Paulo";
@@ -63,4 +63,15 @@ test("os erros do banco viram frases", () => {
   assert.match(mensagemDoErroDoCatalogo({ message: "lugares_excedidos" }), /lugares do setor/);
   assert.match(mensagemDoErroDoCatalogo({ message: "preco_incoerente" }), /combina/);
   assert.match(mensagemDoErroDoCatalogo({ code: "42501" }), /não pode/);
+});
+
+test("a meia-entrada é o desconto de 50% da inteira: quem pode ter, e o nome dela", () => {
+  assert.deepEqual(["inteira", "outra"].map(podeTerMeia), [true, true]);
+  assert.deepEqual(["meia", "social", "gratuito", "cortesia"].map(podeTerMeia), [false, false, false, false], "meia de meia, social, gratuito ou cortesia não existe");
+  assert.equal(nomeDaMeia("Inteira"), "Meia-entrada");
+  assert.equal(nomeDaMeia("  "), "Meia-entrada");
+  assert.equal(nomeDaMeia("Camarote"), "Camarote (meia)");
+  assert.equal(nomeDaMeia("x".repeat(200)).length, 120, "o nome cabe nos 120 do banco");
+  assert.equal(precoDaMeia(7001), 3501, "a mesma conta do banco: metade, arredondada");
+  assert.equal(precoDaMeia(1), 1, "nunca abaixo de 1 centavo");
 });

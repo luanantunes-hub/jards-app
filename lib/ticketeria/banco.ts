@@ -486,6 +486,7 @@ export type BancoDaTicketeria = {
           publico: boolean;
           ordem: number;
           arquivado: boolean;
+          meia_de: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -501,6 +502,7 @@ export type BancoDaTicketeria = {
           publico?: boolean;
           ordem?: number;
           arquivado?: boolean;
+          meia_de?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -516,10 +518,18 @@ export type BancoDaTicketeria = {
           publico?: boolean;
           ordem?: number;
           arquivado?: boolean;
+          meia_de?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "ticketeria_ingressos_meia_de_fkey";
+            columns: ["meia_de"];
+            isOneToOne: true;
+            referencedRelation: "ticketeria_ingressos";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "ticketeria_ingressos_evento_id_fkey";
             columns: ["evento_id"];
@@ -548,6 +558,7 @@ export type BancoDaTicketeria = {
           id: string;
           organization_id: string;
           ingresso_id: string;
+          espelho_de: string | null;
           nome: string;
           ordem: number;
           preco_centavos: number;
@@ -561,6 +572,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id: string;
           ingresso_id: string;
+          espelho_de?: string | null;
           nome: string;
           ordem?: number;
           preco_centavos: number;
@@ -574,6 +586,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id?: string;
           ingresso_id?: string;
+          espelho_de?: string | null;
           nome?: string;
           ordem?: number;
           preco_centavos?: number;
@@ -584,6 +597,13 @@ export type BancoDaTicketeria = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "ticketeria_lotes_espelho_de_fkey";
+            columns: ["espelho_de"];
+            isOneToOne: true;
+            referencedRelation: "ticketeria_lotes";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "ticketeria_lotes_ingresso_id_fkey";
             columns: ["ingresso_id"];

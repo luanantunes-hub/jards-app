@@ -68,3 +68,14 @@ Um ingresso só, com a meia como "variação de preço" escolhida na compra, com
 - pgTAP `ticketeria_estoque_unico.test.sql`, 24 verificações: inteira e meia dividindo o balde, o lote pequeno de uma meia, a inteira vendendo o resto, dois tipos no mesmo pedido, reserva vencida, pagamento tardio e quem pode chamar. As suítes antigas seguiram verdes (catálogo, Começar em várias praças, pagamentos, assentos, lista de espera, porta e reembolsos); duas verificações antigas do catálogo mudaram de propósito (a soma dos lotes não é mais exigida; e `fn_ticketeria_conferir_lugares` é chamável por quem edita, desde a migration do editor de mapa).
 - App: a vitrine limita o que se compra ao balde de todo setor (antes só do numerado); o catálogo mostra "N lugares para todos os ingressos"; a tela final do Começar mostra o preço da inteira e da meia e os lugares, sem número por tipo.
 - Não conferido: compras simultâneas de verdade (o desenho trava o setor antes dos lotes, mas só foi provado em sequência), e os efeitos nas telas de início e do modelo, que já usavam os lugares do setor como capacidade.
+
+## A meia como desconto da inteira (21/11/2026)
+
+O Luan fechou o conceito: para a Ticketeria, a meia-entrada é só um desconto de 50%, não outro ingresso para cuidar. Feito sem mexer no pedido, no cupom, no reembolso nem nos relatórios:
+
+- Migration `20261127100500_ticketeria_meia_e_desconto.sql`, aplicada. A meia continua sendo uma linha de `ticketeria_ingressos`, mas agora **ligada** à inteira (`meia_de`), e os lotes dela são **espelhos** dos lotes da inteira (`espelho_de`): o banco cria, muda e apaga o lote da meia quando o da inteira muda, com metade do preço (arredondado, mínimo 1 centavo), a mesma quantidade, nome, ordem e janela de venda. Setor, "aparece ao público" e limite por pedido da meia seguem os da inteira; inteira arquivada arquiva a meia; apagar a inteira leva a meia.
+- Catálogo: no ingresso, "Oferecer meia-entrada (50% de desconto)". Ligado, a meia aparece sob a inteira, sem lotes para cuidar. Desligar arquiva só a meia. A meia ligada não aparece como item à parte.
+- Começar: cria a meia já ligada.
+- Meias que já existem (sem `meia_de`) seguem como estavam, com lotes próprios.
+- pgTAP `ticketeria_meia_e_desconto.test.sql` (21 verificações): espelhos nascendo, acompanhando preço, quantidade, nome e janela, sumindo com o lote; o preço na venda; o balde compartilhado; o que não combina; e a meia seguindo a inteira.
+- Não impede o lote espelho de ser editado por fora da tela (ele é reescrito na próxima mudança da inteira). A tela não o oferece.
