@@ -65,8 +65,14 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
               return (
                 <button key={id} type="button" aria-pressed={escolhido} onClick={() => muda({ perfil: id })}
                   className={`rounded-xl border bg-white p-4 text-left transition hover:bg-black/[.02] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${escolhido ? "border-[#7259B5] ring-1 ring-[#7259B5]" : "border-black/[.12]"}`}>
-                  <span className="flex items-center justify-between"><Icone size={20} strokeWidth={1.5} className="text-[#7259B5]" aria-hidden="true" />{escolhido && <Check size={16} className="text-[#7259B5]" aria-hidden="true" />}</span>
-                  <span className="mt-2 block text-[0.875rem] text-[#282525]">{PERFIL[id].titulo}</span>
+                  <span className="relative flex h-28 items-center justify-center">
+                    {PERFIL[id].ilustracao
+                      // eslint-disable-next-line @next/next/no-img-element -- ilustração estática, já reduzida
+                      ? <img src={PERFIL[id].ilustracao} alt="" loading="lazy" className="max-h-full max-w-full object-contain" />
+                      : <Icone size={32} strokeWidth={1.25} className="text-[#7259B5]/70" aria-hidden="true" />}
+                    {escolhido && <Check size={16} className="absolute right-0 top-0 text-[#7259B5]" aria-hidden="true" />}
+                  </span>
+                  <span className="mt-3 block text-[0.875rem] text-[#282525]">{PERFIL[id].titulo}</span>
                   <span className="mt-0.5 block text-[0.75rem] leading-relaxed text-black/45">{PERFIL[id].descricao}</span>
                 </button>
               );

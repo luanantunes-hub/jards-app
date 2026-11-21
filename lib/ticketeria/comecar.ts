@@ -10,30 +10,33 @@ export const PERFIS: readonly PerfilDoProdutor[] = ["espaco", "turne", "unico", 
 export const PERFIL: Record<PerfilDoProdutor, {
   titulo: string; descricao: string; pergunta: string; apoio: string; rotuloDoNome: string; exemploDoNome: string;
   rotuloDoLugar: string; exemploDoLugar: string; rotuloDaData: string;
+  /** Ilustração do cartão (public/ilustracoes/ticketeria); sem ela, a tela usa um ícone. */
+  ilustracao: string | null;
 }> = {
   espaco: {
     titulo: "Tenho um espaço", descricao: "Teatro, casa de show, galeria. Vários eventos no mesmo lugar.",
     pergunta: "Qual é o seu espaço?", apoio: "Você cadastra uma vez. Todo evento novo já nasce nele.",
     rotuloDoNome: "Primeiro evento", exemploDoNome: "Hamlet, temporada de março",
-    rotuloDoLugar: "Nome do espaço", exemploDoLugar: "Teatro Municipal", rotuloDaData: "Primeira data",
+    rotuloDoLugar: "Nome do espaço", exemploDoLugar: "Teatro Municipal", rotuloDaData: "Primeira data", ilustracao: null,
   },
   turne: {
     titulo: "Circulo com um espetáculo", descricao: "A mesma obra em várias cidades e datas.",
     pergunta: "Qual é o espetáculo?", apoio: "Comece pela primeira data. As outras você soma depois.",
     rotuloDoNome: "Nome do espetáculo", exemploDoNome: "O Auto da Compadecida",
     rotuloDoLugar: "Primeiro lugar", exemploDoLugar: "Teatro Guaíra", rotuloDaData: "Primeira data",
+    ilustracao: "/ilustracoes/ticketeria/perfil-turne.webp",
   },
   unico: {
     titulo: "Faço um evento único", descricao: "Uma festa, um show, uma palestra.",
     pergunta: "Conta do seu evento", apoio: "Só o essencial. O resto fica para depois.",
     rotuloDoNome: "Nome do evento", exemploDoNome: "Show de lançamento",
-    rotuloDoLugar: "Onde", exemploDoLugar: "Casa de Cultura", rotuloDaData: "Quando",
+    rotuloDoLugar: "Onde", exemploDoLugar: "Casa de Cultura", rotuloDaData: "Quando", ilustracao: null,
   },
   festival: {
     titulo: "Organizo um festival", descricao: "Vários dias ou atrações, no mesmo lugar.",
     pergunta: "Qual é o festival?", apoio: "Um evento com uma sessão por dia, no mesmo lugar.",
     rotuloDoNome: "Nome do festival", exemploDoNome: "Festival de Inverno",
-    rotuloDoLugar: "Onde", exemploDoLugar: "Parque da Cidade", rotuloDaData: "Primeiro dia",
+    rotuloDoLugar: "Onde", exemploDoLugar: "Parque da Cidade", rotuloDaData: "Primeiro dia", ilustracao: null,
   },
 };
 
