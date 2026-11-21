@@ -23,6 +23,12 @@ Em **Público → Novo envio**, escreva uma mensagem, clique em **Enviar teste p
 ## 5. Ligar o acompanhamento no domínio
 No Resend → **Domains** → seu subdomínio, ligue **Open Tracking** e **Click Tracking**. Sem isso o Resend não avisa as aberturas e os cliques.
 
+## 6. Envios grandes (a fila)
+- Um envio aceita até **5.000 pessoas**. O Jards cria o envio, responde na hora e manda os e-mails em **lotes de 100**, logo depois; a aba Envios mostra "400 de 1.200" e se atualiza sozinha.
+- Se a primeira rodada não terminar (muita gente ou uma queda), um **cron a cada minuto** continua de onde parou. Para ele funcionar, crie na Vercel a variável `CRON_SECRET` (qualquer texto longo e secreto; a Vercel o envia sozinha ao cron). Sem ela o cron responde 503 e só a primeira rodada trabalha, que dá conta de milhares de e-mails na maioria dos casos.
+- O cron só roda em produção, ou seja, depois de **publicar** o site.
+- Quem ficou "enviando" por mais de 5 minutos (a rodada caiu) volta para a fila sozinho. Duas rodadas ao mesmo tempo nunca mandam para a mesma pessoa.
+
 ## O que a aba Envios passa a mostrar
 - **Abriram** e **Clicaram**: porcentagem dos enviados e, embaixo, quantas pessoas. Cada pessoa conta uma vez. Quem clica conta também como quem abriu.
 - **N voltaram**: e-mails devolvidos pelo provedor do destinatário.
