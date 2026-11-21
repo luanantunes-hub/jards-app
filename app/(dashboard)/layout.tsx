@@ -11,7 +11,6 @@ import {
   CalendarCheck,
   CalendarClock,
   CalendarDays,
-  Globe,
   CalendarRange,
   UsersRound,
   ListChecks,
@@ -57,11 +56,7 @@ import {
   Mail,
   Megaphone,
   Receipt,
-  ScanLine,
-  Hourglass,
-  Tag,
   Wallet,
-  Plug,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -202,19 +197,13 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
     {
       section: "Ticketeria",
       items: [
-        { label: "Página inicial", href: "/ingressos", icon: Home },
-        { label: "Eventos", href: "/ingressos/eventos", icon: Ticket },
-        { label: "Locais", href: "/ingressos/locais", icon: MapPin },
-        { label: "Site", href: "/ingressos/site", icon: Globe },
+        { label: "Início", href: "/ingressos", icon: Home },
+        { label: "Programação", href: "/ingressos/eventos", icon: Ticket },
         { label: "Vendas", href: "/ingressos/vendas", icon: Receipt },
+        { label: "Financeiro", href: "/ingressos/recebimentos", icon: Wallet },
         { label: "Divulgação", href: "/ingressos/divulgacao", icon: Megaphone },
-        { label: "Público", href: "/ingressos/publico", icon: UsersRound },
-        { label: "Cupons", href: "/ingressos/cupons", icon: Tag },
-        { label: "Lista de espera", href: "/ingressos/espera", icon: Hourglass },
-        { label: "Porta", href: "/ingressos/porta", icon: ScanLine },
-        { label: "Bilheteria", href: "/ingressos/bilheteria", icon: Store },
-        { label: "Recebimentos", href: "/ingressos/recebimentos", icon: Wallet },
-        { label: "Integrações", href: "/ingressos/integracoes", icon: Plug },
+        // Loja, integrações e espaços moram aqui; a barra de abas (SubmenuDaTicketeria) leva de um a outro. O href é o da primeira aba.
+        { label: "Configurações", href: "/ingressos/site", icon: Settings },
       ],
     },
   ],

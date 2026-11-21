@@ -14,9 +14,10 @@ type Compra = { id: string; codigo: string; comprador: string; email: string; ev
 type Resultado = { chave: string; grupo: "Páginas" | "Eventos" | "Compras"; rotulo: string; apoio?: string; href: string; icone: typeof Search };
 
 const PAGINAS: { rotulo: string; href: string }[] = [
-  { rotulo: "Página inicial", href: "/ingressos" }, { rotulo: "Eventos", href: "/ingressos/eventos" }, { rotulo: "Locais", href: "/ingressos/locais" },
-  { rotulo: "Site", href: "/ingressos/site" }, { rotulo: "Vendas", href: "/ingressos/vendas" }, { rotulo: "Cupons", href: "/ingressos/cupons" },
-  { rotulo: "Lista de espera", href: "/ingressos/espera" }, { rotulo: "Porta", href: "/ingressos/porta" }, { rotulo: "Bilheteria", href: "/ingressos/bilheteria" }, { rotulo: "Recebimentos", href: "/ingressos/recebimentos" },
+  { rotulo: "Início", href: "/ingressos" }, { rotulo: "Programação", href: "/ingressos/eventos" }, { rotulo: "Vendas", href: "/ingressos/vendas" },
+  { rotulo: "Porta", href: "/ingressos/porta" }, { rotulo: "Bilheteria", href: "/ingressos/bilheteria" }, { rotulo: "Financeiro", href: "/ingressos/recebimentos" },
+  { rotulo: "Divulgação", href: "/ingressos/divulgacao" }, { rotulo: "Cupons", href: "/ingressos/cupons" }, { rotulo: "Lista de espera", href: "/ingressos/espera" },
+  { rotulo: "Público", href: "/ingressos/publico" }, { rotulo: "Loja", href: "/ingressos/site" }, { rotulo: "Integrações", href: "/ingressos/integracoes" }, { rotulo: "Espaços", href: "/ingressos/locais" },
 ];
 
 /** Sem acento e em minúscula, para a busca não depender de como a pessoa digita. */

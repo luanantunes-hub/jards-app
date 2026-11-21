@@ -6,7 +6,7 @@ import { ArrowLeft, Building2, Check, Landmark, PartyPopper, Route, Tent, type L
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria, type ClienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import {
-  PERFIL, PERFIS, RESPOSTAS_VAZIAS, argumentosDoComecar, auditorioInicial, centavosDe, conferirPasso, divisaoDosLugares, hojeEmBrasilia, lugaresParaVender, mapaDoAuditorio, mensagemDoErroDoComecar, ondeDaPraca, passosDoComecar, pracasEfetivas, praca as pracaVazia, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
+  PERFIL, PERFIS, RESPOSTAS_VAZIAS, VENDAS, argumentosDoComecar, auditorioInicial, centavosDe, conferirPasso, divisaoDosLugares, hojeEmBrasilia, lugaresParaVender, mapaDoAuditorio, mensagemDoErroDoComecar, ondeDaPraca, passosDoComecar, pracasEfetivas, praca as pracaVazia, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
   type PerfilDoProdutor, type Praca, type PracaCriada, type RespostasDoComecar, type ResultadoDoComecar,
 } from "@/lib/ticketeria/comecar";
 import { resumoDasDatas } from "@/lib/ticketeria/calendario";
@@ -230,6 +230,21 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
         </section>
       )}
 
+      {passoAtual === "venda" && (
+        <section aria-labelledby="comecar-titulo">
+          <h1 id="comecar-titulo" className={TITULO}>Como você vai vender?</h1>
+          <div className="mt-12 grid gap-3 md:mt-16 sm:grid-cols-3">
+            {VENDAS.map(opcao => (
+              <button key={opcao.id} type="button" aria-pressed={r.venda === opcao.id} onClick={() => muda({ venda: opcao.id })}
+                className={`rounded-xl border bg-white p-5 text-left transition hover:bg-black/[.02] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${r.venda === opcao.id ? "border-[#7259B5] ring-1 ring-[#7259B5]" : "border-black/[.12]"}`}>
+                <span className="flex items-center justify-between text-[1.375rem] text-[#1C0E33]">{opcao.rotulo}{r.venda === opcao.id && <Check size={18} className="text-[#7259B5]" aria-hidden="true" />}</span>
+                <span className="mt-1 block text-[0.8125rem] text-black/50">{opcao.dica}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {erro && <div className="mt-4"><Aviso texto={erro} /></div>}
       <div className="mt-6 flex items-center justify-between">
         {passo > 0 ? <button type="button" onClick={() => { setErro(null); setPasso(passo - 1); }} disabled={salvando} className={VOLTAR}><ArrowLeft size={13} aria-hidden="true" /> Voltar</button> : <span />}
@@ -400,7 +415,7 @@ function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resu
         ))}
       </div>
 
-      {!gratuito && (
+      {!gratuito && r.venda !== "porta" && (
         <div className="mt-4 flex items-start gap-2.5 rounded-xl border bg-white px-3.5 py-3 text-[0.8125rem] text-[#9A6A10]" style={{ borderColor: "#B07A1447" }}>
           <Landmark size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
           <span>Para vender, falta dizer em qual conta você recebe. Leva dois minutos e pode ser agora ou depois.</span>
@@ -410,13 +425,15 @@ function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resu
       {resultado.mapa === "falhou" && resultado.erroDoMapa && (
         <div className="mt-4 space-y-2">
           <Aviso texto={`O evento foi criado, mas o mapa de assentos não ficou pronto: ${resultado.erroDoMapa}`} />
-          <Link href="/ingressos/locais" className={LINK}>Abrir os locais e montar o mapa</Link>
+          <Link href="/ingressos/locais" className={LINK}>Abrir os espaços e montar o mapa</Link>
         </div>
       )}
 
       <div className="mt-6 flex flex-wrap items-center gap-2.5">
-        {!gratuito && <Link href="/ingressos/recebimentos" className={CTA}>Cadastrar conta</Link>}
-        <Link href={`/ingressos/eventos/${resultado.evento_id}`} className={gratuito ? CTA : LINK}>{gratuito ? "Abrir o evento para publicar" : "Abrir o evento"}</Link>
+        {!gratuito && r.venda !== "porta" && <Link href="/ingressos/recebimentos" className={CTA}>Cadastrar conta</Link>}
+        {r.venda === "porta" && <Link href="/ingressos/bilheteria" className={CTA}>Cadastrar quem vende na porta</Link>}
+        <Link href={`/ingressos/eventos/${resultado.evento_id}`} className={gratuito && r.venda !== "porta" ? CTA : LINK}>{gratuito && r.venda !== "porta" ? "Abrir o evento para publicar" : "Abrir o evento"}</Link>
+        {r.venda === "os_dois" && <Link href="/ingressos/bilheteria" className={LINK}>Cadastrar quem vende na porta</Link>}
         <button type="button" onClick={recomecar} className={VOLTAR}>Criar outro</button>
       </div>
     </section>

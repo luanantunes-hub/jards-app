@@ -17,7 +17,7 @@ const HOJE = "2026-11-21";
 const praca1 = (parte: Partial<Praca> = {}): Praca => ({ ...praca(), uf: "RJ", cidade: "Rio de Janeiro", lugar: "Casa de Cultura", datas: ["2026-12-20"], outra: null, ...parte });
 const CHEIO: RespostasDoComecar = {
   ...RESPOSTAS_VAZIAS, perfil: "unico", evento: "Show de lançamento", pracas: [praca1()],
-  lugares: "100", hora: "20:00", numerada: false, gratuito: false, preco: "60", meia: true,
+  lugares: "100", hora: "20:00", numerada: false, gratuito: false, venda: "online", preco: "60", meia: true,
 };
 /** Um passo sem praça (as perguntas que valem para o evento todo) ou da praça `i`. */
 const p = (id: PassoId, i = 0): Passo => ({ id, praca: i });
@@ -38,13 +38,13 @@ test("os quatro perfis são os que o banco aceita, na ordem da tela", async () =
 
 test("a sequência de passos: uma pergunta por tela, as cidades e os dias em laço só na turnê", () => {
   const um = [praca1()];
-  assert.deepEqual(ids(passosDoComecar("unico", um, false, false)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia"]);
-  assert.deepEqual(ids(passosDoComecar("espaco", um, false, false)), ["perfil", "nome", "onde#0", "evento", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia"], "quem tem espaço dá o nome do primeiro evento num passo só dele");
-  assert.deepEqual(ids(passosDoComecar("festival", um, null, null)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia"], "sem passo de dias: as datas marcadas dizem quantos são");
-  assert.deepEqual(ids(passosDoComecar("unico", um, true, false)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "auditorio", "gratuito", "preco", "meia"], "o auditório só com lugares numerados");
-  assert.deepEqual(ids(passosDoComecar("unico", um, false, true)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito"], "gratuito: acaba na pergunta do gratuito, sem preço nem meia-entrada");
+  assert.deepEqual(ids(passosDoComecar("unico", um, false, false)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia", "venda"]);
+  assert.deepEqual(ids(passosDoComecar("espaco", um, false, false)), ["perfil", "nome", "onde#0", "evento", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia", "venda"], "quem tem espaço dá o nome do primeiro evento num passo só dele");
+  assert.deepEqual(ids(passosDoComecar("festival", um, null, null)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia", "venda"], "sem passo de dias: as datas marcadas dizem quantos são");
+  assert.deepEqual(ids(passosDoComecar("unico", um, true, false)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "auditorio", "gratuito", "preco", "meia", "venda"], "o auditório só com lugares numerados");
+  assert.deepEqual(ids(passosDoComecar("unico", um, false, true)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito", "venda"], "gratuito: acaba na pergunta do gratuito, sem preço nem meia-entrada");
   // Turnê: cada cidade pergunta "tem outra?"; com sim, vem a próxima cidade; com não, segue.
-  assert.deepEqual(ids(passosDoComecar("turne", [praca1()], false, false)), ["perfil", "nome", "onde#0", "data#0", "outra#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia"]);
+  assert.deepEqual(ids(passosDoComecar("turne", [praca1()], false, false)), ["perfil", "nome", "onde#0", "data#0", "outra#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia", "venda"]);
   assert.deepEqual(ids(passosDoComecar("turne", [praca1({ outra: false })], false, false)).slice(2, 6), ["onde#0", "data#0", "outra#0", "horario"]);
   assert.deepEqual(ids(passosDoComecar("turne", [praca1({ outra: true }), praca1({ cidade: "Curitiba", uf: "PR" })], false, false)).slice(2, 9), ["onde#0", "data#0", "outra#0", "onde#1", "data#1", "outra#1", "horario"]);
   assert.deepEqual(ids(passosDoComecar("turne", [praca1({ outra: true }), praca1({ outra: true }), praca1({ outra: false })], false, false)).filter(x => x.startsWith("onde")), ["onde#0", "onde#1", "onde#2"]);
@@ -110,6 +110,8 @@ test("cada passo diz o que falta, um campo por vez", () => {
   // Gratuito, preço e meia-entrada: três perguntas.
   assert.equal(conferirPasso(p("gratuito"), { ...CHEIO, gratuito: null }, HOJE), "Escolha sim ou não");
   assert.equal(conferirPasso(p("gratuito"), CHEIO, HOJE), null);
+  assert.equal(conferirPasso(p("venda"), { ...CHEIO, venda: null }, HOJE), "Escolha uma opção");
+  assert.equal(conferirPasso(p("venda"), CHEIO, HOJE), null);
   assert.equal(conferirPasso(p("preco"), { ...CHEIO, preco: "" }, HOJE), "Diga o preço da inteira");
   assert.equal(conferirPasso(p("preco"), { ...CHEIO, preco: "0" }, HOJE), "Diga o preço da inteira");
   assert.equal(conferirPasso(p("preco"), { ...CHEIO, preco: "100001" }, HOJE), "O preço pode ir até R$ 100.000");
