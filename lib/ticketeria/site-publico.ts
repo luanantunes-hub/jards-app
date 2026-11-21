@@ -8,6 +8,7 @@ import { blocosDoJson, corDoTema, espacosDosBlocos, eventosDosBlocos, hostDoPedi
 import { appUrl } from "@/lib/email/config";
 import { agoraDoServidor } from "@/lib/ticketeria/contagem";
 import { agendaDosEventos, type ItemDaAgenda } from "@/lib/ticketeria/evento-site";
+import { lerAparencia, type AparenciaDoSite } from "@/lib/ticketeria/aparencia";
 import { eventosDaLoja } from "@/lib/ticketeria/integracao-servidor";
 import type { EventoNaApi } from "@/lib/ticketeria/integracao";
 import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
@@ -35,6 +36,9 @@ export type SitePublico = {
   agora: number;
   /** Os eventos da Agenda, quando a página tem um bloco de agenda. */
   agenda?: ItemDaAgenda[];
+  /** O menu e o rodapé escolhidos para o site, e a página do primeiro evento publicado (para onde o botão de ingressos leva quando não tem endereço). */
+  aparencia: AparenciaDoSite;
+  caminhoDoPrimeiroEvento: string | null;
   /** As sessões confirmadas dos espaços que os blocos de programação citam (só os da organização do site). */
   programacoes: ProgramacoesDoSite;
   /** As sessões que ainda vão acontecer de cada evento citado num bloco de ingressos, pelo id do evento. */
@@ -80,6 +84,13 @@ export async function ingressosDosBlocos(admin: Admin, organizationId: string, b
   return saida;
 }
 
+/** A página do primeiro evento publicado da loja ("/e/<slug>"), para o botão de ingressos do menu quando o produtor não escolheu um endereço; nulo se não há evento ou se o botão não precisa dele. */
+export async function caminhoDoPrimeiroEvento(admin: Admin, lojaId: string, aparencia: AparenciaDoSite): Promise<string | null> {
+  if (aparencia.cabecalho.botao_rotulo === "" || aparencia.cabecalho.botao_url !== "") return null;
+  const { data } = await clienteDaTicketeria(admin).from("ticketeria_eventos").select("slug").eq("loja_id", lojaId).eq("situacao", "publicado").order("created_at").limit(1).maybeSingle();
+  return data ? `/e/${data.slug}` : null;
+}
+
 /** O site publicado num domínio ativo, ou null. */
 export async function siteNoAr(admin: Admin, host: string) {
   const dominio = hostDoPedido(host);
@@ -88,7 +99,7 @@ export async function siteNoAr(admin: Admin, host: string) {
   const { data: registro, error } = await ticketeria.from("ticketeria_site_dominios").select("site_id, situacao").eq("dominio", dominio).maybeSingle();
   if (error) throw new Error("não foi possível conferir o domínio");
   if (!registro || registro.situacao !== "ativo") return null;
-  const { data: site } = await ticketeria.from("ticketeria_sites").select("id, organization_id, loja_id, nome, titulo, cor, tema, situacao").eq("id", registro.site_id).maybeSingle();
+  const { data: site } = await ticketeria.from("ticketeria_sites").select("id, organization_id, loja_id, nome, titulo, cor, tema, aparencia, situacao").eq("id", registro.site_id).maybeSingle();
   if (!site || site.situacao !== "publicado") return null;
   return site;
 }
@@ -102,11 +113,13 @@ export async function paginaPublicaDoDominio(admin: Admin, host: string, slug: s
   const atual = publicadas.find(pagina => pagina.slug === slug);
   if (!atual) return null;
   const blocos = blocosDoJson(atual.blocos_publicados);
-  const [organizacao, programacoes, ingressos, agenda] = await Promise.all([
+  const aparencia = lerAparencia(site.aparencia);
+  const [organizacao, programacoes, ingressos, agenda, primeiroEvento] = await Promise.all([
     admin.from("organizations").select("nome").eq("id", site.organization_id).maybeSingle(),
     programacoesDosBlocos(admin, site.organization_id, blocos),
     ingressosDosBlocos(admin, site.organization_id, blocos),
     agendaDosBlocos(admin, site.loja_id, blocos),
+    caminhoDoPrimeiroEvento(admin, site.loja_id, aparencia),
   ]);
   return {
     titulo: site.titulo ?? site.nome,
@@ -118,6 +131,8 @@ export async function paginaPublicaDoDominio(admin: Admin, host: string, slug: s
     agora: agoraDoServidor(),
     programacoes,
     ingressos,
+    aparencia,
+    caminhoDoPrimeiroEvento: primeiroEvento,
     ...(agenda ? { agenda } : {}),
   };
 }
@@ -138,6 +153,7 @@ export async function agendaDosBlocos(admin: Admin, lojaId: string, blocos: read
 
 export type EventoPublicoDoDominio = {
   titulo: string; cor: string; tema: string; organizacao: string; agora: number;
+  aparencia: AparenciaDoSite; caminhoDoPrimeiroEvento: string | null;
   menu: { slug: string; titulo: string }[];
   evento: EventoNaApi;
 };
@@ -159,6 +175,7 @@ export async function eventoPublicoDoDominio(admin: Admin, host: string, slug: s
   const doEvento: EventoNaApi = achado ?? await eventoSemSessoes(admin, evento.id);
   return {
     titulo: site.titulo ?? site.nome, cor: corDoTema(site.cor), tema: site.tema, organizacao: (organizacao.data as { nome?: string | null } | null)?.nome ?? "", agora: agoraDoServidor(),
+    aparencia: lerAparencia(site.aparencia), caminhoDoPrimeiroEvento: await caminhoDoPrimeiroEvento(admin, site.loja_id, lerAparencia(site.aparencia)),
     menu: ordemDasPaginas(paginas ?? []).map(pagina => ({ slug: pagina.slug, titulo: pagina.titulo })), evento: doEvento,
   };
 }

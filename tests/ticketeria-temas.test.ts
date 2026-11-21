@@ -78,7 +78,7 @@ test("a prévia e a folha do tema: cinco opções, a atual marcada, e o aviso de
 
 test("a página do site mostra o tema, e o banco guarda só o nome, numa lista fechada com o clássico de padrão", () => {
   const pagina = readFileSync("app/(dashboard)/ingressos/site/page.tsx", "utf8");
-  for (const t of ["TemaDoSiteSheet", "temaDoSite(site.tema).nome", "Mudar", 'select("id, nome, titulo, cor, tema, situacao")']) assert.ok(pagina.includes(t), t);
+  for (const t of ["TemaDoSiteSheet", "temaDoSite(site.tema).nome", "Mudar", 'select("id, nome, titulo, cor, tema, aparencia, situacao")']) assert.ok(pagina.includes(t), t);
   const sql = readFileSync("supabase/migrations/20261123300000_ticketeria_site_tema.sql", "utf8").replace(/--.*$/gm, "");
   assert.match(sql, /add column if not exists tema text not null default 'classico'/);
   assert.match(sql, /check \(tema in \('classico', 'editorial', 'moderno', 'noite', 'calor'\)\)/);

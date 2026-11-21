@@ -14,12 +14,14 @@ import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryL
 import { DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { TemaDoSiteSheet } from "@/components/ticketeria/TemaDoSiteSheet";
+import { MenuDoSiteSheet, RodapeDoSiteSheet } from "@/components/ticketeria/AparenciaDoSiteSheet";
+import { lerAparencia, ROTULO_DO_LAYOUT_DO_MENU, ROTULO_DO_LAYOUT_DO_RODAPE } from "@/lib/ticketeria/aparencia";
 import { temaDoSite } from "@/lib/ticketeria/temas";
 import { EditorDoSite, type EspacoDaProgramacao, type EventoParaBloco } from "@/components/ticketeria/EditorDoSite";
 import { DominiosDoSite } from "@/components/ticketeria/DominiosDoSite";
 
 type Loja = { id: string; nome: string };
-type Site = { id: string; nome: string; titulo: string | null; cor: string; tema: string; situacao: SituacaoDoSite };
+type Site = { id: string; nome: string; titulo: string | null; cor: string; tema: string; aparencia: unknown; situacao: SituacaoDoSite };
 
 const CAMPO = "h-10 w-full rounded-xl border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-normal text-black/55";
@@ -90,6 +92,7 @@ export default function SiteDaLojaPage() {
   const [cor, setCor] = useState("#282525");
   const [folha, setFolha] = useState(false);
   const [folhaDoTema, setFolhaDoTema] = useState(false);
+  const [folhaDoMenu, setFolhaDoMenu] = useState<"menu" | "rodape" | null>(null);
   // O editor das páginas abre em tela inteira (editor à esquerda, prévia à direita).
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -110,7 +113,7 @@ export default function SiteDaLojaPage() {
         clienteDaProducao(cliente).from("producao_espacos").select("id, nome").eq("organization_id", organizationId).eq("arquivado", false).order("nome"),
       ]);
       const loja = lojas.data ?? null;
-      const sites = loja ? await ticketeria.from("ticketeria_sites").select("id, nome, titulo, cor, tema, situacao").eq("loja_id", loja.id).maybeSingle() : { data: null, error: null };
+      const sites = loja ? await ticketeria.from("ticketeria_sites").select("id, nome, titulo, cor, tema, aparencia, situacao").eq("loja_id", loja.id).maybeSingle() : { data: null, error: null };
       if (!ativo) return;
       const site = (sites.data ?? null) as Site | null;
       const ev = loja ? await ticketeria.from("ticketeria_eventos").select("id, titulo, situacao").eq("loja_id", loja.id).neq("situacao", "cancelado").order("titulo") : { data: [] };
@@ -207,6 +210,11 @@ export default function SiteDaLojaPage() {
           <span className="text-[#282525]">{temaDoSite(site.tema).nome}</span>
           {podeEditar && <button type="button" onClick={() => setFolhaDoTema(true)} className="rounded-xl text-[0.8125rem] text-black/55 underline underline-offset-2 transition hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Mudar</button>}
         </div>
+        <div className="-mt-6 mb-10 flex max-w-2xl flex-wrap items-center gap-x-8 gap-y-2 text-[0.8125rem]">
+          {([["Menu", "menu", ROTULO_DO_LAYOUT_DO_MENU[lerAparencia(site.aparencia).cabecalho.layout].nome], ["Rodapé", "rodape", ROTULO_DO_LAYOUT_DO_RODAPE[lerAparencia(site.aparencia).rodape.layout].nome]] as const).map(([rotulo, qual, nome]) => (
+            <span key={qual} className="flex items-center gap-3"><span className="text-[0.6875rem] font-normal text-black/55">{rotulo}</span><span className="text-[#282525]">{nome}</span>{podeEditar && <button type="button" onClick={() => setFolhaDoMenu(qual)} className="rounded-xl text-[0.8125rem] text-black/55 underline underline-offset-2 transition hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Mudar</button>}</span>
+          ))}
+        </div>
         <section aria-labelledby="paginas-do-site" className="mb-10 flex max-w-2xl flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border bg-white px-4 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="min-w-0 flex-1 basis-60">
             <h2 id="paginas-do-site" className="text-[0.875rem] font-medium text-[#282525]">Páginas do site</h2>
@@ -218,6 +226,8 @@ export default function SiteDaLojaPage() {
         {podeEditar && <div className="mt-12"><button type="button" onClick={apagar} className="text-[0.75rem] font-normal text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Apagar este site</button></div>}
       </DetailPageContent>
       {editando && <EditorDoSite siteId={site.id} nomeDoSite={site.titulo ?? site.nome} organizationId={organizationId} podeEditar={podeEditar} espacos={espacos} eventos={eventos} onFechar={() => setEditando(false)} />}
+      {folhaDoMenu === "menu" && <MenuDoSiteSheet siteId={site.id} aparenciaAtual={site.aparencia} onClose={() => setFolhaDoMenu(null)} onSaved={recarregar} />}
+      {folhaDoMenu === "rodape" && <RodapeDoSiteSheet siteId={site.id} aparenciaAtual={site.aparencia} nomeDoSite={site.titulo ?? site.nome} onClose={() => setFolhaDoMenu(null)} onSaved={recarregar} />}
       {folhaDoTema && <TemaDoSiteSheet siteId={site.id} temaAtual={site.tema} cor={corDoTema(site.cor)} onClose={() => setFolhaDoTema(false)} onSaved={recarregar} />}
     </div>
   );
