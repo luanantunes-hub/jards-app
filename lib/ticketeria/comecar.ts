@@ -3,7 +3,7 @@
 // fica o que a tela precisa antes de chamar: as perguntas por perfil, a conferência dos campos, a divisão da meia-entrada
 // (a mesma conta do banco), o auditório de lugares numerados e as mensagens de erro. Sem imports de servidor: roda nos testes (tests/ticketeria-comecar.test.ts).
 
-import { MAX_FILEIRAS, MAX_LUGARES_NA_FILEIRA, comCorredor, proximoNomeDeFileira, type FileiraDoMapa } from "@/lib/ticketeria/mapa";
+import { MAX_FILEIRAS, MAX_LUGARES_NA_FILEIRA, MAX_LUGARES_NO_SETOR, comCorredor, proximoNomeDeFileira, resumoDoMapa, type FileiraDoMapa } from "@/lib/ticketeria/mapa";
 
 export type PerfilDoProdutor = "espaco" | "turne" | "unico" | "festival";
 
@@ -65,7 +65,14 @@ export type RespostasDoComecar = {
   hora: string; // HH:MM, o mesmo em todas as datas
   /** Lugares numerados: null enquanto a pessoa não respondeu. */
   numerada: boolean | null;
-  /** Lugares por fileira do auditório (só com lugares numerados); vazio até a pessoa chegar nesse passo. */
+  /**
+   * O mapa de assentos que a pessoa desenhou (só com lugares numerados; null até chegar no passo do auditório): o MESMO mapa do editor do setor, com fileiras,
+   * lugares de cada uma e cadeiras bloqueadas. É o mapa final: o evento já nasce com ele. `mapaDeLugares` é o "quantos lugares" com que ele foi gerado
+   * (se a pessoa voltar e mudar o número, o mapa é refeito).
+   */
+  mapa: FileiraDoMapa[] | null;
+  mapaDeLugares: number;
+  /** Lugares por fileira do último "refazer" (só para o controle de refazer a grade). */
   porFileira: string;
   corredor: boolean;
   /** O ingresso é gratuito? null enquanto a pessoa não respondeu. */
@@ -76,7 +83,7 @@ export type RespostasDoComecar = {
 };
 
 export const RESPOSTAS_VAZIAS: RespostasDoComecar = {
-  perfil: null, evento: "", pracas: [praca()], lugares: "", hora: "20:00", numerada: null, porFileira: "", corredor: true, gratuito: null, preco: "", meia: null,
+  perfil: null, evento: "", pracas: [praca()], lugares: "", hora: "20:00", numerada: null, mapa: null, mapaDeLugares: 0, porFileira: "", corredor: true, gratuito: null, preco: "", meia: null,
 };
 
 export const MAX_PRACAS = 20;
@@ -181,10 +188,11 @@ export function conferirPasso(passo: Passo, r: RespostasDoComecar, hoje: string 
     return null;
   }
   if (id === "auditorio") {
-    const porFileira = inteiro(r.porFileira);
-    if (!porFileira || porFileira < 1) return "Diga quantos lugares por fileira";
-    if (porFileira > MAX_LUGARES_NA_FILEIRA) return "São no máximo 80 lugares por fileira";
-    if (Math.ceil(Number(r.lugares) / porFileira) > MAX_FILEIRAS) return "Ficariam mais de 60 fileiras: aumente os lugares por fileira";
+    if (!r.mapa || r.mapa.length === 0) return "Monte pelo menos uma fileira";
+    if (r.mapa.length > MAX_FILEIRAS) return "São no máximo 60 fileiras";
+    const resumo = resumoDoMapa(r.mapa);
+    if (resumo.lugares > MAX_LUGARES_NO_SETOR) return "São no máximo 5.000 lugares no setor";
+    if (resumo.aVenda < 1) return "Deixe pelo menos um lugar à venda";
     return null;
   }
   if (id === "gratuito") return r.gratuito === null ? "Escolha sim ou não" : null;
@@ -218,6 +226,14 @@ export function divisaoDosLugares(lugares: number, meia: boolean, gratuito: bool
 /** O preço da meia: metade da inteira, arredondada, nunca abaixo de 1 centavo (a mesma conta do banco). */
 export const precoDaMeia = (inteira: number) => Math.max(1, Math.round(inteira / 2));
 
+/** Quantos lugares vão à venda: com lugares numerados, os do mapa desenhado (menos as cadeiras bloqueadas); sem eles, o número digitado. */
+export const lugaresParaVender = (r: RespostasDoComecar) => (r.numerada && r.mapa ? resumoDoMapa(r.mapa).aVenda : Number(r.lugares.trim()));
+
+/** O mapa de partida do auditório (grade uniforme com a sugestão de lugares por fileira, corredor no meio), que a pessoa então edita. */
+export function auditorioInicial(lugares: number): FileiraDoMapa[] {
+  return mapaDoAuditorio(lugares, sugestaoPorFileira(lugares), true);
+}
+
 /** Os argumentos de fn_ticketeria_comecar_pracas. Chamar só depois de conferirPasso devolver null em todos os passos. */
 export function argumentosDoComecar(organizationId: string, r: RespostasDoComecar) {
   return {
@@ -225,7 +241,7 @@ export function argumentosDoComecar(organizationId: string, r: RespostasDoComeca
     p_perfil: r.perfil as PerfilDoProdutor,
     p_evento: r.evento.trim(),
     p_pracas: pracasEfetivas(r.perfil, r.pracas).map(p => ({ local: nomeDoLocal(p), cidade: p.cidade.trim(), uf: p.uf, datas: [...new Set(p.datas)].sort() })),
-    p_lugares: Number(r.lugares.trim()),
+    p_lugares: lugaresParaVender(r),
     p_hora: r.hora,
     p_preco_centavos: r.gratuito === true ? 0 : (centavosDe(r.preco) ?? 0),
     p_meia: r.gratuito === false && r.meia === true,

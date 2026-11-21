@@ -6,14 +6,13 @@ import { ArrowLeft, Building2, Check, Landmark, PartyPopper, Route, Tent, type L
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria, type ClienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import {
-  PERFIL, PERFIS, RESPOSTAS_VAZIAS, argumentosDoComecar, centavosDe, conferirPasso, divisaoDosLugares, hojeEmBrasilia, mapaDoAuditorio, mensagemDoErroDoComecar, ondeDaPraca, passosDoComecar, pracasEfetivas, praca as pracaVazia, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
+  PERFIL, PERFIS, RESPOSTAS_VAZIAS, argumentosDoComecar, auditorioInicial, centavosDe, conferirPasso, divisaoDosLugares, hojeEmBrasilia, lugaresParaVender, mapaDoAuditorio, mensagemDoErroDoComecar, ondeDaPraca, passosDoComecar, pracasEfetivas, praca as pracaVazia, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
   type PerfilDoProdutor, type Praca, type PracaCriada, type RespostasDoComecar, type ResultadoDoComecar,
 } from "@/lib/ticketeria/comecar";
 import { resumoDasDatas } from "@/lib/ticketeria/calendario";
-import { mensagemDoErroDoMapa, paraSalvar, type FileiraDoMapa } from "@/lib/ticketeria/mapa";
+import { adicionarFileira, alternarBloqueio, comCorredor, maisLugares, menosLugares, mensagemDoErroDoMapa, paraSalvar, resumoDoMapa } from "@/lib/ticketeria/mapa";
 import { CalendarioDoMes } from "@/components/ticketeria/CalendarioDoMes";
-import { MapaDeAssentos } from "@/components/ticketeria/AssentosView";
-import { SetorSheet, type SetorEditavel } from "@/components/ticketeria/SetorDoLocal";
+import { EditorDoMapa } from "@/components/ticketeria/AssentosView";
 import { cidadeExata, cidadesDoBrasil, cidadesDoEstado } from "@/lib/ticketeria/local-do-evento";
 import type { TabelaMunicipios } from "@/lib/prestacao/municipios";
 import { carregarMunicipios } from "@/components/prestacao/objeto/MunicipioCombobox";
@@ -33,8 +32,8 @@ const LINK = "rounded-xl border border-black/[.12] bg-white px-3.5 py-2 text-[0.
 
 const reais = (centavos: number) => (centavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-/** O que a tela final precisa saber além da resposta do banco: o setor numerado de cada cidade e como terminou a montagem dos mapas de assentos. */
-type Pronto = ResultadoDoComecar & { setores: (SetorEditavel & { local_id: string })[]; mapa: "montado" | "falhou" | null; erroDoMapa: string | null };
+/** O que a tela final precisa saber além da resposta do banco: como terminou a gravação do mapa de assentos desenhado (em todas as cidades). */
+type Pronto = ResultadoDoComecar & { mapa: "montado" | "falhou" | null; erroDoMapa: string | null };
 
 export function ComecarView({ organizationId }: { organizationId: string }) {
   const [r, setR] = useState<RespostasDoComecar>(RESPOSTAS_VAZIAS);
@@ -73,8 +72,10 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
   async function seguir() {
     const problema = conferirPasso(atual, r);
     if (problema) { setErro(problema); return; }
-    // O auditório já vem com uma sugestão de lugares por fileira, para a pessoa só ajustar.
-    if (passoAtual === "lugares" && r.numerada && !r.porFileira) setR(anterior => ({ ...anterior, porFileira: String(sugestaoPorFileira(Number(anterior.lugares))) }));
+    // O auditório já vem desenhado com uma grade sugerida, para a pessoa só ajustar (refeito se ela voltou e mudou o número de lugares).
+    if (passoAtual === "lugares" && r.numerada && (!r.mapa || r.mapaDeLugares !== Number(r.lugares))) {
+      setR(anterior => ({ ...anterior, mapa: auditorioInicial(Number(anterior.lugares)), mapaDeLugares: Number(anterior.lugares), porFileira: String(sugestaoPorFileira(Number(anterior.lugares))) }));
+    }
     // "Tem outra cidade?" sim: abre a próxima cidade (a sequência de passos ganha o onde e o data dela).
     if (passoAtual === "outra" && cidadeAtual.outra === true && r.pracas.length <= ip + 1) setR(anterior => ({ ...anterior, pracas: [...anterior.pracas, pracaVazia()] }));
     if (passo < PASSOS.length - 1 || (passoAtual === "outra" && cidadeAtual.outra === true)) { setPasso(passo + 1); return; }
@@ -83,12 +84,12 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
     const { data, error } = await ticketeria.rpc("fn_ticketeria_comecar_pracas", argumentosDoComecar(organizationId, r));
     if (error || !data) { setSalvando(false); setErro(mensagemDoErroDoComecar(error)); return; }
     const resultado = data as unknown as ResultadoDoComecar;
-    const montagem = r.numerada ? await montarAuditorio(ticketeria, resultado.pracas, r) : { setores: [], mapa: null, erroDoMapa: null };
+    const montagem = r.numerada ? await montarAuditorio(ticketeria, resultado.pracas, r) : { mapa: null, erroDoMapa: null };
     setSalvando(false);
     setPronto({ ...resultado, ...montagem });
   }
 
-  if (pronto) return <EventoPronto r={r} resultado={pronto} organizationId={organizationId} recomecar={() => { setPronto(null); setR({ ...RESPOSTAS_VAZIAS, pracas: [pracaVazia()] }); setPasso(0); }} />;
+  if (pronto) return <EventoPronto r={r} resultado={pronto} recomecar={() => { setPronto(null); setR({ ...RESPOSTAS_VAZIAS, pracas: [pracaVazia()] }); setPasso(0); }} />;
 
   const perfil = r.perfil ? PERFIL[r.perfil] : null;
   return (
@@ -203,7 +204,7 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
       {passoAtual === "auditorio" && (
         <section aria-labelledby="comecar-titulo">
           <h1 id="comecar-titulo" className={TITULO}>Monte o auditório</h1>
-          <div className="mt-8 md:mt-10"><MontarAuditorio r={r} muda={muda} /></div>
+          <div className="mt-8 md:mt-10"><AuditorioDoEvento r={r} muda={muda} /></div>
         </section>
       )}
 
@@ -315,61 +316,55 @@ function EscolherOnde({ praca, mudaPraca, municipios, rotuloDoLugar, exemploDoLu
   );
 }
 
-/** O auditório de lugares numerados: quantos lugares por fileira (as fileiras saem da conta) e a prévia das cadeiras. O desenho (palco, cadeiras, corredor) é o MapaDeAssentos em modo "previa": o mesmo da compra e do editor. */
-function MontarAuditorio({ r, muda }: { r: RespostasDoComecar; muda: (parte: Partial<RespostasDoComecar>) => void }) {
+/**
+ * O auditório de lugares numerados: o MESMO editor de mapa do setor (EditorDoMapa), aqui dentro do onboarding. A grade de partida vem sugerida; a pessoa
+ * soma ou tira lugares de cada fileira, acrescenta fileiras, bloqueia cadeiras e liga ou desliga o corredor. O que ficar desenhado aqui é o mapa final do setor:
+ * o evento nasce com ele. "Refazer a grade" volta a uma grade uniforme com N lugares por fileira (e descarta o que foi editado).
+ */
+function AuditorioDoEvento({ r, muda }: { r: RespostasDoComecar; muda: (parte: Partial<RespostasDoComecar>) => void }) {
+  const mapa = r.mapa ?? [];
+  const resumo = resumoDoMapa(mapa);
   const lugares = Number(r.lugares) || 0;
   const porFileira = Math.max(1, Math.min(80, Number(r.porFileira) || 1));
-  const fileiras: FileiraDoMapa[] = lugares > 0 ? mapaDoAuditorio(lugares, porFileira, r.corredor) : [];
-  const botao = "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-black/[.15] bg-white text-[1.25rem] leading-none text-[#1C0E33] transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-95 disabled:opacity-30";
-  const ajusta = (novo: number) => muda({ porFileira: String(Math.max(1, Math.min(80, novo))) });
+  const refazer = (por: number) => muda({ porFileira: String(por), mapa: mapaDoAuditorio(lugares, por, true) });
+  const botao = "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-black/[.15] bg-white text-[1.125rem] leading-none text-[#1C0E33] transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-95 disabled:opacity-30";
   return (
-    <div>
-      <div className="flex items-center justify-center gap-3">
-        <button type="button" className={botao} aria-label="Menos um lugar por fileira" disabled={porFileira <= 1} onClick={() => ajusta(porFileira - 1)}>−</button>
-        <div className="text-center">
-          <input aria-label="Lugares por fileira" inputMode="numeric" value={r.porFileira} onChange={e => muda({ porFileira: e.target.value.replace(/\D/g, "").slice(0, 2) })}
-            className="w-20 rounded-xl border border-black/[.15] bg-white py-2 text-center text-[1.75rem] font-[700] tabular-nums text-[#1C0E33] outline-none focus:border-[#7259B5]/50 focus:ring-2 focus:ring-[#7259B5]/10" />
-          <p className="mt-1 text-[0.75rem] text-black/45">lugares por fileira</p>
-        </div>
-        <button type="button" className={botao} aria-label="Mais um lugar por fileira" disabled={porFileira >= 80} onClick={() => ajusta(porFileira + 1)}>+</button>
+    <div className="space-y-4">
+      <EditorDoMapa fileiras={comCorredor(mapa, r.corredor)} lugares={resumo.aVenda} bloqueados={resumo.bloqueados} vendidos={0} corredor={r.corredor}
+        onCorredor={corredor => muda({ corredor })} onAlternar={(f, n) => muda({ mapa: alternarBloqueio(mapa, f, n) })} onAdicionarFileira={() => muda({ mapa: adicionarFileira(mapa) })}
+        onMaisLugares={f => muda({ mapa: maisLugares(mapa, f) })} onMenosLugares={f => muda({ mapa: menosLugares(mapa, f) })} />
+      <div className="flex flex-wrap items-center gap-3 text-[0.8125rem] text-black/60">
+        <span>Refazer a grade com</span>
+        <button type="button" className={botao} aria-label="Menos um lugar por fileira" disabled={porFileira <= 1 || lugares < 1} onClick={() => refazer(porFileira - 1)}>−</button>
+        <span className="w-6 text-center text-[1rem] font-[700] tabular-nums text-[#1C0E33]">{porFileira}</span>
+        <button type="button" className={botao} aria-label="Mais um lugar por fileira" disabled={porFileira >= 80 || lugares < 1} onClick={() => refazer(porFileira + 1)}>+</button>
+        <span>lugares por fileira</span>
       </div>
-      <p className="mt-4 text-center text-[0.9375rem] text-black/55 tabular-nums">{fileiras.length} {fileiras.length === 1 ? "fileira" : "fileiras"} · {lugares} lugares</p>
-      <div className="mt-4 rounded-xl border border-black/[.08] bg-black/[.015] px-4 py-5"><MapaDeAssentos fileiras={fileiras} modo="previa" /></div>
-      <div className="mt-4 flex justify-center"><Marcar id="co-corredor" marcado={r.corredor} onChange={corredor => muda({ corredor })} texto="Corredor no meio de cada fileira" /></div>
     </div>
   );
 }
 
 /**
- * Monta o mapa de assentos do setor "Geral" de cada cidade (o mesmo desenho em todas: o produtor ajusta por cidade depois). Um setor que já era numerado,
- * ou de outro tamanho (espaço refeito), fica como está: o mapa se ajusta no editor.
+ * Grava o mapa desenhado no setor "Geral" de cada cidade (o mesmo mapa em todas: o produtor ajusta por cidade depois). Um setor que já era numerado, ou de
+ * outro tamanho (espaço refeito), fica como está: o mapa se ajusta no editor do local.
  */
-async function montarAuditorio(ticketeria: ClienteDaTicketeria, pracas: PracaCriada[], r: RespostasDoComecar): Promise<Pick<Pronto, "setores" | "mapa" | "erroDoMapa">> {
-  const lugares = Number(r.lugares);
-  const setores: Pronto["setores"] = [];
+async function montarAuditorio(ticketeria: ClienteDaTicketeria, pracas: PracaCriada[], r: RespostasDoComecar): Promise<Pick<Pronto, "mapa" | "erroDoMapa">> {
+  const lugares = lugaresParaVender(r);
   let tentou = false;
   let erro: string | null = null;
   for (const p of pracas) {
-    let numerado = p.setor_numerado;
-    if (!numerado && p.setor_lugares === lugares) {
-      tentou = true;
-      const { error } = await ticketeria.rpc("fn_ticketeria_salvar_mapa", { p_setor: p.setor_id, p_fileiras: paraSalvar(mapaDoAuditorio(lugares, Number(r.porFileira), r.corredor)), p_corredor: r.corredor });
-      if (error) erro ??= mensagemDoErroDoMapa(error); else numerado = true;
-    }
-    setores.push({ id: p.setor_id, nome: "Geral", lugares: p.setor_lugares, arquivado: false, numerado, corredor_no_meio: r.corredor, local_id: p.local_id });
+    if (p.setor_numerado || p.setor_lugares !== lugares || !r.mapa) continue;
+    tentou = true;
+    const { error } = await ticketeria.rpc("fn_ticketeria_salvar_mapa", { p_setor: p.setor_id, p_fileiras: paraSalvar(r.mapa), p_corredor: r.corredor });
+    if (error) erro ??= mensagemDoErroDoMapa(error);
   }
-  return { setores, mapa: erro ? "falhou" : tentou ? "montado" : null, erroDoMapa: erro };
+  return { mapa: erro ? "falhou" : tentou ? "montado" : null, erroDoMapa: erro };
 }
 
-function Marcar({ id, marcado, onChange, texto }: { id: string; marcado: boolean; onChange: (marcado: boolean) => void; texto: string }) {
-  return <label htmlFor={id} className="flex cursor-pointer items-center gap-2.5 text-[0.8125rem] text-[#282525]"><input id={id} type="checkbox" checked={marcado} onChange={e => onChange(e.target.checked)} className="size-4 accent-[#7259B5]" />{texto}</label>;
-}
-
-function EventoPronto({ r, resultado, recomecar, organizationId }: { r: RespostasDoComecar; resultado: Pronto; recomecar: () => void; organizationId: string }) {
-  const [editandoMapa, setEditandoMapa] = useState<number | null>(null);
+function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resultado: Pronto; recomecar: () => void }) {
   const gratuito = r.gratuito === true;
   const inteira = gratuito ? 0 : (centavosDe(r.preco) ?? 0);
-  const lugares = Number(r.lugares);
+  const lugares = lugaresParaVender(r);
   const divisao = divisaoDosLugares(lugares, r.meia === true, gratuito);
   const cidades = pracasEfetivas(r.perfil, r.pracas);
   const varias = cidades.length > 1;
@@ -379,11 +374,13 @@ function EventoPronto({ r, resultado, recomecar, organizationId }: { r: Resposta
       ? [["Entrada gratuita", `${lugares} lugares${varias ? " por cidade" : ""}`] as [string, string]]
       : [["Inteira", `${reais(inteira)} · ${divisao.inteira} lugares`] as [string, string], ...(divisao.meia > 0 ? [["Meia-entrada", `${reais(precoDaMeia(inteira))} · ${divisao.meia} lugares`] as [string, string]] : [])]),
   ];
-  if (resultado.mapa === "montado") linhas.push(["Auditório", `${Math.ceil(lugares / (Number(r.porFileira) || 1))} fileiras · ${lugares} lugares numerados`]);
+  if (resultado.mapa === "montado" && r.mapa) {
+    const resumo = resumoDoMapa(r.mapa);
+    linhas.push(["Auditório", `${resumo.fileiras} fileiras · ${resumo.aVenda} lugares numerados${resumo.bloqueados > 0 ? ` · ${resumo.bloqueados} bloqueados` : ""}`]);
+  }
   const cabecalho = varias
     ? `${cidades.length} cidades · ${totalDeSessoes(r)} datas · ${r.hora}`
     : `${resumoDasDatas(cidades[0].datas)}, ${r.hora} · ${ondeDaPraca(cidades[0])}`;
-  const aberto = editandoMapa === null ? null : resultado.setores[editandoMapa] ?? null;
   return (
     <section aria-labelledby="pronto-titulo" className="mx-auto w-full max-w-[36rem]">
       <div className="mb-6 h-[3px] rounded-full bg-[#7259B5]" aria-hidden="true" />
@@ -410,19 +407,18 @@ function EventoPronto({ r, resultado, recomecar, organizationId }: { r: Resposta
         </div>
       )}
 
-      {resultado.mapa === "falhou" && resultado.erroDoMapa && <div className="mt-4"><Aviso texto={`O evento foi criado, mas o mapa de assentos não ficou pronto: ${resultado.erroDoMapa}`} /></div>}
+      {resultado.mapa === "falhou" && resultado.erroDoMapa && (
+        <div className="mt-4 space-y-2">
+          <Aviso texto={`O evento foi criado, mas o mapa de assentos não ficou pronto: ${resultado.erroDoMapa}`} />
+          <Link href="/ingressos/locais" className={LINK}>Abrir os locais e montar o mapa</Link>
+        </div>
+      )}
 
       <div className="mt-6 flex flex-wrap items-center gap-2.5">
         {!gratuito && <Link href="/ingressos/recebimentos" className={CTA}>Cadastrar conta</Link>}
-        {r.numerada && resultado.setores.map((setor, i) => (
-          <button key={setor.id} type="button" onClick={() => setEditandoMapa(i)} className={LINK}>{varias ? `Desenhar o mapa de ${cidades[i]?.cidade ?? "assentos"}` : "Desenhar o mapa de assentos"}</button>
-        ))}
         <Link href={`/ingressos/eventos/${resultado.evento_id}`} className={gratuito ? CTA : LINK}>{gratuito ? "Abrir o evento para publicar" : "Abrir o evento"}</Link>
         <button type="button" onClick={recomecar} className={VOLTAR}>Criar outro</button>
       </div>
-      {aberto && (
-        <SetorSheet organizationId={organizationId} localId={aberto.local_id} nomeDoLocal={ondeDaPraca(cidades[editandoMapa ?? 0])} setor={aberto} onClose={() => setEditandoMapa(null)} onSaved={() => setEditandoMapa(null)} />
-      )}
     </section>
   );
 }

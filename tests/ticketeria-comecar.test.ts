@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import {
-  MAX_DATAS_POR_PRACA, MAX_PRACAS, MAX_SESSOES, PERFIL, PERFIS, RESPOSTAS_VAZIAS, UFS_DO_COMECAR, argumentosDoComecar, centavosDe, conferirPasso, divisaoDosLugares, mapaDoAuditorio, mensagemDoErroDoComecar, nomeDoLocal, ondeDaPraca, passosDoComecar, praca, pracasEfetivas, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
+  MAX_DATAS_POR_PRACA, MAX_PRACAS, MAX_SESSOES, PERFIL, PERFIS, RESPOSTAS_VAZIAS, UFS_DO_COMECAR, argumentosDoComecar, auditorioInicial, lugaresParaVender, centavosDe, conferirPasso, divisaoDosLugares, mapaDoAuditorio, mensagemDoErroDoComecar, nomeDoLocal, ondeDaPraca, passosDoComecar, praca, pracasEfetivas, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
   type Passo, type PassoId, type Praca, type RespostasDoComecar,
 } from "../lib/ticketeria/comecar";
+import { alternarBloqueio, maisLugares, menosLugares, adicionarFileira, resumoDoMapa } from "../lib/ticketeria/mapa";
 import { cidadeExata, cidadesDoBrasil, cidadesDoEstado, normalizar } from "../lib/ticketeria/local-do-evento";
 import { ESTADOS_DO_MAPA } from "../lib/ticketeria/mapa-estados";
 import { NOMES_DOS_MESES, alternarDia, dataPorExtenso, diasEntre, mesDaData, resumoDasDatas, semanasDoMes, somarMeses } from "../lib/ticketeria/calendario";
@@ -99,10 +100,13 @@ test("cada passo diz o que falta, um campo por vez", () => {
   assert.equal(conferirPasso(p("lugares"), { ...CHEIO, numerada: true, lugares: "4801" }, HOJE), "Com lugares numerados, o máximo são 4.800 lugares");
   assert.equal(conferirPasso(p("lugares"), { ...CHEIO, numerada: true, lugares: "4800" }, HOJE), null);
   assert.equal(conferirPasso(p("lugares"), { ...CHEIO, numerada: false, lugares: "5001" }, HOJE), null, "sem numeração o teto é maior");
-  assert.equal(conferirPasso(p("auditorio"), { ...CHEIO, numerada: true, porFileira: "" }, HOJE), "Diga quantos lugares por fileira");
-  assert.equal(conferirPasso(p("auditorio"), { ...CHEIO, numerada: true, porFileira: "81" }, HOJE), "São no máximo 80 lugares por fileira");
-  assert.equal(conferirPasso(p("auditorio"), { ...CHEIO, numerada: true, lugares: "1000", porFileira: "10" }, HOJE), "Ficariam mais de 60 fileiras: aumente os lugares por fileira");
-  assert.equal(conferirPasso(p("auditorio"), { ...CHEIO, numerada: true, porFileira: "16" }, HOJE), null);
+  // O auditório: o mapa desenhado (o mesmo do editor do setor).
+  const desenhado = { ...CHEIO, numerada: true, mapa: mapaDoAuditorio(100, 16, true) };
+  assert.equal(conferirPasso(p("auditorio"), { ...CHEIO, numerada: true, mapa: null }, HOJE), "Monte pelo menos uma fileira");
+  assert.equal(conferirPasso(p("auditorio"), { ...CHEIO, numerada: true, mapa: [] }, HOJE), "Monte pelo menos uma fileira");
+  assert.equal(conferirPasso(p("auditorio"), desenhado, HOJE), null);
+  assert.equal(conferirPasso(p("auditorio"), { ...desenhado, mapa: mapaDoAuditorio(5, 5, false).map(f => ({ ...f, assentos: f.assentos.map(a => ({ ...a, estado: "bloqueado" as const })) })) }, HOJE), "Deixe pelo menos um lugar à venda", "tudo bloqueado não vende");
+  assert.equal(conferirPasso(p("auditorio"), { ...desenhado, mapa: mapaDoAuditorio(5000 + 1, 80, false) }, HOJE), "São no máximo 60 fileiras", "81 fileiras: acima do formato");
   // Gratuito, preço e meia-entrada: três perguntas.
   assert.equal(conferirPasso(p("gratuito"), { ...CHEIO, gratuito: null }, HOJE), "Escolha sim ou não");
   assert.equal(conferirPasso(p("gratuito"), CHEIO, HOJE), null);
@@ -158,6 +162,26 @@ test("o perfil tem uma pergunta por tela: nome, onde e quando", () => {
   }
   assert.equal(PERFIL.espaco.onde.rotuloDoLugar, "", "quem tem espaço já disse o nome do lugar no passo do nome");
   for (const id of ["turne", "unico", "festival"] as const) assert.ok(PERFIL[id].onde.rotuloDoLugar, id);
+});
+
+test("o mapa desenhado no onboarding é o do editor: editar muda os lugares à venda, e é isso que o evento vende", () => {
+  const inicial = auditorioInicial(100);
+  assert.equal(inicial.reduce((n, f) => n + f.assentos.length, 0), 100, "a grade de partida tem os lugares digitados");
+  assert.equal(inicial[0].assentos.length, 16);
+  const comNumeracao = { ...CHEIO, numerada: true, lugares: "100", mapa: inicial };
+  assert.equal(lugaresParaVender(comNumeracao), 100);
+  // Bloqueia três cadeiras e tira um lugar da última fileira: 96 à venda (as mesmas contas do editor do setor).
+  let mapa = alternarBloqueio(inicial, "A", 1);
+  mapa = alternarBloqueio(mapa, "A", 2);
+  mapa = alternarBloqueio(mapa, "B", 16);
+  mapa = menosLugares(mapa, "G");
+  assert.deepEqual({ ...resumoDoMapa(mapa) }, { fileiras: 7, lugares: 99, bloqueados: 3, aVenda: 96, vendidos: 0 });
+  assert.equal(lugaresParaVender({ ...comNumeracao, mapa }), 96, "o evento vende os lugares do mapa, sem as cadeiras bloqueadas");
+  assert.equal(argumentosDoComecar("org", { ...comNumeracao, mapa }).p_lugares, 96);
+  assert.equal(argumentosDoComecar("org", { ...comNumeracao, mapa: maisLugares(adicionarFileira(mapa), "A") }).p_lugares, 96 + 3 + 1, "a fileira nova copia os 3 lugares da última, e mais um lugar na A: tudo conta");
+  assert.equal(alternarBloqueio(mapa, "A", 1)[0].assentos[0].estado, "livre", "tocar de novo libera");
+  // Sem lugares numerados, vale o número digitado.
+  assert.equal(lugaresParaVender({ ...CHEIO, numerada: false, lugares: "250", mapa }), 250);
 });
 
 test("o auditório divide os lugares em fileiras, a última leva o que sobra, e o total é sempre o digitado", () => {
@@ -283,6 +307,9 @@ test("a tela vazia da Ticketeria leva ao onboarding, e o onboarding chama a fun�
   const tela = await readFile("components/ticketeria/ComecarView.tsx", "utf8");
   assert.match(tela, /\.rpc\("fn_ticketeria_comecar_pracas", argumentosDoComecar\(organizationId, r\)\)/);
   assert.match(tela, /href="\/ingressos\/recebimentos"/, "a conta de recebimento fica para o fim, sem travar");
+  assert.doesNotMatch(tela, /Desenhar o mapa/, "o mapa desenhado no passo do auditório é o final: a tela de fim não oferece desenhar de novo");
+  assert.match(tela, /<EditorDoMapa /, "o auditório usa o editor de mapa de verdade");
+  assert.doesNotMatch(tela, /MapaDeAssentos|SetorSheet/, "sem desenho paralelo nem folha do setor no onboarding");
   for (const arquivo of ["ticketeria_comecar", "ticketeria_comecar_pracas"]) {
     const teste = await readFile(`supabase/tests/${arquivo}.test.sql`, "utf8");
     const plano = Number(/select plan\((\d+)\);/.exec(teste)?.[1]);
