@@ -246,6 +246,25 @@
 .tku-fone-tela { padding:22px 16px 16px; border-radius:17px; background:#fff; text-align:center; }
 .tku-fone svg { display:block; width:26px; height:26px; margin:0 auto 14px; stroke:var(--tku-ink); fill:none; stroke-width:1.5; stroke-linecap:round; }
 .tku-fone-btn { margin-top:18px; padding:11px; border-radius:9px; background:var(--tku-ink); color:#fff; font-family:'Geist Mono',ui-monospace,monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
+/* O ingresso em três camadas: a base, o polvo e a onça, com inclinação discreta ao passar o cursor. */
+.tku-tk-palco { display:flex; justify-content:center; width:100%; padding:6px; perspective:1100px; }
+.tku-tk { position:relative; display:block; width:min(100%,248px); touch-action:pan-y; cursor:grab; transform-style:preserve-3d;
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--zoom,1));
+  transition:transform .55s cubic-bezier(.16,1,.3,1), filter .55s ease; filter:drop-shadow(0 24px 25px rgba(99,30,117,.22)); will-change:transform; }
+.tku-tk.em-movimento { transition:transform 90ms linear, filter 150ms ease; cursor:grabbing; filter:drop-shadow(0 34px 28px rgba(99,30,117,.25)); }
+.tku-tk img { display:block; width:100%; height:auto; pointer-events:none; user-select:none; -webkit-user-drag:none; }
+.tku-tk .tku-tk-cam { position:absolute; inset:0; height:100%; object-fit:contain; will-change:transform; transition:transform .55s cubic-bezier(.16,1,.3,1); }
+.tku-tk.em-movimento .tku-tk-cam { transition:transform 100ms linear; }
+.tku-tk-polvo { transform:translate3d(var(--px,0px),var(--py,0px),0); }
+.tku-tk-onca { transform:translate3d(var(--ox,0px),var(--oy,0px),0); }
+.tku-tk-luz { position:absolute; inset:0; pointer-events:none; mix-blend-mode:screen; opacity:var(--luz,0);
+  background:radial-gradient(circle at var(--luz-x,50%) var(--luz-y,42%), rgba(255,255,255,.21), transparent 34%); transition:opacity .3s ease; }
+.tku-dlg .tku-tk { width:min(100%,320px); }
+@media (prefers-reduced-motion:reduce) {
+  .tku-tk, .tku-tk.em-movimento { transform:none !important; transition:none !important; }
+  .tku-tk .tku-tk-cam { transform:none !important; transition:none !important; }
+  .tku-tk-luz { display:none !important; }
+}
 .tku-tab--l th:not(:first-child), .tku-tab--l td:not(:first-child) { text-align:right; }
 .tku-tab--l tfoot td { background:var(--tku-sup); font-weight:500; }
 .tku-dlg { width:100%; max-width:min(880px,92vw); padding:0; border:0; border-radius:var(--tku-raio); background:var(--tku-papel); color:var(--tku-ink); box-shadow:0 40px 80px -30px rgba(28,14,51,.55); }
@@ -370,6 +389,21 @@ section[id] { scroll-margin-top:72px; }
     </div>
   </article>
   <article class="tku-mc tku-mc--5 tku-mc--lil">
+    <div class="tku-mc-cab"><span class="tku-st">Em teste</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Controle o acesso, mesmo sem conexão"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
+    <h3 class="tku-cond">Controle o acesso, mesmo sem conexão</h3>
+    <p class="tku-t tku-sr" data-txt>Cada ingresso tem um QR assinado. A leitura valida na hora e sincroniza quando a conexão volta.</p>
+    <div class="tku-mc-art">
+      <div class="tku-tk-palco" aria-hidden="true">
+        <div class="tku-tk" data-ticket>
+          <img class="tku-tk-base" src="assets/ticket-jards-base.webp" width="674" height="1108" alt="" loading="lazy" draggable="false" />
+          <img class="tku-tk-cam tku-tk-polvo" src="assets/ticket-jards-polvo.webp" width="674" height="1108" alt="" loading="lazy" draggable="false" />
+          <img class="tku-tk-cam tku-tk-onca" src="assets/ticket-jards-onca.webp" width="674" height="1108" alt="" loading="lazy" draggable="false" />
+          <span class="tku-tk-luz"></span>
+        </div>
+      </div>
+    </div>
+  </article>
+  <article class="tku-mc tku-mc--lil">
     <div class="tku-mc-cab"><span class="tku-st">Em teste</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Receba direto, sem custódia"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
     <h3 class="tku-cond">Receba direto, sem custódia</h3>
     <p class="tku-t tku-sr" data-txt>O pagamento é dividido no momento da compra: o valor do ingresso vai para o organizador e só a taxa fica com a Ticketeria. A Ticketeria não retém o dinheiro.</p>
@@ -395,23 +429,6 @@ section[id] { scroll-margin-top:72px; }
         <div class="tku-mono tku-mudo" style="display:flex;justify-content:space-between;gap:10px"><span>Plateia A</span><span>Lote 2 · R$ 60</span></div>
         <div class="tku-mapa"><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="c"></i><i></i><i></i><i></i><i></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="c"></i><i></i><i></i><i></i><i></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="v"></i><i class="v"></i><i class="v"></i><i class="v"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <div class="tku-leg tku-mono"><span><i></i>Livre</span><span><i></i>Vendido</span><span><i></i>Cortesia</span></div>
-      </div>
-    </div>
-  </article>
-  <article class="tku-mc ">
-    <div class="tku-mc-cab"><span class="tku-st">Em teste</span><button type="button" class="tku-exp" data-exp aria-label="Ampliar: Controle o acesso, mesmo sem conexão"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9.8 6.2M6.5 13.5h-4v-4M2.5 13.5l3.7-3.7"/></svg></button></div>
-    <h3 class="tku-cond">Controle o acesso, mesmo sem conexão</h3>
-    <p class="tku-t tku-sr" data-txt>Cada ingresso tem um QR assinado. A leitura valida na hora e sincroniza quando a conexão volta.</p>
-    <div class="tku-mc-art">
-      <div class="tku-janela" aria-hidden="true">
-        <div class="tku-h tku-mono"><span>Acesso · sáb 20h</span><span>● ao vivo</span></div>
-        <div class="tku-b tku-mono">
-          <div class="tku-prog"><span>Entraram</span><span>604 / 876</span></div>
-          <i class="tku-barra" style="--w:69%"></i>
-        </div>
-        <div class="tku-ln"><span class="tku-tg tku-tg--g">Válido</span>Meia · Fila C, 12</div>
-        <div class="tku-ln"><span class="tku-tg tku-tg--y">Já utilizado</span>Inteira · Plateia</div>
-        <div class="tku-ln"><span class="tku-tg tku-tg--r">Inválido</span>QR de outra sessão</div>
       </div>
     </div>
   </article>
@@ -664,6 +681,59 @@ section[id] { scroll-margin-top:72px; }
     .whatsapp-float { right: 1rem; bottom: 1rem; width: 3.25rem; height: 3.25rem; }
   }
 </style>
+<script>
+// O ingresso inclina de leve com o cursor; o polvo e a onça andam em profundidades diferentes.
+// Começa reto, volta sozinho ao sair, responde ao toque e fica parado com "reduzir movimento".
+// Os eventos ficam no documento para valer também na cópia que abre na janela ampliada.
+(function () {
+  var parado = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var arrastando = null;
+  function alvo(e) { return e.target.closest ? e.target.closest("[data-ticket]") : null; }
+  function mover(el, e) {
+    if (parado.matches) return;
+    var r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    var x = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (r.width / 2)));
+    var y = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / (r.height / 2)));
+    var v = { "--rx": (y * 6).toFixed(2) + "deg", "--ry": (-x * 6).toFixed(2) + "deg", "--zoom": "1.012",
+      "--px": (x * -2.3).toFixed(2) + "px", "--py": (y * -1.8).toFixed(2) + "px",
+      "--ox": (x * 2.4).toFixed(2) + "px", "--oy": (y * 1.8).toFixed(2) + "px",
+      "--luz-x": ((x + 1) * 50).toFixed(1) + "%", "--luz-y": ((y + 1) * 50).toFixed(1) + "%", "--luz": ".6" };
+    for (var k in v) el.style.setProperty(k, v[k]);
+    el.classList.add("em-movimento");
+  }
+  function voltar(el) {
+    el.classList.remove("em-movimento");
+    var v = { "--rx": "0deg", "--ry": "0deg", "--zoom": "1", "--px": "0px", "--py": "0px", "--ox": "0px", "--oy": "0px", "--luz": "0" };
+    for (var k in v) el.style.setProperty(k, v[k]);
+  }
+  document.addEventListener("pointermove", function (e) {
+    var el = arrastando || alvo(e);
+    if (!el) return;
+    if (e.pointerType !== "mouse" && el !== arrastando) return;
+    mover(el, e);
+  }, { passive: true });
+  document.addEventListener("pointerdown", function (e) {
+    var el = alvo(e);
+    if (!el) return;
+    arrastando = el;
+    if (el.setPointerCapture) { try { el.setPointerCapture(e.pointerId); } catch (x) {} }
+    mover(el, e);
+  });
+  document.addEventListener("pointerup", function (e) {
+    if (!arrastando) return;
+    var el = arrastando; arrastando = null;
+    if (e.pointerType !== "mouse") voltar(el);
+  });
+  document.addEventListener("pointercancel", function () { if (arrastando) { voltar(arrastando); arrastando = null; } });
+  document.addEventListener("pointerout", function (e) {
+    var el = alvo(e);
+    if (!el || el === arrastando) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    voltar(el);
+  });
+})();
+</script>
 <script>
 // Cada peça do mosaico amplia numa janela com a mesma maquete, em tamanho maior, e a sua descrição.
 // O botão de ampliar só aparece quando há JavaScript e suporte a <dialog>.
