@@ -132,7 +132,7 @@ export async function paginasPublicadasDoDominio(admin: Admin, host: string): Pr
 
 /** A Agenda dos blocos: os eventos publicados da loja com sessão por vir (nulo se nenhum bloco da página é de agenda, para não gastar a consulta). */
 export async function agendaDosBlocos(admin: Admin, lojaId: string, blocos: readonly Bloco[], origem: string = appUrl()): Promise<ItemDaAgenda[] | null> {
-  if (!blocos.some(b => b.tipo === "agenda")) return null;
+  if (!blocos.some(b => b.tipo === "agenda" || (b.tipo === "capa" && b.layout === "proximo"))) return null;
   return agendaDosEventos((await eventosDaLoja(admin, lojaId, origem)).eventos);
 }
 

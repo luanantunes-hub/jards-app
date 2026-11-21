@@ -6,7 +6,7 @@ import { TopSheet } from "@/components/ui/TopSheet";
 import { Aviso, AREA, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 import { CampoDeImagem } from "@/components/ticketeria/CampoDeImagem";
 import { instanteNoFuso, partesNoFuso } from "@/lib/ticketeria/eventos";
-import { GRUPOS_DE_BLOCOS, LAYOUTS_DA_AGENDA, LAYOUT_PADRAO_DA_AGENDA, ROTULO_DO_LAYOUT_DA_AGENDA, ROTULO_DO_TIPO_DE_BLOCO, lerBloco, type Bloco, type LayoutDaAgenda, type TipoDeBloco } from "@/lib/ticketeria/site";
+import { GRUPOS_DE_BLOCOS, LAYOUTS_DO_DESTAQUE, LAYOUT_PADRAO_DO_DESTAQUE, MAX_SLIDES_DO_DESTAQUE, ROTULO_DO_LAYOUT_DO_DESTAQUE, type LayoutDoDestaque, type SlideDoDestaque, LAYOUTS_DA_AGENDA, LAYOUT_PADRAO_DA_AGENDA, ROTULO_DO_LAYOUT_DA_AGENDA, ROTULO_DO_TIPO_DE_BLOCO, lerBloco, type Bloco, type LayoutDaAgenda, type TipoDeBloco } from "@/lib/ticketeria/site";
 
 // O seletor "Acrescentar bloco" (blocos em três grupos) e as folhas dos blocos novos do construtor (capa, duas colunas, galeria, vídeo, mapa, contagem regressiva, perguntas e patrocinadores).
 // Desenho aprovado pelo dono em 20/11/2026. Os blocos antigos seguem na folha de EditorDoSite.tsx.
@@ -82,6 +82,20 @@ function CamposDaColuna({ id, nome, coluna, onChange, desabilitado, organization
   );
 }
 
+/** A miniatura de cada layout do destaque: um esquema em caixas, só para reconhecer a forma. */
+function MiniaturaDoDestaque({ layout }: { layout: LayoutDoDestaque }) {
+  const forte = "bg-[#7259B5]/55", suave = "bg-[#7259B5]/25";
+  return (
+    <span aria-hidden="true" className="relative flex h-14 w-full items-stretch gap-1 overflow-hidden rounded-lg bg-black/[.04] p-1.5">
+      {layout === "tela_cheia" && <span className={`flex w-full flex-col justify-end gap-1 rounded-[3px] p-1.5 ${forte}`}><span className="h-1.5 w-1/2 rounded-full bg-white/90" /><span className="h-1 w-1/3 rounded-full bg-white/60" /></span>}
+      {layout === "dividido" && <><span className="flex w-1/2 flex-col justify-center gap-1"><span className="h-1.5 w-3/4 rounded-full bg-[#7259B5]/70" /><span className="h-1 w-full rounded-full bg-[#7259B5]/30" /><span className="h-2 w-8 rounded-[3px] bg-[#7259B5]/70" /></span><span className={`w-1/2 rounded-[3px] ${forte}`} /></>}
+      {layout === "carrossel" && <><span className={`relative flex flex-1 flex-col justify-end gap-1 rounded-[3px] p-1.5 ${forte}`}><span className="h-1.5 w-1/2 rounded-full bg-white/90" /></span><span className={`w-3 rounded-[3px] ${suave}`} /><span className="absolute left-3 top-2.5 flex gap-0.5"><span className="h-1 w-1 rounded-full bg-white" /><span className="h-1 w-1 rounded-full bg-white/50" /><span className="h-1 w-1 rounded-full bg-white/50" /></span></>}
+      {layout === "proximo" && <span className={`flex w-full flex-col justify-end gap-1 rounded-[3px] p-1.5 ${forte}`}><span className="h-1.5 w-1/3 rounded-full bg-white/50" /><span className="h-1.5 w-2/3 rounded-full bg-white/90" /><span className="h-1 w-1/2 rounded-full bg-white/60" /></span>}
+      {layout === "cartao" && <><span className={`w-full rounded-[3px] ${forte}`} /><span className="absolute inset-x-3 bottom-1.5 flex h-5 items-center justify-between rounded-[3px] bg-white px-1.5 shadow"><span className="h-1 w-1/2 rounded-full bg-[#7259B5]/50" /><span className="h-2 w-6 rounded-[3px] bg-[#7259B5]/70" /></span></>}
+    </span>
+  );
+}
+
 /** A miniatura de cada layout da agenda: um esquema em caixas, só para reconhecer a forma. */
 function MiniaturaDaAgenda({ layout }: { layout: LayoutDaAgenda }) {
   const caixa = "rounded-[3px] bg-[#7259B5]/25";
@@ -106,6 +120,12 @@ export function BlocoNovoSheet({ bloco, tipo, organizationId, onClose, onSalvar 
   const [imagem, setImagem] = useState(b?.tipo === "capa" ? b.imagem : "");
   const [botaoRotulo, setBotaoRotulo] = useState(b?.tipo === "capa" ? b.botao_rotulo : "");
   const [botaoUrl, setBotaoUrl] = useState(b?.tipo === "capa" ? b.botao_url : "");
+  const [layoutDestaque, setLayoutDestaque] = useState<LayoutDoDestaque>(b?.tipo === "capa" ? b.layout : LAYOUT_PADRAO_DO_DESTAQUE);
+  const [botao2Rotulo, setBotao2Rotulo] = useState(b?.tipo === "capa" ? b.botao2_rotulo : "");
+  const [botao2Url, setBotao2Url] = useState(b?.tipo === "capa" ? b.botao2_url : "");
+  const [chamada, setChamada] = useState(b?.tipo === "capa" ? b.chamada : "");
+  const [info, setInfo] = useState(b?.tipo === "capa" ? b.info : "");
+  const [slides, setSlides] = useState<SlideDoDestaque[]>(b?.tipo === "capa" && b.slides.length > 0 ? b.slides : [{ titulo: "", frase: "", imagem: "", botao_rotulo: "", botao_url: "" }]);
   const [esquerda, setEsquerda] = useState<ColunaEmEdicao>(colunaInicial(b?.tipo === "colunas" ? b.esquerda : undefined, "texto"));
   const [direita, setDireita] = useState<ColunaEmEdicao>(colunaInicial(b?.tipo === "colunas" ? b.direita : undefined, "imagem"));
   const [imagens, setImagens] = useState<ImagemEmEdicao[]>(b?.tipo === "galeria" ? b.imagens.map(i => ({ ...i, link: "" })) : [{ url: "https://", alt: "", link: "" }, { url: "https://", alt: "", link: "" }]);
@@ -123,7 +143,7 @@ export function BlocoNovoSheet({ bloco, tipo, organizationId, onClose, onSalvar 
 
   function entrada(): unknown {
     switch (tipo) {
-      case "capa": return { tipo, titulo, subtitulo, imagem, botao_rotulo: botaoRotulo, botao_url: botaoUrl };
+      case "capa": return { tipo, layout: layoutDestaque, titulo, subtitulo, imagem, botao_rotulo: botaoRotulo, botao_url: botaoUrl, botao2_rotulo: botao2Rotulo, botao2_url: botao2Url, chamada, info, slides: layoutDestaque === "carrossel" ? slides : [] };
       case "colunas": return { tipo, esquerda: entradaDaColuna(esquerda), direita: entradaDaColuna(direita) };
       case "galeria": return { tipo, titulo, imagens: imagens.map(i => ({ url: i.url, alt: i.alt })) };
       case "video": return { tipo, titulo, url: video };
@@ -159,14 +179,60 @@ export function BlocoNovoSheet({ bloco, tipo, organizationId, onClose, onSalvar 
         {erro && <Aviso texto={erro} />}
         {tipo === "capa" && (
           <>
-            <div><label className={ROTULO} htmlFor={`${id}-titulo`}>Título</label><input id={`${id}-titulo`} autoFocus className={CAMPO} value={titulo} onChange={e => setTitulo(e.target.value)} maxLength={120} disabled={salvando} /></div>
-            <div><label className={ROTULO} htmlFor={`${id}-sub`}>Subtítulo (opcional)</label><input id={`${id}-sub`} className={CAMPO} value={subtitulo} onChange={e => setSubtitulo(e.target.value)} maxLength={200} disabled={salvando} /></div>
-            <CampoDeImagem id={`${id}-img`} rotulo="Imagem de fundo (https://…, opcional)" valor={imagem} onChange={setImagem} organizationId={organizationId} desabilitado={salvando} />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div><label className={ROTULO} htmlFor={`${id}-br`}>Botão: texto (opcional)</label><input id={`${id}-br`} className={CAMPO} value={botaoRotulo} onChange={e => setBotaoRotulo(e.target.value)} maxLength={60} placeholder="Comprar ingressos" disabled={salvando} /></div>
-              <div><label className={ROTULO} htmlFor={`${id}-bu`}>Botão: para onde leva</label><input id={`${id}-bu`} className={CAMPO} value={botaoUrl} onChange={e => setBotaoUrl(e.target.value)} maxLength={500} placeholder="https://" disabled={salvando} /></div>
-            </div>
-            <p className="text-[0.75rem] text-black/55">Com imagem de fundo, o texto sai em branco sobre a imagem escurecida; sem ela, a capa usa a cor do site.</p>
+            <fieldset>
+              <legend className={ROTULO}>Como mostrar o destaque</legend>
+              <div className="grid grid-cols-2 gap-2.5">
+                {LAYOUTS_DO_DESTAQUE.map(opcao => (
+                  <label key={opcao} className={`flex cursor-pointer flex-col gap-1.5 rounded-xl border p-2.5 transition has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[#7259B5] ${layoutDestaque === opcao ? "border-[#7259B5] bg-[#7259B5]/[.06] ring-1 ring-[#7259B5]" : "border-black/[.12] hover:bg-black/[.02]"}`}>
+                    <input type="radio" name={`${id}-layout`} value={opcao} checked={layoutDestaque === opcao} onChange={() => setLayoutDestaque(opcao)} disabled={salvando} className="sr-only" />
+                    <MiniaturaDoDestaque layout={opcao} />
+                    <span className="text-[0.8125rem] font-normal text-[#282525]">{ROTULO_DO_LAYOUT_DO_DESTAQUE[opcao].nome}</span>
+                    <span className="text-[0.6875rem] leading-snug text-black/55">{ROTULO_DO_LAYOUT_DO_DESTAQUE[opcao].frase}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            {layoutDestaque === "proximo" ? (
+              <p className="rounded-xl border border-black/[.08] bg-black/[.02] p-3 text-[0.75rem] leading-relaxed text-black/65">Nada a preencher. O destaque mostra o próximo evento publicado da loja, com a imagem, a data, o espaço, o preço e o botão para escolher ingressos. Quando o evento muda, o destaque muda. Sem evento publicado com sessão por vir, ele não aparece.</p>
+            ) : layoutDestaque === "carrossel" ? (
+              <>
+                <ul className="space-y-2">
+                  {slides.map((sl, i) => (
+                    <li key={i} className="space-y-1.5 rounded-xl border border-black/[.08] p-3">
+                      <div className="flex items-center justify-between"><span className="text-[0.6875rem] text-black/55">Destaque {i + 1}</span>{slides.length > 1 && <button type="button" onClick={() => setSlides(slides.filter((_, j) => j !== i))} disabled={salvando} aria-label={`Tirar o destaque ${i + 1}`} className="flex h-7 w-7 items-center justify-center rounded-xl text-black/35 hover:bg-black/[.05] hover:text-[#B23B3B]"><Trash2 size={13} aria-hidden="true" /></button>}</div>
+                      <input aria-label={`Título do destaque ${i + 1}`} className={CAMPO} value={sl.titulo} onChange={e => setSlides(mudar(slides, i, { titulo: e.target.value }))} maxLength={120} placeholder="Título" disabled={salvando} />
+                      <input aria-label={`Frase do destaque ${i + 1}`} className={CAMPO} value={sl.frase} onChange={e => setSlides(mudar(slides, i, { frase: e.target.value }))} maxLength={200} placeholder="Frase de apoio (opcional)" disabled={salvando} />
+                      <CampoDeImagem id={`${id}-sl-${i}`} ariaLabel={`Imagem do destaque ${i + 1}`} valor={sl.imagem} onChange={imagem => setSlides(mudar(slides, i, { imagem }))} organizationId={organizationId} desabilitado={salvando} />
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <input aria-label={`Texto do botão do destaque ${i + 1}`} className={CAMPO} value={sl.botao_rotulo} onChange={e => setSlides(mudar(slides, i, { botao_rotulo: e.target.value }))} maxLength={60} placeholder="Botão: texto (opcional)" disabled={salvando} />
+                        <input aria-label={`Endereço do botão do destaque ${i + 1}`} className={CAMPO} value={sl.botao_url} onChange={e => setSlides(mudar(slides, i, { botao_url: e.target.value }))} maxLength={500} placeholder="https://" disabled={salvando} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                {slides.length < MAX_SLIDES_DO_DESTAQUE && <button type="button" onClick={() => setSlides([...slides, { titulo: "", frase: "", imagem: "", botao_rotulo: "", botao_url: "" }])} disabled={salvando} className={`inline-flex items-center gap-1 ${LINK}`}><Plus size={12} aria-hidden="true" /> Outro destaque</button>}
+                <p className="text-[0.75rem] text-black/55">De 1 a {MAX_SLIDES_DO_DESTAQUE} destaques. Passam sozinhos a cada 6 segundos, param quando a pessoa passa o mouse e têm botão de pausa.</p>
+              </>
+            ) : (
+              <>
+                <div><label className={ROTULO} htmlFor={`${id}-titulo`}>Título</label><input id={`${id}-titulo`} autoFocus className={CAMPO} value={titulo} onChange={e => setTitulo(e.target.value)} maxLength={120} placeholder="Hamlet, em cartaz até 6 de dezembro" disabled={salvando} /></div>
+                <div><label className={ROTULO} htmlFor={`${id}-sub`}>Frase de apoio (opcional)</label><input id={`${id}-sub`} className={CAMPO} value={subtitulo} onChange={e => setSubtitulo(e.target.value)} maxLength={200} placeholder="Uma montagem íntima, com 14 atores." disabled={salvando} /></div>
+                {(layoutDestaque === "tela_cheia" || layoutDestaque === "dividido") && <div><label className={ROTULO} htmlFor={`${id}-cham`}>Chamada em destaque (opcional, como “Estreia”)</label><input id={`${id}-cham`} className={CAMPO} value={chamada} onChange={e => setChamada(e.target.value)} maxLength={40} disabled={salvando} /></div>}
+                {layoutDestaque === "dividido" && <div><label className={ROTULO} htmlFor={`${id}-info`}>Data e local (opcional)</label><input id={`${id}-info`} className={CAMPO} value={info} onChange={e => setInfo(e.target.value)} maxLength={120} placeholder="Sáb, 12 de dezembro, 20h · Teatro Municipal" disabled={salvando} /></div>}
+                <CampoDeImagem id={`${id}-img`} rotulo="Imagem (https://…, opcional)" valor={imagem} onChange={setImagem} organizationId={organizationId} desabilitado={salvando} />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div><label className={ROTULO} htmlFor={`${id}-br`}>Botão: texto (opcional)</label><input id={`${id}-br`} className={CAMPO} value={botaoRotulo} onChange={e => setBotaoRotulo(e.target.value)} maxLength={60} placeholder="Escolher ingressos" disabled={salvando} /></div>
+                  <div><label className={ROTULO} htmlFor={`${id}-bu`}>Botão: para onde leva</label><input id={`${id}-bu`} className={CAMPO} value={botaoUrl} onChange={e => setBotaoUrl(e.target.value)} maxLength={500} placeholder="https://" disabled={salvando} /></div>
+                </div>
+                {(layoutDestaque === "tela_cheia" || layoutDestaque === "dividido") && (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div><label className={ROTULO} htmlFor={`${id}-b2r`}>Segundo botão: texto (opcional)</label><input id={`${id}-b2r`} className={CAMPO} value={botao2Rotulo} onChange={e => setBotao2Rotulo(e.target.value)} maxLength={60} placeholder="Ver a programação" disabled={salvando} /></div>
+                    <div><label className={ROTULO} htmlFor={`${id}-b2u`}>Segundo botão: para onde leva</label><input id={`${id}-b2u`} className={CAMPO} value={botao2Url} onChange={e => setBotao2Url(e.target.value)} maxLength={500} placeholder="https://" disabled={salvando} /></div>
+                  </div>
+                )}
+                <p className="text-[0.75rem] text-black/55">O texto sobre a imagem sai em branco, com um degradê escuro para ler bem. Sem imagem, o destaque usa a cor do site.</p>
+              </>
+            )}
           </>
         )}
         {tipo === "colunas" && (

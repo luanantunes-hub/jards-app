@@ -124,8 +124,8 @@ test("todo campo de imagem do editor ganhou o botão Biblioteca, e o endereço h
   assert.ok(campo.includes("Biblioteca") && campo.includes("escolhida da biblioteca") && campo.includes("aoEscolher={url => onChange(url)}") && campo.includes("placeholder = \"https://\""));
   const editor = readFileSync("components/ticketeria/EditorDoSite.tsx", "utf8");
   const novos = readFileSync("components/ticketeria/BlocosNovosSheet.tsx", "utf8");
-  for (const [arquivoDoCodigo, textos] of [[editor, ['id="bl-url" rotulo="Endereço da imagem (https://…) ou da biblioteca"', 'id="seo-imagem"', "organizationId={organizationId}"]], [novos, ["-img`} rotulo=\"Imagem de fundo", "-gal-${i}", "-pat-${i}", "-url`} ariaLabel={`Endereço da imagem da coluna"]]] as [string, string[]][]) for (const t of textos) assert.ok(arquivoDoCodigo.includes(t), t);
-  assert.equal((novos.match(/<CampoDeImagem/g) ?? []).length, 4, "capa, colunas, galeria e patrocinadores");
+  for (const [arquivoDoCodigo, textos] of [[editor, ['id="bl-url" rotulo="Endereço da imagem (https://…) ou da biblioteca"', 'id="seo-imagem"', "organizationId={organizationId}"]], [novos, ["-img`} rotulo=\"Imagem (https", "-sl-${i}", "-gal-${i}", "-pat-${i}", "-url`} ariaLabel={`Endereço da imagem da coluna"]]] as [string, string[]][]) for (const t of textos) assert.ok(arquivoDoCodigo.includes(t), t);
+  assert.equal((novos.match(/<CampoDeImagem/g) ?? []).length, 5, "destaque, destaques do carrossel, colunas, galeria e patrocinadores");
   assert.equal(/<input[^>]*Endereço da imagem/.test(novos) || /<input[^>]*Endereço do logo/.test(novos), false, "nenhum campo de imagem ficou sem o botão");
 });
 
