@@ -13,3 +13,4 @@ A Vercel só constrói quando a mensagem do ÚLTIMO commit pede, para não gerar
 - **Produção** (`main`): só constrói com `[publicar]` na mensagem. Mesclar um PR **não publica**: no último merge do lote, ponha `[publicar]` no título do squash, ou empurre um commit vazio com `[publicar]` para `main`.
 - Um PR por assunto (por exemplo, Ticketeria ou Editais), empurrando em lotes. Cada push roda os testes do GitHub (grátis: o repositório é público).
 - Entre uma prévia e outra, mostre o resultado com prints feitos localmente.
+- A marca vale em qualquer parte da mensagem do commit (título ou corpo): não a escreva sem querer o build, nem ao citar a regra. No merge por squash, confira o título e o corpo antes.
