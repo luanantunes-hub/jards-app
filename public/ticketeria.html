@@ -48,14 +48,14 @@
 :where(.tku) :is(h1,h2,h3,p,ul,pre) { margin:0; padding:0; }
 :where(.tku) ul { list-style:none; }
 .tku-in { max-width:calc(1280px + 10vw); margin:0 auto; padding:0 64px; }
-.tku-mono { font-family:'Geist Mono',ui-monospace,monospace; font-weight:400; letter-spacing:.06em; text-transform:uppercase; font-size:11px; line-height:1.5; }
+.tku-mono { font-family:'Satoshi',system-ui,sans-serif; font-weight:500; letter-spacing:0; text-transform:none; font-size:13px; line-height:1.5; }
 .tku-cond { font-family:'Satoshi',system-ui,sans-serif; font-weight:400; letter-spacing:-.045em; }
 .tku-hero h1 .tku-vio, .tku-h2 .tku-vio, .tku-cta h2 span { font-family:'Gambetta',Georgia,'Times New Roman',serif; font-style:italic; font-weight:400; letter-spacing:-.03em; font-size:1.08em; }
 .tku h3.tku-cond { font-weight:500; }
 .tku ::selection { background:var(--tku-lil); color:var(--tku-ink); }
 .tku-vio { color:var(--tku-vio); }
 .tku-mudo { color:var(--tku-mudo); }
-.tku-btn { display:inline-flex; border-radius:var(--tku-raio); align-items:center; justify-content:space-between; gap:22px; min-height:48px; padding:0 18px; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:12px; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; text-decoration:none; transition:background-color .16s ease, color .16s ease; }
+.tku-btn { display:inline-flex; border-radius:var(--tku-raio); align-items:center; justify-content:space-between; gap:22px; min-height:48px; padding:0 18px; font-family:'Satoshi',system-ui,sans-serif; font-weight:500; font-size:15px; letter-spacing:-.01em; white-space:nowrap; text-decoration:none; transition:background-color .16s ease, color .16s ease; }
 .tku-btn i { font-style:normal; font-size:16px; }
 .tku-btn--pr { background:var(--tku-ink); color:#fff; }
 .tku-btn--pr i { color:#B79CFF; }
@@ -85,7 +85,6 @@
 .tku-foto img { display:block; width:100%; height:100%; object-fit:cover; user-select:none; }
 @keyframes tku-desce { from { transform:translateY(-50%); } to { transform:translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .tku-mural-fita { animation:none; } }
-.tku-hero .tku-idx { color:var(--tku-vio); display:flex; gap:14px; flex-wrap:wrap; }
 .tku-hero h1 { font-size:min(116px,9.4vw); line-height:.98; margin-top:22px; letter-spacing:-.055em; }
 .tku-hero h1 span { display:block; }
 .tku-hero h1 .tku-vio { color:var(--tku-vio); }
@@ -99,8 +98,6 @@
 
 /* seções */
 .tku-sec { padding:40px 0 80px; border-bottom:1px solid var(--tku-linha); }
-.tku-cab { display:flex; gap:22px; align-items:baseline; }
-.tku-cab .tku-idx { color:var(--tku-vio); }
 .tku-h2 { font-size:clamp(38px,5.6vw,72px); line-height:1.03; margin-top:26px; max-width:980px; padding-bottom:.06em; letter-spacing:-.05em; }
 .tku-h2 .tku-vio { color:var(--tku-vio); }
 .tku-lede { margin-top:22px; font-size:16px; line-height:1.6; color:#3A3935; max-width:520px; }
@@ -116,7 +113,7 @@
 .tku-lista { margin-top:26px; }
 .tku-lista li { display:flex; gap:12px; padding:11px 0; border-top:1px solid var(--tku-linha); font-size:14.5px; line-height:1.5; font-weight:400; max-width:520px; }
 .tku-lista li:last-child { border-bottom:1px solid var(--tku-linha); }
-.tku-lista li::before { content:"+"; font-family:'Geist Mono',monospace; color:var(--tku-vio); font-weight:500; }
+.tku-lista li::before { content:"+"; font-family:'Satoshi',system-ui,sans-serif; color:var(--tku-vio); font-weight:500; }
 .tku-lista--tres { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 28px; max-width:none; margin-top:40px; }
 .tku-lista--tres li { max-width:none; border-bottom:1px solid var(--tku-linha); }
 .tku-janela { border:1px solid var(--tku-linha); border-radius:var(--tku-raio); overflow:hidden; background:#fff; box-shadow:0 1px 2px rgba(28,14,51,.04), 0 24px 48px -28px rgba(28,14,51,.28); }
@@ -137,8 +134,8 @@
 .tku-bar2 i::after { content:""; position:absolute; left:0; top:0; bottom:0; width:var(--w); background:var(--tku-vio); }
 .tku-bar2 span:last-child { text-align:right; }
 .tku-ln { display:flex; gap:10px; align-items:center; padding:10px 16px; border-top:1px solid var(--tku-linha); font-size:13px; font-weight:400; }
-.tku-ln em { margin-left:auto; font-style:normal; color:var(--tku-mudo); font-family:'Geist Mono',monospace; font-size:11px; text-align:right; }
-.tku-tg { font-family:'Geist Mono',monospace; font-size:10px; text-transform:uppercase; padding:3px 8px; border-radius:6px; letter-spacing:.05em; white-space:nowrap; }
+.tku-ln em { margin-left:auto; font-style:normal; color:var(--tku-mudo); font-family:'Satoshi',system-ui,sans-serif; font-size:12px; text-align:right; }
+.tku-tg { font-family:'Satoshi',system-ui,sans-serif; font-weight:500; font-size:11px; padding:3px 8px; border-radius:6px; white-space:nowrap; }
 .tku-tg--g { background:#DDF3C9; color:#2C6B0E; }
 .tku-tg--y { background:var(--tku-ambl); color:#A8300F; }
 .tku-tg--r { background:#FFDADA; color:#A22; }
@@ -201,7 +198,7 @@
 @media (prefers-reduced-motion: reduce) { .tku-btn, .tku-faq summary i, .tku-exp, .tku-fec { transition:none; } }
 
 /* situação de cada capacidade */
-.tku-st { display:inline-flex; align-items:center; gap:7px; padding:3px 8px; border-radius:999px; border:1px solid var(--tku-linha); background:rgba(255,255,255,.7); font-family:'Geist Mono',ui-monospace,monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; color:var(--tku-ink); }
+.tku-st { display:inline-flex; align-items:center; gap:7px; padding:3px 8px; border-radius:999px; border:1px solid var(--tku-linha); background:rgba(255,255,255,.7); font-family:'Satoshi',system-ui,sans-serif; font-weight:500; font-size:12px; white-space:nowrap; color:var(--tku-ink); }
 .tku-st::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--tku-vio); }
 .tku-st--c::before { background:var(--tku-amb); }
 .tku-st--b::before { background:transparent; border:1.5px solid var(--tku-vio); }
@@ -249,14 +246,12 @@
 .tku-dupla-loja { position:relative; z-index:2; grid-column:1; grid-row:1; margin:4% -16% 0 0; }
 .tku-dupla-arena { grid-column:2; grid-row:1; }
 .tku-dupla-arena .tku-iso { margin-top:0; }
-.tku-iso .palco-r { fill:var(--tku-ink); font-family:'Geist Mono',ui-monospace,monospace; font-size:.62px; letter-spacing:.32em; text-anchor:middle; }
-.tku-lote { margin-left:6px; color:var(--tku-mudo); font-size:10px; }
+.tku-iso .palco-r { fill:var(--tku-ink); font-family:'Satoshi',system-ui,sans-serif; font-weight:600; font-size:.66px; letter-spacing:.24em; text-anchor:middle; }
 .tku-dupla-loja .tku-tab td:nth-child(2) { white-space:nowrap; }
-@media (max-width:640px) { .tku-lote { display:block; margin:2px 0 0; } }
 .tku-mc--12 h3 { max-width:28ch; }
 @media (max-width:1023px) { .tku-dupla { grid-template-columns:minmax(0,1fr); } .tku-dupla-loja { margin:0; } .tku-dupla-arena { grid-column:1; grid-row:2; margin-top:-8px; } }
 @media (max-width:640px) { .tku-iso { width:124%; max-width:none; margin-left:-12%; } }   /* no celular, a arena ocupa a largura toda */
-.tku-iso .palco-t { fill:#fff; font-family:'Geist Mono',ui-monospace,monospace; font-size:11px; letter-spacing:.3em; text-anchor:middle; }
+.tku-iso .palco-t { fill:#fff; font-family:'Satoshi',system-ui,sans-serif; font-weight:600; font-size:11px; letter-spacing:.24em; text-anchor:middle; }
 .tku-iso .guia { stroke:var(--tku-ink); stroke-opacity:.38; stroke-width:1; stroke-dasharray:2 3; }
 .tku-iso polygon { stroke-width:1; stroke-linejoin:round; }
 .tku-iso .pilula { filter:drop-shadow(0 2px 3px rgba(28,14,51,.10)); }
@@ -273,7 +268,7 @@
 .tku-fone { width:192px; margin:0 auto; padding:8px; border-radius:24px; background:var(--tku-ink); box-shadow:0 24px 44px -28px rgba(28,14,51,.7); }
 .tku-fone-tela { padding:22px 16px 16px; border-radius:17px; background:#fff; text-align:center; }
 .tku-fone svg { display:block; width:26px; height:26px; margin:0 auto 14px; stroke:var(--tku-ink); fill:none; stroke-width:1.5; stroke-linecap:round; }
-.tku-fone-btn { margin-top:18px; padding:11px; border-radius:9px; background:var(--tku-ink); color:#fff; font-family:'Geist Mono',ui-monospace,monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
+.tku-fone-btn { margin-top:18px; padding:11px; border-radius:9px; background:var(--tku-ink); color:#fff; font-family:'Satoshi',system-ui,sans-serif; font-weight:500; font-size:13px; }
 /* O ingresso em três camadas: a base, o polvo e a onça, com inclinação discreta ao passar o cursor. */
 .tku-tk-palco { display:flex; justify-content:center; width:100%; padding:6px; perspective:1100px; }
 .tku-tk { position:relative; display:block; width:min(100%,248px); touch-action:pan-y; cursor:grab; transform-style:preserve-3d;
@@ -338,7 +333,6 @@ section[id] { scroll-margin-top:72px; }
 .tku-logo { display:inline-flex; align-items:center; gap:6.5px; font-weight:700; font-size:22px; letter-spacing:-.04em; color:var(--tku-ink); }
 .tku-simbolo { width:18px; height:auto; flex:none; }
 .tku-marca { font-family:'Cabinet Grotesk','Satoshi',sans-serif; font-weight:800; letter-spacing:-.015em; }
-.tku-marca-sub { padding-left:12px; border-left:1px solid var(--tku-linha); color:var(--tku-mudo); letter-spacing:.08em; }
 .tku-nav { position:fixed; inset:0 0 auto 0; z-index:50; height:64px; background:rgba(255,255,255,.88); backdrop-filter:blur(14px) saturate(140%); -webkit-backdrop-filter:blur(14px) saturate(140%); border-bottom:1px solid var(--tku-linha); }
 .tku-nav-in { max-width:calc(1280px + 10vw); height:100%; margin:0 auto; padding:0 64px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
 .tku-nav-links { display:flex; gap:28px; }
@@ -350,7 +344,7 @@ section[id] { scroll-margin-top:72px; }
 .tku-foot-bot { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-top:36px; padding-top:20px; border-top:1px solid var(--tku-linha); color:var(--tku-mudo); }
 .tku-foot a, .tku-foot button { color:var(--tku-mudo); transition:color .16s ease; }
 .tku-foot .tku-logo { color:var(--tku-ink); }
-.tku-foot button { font-family:'Geist Mono',ui-monospace,monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
+.tku-foot button { font-family:'Satoshi',system-ui,sans-serif; font-weight:500; font-size:13px; }
 .tku-foot a:hover, .tku-foot button:hover { color:var(--tku-ink); }
 .tku-foot-links { display:flex; gap:22px; flex-wrap:wrap; }
 @media (max-width:1023px) { .tku-nav-in { padding:0 32px; } .tku-nav-links { display:none; } }
@@ -364,7 +358,7 @@ section[id] { scroll-margin-top:72px; }
 
 <header class="tku-nav">
   <div class="tku-nav-in">
-    <a href="#top" class="tku-logo" aria-label="Jards Ticketeria, voltar ao início"><svg class="tku-simbolo" viewBox="158 93 201 299" aria-hidden="true"><path d="M160.090,291.659C160.090,291.465 160.090,291.269 160.090,291.076C160.090,182.818 247.979,94.929 356.236,94.929L356.911,94.929L356.911,291.659L160.090,291.659Z" fill="#FF5528"/><path d="M259.129,291.661L356.911,291.661L356.911,291.998C356.911,346.028 313.123,389.913 259.129,390.070L259.129,291.661" fill="#6450D2"/></svg><span class="tku-marca">jards</span><span class="tku-marca-sub tku-mono">ticketeria</span></a>
+    <a href="#top" class="tku-logo" aria-label="Jards, voltar ao início"><svg class="tku-simbolo" viewBox="158 93 201 299" aria-hidden="true"><path d="M160.090,291.659C160.090,291.465 160.090,291.269 160.090,291.076C160.090,182.818 247.979,94.929 356.236,94.929L356.911,94.929L356.911,291.659L160.090,291.659Z" fill="#FF5528"/><path d="M259.129,291.661L356.911,291.661L356.911,291.998C356.911,346.028 313.123,389.913 259.129,390.070L259.129,291.661" fill="#6450D2"/></svg><span class="tku-marca">jards</span></a>
     <nav class="tku-nav-links tku-mono" aria-label="Principal">
       <a href="#base">Plataforma</a><a href="#aberta">Integração</a><a href="#vemai">Situação</a><a href="#duvidas">Perguntas</a>
     </nav>
@@ -377,7 +371,6 @@ section[id] { scroll-margin-top:72px; }
 <!-- ════════════════════════ ABERTURA ════════════════════════ -->
 <section id="top" class="tku-hero" aria-labelledby="abertura-titulo">
   <div class="tku-in">
-    <p class="tku-mono tku-idx"><span>/01</span><span>Ticketeria · infraestrutura de ingressos</span></p>
     <h1 id="abertura-titulo" class="tku-cond"><span>A infraestrutura</span><span>por trás de</span><span class="tku-vio">todo ingresso.</span></h1>
     <div class="tku-sub">
       <div>
@@ -395,7 +388,6 @@ section[id] { scroll-margin-top:72px; }
 <!-- ════════════════════════ BASE: AS CAPACIDADES ════════════════════════ -->
 <section id="base" class="tku-sec" aria-labelledby="base-titulo">
   <div class="tku-in">
-    <p class="tku-cab tku-mono"><span class="tku-idx tku-vio">/02</span><span>Plataforma</span></p>
     <h2 id="base-titulo" class="tku-h2 tku-cond">Uma base flexível <span class="tku-vio">para cada tipo de evento.</span></h2>
     <p class="tku-lede">Sessão única, temporada ou turnê, com ou sem assento marcado. As mesmas peças, configuradas para cada modelo de venda.</p>
     <div class="tku-mos" data-mosaico>
@@ -411,7 +403,7 @@ section[id] { scroll-margin-top:72px; }
             <div class="tku-bar tku-mono tku-mudo">Arena do Porto · Turnê 2026</div>
             <div style="padding:14px 14px 4px"><p class="tku-cond" style="font-size:24px;line-height:1.1">Mar Aberto, ao vivo</p><p class="tku-mono tku-mudo" style="margin-top:8px">Arena do Porto · 20h</p></div>
             <table class="tku-tab"><thead><tr class="tku-mono tku-mudo"><th>Setor</th><th>Preço</th><th>Qtd.</th></tr></thead>
-              <tbody><tr><td>Premium <span class="tku-lote tku-mono">Lote 3</span></td><td>R$ 380,00</td><td>2</td></tr><tr><td>Pista <span class="tku-lote tku-mono">Lote 2</span></td><td>R$ 290,00</td><td>0</td></tr><tr><td>Anel 1 <span class="tku-lote tku-mono">Lote 2</span></td><td>R$ 220,00</td><td>1</td></tr><tr><td>Anel 2 <span class="tku-lote tku-mono">Lote 2</span></td><td>R$ 160,00</td><td>0</td></tr><tr><td>Anel 3 <span class="tku-lote tku-mono">Lote 1</span></td><td>R$ 110,00</td><td>0</td></tr></tbody></table>
+              <tbody><tr><td>Premium</td><td>R$ 380,00</td><td>2</td></tr><tr><td>Pista</td><td>R$ 290,00</td><td>0</td></tr><tr><td>Anel 1</td><td>R$ 220,00</td><td>1</td></tr><tr><td>Anel 2</td><td>R$ 160,00</td><td>0</td></tr><tr><td>Anel 3</td><td>R$ 110,00</td><td>0</td></tr></tbody></table>
           </div>
           <div class="tku-tot"><span>Total R$ 980,00</span><span class="tku-btn">Pagar com Pix <i>↗</i></span></div>
         </div>
@@ -489,7 +481,6 @@ section[id] { scroll-margin-top:72px; }
 <!-- ════════════════════════ EVENTOS DE TODOS OS TAMANHOS ════════════════════════ -->
 <section id="evento" class="tku-sec" aria-labelledby="evento-titulo">
   <div class="tku-in">
-    <p class="tku-cab tku-mono"><span class="tku-idx tku-vio">/03</span><span>Casos de uso</span></p>
     <h2 id="evento-titulo" class="tku-h2 tku-cond">Para eventos <span class="tku-vio">de todos os tamanhos.</span></h2>
     <ul class="tku-quem tku-quem--d">
       <li><b class="tku-cond">Artes cênicas</b><p class="tku-d">Temporadas com várias sessões e assentos marcados, numa venda só.</p></li>
@@ -508,7 +499,6 @@ section[id] { scroll-margin-top:72px; }
 <!-- ════════════════════════ INFRAESTRUTURA ABERTA ════════════════════════ -->
 <section id="aberta" class="tku-sec" aria-labelledby="aberta-titulo">
   <div class="tku-in">
-    <p class="tku-cab tku-mono"><span class="tku-idx tku-vio">/04</span><span>Integração</span></p>
     <div class="tku-duas" style="margin-top:26px">
       <div>
         <h2 id="aberta-titulo" class="tku-h2 tku-cond">Infraestrutura aberta <span class="tku-vio">para cada pilha.</span></h2>
@@ -541,7 +531,6 @@ section[id] { scroll-margin-top:72px; }
 <!-- ════════════════════════ AGENTES ════════════════════════ -->
 <section id="agentes" class="tku-sec" aria-labelledby="agentes-titulo">
   <div class="tku-in">
-    <p class="tku-cab tku-mono"><span class="tku-idx tku-vio">/05</span><span>Próximas etapas</span></p>
     <div class="tku-duas" style="margin-top:26px">
       <div>
         <span class="tku-st tku-st--b">Em breve</span>
@@ -564,7 +553,6 @@ section[id] { scroll-margin-top:72px; }
 <!-- ════════════════════════ A SUA PRÓPRIA TICKETERIA ════════════════════════ -->
 <section id="propria" class="tku-sec" aria-labelledby="propria-titulo">
   <div class="tku-in">
-    <p class="tku-cab tku-mono"><span class="tku-idx tku-vio">/06</span><span>Próximas etapas</span></p>
     <div style="margin-top:26px"><span class="tku-st tku-st--b">Em breve</span></div>
     <h2 id="propria-titulo" class="tku-h2 tku-cond" style="margin-top:22px">Construa a sua <span class="tku-vio">própria ticketeria.</span></h2>
     <p class="tku-lede">Reúna vários eventos e organizadores numa vitrine própria, com curadoria e repasse a cada parte.</p>
@@ -583,7 +571,6 @@ section[id] { scroll-margin-top:72px; }
 <!-- ════════════════════════ SITUAÇÃO ════════════════════════ -->
 <section id="vemai" class="tku-sec" aria-labelledby="vemai-titulo">
   <div class="tku-in">
-    <p class="tku-cab tku-mono"><span class="tku-idx tku-vio">/07</span><span>Situação</span></p>
     <h2 id="vemai-titulo" class="tku-h2 tku-cond">O que já está <span class="tku-vio">e o que vem a seguir.</span></h2>
     <ul class="tku-vemai">
       <li>Loja, venda online, controle de acesso e relatórios<span class="tku-st">Em teste</span></li>
@@ -600,7 +587,6 @@ section[id] { scroll-margin-top:72px; }
 <!-- ════════════════════════ DÚVIDAS ════════════════════════ -->
 <section id="duvidas" class="tku-sec" aria-labelledby="duvidas-titulo">
   <div class="tku-in">
-    <p class="tku-cab tku-mono"><span class="tku-idx tku-vio">/08</span><span>Perguntas frequentes</span></p>
     <h2 id="duvidas-titulo" class="tku-h2 tku-cond">Antes de começar.</h2>
     <div class="tku-faq">
       <details>
@@ -630,7 +616,6 @@ section[id] { scroll-margin-top:72px; }
 
 <!-- ════════════════════════ CTA FINAL ════════════════════════ -->
 <section class="tku-cta" aria-labelledby="fechamento-titulo">
-  <p class="tku-mono" style="color:rgba(255,255,255,.72)">/09 &nbsp; Acesso por convite</p>
   <h2 id="fechamento-titulo" class="tku-cond">Comece com <span>a Ticketeria.</span></h2>
   <p class="tku-tk tku-mono"><span><b>●</b> Loja</span><span>Domínio próprio</span><span>Pix</span><span>QR sem conexão</span><span>API e webhooks</span></p>
   <p style="margin-top:26px;font-size:17px;line-height:1.6;color:rgba(255,255,255,.78);max-width:560px">Acesso por convite durante a fase inicial. Descreva como você vende ingressos hoje.</p>
@@ -654,7 +639,7 @@ section[id] { scroll-margin-top:72px; }
 <footer class="tku-foot">
   <div class="tku-in">
     <div class="tku-foot-top">
-      <a href="#top" class="tku-logo" aria-label="Jards Ticketeria, voltar ao início"><svg class="tku-simbolo" viewBox="158 93 201 299" aria-hidden="true"><path d="M160.090,291.659C160.090,291.465 160.090,291.269 160.090,291.076C160.090,182.818 247.979,94.929 356.236,94.929L356.911,94.929L356.911,291.659L160.090,291.659Z" fill="#FF5528"/><path d="M259.129,291.661L356.911,291.661L356.911,291.998C356.911,346.028 313.123,389.913 259.129,390.070L259.129,291.661" fill="#6450D2"/></svg><span class="tku-marca">jards</span><span class="tku-marca-sub tku-mono">ticketeria</span></a>
+      <a href="#top" class="tku-logo" aria-label="Jards, voltar ao início"><svg class="tku-simbolo" viewBox="158 93 201 299" aria-hidden="true"><path d="M160.090,291.659C160.090,291.465 160.090,291.269 160.090,291.076C160.090,182.818 247.979,94.929 356.236,94.929L356.911,94.929L356.911,291.659L160.090,291.659Z" fill="#FF5528"/><path d="M259.129,291.661L356.911,291.661L356.911,291.998C356.911,346.028 313.123,389.913 259.129,390.070L259.129,291.661" fill="#6450D2"/></svg><span class="tku-marca">jards</span></a>
       <nav class="tku-foot-links tku-mono" aria-label="Rodapé"><a href="#base">Plataforma</a><a href="#aberta">Integração</a><a href="#vemai">Situação</a><a href="#duvidas">Perguntas</a></nav>
     </div>
     <div class="tku-foot-bot tku-mono">
