@@ -226,7 +226,6 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
         <section aria-labelledby="comecar-titulo">
           <h1 id="comecar-titulo" className={TITULO}>Tem meia-entrada?</h1>
           <div className="mt-12 md:mt-16"><SimOuNao valor={r.meia} onChange={meia => muda({ meia })} dicaSim="Pela metade do preço." dicaNao="Só a inteira." /></div>
-          {r.meia === true && <p className="mt-4 text-[0.8125rem] text-black/45">A lei garante meia-entrada a estudantes, pessoas idosas e outros públicos: separamos 40% dos lugares para ela.</p>}
         </section>
       )}
 
