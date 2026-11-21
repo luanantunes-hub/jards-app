@@ -94,7 +94,7 @@ export function BibliotecaDeImagens({ organizationId, aoEscolher, onClose }: { o
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[0.75rem] text-black/55">{Array.isArray(imagens) ? `${lista.length} de ${MAX_IMAGENS_POR_ORGANIZACAO} imagens` : ""}</p>
-          <button type="button" onClick={() => entrada.current?.click()} disabled={trabalhando || lista.length >= MAX_IMAGENS_POR_ORGANIZACAO} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#1C0E33] px-3.5 text-[0.75rem] font-normal text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"><Upload size={13} aria-hidden="true" />{trabalhando ? "Enviando…" : "Enviar imagem"}</button>
+          <button type="button" onClick={() => entrada.current?.click()} disabled={trabalhando || lista.length >= MAX_IMAGENS_POR_ORGANIZACAO} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#6450D2] px-3.5 text-[0.75rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"><Upload size={13} aria-hidden="true" />{trabalhando ? "Enviando…" : "Enviar imagem"}</button>
           <input ref={entrada} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Escolher o arquivo da imagem" tabIndex={-1} onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void enviar(f); }} />
         </div>
         {erro && <Aviso texto={erro} />}

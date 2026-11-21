@@ -67,7 +67,7 @@ export function VersoesSheet({ paginaId, titulo, publicados, podeEditar, onClose
                         <p className="text-[0.75rem] leading-relaxed text-black/70">Trocar o rascunho pela versão de <span className="text-[#282525]">{l.guardada ? l.titulo.replace("Rascunho guardado · ", "") : l.titulo.toLowerCase()}</span>? O que está no ar não muda até você publicar, e o rascunho de agora fica guardado nesta lista.</p>
                         <div className="mt-2 flex items-center justify-end gap-4">
                           <button type="button" onClick={() => setConfirmando(null)} disabled={trabalhando} className="text-[0.75rem] text-black/45 transition hover:text-black/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Cancelar</button>
-                          <button type="button" onClick={() => void restaurar(l.id, quando)} disabled={trabalhando} className="rounded-xl bg-[#1C0E33] px-3 py-1.5 text-[0.75rem] font-normal text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">{trabalhando ? "Restaurando…" : "Restaurar no rascunho"}</button>
+                          <button type="button" onClick={() => void restaurar(l.id, quando)} disabled={trabalhando} className="rounded-xl bg-[#6450D2] px-3 py-1.5 text-[0.75rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">{trabalhando ? "Restaurando…" : "Restaurar no rascunho"}</button>
                         </div>
                       </div>
                     )}

@@ -14,7 +14,7 @@ const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase t
 const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
 const CANCELAR = "rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const SECUNDARIO = "rounded-xl border bg-white px-3.5 py-2.5 text-[0.75rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
-const CTA = "rounded-xl bg-[#1C0E33] px-4 py-2.5 text-[0.75rem] font-normal text-white transition hover:bg-[#2A1750] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
+const CTA = "rounded-xl bg-[#6450D2] px-4 py-2.5 text-[0.75rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
 const FINAL = "rounded-xl bg-[#7259B5] px-4 py-2.5 text-[0.75rem] font-normal text-white transition hover:bg-[#6349A6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
 const numero = (n: number) => n.toLocaleString("pt-BR");
 const preco = formatarMoeda(PRECO_DO_EMAIL_CENTAVOS);

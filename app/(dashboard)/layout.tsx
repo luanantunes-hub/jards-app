@@ -552,7 +552,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       aria-label={!isExpanded ? label : undefined}
                       aria-current={active ? "page" : undefined}
                       className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                        active ? "bg-[#1C0E33] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                        // Na Ticketeria o item da página aberta fica branco, com o contorno e o nome em violeta íris (a cor da logo); nos outros módulos, roxo noite cheio.
+                        active ? (menuFixoAberto ? "bg-white text-[#6450D2] ring-1 ring-inset ring-[#6450D2]" : "bg-[#1C0E33] text-white") : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
                       }`}
                       style={{
                         gap: isExpanded ? 10 : 0,

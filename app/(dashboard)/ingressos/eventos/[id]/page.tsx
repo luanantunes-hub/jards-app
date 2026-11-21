@@ -21,7 +21,7 @@ type Evento = EventoEditavel & { situacao: SituacaoDoEvento; loja_id: string; sl
 type Sessao = SessaoEditavel & { cancelada_em: string | null };
 type Folha = { tipo: "evento" } | { tipo: "sessao"; sessao?: Sessao } | { tipo: "local" };
 
-const BOTAO_ESCURO = "inline-flex h-10 items-center rounded-xl bg-[#1C0E33] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
+const BOTAO_ESCURO = "inline-flex h-10 items-center rounded-xl bg-[#6450D2] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const BOTAO_CLARO = "inline-flex h-10 items-center rounded-xl border border-black/[.12] bg-white px-4 text-[0.75rem] font-normal text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const ROTULO_DA_SESSAO = { agendada: "Por vir", realizada: "Realizada", cancelada: "Cancelada" } as const;
 

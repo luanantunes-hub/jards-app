@@ -48,7 +48,7 @@ export default function IngressosInicioPage() {
           <InicioView dados={estado.dados} periodo={periodo} onPeriodo={setPeriodo} ver={destino => <Link href={destino} prefetch={false} className={ESTILO_DO_LINK}>Ver tudo</Link>} />
         ) : !erro && (
           <ListTableSurface>
-            <ListEmptyState icon={Ticket} title="Seu primeiro evento" description="Três perguntas e ele fica pronto para você conferir e publicar." action={<Link href="/ingressos/comecar" className="inline-flex items-center gap-1.5 rounded-xl bg-[#1C0E33] px-4 py-2.5 text-[0.75rem] text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><Plus size={13} aria-hidden="true" /> Começar</Link>} />
+            <ListEmptyState icon={Ticket} title="Seu primeiro evento" description="Três perguntas e ele fica pronto para você conferir e publicar." action={<Link href="/ingressos/comecar" className="inline-flex items-center gap-1.5 rounded-xl bg-[#6450D2] px-4 py-2.5 text-[0.75rem] text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><Plus size={13} aria-hidden="true" /> Começar</Link>} />
           </ListTableSurface>
         )}
       </ListContent>

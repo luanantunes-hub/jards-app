@@ -204,7 +204,7 @@ export default function SiteDaLojaPage() {
           <button type="button" disabled={salvando} onClick={() => void atualizar({ situacao: site.situacao === "publicado" ? "rascunho" : "publicado" })}
             className={site.situacao === "publicado"
               ? "inline-flex h-10 items-center rounded-xl border border-black/[.12] px-4 text-[0.75rem] font-normal text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"
-              : "inline-flex h-10 items-center rounded-xl bg-[#1C0E33] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"}>
+              : "inline-flex h-10 items-center rounded-xl bg-[#6450D2] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"}>
             {site.situacao === "publicado" ? "Tirar do ar" : "Pôr o site no ar"}
           </button>
         ) : undefined}
@@ -237,7 +237,7 @@ export default function SiteDaLojaPage() {
             <h2 id="paginas-do-site" className="text-[0.875rem] font-medium text-[#282525]">Páginas do site</h2>
             <p className="mt-0.5 text-[0.75rem] leading-relaxed text-black/55">Monte as páginas com a prévia ao lado, em tela inteira: o editor à esquerda e a página de verdade à direita.</p>
           </div>
-          <button type="button" onClick={() => setEditando(true)} className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1C0E33] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><PencilLine size={13} aria-hidden="true" /> {podeEditar ? "Abrir o editor" : "Ver as páginas"}</button>
+          <button type="button" onClick={() => setEditando(true)} className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#6450D2] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><PencilLine size={13} aria-hidden="true" /> {podeEditar ? "Abrir o editor" : "Ver as páginas"}</button>
         </section>
         <DominiosDoSite siteId={site.id} podeEditar={podeEditar} />
         {podeEditar && <div className="mt-12"><button type="button" onClick={apagar} className="text-[0.75rem] font-normal text-black/45 underline underline-offset-2 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Apagar este site</button></div>}
