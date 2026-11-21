@@ -33,14 +33,17 @@ export function estadoDoEvento(sessoes: readonly Pick<SessaoNaApi, "estado">[]):
   return "indisponivel";
 }
 
-export type ItemDaAgenda = { slug: string; titulo: string; imagem: string | null; classificacao: string | null; proxima: { quando: string; local: string } | null; estado: EstadoDoEvento; a_partir_de_centavos: number | null; sessoes: number };
+export type SessaoDaAgenda = Pick<SessaoNaApi, "id" | "inicio" | "quando" | "local" | "estado" | "a_partir_de_centavos" | "poucos" | "url"> & { local_nome: string };
+
+export type ItemDaAgenda = { slug: string; titulo: string; descricao: string | null; imagem: string | null; classificacao: string | null; proxima: { quando: string; local: string } | null; estado: EstadoDoEvento; a_partir_de_centavos: number | null; sessoes: number; lista: SessaoDaAgenda[] };
 
 /** A Agenda: um item por evento com sessão por vir, na ordem da primeira sessão. A "próxima" é a primeira sessão à venda (ou, sem nenhuma, a primeira); o preço é o menor entre as sessões à venda. */
 export function agendaDosEventos(eventos: readonly EventoNaApi[]): ItemDaAgenda[] {
   return eventos.filter(e => e.sessoes.length > 0).map(e => {
     const proxima = e.sessoes.find(s => s.estado === "aberta") ?? e.sessoes[0];
     const precos = e.sessoes.filter(s => s.estado === "aberta" && s.a_partir_de_centavos !== null).map(s => s.a_partir_de_centavos as number);
-    return { slug: e.slug, titulo: e.titulo, imagem: e.imagem, classificacao: e.classificacao, proxima: { quando: proxima.quando, local: proxima.local }, estado: estadoDoEvento(e.sessoes), a_partir_de_centavos: precos.length > 0 ? Math.min(...precos) : null, sessoes: e.sessoes.length };
+    const lista: SessaoDaAgenda[] = e.sessoes.filter(s => s.estado !== "cancelada" && s.estado !== "encerrada").map(s => ({ id: s.id, inicio: s.inicio, quando: s.quando, local: s.local, local_nome: s.local_nome || s.local, estado: s.estado, a_partir_de_centavos: s.a_partir_de_centavos, poucos: s.poucos, url: s.url }));
+    return { slug: e.slug, titulo: e.titulo, descricao: e.descricao, imagem: e.imagem, classificacao: e.classificacao, proxima: { quando: proxima.quando, local: proxima.local }, estado: estadoDoEvento(e.sessoes), a_partir_de_centavos: precos.length > 0 ? Math.min(...precos) : null, sessoes: e.sessoes.length, lista };
   });
 }
 
@@ -134,4 +137,123 @@ export function contagemParaOEvento(sessoes: readonly Pick<SessaoNaApi, "inicio"
   }
   if (menor === null) return null;
   return { dias: menor, frase: menor === 0 ? "A próxima sessão é hoje" : menor === 1 ? "A próxima sessão é amanhã" : `Faltam ${menor} dias para a próxima sessão` };
+}
+
+// ─── A Agenda por seções (a biblioteca de seções, passo 2): os dados que os cinco layouts usam ───────────
+
+const FUSO_DA_AGENDA = "America/Sao_Paulo";
+const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+const SEMANA_CURTA = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+const SEMANA_LONGA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+export type PartesDoDia = { ano: number; mes: number; dia: number; semana: number; hora: number; minuto: number };
+
+/** O dia e a hora de um instante no horário de Brasília (mês de 0 a 11, semana de 0 = domingo a 6 = sábado). Nulo se o texto não é uma data. */
+export function partesDoInstante(iso: string): PartesDoDia | null {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return null;
+  const partes = new Intl.DateTimeFormat("en-CA", { timeZone: FUSO_DA_AGENDA, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(t));
+  const n = (tipo: string) => Number(partes.find(p => p.type === tipo)?.value ?? 0);
+  const ano = n("year"), mes = n("month") - 1, dia = n("day");
+  return { ano, mes, dia, semana: new Date(Date.UTC(ano, mes, dia)).getUTCDay(), hora: n("hour"), minuto: n("minute") };
+}
+
+const chaveDoMes = (p: Pick<PartesDoDia, "ano" | "mes">) => `${p.ano}-${String(p.mes + 1).padStart(2, "0")}`;
+const maiuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+const horaCurta = (p: PartesDoDia) => (p.minuto === 0 ? `${p.hora}h` : `${p.hora}h${String(p.minuto).padStart(2, "0")}`);
+
+/** "Sáb, 28 de novembro". */
+export const diaPorExtensoDaAgenda = (p: PartesDoDia) => `${SEMANA_LONGA[p.semana]}, ${p.dia} de ${MESES[p.mes]}`;
+
+/** O selo na imagem do cartão: "Esgotado" quando todas as sessões esgotaram, "Últimos ingressos" quando alguma à venda tem poucos; senão nada. */
+export function seloDoItem(item: Pick<ItemDaAgenda, "estado" | "lista">): { texto: string; tom: "esgotado" | "poucos" } | null {
+  if (item.estado === "esgotado") return { texto: "Esgotado", tom: "esgotado" };
+  if (item.estado === "aberta" && item.lista.some(s => s.estado === "aberta" && s.poucos)) return { texto: "Últimos ingressos", tom: "poucos" };
+  return null;
+}
+
+/** O botão do cartão: diz o que acontece depois. Esgotado leva à lista de espera; sem venda, só "Ver o evento". */
+export function botaoDoItem(estado: EstadoDoEvento): { texto: string; forte: boolean } {
+  if (estado === "aberta") return { texto: "Datas e ingressos", forte: true };
+  if (estado === "esgotado") return { texto: "Lista de espera", forte: false };
+  return { texto: "Ver o evento", forte: false };
+}
+
+/** O período do evento numa frase: uma data só ("Sáb, 28 de novembro"), "Em cartaz até 6 de dezembro" se a primeira sessão já começou ou é hoje, ou "28 nov a 6 dez". */
+export function periodoDoItem(item: Pick<ItemDaAgenda, "lista">, agora: number): string | null {
+  const dias = item.lista.map(s => partesDoInstante(s.inicio)).filter((p): p is PartesDoDia => p !== null);
+  if (dias.length === 0) return null;
+  const primeiro = dias[0], ultimo = dias[dias.length - 1];
+  const hoje = partesDoInstante(new Date(agora).toISOString());
+  const mesmoDia = primeiro.ano === ultimo.ano && primeiro.mes === ultimo.mes && primeiro.dia === ultimo.dia;
+  if (mesmoDia) return diaPorExtensoDaAgenda(primeiro);
+  if (hoje && Date.UTC(primeiro.ano, primeiro.mes, primeiro.dia) <= Date.UTC(hoje.ano, hoje.mes, hoje.dia)) return `Em cartaz até ${ultimo.dia} de ${MESES[ultimo.mes]}`;
+  const curto = (p: PartesDoDia) => `${p.dia} ${MESES[p.mes].slice(0, 3)}`;
+  return `${curto(primeiro)} a ${curto(ultimo)}`;
+}
+
+/** O menor preço à venda, por extenso ("a partir de R$ 40,00"), formatado por quem chama; aqui só o número. */
+export const precoDoItem = (item: Pick<ItemDaAgenda, "estado" | "a_partir_de_centavos">): number | null => (item.estado === "aberta" ? item.a_partir_de_centavos : null);
+
+/** Uma cor estável por espaço (o mesmo nome dá sempre a mesma cor), para o pino e a listra do cartão. */
+const CORES_DOS_ESPACOS = ["#5B3FA0", "#B4402E", "#1F6F5C", "#C58A12", "#2B5CB0", "#9A3F8A"];
+export function corDoEspaco(nome: string): string {
+  let h = 0;
+  for (const c of nome) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return CORES_DOS_ESPACOS[h % CORES_DOS_ESPACOS.length];
+}
+
+/** Uma linha da lista por mês e do calendário: uma SESSÃO de um evento. */
+export type LinhaDaAgenda = { item: ItemDaAgenda; sessao: SessaoDaAgenda; partes: PartesDoDia; dia: string; semana: string; hora: string };
+
+/** Todas as sessões de todos os eventos, em ordem de data. */
+export function linhasDaAgenda(itens: readonly ItemDaAgenda[]): LinhaDaAgenda[] {
+  const linhas: LinhaDaAgenda[] = [];
+  for (const item of itens) for (const sessao of item.lista) {
+    const partes = partesDoInstante(sessao.inicio);
+    if (partes) linhas.push({ item, sessao, partes, dia: String(partes.dia).padStart(2, "0"), semana: SEMANA_CURTA[partes.semana], hora: horaCurta(partes) });
+  }
+  return linhas.sort((a, b) => Date.parse(a.sessao.inicio) - Date.parse(b.sessao.inicio));
+}
+
+/** As linhas agrupadas por mês ("Novembro", "Dezembro de 2027" quando não é o ano de `ano`). */
+export function agruparPorMes(linhas: readonly LinhaDaAgenda[], ano: number): { chave: string; titulo: string; linhas: LinhaDaAgenda[] }[] {
+  const grupos = new Map<string, { chave: string; titulo: string; linhas: LinhaDaAgenda[] }>();
+  for (const l of linhas) {
+    const chave = chaveDoMes(l.partes);
+    const g = grupos.get(chave) ?? { chave, titulo: maiuscula(MESES[l.partes.mes]) + (l.partes.ano === ano ? "" : ` de ${l.partes.ano}`), linhas: [] };
+    g.linhas.push(l);
+    grupos.set(chave, g);
+  }
+  return [...grupos.values()];
+}
+
+/** A grade de um mês para o calendário: quantos espaços vazios antes do dia 1 (a semana começa na segunda) e quantos dias o mês tem. */
+export function gradeDoMes(ano: number, mes: number): { vazios: number; dias: number; titulo: string } {
+  const primeiro = new Date(Date.UTC(ano, mes, 1)).getUTCDay();
+  return { vazios: (primeiro + 6) % 7, dias: new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate(), titulo: `${maiuscula(MESES[mes])} de ${ano}` };
+}
+
+/** Os dias do mês que têm sessão, com as linhas de cada um. */
+export function diasComSessao(linhas: readonly LinhaDaAgenda[], ano: number, mes: number): Map<number, LinhaDaAgenda[]> {
+  const mapa = new Map<number, LinhaDaAgenda[]>();
+  for (const l of linhas) if (l.partes.ano === ano && l.partes.mes === mes) mapa.set(l.partes.dia, [...(mapa.get(l.partes.dia) ?? []), l]);
+  return mapa;
+}
+
+/** Os filtros da agenda, tirados dos próprios dados: os meses que têm sessão e os espaços. */
+export function filtrosDaAgenda(linhas: readonly LinhaDaAgenda[], ano: number): { meses: { chave: string; titulo: string }[]; espacos: string[] } {
+  return { meses: agruparPorMes(linhas, ano).map(g => ({ chave: g.chave, titulo: g.titulo })), espacos: [...new Set(linhas.map(l => l.sessao.local_nome))] };
+}
+
+/** Os eventos que passam nos filtros (mês, espaço e nome) e as sessões deles que passam: o evento fica se alguma sessão passa. */
+export function filtrarAgenda(itens: readonly ItemDaAgenda[], f: { mes: string | null; espaco: string | null; busca: string }): ItemDaAgenda[] {
+  const busca = f.busca.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return itens.filter(item => {
+    if (busca !== "" && !item.titulo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(busca)) return false;
+    return item.lista.some(s => {
+      const p = partesDoInstante(s.inicio);
+      return p !== null && (f.mes === null || chaveDoMes(p) === f.mes) && (f.espaco === null || s.local_nome === f.espaco);
+    });
+  });
 }

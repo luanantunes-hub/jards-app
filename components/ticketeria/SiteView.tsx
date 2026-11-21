@@ -3,8 +3,8 @@ import { MarcaDaSessao } from "@/components/producao/MarcaDaSessao";
 import { ContagemRegressiva } from "@/components/ticketeria/ContagemRegressiva";
 import { enderecoDoMapa, enderecoDoVideo, textoSobreCor, type Bloco, type ColunaDoBloco } from "@/lib/ticketeria/site";
 import { variaveisDoTema } from "@/lib/ticketeria/temas";
-import { caminhoDoEvento, type ItemDaAgenda } from "@/lib/ticketeria/evento-site";
-import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
+import { AgendaDoSite } from "@/components/ticketeria/AgendaDoSite";
+import type { ItemDaAgenda } from "@/lib/ticketeria/evento-site";
 import { diaPorExtenso } from "@/components/producao/ProgramacaoPublicaView";
 
 export type SiteParaDesenhar = {
@@ -119,42 +119,6 @@ function TituloDoBloco({ titulo }: { titulo: string }) {
 
 const SANDBOX_DO_QUADRO = "allow-scripts allow-same-origin allow-popups allow-presentation";
 
-const ROTULO_DO_ESTADO: Record<ItemDaAgenda["estado"], string | null> = { aberta: null, esgotado: "Esgotado", indisponivel: "Indisponível" };
-
-/** A lista dos eventos da loja: cada um com a próxima sessão, o preço e o link para a página do evento (na prévia, sem link: a página do evento só existe no site no ar). */
-export function Agenda({ titulo, itens, base, semLinks }: { titulo: string; itens: ItemDaAgenda[]; base: string; semLinks: boolean }) {
-  return (
-    <section aria-label={titulo || "Agenda"}>
-      {titulo && <h2 className="mb-3 text-[1.25rem] font-medium tracking-[-.01em]">{titulo}</h2>}
-      {itens.length === 0 ? (
-        <p className="rounded-[var(--site-raio)] border border-[color:var(--site-borda)] px-4 py-5 text-[0.9375rem] opacity-70">Nenhum evento em cartaz por enquanto. Volte em breve.</p>
-      ) : (
-        <ul className="space-y-2.5">
-          {itens.map(item => {
-            const detalhe = ROTULO_DO_ESTADO[item.estado] ?? (item.a_partir_de_centavos !== null ? `a partir de ${formatarMoeda(item.a_partir_de_centavos)}` : null);
-            const conteudo = (
-              <>
-                {item.imagem
-                  // eslint-disable-next-line @next/next/no-img-element -- imagem de endereço externo (https), sem otimização do Next
-                  ? <img src={item.imagem} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-16 shrink-0 rounded-[calc(var(--site-raio)*.7)] object-cover" />
-                  : <span aria-hidden="true" className="h-16 w-16 shrink-0 rounded-[calc(var(--site-raio)*.7)] bg-black/[.06]" />}
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[1rem] font-medium leading-snug">{item.titulo}</span>
-                  {item.proxima && <span className="mt-0.5 block text-[0.8125rem] opacity-70">Próxima: {item.proxima.quando.toLowerCase()}{item.proxima.local ? ` · ${item.proxima.local}` : ""}</span>}
-                  {detalhe && <span className="mt-0.5 block text-[0.8125rem]">{detalhe}</span>}
-                </span>
-                {!semLinks && <span className="shrink-0 text-[0.8125rem] underline underline-offset-2 opacity-70">Ver evento</span>}
-              </>
-            );
-            const caixa = "flex items-center gap-3 rounded-[var(--site-raio)] border border-[color:var(--site-borda)] p-2.5";
-            return <li key={item.slug}>{semLinks ? <div className={caixa}>{conteudo}</div> : <a href={caminhoDoEvento(base, item.slug)} className={`${caixa} transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2`}>{conteudo}</a>}</li>;
-          })}
-        </ul>
-      )}
-    </section>
-  );
-}
-
 function BlocoDoSite({ bloco, cor, agora, base, semLinksDeEvento, agenda, programacoes, ingressos }: { bloco: Bloco; cor: string; agora: number; base: string; semLinksDeEvento: boolean; agenda: ItemDaAgenda[]; programacoes: Record<string, DiaPublico[]>; ingressos: Record<string, { id: string; quando: string; local: string; url: string }[]> }) {
   switch (bloco.tipo) {
     case "titulo":
@@ -232,7 +196,7 @@ function BlocoDoSite({ bloco, cor, agora, base, semLinksDeEvento, agenda, progra
         </section>
       );
     case "agenda":
-      return <Agenda titulo={bloco.titulo} itens={agenda} base={base} semLinks={semLinksDeEvento} />;
+      return <AgendaDoSite titulo={bloco.titulo} layout={bloco.layout} itens={agenda} base={base} semLinks={semLinksDeEvento} agora={agora} />;
     case "programacao":
       return <Programacao titulo={bloco.titulo} dias={bloco.espaco_id ? programacoes[bloco.espaco_id] ?? null : null} />;
     case "ingressos":
