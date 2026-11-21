@@ -16,7 +16,7 @@ export function portasDoEnvioDoSupabase(admin: Admin, d: { organizationId: strin
   return {
     async criar(dados) {
       const { data: envio, error } = await t.from("ticketeria_envios").insert({
-        organization_id: d.organizationId, loja_id: d.lojaId, canal: "email", assunto: dados.assunto, mensagem: dados.mensagem, sessao_id: dados.sessao_id, acao: dados.acao,
+        organization_id: d.organizationId, loja_id: d.lojaId, canal: dados.canal, assunto: dados.assunto, mensagem: dados.mensagem, sessao_id: dados.sessao_id, acao: dados.acao,
         segmento: dados.segmento, destinatarios: dados.destinatarios.length, created_by: d.usuarioId,
       }).select("id").single();
       if (error || !envio) throw new Error(error?.message ?? "não foi possível criar o envio");
@@ -53,7 +53,7 @@ export async function enviosDaLoja(admin: Admin, lojaId: string, agora: number =
   if (error) throw new Error(error.message);
   const pedidos: PedidoDoEnvio[] = [];
   for (let de = 0; ; de += PAGINA) {
-    const { data, error: erroDosPedidos } = await t.from("ticketeria_pedidos").select("id, total_centavos, origem_acao").eq("loja_id", lojaId).eq("situacao", "pago").eq("origem_canal", "email").not("origem_acao", "is", null).order("created_at", { ascending: true }).range(de, de + PAGINA - 1);
+    const { data, error: erroDosPedidos } = await t.from("ticketeria_pedidos").select("id, total_centavos, origem_acao").eq("loja_id", lojaId).eq("situacao", "pago").in("origem_canal", ["email", "whatsapp"]).not("origem_acao", "is", null).order("created_at", { ascending: true }).range(de, de + PAGINA - 1);
     if (erroDosPedidos) throw new Error(erroDosPedidos.message);
     pedidos.push(...(data ?? []).map(p => ({ id: p.id, total_centavos: Number(p.total_centavos), origem_acao: p.origem_acao })));
     if ((data ?? []).length < PAGINA) break;

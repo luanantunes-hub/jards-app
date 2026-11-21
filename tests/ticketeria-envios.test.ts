@@ -35,7 +35,7 @@ test("o corpo do envio: lido e conferido", () => {
   const bom = { assunto: "  Últimas   vagas ", mensagem: " Oi, {nome}!\r\nRestam poucas. ", sessao_id: SESSAO.toUpperCase(), segmento: SEGMENTO_TODOS };
   const l = lerEnvio(bom);
   assert.ok(l.ok);
-  if (l.ok) assert.deepEqual(l.envio, { assunto: "Últimas vagas", mensagem: "Oi, {nome}!\nRestam poucas.", sessao_id: SESSAO, segmento: SEGMENTO_TODOS, teste: false });
+  if (l.ok) assert.deepEqual(l.envio, { canal: "email", assunto: "Últimas vagas", mensagem: "Oi, {nome}!\nRestam poucas.", sessao_id: SESSAO, segmento: SEGMENTO_TODOS, teste: false });
   const t = lerEnvio({ ...bom, teste: true });
   assert.ok(t.ok && t.envio.teste);
   for (const [mudanca, problema] of [[{ assunto: "" }, "assunto"], [{ assunto: "a".repeat(151) }, "assunto"], [{ mensagem: "  " }, "mensagem"], [{ mensagem: "a".repeat(5001) }, "mensagem"], [{ sessao_id: "x" }, "sessão"], [{ segmento: "todos" }, "para quem"]] as [object, string][]) {

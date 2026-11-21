@@ -9,13 +9,13 @@ import { ListContent, ListPageHeader, PrimaryListAction, SecondaryListAction } f
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PublicoDaLoja } from "@/components/ticketeria/PublicoView";
 import { ImportarContatosSheet } from "@/components/ticketeria/ImportarContatosSheet";
-import { EnviosDaLoja, NovoEnvioSheet, type DadosDoNovoEnvio, type EnvioParaLista, type SessaoParaEscolher } from "@/components/ticketeria/EnviosView";
+import { EnviosDaLoja, ListaDoWhatsAppSheet, NovoEnvioSheet, type DadosDoNovoEnvio, type EnvioParaLista, type SessaoParaEscolher } from "@/components/ticketeria/EnviosView";
 import type { CorpoDaImportacaoDeContatos } from "@/lib/ticketeria/contatos-importados";
-import { mensagemDoErroDoEnvio, type Segmento } from "@/lib/ticketeria/envios";
+import { mensagemDoErroDoEnvio, type PessoaDoWhatsapp, type Segmento } from "@/lib/ticketeria/envios";
 import { filtrarPublico, type FiltroDoPublico, type PublicoDaLoja as DadosDoPublico } from "@/lib/ticketeria/publico";
 
 const VAZIO: DadosDoPublico = { contatos: [], resumo: { contatos: 0, aceitaram: 0, aceitaram_porcento: 0, com_whatsapp: 0, sairam: 0 } };
-type DadosDosEnvios = { ligado: boolean; segmentos: Segmento[]; sessoes: SessaoParaEscolher[]; envios: EnvioParaLista[] };
+type DadosDosEnvios = { ligado: boolean; segmentos: Segmento[]; segmentos_whatsapp?: Segmento[]; sessoes: SessaoParaEscolher[]; envios: EnvioParaLista[] };
 const SEM_ENVIOS: DadosDosEnvios = { ligado: false, segmentos: [], sessoes: [], envios: [] };
 const ABAS: ["contatos" | "envios", string][] = [["contatos", "Contatos"], ["envios", "Envios"]];
 
@@ -35,6 +35,9 @@ export default function PublicoPage() {
   const [filtro, setFiltro] = useState<FiltroDoPublico>("todos");
   const [busca, setBusca] = useState("");
   const [novo, setNovo] = useState(false);
+  // A lista de um envio por WhatsApp aberta: o envio, o nome e as pessoas (cada uma com o link da conversa).
+  const [listaWhatsapp, setListaWhatsapp] = useState<{ envio: string; assunto: string; pessoas: PessoaDoWhatsapp[] } | null>(null);
+  const [erroDaLista, setErroDaLista] = useState<string | null>(null);
   const [trabalhando, setTrabalhando] = useState(false);
   const [erroDoEnvio, setErroDoEnvio] = useState<string | null>(null);
   const [avisoDoEnvio, setAvisoDoEnvio] = useState<string | null>(null);
@@ -94,6 +97,39 @@ export default function PublicoPage() {
     }
   }
 
+  async function abrirListaWhatsapp(envio: string, assunto: string) {
+    if (!lojaId) return;
+    setErroDaLista(null);
+    try {
+      const r = await fetch(`/api/ticketeria/lojas/${lojaId}/envios/${envio}/whatsapp`, { cache: "no-store" });
+      if (!r.ok) throw new Error(String(r.status));
+      const d = (await r.json()) as { pessoas: PessoaDoWhatsapp[] };
+      setListaWhatsapp({ envio, assunto, pessoas: d.pessoas });
+    } catch {
+      setAba("envios");
+      setErro("Não foi possível abrir a lista do WhatsApp. Tente de novo.");
+    }
+  }
+
+  /** Abre a conversa (já no clique, para o navegador não bloquear) e marca a pessoa como enviada. */
+  function abrirConversa(p: PessoaDoWhatsapp) {
+    if (!lojaId || !listaWhatsapp) return;
+    window.open(p.link, "_blank", "noopener,noreferrer");
+    const envio = listaWhatsapp.envio;
+    setListaWhatsapp(l => (l ? { ...l, pessoas: l.pessoas.map(x => (x.id === p.id ? { ...x, enviada: true } : x)) } : l));
+    setErroDaLista(null);
+    void (async () => {
+      try {
+        const r = await fetch(`/api/ticketeria/lojas/${lojaId}/envios/${envio}/whatsapp`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ destinatario: p.id }) });
+        if (!r.ok) throw new Error(String(r.status));
+        void carregarEnvios(lojaId);
+      } catch {
+        setListaWhatsapp(l => (l ? { ...l, pessoas: l.pessoas.map(x => (x.id === p.id ? { ...x, enviada: false } : x)) } : l));
+        setErroDaLista("Não consegui marcar como enviada. Tente de novo.");
+      }
+    })();
+  }
+
   async function enviar(d: DadosDoNovoEnvio, teste: boolean) {
     if (!lojaId) return;
     setTrabalhando(true);
@@ -101,11 +137,12 @@ export default function PublicoPage() {
     setAvisoDoEnvio(null);
     try {
       const r = await fetch(`/api/ticketeria/lojas/${lojaId}/envios`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...d, teste }) });
-      const corpo = (await r.json().catch(() => ({}))) as { error?: string; total?: number; limite?: number };
+      const corpo = (await r.json().catch(() => ({}))) as { error?: string; total?: number; limite?: number; envio?: string; pessoas?: PessoaDoWhatsapp[] };
       if (!r.ok) { setErroDoEnvio(mensagemDoErroDoEnvio(corpo.error ?? "", corpo)); return; }
       if (teste) { setAvisoDoEnvio("Enviamos um teste para o seu e-mail."); return; }
       setNovo(false);
       setAba("envios");
+      if (d.canal === "whatsapp" && corpo.envio) setListaWhatsapp({ envio: corpo.envio, assunto: d.assunto, pessoas: corpo.pessoas ?? [] });
       await carregarEnvios(lojaId);
     } catch {
       setErroDoEnvio("Sem conexão. Tente de novo.");
@@ -133,12 +170,13 @@ export default function PublicoPage() {
             </div>
             {aba === "contatos"
               ? <PublicoDaLoja resumo={dados.resumo} contatos={contatos} filtro={filtro} busca={busca} onFiltrar={setFiltro} onBuscar={setBusca} />
-              : <EnviosDaLoja envios={envios.envios} />}
+              : <EnviosDaLoja envios={envios.envios} onContinuar={id => void abrirListaWhatsapp(id, envios.envios.find(e => e.id === id)?.assunto ?? "")} />}
           </div>
         )}
       </ListContent>
       {importar && <ImportarContatosSheet loja={lojaNome} erro={erroDaImportacao} importando={importando} onClose={() => setImportar(false)} onImportar={c => void importarContatos(c)} />}
-      {novo && <NovoEnvioSheet segmentos={envios.segmentos} sessoes={envios.sessoes} ligado={envios.ligado} origem={window.location.origin} erro={erroDoEnvio} aviso={avisoDoEnvio} trabalhando={trabalhando} onTeste={d => void enviar(d, true)} onEnviar={d => void enviar(d, false)} onClose={() => setNovo(false)} />}
+      {listaWhatsapp && <ListaDoWhatsAppSheet assunto={listaWhatsapp.assunto} pessoas={listaWhatsapp.pessoas} erro={erroDaLista} onAbrir={abrirConversa} onClose={() => setListaWhatsapp(null)} />}
+      {novo && <NovoEnvioSheet segmentos={envios.segmentos} segmentosWhatsapp={envios.segmentos_whatsapp ?? []} sessoes={envios.sessoes} ligado={envios.ligado} origem={window.location.origin} erro={erroDoEnvio} aviso={avisoDoEnvio} trabalhando={trabalhando} onTeste={d => void enviar(d, true)} onEnviar={d => void enviar(d, false)} onClose={() => setNovo(false)} />}
     </>
   );
 }
