@@ -133,3 +133,23 @@ export const MOTIVOS_DO_REMETENTE: Record<string, string> = {
   dominio_nao_verificado: "O seu domínio ainda não foi confirmado: faltam os registros no provedor dele.",
   cota_do_mes: "Esse envio passa do limite de e-mails do mês.",
 };
+
+/** O que a tela do e-mail recebe: a assinatura, o domínio, os registros de DNS e a cota do mês. Sem os ids do Stripe e do Resend. */
+export type RemetenteParaATela = {
+  assinatura: AssinaturaDoEmail; periodo_fim: string | null; cancela_no_fim: boolean;
+  dominio: string | null; endereco_local: string; nome_exibicao: string | null; responder_para: string | null; situacao: SituacaoDoRemetente; registros: RegistroDeDns[];
+  usados: number; cota: number; preco_centavos: number; pode_enviar: boolean;
+};
+
+/** O texto para mandar a quem cuida do site do produtor: o que fazer e os registros, um por linha, para colar no e-mail ou no WhatsApp. */
+export function textoParaQuemCuidaDoSite(dominio: string, registros: RegistroDeDns[]): string {
+  const linhas = registros.map(r => `- Tipo ${r.tipo}${r.prioridade !== null ? ` (prioridade ${r.prioridade})` : ""}\n  Nome: ${r.nome}\n  Valor: ${r.valor}`);
+  return [
+    `Olá! Preciso que você adicione estes registros de DNS no domínio ${dominio}, para eu poder enviar e-mails por ele.`,
+    "Os registros que já existem (o site e o e-mail que usamos hoje) não mudam: só entram estes novos.",
+    "",
+    ...linhas,
+    "",
+    "Quando estiverem adicionados, me avise. A confirmação pode levar de alguns minutos a algumas horas.",
+  ].join("\n");
+}

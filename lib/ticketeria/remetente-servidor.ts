@@ -4,7 +4,7 @@ import type { Database } from "@/lib/supabase/types";
 import type { RemetenteDoEnvio } from "@/lib/email/divulgacao";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import type { AssinaturaDoEmail, SituacaoDoRemetente } from "@/lib/ticketeria/estados";
-import { COTA_PADRAO_DE_EMAILS, enderecoDeEnvio, inicioDaCota, podeEnviar, PRECO_DO_EMAIL_CENTAVOS, type PodeEnviar, type RegistroDeDns } from "@/lib/ticketeria/remetente";
+import { COTA_PADRAO_DE_EMAILS, enderecoDeEnvio, inicioDaCota, podeEnviar, PRECO_DO_EMAIL_CENTAVOS, type PodeEnviar, type RegistroDeDns, type RemetenteParaATela } from "@/lib/ticketeria/remetente";
 
 type Admin = SupabaseClient<Database>;
 
@@ -12,13 +12,6 @@ export type LinhaDoRemetente = {
   id: string; organization_id: string; loja_id: string; dominio: string | null; endereco_local: string; nome_exibicao: string | null; responder_para: string | null;
   resend_domain_id: string | null; situacao: SituacaoDoRemetente; registros: RegistroDeDns[] | null; verificado_em: string | null; assinatura: AssinaturaDoEmail;
   stripe_customer_id: string | null; stripe_subscription_id: string | null; periodo_inicio: string | null; periodo_fim: string | null; cancela_no_fim: boolean; cota_mensal: number;
-};
-
-/** O que a tela vê: sem os ids do Stripe e do Resend. */
-export type RemetenteParaATela = {
-  assinatura: AssinaturaDoEmail; periodo_fim: string | null; cancela_no_fim: boolean;
-  dominio: string | null; endereco_local: string; nome_exibicao: string | null; responder_para: string | null; situacao: SituacaoDoRemetente; registros: RegistroDeDns[];
-  usados: number; cota: number; preco_centavos: number; pode_enviar: boolean;
 };
 
 export async function remetenteDaLoja(admin: Admin, lojaId: string): Promise<LinhaDoRemetente | null> {

@@ -212,12 +212,16 @@ export function vendasPorAcao(pedidos: PedidoDoEnvio[], quantidadePorPedido: Rec
 // ─── Mensagens para quem envia ──────────────────────────────────────────────
 
 /** A frase para o produtor quando o envio não segue. */
-export function mensagemDoErroDoEnvio(codigo: string, extra?: { total?: number; limite?: number }): string {
+export function mensagemDoErroDoEnvio(codigo: string, extra?: { total?: number; limite?: number; motivo?: string; restante?: number }): string {
   switch (codigo) {
     case "envio_desligado": return "O envio de e-mail ainda não está ligado. Fale com o suporte do Jards.";
     case "sem_destinatarios": return "Ninguém para receber: só entra quem aceitou novidades e não saiu da lista.";
     case "sem_whatsapp": return "Ninguém com WhatsApp neste grupo: só entra quem aceitou novidades, informou o número e não saiu da lista.";
     case "destinatarios_demais": return `Este envio teria ${extra?.total ?? "gente demais"} pessoas, e o limite por envio é ${extra?.limite ?? LIMITE_DE_DESTINATARIOS}. Escolha um grupo menor.`;
+    case "email_nao_ativo":
+      if (extra?.motivo === "cota_do_mes") return `Esse envio passa do limite de e-mails do mês${typeof extra.restante === "number" ? `: ainda dá para mandar ${extra.restante.toLocaleString("pt-BR")}` : ""}. Escolha um grupo menor ou espere a renovação.`;
+      if (extra?.motivo === "sem_dominio" || extra?.motivo === "dominio_nao_verificado") return "O e-mail ainda não está pronto: falta confirmar o seu domínio. Veja a aba E-mail.";
+      return "Ative o e-mail na aba E-mail para enviar.";
     case "envio_repetido": return "Um envio igual a este acabou de sair. Espere alguns minutos antes de repetir.";
     case "sessao_indisponivel": return "Essa sessão não está mais à venda. Escolha outra.";
     case "teste_falhou": return "Não foi possível enviar o teste agora. Tente de novo em instantes.";
