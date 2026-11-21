@@ -121,10 +121,10 @@ test("a tela Integrações: a chave resumida, o código e os botões só para qu
   assert.ok(folha.includes("A chave atual deixa de valer na hora") && folha.includes("Gerar outra chave") && folha.includes("Cancelar"));
 });
 
-test("o proxy deixa o script do widget abrir sem login e o menu tem Integrações", () => {
+test("o proxy deixa o script do widget abrir sem login e as abas têm Integrações", () => {
   const proxy = readFileSync("proxy.ts", "utf8");
   assert.match(proxy, /dados\/\|widget\//, "widget/ fora do matcher do proxy");
-  assert.match(readFileSync("app/(dashboard)/layout.tsx", "utf8"), /label: "Integrações", href: "\/ingressos\/integracoes"/);
+  assert.match(readFileSync("lib/ticketeria/menu.ts", "utf8"), /rotulo: "Integrações", href: "\/ingressos\/integracoes"/, "Integrações é uma aba de Configurações");
   assert.match(readFileSync("lib/navigation/rotas.ts", "utf8"), /\["\/ingressos\/integracoes", "Integrações"\]/);
   assert.match(readFileSync("next.config.ts", "utf8"), /source: "\/embed\/:path\*"/, "o iframe do widget está em /embed/, a única área que outro site pode embutir");
 });

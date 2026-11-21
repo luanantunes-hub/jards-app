@@ -17,14 +17,14 @@ O que a lei pede é outra coisa: a Lei 12.933/2013 **limita** a meia-entrada a 4
 Três regras, nesta ordem:
 
 1. **Balde.** Numa sessão, o total ocupado (pago ou reservado e não vencido) em todos os ingressos do setor, mais o que está sendo pedido, nunca passa dos lugares do setor.
-2. **Teto do tipo.** A quantidade do lote continua existindo, mas passa a significar "até quantos deste lote", não "quantos lugares ficam separados para ele". A Meia tem lote de até 40% dos lugares; a Inteira, de até todos os lugares. Isso mantém a ordem de lotes (1º lote esgota, abre o 2º) como é hoje.
+2. **Teto do lote.** A quantidade do lote continua existindo, mas passa a significar "até quantos deste lote", não "quantos lugares ficam separados para ele". No Começar, inteira e meia nascem com todos os lugares. Isso mantém a ordem de lotes (1º lote esgota, abre o 2º) como é hoje.
 3. **Gravação.** O banco para de exigir que a soma dos lotes caiba no setor. Passa a exigir só que cada lote, sozinho, caiba (um lote nunca passa dos lugares do setor).
 
 O comprador não vê mudança: continua escolhendo Inteira ou Meia e pagando o preço de cada uma. A diferença é que a inteira só esgota quando o teatro lota de verdade.
 
-### Teto de 40% da meia
+### Sem limite de meia (decisão do Luan, 21/11/2026)
 
-Já nasce do desenho: o lote da Meia é de até 40% dos lugares. O que falta decidir é se o sistema **impede** o produtor de aumentar esse número ou só **avisa** (ver decisões). A conta é por sessão: se cada sessão tem no máximo 40% de meia, o evento inteiro também tem.
+O produto não limita a meia-entrada: ela vende os mesmos lugares que a inteira, e quem comprar primeiro leva. Não há teto de 40%, nem aviso, nem reserva. A quantidade do lote continua existindo para quem quiser limitar um tipo de ingresso (um lote de promoção, por exemplo), mas o Começar não limita nenhum.
 
 ### O que não muda
 
@@ -39,7 +39,7 @@ Já nasce do desenho: o lote da Meia é de até 40% dos lugares. O que falta dec
 | `fn_ticketeria_reservar` (e as duas que a embrulham: com cupom, com lugares) | confere só o lote | trava o setor e confere o balde, depois confere o lote |
 | `fn_ticketeria_livres` (vitrine, lista de espera) | soma o que sobra nos lotes | o menor entre isso e o que sobra no balde |
 | `fn_ticketeria_conferir_lugares` e os dois gatilhos | soma dos lotes ≤ lugares | cada lote ≤ lugares |
-| `fn_ticketeria_comecar` / `_pracas` (Começar) | Inteira = 60%, Meia = 40% | Inteira = todos os lugares, Meia = até 40% |
+| `fn_ticketeria_comecar` / `_pracas` (Começar) | Inteira = 60%, Meia = 40% | Inteira e Meia com todos os lugares |
 | `catalogo.ts` (`ofertaNoSetor`) e a tela do catálogo | "ofertados" e "sobram" somando lotes | mostra o setor, o teto de cada tipo e quanto já foi vendido |
 | Início, vitrine, modelo (MMM), análise do MCP | alguns usam a soma dos lotes como capacidade | **a conferir**: devem usar os lugares do setor |
 | Histórico importado | grava lotes com a quantidade vendida | **a conferir** contra a nova regra de gravação |
@@ -54,17 +54,17 @@ Nada é migrado. As quantidades antigas passam a valer como tetos, e a soma dela
 
 Um ingresso só, com a meia como "variação de preço" escolhida na compra, com o estoque no lote. É o jeito mais fiel a "se ele clicar, paga meio", mas mexe no pedido, no cupom, no reembolso, nos relatórios por categoria e na vitrine. É mais caro e mais arriscado. O desenho acima chega ao mesmo resultado para o produtor e o comprador com bem menos mudança. Dá para evoluir para essa variação depois, sem desfazer nada.
 
-## Decisões do Luan
+## Decisões do Luan (21/11/2026)
 
-1. **Teto de meia: impedir ou só avisar?** Impedir protege o produtor de uma multa; avisar dá liberdade (alguns eventos têm regras próprias, como os de entrada social).
-2. **Os outros tipos (social, VIP, convênio) também dividem o mesmo balde?** O desenho diz que sim, por padrão.
-3. **Eventos que já existem:** deixar como estão (o produtor sobe a Inteira), ou um botão que libera por evento?
-4. **Começar:** hoje a pergunta "Tem meia-entrada?" continua lá e ainda divide 60/40. Até a mudança entrar, tirar a pergunta evita a divisão errada (a meia seria criada depois, no evento). Depois da mudança, ela volta a fazer sentido com o significado novo: Inteira com todos os lugares e Meia com teto de 40%. Qual dos dois caminhos até lá?
+1. **Limite de meia:** não há. Nem o Começar, nem o catálogo, nem o banco limitam ou avisam sobre 40%. (A lei 12.933/2013 fala em 40%; o Luan decidiu que o produto não trata disso.)
+2. **Social, VIP e convênio:** dividem o mesmo balde.
+3. **Eventos que já existem:** ficam como estão, sem botão nem migração.
+4. **Começar:** a pergunta da meia fica; sim = uma Meia com todos os lugares e metade do preço.
 
-## Como seria a obra (quando aprovado)
+## Feito (21/11/2026)
 
-1. Migration aditiva (`create or replace` das funções acima, sem DROP e sem mudar assinatura, para não cair no PGRST203): balde na reserva, `livres`, regra de gravação, Começar.
-2. pgTAP: duas compras de tipos diferentes até lotar; compras simultâneas; teto da meia; reembolso devolvendo o lugar; setor numerado; lista de espera; evento antigo com lotes já divididos; histórico importado.
-3. Telas: catálogo e Começar.
-
-O módulo está escondido dos clientes e nenhuma organização o usa em produção: é a hora mais barata de mexer em estoque.
+- Migration `20261127100300_ticketeria_estoque_unico.sql`, aplicada: a conta do balde (`fn_ticketeria_ocupados_do_setor`), a reserva (trava o setor e confere o balde), o pagamento depois do prazo, `fn_ticketeria_livres` e a regra de gravação (cada lote cabe nos lugares).
+- Migration `20261127100400_ticketeria_comecar_meia_sem_limite.sql`, aplicada: o Começar cria a Meia com todos os lugares (a versão anterior usava 40%) e sem o mínimo de 3 lugares.
+- pgTAP `ticketeria_estoque_unico.test.sql`, 24 verificações: inteira e meia dividindo o balde, o lote pequeno de uma meia, a inteira vendendo o resto, dois tipos no mesmo pedido, reserva vencida, pagamento tardio e quem pode chamar. As suítes antigas seguiram verdes (catálogo, Começar em várias praças, pagamentos, assentos, lista de espera, porta e reembolsos); duas verificações antigas do catálogo mudaram de propósito (a soma dos lotes não é mais exigida; e `fn_ticketeria_conferir_lugares` é chamável por quem edita, desde a migration do editor de mapa).
+- App: a vitrine limita o que se compra ao balde de todo setor (antes só do numerado); o catálogo mostra "N lugares para todos os ingressos"; a tela final do Começar mostra o preço da inteira e da meia e os lugares, sem número por tipo.
+- Não conferido: compras simultâneas de verdade (o desenho trava o setor antes dos lotes, mas só foi provado em sequência), e os efeitos nas telas de início e do modelo, que já usavam os lugares do setor como capacidade.

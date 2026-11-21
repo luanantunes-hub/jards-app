@@ -3153,6 +3153,10 @@ export type BancoDaTicketeria = {
         Args: { p_sessao: string; p_lote: string; p_fora?: string | null };
         Returns: number;
       };
+      fn_ticketeria_ocupados_do_setor: {
+        Args: { p_sessao: string; p_setor: string; p_fora?: string | null };
+        Returns: number;
+      };
       fn_ticketeria_reembolso_registrar: {
         Args: { p_email_id: string; p_remetente: string; p_assunto: string; p_codigo: string | null; p_recebido_em: string };
         Returns: Json;

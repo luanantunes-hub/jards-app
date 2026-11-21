@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  lerIngresso, lerLote, loteDaVez, mensagemDoErroDoCatalogo, nomeDoProximoLote, ofertaNoSetor, precoDaMeia, precoParaMostrar, publicoPorPadrao, semPreco, situacaoDoLote,
+  lerIngresso, lerLote, loteDaVez, mensagemDoErroDoCatalogo, nomeDoProximoLote, precoDaMeia, precoParaMostrar, publicoPorPadrao, semPreco, situacaoDoLote,
 } from "../lib/ticketeria/catalogo";
 
 const FUSO = "America/Sao_Paulo";
@@ -57,13 +57,6 @@ test("a janela do lote e o lote da vez, na ordem", () => {
   assert.deepEqual([primeiro, segundo, terceiro].map(l => situacaoDoLote(l, agora)), ["encerrado", "na_janela", "antes"]);
   assert.equal(loteDaVez([terceiro, segundo, primeiro], agora), segundo);
   assert.equal(loteDaVez([primeiro], agora), null);
-});
-
-test("a oferta do setor: os lotes dos ingressos em uso nele", () => {
-  const ingressos = [{ id: "i1", setor_id: "s1", arquivado: false }, { id: "i2", setor_id: "s1", arquivado: true }, { id: "i3", setor_id: "s2", arquivado: false }];
-  const lotes = [{ ingresso_id: "i1", quantidade: 60 }, { ingresso_id: "i1", quantidade: 20 }, { ingresso_id: "i2", quantidade: 50 }, { ingresso_id: "i3", quantidade: 10 }];
-  assert.deepEqual(ofertaNoSetor({ id: "s1", lugares: 100 }, ingressos, lotes), { lugares: 100, ofertados: 80, livres: 20 });
-  assert.deepEqual(ofertaNoSetor({ id: "s1", lugares: 50 }, ingressos, lotes), { lugares: 50, ofertados: 80, livres: -30 }, "o setor diminuído depois mostra o que passou");
 });
 
 test("os erros do banco viram frases", () => {

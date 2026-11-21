@@ -10,7 +10,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { CATEGORIAS_DO_INGRESSO, type CategoriaDoIngresso } from "@/lib/ticketeria/estados";
 import { partesNoFuso, quandoDaSessao } from "@/lib/ticketeria/eventos";
 import {
-  NOME_PADRAO, ROTULO_DA_CATEGORIA, lerIngresso, lerLote, loteDaVez, mensagemDoErroDoCatalogo, nomeDoProximoLote, ofertaNoSetor,
+  NOME_PADRAO, ROTULO_DA_CATEGORIA, lerIngresso, lerLote, loteDaVez, mensagemDoErroDoCatalogo, nomeDoProximoLote,
   precoDaMeia, precoParaMostrar, publicoPorPadrao, semPreco, situacaoDoLote,
 } from "@/lib/ticketeria/catalogo";
 import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
@@ -80,7 +80,7 @@ function IngressoSheet({ organizationId, eventoId, setores, locais, ingresso, or
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
         {opcoes.length === 0 ? (
-          <p className="rounded-xl border border-black/[.08] px-3 py-3 text-[0.75rem] text-black/55">O ingresso é de um setor de um local. Cadastre o local e os setores em Locais, no menu.</p>
+          <p className="rounded-xl border border-black/[.08] px-3 py-3 text-[0.75rem] text-black/55">O ingresso é de um setor de um local. Cadastre o local e os setores em Configurações, na aba Espaços.</p>
         ) : (
           <div><span className={ROTULO}>Setor</span><Dropdown ariaLabel="Setor do ingresso" value={setorId} onChange={setSetorId} disabled={salvando} options={opcoes.map(setor => ({ value: setor.id, label: `${locais.find(local => local.id === setor.local_id)?.nome ?? "Local"} · ${setor.nome}` }))} /></div>
         )}
@@ -172,7 +172,7 @@ function LoteSheet({ organizationId, ingresso, fuso, lote, quantosLotes, sugesta
 
 // ─── A seção ────────────────────────────────────────────────────────────────
 
-/** Os ingressos do evento, agrupados por setor, com os lotes e a oferta de cada setor por sessão. */
+/** Os ingressos do evento, agrupados por setor, com os lotes e os lugares de cada setor. */
 export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, podeEditar }: { organizationId: string; eventoId: string; locaisDasSessoes: string[]; podeEditar: boolean }) {
   const [dados, setDados] = useState<{ locais: Local[]; setores: Setor[]; ingressos: Ingresso[]; lotes: Lote[] } | null>(null);
   const [folha, setFolha] = useState<Folha | null>(null);
@@ -209,7 +209,7 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
       const local = dados.locais.find(item => item.id === setor?.local_id);
       return {
         setor, local,
-        oferta: setor ? ofertaNoSetor(setor, dados.ingressos, dados.lotes) : null,
+        lugares: setor ? setor.lugares : null,
         ingressos: dados.ingressos.filter(ingresso => ingresso.setor_id === setorId).map(ingresso => ({ ingresso, lotes: dados.lotes.filter(lote => lote.ingresso_id === ingresso.id) })),
       };
     });
@@ -247,15 +247,11 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
         </div>
       ) : (
         <div className="space-y-3">
-          {grupos.map(({ setor, local, oferta, ingressos }) => (
+          {grupos.map(({ setor, local, lugares, ingressos }) => (
             <div key={setor?.id ?? "sem-setor"} className="overflow-hidden rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b bg-black/[.015] px-4 py-2.5" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                 <p className="text-[0.75rem] font-normal text-[#282525]">{local?.nome ?? "Local"} · {setor?.nome ?? "Setor"}</p>
-                {oferta && (
-                  <p className="text-[0.6875rem] tabular-nums text-black/50">
-                    {numero(oferta.lugares)} lugares · {numero(oferta.ofertados)} no catálogo · {oferta.livres >= 0 ? `${numero(oferta.livres)} sem ingresso` : `${numero(-oferta.livres)} a mais que os lugares`}
-                  </p>
-                )}
+                {lugares !== null && <p className="text-[0.6875rem] tabular-nums text-black/50">{numero(lugares)} lugares para todos os ingressos</p>}
               </div>
               <ul className="divide-y divide-black/[.06]">
                 {ingressos.map(({ ingresso, lotes }) => {

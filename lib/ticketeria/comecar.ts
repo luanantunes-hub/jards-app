@@ -227,11 +227,9 @@ export function ondeDaPraca(p: Praca): string {
   return lugar && lugar !== p.cidade.trim() ? `${lugar}, ${cidade}` : cidade;
 }
 
-/** Como o banco divide os lugares: 40% meia (Lei 12.933/2013) e o resto inteira; sem meia abaixo de 3 lugares ou no gratuito. */
+/** O estoque é um só: a inteira e a meia-entrada vendem os mesmos lugares, sem reservar nem limitar nenhum dos dois. No gratuito não há meia. */
 export function divisaoDosLugares(lugares: number, meia: boolean, gratuito: boolean): { inteira: number; meia: number } {
-  if (gratuito || !meia || lugares < 3) return { inteira: lugares, meia: 0 };
-  const m = Math.floor(lugares * 0.4);
-  return { inteira: lugares - m, meia: m };
+  return { inteira: lugares, meia: gratuito || !meia ? 0 : lugares };
 }
 
 /** O preço da meia: metade da inteira, arredondada, nunca abaixo de 1 centavo (a mesma conta do banco). */

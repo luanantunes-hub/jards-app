@@ -392,7 +392,7 @@ function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resu
     ...(varias ? cidades.map(c => [`${c.cidade}, ${c.uf}`, resumoDasDatas(c.datas)] as [string, string]) : []),
     ...(gratuito
       ? [["Entrada gratuita", `${lugares} lugares${varias ? " por cidade" : ""}`] as [string, string]]
-      : [["Inteira", `${reais(inteira)} · ${divisao.inteira} lugares`] as [string, string], ...(divisao.meia > 0 ? [["Meia-entrada", `${reais(precoDaMeia(inteira))} · ${divisao.meia} lugares`] as [string, string]] : [])]),
+      : [["Inteira", reais(inteira)] as [string, string], ...(divisao.meia > 0 ? [["Meia-entrada", reais(precoDaMeia(inteira))] as [string, string]] : []), ["Lugares", `${lugares}${varias ? " por cidade" : ""}`] as [string, string]]),
   ];
   if (resultado.mapa === "montado" && r.mapa) {
     const resumo = resumoDoMapa(r.mapa);

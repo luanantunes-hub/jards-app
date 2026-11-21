@@ -104,19 +104,6 @@ export function loteDaVez<T extends { ordem: number; vendas_inicio: string | nul
   return [...lotes].sort((a, b) => a.ordem - b.ordem).find(lote => situacaoDoLote(lote, agora) === "na_janela") ?? null;
 }
 
-export type OfertaDoSetor = { lugares: number; ofertados: number; livres: number };
-
-/** Quantos lugares do setor o catálogo do evento já oferece por sessão (a soma dos lotes dos ingressos em uso) e quantos sobram. */
-export function ofertaNoSetor(
-  setor: { id: string; lugares: number },
-  ingressos: readonly { id: string; setor_id: string; arquivado: boolean }[],
-  lotes: readonly { ingresso_id: string; quantidade: number }[],
-): OfertaDoSetor {
-  const doSetor = new Set(ingressos.filter(ingresso => ingresso.setor_id === setor.id && !ingresso.arquivado).map(ingresso => ingresso.id));
-  const ofertados = lotes.reduce((soma, lote) => soma + (doSetor.has(lote.ingresso_id) ? lote.quantidade : 0), 0);
-  return { lugares: setor.lugares, ofertados, livres: setor.lugares - ofertados };
-}
-
 /** O preço para mostrar: "R$ 50,00", ou "Grátis". */
 export const precoParaMostrar = (centavos: number) => (centavos === 0 ? "Grátis" : formatarReais(centavos));
 
@@ -124,7 +111,7 @@ export const precoParaMostrar = (centavos: number) => (centavos === 0 ? "Grátis
 export function mensagemDoErroDoCatalogo(erro: { code?: string; message?: string }): string {
   const m = erro.message ?? "";
   if (erro.code === "42501") return "Você não pode mudar a Ticketeria desta organização.";
-  if (m.includes("lugares_excedidos")) return "Passa dos lugares do setor. Diminua a quantidade ou aumente os lugares do setor em Locais.";
+  if (m.includes("lugares_excedidos")) return "Passa dos lugares do setor. Diminua a quantidade ou aumente os lugares do setor em Espaços.";
   if (m.includes("preco_incoerente")) return "O preço não combina com a categoria: gratuito e cortesia custam zero; as outras, mais que zero.";
   if (m.includes("setor_arquivado")) return "Esse setor está arquivado. Escolha outro.";
   if (m.includes("evento_cancelado")) return "O evento está cancelado e não muda mais.";

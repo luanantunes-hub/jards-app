@@ -240,9 +240,9 @@ test("o preço digitado vira centavos, no jeito brasileiro", () => {
 });
 
 test("a meia fica com 40% dos lugares pela metade do preço, como o banco divide", () => {
-  assert.deepEqual(divisaoDosLugares(100, true, false), { inteira: 60, meia: 40 });
-  assert.deepEqual(divisaoDosLugares(7, true, false), { inteira: 5, meia: 2 });
-  assert.deepEqual(divisaoDosLugares(2, true, false), { inteira: 2, meia: 0 }, "menos de 3 lugares: sem meia");
+  assert.deepEqual(divisaoDosLugares(100, true, false), { inteira: 100, meia: 100 }, "estoque único: a inteira e a meia vendem os mesmos lugares, sem limite");
+  assert.deepEqual(divisaoDosLugares(7, true, false), { inteira: 7, meia: 7 });
+  assert.deepEqual(divisaoDosLugares(2, true, false), { inteira: 2, meia: 2 }, "poucos lugares também têm meia: não há mais o mínimo de 3");
   assert.deepEqual(divisaoDosLugares(100, false, false), { inteira: 100, meia: 0 });
   assert.deepEqual(divisaoDosLugares(500, true, true), { inteira: 500, meia: 0 }, "gratuito: sem meia");
   assert.equal(precoDaMeia(6000), 3000);

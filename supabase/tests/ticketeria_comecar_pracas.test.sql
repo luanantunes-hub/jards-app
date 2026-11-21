@@ -73,7 +73,7 @@ select is((select string_agg(lo.cidade || '/' || lo.uf, ',' order by lo.cidade) 
 select is((select string_agg(lo.cidade || ':' || i.nome || ':' || l.preco_centavos || 'x' || l.quantidade, ',' order by lo.cidade, i.ordem)
            from public.ticketeria_ingressos i join public.ticketeria_lotes l on l.ingresso_id = i.id join public.ticketeria_setores s on s.id = i.setor_id join public.ticketeria_locais lo on lo.id = s.local_id
            where i.evento_id = ((select r from tp.r where k = 'turne') ->> 'evento_id')::uuid),
-          'Curitiba:Inteira:6000x60,Curitiba:Meia-entrada:3000x40,Sorocaba:Inteira:6000x60,Sorocaba:Meia-entrada:3000x40', 'turnê: inteira e meia em cada cidade, com 60% e 40% dos lugares');
+          'Curitiba:Inteira:6000x100,Curitiba:Meia-entrada:3000x100,Sorocaba:Inteira:6000x100,Sorocaba:Meia-entrada:3000x100', 'turnê: inteira e meia em cada cidade, as duas com todos os lugares (sem limite de meia)');
 select is((select perfil from public.ticketeria_lojas where organization_id = tp.id('a0')), 'turne', 'o perfil fica na loja');
 select is((select (r -> 'pracas' -> 1 ->> 'sessoes')::int from tp.r where k = 'turne'), 2, 'cada praça diz quantas sessões criou');
 
