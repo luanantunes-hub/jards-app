@@ -59,7 +59,7 @@ Um ingresso só, com a meia como "variação de preço" escolhida na compra, com
 1. **Teto de meia: impedir ou só avisar?** Impedir protege o produtor de uma multa; avisar dá liberdade (alguns eventos têm regras próprias, como os de entrada social).
 2. **Os outros tipos (social, VIP, convênio) também dividem o mesmo balde?** O desenho diz que sim, por padrão.
 3. **Eventos que já existem:** deixar como estão (o produtor sobe a Inteira), ou um botão que libera por evento?
-4. **Começar:** depois da mudança, volta a pergunta "Tem meia-entrada?" com o significado novo (Inteira com todos os lugares, Meia com teto de 40%)? Ou só a Inteira, e a meia entra depois, no evento? Hoje a pergunta já foi tirada do Começar por esse motivo, só se ela voltar com o sentido certo.
+4. **Começar:** hoje a pergunta "Tem meia-entrada?" continua lá e ainda divide 60/40. Até a mudança entrar, tirar a pergunta evita a divisão errada (a meia seria criada depois, no evento). Depois da mudança, ela volta a fazer sentido com o significado novo: Inteira com todos os lugares e Meia com teto de 40%. Qual dos dois caminhos até lá?
 
 ## Como seria a obra (quando aprovado)
 
