@@ -46,7 +46,7 @@ function Relatorio() {
   if (!organizationId || (sessaoId && dados === undefined)) return <DetailPageSkeleton />;
   return (
     <>
-      <ListPageHeader eyebrow="Ticketeria" title="Relatório da porta" />
+      <ListPageHeader eyebrow="Ticketeria" title="Relatório da entrada" />
       <ListContent>
         {erro && <p role="alert" className="mx-auto mb-4 max-w-[44rem] rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {dados ? (

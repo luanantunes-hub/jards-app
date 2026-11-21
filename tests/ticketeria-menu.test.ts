@@ -23,12 +23,12 @@ test("as abas aparecem só nas páginas agrupadas e acendem a aba certa", () => 
   assert.equal(abasDaRota("/ingressos/eventos/abc"), null);
   assert.equal(abasDaRota("/ingressos/recebimentos"), null);
   assert.equal(abasDaRota("/ingressos/comecar"), null);
-  assert.equal(abasDaRota("/ingressos/porta/relatorio")?.ativa.rotulo, "Porta");
+  assert.equal(abasDaRota("/ingressos/porta/relatorio")?.ativa.rotulo, "Controle de entrada");
   assert.equal(abasDaRota("/ingressos/publico")?.grupo.id, "divulgacao");
   assert.equal(abasDaRota("/ingressos/locais")?.ativa.rotulo, "Espaços");
   assert.equal(abasDaRota("/ingressos/vendas")?.grupo.abas.length, 4);
-  assert.equal(abasDaRota("/ingressos/site")?.grupo.id, "vendas", "o site é uma aba de Vendas");
-  assert.equal(abasDaRota("/ingressos/site")?.ativa.rotulo, "Site");
+  assert.equal(abasDaRota("/ingressos/site")?.grupo.id, "vendas", "a loja online é uma aba de Vendas");
+  assert.equal(abasDaRota("/ingressos/site")?.ativa.rotulo, "Loja online");
 });
 
 test("a primeira aba de cada grupo é o href do item do menu", () => {
