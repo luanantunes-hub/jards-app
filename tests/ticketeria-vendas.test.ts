@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { diaCurtoEHora, montarVendas, repasseDoPedido, situacaoDaSessao, type EntradaDasVendas, type LinhaDePedido } from "../lib/ticketeria/vendas";
+import { diaCurtoEHora, montarCompras, montarResumoDasVendas, montarVendas, repasseDoPedido, situacaoDaSessao, type EntradaDasVendas, type LinhaDePedido, type TotaisDasVendas } from "../lib/ticketeria/vendas";
 import { ComprasDeVendas, DetalheDaCompraSheet, ReembolsosDeVendas, ResumoDeVendas, SessoesDeVendas, VendasView } from "../components/ticketeria/VendasView";
 
 const AGORA = Date.parse("2026-11-19T15:00:00.000Z");
@@ -162,4 +162,64 @@ test("o lugar nas vendas: o detalhe da compra traz o lugar de cada ingresso de s
   const detalhe = compras.find(c => c.detalhe.ingressos.some(i => i.assento))!.detalhe;
   const folha = renderToStaticMarkup(createElement(DetalheDaCompraSheet, { compra: { ...detalhe, endereco_do_pedido: "https://jards.com.br/pedido/x" }, onClose: () => {} })).replace(/\u00a0/g, " ");
   assert.ok(folha.includes("Plateia · Fileira C · lugar 7"));
+});
+
+// ─── As vendas paginadas: os totais vêm somados do banco e a lista de compras, de página em página ─────────────────────────────────────────────────────
+
+/** Os totais como a função do banco os soma (só os pedidos pagos; os ingressos válidos; a fila de reembolsos), a partir dos mesmos dados da entrada. */
+function totaisComoOBancoSoma(e: EntradaDasVendas): TotaisDasVendas {
+  const pagos = e.pedidos.filter(p => p.situacao === "pago");
+  const porSessao = new Map<string, { vendidos: number; receita: number }>();
+  for (const p of pagos) {
+    const atual = porSessao.get(p.sessao_id) ?? { vendidos: 0, receita: 0 };
+    porSessao.set(p.sessao_id, { vendidos: atual.vendidos + (e.quantidadePorPedido[p.id] ?? 0), receita: atual.receita + p.total_centavos });
+  }
+  return {
+    compras_pagas: pagos.length, vendido_centavos: pagos.reduce((soma, p) => soma + p.total_centavos, 0), repasse_centavos: pagos.reduce((soma, p) => soma + repasseDoPedido(p), 0),
+    ingressos: e.emitidos.filter(i => !i.cancelado_em).length,
+    por_sessao: [...porSessao].map(([sessao_id, v]) => ({ sessao_id, ...v })),
+    reembolsos: (e.reembolsos ?? []).map(r => ({ ...r, codigo: e.pedidos.find(p => p.id === r.pedido_id)?.codigo ?? "" })),
+  };
+}
+
+test("o resumo, as sessões e os reembolsos a partir dos totais do banco são os mesmos de montarVendas (a conta não mudou, só quem soma)", () => {
+  const comReembolso: EntradaDasVendas = { ...entrada, reembolsos: [{ id: "r1", pedido_id: "1", remetente: "a@exemplo.com", recebido_em: "2026-11-19T14:20:00.000Z", situacao: "estornado", valor_centavos: 15000, origem: "email" }] };
+  const inteira = montarVendas(comReembolso);
+  const paginada = montarResumoDasVendas(totaisComoOBancoSoma(comReembolso), comReembolso);
+  assert.deepEqual(paginada.resumo, inteira.resumo);
+  assert.deepEqual(paginada.sessoes, inteira.sessoes);
+  assert.deepEqual(paginada.reembolsos, inteira.reembolsos);
+  assert.equal(paginada.reembolsos.length, 1, "a fila de reembolsos veio");
+});
+
+test("sem nenhuma venda, os totais zerados dão um resumo zerado (loja nova)", () => {
+  const vazio: TotaisDasVendas = { compras_pagas: 0, vendido_centavos: 0, repasse_centavos: 0, ingressos: 0, por_sessao: [], reembolsos: [] };
+  const r = montarResumoDasVendas(vazio, { ...entrada, liberadoCentavos: 0, sacadoCentavos: 0 });
+  assert.deepEqual(r.resumo, { vendido_centavos: 0, ingressos: 0, compras: 0, repasse_centavos: 0, liberado_centavos: 0, retido_centavos: 0 });
+  assert.ok(r.sessoes.every(s => s.vendidos === 0 && s.receita_centavos === 0), "as sessões aparecem, sem vendas");
+});
+
+test("os totais do banco chegam como texto (bigint): a conta aceita e converte", () => {
+  const t = totaisComoOBancoSoma(entrada);
+  const comoTexto = { ...t, vendido_centavos: String(t.vendido_centavos) as unknown as number, repasse_centavos: String(t.repasse_centavos) as unknown as number, por_sessao: t.por_sessao.map(x => ({ ...x, vendidos: String(x.vendidos) as unknown as number, receita: String(x.receita) as unknown as number })) };
+  assert.deepEqual(montarResumoDasVendas(comoTexto, entrada).resumo, montarVendas(entrada).resumo);
+});
+
+test("a página de compras: só os pedidos da página, da mais recente, com os ingressos de cada um", () => {
+  const pagina = montarCompras({ ...entrada, pedidos: entrada.pedidos.slice(0, 2) });
+  assert.deepEqual(pagina.map(c => c.id), ["1", "2"], "da mais recente para a mais antiga");
+  assert.equal(pagina[0].detalhe.ingressos.length, 3, "os ingressos do pedido 1");
+  assert.equal(pagina[1].detalhe.ingressos.length, 1);
+  assert.equal(montarCompras({ ...entrada, pedidos: [] }).length, 0);
+});
+
+test("a lista de compras: 'Ver mais compras' só aparece quando há mais; buscando, o botão trabalha e a tabela esmaece", () => {
+  const compras = montarVendas(entrada).compras;
+  const com = renderToStaticMarkup(createElement(ComprasDeVendas, { compras, filtro: "todas", haMais: true, onVerMais: () => undefined }));
+  assert.match(com, /Ver mais compras/);
+  assert.doesNotMatch(renderToStaticMarkup(createElement(ComprasDeVendas, { compras, filtro: "todas" })), /Ver mais compras/, "sem mais páginas, sem o botão");
+  const buscando = renderToStaticMarkup(createElement(ComprasDeVendas, { compras, filtro: "todas", haMais: true, carregando: true }));
+  assert.match(buscando, /Buscando…/);
+  assert.match(buscando, /opacity-60/);
+  assert.match(renderToStaticMarkup(createElement(ComprasDeVendas, { compras: [], filtro: "pagas", carregando: true })), /Buscando…/, "trocando o filtro, antes da resposta, não diz 'nenhuma compra'");
 });
