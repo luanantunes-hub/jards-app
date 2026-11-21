@@ -28,7 +28,7 @@ test("o resumo dos blocos: quantos e os três primeiros, com reticências quando
   assert.equal(resumoDosBlocos([]), "página vazia");
   assert.equal(resumoDosBlocos([t("a")]), "1 bloco · Título");
   assert.equal(resumoDosBlocos([t("a"), { tipo: "texto", texto: "b" }, { tipo: "ingressos", titulo: "", evento_id: null }]), "3 blocos · Título, Texto, Ingressos");
-  assert.equal(resumoDosBlocos([{ tipo: "capa", titulo: "x", subtitulo: "", imagem: "", botao_rotulo: "", botao_url: "" }, t("a"), { tipo: "faq", titulo: "", itens: [{ pergunta: "p", resposta: "r" }] }, t("b"), t("c"), t("d")]), "6 blocos · Capa, Título, Perguntas…");
+  assert.equal(resumoDosBlocos([{ tipo: "capa", layout: "tela_cheia", titulo: "x", subtitulo: "", imagem: "", botao_rotulo: "", botao_url: "", botao2_rotulo: "", botao2_url: "", chamada: "", info: "", slides: [] }, t("a"), { tipo: "faq", titulo: "", itens: [{ pergunta: "p", resposta: "r" }] }, t("b"), t("c"), t("d")]), "6 blocos · Destaque do alto, Título, Perguntas…");
 });
 
 test("a lista: mais novas primeiro, só as 20 mais recentes, blocos lidos como o site os lê, e linha estranha some", () => {

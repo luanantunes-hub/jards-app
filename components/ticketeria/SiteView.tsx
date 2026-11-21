@@ -4,6 +4,7 @@ import { ContagemRegressiva } from "@/components/ticketeria/ContagemRegressiva";
 import { enderecoDoMapa, enderecoDoVideo, textoSobreCor, type Bloco, type ColunaDoBloco } from "@/lib/ticketeria/site";
 import { variaveisDoTema } from "@/lib/ticketeria/temas";
 import { AgendaDoSite } from "@/components/ticketeria/AgendaDoSite";
+import { DestaqueDoSite } from "@/components/ticketeria/DestaqueDoSite";
 import type { ItemDaAgenda } from "@/lib/ticketeria/evento-site";
 import { diaPorExtenso } from "@/components/producao/ProgramacaoPublicaView";
 
@@ -82,7 +83,7 @@ export function IngressosDoEvento({ titulo, sessoes }: { titulo: string; sessoes
 const BOTAO_CLARO = "inline-flex min-h-11 items-center rounded-[var(--site-raio)] bg-white px-5 py-2.5 text-[0.9375rem] font-normal text-[#282525] transition hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 
 /** A faixa de abertura: com imagem de fundo (escurecida, para o texto branco ler bem) ou na cor do tema. */
-export function Capa({ bloco, cor }: { bloco: Extract<Bloco, { tipo: "capa" }>; cor: string }) {
+export function Capa({ bloco, cor }: { bloco: Pick<Extract<Bloco, { tipo: "capa" }>, "titulo" | "subtitulo" | "imagem" | "botao_rotulo" | "botao_url">; cor: string }) {
   const comImagem = bloco.imagem !== "";
   const texto = comImagem ? "#ffffff" : textoSobreCor(cor);
   return (
@@ -131,7 +132,7 @@ function BlocoDoSite({ bloco, cor, agora, base, semLinksDeEvento, agenda, progra
     case "botao":
       return <a href={bloco.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-[var(--site-raio)] bg-[color:var(--site-botao)] px-5 py-2.5 text-[0.9375rem] font-normal text-[color:var(--site-botao-texto)] transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{bloco.rotulo}</a>;
     case "capa":
-      return <Capa bloco={bloco} cor={cor} />;
+      return <DestaqueDoSite bloco={bloco} cor={cor} agenda={agenda} base={base} semLinks={semLinksDeEvento} agora={agora} />;
     case "colunas":
       return <div className="grid items-center gap-5 sm:grid-cols-2"><Coluna coluna={bloco.esquerda} /><Coluna coluna={bloco.direita} /></div>;
     case "galeria":

@@ -13,7 +13,7 @@ import { copiaDeUmaPagina, duplicarBloco, enderecoDaPrevia, moverBloco } from "@
 import { PreviaDoSite } from "@/components/ticketeria/PreviaDoSite";
 import { CampoDeImagem } from "@/components/ticketeria/CampoDeImagem";
 import { VersoesSheet } from "@/components/ticketeria/VersoesDoSite";
-import { blocosDoJson, lerBloco, lerSeo, ordemDasPaginas, ROTULO_DO_LAYOUT_DA_AGENDA, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
+import { blocosDoJson, lerBloco, lerSeo, ordemDasPaginas, ROTULO_DO_LAYOUT_DA_AGENDA, ROTULO_DO_LAYOUT_DO_DESTAQUE, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
 import { AcrescentarBlocoSheet, BlocoNovoSheet, TIPOS_DAS_FOLHAS_NOVAS } from "@/components/ticketeria/BlocosNovosSheet";
 
 /** Um evento da loja: a fonte de um bloco de ingressos. */
@@ -43,7 +43,7 @@ const resumoDoBloco = (bloco: Bloco, espacos: readonly EspacoDaProgramacao[], ev
       return [bloco.titulo, evento ? `as sessões de ${evento.titulo}${evento.situacao === "publicado" ? "" : " (o evento ainda não está publicado: o bloco não mostra nada)"}` : "sem evento: o bloco não mostra nada"].filter(Boolean).join(" · ");
     }
     case "contato": return [bloco.endereco, bloco.telefone, bloco.email].filter(Boolean).join(" · ");
-    case "capa": return [bloco.titulo, bloco.subtitulo].filter(Boolean).join(" · ");
+    case "capa": return [ROTULO_DO_LAYOUT_DO_DESTAQUE[bloco.layout].nome, bloco.layout === "carrossel" ? `${bloco.slides.length} ${bloco.slides.length === 1 ? "destaque" : "destaques"}` : bloco.layout === "proximo" ? "o próximo evento" : bloco.titulo, bloco.layout === "carrossel" || bloco.layout === "proximo" ? "" : bloco.subtitulo].filter(Boolean).join(" · ");
     case "colunas": return `${bloco.esquerda.tipo === "texto" ? "texto" : "imagem"} e ${bloco.direita.tipo === "texto" ? "texto" : "imagem"}`;
     case "galeria": return [bloco.titulo, `${bloco.imagens.length} imagens`].filter(Boolean).join(" · ");
     case "video": return [bloco.titulo, bloco.provedor === "youtube" ? "YouTube" : "Vimeo"].filter(Boolean).join(" · ");

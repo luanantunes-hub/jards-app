@@ -44,7 +44,7 @@ export function EventoDoSiteView({ dados, host, busca = {} }: { dados: EventoPub
     <QuadroDoSite site={dados} base="" paginaAtual="">
       <article className="space-y-8">
         <h1 className="sr-only">{e.titulo}</h1>
-        <Capa bloco={{ tipo: "capa", titulo: e.titulo, subtitulo, imagem, botao_rotulo: "", botao_url: "" }} cor={dados.cor} />
+        <Capa bloco={{ titulo: e.titulo, subtitulo, imagem, botao_rotulo: "", botao_url: "" }} cor={dados.cor} />
         {e.descricao && <div className="space-y-3 text-[1rem] leading-relaxed">{e.descricao.split(/\n{2,}/).map((paragrafo, i) => <p key={i} className="whitespace-pre-line">{paragrafo}</p>)}</div>}
         <section aria-label="Sessões">
           {contagem && <p className="mb-2 text-[0.875rem] font-normal opacity-70">{contagem.frase}</p>}

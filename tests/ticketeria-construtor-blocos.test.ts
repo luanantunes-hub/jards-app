@@ -23,8 +23,8 @@ test("os grupos do seletor cobrem todos os tipos, cada um uma vez, e cada tipo t
 });
 
 test("capa: título obrigatório, imagem https opcional, botão com texto e endereço juntos", () => {
-  assert.deepEqual(ok({ tipo: "capa", titulo: " Hamlet ", subtitulo: "De 12 a 20", imagem: "https://exemplo.com/f.jpg", botao_rotulo: "Comprar", botao_url: "https://exemplo.com/c" }), { tipo: "capa", titulo: "Hamlet", subtitulo: "De 12 a 20", imagem: "https://exemplo.com/f.jpg", botao_rotulo: "Comprar", botao_url: "https://exemplo.com/c" });
-  assert.deepEqual(ok({ tipo: "capa", titulo: "Só título" }), { tipo: "capa", titulo: "Só título", subtitulo: "", imagem: "", botao_rotulo: "", botao_url: "" });
+  assert.deepEqual(ok({ tipo: "capa", titulo: " Hamlet ", subtitulo: "De 12 a 20", imagem: "https://exemplo.com/f.jpg", botao_rotulo: "Comprar", botao_url: "https://exemplo.com/c" }), { tipo: "capa", layout: "tela_cheia", titulo: "Hamlet", subtitulo: "De 12 a 20", imagem: "https://exemplo.com/f.jpg", botao_rotulo: "Comprar", botao_url: "https://exemplo.com/c", botao2_rotulo: "", botao2_url: "", chamada: "", info: "", slides: [] });
+  assert.deepEqual(ok({ tipo: "capa", titulo: "Só título" }), { tipo: "capa", layout: "tela_cheia", titulo: "Só título", subtitulo: "", imagem: "", botao_rotulo: "", botao_url: "", botao2_rotulo: "", botao2_url: "", chamada: "", info: "", slides: [] });
   assert.match(erro({ tipo: "capa", titulo: "" }), /título da capa/);
   assert.match(erro({ tipo: "capa", titulo: "x".repeat(121) }), /título da capa/);
   assert.match(erro({ tipo: "capa", titulo: "x", imagem: "http://inseguro.com/a.jpg" }), /https/);
@@ -112,10 +112,10 @@ const desenhar = (blocos: unknown[]) => renderToStaticMarkup(createElement(SiteV
 
 test("o site desenha a capa (com e sem imagem), as colunas e a galeria", () => {
   const comImagem = desenhar([{ tipo: "capa", titulo: "Hamlet em temporada", subtitulo: "No Teatro Municipal", imagem: "https://a.com/f.jpg", botao_rotulo: "Comprar ingressos", botao_url: "https://a.com/c" }]);
-  assert.ok(comImagem.includes("Hamlet em temporada") && comImagem.includes("No Teatro Municipal") && comImagem.includes('src="https://a.com/f.jpg"') && comImagem.includes("bg-black/55") && comImagem.includes("Comprar ingressos"));
+  assert.ok(comImagem.includes("Hamlet em temporada") && comImagem.includes("No Teatro Municipal") && comImagem.includes('src="https://a.com/f.jpg"') && comImagem.includes("from-black/70") && comImagem.includes("Comprar ingressos"));
   assert.ok(comImagem.includes('rel="noopener noreferrer"') && comImagem.includes('target="_blank"'));
   const semImagem = desenhar([{ tipo: "capa", titulo: "Só cor" }]);
-  assert.ok(semImagem.includes("background-color:#1C0E33") && semImagem.includes("color:#ffffff") && !semImagem.includes("<img") && !semImagem.includes("target=\"_blank\""), "sem imagem e sem botão: nada de imagem nem de link para fora");
+  assert.ok(semImagem.includes("linear-gradient(150deg, #1C0E33") && !semImagem.includes("<img") && !semImagem.includes("target=\"_blank\""), "sem imagem e sem botão: nada de imagem nem de link para fora");
   const colunas = desenhar([{ tipo: "colunas", esquerda: { tipo: "texto", texto: "Primeiro\n\nSegundo" }, direita: { tipo: "imagem", url: "https://a.com/i.png", alt: "Foto do elenco" } }]);
   assert.ok(colunas.includes("sm:grid-cols-2") && colunas.includes("<p") && colunas.includes('alt="Foto do elenco"'));
   const galeria = desenhar([{ tipo: "galeria", titulo: "Fotos", imagens: [{ url: "https://a.com/1.jpg", alt: "Um" }, { url: "https://a.com/2.jpg", alt: "Dois" }] }]);
@@ -159,7 +159,7 @@ test("o site desenha contagem, perguntas e patrocinadores", () => {
 test("o seletor Acrescentar bloco: três grupos, programação e ingressos só quando há de onde tirar", () => {
   const html = (temEspacos: boolean, temEventos: boolean) => renderToStaticMarkup(createElement(AcrescentarBlocoSheet, { temEspacos, temEventos, onEscolher: () => {}, onClose: () => {} }));
   const completo = html(true, true);
-  for (const t of ["Acrescentar bloco", "Conteúdo", "Mídia e local", "Venda e confiança", "Capa", "Título", "Texto", "Duas colunas", "Imagem", "Galeria", "Vídeo", "Mapa", "Contato", "Ingressos", "Botão", "Contagem", "Perguntas", "Patrocinadores", "Programação"]) assert.ok(completo.includes(t), t);
+  for (const t of ["Acrescentar bloco", "Conteúdo", "Mídia e local", "Venda e confiança", "Destaque do alto", "Título", "Texto", "Duas colunas", "Imagem", "Galeria", "Vídeo", "Mapa", "Contato", "Ingressos", "Botão", "Contagem", "Perguntas", "Patrocinadores", "Programação"]) assert.ok(completo.includes(t), t);
   const sem = html(false, false);
   assert.equal(sem.includes("Programação") || sem.includes(">Ingressos<"), false);
   assert.ok(sem.includes("Galeria") && sem.includes("Mapa"));
@@ -169,13 +169,13 @@ test("as folhas dos blocos novos montam com os campos desenhados", () => {
   const folha = (tipo: Parameters<typeof BlocoNovoSheet>[0]["tipo"], bloco?: Bloco) => renderToStaticMarkup(createElement(BlocoNovoSheet, { tipo, bloco, organizationId: "o1", onClose: () => {}, onSalvar: async () => null }));
   assert.deepEqual([...TIPOS_DAS_FOLHAS_NOVAS].sort(), ["agenda", "capa", "colunas", "contagem", "faq", "galeria", "mapa", "patrocinadores", "video"]);
   const capa = folha("capa");
-  for (const t of ["Novo bloco: Capa", "Título", "Subtítulo (opcional)", "Imagem de fundo (https://…, opcional)", "Botão: texto (opcional)", "Botão: para onde leva", "Acrescentar", "Cancelar"]) assert.ok(capa.includes(t), t);
+  for (const t of ["Novo bloco: Destaque do alto", "Como mostrar o destaque", "Título", "Frase de apoio (opcional)", "Imagem (https://…, opcional)", "Botão: texto (opcional)", "Botão: para onde leva", "Acrescentar", "Cancelar"]) assert.ok(capa.includes(t), t);
   for (const [tipo, textos] of [["colunas", ["Esquerda", "Direita", "uma em cima da outra"]], ["galeria", ["Imagem 1", "Imagem 2", "Outra imagem", "2 a 12"]], ["video", ["Endereço do vídeo (YouTube ou Vimeo)", "Só YouTube e Vimeo"]], ["mapa", ["Endereço", "mapa do Google"]], ["contagem", ["Dia do fim", "Hora", "Frase depois que acabar", "Brasília"]], ["faq", ["Pergunta 1", "Outra pergunta"]], ["patrocinadores", ["Patrocinador 1", "Outro patrocinador", "Site (https://…, opcional)"]]] as const) {
     const h = folha(tipo);
     for (const t of textos) assert.ok(h.includes(t), `${tipo}: ${t}`);
   }
   const editando = folha("capa", ok({ tipo: "capa", titulo: "Hamlet", subtitulo: "", imagem: "", botao_rotulo: "", botao_url: "" }));
-  assert.ok(editando.includes("Editar bloco: Capa") && editando.includes('value="Hamlet"') && editando.includes("Salvar"));
+  assert.ok(editando.includes("Editar bloco: Destaque do alto") && editando.includes('value="Hamlet"') && editando.includes("Salvar"));
   const contagem = folha("contagem", ok({ tipo: "contagem", titulo: "Faltam", ate: "2026-12-13T02:00:00.000Z", depois: "Já começou!" }));
   assert.ok(contagem.includes('value="2026-12-12"') && contagem.includes('value="23:00"'), "a data volta no fuso de Brasília");
 });
