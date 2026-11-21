@@ -65,7 +65,7 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
               return (
                 <button key={id} type="button" aria-pressed={escolhido} onClick={() => muda({ perfil: id })}
                   className={`rounded-xl border bg-white p-4 text-left transition hover:bg-black/[.02] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${escolhido ? "border-[#7259B5] ring-1 ring-[#7259B5]" : "border-black/[.12]"}`}>
-                  <span className="relative flex h-28 items-center justify-center">
+                  <span className="relative flex h-36 items-center justify-center">
                     {PERFIL[id].ilustracao
                       // eslint-disable-next-line @next/next/no-img-element -- ilustração estática, já reduzida
                       ? <img src={PERFIL[id].ilustracao} alt="" loading="lazy" className="max-h-full max-w-full object-contain" />

@@ -17,7 +17,8 @@ export const PERFIL: Record<PerfilDoProdutor, {
     titulo: "Tenho um espaço", descricao: "Teatro, casa de show, galeria. Vários eventos no mesmo lugar.",
     pergunta: "Qual é o seu espaço?", apoio: "Você cadastra uma vez. Todo evento novo já nasce nele.",
     rotuloDoNome: "Primeiro evento", exemploDoNome: "Hamlet, temporada de março",
-    rotuloDoLugar: "Nome do espaço", exemploDoLugar: "Teatro Municipal", rotuloDaData: "Primeira data", ilustracao: null,
+    rotuloDoLugar: "Nome do espaço", exemploDoLugar: "Teatro Municipal", rotuloDaData: "Primeira data",
+    ilustracao: "/ilustracoes/ticketeria/perfil-espaco.webp",
   },
   turne: {
     titulo: "Circulo com um espetáculo", descricao: "A mesma obra em várias cidades e datas.",
