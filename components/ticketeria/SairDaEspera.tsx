@@ -7,7 +7,7 @@ import { Moldura } from "@/components/ticketeria/CompraView";
 // A página do link "sair da lista" do e-mail de aviso: um botão que apaga a pessoa da lista (só o botão apaga: os leitores de e-mail abrem links sozinhos).
 // Primeira tela da Ticketeria nos 10 idiomas (textos em messages/<idioma>/ticketeria.json, chaves "sair.espera.*" e "sair.*").
 
-const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#282525] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] disabled:cursor-not-allowed disabled:bg-black/20";
+const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#6450D2] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6450D2] disabled:cursor-not-allowed disabled:bg-black/20";
 
 export function SairDaEspera({ token }: { token: string }) {
   const t = useTranslations("ticketeria.sair");

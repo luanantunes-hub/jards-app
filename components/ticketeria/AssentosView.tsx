@@ -91,7 +91,7 @@ export function LegendaDoMapa({ modo }: { modo: "comprador" | "produtor" }) {
 // ─── Quem compra ────────────────────────────────────────────────────────────
 
 type Site = { titulo: string; cor?: string };
-const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#282525] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] disabled:cursor-not-allowed disabled:bg-black/20";
+const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#FF5528] px-5 py-3 text-[0.9375rem] font-normal text-[#1C0E33] transition hover:bg-[#FF6C45] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6450D2] disabled:cursor-not-allowed disabled:bg-black/20";
 const BOTAO_SECUNDARIO = "inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-[0.875rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
 
 /** A tela de escolher os lugares de um ingresso no mapa do setor. `escolhidos` são os rótulos ("C7") na ordem em que a pessoa os tocou. */

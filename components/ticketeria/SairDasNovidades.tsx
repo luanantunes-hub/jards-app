@@ -7,7 +7,7 @@ import { Moldura } from "@/components/ticketeria/CompraView";
 // A página do link "Sair da lista" do e-mail de divulgação: um botão que registra a saída (só o botão grava: os leitores de e-mail abrem links sozinhos).
 // `loja` é o nome do organizador; sem nome, o texto fala "do organizador". Textos em messages/<idioma>/ticketeria.json ("sair.novidades.*" e "sair.*").
 
-const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#282525] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
+const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#6450D2] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6450D2] disabled:opacity-50";
 
 export function SairDasNovidades({ token, loja }: { token: string; loja: string | null }) {
   const t = useTranslations("ticketeria.sair");
