@@ -13,7 +13,7 @@ const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
 const ROTULO_PEQUENO = "text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45";
 
 const ETIQUETA: Record<NovidadesDoContato, { texto: string; cor: string }> = {
-  aceitou: { texto: "ACEITOU", cor: "#2E8932" }, sem_aceite: { texto: "SEM ACEITE", cor: "#B07A14" }, so_espera: { texto: "SÓ AVISO DA ESPERA", cor: "#B07A14" }, saiu: { texto: "SAIU DA LISTA", cor: "#6b6767" },
+  aceitou: { texto: "ACEITOU", cor: "#2E8932" }, sem_aceite: { texto: "SEM ACEITE", cor: "#B07A14" }, so_espera: { texto: "SÓ AVISO DA ESPERA", cor: "#B07A14" }, saiu: { texto: "SAIU DA LISTA", cor: "#6b6767" }, declarado: { texto: "DECLARADO POR VOCÊ", cor: "#2E8932" },
 };
 
 function Etiqueta({ texto, cor }: { texto: string; cor: string }) {
@@ -65,7 +65,7 @@ export function PublicoDaLoja({ resumo, contatos, filtro, busca, onFiltrar, onBu
               {contatos.map(c => (
                 <tr key={c.email}>
                   <td className={CELULA}><p>{c.nome}</p><p className="text-[0.6875rem] text-black/45">{c.email}{c.whatsapp ? ` · ${whatsappEmTexto(c.whatsapp)}` : ""}</p></td>
-                  <td className={CELULA}>{c.veio_de === "compra" ? "Compra" : "Lista de espera"}{c.evento ? ` · ${c.evento}` : ""}</td>
+                  <td className={CELULA}>{c.veio_de === "compra" ? "Compra" : c.veio_de === "espera" ? "Lista de espera" : "Importado"}{c.evento ? ` · ${c.evento}` : ""}</td>
                   <td className={`${CELULA} text-right tabular-nums ${c.ingressos === 0 ? "text-black/30" : ""}`}>{c.ingressos}</td>
                   <td className={`${CELULA} tabular-nums text-black/70`}>{c.ultima_compra ? diaEMes(c.ultima_compra) : "—"}</td>
                   <td className={`${CELULA} text-right`}><Etiqueta {...ETIQUETA[c.novidades]} /></td>

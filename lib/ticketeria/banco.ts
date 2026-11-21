@@ -1596,6 +1596,48 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_contatos_importados: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          email: string;
+          nome: string;
+          whatsapp: string | null;
+          arquivo: string | null;
+          novidades_declaradas_em: string | null;
+          declarado_por: string | null;
+          declaracao_versao: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          email: string;
+          nome: string;
+          whatsapp?: string | null;
+          arquivo?: string | null;
+          novidades_declaradas_em?: string | null;
+          declarado_por?: string | null;
+          declaracao_versao?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          email?: string;
+          nome?: string;
+          whatsapp?: string | null;
+          arquivo?: string | null;
+          novidades_declaradas_em?: string | null;
+          declarado_por?: string | null;
+          declaracao_versao?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       ticketeria_cupons: {
         Row: {
           id: string;

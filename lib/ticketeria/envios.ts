@@ -5,7 +5,7 @@
 // as vendas que voltam por ele aparecem no resultado do envio e no painel Divulgação.
 
 import { enderecoDeDivulgacao } from "@/lib/ticketeria/divulgacao";
-import { montarPublico, type EntradaDoPublico } from "@/lib/ticketeria/publico";
+import { montarPublico, recebeNovidades, type EntradaDoPublico } from "@/lib/ticketeria/publico";
 
 /** O máximo de pessoas num envio (por enquanto, para o envio caber numa chamada). */
 export const LIMITE_DE_DESTINATARIOS = 300;
@@ -25,7 +25,7 @@ export type Destinatario = { email: string; nome: string };
 
 /** As escolhas de "Para quem": todos que aceitaram, e quem comprou cada evento e aceitou. Só entram as que têm gente. */
 export function segmentosDoPublico(e: EntradaParaEnvio): Segmento[] {
-  const aceitaram = new Set(montarPublico(e).contatos.filter(c => c.novidades === "aceitou").map(c => c.email));
+  const aceitaram = new Set(montarPublico(e).contatos.filter(recebeNovidades).map(c => c.email));
   const porEvento = new Map<string, Set<string>>();
   for (const p of e.pedidos) {
     const email = p.comprador_email.trim().toLowerCase();
@@ -42,7 +42,7 @@ export function segmentosDoPublico(e: EntradaParaEnvio): Segmento[] {
 
 /** As pessoas de um segmento: aceitaram novidades e não saíram da lista (quem saiu nunca entra). */
 export function destinatariosDoSegmento(e: EntradaParaEnvio, segmento: string): Destinatario[] {
-  const contatos = montarPublico(e).contatos.filter(c => c.novidades === "aceitou");
+  const contatos = montarPublico(e).contatos.filter(recebeNovidades);
   if (segmento === SEGMENTO_TODOS) return contatos.map(c => ({ email: c.email, nome: c.nome }));
   const m = /^evento:(.+)$/.exec(segmento);
   if (!m || !UUID.test(m[1])) return [];
