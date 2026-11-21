@@ -47,8 +47,10 @@ const resultado = (extra: Partial<ResultadoParaATela> = {}, semanas = 58, confia
 test("o resultado do modelo: confiança, tabela com o modelo ao lado dos links, avisos de margem e de gasto constante", () => {
   const h = html(createElement(ResultadoDoModelo, { resultado: resultado() }));
   for (const t of ["Confiança média.", "Histórico: 58 semanas", "em ordem", "O que essa confiança permite", "Venderia de qualquer jeito", "41%", "±24", "Meta Ads", "R$ 7.800,00", "27%", "±33", "Google Ads", "margem grande", "gasto quase constante", "Instagram", "22%", "E-mail", "13%", "R$ 22,50", "R$ 18,20",
-    "Anúncios pagos (Meta e Google juntos", "modelo 36% · links 27%", "Meta Ads: acima de R$ 300,00 por semana, cada real a mais rende pouco.", "já alargado 3 vezes", "desconfie do modelo"]) assert.ok(h.includes(t), `falta: ${t}`);
-  assert.ok(!h.includes("Google Ads: acima de"), "sem ponto de saturação, sem frase");
+    "Anúncios pagos (Meta e Google juntos", "modelo 36% · links 27%", "impreciso", "Quanto cada canal vendeu", "já alargado 3 vezes", "desconfie do modelo"]) assert.ok(h.includes(t), `falta: ${t}`);
+  assert.ok(!h.includes("acima de R$ 300,00 por semana, cada real a mais rende pouco"), "com confiança média o ponto de saturação não aparece: é parte do ranking de canais");
+  const boa = html(createElement(ResultadoDoModelo, { resultado: resultado({}, 104, "boa") }));
+  assert.ok(boa.includes("Meta Ads: acima de R$ 300,00 por semana, cada real a mais rende pouco.") && !boa.includes("Google Ads: acima de"), "com confiança boa, o ponto de saturação aparece; sem ele, sem frase");
   assert.ok(!h.includes("não deu"));
 });
 
@@ -126,10 +128,10 @@ test("todos os canais perto do limite: a frase diz que gastar mais rende pouco",
   assert.ok(!p.includes("aponta o"));
 });
 
-test("o resultado mostra a recomendação só quando recebe o gasto por semana", () => {
-  const com = html(createElement(ResultadoDoModelo, { resultado: resultado({ canais: comCurva }), gastoSemanal: gasto }));
-  assert.ok(com.includes("Onde vale investir mais"));
-  assert.ok(!html(createElement(ResultadoDoModelo, { resultado: resultado({ canais: comCurva }) })).includes("Onde vale investir mais"));
+test("o resultado mostra a recomendação (confiança boa) só quando recebe o gasto por semana", () => {
+  const com = html(createElement(ResultadoDoModelo, { resultado: resultado({ canais: comCurva }, 104, "boa"), gastoSemanal: gasto }));
+  assert.ok(com.includes("Onde vale investir mais") && com.includes("Ingressos por R$ 100 a mais"));
+  assert.ok(!html(createElement(ResultadoDoModelo, { resultado: resultado({ canais: comCurva }, 104, "boa") })).includes("Ingressos por R$ 100 a mais"));
 });
 
 test("simular orçamento: o gasto de hoje, a divisão sugerida, o que esperar e o que a frase diz de gastar mais ou menos", () => {
