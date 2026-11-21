@@ -9,5 +9,5 @@ import { ComecarView } from "@/components/ticketeria/ComecarView";
 export default function ComecarPage() {
   const organizationId = useOrganizationId();
   if (!organizationId) return <DetailPageSkeleton />;
-  return <ListContent className="py-8 md:py-12"><ComecarView organizationId={organizationId} /></ListContent>;
+  return <ListContent className="py-8 pb-28 md:py-12 md:pb-12"><ComecarView organizationId={organizationId} /></ListContent>;
 }
