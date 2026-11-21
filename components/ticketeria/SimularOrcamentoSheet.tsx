@@ -13,7 +13,8 @@ import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 // É uma PREVISÃO a partir da curva de resposta de cada canal (lib/ticketeria/modelo-recomendacao.ts), não uma garantia. Só desenho: os dados chegam por props.
 
 const BORDA = "rgba(13,13,13,.08)";
-const CABECALHO = "px-4 py-2.5 text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
+// `relative`: o texto `sr-only` do cabeçalho (posicionado de forma absoluta) fica dentro da célula; solto, contava como parte da página e criava um segundo scroll, com espaço em branco, em listas compridas.
+const CABECALHO = "relative px-4 py-2.5 text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
 const CELULA = "px-4 py-2.5 text-[0.8125rem] text-[#282525]";
 const inteiro = (n: number) => String(Math.round(n));
 const reaisParaCampo = (centavos: number) => (centavos / 100).toFixed(2).replace(".", ",").replace(/,00$/, "");

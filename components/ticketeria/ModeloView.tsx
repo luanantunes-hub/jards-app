@@ -135,7 +135,8 @@ export function ConfiancaDoModelo({ resultado, sessoes = null, eventos = null }:
 
 // ─── O resultado do modelo (M-B) ────────────────────────────────────────────
 
-const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
+// `relative`: o texto `sr-only` do cabeçalho (posicionado de forma absoluta) fica dentro da célula; solto, contava como parte da página e criava um segundo scroll, com espaço em branco, em listas compridas.
+const CABECALHO = "relative px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
 const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
 const dataBr = (iso: string) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso));
 const pontos = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ","));

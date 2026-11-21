@@ -9,7 +9,8 @@ import type { BilheteiroParaLista } from "@/lib/ticketeria/bilheteria";
 // Quem vende na porta (a tela do produtor): a lista de contas da bilheteria e a folha de cadastrar ou editar. Só desenho: os dados e as ações chegam por props.
 
 const BORDA = "rgba(13,13,13,.08)";
-const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
+// `relative`: o texto `sr-only` do cabeçalho (posicionado de forma absoluta) fica dentro da célula; solto, contava como parte da página e criava um segundo scroll, com espaço em branco, em listas compridas.
+const CABECALHO = "relative px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
 const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
 
 function Etiqueta({ texto, cor }: { texto: string; cor: string }) {
