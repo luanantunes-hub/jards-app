@@ -47,7 +47,7 @@ test("a rota do webhook: falha fechada sem o segredo, assinatura obrigatória, s
   assert.match(rota, /fn_ticketeria_registrar_evento_envio/);
   const proxy = await readFile("proxy.ts", "utf8");
   assert.match(proxy, /\["\/api\/ticketeria\/resend-eventos", \d+\]/, "limite por IP");
-  const sql = (await readFile("supabase/migrations/20261125600000_ticketeria_envios_eventos.sql", "utf8")).replace(/--.*$/gm, "");
+  const sql = (await readFile("supabase/migrations/20261121051531_ticketeria_envios_eventos.sql", "utf8")).replace(/--.*$/gm, "");
   assert.match(sql, /revoke execute on function public\.fn_ticketeria_registrar_evento_envio\(text, text, timestamptz, boolean\) from public, anon, authenticated/);
   assert.match(sql, /p_tipo = 'reclamou' or \(p_tipo = 'devolvido' and coalesce\(p_permanente, false\)\)/, "reclamação e devolução permanente cortam a pessoa");
   assert.doesNotMatch(sql, /\bdrop\b/i);
