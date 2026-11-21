@@ -231,12 +231,13 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
 
       {passoAtual === "venda" && (
         <section aria-labelledby="comecar-titulo">
-          <h1 id="comecar-titulo" className={TITULO}>Como você vai vender?</h1>
-          <div className="mt-12 grid gap-3 md:mt-16 sm:grid-cols-3">
+          <h1 id="comecar-titulo" className={TITULO}>Como será a venda dos ingressos?</h1>
+          <p className="mt-3 text-[0.9375rem] text-black/55">Pode marcar as duas.</p>
+          <div className="mt-12 grid gap-3 md:mt-16 sm:grid-cols-2">
             {VENDAS.map(opcao => (
-              <button key={opcao.id} type="button" aria-pressed={r.venda === opcao.id} onClick={() => muda({ venda: opcao.id })}
-                className={`rounded-xl border bg-white p-5 text-left transition hover:bg-black/[.02] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${r.venda === opcao.id ? "border-[#7259B5] ring-1 ring-[#7259B5]" : "border-black/[.12]"}`}>
-                <span className="flex items-center justify-between text-[1.375rem] text-[#1C0E33]">{opcao.rotulo}{r.venda === opcao.id && <Check size={18} className="text-[#7259B5]" aria-hidden="true" />}</span>
+              <button key={opcao.id} type="button" aria-pressed={r.venda.includes(opcao.id)} onClick={() => muda({ venda: r.venda.includes(opcao.id) ? r.venda.filter(v => v !== opcao.id) : [...r.venda, opcao.id] })}
+                className={`rounded-xl border bg-white p-5 text-left transition hover:bg-black/[.02] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${r.venda.includes(opcao.id) ? "border-[#7259B5] ring-1 ring-[#7259B5]" : "border-black/[.12]"}`}>
+                <span className="flex items-center justify-between text-[1.375rem] text-[#1C0E33]">{opcao.rotulo}{r.venda.includes(opcao.id) && <Check size={18} className="text-[#7259B5]" aria-hidden="true" />}</span>
                 <span className="mt-1 block text-[0.8125rem] text-black/50">{opcao.dica}</span>
               </button>
             ))}
@@ -380,6 +381,8 @@ async function montarAuditorio(ticketeria: ClienteDaTicketeria, pracas: PracaCri
 
 function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resultado: Pronto; recomecar: () => void }) {
   const gratuito = r.gratuito === true;
+  const porta = r.venda.includes("porta");
+  const online = r.venda.includes("online");
   const inteira = gratuito ? 0 : (centavosDe(r.preco) ?? 0);
   const lugares = lugaresParaVender(r);
   const divisao = divisaoDosLugares(lugares, r.meia === true, gratuito);
@@ -417,7 +420,7 @@ function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resu
         ))}
       </div>
 
-      {!gratuito && r.venda !== "porta" && (
+      {!gratuito && online && (
         <div className="mt-4 flex items-start gap-2.5 rounded-xl border bg-white px-3.5 py-3 text-[0.8125rem] text-[#9A6A10]" style={{ borderColor: "#B07A1447" }}>
           <Landmark size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
           <span>Para vender, falta dizer em qual conta você recebe. Leva dois minutos e pode ser agora ou depois.</span>
@@ -439,10 +442,9 @@ function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resu
       )}
 
       <div className="mt-6 flex flex-wrap items-center gap-2.5">
-        {!gratuito && r.venda !== "porta" && <Link href="/ingressos/recebimentos" className={CTA}>Cadastrar conta</Link>}
-        {r.venda === "porta" && <Link href="/ingressos/bilheteria" className={CTA}>Cadastrar quem vende na porta</Link>}
-        <Link href={`/ingressos/eventos/${resultado.evento_id}`} className={gratuito && r.venda !== "porta" ? CTA : LINK}>{gratuito && r.venda !== "porta" ? "Abrir o evento para publicar" : "Abrir o evento"}</Link>
-        {r.venda === "os_dois" && <Link href="/ingressos/bilheteria" className={LINK}>Cadastrar quem vende na porta</Link>}
+        {!gratuito && online && <Link href="/ingressos/recebimentos" className={CTA}>Cadastrar conta</Link>}
+        {porta && <Link href="/ingressos/bilheteria" className={online ? LINK : CTA}>Cadastrar quem vende na porta</Link>}
+        <Link href={`/ingressos/eventos/${resultado.evento_id}`} className={gratuito && online ? CTA : LINK}>{gratuito && online ? "Abrir o evento para publicar" : "Abrir o evento"}</Link>
         <button type="button" onClick={recomecar} className={VOLTAR}>Criar outro</button>
       </div>
     </section>

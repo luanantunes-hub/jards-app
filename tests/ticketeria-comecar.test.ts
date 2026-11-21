@@ -17,7 +17,7 @@ const HOJE = "2026-11-21";
 const praca1 = (parte: Partial<Praca> = {}): Praca => ({ ...praca(), uf: "RJ", cidade: "Rio de Janeiro", lugar: "Casa de Cultura", datas: ["2026-12-20"], outra: null, ...parte });
 const CHEIO: RespostasDoComecar = {
   ...RESPOSTAS_VAZIAS, perfil: "unico", evento: "Show de lançamento", pracas: [praca1()],
-  lugares: "100", hora: "20:00", numerada: false, gratuito: false, venda: "online", preco: "60", meia: true,
+  lugares: "100", hora: "20:00", numerada: false, gratuito: false, venda: ["online"], preco: "60", meia: true,
 };
 /** Um passo sem praça (as perguntas que valem para o evento todo) ou da praça `i`. */
 const p = (id: PassoId, i = 0): Passo => ({ id, praca: i });
@@ -110,7 +110,8 @@ test("cada passo diz o que falta, um campo por vez", () => {
   // Gratuito, preço e meia-entrada: três perguntas.
   assert.equal(conferirPasso(p("gratuito"), { ...CHEIO, gratuito: null }, HOJE), "Escolha sim ou não");
   assert.equal(conferirPasso(p("gratuito"), CHEIO, HOJE), null);
-  assert.equal(conferirPasso(p("venda"), { ...CHEIO, venda: null }, HOJE), "Escolha uma opção");
+  assert.equal(conferirPasso(p("venda"), { ...CHEIO, venda: [] }, HOJE), "Escolha pelo menos uma opção");
+  assert.equal(conferirPasso(p("venda"), { ...CHEIO, venda: ["porta", "online"] }, HOJE), null, "as duas juntas valem");
   assert.equal(conferirPasso(p("venda"), CHEIO, HOJE), null);
   assert.equal(conferirPasso(p("preco"), { ...CHEIO, preco: "" }, HOJE), "Diga o preço da inteira");
   assert.equal(conferirPasso(p("preco"), { ...CHEIO, preco: "0" }, HOJE), "Diga o preço da inteira");

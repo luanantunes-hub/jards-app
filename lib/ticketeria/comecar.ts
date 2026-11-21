@@ -77,15 +77,15 @@ export type RespostasDoComecar = {
   corredor: boolean;
   /** O ingresso é gratuito? null enquanto a pessoa não respondeu. */
   gratuito: boolean | null;
-  /** Por onde o ingresso vai ser vendido: só na porta, só online ou os dois. null enquanto a pessoa não respondeu. Não vai para o banco: decide o que a tela final oferece. */
-  venda: VendaDoEvento | null;
+  /** Por onde os ingressos serão vendidos: na porta, online ou os dois (marcar as duas). Vazio enquanto a pessoa não respondeu. Não vai para o banco: decide o que a tela final oferece. */
+  venda: VendaDoEvento[];
   preco: string; // em reais, como digitado ("60" ou "59,90")
   /** Tem meia-entrada? null enquanto a pessoa não respondeu. */
   meia: boolean | null;
 };
 
 export const RESPOSTAS_VAZIAS: RespostasDoComecar = {
-  perfil: null, evento: "", pracas: [praca()], lugares: "", hora: "20:00", numerada: null, mapa: null, mapaDeLugares: 0, porFileira: "", corredor: true, gratuito: null, venda: null, preco: "", meia: null,
+  perfil: null, evento: "", pracas: [praca()], lugares: "", hora: "20:00", numerada: null, mapa: null, mapaDeLugares: 0, porFileira: "", corredor: true, gratuito: null, venda: [], preco: "", meia: null,
 };
 
 export const MAX_PRACAS = 20;
@@ -93,13 +93,12 @@ export const MAX_DATAS_POR_PRACA = 60;
 export const MAX_SESSOES = 200;
 
 /** Os passos com perguntas, uma coisa por tela (depois vem o evento pronto). */
-export type VendaDoEvento = "porta" | "online" | "os_dois";
+export type VendaDoEvento = "porta" | "online";
 
-/** As três respostas de "Como você vai vender?", com a frase de apoio de cada uma. */
+/** As opções de "Como será a venda dos ingressos?" (pode marcar as duas), com a frase de apoio de cada uma. */
 export const VENDAS: { id: VendaDoEvento; rotulo: string; dica: string }[] = [
   { id: "porta", rotulo: "Na porta", dica: "Só no balcão, no dia do evento." },
   { id: "online", rotulo: "Online", dica: "Pelo site, com pagamento na hora." },
-  { id: "os_dois", rotulo: "Os dois", dica: "Site e balcão ao mesmo tempo." },
 ];
 
 export type PassoId = "perfil" | "nome" | "onde" | "evento" | "data" | "outra" | "horario" | "numerada" | "lugares" | "auditorio" | "gratuito" | "preco" | "meia" | "venda";
@@ -208,7 +207,7 @@ export function conferirPasso(passo: Passo, r: RespostasDoComecar, hoje: string 
   }
   if (id === "gratuito") return r.gratuito === null ? "Escolha sim ou não" : null;
   if (id === "meia") return r.meia === null ? "Escolha sim ou não" : null;
-  if (id === "venda") return r.venda === null ? "Escolha uma opção" : null;
+  if (id === "venda") return r.venda.length === 0 ? "Escolha pelo menos uma opção" : null;
   const centavos = centavosDe(r.preco);
   if (centavos === null || centavos <= 0) return "Diga o preço da inteira";
   if (centavos > 10000000) return "O preço pode ir até R$ 100.000";
