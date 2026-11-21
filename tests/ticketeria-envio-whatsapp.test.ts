@@ -82,7 +82,7 @@ test("as rotas e a migration: WhatsApp não exige o remetente de e-mail, a lista
   const srv = await readFile("lib/ticketeria/envios-whatsapp-servidor.ts", "utf8");
   assert.match(srv, /\.eq\("loja_id", lojaId\)/, "o envio tem de ser da loja");
   assert.match(srv, /recebeNovidades/, "quem saiu depois some da lista");
-  const sql = (await readFile("supabase/migrations/20261125500000_ticketeria_envios_whatsapp.sql", "utf8")).replace(/--.*$/gm, "");
+  const sql = (await readFile("supabase/migrations/20261121045709_ticketeria_envios_whatsapp.sql", "utf8")).replace(/--.*$/gm, "");
   assert.match(sql, /check \(canal in \('email', 'whatsapp'\)\)/);
   assert.doesNotMatch(sql.replace(/alter table public\.ticketeria_envios drop constraint if exists ticketeria_envios_canal_check;/, ""), /\bdrop\b/i, "só a troca da regra do canal");
 });
