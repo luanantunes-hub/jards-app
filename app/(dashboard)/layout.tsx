@@ -94,6 +94,9 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
 // Conectar e-mail continua valendo a lista EMAIL_BETA_LIBERADO (lib/email/beta.ts).
 const ROTAS_SO_SUPER_ADMIN: string[] = [];
 
+// Telas de foco, sem menu lateral nem barra do topo: o onboarding da Ticketeria ocupa a tela toda (pedido do dono em 21/11/2026).
+const ROTAS_TELA_CHEIA = ["/ingressos/comecar"];
+
 // `icone`: o grupo aparece no menu como uma seção que abre e fecha para baixo (como no Apollo), com este ícone no título e as telas dele logo abaixo.
 const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementType; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
   captacao: [
@@ -518,6 +521,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => document.body.classList.remove("cantos-ticketeria");
   }, [menuFixoAberto]);
   const menuPath    = itemAtivoDoMenu(path);
+  const telaCheia   = ROTAS_TELA_CHEIA.some(rota => correspondeRota(path, rota));
   const hrefAtivo   = hrefAtivoDoMenu(menuPath, navGroups.flatMap(grupo => grupo.items.map(item => item.href)));
   // Os grupos com `icone` viram seções que abrem e fecham. Com o menu recolhido (só ícones) cada seção mostra apenas o ícone; o da página aberta fica aceso.
   const gruposFixos = navGroups.filter(grupo => !grupo.icone && grupo.items.length > 0);
@@ -641,13 +645,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Sidebar */}
-      {mobileOpen && (
+      {mobileOpen && !telaCheia && (
         <div className="fixed inset-0 z-20 veu md:hidden" aria-hidden="true" onClick={() => setMobileOpen(false)} />
       )}
       <aside
         id="menu-principal"
         aria-label="Menu principal"
-        className={`fixed top-0 left-0 bottom-0 flex flex-col overflow-hidden z-30 motion-reduce:transition-none ${mobileOpen ? "" : "max-md:-translate-x-full"}`}
+        className={`fixed top-0 left-0 bottom-0 flex flex-col overflow-hidden z-30 motion-reduce:transition-none ${mobileOpen ? "" : "max-md:-translate-x-full"} ${telaCheia ? "hidden" : ""}`}
         style={{
           width: isExpanded ? EXPANDED_W : COLLAPSED_W,
           transition: "width 220ms cubic-bezier(0.4,0,0.2,1), transform 220ms cubic-bezier(0.4,0,0.2,1)",
@@ -927,11 +931,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>}
       </aside>
       {/* Main */}
-      <div className={`flex flex-col h-full overflow-hidden transition-[padding] duration-200 motion-reduce:transition-none ${menuFixoAberto ? "md:pl-56" : "md:pl-14"}`}>
+      <div className={`flex flex-col h-full overflow-hidden transition-[padding] duration-200 motion-reduce:transition-none ${telaCheia ? "" : menuFixoAberto ? "md:pl-56" : "md:pl-14"}`}>
 
         {/* Top bar */}
         <header
-          className="flex-shrink-0 flex items-center justify-end px-4 md:px-8 border-b"
+          className={`flex-shrink-0 flex items-center justify-end px-4 md:px-8 border-b ${telaCheia ? "hidden" : ""}`}
           style={{ height: "3.5rem", background: "#FFFFFF", borderColor: "rgba(13,13,13,.08)" }}
         >
           <div className={`${menuFixoAberto ? "" : "mr-auto"} flex items-center gap-2 md:hidden`}>
