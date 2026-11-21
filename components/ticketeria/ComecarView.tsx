@@ -101,10 +101,13 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
       )}
 
       {PASSOS[passo] === "nome" && perfil && r.perfil && (
-        <section aria-labelledby="comecar-titulo" className="space-y-6">
+        <section aria-labelledby="comecar-titulo">
           <h1 id="comecar-titulo" className={TITULO}>{perfil.nome.pergunta}</h1>
-          <CampoDoNome valor={r.perfil === "espaco" ? r.lugar : r.evento} exemplo={perfil.nome.exemplo} rotulo={perfil.nome.rotulo}
-            onChange={nome => muda(r.perfil === "espaco" ? { lugar: nome } : { evento: nome })} onEnter={() => void seguir()} />
+          <p className={APOIO}>{perfil.nome.apoio}</p>
+          <div className="mt-12 md:mt-16">
+            <CampoDoNome valor={r.perfil === "espaco" ? r.lugar : r.evento} exemplo={perfil.nome.exemplo} rotulo={perfil.nome.rotulo}
+              onChange={nome => muda(r.perfil === "espaco" ? { lugar: nome } : { evento: nome })} onEnter={() => void seguir()} />
+          </div>
         </section>
       )}
 
@@ -167,7 +170,7 @@ function Campo({ id, rotulo, valor, exemplo, onChange, autoFocus = false, numeri
   return <div><label className={ROTULO} htmlFor={id}>{rotulo}</label><input id={id} autoFocus={autoFocus} inputMode={numerico ? "decimal" : undefined} className={CAMPO} value={valor} placeholder={exemplo} onChange={e => onChange(e.target.value)} onKeyDown={onEnter ? (e => { if (e.key === "Enter") { e.preventDefault(); onEnter(); } }) : undefined} /></div>;
 }
 
-/** O campo do nome: grande e em negrito (peso 700 direto: a Ticketeria limita font-bold a 500 em globals.css), sem rótulo nem explicação (a pergunta já é o rótulo). O cursor já entra nele; Enter segue. */
+/** O campo do nome: uma caixa grande, com o texto em negrito (peso 700 direto: a Ticketeria limita font-bold a 500 em globals.css), sem rótulo (a pergunta já é o rótulo). O cursor já entra nele; Enter segue. */
 function CampoDoNome({ valor, exemplo, rotulo, onChange, onEnter }: { valor: string; exemplo: string; rotulo: string; onChange: (valor: string) => void; onEnter: () => void }) {
   const campo = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -176,7 +179,7 @@ function CampoDoNome({ valor, exemplo, rotulo, onChange, onEnter }: { valor: str
   }, []);
   return (
     <input ref={campo} autoFocus aria-label={rotulo} value={valor} placeholder={exemplo} maxLength={200} autoComplete="off"
-      className="w-full border-0 border-b-2 border-black/[.12] bg-transparent px-0 pb-3 pt-1 text-[1.75rem] font-[700] leading-tight tracking-[-.02em] text-[#1C0E33] outline-none transition-colors placeholder:font-[700] placeholder:text-black/20 focus:border-[#7259B5] md:text-[2.25rem]"
+      className="w-full rounded-xl border border-black/[.15] bg-white px-4 py-4 text-[1.5rem] font-[700] leading-tight tracking-[-.02em] text-[#1C0E33] outline-none transition placeholder:font-[700] placeholder:text-black/20 focus:border-[#7259B5]/50 focus:ring-2 focus:ring-[#7259B5]/10 md:px-5 md:py-5 md:text-[1.875rem]"
       onChange={e => onChange(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); onEnter(); } }} />
   );
 }
