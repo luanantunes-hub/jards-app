@@ -40,9 +40,9 @@
 @font-face { font-family:'Gambetta'; src:url('assets/fontes/gambetta-italic-400.woff2') format('woff2'); font-weight:400; font-style:italic; font-display:swap; }
 @font-face { font-family:'Geist Mono'; src:url('assets/fontes/geist-mono-latin.woff2') format('woff2'); font-weight:400 500; font-style:normal; font-display:swap; unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
 /* ── Landing da Ticketeria: concreto claro, tipografia condensada e fios finos ──
-   Tudo com o prefixo tku-. Violeta iris #6450D2, laranja #FF5528 e lima #DCFF00 sobre branco; texto e superfícies escuras no roxo noite #1C0E33 (o dos botões do app).
+   Tudo com o prefixo tku-. Violeta iris #6450D2 e laranja #FF5528 sobre branco; texto e superfícies escuras no roxo noite #1C0E33 (o dos botões do app).
    Cantos de 12px e fios de 1px em tom suave, sem borda dura ou sombra seca. Menu e rodapé são os de todas as páginas do site. */
-.tku { --tku-ink:#1C0E33; --tku-papel:#FFFFFF; --tku-linha:rgba(28,14,51,.12); --tku-raio:12px; --tku-sup:#FAFAF8; --tku-mudo:#66655F; --tku-vio:#6450D2; --tku-amb:#FF5528; --tku-ambl:rgba(255,85,40,.13); --tku-lil:#E6E1FA; --tku-lima:#DCFF00;
+.tku { --tku-ink:#1C0E33; --tku-papel:#FFFFFF; --tku-linha:rgba(28,14,51,.12); --tku-raio:12px; --tku-sup:#FAFAF8; --tku-mudo:#66655F; --tku-vio:#6450D2; --tku-amb:#FF5528; --tku-ambl:rgba(255,85,40,.13); --tku-lil:#E6E1FA;
   background:var(--tku-papel); color:var(--tku-ink); font-family:'Satoshi',system-ui,-apple-system,'Segoe UI',sans-serif; font-weight:400; }
 .tku *, .tku *::before, .tku *::after { box-sizing:border-box; }
 :where(.tku) :is(h1,h2,h3,p,ul,pre) { margin:0; padding:0; }
@@ -52,7 +52,7 @@
 .tku-cond { font-family:'Satoshi',system-ui,sans-serif; font-weight:400; letter-spacing:-.045em; }
 .tku-hero h1 .tku-vio, .tku-h2 .tku-vio, .tku-cta h2 span { font-family:'Gambetta',Georgia,'Times New Roman',serif; font-style:italic; font-weight:400; letter-spacing:-.03em; font-size:1.08em; }
 .tku h3.tku-cond { font-weight:500; }
-.tku ::selection { background:var(--tku-lima); color:var(--tku-ink); }
+.tku ::selection { background:var(--tku-lil); color:var(--tku-ink); }
 .tku-vio { color:var(--tku-vio); }
 .tku-mudo { color:var(--tku-mudo); }
 .tku-btn { display:inline-flex; border-radius:var(--tku-raio); align-items:center; justify-content:space-between; gap:22px; min-height:48px; padding:0 18px; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:12px; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; text-decoration:none; transition:background-color .16s ease, color .16s ease; }
@@ -155,7 +155,7 @@
 .tku-cta h2 { font-size:min(100px,8.2vw); line-height:1.02; margin-top:18px; letter-spacing:-.055em; }
 .tku-cta h2 span { color:var(--tku-amb); }
 .tku-cta .tku-tk { margin-top:30px; border-top:1px solid rgba(255,255,255,.14); border-bottom:1px solid rgba(255,255,255,.14); padding:12px 0; display:flex; gap:34px; flex-wrap:wrap; color:rgba(255,255,255,.7); }
-.tku-cta .tku-tk b { color:var(--tku-lima); font-weight:400; }
+.tku-cta .tku-tk b { color:#B79CFF; font-weight:400; }
 .tku-cta p.tku-fim { margin-top:30px; display:flex; flex-wrap:wrap; gap:18px; align-items:center; }
 
 @media (max-width:1023px) {
@@ -189,7 +189,7 @@
 
 /* situação de cada capacidade */
 .tku-st { display:inline-flex; align-items:center; gap:7px; padding:3px 8px; border-radius:999px; border:1px solid var(--tku-linha); background:rgba(255,255,255,.7); font-family:'Geist Mono',ui-monospace,monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; color:var(--tku-ink); }
-.tku-st::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--tku-lima); box-shadow:0 0 0 1px rgba(28,14,51,.45); }
+.tku-st::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--tku-vio); }
 .tku-st--c::before { background:var(--tku-amb); }
 .tku-st--b::before { background:transparent; border:1.5px solid var(--tku-vio); }
 .tku-seis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:48px; }
@@ -238,7 +238,7 @@
 .tku-sala .a { --c:var(--tku-vio); } .tku-sala .b { --c:var(--tku-amb); }
 .tku-sala .l { fill:#fff; stroke:var(--c); stroke-opacity:.5; }
 .tku-sala .v { fill:var(--c); stroke:var(--c); }
-.tku-sala .c { fill:var(--tku-lima); stroke:rgba(28,14,51,.45); }
+.tku-sala .c { fill:var(--tku-ink); stroke:var(--tku-ink); }
 .tku-sala-leg { margin-top:14px; color:var(--tku-mudo); }
 .tku-sala-cat { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; border-top:1px solid var(--tku-linha); }
 .tku-sala-cat b { font-weight:400; color:var(--tku-ink); }
@@ -249,7 +249,7 @@
 .tku-sala-est { display:flex; flex-wrap:wrap; gap:6px 16px; padding-top:9px; border-top:1px solid var(--tku-linha); }
 .tku-sala-est i.l { background:#fff; box-shadow:inset 0 0 0 1px rgba(28,14,51,.35); }
 .tku-sala-est i.v { background:linear-gradient(135deg, var(--tku-vio) 50%, var(--tku-amb) 50%); }
-.tku-sala-est i.c { background:var(--tku-lima); box-shadow:inset 0 0 0 1px rgba(28,14,51,.3); }
+.tku-sala-est i.c { background:var(--tku-ink); }
 .tku-prog { display:flex; justify-content:space-between; gap:10px; color:var(--tku-mudo); }
 .tku-barra { position:relative; display:block; height:7px; margin-top:10px; border-radius:99px; background:rgba(28,14,51,.1); overflow:hidden; }
 .tku-barra::after { content:""; position:absolute; inset:0 auto 0 0; width:var(--w); background:var(--tku-vio); }
@@ -795,7 +795,7 @@ section[id] { scroll-margin-top:72px; }
   if (!cv || !cv.getContext) return;
   var ctx = cv.getContext("2d");
   var parado = window.matchMedia ? matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
-  var NOITE = "#1C0E33", IRIS = "#6450D2", LAR = "#FF5528", LIMA = "#DCFF00", T = 12;
+  var NOITE = "#1C0E33", IRIS = "#6450D2", LAR = "#FF5528", LILAS = "#DCD4F8", T = 12;
   var TRILHOS = [
     { xo: -.03, amp: 54, m: 1, larg: 128, tipo: "cheia", cor: "#8C79E8", pacotes: 4 },
     { xo: .07, amp: 70, m: 1, larg: 104, tipo: "contorno" },
@@ -806,7 +806,7 @@ section[id] { scroll-margin-top:72px; }
     { xo: .51, amp: 56, m: 2, larg: 96, tipo: "cheia", cor: "#4A37B8", pacotes: 5, furos: true },
     { xo: .62, amp: 66, m: 1, larg: 46, tipo: "tracejada", cor: LAR },
     { xo: .70, amp: 50, m: 2, larg: 64, tipo: "contorno" },
-    { xo: .73, amp: 54, m: 1, larg: 24, tipo: "cheia", cor: LIMA, pacotes: 2 }
+    { xo: .73, amp: 54, m: 1, larg: 24, tipo: "cheia", cor: LILAS, pacotes: 2 }
   ];
   var W = 0, H = 0, k = 1, faixa = false, dither = [], grao = null, fora = null;
 
@@ -886,8 +886,8 @@ section[id] { scroll-margin-top:72px; }
           var u = ((t / T) * (f.m === 2 ? 2 : 1) + j / f.pacotes) % 1, idx = Math.min(N, Math.max(0, Math.round(u * N)));
           var a = C[idx], c2 = C[Math.min(N, idx + 2)], an = Math.atan2(c2[1] - a[1], c2[0] - a[0]);
           ctx.save(); ctx.translate(a[0], a[1]); ctx.rotate(an);
-          var claro = f.cor === LIMA ? NOITE : "#fff";
-          if (f.cor === LIMA) { ctx.fillStyle = "rgba(28,14,51,.55)"; } else {
+          var claro = f.cor === LILAS ? NOITE : "#fff";
+          if (f.cor === LILAS) { ctx.fillStyle = "rgba(28,14,51,.55)"; } else {
             var rt = ctx.createLinearGradient(-54 * k, 0, 16 * k, 0);
             rt.addColorStop(0, "rgba(255,255,255,0)"); rt.addColorStop(1, claro); ctx.fillStyle = rt;
           }
