@@ -6,7 +6,7 @@ import { TopSheet } from "@/components/ui/TopSheet";
 import { Aviso, AREA, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 import { CampoDeImagem } from "@/components/ticketeria/CampoDeImagem";
 import { instanteNoFuso, partesNoFuso } from "@/lib/ticketeria/eventos";
-import { GRUPOS_DE_BLOCOS, ROTULO_DO_TIPO_DE_BLOCO, lerBloco, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
+import { GRUPOS_DE_BLOCOS, LAYOUTS_DA_AGENDA, LAYOUT_PADRAO_DA_AGENDA, ROTULO_DO_LAYOUT_DA_AGENDA, ROTULO_DO_TIPO_DE_BLOCO, lerBloco, type Bloco, type LayoutDaAgenda, type TipoDeBloco } from "@/lib/ticketeria/site";
 
 // O seletor "Acrescentar bloco" (blocos em três grupos) e as folhas dos blocos novos do construtor (capa, duas colunas, galeria, vídeo, mapa, contagem regressiva, perguntas e patrocinadores).
 // Desenho aprovado pelo dono em 20/11/2026. Os blocos antigos seguem na folha de EditorDoSite.tsx.
@@ -82,6 +82,21 @@ function CamposDaColuna({ id, nome, coluna, onChange, desabilitado, organization
   );
 }
 
+/** A miniatura de cada layout da agenda: um esquema em caixas, só para reconhecer a forma. */
+function MiniaturaDaAgenda({ layout }: { layout: LayoutDaAgenda }) {
+  const caixa = "rounded-[3px] bg-[#7259B5]/25";
+  const linha = "h-1 rounded-full bg-[#7259B5]/45";
+  return (
+    <span aria-hidden="true" className="flex h-14 w-full items-stretch gap-1 overflow-hidden rounded-lg bg-black/[.04] p-1.5">
+      {layout === "carrossel" && <><span className={`${caixa} w-[34%]`} /><span className={`${caixa} w-[34%]`} /><span className={`${caixa} w-[34%] opacity-60`} /></>}
+      {layout === "grade" && <><span className={`${caixa} flex-1`} /><span className={`${caixa} flex-1`} /><span className={`${caixa} flex-1`} /></>}
+      {layout === "lista" && <span className="flex w-full flex-col justify-center gap-1.5"><span className="flex items-center gap-1.5"><span className={`${caixa} h-2.5 w-3`} /><span className={`${linha} flex-1`} /></span><span className="flex items-center gap-1.5"><span className={`${caixa} h-2.5 w-3`} /><span className={`${linha} flex-1`} /></span><span className="flex items-center gap-1.5"><span className={`${caixa} h-2.5 w-3`} /><span className={`${linha} w-2/3`} /></span></span>}
+      {layout === "calendario" && <><span className="grid flex-1 grid-cols-7 gap-0.5">{Array.from({ length: 21 }, (_, i) => <span key={i} className={`rounded-[2px] ${[3, 4, 11, 17].includes(i) ? "bg-[#7259B5]/70" : "bg-[#7259B5]/20"}`} />)}</span><span className="flex w-[30%] flex-col justify-center gap-1.5"><span className={linha} /><span className={`${linha} w-2/3`} /></span></>}
+      {layout === "filtros" && <span className="flex w-full flex-col gap-1.5"><span className="flex gap-1"><span className="h-2 w-5 rounded-full bg-[#7259B5]/70" /><span className="h-2 w-5 rounded-full bg-[#7259B5]/25" /><span className="h-2 w-5 rounded-full bg-[#7259B5]/25" /></span><span className="flex flex-1 gap-1"><span className={`${caixa} flex-1`} /><span className={`${caixa} flex-1`} /><span className={`${caixa} flex-1`} /></span></span>}
+    </span>
+  );
+}
+
 /** A folha de um bloco novo (ou de um existente, ao editar). `tipo` é um de TIPOS_DAS_FOLHAS_NOVAS. */
 export function BlocoNovoSheet({ bloco, tipo, organizationId, onClose, onSalvar }: { bloco?: Bloco; tipo: TipoDeBloco; organizationId: string; onClose: () => void; onSalvar: (bloco: Bloco) => Promise<string | null> }) {
   const id = useId();
@@ -97,6 +112,7 @@ export function BlocoNovoSheet({ bloco, tipo, organizationId, onClose, onSalvar 
   const [patrocinadores, setPatrocinadores] = useState<ImagemEmEdicao[]>(b?.tipo === "patrocinadores" ? b.itens : [{ url: "https://", alt: "", link: "" }]);
   const [video, setVideo] = useState(b?.tipo === "video" ? (b.provedor === "youtube" ? `https://www.youtube.com/watch?v=${b.id}` : `https://vimeo.com/${b.id}`) : "");
   const [endereco, setEndereco] = useState(b?.tipo === "mapa" ? b.endereco : "");
+  const [layoutAgenda, setLayoutAgenda] = useState<LayoutDaAgenda>(b?.tipo === "agenda" ? b.layout : LAYOUT_PADRAO_DA_AGENDA);
   const inicial = b?.tipo === "contagem" ? partesNoFuso(b.ate, FUSO) : { dia: "", hora: "20:00" };
   const [dia, setDia] = useState(inicial.dia);
   const [hora, setHora] = useState(inicial.hora);
@@ -115,7 +131,7 @@ export function BlocoNovoSheet({ bloco, tipo, organizationId, onClose, onSalvar 
       case "contagem": return { tipo, titulo, depois, ate: instanteNoFuso(dia, hora, FUSO) ?? "" };
       case "faq": return { tipo, titulo, itens: perguntas };
       case "patrocinadores": return { tipo, titulo, itens: patrocinadores };
-      case "agenda": return { tipo, titulo };
+      case "agenda": return { tipo, titulo, layout: layoutAgenda };
       default: return { tipo };
     }
   }
@@ -219,7 +235,20 @@ export function BlocoNovoSheet({ bloco, tipo, organizationId, onClose, onSalvar 
         {tipo === "agenda" && (
           <>
             <div><label className={ROTULO} htmlFor={`${id}-titulo`}>Título (opcional, como “Em cartaz”)</label><input id={`${id}-titulo`} autoFocus className={CAMPO} value={titulo} onChange={e => setTitulo(e.target.value)} maxLength={120} disabled={salvando} /></div>
-            <p className="text-[0.75rem] text-black/55">Mostra os eventos publicados da loja que ainda têm sessão por vir, cada um com a próxima sessão, o preço e o link para a página do evento. A lista se atualiza sozinha.</p>
+            <fieldset>
+              <legend className={ROTULO}>Como mostrar os eventos</legend>
+              <div className="grid grid-cols-2 gap-2.5">
+                {LAYOUTS_DA_AGENDA.map(opcao => (
+                  <label key={opcao} className={`flex cursor-pointer flex-col gap-1.5 rounded-xl border p-2.5 transition has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[#7259B5] ${layoutAgenda === opcao ? "border-[#7259B5] bg-[#7259B5]/[.06] ring-1 ring-[#7259B5]" : "border-black/[.12] hover:bg-black/[.02]"}`}>
+                    <input type="radio" name={`${id}-layout`} value={opcao} checked={layoutAgenda === opcao} onChange={() => setLayoutAgenda(opcao)} disabled={salvando} className="sr-only" />
+                    <MiniaturaDaAgenda layout={opcao} />
+                    <span className="text-[0.8125rem] font-normal text-[#282525]">{ROTULO_DO_LAYOUT_DA_AGENDA[opcao].nome}</span>
+                    <span className="text-[0.6875rem] leading-snug text-black/55">{ROTULO_DO_LAYOUT_DA_AGENDA[opcao].frase}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <p className="text-[0.75rem] text-black/55">Os eventos publicados da loja com sessão por vir entram sozinhos e a lista se atualiza sozinha. Trocar o layout não muda nada além da forma.</p>
           </>
         )}
         {tipo === "patrocinadores" && (

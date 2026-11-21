@@ -7,6 +7,18 @@
 export const TIPOS_DE_BLOCO = ["capa", "titulo", "texto", "colunas", "imagem", "galeria", "video", "mapa", "botao", "contagem", "faq", "patrocinadores", "programacao", "ingressos", "agenda", "contato"] as const;
 export type TipoDeBloco = (typeof TIPOS_DE_BLOCO)[number];
 
+/** Os cinco jeitos de mostrar a agenda de eventos (a biblioteca de seções, passo 2; desenhos aprovados pelo dono em 20/11/2026). */
+export const LAYOUTS_DA_AGENDA = ["carrossel", "grade", "lista", "calendario", "filtros"] as const;
+export type LayoutDaAgenda = (typeof LAYOUTS_DA_AGENDA)[number];
+export const LAYOUT_PADRAO_DA_AGENDA: LayoutDaAgenda = "grade";
+export const ROTULO_DO_LAYOUT_DA_AGENDA: Record<LayoutDaAgenda, { nome: string; frase: string }> = {
+  carrossel: { nome: "Carrossel", frase: "Cartões em fila, com setas e deslizar no celular." },
+  grade: { nome: "Grade", frase: "Cartões em colunas, com a cor de cada espaço." },
+  lista: { nome: "Lista por mês", frase: "Uma linha por sessão, agrupada por mês." },
+  calendario: { nome: "Calendário do mês", frase: "Os dias com programação ficam marcados." },
+  filtros: { nome: "Com filtros", frase: "Filtra por mês e por espaço, e busca pelo nome." },
+};
+
 export const ROTULO_DO_TIPO_DE_BLOCO: Record<TipoDeBloco, string> = {
   capa: "Capa", titulo: "Título", texto: "Texto", colunas: "Duas colunas", imagem: "Imagem", galeria: "Galeria", video: "Vídeo", mapa: "Mapa", botao: "Botão com link",
   agenda: "Agenda de eventos", contagem: "Contagem regressiva", faq: "Perguntas frequentes", patrocinadores: "Patrocinadores", programacao: "Programação de um espaço (Produção)", ingressos: "Ingressos de um evento", contato: "Contato",
@@ -47,7 +59,7 @@ export type Bloco =
   /** As sessões de um evento publicado da mesma organização, cada uma com o botão de comprar (a página de compra do Jards); sem evento, o bloco não mostra nada. */
   | { tipo: "ingressos"; titulo: string; evento_id: string | null }
   /** A lista dos eventos publicados da loja com sessão por vir, cada um com a próxima sessão, o preço e o link para a página do evento. */
-  | { tipo: "agenda"; titulo: string }
+  | { tipo: "agenda"; titulo: string; layout: LayoutDaAgenda }
   | { tipo: "contato"; email: string; telefone: string; endereco: string };
 
 export const MAX_BLOCOS_POR_PAGINA = 60;
@@ -257,7 +269,11 @@ export function lerBloco(entrada: unknown): LeituraDoBloco {
     }
     case "agenda": {
       const titulo = texto(e.titulo);
-      return titulo.length > 120 ? { ok: false, erro: "O título da agenda pode ter até 120 letras." } : { ok: true, bloco: { tipo: "agenda", titulo } };
+      if (e.layout !== undefined && e.layout !== null && typeof e.layout !== "string") return { ok: false, erro: "Escolha um dos layouts da agenda." };
+      const bruto = typeof e.layout === "string" ? e.layout.trim() : "";
+      if (bruto !== "" && !(LAYOUTS_DA_AGENDA as readonly string[]).includes(bruto)) return { ok: false, erro: "Escolha um dos layouts da agenda." };
+      const layout = bruto === "" ? LAYOUT_PADRAO_DA_AGENDA : (bruto as LayoutDaAgenda);
+      return titulo.length > 120 ? { ok: false, erro: "O título da agenda pode ter até 120 letras." } : { ok: true, bloco: { tipo: "agenda", titulo, layout } };
     }
     default:
       return { ok: false, erro: "Escolha o tipo do bloco." };

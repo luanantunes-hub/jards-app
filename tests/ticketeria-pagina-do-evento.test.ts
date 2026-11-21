@@ -96,12 +96,12 @@ test("a página do evento sem sessão, sem imagem ou com imagem que não é http
 const site = (blocos: unknown[], agenda?: ReturnType<typeof agendaDosEventos>): SiteParaDesenhar => ({ agora: 0, titulo: "Cia", cor: "#1C0E33", tema: "classico", menu: [{ slug: "inicio", titulo: "Início" }], pagina: { slug: "inicio", titulo: "Início", blocos: blocos.map(b => { const r = lerBloco(b); assert.ok(r.ok); return (r as unknown as { bloco: Bloco }).bloco; }) }, programacoes: {}, agenda });
 
 test("o bloco Agenda: lido, no seletor, e desenhado com link para a página do evento (na prévia, sem link)", () => {
-  assert.deepEqual(lerBloco({ tipo: "agenda", titulo: " Em cartaz " }), { ok: true, bloco: { tipo: "agenda", titulo: "Em cartaz" } });
+  assert.deepEqual(lerBloco({ tipo: "agenda", titulo: " Em cartaz " }), { ok: true, bloco: { tipo: "agenda", titulo: "Em cartaz", layout: "grade" } }, "sem layout, a grade");
   assert.equal(lerBloco({ tipo: "agenda", titulo: "x".repeat(121) }).ok, false);
   assert.ok(TIPOS_DE_BLOCO.includes("agenda") && GRUPOS_DE_BLOCOS.find(g => g.titulo === "Venda e confiança")!.tipos.includes("agenda"));
   const itens = agendaDosEventos([evento(), evento({ id: "e3", slug: "mar", titulo: "Mar de Dentro", imagem: null, sessoes: [sessao({ estado: "esgotada", a_partir_de_centavos: null })] })]);
   const html = renderToStaticMarkup(createElement(SiteView, { site: site([{ tipo: "agenda", titulo: "Em cartaz" }], itens), base: "" }));
-  for (const t of ["Em cartaz", "Hamlet", "Mar de Dentro", "Próxima: sábado, 12 de dezembro, às 20h · Teatro Municipal, São Paulo/SP", "a partir de R$", "Esgotado", "Ver evento", 'href="/e/hamlet"', 'href="/e/mar"']) assert.ok(html.includes(t), t);
+  for (const t of ["Em cartaz", "Hamlet", "Mar de Dentro", "Esgotado", "Lista de espera", "Datas e ingressos", 'href="/e/hamlet"', 'href="/e/mar"']) assert.ok(html.includes(t), t);
   const previa = renderToStaticMarkup(createElement(SiteView, { site: site([{ tipo: "agenda", titulo: "" }], itens), base: "/previa-site/s1", previa: true }));
   assert.equal(previa.includes('href="/previa-site/s1/e/'), false, "na prévia, o evento ainda não tem página: sem link");
   const vazia = renderToStaticMarkup(createElement(SiteView, { site: site([{ tipo: "agenda", titulo: "" }], []), base: "" }));
