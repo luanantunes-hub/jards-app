@@ -1,4 +1,8 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+// Liga a biblioteca de idiomas (next-intl) ao pedido: i18n/request.ts diz qual idioma e quais textos servem cada tela.
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -56,4 +60,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

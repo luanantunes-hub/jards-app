@@ -1,0 +1,26 @@
+{
+  "seletor": {
+    "rotulo": "Idioma"
+  },
+  "sair": {
+    "botao": "Salir de la lista",
+    "saindo": "Saliendo…",
+    "erro": "No pudimos completar la salida en este momento. Inténtalo de nuevo en unos instantes.",
+    "feito": "Listo, ya saliste de la lista",
+    "espera": {
+      "titulo": "Lista de espera",
+      "pergunta": "¿Salir de la lista de espera?",
+      "explicacao": "Dejarás de recibir el aviso cuando vuelvan a estar disponibles las entradas. Si cambias de opinión, puedes volver a anotarte en la lista.",
+      "feitoExplicacao": "Ya no te avisaremos sobre esta entrada."
+    },
+    "novidades": {
+      "titulo": "Novedades",
+      "organizador": "Organizador",
+      "pergunta": "¿Salir de la lista de novedades?",
+      "explicacao": "Dejarás de recibir novedades y ofertas de {loja}. Las entradas que ya compraste siguen siendo válidas.",
+      "explicacaoSemLoja": "Dejarás de recibir novedades y ofertas del organizador. Las entradas que ya compraste siguen siendo válidas.",
+      "feitoExplicacao": "Ya no enviaremos novedades de {loja} a tu correo electrónico.",
+      "feitoExplicacaoSemLoja": "Ya no enviaremos novedades del organizador a tu correo electrónico."
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { create as criarQr } from "qrcode";
+import { SeletorDeIdioma } from "@/components/i18n/SeletorDeIdioma";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TEXTO_DAS_NOVIDADES } from "@/lib/ticketeria/novidades";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
@@ -16,7 +17,7 @@ const CAMPO = "h-12 w-full rounded-xl border border-black/15 bg-white px-3.5 tex
 const ETIQUETA = "inline-flex rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal uppercase tracking-[.08em]";
 
 /** A moldura das telas: cabeçalho na cor do site da pessoa e o miolo estreito (34rem), que no celular ocupa a largura toda. */
-export function Moldura({ titulo, cor = "#1C0E33", passo, children, rodape }: { titulo: string; cor?: string; passo?: { atual: number; total: number }; children: ReactNode; rodape?: ReactNode }) {
+export function Moldura({ titulo, cor = "#1C0E33", passo, children, rodape, seletorDeIdioma }: { titulo: string; cor?: string; passo?: { atual: number; total: number }; children: ReactNode; rodape?: ReactNode; seletorDeIdioma?: boolean }) {
   const texto = textoSobreCor(cor);
   return (
     <div className="min-h-screen bg-white text-[#282525]">
@@ -24,6 +25,8 @@ export function Moldura({ titulo, cor = "#1C0E33", passo, children, rodape }: { 
         <div className="mx-auto flex w-full max-w-[34rem] items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <span className="text-[1.0625rem] font-medium tracking-[-.01em]">{titulo}</span>
           {passo && <span className="text-[0.6875rem] font-normal uppercase tracking-[.08em] opacity-70">Passo {passo.atual} de {passo.total}</span>}
+          {/* Só nas telas já traduzidas, dentro do ProvedorDeIdioma; as demais seguem em português até a vez delas. */}
+          {seletorDeIdioma && <SeletorDeIdioma />}
         </div>
       </header>
       <main className="mx-auto w-full max-w-[34rem] px-4 pb-32 pt-6 sm:px-6">{children}</main>

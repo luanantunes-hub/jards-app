@@ -3,13 +3,18 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { SairDasNovidades } from "@/components/ticketeria/SairDasNovidades";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export const metadata: Metadata = { title: "Novidades", robots: { index: false, follow: false } };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("ticketeria.sair.novidades");
+  return { title: t("titulo"), robots: { index: false, follow: false } };
+}
 
 export default async function PaginaSairDasNovidades({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -19,5 +24,5 @@ export default async function PaginaSairDasNovidades({ params }: { params: Promi
   if (!destinatario) notFound();
   const { data: envio } = await t.from("ticketeria_envios").select("loja_id").eq("id", destinatario.envio_id).maybeSingle();
   const { data: loja } = envio ? await t.from("ticketeria_lojas").select("nome").eq("id", envio.loja_id).maybeSingle() : { data: null };
-  return <SairDasNovidades token={token.toLowerCase()} loja={loja?.nome ?? "o organizador"} />;
+  return <SairDasNovidades token={token.toLowerCase()} loja={loja?.nome ?? null} />;
 }
