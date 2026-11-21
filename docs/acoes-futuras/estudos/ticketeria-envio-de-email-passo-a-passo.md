@@ -3,12 +3,12 @@
 Para o dono do Jards, 21/11/2026. O envio nasce **desligado**: nada sai até os passos 1 a 3. Os passos 4 e 5 ligam os números de quem abriu e clicou.
 
 ## 1. Cadastrar o subdomínio de envio no Resend
-1. Resend → **Domains** → **Add Domain**. Use um subdomínio (ex.: `mail.jards.com.br`), não o domínio principal: se uma divulgação cair em spam, o e-mail principal não é afetado.
+1. Resend → **Domains** → **Add Domain**. Use um subdomínio (ex.: `novidades.jards.com.br`), não o domínio principal: se uma divulgação cair em spam, o e-mail principal não é afetado.
 2. O Resend mostra 3 ou 4 registros de DNS. No GoDaddy (DNS do jards.com.br), **adicione** cada um exatamente como aparece. Não mexa nos registros que já existem (o SPF do Google continua como está).
 3. Volte ao Resend e clique em **Verify**. Pode levar de minutos a algumas horas.
 
 ## 2. Dizer ao Jards qual é o remetente
-Na Vercel (projeto jards-app, Production), crie a variável `TICKETERIA_NOVIDADES_EMAIL_FROM` com o remetente, por exemplo `Jards Ingressos <novidades@mail.jards.com.br>`. Sem ela, o botão "Enviar" da folha Novo envio avisa que o envio não está ligado.
+Na Vercel (projeto jards-app, Production), crie a variável `TICKETERIA_NOVIDADES_EMAIL_FROM` com o remetente, por exemplo `Jards Ingressos <ingressos@novidades.jards.com.br>`. Sem ela, o botão "Enviar" da folha Novo envio avisa que o envio não está ligado.
 
 ## 3. Primeiro teste
 Em **Público → Novo envio**, escreva uma mensagem, clique em **Enviar teste para mim** e confira se chegou na caixa de entrada (não no spam) e se o botão "Sair da lista" abre a página certa. Só depois envie de verdade, para um grupo pequeno.
