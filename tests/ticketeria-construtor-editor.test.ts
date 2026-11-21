@@ -79,8 +79,8 @@ test("a prévia só abre no próprio painel: o cabeçalho da rota permite a mesm
 
 test("o editor abre em TELA INTEIRA: por cima do painel, o editor à esquerda e a prévia à direita; em tela estreita um botão alterna; fechar volta ao site", () => {
   const editor = readFileSync("components/ticketeria/EditorDoSite.tsx", "utf8");
-  for (const t of ["fixed inset-0 z-[45]", "createPortal(tela, document.body)", 'lg:w-[440px]', "lg:flex-row", "<PreviaDoSite siteId={siteId} slug={atual.slug} versao={versao} telaInteira />", "Fechar<span className=\"hidden sm:inline\"> o editor</span>", "onFechar", "lg:hidden", 'hidden lg:block', 'document.body.style.overflow = "hidden"']) assert.ok(editor.includes(t), t);
-  assert.ok(editor.indexOf("> esta página</span>") < editor.indexOf('role="tablist"'), "publicar fica no alto, as páginas logo abaixo");
+  for (const t of ["fixed inset-0 z-[45]", "createPortal(tela, document.body)", 'lg:w-[440px]', "lg:flex-row", "<PreviaDoSite siteId={siteId} slug={atual.slug} versao={versao} telaInteira />", "Fechar o editor", "onFechar", "lg:hidden", 'hidden lg:block', 'document.body.style.overflow = "hidden"']) assert.ok(editor.includes(t), t);
+  assert.ok(editor.indexOf("Publicar esta página") < editor.indexOf('role="tablist"'), "publicar fica no alto, as páginas logo abaixo");
   const folhas = ["<VersoesSheet", "<AcrescentarBlocoSheet", "<BlocoSheet", "<NovaPaginaSheet"];
   for (const f of folhas) assert.ok(editor.includes(f), `${f} segue ligada (as folhas abrem por cima do editor: z-50)`);
   const pagina = readFileSync("app/(dashboard)/ingressos/site/page.tsx", "utf8");
@@ -90,4 +90,15 @@ test("o editor abre em TELA INTEIRA: por cima do painel, o editor à esquerda e 
   assert.ok(html.indexOf('aria-pressed="true"') < html.indexOf("Computador") + 200, "na tela inteira a prévia abre no tamanho do computador (largura da coluna)");
   const comum = renderToStaticMarkup(createElement(PreviaDoSite, { siteId: "s1", slug: "inicio", versao: 0 }));
   assert.ok(!comum.includes('class="h-full w-full"'), "a prévia da coluna estreita segue como era");
+});
+
+test("o painel pode abrir a prévia num quadro: o frame-src da política tem 'self' (sem ele o navegador bloqueava o quadro e a prévia ficava em branco); os botões do alto não colam as palavras", () => {
+  const next = readFileSync("next.config.ts", "utf8");
+  const frameSrc = /"frame-src ([^"]+)"/.exec(next)?.[1] ?? "";
+  assert.ok(frameSrc.startsWith("'self' "), "o quadro da mesma origem é permitido");
+  assert.ok(frameSrc.includes("https://js.stripe.com"), "o que já estava continua");
+  assert.match(next, /source: "\/\(\(\?!embed\/\|previa-site\/\)\.\*\)", headers: \[\.\.\.cabecalhosComuns, \{ key: "X-Frame-Options", value: "DENY" \}/, "as outras páginas seguem sem poder ser abertas em quadro por outros sites");
+  const editor = readFileSync("components/ticketeria/EditorDoSite.tsx", "utf8");
+  assert.ok(!/<span className="hidden sm:inline"> /.test(editor), "um espaço no começo de um item de caixa flexível some: as duas versões do texto são inteiras");
+  assert.ok(editor.includes('<span className="sm:hidden">Publicar</span><span className="hidden sm:inline">Publicar esta página</span>'));
 });
