@@ -47,7 +47,7 @@ function Bloco({ titulo, selo, children }: { titulo: string; selo: Selo; childre
 }
 
 /** O que o primeiro evento já mostra: quanto vendeu, o ritmo (conta simples) e de onde vieram as vendas. */
-export function PrimeirosDados({ ritmo, origem }: { ritmo: RitmoDoEvento | null; origem: { rotulo: string; ingressos: number }[] }) {
+export function PrimeirosDados({ ritmo, origem, semConta = false }: { ritmo: RitmoDoEvento | null; origem: { rotulo: string; ingressos: number }[]; /** Esconde a conta simples do ritmo quando a comparação com eventos parecidos a substitui. */ semConta?: boolean }) {
   if (!ritmo && origem.length === 0) return null;
   const maximo = ritmo ? Math.max(1, ...ritmo.serie.map(d => d.ingressos)) : 1;
   return (
@@ -62,11 +62,11 @@ export function PrimeirosDados({ ritmo, origem }: { ritmo: RitmoDoEvento | null;
             </div>
             <p className="mt-1 text-[0.6875rem] text-black/40">Ingressos por dia, nos últimos 28 dias.</p>
           </Bloco>
-          <Bloco titulo="Se o ritmo continuar" selo="muito_impreciso">
+          {!semConta && <Bloco titulo="Se o ritmo continuar" selo="muito_impreciso">
             <p className="mt-2 text-[1.375rem] tabular-nums tracking-[-.02em] text-[#282525]">cerca de {numero(ritmo.projecao)} até a data</p>
             <p className="mt-1 max-w-md text-[0.75rem] leading-relaxed text-black/50">É o ritmo dos últimos 7 dias ({virgula(ritmo.ritmoPorDia)} {ritmo.ritmoPorDia === 1 ? "ingresso" : "ingressos"} por dia) seguido até a sessão. Se o ritmo cair à metade: {numero(ritmo.metade)}. Se dobrar: {ritmo.dobroLota ? "lotaria antes da data" : numero(ritmo.dobro)}.</p>
             <p className="mt-1.5 max-w-md text-[0.75rem] leading-relaxed text-black/50">É uma conta simples, não uma previsão do modelo: as vendas costumam acelerar perto da data, mas não dá para dizer por quanto com os dados de um evento só.</p>
-          </Bloco>
+          </Bloco>}
         </>
       )}
       {origem.length > 0 && (

@@ -13,6 +13,8 @@ import { DatasDePicoSheet } from "@/components/ticketeria/DatasDePicoSheet";
 import { SimularOrcamentoSheet } from "@/components/ticketeria/SimularOrcamentoSheet";
 import { PlanoBDoModelo } from "@/components/ticketeria/PlanoBView";
 import { CabecalhoDoPainel, PreviaComExemplo, PrimeirosDados } from "@/components/ticketeria/PainelView";
+import { ExpectativaSheet, ParecidosSheet, RitmoComparado, SemParecido, useEscolhasDoRitmo } from "@/components/ticketeria/RitmoComparadoView";
+import { candidatosDoEvento, preverPorComparacao } from "@/lib/ticketeria/ritmo-comparado";
 import { confiancaMostrada } from "@/lib/ticketeria/modelo-confianca";
 import { blocoDeInvestir, blocoDoTamanhoDosCanais } from "@/lib/ticketeria/modelo-painel";
 import { lerDataDePico, type CamposDaDataDePico, type DataDePico } from "@/lib/ticketeria/modelo-controles";
@@ -65,6 +67,12 @@ export default function DivulgacaoPage() {
   // As datas de pico da loja (a folha "Adicionar uma data sua" da aba Modelo).
   const [datasDePico, setDatasDePico] = useState<DataDePico[]>([]);
   const [simulando, setSimulando] = useState(false);
+  const [folhaParecidos, setFolhaParecidos] = useState(false);
+  const [folhaExpectativa, setFolhaExpectativa] = useState(false);
+  // O ritmo comparado com eventos parecidos: a escolha dos parecidos e a expectativa ficam neste navegador.
+  const ritmo = prontidao?.ritmo ?? null;
+  const comparacao = ritmo?.comparacao ?? null;
+  const { escolhas, salvarEscolhas, expectativa, salvarExpectativa } = useEscolhasDoRitmo(estado?.lojaId ?? null, comparacao?.sessaoId ?? null);
   const [folhaDeDatas, setFolhaDeDatas] = useState<{ valores: CamposDaDataDePico; erro: string | null } | null>(null);
 
   useEffect(() => {
@@ -240,6 +248,8 @@ export default function DivulgacaoPage() {
 
   if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   const dados = estado.dados;
+  const candidatos = comparacao ? candidatosDoEvento({ id: comparacao.sessaoId, localId: comparacao.localId, precoMedioCentavos: comparacao.precoMedioCentavos }, comparacao.curvas, escolhas) : [];
+  const previsaoPorComparacao = ritmo && comparacao ? preverPorComparacao({ vendidos: ritmo.vendidos, lugares: ritmo.lugares, diasAteASessao: ritmo.diasAteASessao, parecidos: candidatos.filter(c => c.usado).map(c => c.curva) }) : null;
   // O gasto por semana de cada canal (o mais comum nas semanas com gasto): a base da previsão e do simulador.
   const gastoSemanal: Record<string, number> = Object.fromEntries((prontidao?.canais ?? []).filter(c => c.medianaCentavos > 0).map(c => [c.canal, c.medianaCentavos]));
   // O dia da próxima sessão à venda: o plano B não sugere experimento perto de uma sessão.
@@ -277,7 +287,10 @@ export default function DivulgacaoPage() {
                     <CabecalhoDoPainel
                       resumo={[prontidao.resumo ? `${prontidao.resumo.eventos} ${prontidao.resumo.eventos === 1 ? "evento" : "eventos"}` : null, resultadoDoModelo ? `${resultadoDoModelo.execucao.semanas} semanas` : prontidao.semanas > 0 ? `${prontidao.semanas} semanas` : null].filter(Boolean).join(" · ") || "primeiros dados"}
                       frase={resultadoDoModelo && blocoDoTamanhoDosCanais(resultadoDoModelo.execucao.semanas, confiancaMostrada(resultadoDoModelo.execucao.confianca, prontidao.resumo?.sessoes ?? null)).aberto ? "O modelo já estima o tamanho de cada canal, com margem larga." : "Já dá para ver o que é medido, e cada integração que você faz deixa o resto mais preciso."} />
-                    <PrimeirosDados ritmo={prontidao.ritmo ?? null} origem={resumirDivulgacao(dados.linhas, null).canais.map(c => ({ rotulo: c.rotulo, ingressos: c.ingressos }))} />
+                    <PrimeirosDados semConta={!!previsaoPorComparacao} ritmo={prontidao.ritmo ?? null} origem={resumirDivulgacao(dados.linhas, null).canais.map(c => ({ rotulo: c.rotulo, ingressos: c.ingressos }))} />
+                    {ritmo && (previsaoPorComparacao
+                      ? <RitmoComparado ritmo={ritmo} previsao={previsaoPorComparacao} candidatos={candidatos} onAjustar={() => setFolhaParecidos(true)} />
+                      : <SemParecido ritmo={ritmo} temHistorico={(comparacao?.curvas.length ?? 0) > 0} expectativa={expectativa} onExpectativa={() => setFolhaExpectativa(true)} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />)}
                     {resultadoDoModelo && <ResultadoDoModelo resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} sessoes={prontidao.resumo?.sessoes ?? null} eventos={prontidao.resumo?.eventos ?? null} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />}
                     {!resultadoDoModelo && (
                       <div className="space-y-3">
@@ -302,6 +315,8 @@ export default function DivulgacaoPage() {
       {criando && dados && <LinkDeDivulgacaoSheet sessoes={dados.sessoes} origem={window.location.origin} sessaoInicial={sessaoId} onClose={() => setCriando(false)} />}
       {folhaDeImportar && <ImportarPlanilhaSheet existentes={historico.importacoes} erro={erroDeImportar} importando={importando} onClose={() => setFolhaDeImportar(false)} onImportar={c => void importar(c)} />}
       {escolhendo && <EscolherContaSheet fonte={CARTOES[escolhendo.provedor].fonte} tipo={escolhendo.provedor === "ga4" ? "visitas" : "gasto"} contas={escolhendo.contas} escolhida={escolhendo.escolhida} erro={escolhendo.erro} salvando={salvando} onEscolher={id => setEscolhendo(e => (e ? { ...e, escolhida: id } : e))} onClose={() => setEscolhendo(null)} onSalvar={() => void confirmarConta()} />}
+      {folhaParecidos && <ParecidosSheet candidatos={candidatos} onSalvar={salvarEscolhas} onClose={() => setFolhaParecidos(false)} />}
+      {folhaExpectativa && ritmo && <ExpectativaSheet lugares={ritmo.lugares} valorInicial={expectativa} onSalvar={salvarExpectativa} onClose={() => setFolhaExpectativa(false)} />}
       {simulando && resultadoDoModelo && <SimularOrcamentoSheet canais={resultadoDoModelo.canais} gastoSemanal={gastoSemanal} confianca={resultadoDoModelo.execucao.confianca} semanas={resultadoDoModelo.execucao.semanas} onClose={() => setSimulando(false)} />}
       {folhaDeDatas && <DatasDePicoSheet datas={datasDePico} valores={folhaDeDatas.valores} erro={folhaDeDatas.erro} salvando={salvando} onMudar={(campo, valor) => setFolhaDeDatas(f => (f ? { ...f, valores: { ...f.valores, [campo]: valor } } : f))} onClose={() => setFolhaDeDatas(null)} onAdicionar={() => void adicionarData()} onApagar={id => void apagarData(id)} />}
       {acao && <AcaoSheet editando={acao.id !== null} valores={acao.valores} erro={acaoErro} salvando={salvando} onMudar={(campo, valor) => setAcao(a => (a ? { ...a, valores: { ...a.valores, [campo]: valor } } : a))} onClose={() => setAcao(null)} onSalvar={() => void salvar()} onApagar={() => void apagar()} />}
