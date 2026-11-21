@@ -44,7 +44,7 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
   const [pronto, setPronto] = useState<Pronto | null>(null);
   const [municipios, setMunicipios] = useState<TabelaMunicipios | null>(null);
 
-  const PASSOS = passosDoComecar(r.perfil, r.numerada);
+  const PASSOS = passosDoComecar(r.perfil, r.numerada, r.gratuito);
 
   const passoAtual = PASSOS[passo];
 
@@ -172,18 +172,10 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
         </section>
       )}
 
-      {PASSOS[passo] === "numerada" && (
+      {passoAtual === "numerada" && (
         <section aria-labelledby="comecar-titulo">
           <h1 id="comecar-titulo" className={TITULO}>Os lugares são numerados?</h1>
-          <div className="mt-12 grid grid-cols-2 gap-3 md:mt-16">
-            {([[true, "Sim", "Cada pessoa escolhe o seu lugar."], [false, "Não", "Entrada livre, sem lugar marcado."]] as const).map(([valor, rotulo, dica]) => (
-              <button key={rotulo} type="button" aria-pressed={r.numerada === valor} onClick={() => muda({ numerada: valor })}
-                className={`rounded-xl border bg-white p-5 text-left transition hover:bg-black/[.02] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${r.numerada === valor ? "border-[#7259B5] ring-1 ring-[#7259B5]" : "border-black/[.12]"}`}>
-                <span className="flex items-center justify-between text-[1.375rem] text-[#1C0E33]">{rotulo}{r.numerada === valor && <Check size={18} className="text-[#7259B5]" aria-hidden="true" />}</span>
-                <span className="mt-1 block text-[0.8125rem] text-black/50">{dica}</span>
-              </button>
-            ))}
-          </div>
+          <div className="mt-12 md:mt-16"><SimOuNao valor={r.numerada} onChange={numerada => muda({ numerada })} dicaSim="Cada pessoa escolhe o seu lugar." dicaNao="Entrada livre, sem lugar marcado." /></div>
         </section>
       )}
 
@@ -201,21 +193,25 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
         </section>
       )}
 
-      {PASSOS[passo] === "ingresso" && (
-        <section aria-labelledby="comecar-titulo" className="space-y-3">
-          <div>
-            <p className="text-[0.75rem] text-black/45">Ingresso</p>
-            <h1 id="comecar-titulo" className={TITULO}>Quanto custa a entrada?</h1>
-            <p className={APOIO}>Um preço basta para começar. Lotes e outros tipos você cria depois.</p>
-          </div>
-          <Marcar id="co-gratuito" marcado={r.gratuito} onChange={gratuito => muda({ gratuito })} texto="É gratuito, só quero controlar quem entra" />
-          {!r.gratuito && (
-            <>
-              <Campo id="co-preco" rotulo="Inteira (R$)" valor={r.preco} exemplo="60" onChange={preco => muda({ preco })} autoFocus numerico onEnter={() => void seguir()} />
-              <Marcar id="co-meia" marcado={r.meia} onChange={meia => muda({ meia })} texto="Ter meia-entrada pela metade do preço" />
-              {r.meia && <p className="text-[0.75rem] text-black/45">A lei garante meia-entrada a estudantes, pessoas idosas e outros públicos: separamos 40% dos lugares para ela.</p>}
-            </>
-          )}
+      {passoAtual === "gratuito" && (
+        <section aria-labelledby="comecar-titulo">
+          <h1 id="comecar-titulo" className={TITULO}>O ingresso é gratuito?</h1>
+          <div className="mt-12 md:mt-16"><SimOuNao valor={r.gratuito} onChange={gratuito => muda({ gratuito })} dicaSim="Só quero controlar quem entra." dicaNao="Vou cobrar a entrada." /></div>
+        </section>
+      )}
+
+      {passoAtual === "preco" && (
+        <section aria-labelledby="comecar-titulo">
+          <h1 id="comecar-titulo" className={TITULO}>Quanto custa a inteira?</h1>
+          <div className="mt-12 md:mt-16"><CampoGrande numerico prefixo="R$" valor={r.preco} exemplo="60" rotulo="Preço da inteira, em reais" onChange={preco => muda({ preco: preco.replace(/[^\d.,]/g, "") })} onEnter={() => void seguir()} /></div>
+        </section>
+      )}
+
+      {passoAtual === "meia" && (
+        <section aria-labelledby="comecar-titulo">
+          <h1 id="comecar-titulo" className={TITULO}>Tem meia-entrada?</h1>
+          <div className="mt-12 md:mt-16"><SimOuNao valor={r.meia} onChange={meia => muda({ meia })} dicaSim="Pela metade do preço." dicaNao="Só a inteira." /></div>
+          {r.meia === true && <p className="mt-4 text-[0.8125rem] text-black/45">A lei garante meia-entrada a estudantes, pessoas idosas e outros públicos: separamos 40% dos lugares para ela.</p>}
         </section>
       )}
 
@@ -233,15 +229,33 @@ function Campo({ id, rotulo, valor, exemplo, onChange, autoFocus = false, numeri
 }
 
 /** O campo de uma pergunta só: uma caixa grande, com o texto em negrito (peso 700 direto: a Ticketeria limita font-bold a 500 em globals.css), sem rótulo (a pergunta já é o rótulo). O cursor já entra nele; Enter segue. */
-function CampoGrande({ valor, exemplo, rotulo, onChange, onEnter, numerico = false }: { valor: string; exemplo: string; rotulo: string; onChange: (valor: string) => void; onEnter: () => void; numerico?: boolean }) {
+function CampoGrande({ valor, exemplo, rotulo, onChange, onEnter, numerico = false, prefixo }: { valor: string; exemplo: string; rotulo: string; onChange: (valor: string) => void; onEnter: () => void; numerico?: boolean; prefixo?: string }) {
   const campo = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const t = setTimeout(() => campo.current?.focus(), 60);
     return () => clearTimeout(t);
   }, []);
-  return (
-    <input ref={campo} autoFocus aria-label={rotulo} value={valor} placeholder={exemplo} maxLength={200} autoComplete="off" inputMode={numerico ? "numeric" : undefined} className={CAMPO_GRANDE}
+  const entrada = (
+    <input ref={campo} autoFocus aria-label={rotulo} value={valor} placeholder={exemplo} maxLength={200} autoComplete="off" inputMode={numerico ? "numeric" : undefined}
+      className={`${CAMPO_GRANDE} ${prefixo ? "pl-14 md:pl-16" : ""}`}
       onChange={e => onChange(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); onEnter(); } }} />
+  );
+  if (!prefixo) return entrada;
+  return <div className="relative">{entrada}<span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[1.25rem] font-[700] text-black/30 md:left-5 md:text-[1.5rem]" aria-hidden="true">{prefixo}</span></div>;
+}
+
+/** Duas opções grandes, Sim e Não, para as perguntas de resposta curta. `valor` é null enquanto a pessoa não respondeu. */
+function SimOuNao({ valor, onChange, dicaSim, dicaNao }: { valor: boolean | null; onChange: (valor: boolean) => void; dicaSim: string; dicaNao: string }) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {([[true, "Sim", dicaSim], [false, "Não", dicaNao]] as const).map(([opcao, rotulo, dica]) => (
+        <button key={rotulo} type="button" aria-pressed={valor === opcao} onClick={() => onChange(opcao)}
+          className={`rounded-xl border bg-white p-5 text-left transition hover:bg-black/[.02] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${valor === opcao ? "border-[#7259B5] ring-1 ring-[#7259B5]" : "border-black/[.12]"}`}>
+          <span className="flex items-center justify-between text-[1.375rem] text-[#1C0E33]">{rotulo}{valor === opcao && <Check size={18} className="text-[#7259B5]" aria-hidden="true" />}</span>
+          <span className="mt-1 block text-[0.8125rem] text-black/50">{dica}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -329,11 +343,12 @@ function Marcar({ id, marcado, onChange, texto }: { id: string; marcado: boolean
 
 function EventoPronto({ r, resultado, recomecar, organizationId }: { r: RespostasDoComecar; resultado: Pronto; recomecar: () => void; organizationId: string }) {
   const [editandoMapa, setEditandoMapa] = useState(false);
-  const inteira = r.gratuito ? 0 : (centavosDe(r.preco) ?? 0);
+  const gratuito = r.gratuito === true;
+  const inteira = gratuito ? 0 : (centavosDe(r.preco) ?? 0);
   const lugares = Number(r.lugares);
-  const divisao = divisaoDosLugares(lugares, r.meia, r.gratuito);
+  const divisao = divisaoDosLugares(lugares, r.meia === true, gratuito);
   const onde = ondeDoEvento(r);
-  const linhas: [string, string][] = r.gratuito
+  const linhas: [string, string][] = gratuito
     ? [["Entrada gratuita", `${lugares} lugares`]]
     : [["Inteira", `${reais(inteira)} · ${divisao.inteira} lugares`], ...(divisao.meia > 0 ? [["Meia-entrada", `${reais(precoDaMeia(inteira))} · ${divisao.meia} lugares`] as [string, string]] : [])];
   if (resultado.mapa === "montado") linhas.push(["Auditório", `${Math.ceil(lugares / (Number(r.porFileira) || 1))} fileiras · ${lugares} lugares numerados`]);
@@ -358,7 +373,7 @@ function EventoPronto({ r, resultado, recomecar, organizationId }: { r: Resposta
         ))}
       </div>
 
-      {!r.gratuito && (
+      {!gratuito && (
         <div className="mt-4 flex items-start gap-2.5 rounded-xl border bg-white px-3.5 py-3 text-[0.8125rem] text-[#9A6A10]" style={{ borderColor: "#B07A1447" }}>
           <Landmark size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
           <span>Para vender, falta dizer em qual conta você recebe. Leva dois minutos e pode ser agora ou depois.</span>
@@ -368,9 +383,9 @@ function EventoPronto({ r, resultado, recomecar, organizationId }: { r: Resposta
       {resultado.mapa === "falhou" && resultado.erroDoMapa && <div className="mt-4"><Aviso texto={`O evento foi criado, mas o mapa de assentos não ficou pronto: ${resultado.erroDoMapa}`} /></div>}
 
       <div className="mt-6 flex flex-wrap items-center gap-2.5">
-        {!r.gratuito && <Link href="/ingressos/recebimentos" className={CTA}>Cadastrar conta</Link>}
+        {!gratuito && <Link href="/ingressos/recebimentos" className={CTA}>Cadastrar conta</Link>}
         {r.numerada && resultado.setor && <button type="button" onClick={() => setEditandoMapa(true)} className={LINK}>Desenhar o mapa de assentos</button>}
-        <Link href={`/ingressos/eventos/${resultado.evento_id}`} className={r.gratuito ? CTA : LINK}>{r.gratuito ? "Abrir o evento para publicar" : "Abrir o evento"}</Link>
+        <Link href={`/ingressos/eventos/${resultado.evento_id}`} className={gratuito ? CTA : LINK}>{gratuito ? "Abrir o evento para publicar" : "Abrir o evento"}</Link>
         <button type="button" onClick={recomecar} className={VOLTAR}>Criar outro</button>
       </div>
       {editandoMapa && resultado.setor && (

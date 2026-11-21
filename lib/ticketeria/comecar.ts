@@ -64,23 +64,28 @@ export type RespostasDoComecar = {
   /** Lugares por fileira do auditório (só com lugares numerados); vazio até a pessoa chegar nesse passo. */
   porFileira: string;
   corredor: boolean;
-  gratuito: boolean;
+  /** O ingresso é gratuito? null enquanto a pessoa não respondeu. */
+  gratuito: boolean | null;
   preco: string; // em reais, como digitado ("60" ou "59,90")
-  meia: boolean;
+  /** Tem meia-entrada? null enquanto a pessoa não respondeu. */
+  meia: boolean | null;
 };
 
 export const RESPOSTAS_VAZIAS: RespostasDoComecar = {
-  perfil: null, evento: "", lugar: "", uf: "", cidade: "", lugares: "", data: "", hora: "20:00", dias: "2", numerada: null, porFileira: "", corredor: true, gratuito: false, preco: "", meia: true,
+  perfil: null, evento: "", lugar: "", uf: "", cidade: "", lugares: "", data: "", hora: "20:00", dias: "2", numerada: null, porFileira: "", corredor: true, gratuito: null, preco: "", meia: null,
 };
 
 /** Os passos com perguntas, uma coisa por tela (depois vem o evento pronto). */
-export type PassoDoComecar = "perfil" | "nome" | "onde" | "evento" | "data" | "dias" | "horario" | "numerada" | "lugares" | "auditorio" | "ingresso";
+export type PassoDoComecar = "perfil" | "nome" | "onde" | "evento" | "data" | "dias" | "horario" | "numerada" | "lugares" | "auditorio" | "gratuito" | "preco" | "meia";
 
-/** A sequência de passos: o nome do primeiro evento só para quem tem espaço, os dias só no festival e o auditório só com lugares numerados. */
-export function passosDoComecar(perfil: PerfilDoProdutor | null, numerada: boolean | null): PassoDoComecar[] {
+/**
+ * A sequência de passos: o nome do primeiro evento só para quem tem espaço, os dias só no festival, o auditório só com lugares numerados e o preço e a
+ * meia-entrada só se o ingresso não for gratuito. Enquanto uma resposta não vem, vale o caminho mais comum (sem auditório; ingresso pago).
+ */
+export function passosDoComecar(perfil: PerfilDoProdutor | null, numerada: boolean | null, gratuito: boolean | null): PassoDoComecar[] {
   return [
     "perfil", "nome", "onde", ...(perfil === "espaco" ? ["evento" as const] : []), "data", ...(perfil === "festival" ? ["dias" as const] : []),
-    "horario", "numerada", "lugares", ...(numerada ? ["auditorio" as const] : []), "ingresso",
+    "horario", "numerada", "lugares", ...(numerada ? ["auditorio" as const] : []), "gratuito", ...(gratuito === true ? [] : ["preco" as const, "meia" as const]),
   ];
 }
 
@@ -152,9 +157,10 @@ export function conferirPasso(passo: PassoDoComecar, r: RespostasDoComecar, hoje
     if (Math.ceil(Number(r.lugares) / porFileira) > MAX_FILEIRAS) return "Ficariam mais de 60 fileiras: aumente os lugares por fileira";
     return null;
   }
-  if (r.gratuito) return null;
+  if (passo === "gratuito") return r.gratuito === null ? "Escolha sim ou não" : null;
+  if (passo === "meia") return r.meia === null ? "Escolha sim ou não" : null;
   const centavos = centavosDe(r.preco);
-  if (centavos === null || centavos <= 0) return "Diga o preço da inteira, ou marque gratuito";
+  if (centavos === null || centavos <= 0) return "Diga o preço da inteira";
   if (centavos > 10000000) return "O preço pode ir até R$ 100.000";
   return null;
 }
@@ -191,8 +197,8 @@ export function argumentosDoComecar(organizationId: string, r: RespostasDoComeca
     p_data: r.data,
     p_hora: r.hora,
     p_dias: r.perfil === "festival" ? Number(r.dias.trim()) : null,
-    p_preco_centavos: r.gratuito ? 0 : (centavosDe(r.preco) ?? 0),
-    p_meia: !r.gratuito && r.meia,
+    p_preco_centavos: r.gratuito === true ? 0 : (centavosDe(r.preco) ?? 0),
+    p_meia: r.gratuito === false && r.meia === true,
   };
 }
 

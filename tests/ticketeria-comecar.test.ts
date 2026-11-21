@@ -15,7 +15,7 @@ import { NOMES_DOS_MESES, dataPorExtenso, mesDaData, semanasDoMes, somarMeses } 
 const HOJE = "2026-11-21";
 const CHEIO: RespostasDoComecar = {
   ...RESPOSTAS_VAZIAS, perfil: "unico", evento: "Show de lançamento", lugar: "Casa de Cultura", uf: "RJ", cidade: "Rio de Janeiro",
-  lugares: "100", data: "2026-12-20", hora: "20:00", numerada: false, preco: "60",
+  lugares: "100", data: "2026-12-20", hora: "20:00", numerada: false, gratuito: false, preco: "60", meia: true,
 };
 
 async function migration(): Promise<string> {
@@ -31,11 +31,12 @@ test("os quatro perfis são os que o banco aceita, na ordem da tela", async () =
   assert.match(sql, /check \(perfil is null or perfil in \('espaco', 'turne', 'unico', 'festival'\)\)/);
 });
 
-test("são cinco passos, uma coisa por tela, e cada passo diz o que falta", () => {
-  assert.deepEqual(passosDoComecar("unico", false), ["perfil", "nome", "onde", "data", "horario", "numerada", "lugares", "ingresso"]);
-  assert.deepEqual(passosDoComecar("espaco", false), ["perfil", "nome", "onde", "evento", "data", "horario", "numerada", "lugares", "ingresso"], "quem tem espaço dá o nome do primeiro evento num passo só dele");
-  assert.deepEqual(passosDoComecar("festival", null), ["perfil", "nome", "onde", "data", "dias", "horario", "numerada", "lugares", "ingresso"], "os dias só no festival");
-  assert.deepEqual(passosDoComecar("turne", true), ["perfil", "nome", "onde", "data", "horario", "numerada", "lugares", "auditorio", "ingresso"], "o auditório só com lugares numerados");
+test("cada passo é uma pergunta só, e cada um diz o que falta", () => {
+  assert.deepEqual(passosDoComecar("unico", false, false), ["perfil", "nome", "onde", "data", "horario", "numerada", "lugares", "gratuito", "preco", "meia"]);
+  assert.deepEqual(passosDoComecar("espaco", false, false), ["perfil", "nome", "onde", "evento", "data", "horario", "numerada", "lugares", "gratuito", "preco", "meia"], "quem tem espaço dá o nome do primeiro evento num passo só dele");
+  assert.deepEqual(passosDoComecar("festival", null, null), ["perfil", "nome", "onde", "data", "dias", "horario", "numerada", "lugares", "gratuito", "preco", "meia"], "os dias só no festival; sem resposta ainda, vale o caminho comum");
+  assert.deepEqual(passosDoComecar("turne", true, false), ["perfil", "nome", "onde", "data", "horario", "numerada", "lugares", "auditorio", "gratuito", "preco", "meia"], "o auditório só com lugares numerados");
+  assert.deepEqual(passosDoComecar("unico", false, true), ["perfil", "nome", "onde", "data", "horario", "numerada", "lugares", "gratuito"], "gratuito: acaba na pergunta do gratuito, sem preço nem meia-entrada");
   assert.equal(conferirPasso("perfil", RESPOSTAS_VAZIAS, HOJE), "Escolha uma opção para continuar");
   assert.equal(conferirPasso("perfil", CHEIO, HOJE), null);
   // O nome: só o nome. Quem tem espaço dá o nome do espaço; os outros, o nome do evento.
@@ -71,11 +72,16 @@ test("são cinco passos, uma coisa por tela, e cada passo diz o que falta", () =
   assert.equal(conferirPasso("auditorio", { ...CHEIO, numerada: true, porFileira: "81" }, HOJE), "São no máximo 80 lugares por fileira");
   assert.equal(conferirPasso("auditorio", { ...CHEIO, numerada: true, lugares: "1000", porFileira: "10" }, HOJE), "Ficariam mais de 60 fileiras: aumente os lugares por fileira");
   assert.equal(conferirPasso("auditorio", { ...CHEIO, numerada: true, porFileira: "16" }, HOJE), null);
-  // O preço.
-  assert.equal(conferirPasso("ingresso", { ...CHEIO, preco: "" }, HOJE), "Diga o preço da inteira, ou marque gratuito");
-  assert.equal(conferirPasso("ingresso", { ...CHEIO, preco: "", gratuito: true }, HOJE), null);
-  assert.equal(conferirPasso("ingresso", CHEIO, HOJE), null);
-  for (const passo of passosDoComecar("unico", true).slice(1)) assert.equal(conferirPasso(passo, RESPOSTAS_VAZIAS, HOJE), "Escolha como você trabalha", passo);
+  // Gratuito, preço e meia-entrada: três perguntas.
+  assert.equal(conferirPasso("gratuito", { ...CHEIO, gratuito: null }, HOJE), "Escolha sim ou não");
+  assert.equal(conferirPasso("gratuito", CHEIO, HOJE), null);
+  assert.equal(conferirPasso("preco", { ...CHEIO, preco: "" }, HOJE), "Diga o preço da inteira");
+  assert.equal(conferirPasso("preco", { ...CHEIO, preco: "0" }, HOJE), "Diga o preço da inteira");
+  assert.equal(conferirPasso("preco", { ...CHEIO, preco: "100001" }, HOJE), "O preço pode ir até R$ 100.000");
+  assert.equal(conferirPasso("preco", CHEIO, HOJE), null);
+  assert.equal(conferirPasso("meia", { ...CHEIO, meia: null }, HOJE), "Escolha sim ou não");
+  assert.equal(conferirPasso("meia", CHEIO, HOJE), null);
+  for (const passo of passosDoComecar("unico", true, false).slice(1)) assert.equal(conferirPasso(passo, RESPOSTAS_VAZIAS, HOJE), "Escolha como você trabalha", passo);
 });
 
 test("o nome do local e o texto do 'onde' seguem o que a pessoa disse", () => {
