@@ -11,8 +11,9 @@ const ativa: Parameters<typeof CartaoDaConta>[0]["conta"] = { situacao: "aprovad
 test("o cartão da conta: em análise, ativa e com atenção, cada um com a sua etiqueta e o seu texto", () => {
   const html = (situacao: string) => renderToStaticMarkup(createElement(CartaoDaConta, { conta: { ...ativa, situacao } }));
   const analise = html("pendente");
-  assert.match(analise, /EM ANÁLISE/);
-  assert.match(analise, /O Asaas está conferindo os dados e os documentos\./);
+  assert.match(analise, /ATIVAR NO ASAAS/);
+  assert.match(analise, /Falta ativar a conta no Asaas: abra o e-mail que o Asaas enviou ao titular/);
+  assert.match(analise, /as vendas ficam pausadas/);
   assert.doesNotMatch(analise, /Conta para saques/, "em análise não mostra a conta de saque");
   const ok = html("aprovada");
   assert.match(ok, /ATIVA/);
