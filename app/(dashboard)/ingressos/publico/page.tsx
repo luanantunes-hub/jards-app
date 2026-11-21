@@ -84,7 +84,7 @@ export default function PublicoPage() {
       setImportar(false);
       setFiltro("importados");
       setAba("contatos");
-      setAvisoDaImportacao(`${(d.novos ?? 0).toLocaleString("pt-BR")} ${d.novos === 1 ? "contato novo importado" : "contatos novos importados"}${d.ja_existiam ? `; ${d.ja_existiam.toLocaleString("pt-BR")} já estavam no Público` : ""}.`);
+      setAvisoDaImportacao(`${(d.novos ?? 0) === 0 ? "Nenhum contato novo" : `${(d.novos ?? 0).toLocaleString("pt-BR")} ${d.novos === 1 ? "contato novo importado" : "contatos novos importados"}`}${d.ja_existiam ? `; ${d.ja_existiam.toLocaleString("pt-BR")} ${d.ja_existiam === 1 ? "já estava" : "já estavam"} no Público e ${d.ja_existiam === 1 ? "foi atualizado" : "foram atualizados"}` : ""}.`);
       try { setEstado({ dados: await carregarPublico(lojaId) }); } catch { /* a lista fica como estava até recarregar */ }
       void carregarEnvios(lojaId);
     } catch {
