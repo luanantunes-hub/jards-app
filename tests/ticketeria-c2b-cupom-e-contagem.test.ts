@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { APARENCIA_PADRAO } from "../lib/ticketeria/aparencia";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { EventoDoSiteView } from "../components/ticketeria/EventoDoSiteView";
@@ -13,7 +14,7 @@ import type { EventoPublicoDoDominio } from "../lib/ticketeria/site-publico";
 const AGORA = Date.parse("2026-11-20T15:00:00.000Z"); // 12:00 em Brasília
 const sessao = (extra: Partial<SessaoNaApi> = {}): SessaoNaApi => ({ id: "s1", inicio: "2026-11-28T23:00:00.000Z", quando: "Sábado, 28 de novembro, às 20h", local: "Teatro Municipal, São Paulo/SP", estado: "aberta", a_partir_de_centavos: 4000, poucos: false, url: "https://jards.com.br/comprar/s1", ...extra } as SessaoNaApi);
 const evento = (sessoes: SessaoNaApi[]): EventoNaApi => ({ id: "e1", slug: "hamlet", titulo: "Hamlet", descricao: null, classificacao: null, imagem: null, sessoes });
-const dados = (sessoes: SessaoNaApi[], agora = AGORA): EventoPublicoDoDominio => ({ titulo: "Cia Atores de Mar", cor: "#1C0E33", tema: "editorial", organizacao: "Cia", agora, menu: [{ slug: "inicio", titulo: "Início" }], evento: evento(sessoes) });
+const dados = (sessoes: SessaoNaApi[], agora = AGORA): EventoPublicoDoDominio => ({ titulo: "Cia Atores de Mar", cor: "#1C0E33", tema: "editorial", organizacao: "Cia", agora, aparencia: APARENCIA_PADRAO, caminhoDoPrimeiroEvento: null, menu: [{ slug: "inicio", titulo: "Início" }], evento: evento(sessoes) });
 
 test("o cupom do link: maiúsculas, no formato do banco; código torto é jogado fora", () => {
   assert.equal(parametrosParaACompra({ cupom: "verao10" }).get("cupom"), "VERAO10");

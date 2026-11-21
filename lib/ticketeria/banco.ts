@@ -61,6 +61,7 @@ export type BancoDaTicketeria = {
           titulo: string | null;
           cor: string;
           tema: TemaDoSite;
+          aparencia: Json;
           situacao: SituacaoDoSite;
           criado_por: string | null;
           created_at: string;
@@ -74,6 +75,7 @@ export type BancoDaTicketeria = {
           titulo?: string | null;
           cor?: string;
           tema?: TemaDoSite;
+          aparencia?: Json;
           situacao?: SituacaoDoSite;
           criado_por?: string | null;
           created_at?: string;
@@ -87,6 +89,7 @@ export type BancoDaTicketeria = {
           titulo?: string | null;
           cor?: string;
           tema?: TemaDoSite;
+          aparencia?: Json;
           situacao?: SituacaoDoSite;
           criado_por?: string | null;
           created_at?: string;

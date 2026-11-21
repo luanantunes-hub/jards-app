@@ -4,6 +4,8 @@ import { ContagemRegressiva } from "@/components/ticketeria/ContagemRegressiva";
 import { enderecoDoMapa, enderecoDoVideo, textoSobreCor, type Bloco, type ColunaDoBloco } from "@/lib/ticketeria/site";
 import { variaveisDoTema } from "@/lib/ticketeria/temas";
 import { AgendaDoSite } from "@/components/ticketeria/AgendaDoSite";
+import { MenuDoSite, RodapeDoSite } from "@/components/ticketeria/MenuERodapeDoSite";
+import type { AparenciaDoSite } from "@/lib/ticketeria/aparencia";
 import { DestaqueDoSite } from "@/components/ticketeria/DestaqueDoSite";
 import type { ItemDaAgenda } from "@/lib/ticketeria/evento-site";
 import { diaPorExtenso } from "@/components/producao/ProgramacaoPublicaView";
@@ -18,6 +20,9 @@ export type SiteParaDesenhar = {
   agora: number;
   /** Os eventos da Agenda (só quando a página tem um bloco de agenda). */
   agenda?: ItemDaAgenda[];
+  /** O menu e o rodapé escolhidos para o site (sem eles, o clássico e o simples) e a página do primeiro evento publicado, para onde o botão de ingressos leva quando não tem endereço. */
+  aparencia?: AparenciaDoSite;
+  caminhoDoPrimeiroEvento?: string | null;
   /** A programação de cada espaço da Produção citado num bloco, pelo id do espaço. */
   programacoes: Record<string, DiaPublico[]>;
   /** As sessões de cada evento citado num bloco de ingressos, pelo id do evento. */
@@ -214,27 +219,14 @@ function BlocoDoSite({ bloco, cor, agora, base, semLinksDeEvento, agenda, progra
 }
 
 /** O quadro do site: o tema, o cabeçalho com o título e o menu, e o miolo da página (os blocos, ou a página de um evento). `paginaAtual` marca o item do menu em que a pessoa está (vazio: nenhum). */
-export function QuadroDoSite({ site, base, previa, paginaAtual, children }: { site: Pick<SiteParaDesenhar, "titulo" | "cor" | "tema" | "menu">; base: string; previa?: boolean; paginaAtual: string; children: React.ReactNode }) {
-  const texto = textoSobreCor(site.cor);
+export function QuadroDoSite({ site, base, previa, paginaAtual, children }: { site: Pick<SiteParaDesenhar, "titulo" | "cor" | "tema" | "menu" | "aparencia" | "caminhoDoPrimeiroEvento">; base: string; previa?: boolean; paginaAtual: string; children: React.ReactNode }) {
   return (
     <div className="site-tema min-h-screen" style={{ ...variaveisDoTema(site.tema, site.cor), backgroundColor: "var(--site-fundo)", color: "var(--site-texto)", fontFamily: "var(--site-fonte)" }}>
       <style>{".site-tema h1,.site-tema h2,.site-tema h3{font-family:var(--site-fonte-titulos)}"}</style>
       {previa && <p role="status" className="bg-[#282525] px-4 py-2 text-center text-[0.75rem] text-white">Prévia do rascunho: só quem está logado vê esta página.</p>}
-      <header style={{ backgroundColor: site.cor, color: texto }}>
-        <div className="mx-auto flex w-full max-w-[56rem] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 sm:px-6">
-          <a href={caminhoDe(base, "inicio")} className="text-[1.125rem] font-medium tracking-[-.01em] focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: texto }}>{site.titulo}</a>
-          {site.menu.length > 1 && (
-            <nav aria-label="Páginas do site">
-              <ul className="flex flex-wrap gap-x-5 gap-y-1">
-                {site.menu.map(item => (
-                  <li key={item.slug}><a href={caminhoDe(base, item.slug)} aria-current={item.slug === paginaAtual ? "page" : undefined} className={`text-[0.875rem] underline-offset-4 hover:underline ${item.slug === paginaAtual ? "underline" : "opacity-90"}`} style={{ color: texto }}>{item.titulo}</a></li>
-                ))}
-              </ul>
-            </nav>
-          )}
-        </div>
-      </header>
+      <MenuDoSite titulo={site.titulo} cor={site.cor} paginas={site.menu} paginaAtual={paginaAtual} base={base} aparencia={site.aparencia} caminhoDoPrimeiroEvento={site.caminhoDoPrimeiroEvento ?? null} />
       <main className="mx-auto w-full max-w-[56rem] px-4 py-8 sm:px-6 sm:py-10">{children}</main>
+      <RodapeDoSite titulo={site.titulo} aparencia={site.aparencia} />
     </div>
   );
 }

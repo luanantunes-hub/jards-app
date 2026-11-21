@@ -7,6 +7,7 @@ import { SiteView, type SiteParaDesenhar } from "@/components/ticketeria/SiteVie
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { agendaDosBlocos, ingressosDosBlocos, programacoesDosBlocos } from "@/lib/ticketeria/site-publico";
 import { blocosDoJson, corDoTema, ordemDasPaginas } from "@/lib/ticketeria/site";
+import { lerAparencia } from "@/lib/ticketeria/aparencia";
 import { agoraDoServidor } from "@/lib/ticketeria/contagem";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +21,7 @@ export default async function PreviaDoSite({ params }: { params: Promise<{ id: s
   const { id, pagina } = await params;
   if (!UUID.test(id) || (pagina && pagina.length > 1)) notFound();
   const ticketeria = clienteDaTicketeria(await createClient());
-  const { data: site } = await ticketeria.from("ticketeria_sites").select("id, organization_id, loja_id, nome, titulo, cor, tema").eq("id", id).maybeSingle();
+  const { data: site } = await ticketeria.from("ticketeria_sites").select("id, organization_id, loja_id, nome, titulo, cor, tema, aparencia").eq("id", id).maybeSingle();
   if (!site) notFound();
   const { data: pode } = await ticketeria.rpc("auth_ticketeria_pode", { p_org: site.organization_id, p_acao: "editar" });
   if (pode !== true) notFound();
@@ -34,6 +35,8 @@ export default async function PreviaDoSite({ params }: { params: Promise<{ id: s
     menu: ordenadas.map(item => ({ slug: item.slug, titulo: item.titulo })),
     pagina: { slug: atual.slug, titulo: atual.titulo, blocos },
     agora: agoraDoServidor(),
+    // Na prévia o botão de ingressos aparece, mas não leva a lugar nenhum: a página do evento só existe no site no ar.
+    aparencia: lerAparencia(site.aparencia), caminhoDoPrimeiroEvento: "#",
     programacoes: await programacoesDosBlocos(createAdminClient(), site.organization_id, blocos),
     ingressos: await ingressosDosBlocos(createAdminClient(), site.organization_id, blocos),
     agenda: (await agendaDosBlocos(createAdminClient(), site.loja_id, blocos)) ?? undefined,
