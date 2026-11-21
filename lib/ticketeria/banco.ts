@@ -937,6 +937,9 @@ export type BancoDaTicketeria = {
           created_by: string | null;
           created_at: string;
           enviado_em: string | null;
+          abertos: number;
+          cliques: number;
+          devolvidos: number;
         };
         Insert: {
           id?: string;
@@ -955,6 +958,9 @@ export type BancoDaTicketeria = {
           created_by?: string | null;
           created_at?: string;
           enviado_em?: string | null;
+          abertos?: number;
+          cliques?: number;
+          devolvidos?: number;
         };
         Update: {
           id?: string;
@@ -973,6 +979,9 @@ export type BancoDaTicketeria = {
           created_by?: string | null;
           created_at?: string;
           enviado_em?: string | null;
+          abertos?: number;
+          cliques?: number;
+          devolvidos?: number;
         };
         Relationships: [];
       };
@@ -988,6 +997,11 @@ export type BancoDaTicketeria = {
           provedor_id: string | null;
           enviado_em: string | null;
           created_at: string;
+          entregue_em: string | null;
+          aberto_em: string | null;
+          clicou_em: string | null;
+          devolvido_em: string | null;
+          reclamou_em: string | null;
         };
         Insert: {
           id?: string;
@@ -1000,6 +1014,11 @@ export type BancoDaTicketeria = {
           provedor_id?: string | null;
           enviado_em?: string | null;
           created_at?: string;
+          entregue_em?: string | null;
+          aberto_em?: string | null;
+          clicou_em?: string | null;
+          devolvido_em?: string | null;
+          reclamou_em?: string | null;
         };
         Update: {
           id?: string;
@@ -1012,6 +1031,11 @@ export type BancoDaTicketeria = {
           provedor_id?: string | null;
           enviado_em?: string | null;
           created_at?: string;
+          entregue_em?: string | null;
+          aberto_em?: string | null;
+          clicou_em?: string | null;
+          devolvido_em?: string | null;
+          reclamou_em?: string | null;
         };
         Relationships: [];
       };
@@ -2838,6 +2862,10 @@ export type BancoDaTicketeria = {
       fn_ticketeria_espera_sair: {
         Args: { p_token: string };
         Returns: boolean;
+      };
+      fn_ticketeria_registrar_evento_envio: {
+        Args: { p_provedor_id: string; p_tipo: string; p_quando: string | null; p_permanente: boolean };
+        Returns: string;
       };
       fn_ticketeria_novidades_sair: {
         Args: { p_token: string };

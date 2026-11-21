@@ -43,13 +43,13 @@ export function portasDoEnvioDoSupabase(admin: Admin, d: { organizationId: strin
   };
 }
 
-export type EnvioDaLista = { id: string; assunto: string; canal: string; quando: string; destinatarios: number; enviados: number; falhas: number; situacao: string; ingressos: number; vendido_centavos: number };
+export type EnvioDaLista = { id: string; assunto: string; canal: string; quando: string; destinatarios: number; enviados: number; falhas: number; abertos: number; cliques: number; devolvidos: number; situacao: string; ingressos: number; vendido_centavos: number };
 export type SessaoParaEnviar = { id: string; evento: string; quando: string };
 
 /** Os envios da loja com o resultado em vendas (as compras pagas que voltaram pelo link do envio), e as sessões à venda para escolher. */
 export async function enviosDaLoja(admin: Admin, lojaId: string, agora: number = Date.now()): Promise<{ envios: EnvioDaLista[]; sessoes: SessaoParaEnviar[] }> {
   const t = clienteDaTicketeria(admin);
-  const { data: envios, error } = await t.from("ticketeria_envios").select("id, assunto, canal, acao, destinatarios, enviados, falhas, situacao, created_at, enviado_em").eq("loja_id", lojaId).order("created_at", { ascending: false }).limit(200);
+  const { data: envios, error } = await t.from("ticketeria_envios").select("id, assunto, canal, acao, destinatarios, enviados, falhas, abertos, cliques, devolvidos, situacao, created_at, enviado_em").eq("loja_id", lojaId).order("created_at", { ascending: false }).limit(200);
   if (error) throw new Error(error.message);
   const pedidos: PedidoDoEnvio[] = [];
   for (let de = 0; ; de += PAGINA) {
@@ -71,7 +71,7 @@ export async function enviosDaLoja(admin: Admin, lojaId: string, agora: number =
   const fuso = new Map((locais ?? []).map(l => [l.id, l.fuso]));
   return {
     envios: (envios ?? []).map(e => ({
-      id: e.id, assunto: e.assunto, canal: e.canal, quando: e.enviado_em ?? e.created_at, destinatarios: e.destinatarios, enviados: e.enviados, falhas: e.falhas, situacao: e.situacao,
+      id: e.id, assunto: e.assunto, canal: e.canal, quando: e.enviado_em ?? e.created_at, destinatarios: e.destinatarios, enviados: e.enviados, falhas: e.falhas, abertos: e.abertos, cliques: e.cliques, devolvidos: e.devolvidos, situacao: e.situacao,
       ingressos: e.acao ? vendas[e.acao]?.ingressos ?? 0 : 0, vendido_centavos: e.acao ? vendas[e.acao]?.vendido_centavos ?? 0 : 0,
     })),
     sessoes: (sessoes ?? []).filter(s => !s.cancelada_em && Date.parse(s.inicio) > agora).map(s => ({ id: s.id, evento: titulo.get(s.evento_id) ?? "Evento", quando: diaCurtoEHora(s.inicio, fuso.get(s.local_id)) })),

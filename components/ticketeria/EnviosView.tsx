@@ -5,6 +5,7 @@ import { Send } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { MAX_ASSUNTO, MAX_MENSAGEM, acaoDoEnvio, enderecoDeCompraDoEnvio, type CanalDoEnvio, type PessoaDoWhatsapp, type Segmento } from "@/lib/ticketeria/envios";
+import { porcentagem } from "@/lib/ticketeria/eventos-de-email";
 import { whatsappEmTexto } from "@/lib/ticketeria/publico";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 import { AREA, Aviso, CAMPO, ROTULO } from "@/components/ticketeria/FolhasDosEventos";
@@ -18,10 +19,17 @@ const CANCELAR = "rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/3
 const SECUNDARIO = "rounded-xl border bg-white px-3.5 py-2.5 text-[0.75rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const FINAL = "rounded-xl acao-principal px-4 py-2.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
 
-export type EnvioParaLista = { id: string; assunto: string; canal: string; quando: string; destinatarios: number; enviados: number; falhas: number; situacao: string; ingressos: number; vendido_centavos: number };
+export type EnvioParaLista = { id: string; assunto: string; canal: string; quando: string; destinatarios: number; enviados: number; falhas: number; abertos?: number; cliques?: number; devolvidos?: number; situacao: string; ingressos: number; vendido_centavos: number };
 export type SessaoParaEscolher = { id: string; evento: string; quando: string };
 
 const dia = (iso: string) => { try { return new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso)).replace(",", " às"); } catch { return iso; } };
+
+/** Abriram ou clicaram: a porcentagem dos enviados e, embaixo, quantas pessoas. No WhatsApp não há como saber (traço). */
+function Taxa({ canal, parte, total }: { canal: string; parte: number; total: number }) {
+  const p = canal === "whatsapp" ? null : porcentagem(parte, total);
+  if (p === null) return <span className="text-black/30">—</span>;
+  return <>{p}%<span className="block text-[0.6875rem] text-black/45">{parte.toLocaleString("pt-BR")}</span></>;
+}
 
 /** Os envios feitos, do mais novo ao mais antigo, com o que cada um vendeu. */
 export function EnviosDaLoja({ envios, onContinuar }: { envios: EnvioParaLista[]; onContinuar?: (id: string) => void }) {
@@ -34,13 +42,15 @@ export function EnviosDaLoja({ envios, onContinuar }: { envios: EnvioParaLista[]
         </div>
       ) : (
         <table className="w-full min-w-[46rem] border-collapse">
-          <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Envio</th><th className={CABECALHO}>Canal</th><th className={`${CABECALHO} text-right`}>Enviados</th><th className={`${CABECALHO} text-right`}>Ingressos vendidos</th><th className={`${CABECALHO} text-right`}>Vendido</th></tr></thead>
+          <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Envio</th><th className={CABECALHO}>Canal</th><th className={`${CABECALHO} text-right`}>Enviados</th><th className={`${CABECALHO} text-right`}>Abriram</th><th className={`${CABECALHO} text-right`}>Clicaram</th><th className={`${CABECALHO} text-right`}>Ingressos vendidos</th><th className={`${CABECALHO} text-right`}>Vendido</th></tr></thead>
           <tbody className="divide-y divide-black/[.08]">
             {envios.map(e => (
               <tr key={e.id}>
                 <td className={CELULA}><p>{e.assunto}</p><p className="text-[0.6875rem] text-black/45">{dia(e.quando)}</p></td>
                 <td className={CELULA}>{e.canal === "whatsapp" ? "WhatsApp" : "E-mail"}</td>
-                <td className={`${CELULA} text-right tabular-nums`}>{e.canal === "whatsapp" ? `${e.enviados.toLocaleString("pt-BR")} de ${e.destinatarios.toLocaleString("pt-BR")}` : e.enviados.toLocaleString("pt-BR")}{e.canal === "whatsapp" && e.enviados < e.destinatarios && <button type="button" onClick={() => onContinuar?.(e.id)} className="mt-0.5 block w-full rounded-xl text-right text-[0.6875rem] text-[#7259B5] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Continuar</button>}{e.falhas > 0 && <span className="block text-[0.6875rem] text-[#B23B3B]">{e.falhas.toLocaleString("pt-BR")} não saíram</span>}{e.situacao === "enviando" && e.canal !== "whatsapp" && <span className="block text-[0.6875rem] text-black/45">enviando…</span>}</td>
+                <td className={`${CELULA} text-right tabular-nums`}>{e.canal === "whatsapp" ? `${e.enviados.toLocaleString("pt-BR")} de ${e.destinatarios.toLocaleString("pt-BR")}` : e.enviados.toLocaleString("pt-BR")}{e.canal === "whatsapp" && e.enviados < e.destinatarios && <button type="button" onClick={() => onContinuar?.(e.id)} className="mt-0.5 block w-full rounded-xl text-right text-[0.6875rem] text-[#7259B5] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Continuar</button>}{e.falhas > 0 && <span className="block text-[0.6875rem] text-[#B23B3B]">{e.falhas.toLocaleString("pt-BR")} não saíram</span>}{(e.devolvidos ?? 0) > 0 && <span className="block text-[0.6875rem] text-[#B23B3B]">{(e.devolvidos ?? 0).toLocaleString("pt-BR")} {e.devolvidos === 1 ? "voltou" : "voltaram"}</span>}{e.situacao === "enviando" && e.canal !== "whatsapp" && <span className="block text-[0.6875rem] text-black/45">enviando…</span>}</td>
+                <td className={`${CELULA} text-right tabular-nums`}><Taxa canal={e.canal} parte={e.abertos ?? 0} total={e.enviados} /></td>
+                <td className={`${CELULA} text-right tabular-nums`}><Taxa canal={e.canal} parte={e.cliques ?? 0} total={e.enviados} /></td>
                 <td className={`${CELULA} text-right tabular-nums ${e.ingressos === 0 ? "text-black/30" : ""}`}>{e.ingressos.toLocaleString("pt-BR")}</td>
                 <td className={`${CELULA} text-right tabular-nums ${e.vendido_centavos === 0 ? "text-black/30" : ""}`}>{formatarMoeda(e.vendido_centavos)}</td>
               </tr>

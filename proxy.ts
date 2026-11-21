@@ -17,6 +17,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/email", 30],
   // Avisos de pagamento do provedor (sem login, token próprio): muitos em rajada quando um evento abre as vendas.
   ["/api/ticketeria/avisos", 600],
+  // Avisos do Resend sobre os e-mails de divulgação (sem login, assinatura Svix): vários por envio (um por pessoa e por evento).
+  ["/api/ticketeria/resend-eventos", 600],
   // Validação de saque do Asaas (sem login, token próprio): um pedido por saque, rápido.
   ["/api/ticketeria/validacao-saque", 300],
   // Compra de ingressos (sem login): por IP. Cada compra abre uma reserva e uma cobrança, então o teto é baixo; a consulta do Pix pago é mais frequente.
