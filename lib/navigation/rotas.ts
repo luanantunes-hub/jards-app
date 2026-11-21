@@ -89,7 +89,7 @@ const SECAO_DO_MENU: Record<string, string> = {
   "/ingressos/cupons": "/ingressos/divulgacao",
   "/ingressos/espera": "/ingressos/divulgacao",
   "/ingressos/publico": "/ingressos/divulgacao",
-  "/ingressos/locais": "/ingressos/integracoes",
+  "/ingressos/locais": "/ingressos/eventos",
 };
 
 export function correspondeRota(path: string, prefixo: string): boolean {

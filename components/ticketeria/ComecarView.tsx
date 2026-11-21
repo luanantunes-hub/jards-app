@@ -10,6 +10,7 @@ import {
   type PerfilDoProdutor, type Praca, type PracaCriada, type RespostasDoComecar, type ResultadoDoComecar,
 } from "@/lib/ticketeria/comecar";
 import { resumoDasDatas } from "@/lib/ticketeria/calendario";
+import { escolhasDoComecar } from "@/lib/ticketeria/menu";
 import { adicionarFileira, alternarBloqueio, comCorredor, maisLugares, menosLugares, mensagemDoErroDoMapa, paraSalvar, resumoDoMapa } from "@/lib/ticketeria/mapa";
 import { CalendarioDoMes } from "@/components/ticketeria/CalendarioDoMes";
 import { EditorDoMapa } from "@/components/ticketeria/AssentosView";
@@ -85,6 +86,9 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
     if (error || !data) { setSalvando(false); setErro(mensagemDoErroDoComecar(error)); return; }
     const resultado = data as unknown as ResultadoDoComecar;
     const montagem = r.numerada ? await montarAuditorio(ticketeria, resultado.pracas, r) : { mapa: null, erroDoMapa: null };
+    // O espaço de trabalho se ajusta ao que a pessoa respondeu (a Bilheteria, a Loja online e os Espaços só aparecem a quem os usa). Se não gravar, o menu
+    // segue mostrando tudo: nada se perde e o evento já está criado.
+    await gravarAsEscolhas(ticketeria, resultado.loja_id, r);
     setSalvando(false);
     setPronto({ ...resultado, ...montagem });
   }
@@ -377,6 +381,14 @@ async function montarAuditorio(ticketeria: ClienteDaTicketeria, pracas: PracaCri
     if (error) erro ??= mensagemDoErroDoMapa(error);
   }
   return { mapa: erro ? "falhou" : mantido ? "mantido" : tentou ? "montado" : null, erroDoMapa: erro };
+}
+
+/** Grava na loja por onde ela vende e se tem espaço (a primeira vez vale a resposta; nas seguintes soma-se ao que já estava). */
+async function gravarAsEscolhas(ticketeria: ClienteDaTicketeria, lojaId: string, r: RespostasDoComecar) {
+  const { data } = await ticketeria.from("ticketeria_lojas").select("canais, usa_espacos").eq("id", lojaId).maybeSingle();
+  if (!data) return;
+  const novas = escolhasDoComecar({ canais: data.canais, usaEspacos: data.usa_espacos }, { canais: r.venda, temEspaco: r.perfil === "espaco" });
+  await ticketeria.from("ticketeria_lojas").update({ canais: novas.canais, usa_espacos: novas.usaEspacos }).eq("id", lojaId);
 }
 
 function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resultado: Pronto; recomecar: () => void }) {
