@@ -47,7 +47,7 @@
 .tku *, .tku *::before, .tku *::after { box-sizing:border-box; }
 :where(.tku) :is(h1,h2,h3,p,ul,pre) { margin:0; padding:0; }
 :where(.tku) ul { list-style:none; }
-.tku-in { max-width:1280px; margin:0 auto; padding:0 64px; }
+.tku-in { max-width:calc(1280px + 10vw); margin:0 auto; padding:0 64px; }
 .tku-mono { font-family:'Geist Mono',ui-monospace,monospace; font-weight:400; letter-spacing:.06em; text-transform:uppercase; font-size:11px; line-height:1.5; }
 .tku-cond { font-family:'Satoshi',system-ui,sans-serif; font-weight:400; letter-spacing:-.045em; }
 .tku-hero h1 .tku-vio, .tku-h2 .tku-vio, .tku-cta h2 span { font-family:'Gambetta',Georgia,'Times New Roman',serif; font-style:italic; font-weight:400; letter-spacing:-.03em; font-size:1.08em; }
@@ -74,7 +74,7 @@
 .tku-hero .tku-in { position:relative; z-index:1; }
 /* A abertura: duas colunas de fotos descendo devagar, em velocidades diferentes. Cada coluna
    repete as suas fotos uma vez, e o laço volta sem emenda. Com "reduzir movimento", fica parado. */
-.tku-mural { position:absolute; z-index:0; top:0; bottom:0; right:max(64px, calc((100% - 1280px) / 2 + 64px)); width:clamp(300px, 29vw, 430px);
+.tku-mural { position:absolute; z-index:0; top:0; bottom:0; right:max(64px, calc((100% - 1280px - 10vw) / 2 + 64px)); width:clamp(300px, 29vw, 430px);
   display:grid; grid-template-columns:1fr 1fr; gap:16px; overflow:hidden; pointer-events:none;
   -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image:linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%); }
 .tku-mural-col { overflow:hidden; }
@@ -335,7 +335,7 @@ section[id] { scroll-margin-top:72px; }
 .tku-marca { font-family:'Cabinet Grotesk','Satoshi',sans-serif; font-weight:800; letter-spacing:-.015em; }
 .tku-marca-sub { padding-left:12px; border-left:1px solid var(--tku-linha); color:var(--tku-mudo); letter-spacing:.08em; }
 .tku-nav { position:fixed; inset:0 0 auto 0; z-index:50; height:64px; background:rgba(255,255,255,.88); backdrop-filter:blur(14px) saturate(140%); -webkit-backdrop-filter:blur(14px) saturate(140%); border-bottom:1px solid var(--tku-linha); }
-.tku-nav-in { max-width:1280px; height:100%; margin:0 auto; padding:0 64px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
+.tku-nav-in { max-width:calc(1280px + 10vw); height:100%; margin:0 auto; padding:0 64px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
 .tku-nav-links { display:flex; gap:28px; }
 .tku-nav-links a { color:var(--tku-mudo); transition:color .16s ease; }
 .tku-nav-links a:hover { color:var(--tku-ink); }
