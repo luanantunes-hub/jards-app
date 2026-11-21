@@ -69,10 +69,12 @@
 
 /* abertura */
 .tku-hero { position:relative; padding:100px 0 0; border-bottom:1px solid var(--tku-linha); }
+/* no computador, a abertura ocupa a tela inteira, com o texto no meio da altura */
+@media (min-width:1024px) { .tku-hero { min-height:100vh; min-height:100svh; display:flex; flex-direction:column; justify-content:center; } .tku-hero > .tku-in { width:100%; } }
 .tku-hero .tku-in { position:relative; z-index:1; }
 /* A abertura: duas colunas de fotos descendo devagar, em velocidades diferentes. Cada coluna
    repete as suas fotos uma vez, e o laço volta sem emenda. Com "reduzir movimento", fica parado. */
-.tku-mural { position:absolute; z-index:0; top:0; bottom:0; right:max(64px, calc((100% - 1280px) / 2 + 64px)); width:clamp(300px, 33vw, 470px);
+.tku-mural { position:absolute; z-index:0; top:0; bottom:0; right:max(64px, calc((100% - 1280px) / 2 + 64px)); width:clamp(300px, 29vw, 430px);
   display:grid; grid-template-columns:1fr 1fr; gap:16px; overflow:hidden; pointer-events:none;
   -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image:linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%); }
 .tku-mural-col { overflow:hidden; }
