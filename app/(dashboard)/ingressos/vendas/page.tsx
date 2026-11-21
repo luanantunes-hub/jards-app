@@ -15,7 +15,7 @@ type Pagina = { compras: Compras; ha_mais: boolean };
 
 /**
  * As vendas da loja (passo C3): o que entrou, o que já pode sacar, as sessões e as compras. Lê da rota do servidor, que confere quem edita a Ticketeria.
- * O resumo e as sessões vêm somados do banco; a lista de compras vem de 30 em 30 ("Ver mais compras"), com o filtro aplicado no banco.
+ * O resumo e as sessões vêm somados do banco; a lista de compras vem de 50 em 50 ("Ver mais compras"), com o filtro aplicado no banco.
  */
 export default function VendasPage() {
   const organizationId = useOrganizationId();

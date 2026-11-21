@@ -1,4 +1,4 @@
-// GET /api/ticketeria/lojas/{id}/vendas/compras?pagina=0&filtro=todas|pagas|aguardando: uma página da lista de compras (30 por vez, da mais recente), com o filtro aplicado
+// GET /api/ticketeria/lojas/{id}/vendas/compras?pagina=0&filtro=todas|pagas|aguardando: uma página da lista de compras (50 por vez, da mais recente), com o filtro aplicado
 // no banco. Com ?id=<pedido> devolve só essa compra (a busca do topo leva a ela, esteja em que página estiver). Quem pede precisa EDITAR a Ticketeria da organização
 // (a mesma regra da lista de vendas: dado pessoal e dinheiro). Só leitura.
 

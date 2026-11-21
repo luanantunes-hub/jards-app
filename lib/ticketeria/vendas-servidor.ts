@@ -7,7 +7,7 @@ import { montarCompras, montarResumoDasVendas, type EntradaDasVendas, type Linha
 
 type Admin = SupabaseClient<Database>;
 /** Quantas compras vêm por vez na lista de Vendas. */
-export const TAMANHO_DA_PAGINA_DE_COMPRAS = 30;
+export const TAMANHO_DA_PAGINA_DE_COMPRAS = 50;
 export type FiltroDeCompras = "todas" | "pagas" | "aguardando";
 export type ComprasDaPagina = { compras: VendasDaLoja["compras"]; ha_mais: boolean };
 
@@ -45,7 +45,7 @@ export async function vendasDaLoja(admin: Admin, lojaId: string, agora: number =
 }
 
 /**
- * Uma página da lista de compras (30 por vez, da mais recente), com o filtro aplicado no banco; ou uma compra só, pelo id (a busca do topo leva a ela).
+ * Uma página da lista de compras (50 por vez, da mais recente), com o filtro aplicado no banco; ou uma compra só, pelo id (a busca do topo leva a ela).
  * Só os ingressos, os itens e as sessões das compras da página são lidos.
  */
 export async function comprasDaLoja(admin: Admin, lojaId: string, o: { pagina: number; filtro: FiltroDeCompras; id?: string }): Promise<ComprasDaPagina> {
