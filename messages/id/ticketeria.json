@@ -1,0 +1,26 @@
+{
+  "seletor": {
+    "rotulo": "Bahasa"
+  },
+  "sair": {
+    "botao": "Keluar dari daftar",
+    "saindo": "Memproses…",
+    "erro": "Saat ini belum bisa keluar dari daftar. Silakan coba lagi sebentar lagi.",
+    "feito": "Selesai, Anda sudah keluar dari daftar",
+    "espera": {
+      "titulo": "Daftar tunggu",
+      "pergunta": "Keluar dari daftar tunggu?",
+      "explicacao": "Anda tidak akan menerima pemberitahuan lagi saat tiket tersedia kembali. Jika berubah pikiran, Anda bisa bergabung lagi kapan saja.",
+      "feitoExplicacao": "Kami tidak akan memberi tahu Anda lagi tentang tiket ini."
+    },
+    "novidades": {
+      "titulo": "Kabar terbaru",
+      "organizador": "Penyelenggara",
+      "pergunta": "Berhenti berlangganan kabar terbaru?",
+      "explicacao": "Anda tidak akan menerima lagi kabar terbaru dan penawaran dari {loja}. Tiket yang sudah Anda beli tetap berlaku.",
+      "explicacaoSemLoja": "Anda tidak akan menerima lagi kabar terbaru dan penawaran dari penyelenggara. Tiket yang sudah Anda beli tetap berlaku.",
+      "feitoExplicacao": "Kami tidak akan mengirim kabar terbaru dari {loja} ke email Anda.",
+      "feitoExplicacaoSemLoja": "Kami tidak akan mengirim kabar terbaru dari penyelenggara ke email Anda."
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "seletor": {
+    "rotulo": "Langue"
+  },
+  "sair": {
+    "botao": "Quitter la liste",
+    "saindo": "Sortie en cours…",
+    "erro": "Impossible de vous retirer pour le moment. Réessayez dans quelques instants.",
+    "feito": "C’est fait, vous avez quitté la liste",
+    "espera": {
+      "titulo": "Liste d’attente",
+      "pergunta": "Quitter la liste d’attente ?",
+      "explicacao": "Vous ne recevrez plus d’alerte lorsque des billets seront de nouveau disponibles. Si vous changez d’avis, vous pouvez vous réinscrire à tout moment.",
+      "feitoExplicacao": "Nous ne vous préviendrons plus au sujet de ce billet."
+    },
+    "novidades": {
+      "titulo": "Actualités",
+      "organizador": "Organisateur",
+      "pergunta": "Se désabonner des actualités ?",
+      "explicacao": "Vous ne recevrez plus les actualités et les offres de {loja}. Les billets que vous avez déjà achetés restent valables.",
+      "explicacaoSemLoja": "Vous ne recevrez plus les actualités et les offres de l’organisateur. Les billets que vous avez déjà achetés restent valables.",
+      "feitoExplicacao": "Nous ne vous enverrons plus les actualités de {loja} par e-mail.",
+      "feitoExplicacaoSemLoja": "Nous ne vous enverrons plus les actualités de l’organisateur par e-mail."
+    }
+  }
+}

@@ -4,13 +4,32 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SairDasNovidades } from "../components/ticketeria/SairDasNovidades";
+import { comIdioma } from "./_helpers/com-idioma";
+
+const TOKEN = "0d760000-0000-4000-8000-0000000000aa";
 
 test("a página de sair da lista: pergunta com o nome do organizador e um botão (nada é gravado ao abrir)", () => {
-  const h = renderToStaticMarkup(createElement(SairDasNovidades, { token: "0d760000-0000-4000-8000-0000000000aa", loja: "Cia Atores de Mar" }));
+  const h = renderToStaticMarkup(comIdioma(createElement(SairDasNovidades, { token: TOKEN, loja: "Cia Atores de Mar" })));
   assert.match(h, /Sair da lista de novidades\?/);
   assert.match(h, /Cia Atores de Mar/);
   assert.match(h, /<button[^>]*>Sair da lista<\/button>/);
   assert.match(h, /Os ingressos que você já comprou continuam valendo/);
+});
+
+test("sem o nome do organizador o texto fala do organizador (sem \"de o\")", () => {
+  const h = renderToStaticMarkup(comIdioma(createElement(SairDasNovidades, { token: TOKEN, loja: null })));
+  assert.match(h, /novidades e ofertas do organizador/);
+  assert.doesNotMatch(h, /de o organizador/);
+});
+
+test("a mesma página em inglês e em árabe: textos do idioma, com o nome do organizador no meio da frase", () => {
+  const en = renderToStaticMarkup(comIdioma(createElement(SairDasNovidades, { token: TOKEN, loja: "Cia Atores de Mar" }), "en"));
+  assert.match(en, /Unsubscribe from updates\?/);
+  assert.match(en, /news and offers from Cia Atores de Mar/);
+  assert.match(en, /<button[^>]*>Leave the list<\/button>/);
+  const ar = renderToStaticMarkup(comIdioma(createElement(SairDasNovidades, { token: TOKEN, loja: "Cia Atores de Mar" }), "ar"));
+  assert.match(ar, /هل تريد إلغاء الاشتراك في الأخبار؟/);
+  assert.match(ar, /Cia Atores de Mar/);
 });
 
 test("o proxy deixa a página e a rota de sair da lista abertas, com limite por IP", async () => {

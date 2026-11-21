@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { TelaEscolherIngressos } from "../components/ticketeria/CompraView";
 import { AvisarSheet, EsperaDaLoja, TelaListaDeEspera, TelaNaListaDeEspera } from "../components/ticketeria/ListaDeEsperaView";
 import { SairDaEspera } from "../components/ticketeria/SairDaEspera";
+import { comIdioma } from "./_helpers/com-idioma";
 import { diaDoAviso, emailDoAviso, lerCorpoDaEspera, mensagemDoErroDaEspera, mensagemDoErroDeAvisar, opcoesDeAviso, quandoDaSessao, quandoEntrou, quantasAvisarPorPadrao } from "../lib/ticketeria/espera";
 import { avisarEspera, type PessoaParaAvisar, type PortasDoAviso } from "../lib/ticketeria/espera-aviso";
 
@@ -153,8 +154,9 @@ test("as telas do comprador: o formulário, o erro e a confirmação", () => {
 });
 
 test("a página de sair da lista: a pergunta, com o botão", () => {
-  const h = html(createElement(SairDaEspera, { token: "0d780000-0000-4000-8000-0000000000aa" }));
+  const h = html(comIdioma(createElement(SairDaEspera, { token: "0d780000-0000-4000-8000-0000000000aa" })));
   assert.ok(h.includes("Sair da lista de espera?") && h.includes("Sair da lista"));
+  assert.ok(html(comIdioma(createElement(SairDaEspera, { token: "0d780000-0000-4000-8000-0000000000aa" }), "de")).includes("Von der Warteliste abmelden?"));
 });
 
 test("a tela do produtor: a lista por ingresso, o vazio e a folha de avisar", () => {
