@@ -43,13 +43,16 @@ test("a frase neutra traz os números da faixa", () => {
   assert.match(t, /30 h/);
 });
 
-test("o bloco mostra os quatro grupos, as fontes com link e a lacuna, sem recomendar nada", () => {
+test("o bloco mostra o ganho, os riscos e o que reduz o risco, com fonte e link, sem recomendar nada e sem grupo de lacuna", () => {
   const h = renderToStaticMarkup(createElement(EvidenciasDoPrecoDinamico, { faixa: REGRA_PADRAO }));
-  for (const t of ["Ganhos estimados", "Riscos registrados", "O que a literatura associa a menos risco", "Sem medição pública"]) assert.match(h, new RegExp(t));
+  for (const t of ["Ganho", "Riscos registrados", "Associado a menos risco"]) assert.match(h, new RegExp(t));
+  assert.match(h, /A literatura dá 5% a 16%, de contextos diferentes\./);
+  assert.doesNotMatch(h, /shows|revenda|beisebol|categoria de assento/, "o ganho não traz o contexto de cada estudo");
   assert.match(h, /Courty e Pagliero, 2012/);
+  assert.match(h, /Sweeting, 2012/);
   assert.match(h, /Anderson e Simester, 2010/);
   assert.match(h, /href="https:\/\/dspace\.mit\.edu/);
-  assert.match(h, /Não achamos estudo público/);
+  assert.doesNotMatch(h, /Sem medição pública|Não achamos estudo/);
   assert.doesNotMatch(h, /recomendamos|aconselhamos|você deve|vale a pena/i);
 });
 
@@ -59,6 +62,6 @@ test("sem faixa válida o bloco não mostra a frase da exposição, só a litera
   assert.match(h, /O que a literatura registra/);
 });
 
-test("cada evidência tem fonte, e as com link usam https", () => {
-  for (const e of EVIDENCIAS) { assert.ok(e.fonte.length > 0); if (e.url) assert.match(e.url, /^https:\/\//); }
+test("cada evidência tem ao menos uma fonte, e todas com link https", () => {
+  for (const e of EVIDENCIAS) { assert.ok(e.fontes.length > 0); for (const f of e.fontes) { assert.ok(f.nome.length > 0); assert.match(f.url, /^https:\/\//); } }
 });

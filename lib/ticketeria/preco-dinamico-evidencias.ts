@@ -1,28 +1,32 @@
 // O QUE A LITERATURA REGISTRA SOBRE O PREÇO DINÂMICO (plano da Ticketeria, seção 11; estudo em docs/acoes-futuras/estudos/estudo-cancelamento-preco-dinamico.md). Só dados, sem banco e sem imports de
-// servidor: a folha de adesão mostra estes itens ao produtor, de forma neutra, antes de ele escolher a faixa. Cada item diz o que o estudo encontrou e em que contexto (nem todos são de ingressos),
+// servidor: a folha de adesão mostra estes itens ao produtor, de forma neutra, antes de ele escolher a faixa. Cada item diz o que o estudo encontrou, em frase curta e exata (o contexto só quando muda a leitura),
 // sem recomendar nem desaconselhar. Os números vêm dos resumos e das páginas dos estudos; os artigos completos NÃO foram lidos (alguns são pagos). Revisar quando houver dado das vendas do Jards.
 
 import { FATOR_BASE, type RegraDinamica } from "@/lib/ticketeria/preco-dinamico";
 
-export type TipoDeEvidencia = "ganho" | "risco" | "mitigacao" | "lacuna";
-export type Evidencia = { tipo: TipoDeEvidencia; texto: string; fonte: string; url: string | null };
+export type TipoDeEvidencia = "ganho" | "risco" | "mitigacao";
+export type FonteDaEvidencia = { nome: string; url: string };
+export type Evidencia = { tipo: TipoDeEvidencia; texto: string; fontes: readonly FonteDaEvidencia[] };
 
 export const GRUPOS_DE_EVIDENCIA: Record<TipoDeEvidencia, string> = {
-  ganho: "Ganhos estimados",
+  ganho: "Ganho",
   risco: "Riscos registrados",
-  mitigacao: "O que a literatura associa a menos risco",
-  lacuna: "Sem medição pública",
+  mitigacao: "Associado a menos risco",
 };
 
 export const EVIDENCIAS: readonly Evidencia[] = [
-  { tipo: "ganho", texto: "Preço diferente por categoria de assento: cerca de 5% mais receita que preço único, em shows.", fonte: "Courty e Pagliero, 2012", url: "https://econpapers.repec.org/RePEc:tpr:restat:v:94:y:2012:i:1:p:359-369" },
-  { tipo: "ganho", texto: "Preço dinâmico na revenda de ingressos de beisebol: cerca de 16% a mais no ganho esperado do vendedor; os preços caíram 40% ou mais perto do jogo.", fonte: "Sweeting, 2012", url: "https://www.econ.umd.edu/publication/price-dynamics-perishable-goods-markets-case-secondary-markets-major-league-baseball" },
-  { tipo: "risco", texto: "Clientes que pagaram mais e depois viram o preço menor compraram menos da mesma loja, por cerca de 20 meses, mais entre os melhores clientes (varejo de catálogo, não ingressos).", fonte: "Anderson e Simester, 2010", url: "https://dspace.mit.edu/handle/1721.1/58801" },
-  { tipo: "risco", texto: "Compradores que esperam preço menor podem adiar a compra; ignorar isso pode reduzir a receita (modelos teóricos).", fonte: "Su, 2007; Levin, McGill e Nediak, 2009", url: "https://ideas.repec.org/a/inm/ormnsc/v55y2009i1p32-46.html" },
-  { tipo: "risco", texto: "No Brasil, o CDC (art. 49) dá 7 dias de arrependimento em compra à distância; para ingresso com data marcada a aplicação é discutida.", fonte: "Idec; Procon-MPMG", url: "https://idec.org.br/dicas-e-direitos/vai-comprar-ingresso-pela-internet-saiba-quais-sao-seus-direitos" },
-  { tipo: "risco", texto: "Estorno no cartão: a Visa monitora a razão de disputas, com limite de 1,5% para comerciantes na América Latina.", fonte: "Solidgate", url: "https://docs.solidgate.com/risks/monitoring-programs/visa/" },
-  { tipo: "mitigacao", texto: "Devolver a diferença quando o preço cai logo depois da compra aumentou o lucro num modelo teórico, mesmo com todos pedindo.", fonte: "Cohen-Vernik e Pazgal, 2017", url: "https://econpapers.repec.org/RePEc:eee:jouret:v:93:y:2017:i:4:p:507-526" },
-  { tipo: "lacuna", texto: "Não achamos estudo público que meça devolução, chargeback ou espera por queda de preço em ingressos. Os números do seu evento virão das suas vendas.", fonte: "Levantamento do Jards, 22/11/2026", url: null },
+  {
+    tipo: "ganho", texto: "A literatura dá 5% a 16%, de contextos diferentes.",
+    fontes: [
+      { nome: "Courty e Pagliero, 2012", url: "https://econpapers.repec.org/RePEc:tpr:restat:v:94:y:2012:i:1:p:359-369" },
+      { nome: "Sweeting, 2012", url: "https://www.econ.umd.edu/publication/price-dynamics-perishable-goods-markets-case-secondary-markets-major-league-baseball" },
+    ],
+  },
+  { tipo: "risco", texto: "Clientes que pagaram mais e depois viram o preço menor reduziram as compras seguintes na mesma loja, por cerca de 20 meses (experimento de campo, varejo de catálogo).", fontes: [{ nome: "Anderson e Simester, 2010", url: "https://dspace.mit.edu/handle/1721.1/58801" }] },
+  { tipo: "risco", texto: "Em modelos teóricos, compradores que antecipam a queda do preço adiam a compra, e a receita de quem ignora isso é menor.", fontes: [{ nome: "Levin, McGill e Nediak, 2009", url: "https://ideas.repec.org/a/inm/ormnsc/v55y2009i1p32-46.html" }, { nome: "Su, 2007", url: "https://repository.upenn.edu/oid_papers/153" }] },
+  { tipo: "risco", texto: "CDC, art. 49: direito de arrependimento de 7 dias em compra à distância. A aplicação a ingresso com data marcada é objeto de divergência.", fontes: [{ nome: "Idec", url: "https://idec.org.br/dicas-e-direitos/vai-comprar-ingresso-pela-internet-saiba-quais-sao-seus-direitos" }] },
+  { tipo: "risco", texto: "Visa: limite de 1,5% de razão de disputas para comerciantes na América Latina, acima de um volume mínimo de transações.", fontes: [{ nome: "Solidgate", url: "https://docs.solidgate.com/risks/monitoring-programs/visa/" }] },
+  { tipo: "mitigacao", texto: "Em modelo teórico, devolver a diferença quando o preço cai logo depois da compra aumentou o lucro do vendedor, mesmo com todos os elegíveis pedindo.", fontes: [{ nome: "Cohen-Vernik e Pazgal, 2017", url: "https://econpapers.repec.org/RePEc:eee:jouret:v:93:y:2017:i:4:p:507-526" }] },
 ];
 
 export type ExposicaoDaFaixa = {
