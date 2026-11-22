@@ -29,6 +29,7 @@ export default function LocaisPage() {
   const [arquivados, setArquivados] = useState(false);
   const [folha, setFolha] = useState<Folha | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
   const podeEditar = podeEditarATicketeria(papel);
   const recarregar = () => setVersao(atual => atual + 1);
@@ -57,6 +58,9 @@ export default function LocaisPage() {
   const temArquivados = (locais ?? []).some(local => local.arquivado);
   const novo = podeEditar ? <PrimaryListAction onClick={() => setFolha({ tipo: "local" })}><Plus size={13} aria-hidden="true" /> Novo local</PrimaryListAction> : undefined;
 
+  // Quantos setores em uso cada sala tem (a sala vazia pode começar de um modelo).
+  const setoresPorSala = useMemo(() => { const por: Record<string, number> = {}; for (const setor of setores) if (!setor.arquivado) por[setor.sala_id] = (por[setor.sala_id] ?? 0) + 1; return por; }, [setores]);
+
   const botaoDoSetor = (setor: Setor, local: LocalEditavel) => (
     <button key={setor.id} type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "setor", local, sala: salas.find(sala => sala.id === setor.sala_id), setor })} className={`rounded-xl border border-black/[.12] bg-white px-2.5 py-1 text-[0.6875rem] font-normal transition enabled:hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${setor.arquivado ? "text-black/35 line-through" : "text-black/65"}`}>
       {setor.nome} · {numero(setor.lugares)}{setor.numerado ? " · numerado" : ""}
@@ -67,6 +71,7 @@ export default function LocaisPage() {
     <>
       <ListPageHeader title="Espaços" actions={locais && locais.length > 0 ? novo : undefined} />
       <ListContent>
+        {aviso && <p role="status" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{aviso} <button type="button" onClick={() => setAviso(null)} className="ml-1 underline underline-offset-2">Fechar</button></p>}
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {temArquivados && (
           <div className="mb-4">
@@ -101,7 +106,7 @@ export default function LocaisPage() {
                     {salasDele.length <= 1 ? (
                       // Uma sala só: ela é o próprio espaço, e os setores aparecem direto.
                       <div className="flex flex-wrap items-center gap-2">
-                        {deles.length === 0 && <span className="text-[0.6875rem] text-black/45">Sem setores</span>}
+                        {deles.length === 0 && <span className="text-[0.6875rem] text-black/45">Sem setores{podeEditar && !local.arquivado && salasDele[0] && <> · <button type="button" onClick={() => setFolha({ tipo: "sala", local, sala: salasDele[0] })} className="underline underline-offset-2 hover:text-black/65">começar de um modelo</button></>}</span>}
                         {deles.map(setor => botaoDoSetor(setor, local))}
                         {podeEditar && !local.arquivado && (
                           <>
@@ -135,7 +140,7 @@ export default function LocaisPage() {
       </ListContent>
       {folha?.tipo === "local" && organizationId && <LocalSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} local={folha.local} onClose={() => setFolha(null)} onSaved={recarregar} />}
       {folha?.tipo === "setor" && organizationId && <SetorSheet organizationId={organizationId} localId={folha.local.id} salaId={folha.setor?.sala_id ?? folha.sala?.id} nomeDoLocal={[folha.local.nome, folha.sala && salasDoEspaco(salas, folha.local.id).length > 1 ? folha.sala.nome : null].filter(Boolean).join(" · ")} setor={folha.setor} onClose={() => setFolha(null)} onSaved={recarregar} />}
-      {folha?.tipo === "sala" && organizationId && <SalaSheet organizationId={organizationId} localId={folha.local.id} nomeDoLocal={folha.local.nome} salasDoLocal={salas.filter(sala => sala.local_id === folha.local.id)} sala={folha.sala} onClose={() => setFolha(null)} onSaved={recarregar} />}
+      {folha?.tipo === "sala" && organizationId && <SalaSheet organizationId={organizationId} localId={folha.local.id} nomeDoLocal={folha.local.nome} salasDoLocal={salas.filter(sala => sala.local_id === folha.local.id)} setoresPorSala={setoresPorSala} sala={folha.sala} onClose={() => setFolha(null)} onSaved={recarregar} onAviso={setAviso} />}
     </>
   );
 }
