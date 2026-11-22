@@ -13,7 +13,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(23);
+select plan(26);
 
 create schema ts;
 grant usage on schema ts to authenticated, anon;
@@ -94,6 +94,13 @@ select is(ts.tenta(format('insert into public.ticketeria_sessoes (organization_i
           '23514 sala_incoerente', 'sessão com a sala de outra organização: recusada');
 select is(ts.tenta(format('update public.ticketeria_salas set local_id = %L where id = %L', ts.id('52'), ts.id('91'))), '23514 sala_nao_muda_de_espaco', 'a sala não muda de espaço');
 select is(ts.tenta(format('insert into public.ticketeria_salas (organization_id, local_id, nome) values (%L, %L, %L)', ts.id('a0'), ts.id('53'), 'Sala invasora')), '23514 espaco_de_outra_organizacao', 'sala num espaço de outra organização: recusada');
+
+-- ─── O nome do setor é único por sala ───────────────────────────────────────
+
+insert into public.ticketeria_setores (organization_id, local_id, sala_id, nome, lugares) values (ts.id('a0'), ts.id('51'), ts.id('91'), 'Plateia', 5);
+select is((select count(*)::int from public.ticketeria_setores where local_id = ts.id('51') and nome = 'Plateia'), 2, 'o mesmo nome de setor em outra sala do mesmo espaço: aceito');
+select is(ts.tenta(format('insert into public.ticketeria_setores (organization_id, local_id, sala_id, nome, lugares) values (%L, %L, %L, %L, 5)', ts.id('a0'), ts.id('51'), ts.id('91'), 'Plateia')), '23505 ticketeria_setores_sala_nome_key', 'o mesmo nome dentro da mesma sala: recusado');
+select ok(not exists (select 1 from pg_constraint where conname = 'ticketeria_setores_nome_key'), 'a regra antiga (nome único no espaço) saiu');
 
 -- ─── A última sala ativa ────────────────────────────────────────────────────
 

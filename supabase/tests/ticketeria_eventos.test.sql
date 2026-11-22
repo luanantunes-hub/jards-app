@@ -196,7 +196,7 @@ select is(array[
             te.tenta(format('update public.ticketeria_eventos set loja_id = %L where id = %L', te.id('6b'), te.id('71'))),
             te.tenta(format('update public.ticketeria_locais set organization_id = %L where id = %L', te.id('b0'), te.id('51')))],
           array['23514 loja_de_outra_organizacao', '23514 ticketeria_locais_uf_check', '23514 ticketeria_locais_fuso_check', '23514 ticketeria_locais_nome_check',
-                '23514 local_de_outra_organizacao', '23505 ticketeria_setores_nome_key', '23514 ticketeria_setores_lugares_check',
+                '23514 local_de_outra_organizacao', '23505 ticketeria_setores_sala_nome_key', '23514 ticketeria_setores_lugares_check',
                 '23514 ticketeria_eventos_classificacao_check', '23514 ticketeria_eventos_situacao_check', '23514 ticketeria_eventos_imagem_url_check',
                 '23514 evento_de_outra_organizacao', '23514 local_de_outra_organizacao', '23514 local_arquivado', '23514 evento_cancelado',
                 '23514 ticketeria_sessoes_fim_check', '23514 ticketeria_sessoes_portas_check',
