@@ -249,6 +249,37 @@
 .tku-cel-caixa .tku-tab td:nth-child(2) { white-space:nowrap; }
 @media (max-width:1023px) { .tku-hero-grade { grid-template-columns:minmax(0,1fr); gap:24px; } .tku-hero-arte .tku-iso { width:104%; margin:0 -2%; }
   .tku-base-topo { grid-template-columns:minmax(0,1fr); gap:32px; } }
+/* "sold out" grifado em pontilhado: ao passar o mouse (ou tocar) abre a loja num painel deitado */
+.tku-hero-grade { position:relative; }
+.tku-sold { text-decoration:underline dotted; text-decoration-color:var(--tku-vio); text-decoration-thickness:.07em; text-underline-offset:.16em; cursor:pointer; border-radius:4px; transition:text-decoration-color .15s ease; }
+.tku-sold:hover, .tku-sold:focus-visible { text-decoration-color:var(--tku-ink); }
+.tku-painel { position:absolute; right:clamp(16px,4.4vw,64px); top:50%; z-index:5; width:min(580px, 46%); opacity:0; visibility:hidden; pointer-events:none; transform:translateY(calc(-50% + 10px));
+  transition:opacity .22s ease, transform .22s ease, visibility 0s linear .22s; }
+.tku-hero-tit:has(.tku-sold:hover) .tku-painel, .tku-hero-tit:has(.tku-sold:focus-visible) .tku-painel { opacity:1; visibility:visible; transform:translateY(-50%); transition-delay:0s; }
+.tku-hero-tit.is-aberto .tku-painel { opacity:1; visibility:visible; transform:translateY(-50%); transition-delay:0s; }
+@media (max-width:1023px) { .tku-hero-tit { position:relative; } .tku-painel { top:100%; right:auto; left:0; width:100%; padding-top:14px; transform:translateY(10px); }
+  .tku-hero-tit:has(.tku-sold:hover) .tku-painel, .tku-hero-tit:has(.tku-sold:focus-visible) .tku-painel, .tku-hero-tit.is-aberto .tku-painel { transform:none; } }
+.tku-pn { padding:8px; border-radius:30px;
+  background:linear-gradient(150deg, rgba(226,208,252,.78) 0%, rgba(255,255,255,.55) 46%, rgba(252,214,236,.72) 100%);
+  -webkit-backdrop-filter:blur(20px) saturate(1.7); backdrop-filter:blur(20px) saturate(1.7);
+  box-shadow:0 0 0 1px rgba(28,14,51,.10), inset 0 0 0 1px rgba(255,255,255,.75), inset 0 1px 0 rgba(255,255,255,.95), 0 34px 60px -30px rgba(110,50,170,.55); }
+.tku-pn-tela { border-radius:23px; overflow:hidden; background:rgba(255,255,255,.94); box-shadow:inset 0 0 0 1px rgba(255,255,255,.6); padding-bottom:12px; }
+.tku-pn-barra { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; height:38px; padding:0 18px; font-weight:600; font-size:13px; color:var(--tku-ink); }
+.tku-pn-url { padding:4px 14px; border-radius:10px; background:rgba(28,14,51,.06); font-size:12px; font-weight:400; color:var(--tku-mudo); }
+.tku-pn-ponto { justify-self:end; width:7px; height:7px; border-radius:50%; background:rgba(28,14,51,.22); }
+.tku-pn-corpo { display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:12px; padding:0 12px; align-items:stretch; }
+.tku-pn-capa { position:relative; min-height:230px; border-radius:16px; background:url(assets/ticketeria-tinta.webp) 62% 45% / cover; display:flex; align-items:flex-end; padding:10px; }
+.tku-pn-ev { width:100%; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.86); }
+.tku-pn-nome { font-size:19px; line-height:1.1; margin:2px 0; color:var(--tku-ink); }
+.tku-pn-lado { min-width:0; display:flex; flex-direction:column; justify-content:space-between; }
+.tku-pn .tku-tab { font-size:13px; }
+.tku-pn .tku-tab th, .tku-pn .tku-tab td { padding:8px 12px; }
+.tku-pn .tku-tab td:nth-child(2) { white-space:nowrap; }
+.tku-pn .tku-tot { margin:6px 0 0; padding:9px 9px 9px 12px; gap:8px; border:0; border-radius:14px; font-size:12.5px; white-space:nowrap; }
+.tku-pn .tku-tot .tku-btn { min-height:34px; padding:0 12px; gap:10px; font-size:13px; }
+@media (max-width:1023px) { .tku-pn-corpo { grid-template-columns:minmax(0,5fr) minmax(0,7fr); } }
+@media (max-width:620px) { .tku-pn-corpo { grid-template-columns:minmax(0,1fr); } .tku-pn-capa { min-height:84px; } }
+@media (prefers-reduced-motion:reduce) { .tku-painel { transition:none; } }
 /* vidro: moldura e tela translúcidas, com borrão do que está atrás, borda clara e brilho em cima */
 .tku-cel-caixa { position:relative; }
 .tku-cel { position:relative; width:100%; max-width:300px; padding:9px; border-radius:50px;
@@ -394,7 +425,21 @@ section[id] { scroll-margin-top:72px; }
 <section id="top" class="tku-hero" aria-labelledby="abertura-titulo">
   <div class="tku-in tku-hero-grade">
     <div class="tku-hero-txt">
-      <h1 id="abertura-titulo" class="tku-cond">A infraestrutura por trás de <span class="tku-vio">todo ingresso.</span> Implemente modelos de venda personalizados, desde a primeira cadeira até&nbsp;o&nbsp;sold&nbsp;out.</h1>
+      <div class="tku-hero-tit">
+      <h1 id="abertura-titulo" class="tku-cond">A infraestrutura por trás de <span class="tku-vio">todo ingresso.</span> Implemente modelos de venda personalizados, desde a primeira cadeira até&nbsp;o&nbsp;<span class="tku-sold" role="button" tabindex="0" aria-expanded="false" aria-controls="painel-loja">sold&nbsp;out</span>.</h1>
+      <div class="tku-painel" id="painel-loja" role="group" aria-label="Exemplo de loja de ingressos">
+        <div class="tku-pn"><div class="tku-pn-tela">
+          <div class="tku-pn-barra"><span>9:41</span><span class="tku-pn-url">arenadoporto.com.br</span><i class="tku-pn-ponto"></i></div>
+          <div class="tku-pn-corpo">
+            <div class="tku-pn-capa"><div class="tku-pn-ev"><p class="tku-mono tku-mudo">Arena do Porto · Turnê 2026</p><p class="tku-cond tku-pn-nome">Mar Aberto, ao vivo</p><p class="tku-mono tku-mudo">Sáb 12/12 · 20h</p></div></div>
+            <div class="tku-pn-lado">
+              <table class="tku-tab"><thead><tr class="tku-mono tku-mudo"><th>Setor</th><th>Preço</th><th>Qtd.</th></tr></thead><tbody><tr><td>Premium</td><td>R$ 380,00</td><td>2</td></tr><tr><td>Pista</td><td>R$ 290,00</td><td>0</td></tr><tr><td>Anel 1</td><td>R$ 220,00</td><td>1</td></tr><tr><td>Anel 2</td><td>R$ 160,00</td><td>0</td></tr><tr><td>Anel 3</td><td>R$ 110,00</td><td>0</td></tr></tbody></table>
+              <div class="tku-tot"><span>Total R$ 980,00</span><span class="tku-btn">Pagar com Pix <i>↗</i></span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      </div>
     <div class="tku-sub">
         <div>
           <div class="tku-acoes">
@@ -841,6 +886,19 @@ section[id] { scroll-margin-top:72px; }
       if (e.isIntersecting) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else { v.pause(); }
     });
   }, { threshold: 0.25 }).observe(v);
+})();
+</script>
+<script>
+// "sold out" abre o painel da loja: com mouse é só passar por cima (CSS); no toque ou no teclado, alterna; Esc e clique fora fecham.
+(function () {
+  var t = document.querySelector(".tku-hero-tit"), g = t && t.querySelector(".tku-sold");
+  if (!g) return;
+  var mouse = window.matchMedia("(hover: hover)").matches;
+  function abre(a) { t.classList.toggle("is-aberto", a); g.setAttribute("aria-expanded", a ? "true" : "false"); }
+  g.addEventListener("click", function (e) { if (mouse && e.detail > 0) return; abre(!t.classList.contains("is-aberto")); });
+  g.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abre(!t.classList.contains("is-aberto")); } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") abre(false); });
+  document.addEventListener("click", function (e) { if (!t.contains(e.target)) abre(false); });
 })();
 </script>
 </body>
