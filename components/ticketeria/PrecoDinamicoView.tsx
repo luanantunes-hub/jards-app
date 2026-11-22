@@ -29,14 +29,22 @@ export function PrecoDinamicoView({ regra, fatores, sessoes, acao }: { regra: Re
         {ativo && sessoes.length > 0 && (
           <ul className="mt-3 divide-y divide-black/[.06]">
             {sessoes.map(s => {
-              const f = fatores.find(x => x.sessaoId === s.id);
+              const dosSetores = fatores.filter(x => x.sessaoId === s.id).sort((x, y) => x.setor.localeCompare(y.setor, "pt-BR"));
               return (
                 <li key={s.id} className="py-2">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4">
                     <span className="text-[0.8125rem] text-[#282525]">{quandoDaSessao(s.inicio, s.fuso)}</span>
-                    <span className="text-[0.8125rem] tabular-nums text-[#282525]">{textoDoFator(f?.fatorBps ?? 10000)}</span>
+                    {dosSetores.length === 0 && <span className="text-[0.8125rem] tabular-nums text-[#282525]">{textoDoFator(10000)}</span>}
                   </div>
-                  {f?.motivo && <p className="mt-0.5 text-[0.6875rem] text-black/50">{f.motivo}</p>}
+                  {dosSetores.map(f => (
+                    <div key={f.setorId} className="mt-1">
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 pl-3">
+                        <span className="text-[0.75rem] text-black/60">{f.setor}</span>
+                        <span className="text-[0.8125rem] tabular-nums text-[#282525]">{textoDoFator(f.fatorBps)}</span>
+                      </div>
+                      {f.motivo && <p className="pl-3 text-[0.6875rem] text-black/50">{f.motivo}</p>}
+                    </div>
+                  ))}
                 </li>
               );
             })}

@@ -1,7 +1,7 @@
 // O preço que vale para um lote numa sessão (plano da Ticketeria, seção 11, fases P0 e P2). Só lógica, sem banco e sem import de servidor.
 //
 // O preço do lote vale em todas as sessões do evento, a menos que a sessão tenha um preço próprio para ele (ticketeria_precos_da_sessao, P0). Com a adesão ao preço dinâmico ativa (P2), o preço da sessão
-// (ou do lote) é multiplicado pelo FATOR da sessão (10000 = sem mudança). A meia não tem preço próprio por sessão: o lote dela é o espelho da inteira (espelho_de) e, numa sessão em que a inteira tem preço
+// (ou do lote) é multiplicado pelo FATOR da sessão e do setor do ingresso (10000 = sem mudança). A meia não tem preço próprio por sessão: o lote dela é o espelho da inteira (espelho_de) e, numa sessão em que a inteira tem preço
 // próprio ou fator, a meia vale a metade do preço que vale da inteira (arredondada, nunca abaixo de 1 centavo: a mesma conta do espelho e de fn_ticketeria_preco_do_lote, no banco).
 // Esta conta tem de dar o mesmo resultado que a função do banco: a vitrine mostra por aqui, e a reserva cobra por lá.
 
@@ -31,8 +31,12 @@ export function precoDoLoteNaSessao(lote: LoteParaPreco, precos: PrecosDaSessao,
   return aplicarFator(precos.get(lote.id) ?? lote.preco_centavos, fatorBps);
 }
 
-/** Os mesmos lotes, cada um com o preço que vale na sessão (com o fator da sessão, se houver). */
-export function aplicarPrecosDaSessao<T extends LoteParaPreco>(lotes: readonly T[], precos: PrecosDaSessao, fatorBps: number = FATOR_BASE): T[] {
+/**
+ * Os mesmos lotes, cada um com o preço que vale na sessão. O fator é POR SETOR (uma sessão pode ter o VIP mais caro e o anel 4 mais barato): passe um número (o mesmo para todos) ou uma função
+ * que devolve o fator de cada lote (a meia usa o fator do lote da inteira que ela espelha, que é do mesmo setor).
+ */
+export function aplicarPrecosDaSessao<T extends LoteParaPreco>(lotes: readonly T[], precos: PrecosDaSessao, fatorBps: number | ((lote: T) => number) = FATOR_BASE): T[] {
   const porId = new Map(lotes.map(lote => [lote.id, lote] as const));
-  return lotes.map(lote => ({ ...lote, preco_centavos: precoDoLoteNaSessao(lote, precos, fatorBps, lote.espelho_de ? porId.get(lote.espelho_de) ?? null : null) }));
+  const fatorDe = (lote: T) => (typeof fatorBps === "function" ? fatorBps(lote) : fatorBps);
+  return lotes.map(lote => ({ ...lote, preco_centavos: precoDoLoteNaSessao(lote, precos, fatorDe(lote), lote.espelho_de ? porId.get(lote.espelho_de) ?? null : null) }));
 }

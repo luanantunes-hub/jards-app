@@ -53,9 +53,11 @@ export function referenciaDePreco(parecidos: readonly CurvaDoEvento[]): Referenc
   return { mediaCentavos: Math.round(lotaram.reduce((s, c) => s + c.precoMedioCentavos, 0) / lotaram.length), n: lotaram.length };
 }
 
-/** Uma sessão no quadro. As horas são ISO; o fuso é o do local. */
+/** Um setor de uma sessão no quadro (o preço e a demanda são do setor). As horas são ISO; o fuso é o do local. */
 export type LinhaDoQuadro = {
   sessaoId: string;
+  setorId: string;
+  setor: string;
   inicio: string;
   fuso: string;
   lugares: number;

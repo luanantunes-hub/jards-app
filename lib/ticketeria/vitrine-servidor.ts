@@ -58,9 +58,11 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
     : { data: [] };
   // O preço dinâmico (plano, seção 11, P2): só com a adesão do evento ativa, o preço da sessão vale vezes o fator dela. A reserva cobra pela mesma conta, no banco (fn_ticketeria_preco_do_lote).
   const { data: adesao } = await t.from("ticketeria_preco_dinamico").select("ativo").eq("evento_id", evento.id).maybeSingle();
-  const { data: estadoDoFator } = adesao?.ativo ? await t.from("ticketeria_preco_dinamico_estado").select("fator_bps").eq("sessao_id", sessao.id).maybeSingle() : { data: null };
-  const fatorBps = adesao?.ativo ? estadoDoFator?.fator_bps ?? 10000 : 10000;
-  const lotes = aplicarPrecosDaSessao(lotesDoBanco ?? [], new Map((precosDaSessao ?? []).map(p => [p.lote_id, p.preco_centavos] as const)), fatorBps);
+  // O fator é por setor (cada setor da sessão tem o seu): o do lote é o do setor do ingresso dele.
+  const { data: estadosDoFator } = adesao?.ativo ? await t.from("ticketeria_preco_dinamico_estado").select("setor_id, fator_bps").eq("sessao_id", sessao.id) : { data: [] };
+  const fatorDoSetor = new Map((estadosDoFator ?? []).map(e => [e.setor_id, e.fator_bps] as const));
+  const setorDoIngresso = new Map((ingressos ?? []).map(i => [i.id, i.setor_id] as const));
+  const lotes = aplicarPrecosDaSessao(lotesDoBanco ?? [], new Map((precosDaSessao ?? []).map(p => [p.lote_id, p.preco_centavos] as const)), l => fatorDoSetor.get(setorDoIngresso.get(l.ingresso_id) ?? "") ?? 10000);
   const ocupados = new Map<string, number>(await Promise.all((lotes ?? []).map(async l => {
     const { data } = await t.rpc("fn_ticketeria_ocupados", { p_sessao: sessao.id, p_lote: l.id, p_fora: null });
     return [l.id, Number(data ?? 0)] as const;

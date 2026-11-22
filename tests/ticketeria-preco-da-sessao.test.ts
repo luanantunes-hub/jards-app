@@ -73,3 +73,12 @@ test("a meia com fator usa a inteira da lista e arredonda como o banco (para cim
   assert.equal(m.preco_centavos, 3301, "metade de 6601 = 3300,5 sobe para 3301");
   assert.equal(aplicarPrecosDaSessao([{ id: "x", preco_centavos: 1, espelho_de: null }], new Map(), 1000)[0].preco_centavos, 1, "nunca abaixo de 1 centavo");
 });
+
+test("fator por lote: cada setor da sessão tem o seu, e a meia segue o fator da inteira que ela espelha", () => {
+  const vip = { id: "vip", preco_centavos: 10000, espelho_de: null };
+  const vipMeia = { id: "vip-meia", preco_centavos: 5000, espelho_de: "vip" };
+  const anel = { id: "anel", preco_centavos: 3000, espelho_de: null };
+  const fatores = new Map([["vip", 12000], ["vip-meia", 12000], ["anel", 9000]]);
+  const [a, b, c] = aplicarPrecosDaSessao([vip, vipMeia, anel], new Map(), l => fatores.get(l.id) ?? 10000);
+  assert.deepEqual([a.preco_centavos, b.preco_centavos, c.preco_centavos], [12000, 6000, 2700]);
+});

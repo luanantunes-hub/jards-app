@@ -872,6 +872,7 @@ export type BancoDaTicketeria = {
           id: string;
           organization_id: string;
           sessao_id: string;
+          setor_id: string;
           fator_bps: number;
           direcao: string;
           motivo: string | null;
@@ -882,6 +883,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id: string;
           sessao_id: string;
+          setor_id: string;
           fator_bps?: number;
           direcao?: string;
           motivo?: string | null;
@@ -892,6 +894,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id?: string;
           sessao_id?: string;
+          setor_id?: string;
           fator_bps?: number;
           direcao?: string;
           motivo?: string | null;
@@ -909,8 +912,15 @@ export type BancoDaTicketeria = {
           {
             foreignKeyName: "ticketeria_preco_dinamico_estado_sessao_id_fkey";
             columns: ["sessao_id"];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: "ticketeria_sessoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_preco_dinamico_estado_setor_id_fkey";
+            columns: ["setor_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_setores";
             referencedColumns: ["id"];
           },
         ];
@@ -920,6 +930,7 @@ export type BancoDaTicketeria = {
           id: string;
           organization_id: string;
           sessao_id: string;
+          setor_id: string;
           fator_anterior_bps: number;
           fator_novo_bps: number;
           direcao: string;
@@ -930,6 +941,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id: string;
           sessao_id: string;
+          setor_id: string;
           fator_anterior_bps: number;
           fator_novo_bps: number;
           direcao: string;
@@ -940,6 +952,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id?: string;
           sessao_id?: string;
+          setor_id?: string;
           fator_anterior_bps?: number;
           fator_novo_bps?: number;
           direcao?: string;
@@ -959,6 +972,13 @@ export type BancoDaTicketeria = {
             columns: ["sessao_id"];
             isOneToOne: false;
             referencedRelation: "ticketeria_sessoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_preco_dinamico_historico_setor_id_fkey";
+            columns: ["setor_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_setores";
             referencedColumns: ["id"];
           },
         ];
@@ -3528,7 +3548,7 @@ export type BancoDaTicketeria = {
         Returns: Json;
       };
       fn_ticketeria_preco_dinamico_registrar: {
-        Args: { p_sessao: string; p_fator: number; p_direcao: string; p_motivo: string | null };
+        Args: { p_sessao: string; p_setor: string; p_fator: number; p_direcao: string; p_motivo: string | null };
         Returns: undefined;
       };
       fn_ticketeria_preco_do_lote: {

@@ -8,7 +8,7 @@ import type { LinhaDoQuadro, QuadroDoEvento } from "@/lib/ticketeria/precificaca
 // O quadro de precificação do evento (P1, só leitura): o que a tela mostra para cada sessão.
 
 const linha = (extra: Partial<LinhaDoQuadro> = {}): LinhaDoQuadro => ({
-  sessaoId: "s1", inicio: "2026-12-20T23:00:00Z", fuso: "America/Sao_Paulo", lugares: 200, vendidos: 50, diasAteASessao: 12,
+  sessaoId: "s1", setorId: "pl", setor: "Plateia", inicio: "2026-12-20T23:00:00Z", fuso: "America/Sao_Paulo", lugares: 200, vendidos: 50, diasAteASessao: 12,
   precoBaseCentavos: 6000, precoVigenteCentavos: 6000, precoProprio: false, previsaoPorcento: 80, faixaBaixo: 140, faixaAlto: 190, parecidos: 3, selo: "impreciso",
   sugestao: { direcao: "manter", motivo: "Eventos parecidos chegavam a 70% a 95% da lotação neste ponto." }, ...extra,
 });
@@ -28,6 +28,14 @@ test("cada sessão mostra preço, ocupação, previsão com faixa e selo, e a di
   assert.match(h, /impreciso, 3 parecidos/);
   assert.match(h, /No ritmo esperado/);
   assert.match(h, /Eventos parecidos chegavam a 70% a 95%/);
+});
+
+test("cada setor da sessão é uma linha, com o nome do setor", () => {
+  const h = html({ linhas: [linha({ setorId: "vip", setor: "VIP", precoVigenteCentavos: 12000, precoBaseCentavos: 12000 }), linha({ setorId: "a4", setor: "Anel 4", precoVigenteCentavos: 3000, precoBaseCentavos: 3000 })], referencia: null });
+  assert.match(h, /· VIP/);
+  assert.match(h, /· Anel 4/);
+  assert.match(h, /R\$\s?120,00/);
+  assert.match(h, /R\$\s?30,00/);
 });
 
 test("preço próprio da sessão aparece com o preço do lote", () => {

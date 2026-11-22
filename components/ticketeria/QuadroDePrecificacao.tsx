@@ -6,7 +6,7 @@ import { quandoDaSessao } from "@/lib/ticketeria/eventos";
 import { ROTULO_DO_SELO } from "@/lib/ticketeria/modelo-painel";
 import { ROTULO_DA_DIRECAO, type DirecaoDoPreco, type LinhaDoQuadro, type QuadroDoEvento } from "@/lib/ticketeria/precificacao";
 
-// O quadro de precificação do evento (plano da Ticketeria, seção 11, P1, SÓ LEITURA): por sessão por vir, o preço que vale, a ocupação, a previsão de lotação por comparação com eventos parecidos e a sugestão
+// O quadro de precificação do evento (plano da Ticketeria, seção 11, P1, SÓ LEITURA): por sessão por vir e por setor, o preço que vale, a ocupação, a previsão de lotação por comparação com eventos parecidos e a sugestão
 // de direção, com o motivo. Não muda preço: o preço de cada sessão se muda no lote, em "Preço por sessão". A conta está em lib/ticketeria/precificacao.ts e precificacao-servidor.ts.
 
 const COR_DA_DIRECAO: Record<DirecaoDoPreco, string> = { subir: "#2E8932", manter: "#6B6B6B", baixar: "#B07A14", sem_comparacao: "#9A9A9A" };
@@ -34,9 +34,9 @@ export function QuadroView({ quadro }: { quadro: QuadroDoEvento }) {
         {quadro.linhas.map(l => {
           const previsao = textoDaPrevisao(l);
           return (
-            <li key={l.sessaoId} className="px-4 py-3">
+            <li key={`${l.sessaoId}|${l.setorId}`} className="px-4 py-3">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <span className="text-[0.8125rem] font-normal text-[#282525]">{quandoDaSessao(l.inicio, l.fuso)}</span>
+                <span className="text-[0.8125rem] font-normal text-[#282525]">{quandoDaSessao(l.inicio, l.fuso)} <span className="text-black/50">· {l.setor}</span></span>
                 <span className="flex items-center gap-2 text-[0.8125rem] tabular-nums text-[#282525]">
                   {l.precoVigenteCentavos !== null ? formatarReais(l.precoVigenteCentavos) : "Sem ingresso pago"}
                   {l.precoProprio && l.precoBaseCentavos !== null && <span className="text-[0.6875rem] text-black/45">preço próprio (lote: {formatarReais(l.precoBaseCentavos)})</span>}
