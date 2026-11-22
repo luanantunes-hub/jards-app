@@ -1,12 +1,12 @@
 "use client";
 
-import { AppWindow, AtSign, Braces, Code, Globe, Handshake, LayoutGrid, Link2, MousePointerClick, Plug, QrCode, Store, Users, Webhook, type LucideIcon } from "lucide-react";
+import { AppWindow, AtSign, Braces, Code, Globe, Handshake, LayoutGrid, Link2, MousePointerClick, Plug, QrCode, Repeat, Store, Ticket, Users, Webhook, type LucideIcon } from "lucide-react";
 import { gruposDaLoja, type Caixa, type EstadoDaCaixa, type IconeDaCaixa } from "@/lib/ticketeria/vender";
 import type { EscolhasDaLoja } from "@/lib/ticketeria/menu";
 
 const ICONES: Record<IconeDaCaixa, LucideIcon> = {
   store: Store, qr: QrCode, globe: Globe, arroba: AtSign, vitrine: LayoutGrid, codigo: Code, botao: MousePointerClick, janela: AppWindow, link: Link2,
-  parceria: Handshake, pessoas: Users, api: Braces, webhook: Webhook, plug: Plug,
+  parceria: Handshake, pessoas: Users, api: Braces, webhook: Webhook, plug: Plug, passe: Ticket, assinatura: Repeat,
 };
 
 const ROTULO_DO_GRUPO = "text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45";
