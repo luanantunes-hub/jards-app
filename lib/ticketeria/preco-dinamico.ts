@@ -10,8 +10,8 @@ import type { DirecaoDoPreco } from "@/lib/ticketeria/precificacao";
 export const FATOR_BASE = 10000;
 /** Nas últimas horas antes da sessão o preço não sobe (só baixa). */
 export const HORAS_SEM_SUBIR = 48;
-/** A versão do texto do aceite. É um RASCUNHO para o advogado: troque quando o texto for aprovado, e o aceite guardado de cada produtor diz qual texto ele aceitou. */
-export const VERSAO_DO_ACEITE = "rascunho-1";
+/** A versão do texto do aceite. "v1": o texto de PONTOS_DO_ACEITE, aprovado pelo advogado (22/11/2026, aviso informado pelo dono). Se o texto mudar, troque a versão: o aceite guardado de cada produtor diz qual texto ele aceitou. */
+export const VERSAO_DO_ACEITE = "v1";
 
 export type RegraDinamica = { ativo: boolean; pisoBps: number; tetoBps: number; passoBps: number; intervaloMinutos: number };
 
