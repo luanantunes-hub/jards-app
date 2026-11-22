@@ -56,7 +56,11 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
   const { data: precosDaSessao } = ids.length > 0
     ? await t.from("ticketeria_precos_da_sessao").select("lote_id, preco_centavos").eq("sessao_id", sessao.id)
     : { data: [] };
-  const lotes = aplicarPrecosDaSessao(lotesDoBanco ?? [], new Map((precosDaSessao ?? []).map(p => [p.lote_id, p.preco_centavos] as const)));
+  // O preço dinâmico (plano, seção 11, P2): só com a adesão do evento ativa, o preço da sessão vale vezes o fator dela. A reserva cobra pela mesma conta, no banco (fn_ticketeria_preco_do_lote).
+  const { data: adesao } = await t.from("ticketeria_preco_dinamico").select("ativo").eq("evento_id", evento.id).maybeSingle();
+  const { data: estadoDoFator } = adesao?.ativo ? await t.from("ticketeria_preco_dinamico_estado").select("fator_bps").eq("sessao_id", sessao.id).maybeSingle() : { data: null };
+  const fatorBps = adesao?.ativo ? estadoDoFator?.fator_bps ?? 10000 : 10000;
+  const lotes = aplicarPrecosDaSessao(lotesDoBanco ?? [], new Map((precosDaSessao ?? []).map(p => [p.lote_id, p.preco_centavos] as const)), fatorBps);
   const ocupados = new Map<string, number>(await Promise.all((lotes ?? []).map(async l => {
     const { data } = await t.rpc("fn_ticketeria_ocupados", { p_sessao: sessao.id, p_lote: l.id, p_fora: null });
     return [l.id, Number(data ?? 0)] as const;

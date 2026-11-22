@@ -736,6 +736,165 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_preco_dinamico: {
+        Row: {
+          id: string;
+          organization_id: string;
+          evento_id: string;
+          ativo: boolean;
+          piso_bps: number;
+          teto_bps: number;
+          passo_bps: number;
+          intervalo_minutos: number;
+          aceite_em: string | null;
+          aceite_por: string | null;
+          aceite_versao: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          evento_id: string;
+          ativo?: boolean;
+          piso_bps?: number;
+          teto_bps?: number;
+          passo_bps?: number;
+          intervalo_minutos?: number;
+          aceite_em?: string | null;
+          aceite_por?: string | null;
+          aceite_versao?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          evento_id?: string;
+          ativo?: boolean;
+          piso_bps?: number;
+          teto_bps?: number;
+          passo_bps?: number;
+          intervalo_minutos?: number;
+          aceite_em?: string | null;
+          aceite_por?: string | null;
+          aceite_versao?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_preco_dinamico_evento_id_fkey";
+            columns: ["evento_id"];
+            isOneToOne: true;
+            referencedRelation: "ticketeria_eventos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_preco_dinamico_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_preco_dinamico_estado: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          fator_bps: number;
+          direcao: string;
+          motivo: string | null;
+          atualizado_em: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          fator_bps?: number;
+          direcao?: string;
+          motivo?: string | null;
+          atualizado_em?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          fator_bps?: number;
+          direcao?: string;
+          motivo?: string | null;
+          atualizado_em?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_preco_dinamico_estado_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_preco_dinamico_estado_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: true;
+            referencedRelation: "ticketeria_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_preco_dinamico_historico: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          fator_anterior_bps: number;
+          fator_novo_bps: number;
+          direcao: string;
+          motivo: string | null;
+          quando: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          fator_anterior_bps: number;
+          fator_novo_bps: number;
+          direcao: string;
+          motivo?: string | null;
+          quando?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          fator_anterior_bps?: number;
+          fator_novo_bps?: number;
+          direcao?: string;
+          motivo?: string | null;
+          quando?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_preco_dinamico_historico_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_preco_dinamico_historico_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_taxas: {
         Row: {
           id: string;
@@ -3295,6 +3454,14 @@ export type BancoDaTicketeria = {
       fn_ticketeria_ocupados_do_setor: {
         Args: { p_sessao: string; p_setor: string; p_fora?: string | null };
         Returns: number;
+      };
+      fn_ticketeria_preco_dinamico_definir: {
+        Args: { p_evento: string; p_ativo: boolean; p_piso: number; p_teto: number; p_passo: number; p_intervalo: number; p_aceite_versao: string | null; p_usuario: string | null };
+        Returns: Json;
+      };
+      fn_ticketeria_preco_dinamico_registrar: {
+        Args: { p_sessao: string; p_fator: number; p_direcao: string; p_motivo: string | null };
+        Returns: undefined;
       };
       fn_ticketeria_preco_do_lote: {
         Args: { p_lote: string; p_sessao: string };

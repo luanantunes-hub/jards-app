@@ -47,3 +47,29 @@ test("aplicar nos lotes troca só o preço e mantém o resto, e a vitrine mostra
   assert.equal(lotes[0].preco_centavos, 6000, "não altera o que recebeu");
   assert.deepEqual(faixasDoIngresso(aplicados, Date.now()), [{ preco_centavos: 7500, livres: 100 }]);
 });
+
+// ─── Com o fator do preço dinâmico (P2) ─────────────────────────────────────
+
+test("com fator, o preço da sessão (ou do lote) vale vezes o fator, e a meia é a metade do que vale da inteira", () => {
+  const lotes = [{ ...INTEIRA, ordem: 0 }, { ...MEIA, ordem: 0 }];
+  const sem = aplicarPrecosDaSessao(lotes, new Map(), 11000);
+  assert.deepEqual(sem.map(l => l.preco_centavos), [6600, 3300], "fator 110% sobre o lote: R$ 66,00 e R$ 33,00");
+  const com = aplicarPrecosDaSessao(lotes, new Map([["lote-inteira", 8000]]), 11000);
+  assert.deepEqual(com.map(l => l.preco_centavos), [8800, 4400], "e sobre o preço próprio da sessão: R$ 88,00 e R$ 44,00");
+});
+
+test("fator 10000 é exatamente a conta de antes, e o gratuito segue em zero", () => {
+  const precos = new Map([["lote-inteira", 8001]]);
+  assert.equal(precoDoLoteNaSessao(INTEIRA, precos, 10000), 8001);
+  assert.equal(precoDoLoteNaSessao(MEIA, precos, 10000), 4001, "metade de R$ 80,01 sobe para R$ 40,01");
+  assert.equal(precoDoLoteNaSessao({ id: "g", preco_centavos: 0, espelho_de: null }, new Map(), 12000), 0);
+});
+
+test("a meia com fator usa a inteira da lista e arredonda como o banco (para cima no meio, mínimo 1 centavo)", () => {
+  const inteira = { id: "i", preco_centavos: 6001, espelho_de: null };
+  const meia = { id: "m", preco_centavos: 3001, espelho_de: "i" };
+  const [i, m] = aplicarPrecosDaSessao([inteira, meia], new Map(), 11000);
+  assert.equal(i.preco_centavos, 6601, "6001 × 1,1 = 6601,1");
+  assert.equal(m.preco_centavos, 3301, "metade de 6601 = 3300,5 sobe para 3301");
+  assert.equal(aplicarPrecosDaSessao([{ id: "x", preco_centavos: 1, espelho_de: null }], new Map(), 1000)[0].preco_centavos, 1, "nunca abaixo de 1 centavo");
+});

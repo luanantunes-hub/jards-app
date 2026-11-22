@@ -15,6 +15,7 @@ import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton }
 import { SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { CatalogoDoEvento } from "@/components/ticketeria/CatalogoDoEvento";
 import { QuadroDePrecificacao } from "@/components/ticketeria/QuadroDePrecificacao";
+import { PrecoDinamicoDoEvento } from "@/components/ticketeria/PrecoDinamicoDoEvento";
 import { LinkDeVenda } from "@/components/ticketeria/LinkDeVenda";
 import { Aviso, EventoSheet, LocalSheet, SessaoSheet, type EventoEditavel, type LocalDaSessao, type SessaoEditavel } from "@/components/ticketeria/FolhasDosEventos";
 
@@ -175,6 +176,7 @@ export default function EventoPage() {
         </section>
         <CatalogoDoEvento organizationId={organizationId} eventoId={evento.id} locaisDasSessoes={[...new Set(sessoes.map(sessao => sessao.local_id))]} podeEditar={editavel} onMudou={() => setVersaoDoCatalogo(v => v + 1)} />
         {editavel && <QuadroDePrecificacao lojaId={evento.loja_id} eventoId={evento.id} chave={versaoDoCatalogo} />}
+        {editavel && <PrecoDinamicoDoEvento lojaId={evento.loja_id} eventoId={evento.id} sessoes={sessoes.filter(s => !s.cancelada_em && Date.parse(s.inicio) > Date.now()).map(s => ({ id: s.id, inicio: s.inicio, fuso: locais.find(l => l.id === s.local_id)?.fuso ?? "America/Sao_Paulo" }))} onMudou={() => setVersaoDoCatalogo(v => v + 1)} />}
         {editavel && (
           <div className="mt-12">
             {evento.situacao === "rascunho"
