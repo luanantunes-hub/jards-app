@@ -300,3 +300,12 @@ Por evento e sessão: preço-base, preço atual, faixa permitida, curva de venda
 | Projeto de lei de incentivo com limite de preço usando o dinâmico | Decisão do dono (21/11/2026): o sistema não impõe o limite; aviso na adesão e aceite do produtor; quem tem limite não usa o dinâmico |
 | Produtor pequeno com poucas vendas: sinal ruidoso | A faixa sugerida usa eventos parecidos; o dinâmico só entra quando houver volume mínimo (a definir) |
 | Preço mudando no meio da compra | Preço travado na reserva e Pix gerado com ele |
+
+### 11.8 Andamento
+
+| Fase | Situação | Onde |
+|---|---|---|
+| **P0** | **Feita e aplicada no banco real (21/11/2026, versão `20261128100000`).** `ticketeria_precos_da_sessao` (o preço de um lote numa sessão; só lote do mesmo evento; gratuito e pago combinam com o preço; a meia não tem preço próprio e vale a metade da inteira da sessão), `ticketeria_precos_historico` (de quanto, para quanto, quando e quem, escrito por gatilho; só se lê), `ticketeria_pedido_itens.preco_base_centavos`, `fn_ticketeria_preco_do_lote` (só o servidor chama) e `fn_ticketeria_reservar` (mesma assinatura, `create or replace`) cobrando pelo preço que vale. A vitrine mostra pela mesma conta (`lib/ticketeria/preco-da-sessao.ts`, usada em `lib/ticketeria/vitrine-servidor.ts`). Tela: na folha de um lote de ingresso pago (não a meia) de evento com 2 ou mais sessões futuras, a seção **Preço por sessão** (`components/ticketeria/CatalogoDoEvento.tsx`); em branco, vale o preço do lote. **Provado:** 19 testes de banco novos (`supabase/tests/ticketeria_preco_por_sessao.test.sql`) e os de estoque único (24), pagamentos (30), cupons (29), meia e desconto (21) e compra com assentos (36) com a migration na frente, em bloco desfeito; depois de aplicada, os novos (19), pagamentos (30) e estoque único (24) de novo; 805 testes de TypeScript. **Na tela, contra o banco real** (evento em rascunho da organização de teste): gravou R$ 60,00 numa sessão, o cartão do lote passou a dizer "preço próprio em 1 sessão", a meia ficou em R$ 30,00, o histórico guardou quem fez, e apagar voltou ao preço do lote (o histórico guarda a entrada e a saída). | `feat/ticketeria` (PR #499); nada publicado |
+| **P1** | Não começada: quadro de precificação só de leitura | — |
+| **P2** | Não começada: adesão ao preço dinâmico (depende das decisões da seção 11.6 e do parecer sobre CDC e meia-entrada) | — |
+| **P3** | Não começada | — |
