@@ -94,7 +94,7 @@ Por que parâmetros, e não x e y de cada lugar: o arquivo fica pequeno e editá
    Também **salvar um mapa como modelo** da organização e copiar o mapa de outro espaço ou evento.
 4. **Tipos de lugar:** cadeira comum, cadeira de rodas, acompanhante, mobilidade reduzida, obeso. Com legenda no mapa do comprador e um contador do mínimo de referência da lei, **só informativo** (como o resto do produto, avisa e não impede).
 5. **Regra de numeração por bloco:** esquerda para direita, direita para esquerda, ou ímpar e par a partir do centro, com o rótulo de cada lugar visível antes de salvar.
-6. **Um mapa só do espaço.** Cada bloco pertence a um setor (que continua sendo a unidade de preço e de ingresso), e o comprador vê a sala inteira colorida por setor, em vez de um mapa por setor. É a maior mudança e a que mais parece com o mercado.
+6. **Um mapa só da sala, com os setores coloridos** (decidido pelo Luan em 22/11/2026). Cada bloco pertence a um setor (que continua sendo a unidade de preço e de ingresso), e o comprador vê a sala inteira colorida por setor, em vez de um mapa por setor. É a maior mudança e a que mais parece com o mercado. A palavra "sala" está explicada em 5.5.
 7. **Mesas, áreas em pé e camarotes** (um grupo de lugares com nome).
 
 ### 5.3 Importar
@@ -113,30 +113,61 @@ DWG e DXF: não. Pedimos para exportar para PDF ou SVG.
 - O **editor avançado é feito para computador** (o Eventbrite nem permite editar mapa no celular). No celular, o produtor continua com o editor simples de hoje para pequenos ajustes (bloquear lugar).
 - Nada de biblioteca de terceiros para o editor. As que achei (seatmap-creator, react-seatmap-builder) são de poucos mantenedores e pouco usadas, e o que pesa para nós (reserva sem vender duas vezes) já é do banco, não da tela.
 
+### 5.5 Um espaço com várias salas (decidido pelo Luan em 22/11/2026)
+
+Um espaço pode ter **mais de uma sala**: um cinema com 2, 4 ou 6 salas, um centro cultural com teatro e sala menor. A pessoa diz quantas são e **dá um nome a cada uma** ("Sala 1", "Sala Jardim"). Cada sala tem o **seu mapa**.
+
+**O modelo.** Entra um nível entre o espaço e o setor:
+
+```
+Espaço (hoje: local)  →  Sala (novo)  →  Setor  →  Lugar
+                                  └── o mapa (blocos, corredores) é da sala
+```
+
+- **Compatibilidade.** Todo espaço que já existe ganha **uma sala padrão** ("Sala única", sem aparecer na tela enquanto houver uma só). Os setores e as sessões de hoje passam para ela. Nada muda para quem tem uma sala só, nem para turnê e evento único.
+- **A sessão passa a ser de uma sala.** Hoje ela aponta para o espaço, e a venda confere que o setor do ingresso é do mesmo espaço da sessão (`fn_ticketeria_reservar`). Passaria a conferir a **sala**. No cinema, o mesmo filme em horários diferentes e em salas diferentes vira o caso normal.
+- **O Começar** (para quem "tem um espaço") ganha a pergunta "Quantas salas tem?", com 1 como resposta de partida e, se houver mais de uma, os nomes de cada. Ao criar o evento, quem tem mais de uma sala escolhe em qual.
+- **De bônus**, dá para avisar quando duas sessões se encavalam **na mesma sala** (o que um cinema precisa e hoje não existe).
+
+**O que isso toca no que já existe** (conferido no código):
+- Banco: `ticketeria_setores` e `ticketeria_sessoes` guardam `local_id`; a venda compara os dois. Passam a guardar também `sala_id`, com a comparação trocada para a sala.
+- A página de compra lê os setores pelo espaço da sessão e passaria a lê-los pela sala.
+- A tela de Vendas soma os lugares de cada espaço para dizer quanto da sessão já vendeu; passaria a somar por sala. (A sessão de cinema numa sala de 80 lugares não pode contar os lugares de todas as salas.)
+- O catálogo de ingressos (setores por espaço) passa a listar os setores por sala.
+- Tudo isso é **aditivo e compatível**: colunas novas com sala padrão preenchida, sem apagar nada.
+
 ## 6. Em que ordem
 
 | Fase | O que entrega | Tamanho |
 |---|---|---|
+| **M0** | **Salas:** a tabela de salas, o `sala_id` nos setores e nas sessões (com a sala padrão para o que já existe), a venda conferindo a sala, a pergunta no Começar e a escolha da sala ao criar o evento. Sem mexer no desenho do mapa. | Médio: é encanamento, mas passa por venda, vitrine e vendas |
 | **M1** | O motor do layout (blocos, corredores livres, curva e ângulo) e a tela do comprador desenhando por ele; os mapas de hoje viram um bloco. Modelos básicos: corredor central, três blocos, leque. | Grande: semanas, é a base de tudo |
 | **M2** | Tipos de lugar (acessibilidade), regra de numeração, legenda no mapa do comprador e o contador de referência. | Médio |
-| **M3** | Um mapa só do espaço, com vários setores coloridos. Mexe na leitura do mapa para a compra. | Médio a grande |
+| **M3** | Um mapa só da sala, com vários setores coloridos. Mexe na leitura do mapa para a compra. | Médio a grande |
 | **M4** | Planta de fundo (PDF, imagem, SVG) para traçar por cima. | Médio |
 | **M5** | Importar e exportar SVG e JSON, modelos salvos pela organização, copiar mapa. | Médio |
 | **M6** | Mesas, áreas em pé, camarotes. | Médio |
 | **M7** | Detecção assistida (piloto). | Incerto |
 
-A minha sugestão é fazer **M1 e M2 juntas**, porque a acessibilidade é a lacuna com peso de lei, e **M4 logo depois**, porque é o que o produtor sentiria mais.
+A minha sugestão é fazer **M0 primeiro**: é a estrutura em que o mapa se pendura, e é mais barato mexer nela agora, antes de haver mais eventos e vendas. Depois **M1 e M2 juntas**, porque a acessibilidade é a lacuna com peso de lei, e **M4 logo depois**, porque é o que o produtor sentiria mais.
 
 ## 7. O que o Luan decide
 
-1. **Um mapa por setor (como hoje) ou um mapa só do espaço, com os setores coloridos?** A recomendação é o mapa do espaço (M3).
+**Já decidido (22/11/2026):**
+- **Mapa só do espaço**, com os setores coloridos (na prática, um mapa por sala).
+- **Espaço com várias salas**, nomeáveis, cada uma com o seu mapa (seção 5.5).
+
+**Ainda em aberto:**
+1. **A ordem:** salas (M0) primeiro, como sugiro, ou o motor dos blocos (M1) primeiro?
 2. **A acessibilidade entra já, junto com o motor (M2)?** A recomendação é que sim.
 3. **A importação começa pela planta de fundo (PDF ou imagem)** em vez do SVG? A recomendação é que sim.
-4. **Quais modelos de sala valem como os primeiros?** Teatro com plateia e balcão, igreja, auditório escolar, show em pé com camarote… quais os produtores de vocês mais pedem?
+4. **Quais modelos de sala valem como os primeiros?** Teatro com plateia e balcão, cinema, igreja, auditório escolar, show em pé com camarote… quais os produtores de vocês mais pedem?
 5. **Mesas e áreas em pé:** antes (para festas e shows) ou depois (M6)?
+6. **Salas que se repetem:** num cinema com 6 salas iguais, a pessoa desenha um mapa e o **copia** para as outras? (A recomendação é que sim, com "copiar o mapa de outra sala".)
 
 ## 8. Riscos
 
+- **Salas em eventos que já têm vendas.** A migração para a sala padrão não pode mexer em sessões vendidas: a conta de lugares e o conferir da venda precisam dar o mesmo resultado de antes para quem tem uma sala só. Teste pesado, como no resto.
 - **Mapas com vendas.** Mudar o desenho não pode mudar quem é cada lugar. A migração do mapa de hoje precisa de teste pesado com lugares vendidos. Mudar a regra de numeração só vale sem vendas.
 - **Leitura da lei.** Os números de acessibilidade vêm de resumos da pesquisa, não do texto oficial. Conferir antes de mostrar qualquer "mínimo".
 - **Desempenho** com milhares de lugares na tela, em celular fraco.
