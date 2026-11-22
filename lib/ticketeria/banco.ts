@@ -306,6 +306,7 @@ export type BancoDaTicketeria = {
           id: string;
           organization_id: string;
           local_id: string;
+          sala_id: string;
           nome: string;
           lugares: number;
           numerado: boolean;
@@ -319,6 +320,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id: string;
           local_id: string;
+          sala_id?: string;
           nome: string;
           lugares: number;
           numerado?: boolean;
@@ -332,6 +334,7 @@ export type BancoDaTicketeria = {
           id?: string;
           organization_id?: string;
           local_id?: string;
+          sala_id?: string;
           nome?: string;
           lugares?: number;
           numerado?: boolean;
@@ -350,7 +353,62 @@ export type BancoDaTicketeria = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "ticketeria_setores_sala_id_fkey";
+            columns: ["sala_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_salas";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "ticketeria_setores_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_salas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          local_id: string;
+          nome: string;
+          ordem: number;
+          arquivado: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          local_id: string;
+          nome: string;
+          ordem?: number;
+          arquivado?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          local_id?: string;
+          nome?: string;
+          ordem?: number;
+          arquivado?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_salas_local_id_fkey";
+            columns: ["local_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_locais";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_salas_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
@@ -424,6 +482,7 @@ export type BancoDaTicketeria = {
           organization_id: string;
           evento_id: string;
           local_id: string;
+          sala_id: string;
           inicio: string;
           fim: string | null;
           abertura_portas: string | null;
@@ -436,6 +495,7 @@ export type BancoDaTicketeria = {
           organization_id: string;
           evento_id: string;
           local_id: string;
+          sala_id?: string;
           inicio: string;
           fim?: string | null;
           abertura_portas?: string | null;
@@ -448,6 +508,7 @@ export type BancoDaTicketeria = {
           organization_id?: string;
           evento_id?: string;
           local_id?: string;
+          sala_id?: string;
           inicio?: string;
           fim?: string | null;
           abertura_portas?: string | null;
@@ -468,6 +529,13 @@ export type BancoDaTicketeria = {
             columns: ["local_id"];
             isOneToOne: false;
             referencedRelation: "ticketeria_locais";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_sessoes_sala_id_fkey";
+            columns: ["sala_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_salas";
             referencedColumns: ["id"];
           },
           {

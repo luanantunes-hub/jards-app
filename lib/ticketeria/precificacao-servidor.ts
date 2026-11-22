@@ -23,7 +23,7 @@ export async function quadroDoEvento(admin: Admin, lojaId: string, eventoId: str
   const { data: eventos } = await t.from("ticketeria_eventos").select("id, titulo").eq("loja_id", lojaId);
   if (!(eventos ?? []).some(e => e.id === eventoId)) return null;
   const idsDosEventos = (eventos ?? []).map(e => e.id);
-  const { data: sessoesBrutas } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").in("evento_id", idsDosEventos);
+  const { data: sessoesBrutas } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, cancelada_em").in("evento_id", idsDosEventos);
   const validas = (sessoesBrutas ?? []).filter(s => !s.cancelada_em);
   const futuras = validas.filter(s => s.evento_id === eventoId && Date.parse(s.inicio) > agora).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
   if (futuras.length === 0) return { linhas: [], referencia: null };
@@ -47,10 +47,10 @@ export async function quadroDoEvento(admin: Admin, lojaId: string, eventoId: str
   const idsDosLocais = [...new Set(validas.map(s => s.local_id))];
   const [{ data: locais }, { data: setores }] = await Promise.all([
     t.from("ticketeria_locais").select("id, nome, fuso").in("id", idsDosLocais),
-    t.from("ticketeria_setores").select("local_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false),
+    t.from("ticketeria_setores").select("sala_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false),
   ]);
-  const lugaresDoLocal = new Map<string, number>();
-  for (const x of setores ?? []) lugaresDoLocal.set(x.local_id, (lugaresDoLocal.get(x.local_id) ?? 0) + x.lugares);
+  const lugaresDaSala = new Map<string, number>();
+  for (const x of setores ?? []) lugaresDaSala.set(x.sala_id, (lugaresDaSala.get(x.sala_id) ?? 0) + x.lugares);
   const doLocal = new Map((locais ?? []).map(l => [l.id, l]));
   const titulo = new Map((eventos ?? []).map(e => [e.id, e.titulo]));
 
@@ -75,7 +75,7 @@ export async function quadroDoEvento(admin: Admin, lojaId: string, eventoId: str
     if (v.total <= 0) continue;
     curvas.push({
       id: s.id, nome: titulo.get(s.evento_id) ?? "Evento", quando: new Intl.DateTimeFormat("pt-BR", { month: "short", year: "numeric", timeZone: v.fuso ?? "America/Sao_Paulo" }).format(new Date(s.inicio)).replace(" de ", "/").replace(".", ""),
-      local: doLocal.get(s.local_id)?.nome ?? "Local", localId: s.local_id, precoMedioCentavos: v.precoMedioCentavos, lugares: lugaresDoLocal.get(s.local_id) ?? 0, acumulado: acumuladoDaSessao(v.diaDaSessao, v.porDia),
+      local: doLocal.get(s.local_id)?.nome ?? "Local", localId: s.local_id, precoMedioCentavos: v.precoMedioCentavos, lugares: lugaresDaSala.get(s.sala_id) ?? 0, acumulado: acumuladoDaSessao(v.diaDaSessao, v.porDia),
     });
   }
 
@@ -95,7 +95,7 @@ export async function quadroDoEvento(admin: Admin, lojaId: string, eventoId: str
   const linhas: LinhaDoQuadro[] = futuras.map(s => {
     const v = vendasDaSessao(s);
     const fuso = v.fuso ?? "America/Sao_Paulo";
-    const lugares = lugaresDoLocal.get(s.local_id) ?? 0;
+    const lugares = lugaresDaSala.get(s.sala_id) ?? 0;
     const precosDaSessao = new Map((proprios ?? []).filter(p => p.sessao_id === s.id).map(p => [p.lote_id, p.preco_centavos] as const));
     const candidatas = dasVez.map(l => ({ base: l.preco_centavos, vigente: precoDoLoteNaSessao(l, precosDaSessao), proprio: precosDaSessao.has(l.id) })).sort((a, b) => a.vigente - b.vigente);
     const menor = candidatas[0] ?? null;

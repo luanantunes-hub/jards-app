@@ -6,7 +6,7 @@ import { ArrowLeft, Building2, Check, Landmark, PartyPopper, Route, Tent, type L
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria, type ClienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import {
-  PERFIL, PERFIS, RESPOSTAS_VAZIAS, VENDAS, argumentosDoComecar, auditorioInicial, centavosDe, conferirPasso, divisaoDosLugares, hojeEmBrasilia, lugaresParaVender, mapaDoAuditorio, mensagemDoErroDoComecar, ondeDaPraca, passosDoComecar, pracasEfetivas, praca as pracaVazia, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
+  MAX_SALAS, PERFIL, PERFIS, RESPOSTAS_VAZIAS, VENDAS, argumentosDoComecar, auditorioInicial, centavosDe, conferirPasso, divisaoDosLugares, hojeEmBrasilia, lugaresParaVender, mapaDoAuditorio, mensagemDoErroDoComecar, nomesDasSalas, ondeDaPraca, passosDoComecar, pracasEfetivas, praca as pracaVazia, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
   type PerfilDoProdutor, type Praca, type PracaCriada, type RespostasDoComecar, type ResultadoDoComecar,
 } from "@/lib/ticketeria/comecar";
 import { resumoDasDatas } from "@/lib/ticketeria/calendario";
@@ -34,7 +34,7 @@ const LINK = "rounded-xl border border-black/[.12] bg-white px-3.5 py-2 text-[0.
 const reais = (centavos: number) => (centavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 /** O que a tela final precisa saber além da resposta do banco: como terminou a gravação do mapa de assentos desenhado (em todas as cidades). */
-type Pronto = ResultadoDoComecar & { mapa: "montado" | "falhou" | "mantido" | null; erroDoMapa: string | null };
+type Pronto = ResultadoDoComecar & { mapa: "montado" | "falhou" | "mantido" | null; erroDoMapa: string | null; salasFalharam: boolean };
 
 export function ComecarView({ organizationId }: { organizationId: string }) {
   const [r, setR] = useState<RespostasDoComecar>(RESPOSTAS_VAZIAS);
@@ -85,12 +85,14 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
     const { data, error } = await ticketeria.rpc("fn_ticketeria_comecar_pracas", argumentosDoComecar(organizationId, r));
     if (error || !data) { setSalvando(false); setErro(mensagemDoErroDoComecar(error)); return; }
     const resultado = data as unknown as ResultadoDoComecar;
+    // As salas do espaço (só quem tem espaço): a primeira é a que já nasceu com ele; as outras entram agora, vazias (os setores vêm depois, em Espaços).
+    const salasFalharam = r.perfil === "espaco" ? !(await gravarAsSalas(ticketeria, organizationId, resultado.pracas[0]?.local_id, r.salas)) : false;
     const montagem = r.numerada ? await montarAuditorio(ticketeria, resultado.pracas, r) : { mapa: null, erroDoMapa: null };
     // O espaço de trabalho se ajusta ao que a pessoa respondeu (a Bilheteria, a Loja online e os Espaços só aparecem a quem os usa). Se não gravar, o menu
     // segue mostrando tudo: nada se perde e o evento já está criado.
     await gravarAsEscolhas(ticketeria, resultado.loja_id, r);
     setSalvando(false);
-    setPronto({ ...resultado, ...montagem });
+    setPronto({ ...resultado, ...montagem, salasFalharam });
   }
 
   if (pronto) return <EventoPronto r={r} resultado={pronto} recomecar={() => { setPronto(null); setR({ ...RESPOSTAS_VAZIAS, pracas: [pracaVazia()] }); setPasso(0); }} />;
@@ -137,6 +139,26 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
           <div className="mt-12 md:mt-16">
             <CampoGrande valor={r.perfil === "espaco" ? r.pracas[0]?.lugar ?? "" : r.evento} exemplo={perfil.nome.exemplo} rotulo={perfil.nome.rotulo}
               onChange={nome => (r.perfil === "espaco" ? mudaPraca(0, { lugar: nome }) : muda({ evento: nome }))} onEnter={() => void seguir()} />
+          </div>
+        </section>
+      )}
+
+      {passoAtual === "salas" && (
+        <section aria-labelledby="comecar-titulo">
+          <h1 id="comecar-titulo" className={TITULO}>Quantas salas tem o espaço?</h1>
+          <p className={APOIO}>Um cinema tem várias; um teatro costuma ter uma só. Cada sala tem os seus setores e o seu mapa.</p>
+          <div className="mt-10 md:mt-12 space-y-5">
+            <div className="flex items-center gap-4" role="group" aria-label="Quantas salas">
+              <button type="button" aria-label="Menos uma sala" disabled={r.salas.length <= 1} onClick={() => muda({ salas: r.salas.slice(0, -1) })} className="flex h-12 w-12 items-center justify-center rounded-xl border border-black/[.15] bg-white text-[1.25rem] text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">−</button>
+              <span className="min-w-[3rem] text-center text-[2rem] tabular-nums text-[#1C0E33]" aria-live="polite">{r.salas.length}</span>
+              <button type="button" aria-label="Mais uma sala" disabled={r.salas.length >= MAX_SALAS} onClick={() => muda({ salas: [...r.salas, ""] })} className="flex h-12 w-12 items-center justify-center rounded-xl border border-black/[.15] bg-white text-[1.25rem] text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">+</button>
+            </div>
+            {r.salas.length > 1 && (
+              <div className="space-y-3">
+                {r.salas.map((nome, i) => <Campo key={i} id={`comecar-sala-${i}`} rotulo={`Nome da sala ${i + 1}`} valor={nome} exemplo={`Sala ${i + 1}`} onChange={novo => muda({ salas: r.salas.map((atual, j) => (j === i ? novo : atual)) })} />)}
+                <p className="text-[0.75rem] text-black/50">Os lugares que você disser a seguir valem para a primeira sala. As outras você completa depois, em Espaços.</p>
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -384,6 +406,29 @@ async function montarAuditorio(ticketeria: ClienteDaTicketeria, pracas: PracaCri
   return { mapa: erro ? "falhou" : mantido ? "mantido" : tentou ? "montado" : null, erroDoMapa: erro };
 }
 
+/**
+ * As salas do espaço recém-criado: o espaço nasce com a "Sala única"; ela vira a primeira (com o nome dito, ou "Sala 1" se há mais de uma) e as outras entram depois.
+ * Um espaço que já tinha mais de uma sala não é mexido (a pessoa o refez com o mesmo nome), e uma sala que já existe com o nome não se repete. Devolve se deu certo.
+ */
+async function gravarAsSalas(ticketeria: ClienteDaTicketeria, organizationId: string, localId: string | undefined, digitadas: readonly string[]): Promise<boolean> {
+  if (!localId) return true;
+  const nomes = nomesDasSalas(digitadas);
+  if (nomes.length === 1 && nomes[0] === "Sala única") return true;
+  const { data, error } = await ticketeria.from("ticketeria_salas").select("id, nome, ordem").eq("local_id", localId).order("ordem");
+  if (error || !data) return false;
+  if (data.length > 1) return true;
+  let certo = true;
+  if (data[0] && data[0].nome !== nomes[0]) {
+    const { error: erroDoNome } = await ticketeria.from("ticketeria_salas").update({ nome: nomes[0] }).eq("id", data[0].id);
+    if (erroDoNome) certo = false;
+  }
+  for (let i = 1; i < nomes.length; i += 1) {
+    const { error: erroDaSala } = await ticketeria.from("ticketeria_salas").insert({ organization_id: organizationId, local_id: localId, nome: nomes[i], ordem: i });
+    if (erroDaSala) certo = false;
+  }
+  return certo;
+}
+
 /** Grava na loja por onde ela vende e se tem espaço (a primeira vez vale a resposta; nas seguintes soma-se ao que já estava). */
 async function gravarAsEscolhas(ticketeria: ClienteDaTicketeria, lojaId: string, r: RespostasDoComecar) {
   const { data } = await ticketeria.from("ticketeria_lojas").select("canais, usa_espacos").eq("id", lojaId).maybeSingle();
@@ -437,6 +482,13 @@ function EventoPronto({ r, resultado, recomecar }: { r: RespostasDoComecar; resu
         <div className="mt-4 flex items-start gap-2.5 rounded-xl border bg-white px-3.5 py-3 text-[0.8125rem] text-[#9A6A10]" style={{ borderColor: "#B07A1447" }}>
           <Landmark size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
           <span>Para vender, falta dizer em qual conta você recebe. Leva dois minutos e pode ser agora ou depois.</span>
+        </div>
+      )}
+
+      {resultado.salasFalharam && (
+        <div className="mt-4 space-y-2">
+          <Aviso texto="O evento foi criado, mas as salas do espaço não ficaram prontas." />
+          <Link href="/ingressos/locais" className={LINK}>Abrir os espaços e criar as salas</Link>
         </div>
       )}
 

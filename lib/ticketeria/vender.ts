@@ -5,7 +5,7 @@
 import type { Canal, EscolhasDaLoja } from "@/lib/ticketeria/menu";
 
 export type IconeDaCaixa =
-  | "store" | "qr" | "globe" | "arroba" | "vitrine" | "codigo" | "botao" | "janela" | "link" | "parceria" | "pessoas" | "api" | "webhook" | "plug";
+  | "store" | "qr" | "globe" | "arroba" | "vitrine" | "codigo" | "botao" | "janela" | "link" | "parceria" | "pessoas" | "api" | "webhook" | "plug" | "passe" | "assinatura";
 
 export type GrupoDeCaixas = { id: string; titulo: string };
 
@@ -26,6 +26,7 @@ export const GRUPOS_DE_CAIXAS: GrupoDeCaixas[] = [
   { id: "balcao", titulo: "No balcão e no cartaz" },
   { id: "site", titulo: "No seu site" },
   { id: "outros", titulo: "Em outros sites e nas redes" },
+  { id: "recorrencia", titulo: "Para quem volta" },
   { id: "parcerias", titulo: "Com parceiros" },
   { id: "programadores", titulo: "Para programadores" },
 ];
@@ -42,6 +43,9 @@ export const CAIXAS: Caixa[] = [
   { id: "botao-avulso", grupo: "outros", titulo: "Botão Comprar avulso", descricao: "Um botão de uma sessão só, para colar onde quiser.", icone: "botao", href: null },
   { id: "janela", grupo: "outros", titulo: "Compra em janela sobreposta", descricao: "O cliente compra sem sair do seu site.", icone: "janela", href: null },
   { id: "link-sessao", grupo: "outros", titulo: "Link de venda por sessão", descricao: "Um endereço para mandar por WhatsApp, e-mail e redes. Fica em cada evento.", icone: "link", href: "/ingressos/eventos" },
+
+  { id: "passe", grupo: "recorrencia", titulo: "Passe", descricao: "Um ingresso que vale em vários dias do mesmo evento, vendido junto com o ingresso por dia.", icone: "passe", href: null },
+  { id: "assinatura", grupo: "recorrencia", titulo: "Assinatura e temporada", descricao: "A pessoa entra numa temporada ou associação e frequenta o ano todo.", icone: "assinatura", href: null },
 
   { id: "collab", grupo: "parcerias", titulo: "Collab", descricao: "Um evento vendido por dois produtores, cada um no seu site.", icone: "parceria", href: null },
   { id: "afiliados", grupo: "parcerias", titulo: "Promotores e afiliados", descricao: "Pessoas que vendem por um link próprio e ganham comissão.", icone: "pessoas", href: null },

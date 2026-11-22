@@ -10,9 +10,11 @@ import { FUSOS_DO_BRASIL, capacidadeDoLocal } from "@/lib/ticketeria/eventos";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { LocalSheet, type LocalEditavel } from "@/components/ticketeria/FolhasDosEventos";
 import { SetorSheet, type SetorEditavel } from "@/components/ticketeria/SetorDoLocal";
+import { SalaSheet } from "@/components/ticketeria/SalaDoEspaco";
+import { salasDoEspaco, type SalaDoEspaco } from "@/lib/ticketeria/salas";
 
-type Setor = SetorEditavel & { local_id: string; ordem: number };
-type Folha = { tipo: "local"; local?: LocalEditavel } | { tipo: "setor"; local: LocalEditavel; setor?: Setor };
+type Setor = SetorEditavel & { local_id: string; sala_id: string; ordem: number };
+type Folha = { tipo: "local"; local?: LocalEditavel } | { tipo: "setor"; local: LocalEditavel; sala?: SalaDoEspaco; setor?: Setor } | { tipo: "sala"; local: LocalEditavel; sala?: SalaDoEspaco };
 
 const numero = (n: number) => n.toLocaleString("pt-BR");
 
@@ -23,6 +25,7 @@ export default function LocaisPage() {
   const papel = useOrganizationRole();
   const [locais, setLocais] = useState<LocalEditavel[] | null>(null);
   const [setores, setSetores] = useState<Setor[]>([]);
+  const [salas, setSalas] = useState<SalaDoEspaco[]>([]);
   const [arquivados, setArquivados] = useState(false);
   const [folha, setFolha] = useState<Folha | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -35,14 +38,17 @@ export default function LocaisPage() {
     let ativo = true;
     void (async () => {
       const ticketeria = clienteDaTicketeria(createClient());
-      const [lo, se] = await Promise.all([
+      const [lo, se, sa] = await Promise.all([
+
         ticketeria.from("ticketeria_locais").select("id, nome, endereco, cidade, uf, fuso, arquivado").eq("organization_id", organizationId).order("nome"),
-        ticketeria.from("ticketeria_setores").select("id, local_id, nome, lugares, numerado, corredor_no_meio, ordem, arquivado").eq("organization_id", organizationId).order("ordem").order("nome"),
+        ticketeria.from("ticketeria_setores").select("id, local_id, sala_id, nome, lugares, numerado, corredor_no_meio, ordem, arquivado").eq("organization_id", organizationId).order("ordem").order("nome"),
+        ticketeria.from("ticketeria_salas").select("id, local_id, nome, ordem, arquivado").eq("organization_id", organizationId),
       ]);
       if (!ativo) return;
       setLocais((lo.data ?? []) as LocalEditavel[]);
       setSetores((se.data ?? []) as Setor[]);
-      setErro(lo.error || se.error ? "Não foi possível carregar os locais. Recarregue a página." : null);
+      setSalas((sa.data ?? []) as SalaDoEspaco[]);
+      setErro(lo.error || se.error || sa.error ? "Não foi possível carregar os locais. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
   }, [organizationId, versao]);
@@ -50,6 +56,12 @@ export default function LocaisPage() {
   const visiveis = useMemo(() => (locais ?? []).filter(local => local.arquivado === arquivados), [locais, arquivados]);
   const temArquivados = (locais ?? []).some(local => local.arquivado);
   const novo = podeEditar ? <PrimaryListAction onClick={() => setFolha({ tipo: "local" })}><Plus size={13} aria-hidden="true" /> Novo local</PrimaryListAction> : undefined;
+
+  const botaoDoSetor = (setor: Setor, local: LocalEditavel) => (
+    <button key={setor.id} type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "setor", local, sala: salas.find(sala => sala.id === setor.sala_id), setor })} className={`rounded-xl border border-black/[.12] bg-white px-2.5 py-1 text-[0.6875rem] font-normal transition enabled:hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${setor.arquivado ? "text-black/35 line-through" : "text-black/65"}`}>
+      {setor.nome} · {numero(setor.lugares)}{setor.numerado ? " · numerado" : ""}
+    </button>
+  );
 
   return (
     <>
@@ -71,6 +83,7 @@ export default function LocaisPage() {
           <ul className="space-y-3">
             {visiveis.map(local => {
               const deles = setores.filter(setor => setor.local_id === local.id);
+              const salasDele = salasDoEspaco(salas, local.id);
               const capacidade = capacidadeDoLocal(deles);
               const fuso = local.fuso !== "America/Sao_Paulo" ? FUSOS_DO_BRASIL.find(item => item.id === local.fuso)?.curto : null;
               return (
@@ -85,17 +98,34 @@ export default function LocaisPage() {
                     )}
                   </div>
                   <div className="border-t bg-black/[.015] px-4 py-2.5" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {deles.length === 0 && <span className="text-[0.6875rem] text-black/45">Sem setores</span>}
-                      {deles.map(setor => (
-                        <button key={setor.id} type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "setor", local, setor })} className={`rounded-xl border border-black/[.12] bg-white px-2.5 py-1 text-[0.6875rem] font-normal transition enabled:hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${setor.arquivado ? "text-black/35 line-through" : "text-black/65"}`}>
-                          {setor.nome} · {numero(setor.lugares)}{setor.numerado ? " · numerado" : ""}
-                        </button>
-                      ))}
-                      {podeEditar && !local.arquivado && (
-                        <button type="button" onClick={() => setFolha({ tipo: "setor", local })} className="rounded-xl px-2 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">+ Setor</button>
-                      )}
-                    </div>
+                    {salasDele.length <= 1 ? (
+                      // Uma sala só: ela é o próprio espaço, e os setores aparecem direto.
+                      <div className="flex flex-wrap items-center gap-2">
+                        {deles.length === 0 && <span className="text-[0.6875rem] text-black/45">Sem setores</span>}
+                        {deles.map(setor => botaoDoSetor(setor, local))}
+                        {podeEditar && !local.arquivado && (
+                          <>
+                            <button type="button" onClick={() => setFolha({ tipo: "setor", local, sala: salasDele[0] })} className="rounded-xl px-2 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">+ Setor</button>
+                            <button type="button" onClick={() => setFolha({ tipo: "sala", local })} className="rounded-xl px-2 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">+ Sala</button>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {salasDele.map(sala => {
+                          const dela = deles.filter(setor => setor.sala_id === sala.id);
+                          return (
+                            <div key={sala.id} className="flex flex-wrap items-center gap-2">
+                              <button type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "sala", local, sala })} title="Editar a sala" className={`min-w-[5.5rem] rounded-xl px-1 py-1 text-left text-[0.6875rem] font-normal transition enabled:hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${sala.arquivado ? "text-black/35 line-through" : "text-[#282525]"}`}>{sala.nome}</button>
+                              {dela.length === 0 && <span className="text-[0.6875rem] text-black/45">Sem setores</span>}
+                              {dela.map(setor => botaoDoSetor(setor, local))}
+                              {podeEditar && !local.arquivado && !sala.arquivado && <button type="button" onClick={() => setFolha({ tipo: "setor", local, sala })} className="rounded-xl px-2 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">+ Setor</button>}
+                            </div>
+                          );
+                        })}
+                        {podeEditar && !local.arquivado && <button type="button" onClick={() => setFolha({ tipo: "sala", local })} className="rounded-xl px-1 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">+ Sala</button>}
+                      </div>
+                    )}
                   </div>
                 </li>
               );
@@ -104,7 +134,8 @@ export default function LocaisPage() {
         )}
       </ListContent>
       {folha?.tipo === "local" && organizationId && <LocalSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} local={folha.local} onClose={() => setFolha(null)} onSaved={recarregar} />}
-      {folha?.tipo === "setor" && organizationId && <SetorSheet organizationId={organizationId} localId={folha.local.id} nomeDoLocal={folha.local.nome} setor={folha.setor} onClose={() => setFolha(null)} onSaved={recarregar} />}
+      {folha?.tipo === "setor" && organizationId && <SetorSheet organizationId={organizationId} localId={folha.local.id} salaId={folha.setor?.sala_id ?? folha.sala?.id} nomeDoLocal={[folha.local.nome, folha.sala && salasDoEspaco(salas, folha.local.id).length > 1 ? folha.sala.nome : null].filter(Boolean).join(" · ")} setor={folha.setor} onClose={() => setFolha(null)} onSaved={recarregar} />}
+      {folha?.tipo === "sala" && organizationId && <SalaSheet organizationId={organizationId} localId={folha.local.id} nomeDoLocal={folha.local.nome} salasDoLocal={salas.filter(sala => sala.local_id === folha.local.id)} sala={folha.sala} onClose={() => setFolha(null)} onSaved={recarregar} />}
     </>
   );
 }

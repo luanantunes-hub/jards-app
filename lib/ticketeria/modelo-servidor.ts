@@ -154,7 +154,7 @@ export async function ritmoDoProximoEvento(admin: Admin, lojaId: string, agora: 
   const { data: eventos } = await t.from("ticketeria_eventos").select("id, titulo").eq("loja_id", lojaId);
   const idsDosEventos = (eventos ?? []).map(e => e.id);
   if (idsDosEventos.length === 0) return null;
-  const { data: sessoesBrutas } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").in("evento_id", idsDosEventos);
+  const { data: sessoesBrutas } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, cancelada_em").in("evento_id", idsDosEventos);
   const validas = (sessoesBrutas ?? []).filter(s => !s.cancelada_em);
   const futuras = validas.filter(s => Date.parse(s.inicio) > agora).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
   if (futuras.length === 0) return null;
@@ -176,10 +176,10 @@ export async function ritmoDoProximoEvento(admin: Admin, lojaId: string, agora: 
   const idsDosLocais = [...new Set(validas.map(s => s.local_id))];
   const [{ data: locais }, { data: setores }] = await Promise.all([
     t.from("ticketeria_locais").select("id, nome, fuso").in("id", idsDosLocais),
-    t.from("ticketeria_setores").select("local_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false),
+    t.from("ticketeria_setores").select("sala_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false),
   ]);
-  const lugaresDoLocal = new Map<string, number>();
-  for (const x of setores ?? []) lugaresDoLocal.set(x.local_id, (lugaresDoLocal.get(x.local_id) ?? 0) + x.lugares);
+  const lugaresDaSala = new Map<string, number>();
+  for (const x of setores ?? []) lugaresDaSala.set(x.sala_id, (lugaresDaSala.get(x.sala_id) ?? 0) + x.lugares);
   const doLocal = new Map((locais ?? []).map(l => [l.id, l]));
   const titulo = new Map((eventos ?? []).map(e => [e.id, e.titulo]));
   // As vendas de uma sessão: por dia (do pagamento, no fuso do local), o total e o preço médio.
@@ -197,7 +197,7 @@ export async function ritmoDoProximoEvento(admin: Admin, lojaId: string, agora: 
     return { fuso, porDia, total, precoMedioCentavos: qtdPaga > 0 ? Math.round(valor / qtdPaga) : 0, diaDaSessao: diaNoFuso(sessao.inicio, fuso) };
   };
   const atual = vendasDaSessao(escolhida);
-  const lugares = lugaresDoLocal.get(escolhida.local_id) ?? 0;
+  const lugares = lugaresDaSala.get(escolhida.sala_id) ?? 0;
   const ritmo = ritmoDoEvento({ evento: titulo.get(escolhida.evento_id) ?? "Evento", vendasPorDia: atual.porDia, vendidos: atual.total, lugares, hoje: diaNoFuso(new Date(agora), atual.fuso), diaDaSessao: atual.diaDaSessao });
   if (!ritmo) return null;
   // As curvas dos eventos que já aconteceram (para a comparação): cada sessão passada que vendeu.
@@ -207,7 +207,7 @@ export async function ritmoDoProximoEvento(admin: Admin, lojaId: string, agora: 
     if (v.total <= 0) continue;
     curvas.push({
       id: s.id, nome: titulo.get(s.evento_id) ?? "Evento", quando: new Intl.DateTimeFormat("pt-BR", { month: "short", year: "numeric", timeZone: v.fuso ?? "America/Sao_Paulo" }).format(new Date(s.inicio)).replace(" de ", "/").replace(".", ""),
-      local: doLocal.get(s.local_id)?.nome ?? "Local", localId: s.local_id, precoMedioCentavos: v.precoMedioCentavos, lugares: lugaresDoLocal.get(s.local_id) ?? 0, acumulado: acumuladoDaSessao(v.diaDaSessao, v.porDia),
+      local: doLocal.get(s.local_id)?.nome ?? "Local", localId: s.local_id, precoMedioCentavos: v.precoMedioCentavos, lugares: lugaresDaSala.get(s.sala_id) ?? 0, acumulado: acumuladoDaSessao(v.diaDaSessao, v.porDia),
     });
   }
   return { ...ritmo, comparacao: { sessaoId: escolhida.id, localId: escolhida.local_id, precoMedioCentavos: atual.precoMedioCentavos, acumulado: acumuladoDaSessao(atual.diaDaSessao, atual.porDia), curvas } };

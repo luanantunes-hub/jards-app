@@ -19,12 +19,12 @@ const entrada: EntradaDasVendas = {
   ],
   quantidadePorPedido: { "1": 3, "2": 1, "3": 1, "4": 2 },
   sessoes: [
-    { id: "s3", evento_id: "e1", local_id: "l1", inicio: "2026-11-14T23:00:00.000Z", cancelada_em: null },
-    { id: "s1", evento_id: "e1", local_id: "l1", inicio: "2026-11-21T23:00:00.000Z", cancelada_em: null },
-    { id: "s2", evento_id: "e2", local_id: "l1", inicio: "2026-12-05T00:00:00.000Z", cancelada_em: null },
-    { id: "s4", evento_id: "e2", local_id: "l1", inicio: "2026-11-20T23:00:00.000Z", cancelada_em: "2026-11-18T10:00:00.000Z" },
+    { id: "s3", evento_id: "e1", local_id: "l1", sala_id: "sa1", inicio: "2026-11-14T23:00:00.000Z", cancelada_em: null },
+    { id: "s1", evento_id: "e1", local_id: "l1", sala_id: "sa1", inicio: "2026-11-21T23:00:00.000Z", cancelada_em: null },
+    { id: "s2", evento_id: "e2", local_id: "l1", sala_id: "sa1", inicio: "2026-12-05T00:00:00.000Z", cancelada_em: null },
+    { id: "s4", evento_id: "e2", local_id: "l1", sala_id: "sa1", inicio: "2026-11-20T23:00:00.000Z", cancelada_em: "2026-11-18T10:00:00.000Z" },
   ],
-  tituloDoEvento: { e1: "Hamlet", e2: "Cabaré" }, fusoDoLocal: { l1: "America/Sao_Paulo" }, lugaresDoLocal: { l1: 4 },
+  tituloDoEvento: { e1: "Hamlet", e2: "Cabaré" }, fusoDoLocal: { l1: "America/Sao_Paulo" }, lugaresDaSala: { sa1: 4 },
   emitidos: [
     { codigo: "AAAAAAAAA2", nome: "Inteira", pedido_id: "1", usado_em: null, cancelado_em: null }, { codigo: "BBBBBBBBB3", nome: "Inteira", pedido_id: "1", usado_em: null, cancelado_em: null },
     { codigo: "CCCCCCCCC4", nome: "Meia", pedido_id: "1", usado_em: "2026-11-20T00:00:00.000Z", cancelado_em: null }, { codigo: "DDDDDDDDD5", nome: "Inteira", pedido_id: "2", usado_em: null, cancelado_em: "2026-11-19T15:00:00.000Z" },

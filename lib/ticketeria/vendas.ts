@@ -12,7 +12,7 @@ export type LinhaDePedido = {
   total_centavos: number; taxa_centavos: number; produtor_centavos: number; custo_meio_centavos: number; custo_meio_real_centavos: number | null;
   pago_em: string | null; created_at: string;
 };
-export type LinhaDeSessao = { id: string; evento_id: string; local_id: string; inicio: string; cancelada_em: string | null };
+export type LinhaDeSessao = { id: string; evento_id: string; local_id: string; sala_id: string; inicio: string; cancelada_em: string | null };
 export type LinhaDeIngressoEmitido = { codigo: string; nome: string; assento_rotulo?: string | null; pedido_id: string; usado_em: string | null; cancelado_em: string | null };
 
 export type LinhaDeReembolso = { id: string; pedido_id: string | null; remetente: string; recebido_em: string; situacao: string; valor_centavos: number | null; origem?: string };
@@ -25,7 +25,8 @@ export type EntradaDasVendas = {
   tituloDoEvento: Record<string, string>;
   fusoDoLocal: Record<string, string>;
   /** A capacidade de cada local (a soma dos lugares dos setores em uso), pelo id do local. */
-  lugaresDoLocal: Record<string, number>;
+  /** Os lugares de cada sala (a soma dos setores em uso), pela id da sala. */
+  lugaresDaSala: Record<string, number>;
   emitidos: LinhaDeIngressoEmitido[];
   /** O que o produtor já pode sacar agora (`fn_ticketeria_saldo_liberavel`: já descontado o que sacou). */
   /** Os pedidos de reembolso por e-mail dos pedidos da loja (a fila: o que foi devolvido e o que não). */
@@ -82,12 +83,12 @@ export function montarCompras(e: Pick<EntradaDasVendas, "pedidos" | "quantidadeP
 }
 
 /** A tabela "por sessão": as futuras primeiro (da mais próxima), depois as que já passaram (da mais recente). */
-function montarSessoes(e: Pick<EntradaDasVendas, "sessoes" | "tituloDoEvento" | "fusoDoLocal" | "lugaresDoLocal">, vendidosNaSessao: Map<string, number>, receitaNaSessao: Map<string, number>, agora: number): SessaoDeVendas[] {
+function montarSessoes(e: Pick<EntradaDasVendas, "sessoes" | "tituloDoEvento" | "fusoDoLocal" | "lugaresDaSala">, vendidosNaSessao: Map<string, number>, receitaNaSessao: Map<string, number>, agora: number): SessaoDeVendas[] {
   const futuras = e.sessoes.filter(s => Date.parse(s.inicio) > agora).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
   const passadas = e.sessoes.filter(s => Date.parse(s.inicio) <= agora).sort((a, b) => Date.parse(b.inicio) - Date.parse(a.inicio));
   return [...futuras, ...passadas].map(s => {
     const vendidos = vendidosNaSessao.get(s.id) ?? 0;
-    const lugares = e.lugaresDoLocal[s.local_id] ?? 0;
+    const lugares = e.lugaresDaSala[s.sala_id] ?? 0;
     return {
       id: s.id, evento: e.tituloDoEvento[s.evento_id] ?? "Evento", quando: maiuscula(diaEHoraDoEvento(s.inicio, e.fusoDoLocal[s.local_id] ?? FUSO_PADRAO)),
       vendidos, lugares, receita_centavos: receitaNaSessao.get(s.id) ?? 0, situacao: situacaoDaSessao(s, vendidos, lugares, agora),
@@ -138,7 +139,7 @@ export type TotaisDasVendas = {
  * O resumo, as sessões e os reembolsos da tela a partir dos totais que o banco somou (sem ler pedido por pedido): a mesma conta de montarVendas.
  * As compras vêm à parte, de página em página (montarCompras).
  */
-export function montarResumoDasVendas(t: TotaisDasVendas, e: Pick<EntradaDasVendas, "sessoes" | "tituloDoEvento" | "fusoDoLocal" | "lugaresDoLocal" | "liberadoCentavos" | "sacadoCentavos" | "agora">): Pick<VendasDaLoja, "resumo" | "sessoes" | "reembolsos"> {
+export function montarResumoDasVendas(t: TotaisDasVendas, e: Pick<EntradaDasVendas, "sessoes" | "tituloDoEvento" | "fusoDoLocal" | "lugaresDaSala" | "liberadoCentavos" | "sacadoCentavos" | "agora">): Pick<VendasDaLoja, "resumo" | "sessoes" | "reembolsos"> {
   const agora = e.agora ?? Date.now();
   const resumo: ResumoDasVendas = {
     vendido_centavos: Number(t.vendido_centavos), ingressos: Number(t.ingressos), compras: Number(t.compras_pagas), repasse_centavos: Number(t.repasse_centavos),

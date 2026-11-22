@@ -14,6 +14,7 @@ import { PaginaDoEventoNoSite } from "@/components/ticketeria/PaginaDoEventoNoSi
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { CatalogoDoEvento } from "@/components/ticketeria/CatalogoDoEvento";
+import { temVariasSalas, type SalaDoEspaco } from "@/lib/ticketeria/salas";
 import { QuadroDePrecificacao } from "@/components/ticketeria/QuadroDePrecificacao";
 import { PrecoDinamicoDoEvento } from "@/components/ticketeria/PrecoDinamicoDoEvento";
 import { LinkDeVenda } from "@/components/ticketeria/LinkDeVenda";
@@ -39,6 +40,7 @@ export default function EventoPage() {
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
   const [versaoDoCatalogo, setVersaoDoCatalogo] = useState(0);
   const [locais, setLocais] = useState<LocalDaSessao[]>([]);
+  const [salas, setSalas] = useState<SalaDoEspaco[]>([]);
   const [folha, setFolha] = useState<Folha | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -51,24 +53,28 @@ export default function EventoPage() {
     let ativo = true;
     void (async () => {
       const ticketeria = clienteDaTicketeria(createClient());
-      const [ev, se, lo] = await Promise.all([
+      const [ev, se, lo, sa] = await Promise.all([
+
         ticketeria.from("ticketeria_eventos").select("id, loja_id, slug, titulo, descricao, imagem_url, classificacao, situacao").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
-        ticketeria.from("ticketeria_sessoes").select("id, local_id, inicio, fim, abertura_portas, cancelada_em").eq("evento_id", id).order("inicio"),
+        ticketeria.from("ticketeria_sessoes").select("id, local_id, sala_id, inicio, fim, abertura_portas, cancelada_em").eq("evento_id", id).order("inicio"),
         ticketeria.from("ticketeria_locais").select("id, nome, fuso, arquivado").eq("organization_id", organizationId).order("nome"),
+        ticketeria.from("ticketeria_salas").select("id, local_id, nome, ordem, arquivado").eq("organization_id", organizationId),
       ]);
       if (!ativo) return;
       setEvento(ev.error ? null : ((ev.data ?? null) as Evento | null));
       setSessoes((se.data ?? []) as Sessao[]);
       setLocais((lo.data ?? []) as LocalDaSessao[]);
+      setSalas((sa.data ?? []) as SalaDoEspaco[]);
     })();
     return () => { ativo = false; };
   }, [id, organizationId, versao]);
 
   const linhas = useMemo(() => sessoes.map(sessao => {
     const local = locais.find(item => item.id === sessao.local_id);
+    const sala = temVariasSalas(salas, sessao.local_id) ? salas.find(item => item.id === sessao.sala_id) : undefined;
     const fuso = local?.fuso ?? "America/Sao_Paulo";
-    return { sessao, local, quando: quandoDaSessao(sessao.inicio, fuso), situacao: situacaoDaSessao(sessao), detalhes: [sessao.abertura_portas ? `portas às ${partesNoFuso(sessao.abertura_portas, fuso).hora}` : null, sessao.fim ? `até ${partesNoFuso(sessao.fim, fuso).hora}` : null].filter(Boolean).join(" · ") };
-  }), [sessoes, locais]);
+    return { sessao, local, sala, quando: quandoDaSessao(sessao.inicio, fuso), situacao: situacaoDaSessao(sessao), detalhes: [sessao.abertura_portas ? `portas às ${partesNoFuso(sessao.abertura_portas, fuso).hora}` : null, sessao.fim ? `até ${partesNoFuso(sessao.fim, fuso).hora}` : null].filter(Boolean).join(" · ") };
+  }), [sessoes, locais, salas]);
 
   async function mudarSituacao(situacao: SituacaoDoEvento) {
     if (!evento) return;
@@ -155,11 +161,11 @@ export default function EventoPage() {
             </div>
           ) : (
             <ul className="divide-y divide-black/[.06] overflow-hidden rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              {linhas.map(({ sessao, local, quando, situacao, detalhes }) => (
+              {linhas.map(({ sessao, local, sala, quando, situacao, detalhes }) => (
                 <li key={sessao.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
                   <span className="min-w-0 flex-1 basis-60">
                     <span className={`block text-[0.8125rem] font-normal tabular-nums ${situacao === "cancelada" ? "text-black/40 line-through" : "text-[#282525]"}`}>{quando}</span>
-                    <span className="flex items-center gap-1.5 truncate text-[0.6875rem] text-black/45"><MapPin size={12} aria-hidden="true" className="shrink-0 text-black/40" />{[local?.nome ?? "Local", detalhes].filter(Boolean).join(" · ")}</span>
+                    <span className="flex items-center gap-1.5 truncate text-[0.6875rem] text-black/45"><MapPin size={12} aria-hidden="true" className="shrink-0 text-black/40" />{[local?.nome ?? "Local", sala?.nome, detalhes].filter(Boolean).join(" · ")}</span>
                   </span>
                   <span className="text-[0.6875rem] text-black/50">{ROTULO_DA_SESSAO[situacao]}</span>
                   {evento.situacao === "publicado" && situacao === "agendada" && <LinkDeVenda sessaoId={sessao.id} />}
@@ -186,7 +192,7 @@ export default function EventoPage() {
         )}
       </DetailPageContent>
       {folha?.tipo === "evento" && <EventoSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} evento={evento} onClose={() => setFolha(null)} onSaved={recarregar} />}
-      {folha?.tipo === "sessao" && <SessaoSheet organizationId={organizationId} eventoId={evento.id} locais={locais} sessao={folha.sessao} podeApagar={evento.situacao === "rascunho"} onClose={() => setFolha(null)} onSaved={recarregar} onNovoLocal={() => setFolha({ tipo: "local" })} />}
+      {folha?.tipo === "sessao" && <SessaoSheet organizationId={organizationId} eventoId={evento.id} locais={locais} salas={salas} sessao={folha.sessao} podeApagar={evento.situacao === "rascunho"} onClose={() => setFolha(null)} onSaved={recarregar} onNovoLocal={() => setFolha({ tipo: "local" })} />}
       {folha?.tipo === "local" && <LocalSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} onClose={() => setFolha({ tipo: "sessao" })} onSaved={() => recarregar()} />}
     </div>
   );

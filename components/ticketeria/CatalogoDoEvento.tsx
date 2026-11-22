@@ -1,5 +1,6 @@
 "use client";
 
+import { rotuloDoSetor, temVariasSalas, type SalaDoEspaco } from "@/lib/ticketeria/salas";
 import { useEffect, useMemo, useState } from "react";
 import { EyeOff, Plus } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
@@ -18,7 +19,7 @@ import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosE
 // O catálogo do evento (T3): os ingressos por setor e os lotes de cada um. Sem venda ainda (T5): os números são da oferta.
 
 type Local = { id: string; nome: string; fuso: string; arquivado: boolean };
-type Setor = { id: string; local_id: string; nome: string; lugares: number; arquivado: boolean };
+type Setor = { id: string; local_id: string; sala_id: string; nome: string; lugares: number; arquivado: boolean };
 type Ingresso = { id: string; setor_id: string; nome: string; categoria: CategoriaDoIngresso; limite_por_pedido: number; publico: boolean; ordem: number; arquivado: boolean; meia_de: string | null };
 type Lote = { id: string; ingresso_id: string; nome: string; ordem: number; preco_centavos: number; quantidade: number; vendas_inicio: string | null; vendas_fim: string | null };
 type SessaoDoEvento = { id: string; local_id: string; inicio: string; cancelada_em: string | null };
@@ -30,8 +31,8 @@ const PEQUENO = "h-8 rounded-xl px-2.5 text-[0.6875rem] font-normal text-black/5
 
 // ─── Folhas ─────────────────────────────────────────────────────────────────
 
-function IngressoSheet({ organizationId, eventoId, setores, locais, ingresso, meia, ordem, onClose, onSaved }: {
-  organizationId: string; eventoId: string; setores: Setor[]; locais: Local[]; ingresso?: Ingresso; /** A meia-entrada ligada a este ingresso, se já existe (ativa ou arquivada). */ meia?: Ingresso; ordem: number; onClose: () => void; onSaved: () => void;
+function IngressoSheet({ organizationId, eventoId, setores, locais, salas, ingresso, meia, ordem, onClose, onSaved }: {
+  organizationId: string; eventoId: string; setores: Setor[]; locais: Local[]; salas: SalaDoEspaco[]; ingresso?: Ingresso; /** A meia-entrada ligada a este ingresso, se já existe (ativa ou arquivada). */ meia?: Ingresso; ordem: number; onClose: () => void; onSaved: () => void;
 }) {
   const opcoes = setores.filter(setor => (!setor.arquivado && !locais.find(local => local.id === setor.local_id)?.arquivado) || setor.id === ingresso?.setor_id);
   const [setorId, setSetorId] = useState(ingresso?.setor_id ?? opcoes[0]?.id ?? "");
@@ -102,7 +103,7 @@ function IngressoSheet({ organizationId, eventoId, setores, locais, ingresso, me
         {opcoes.length === 0 ? (
           <p className="rounded-xl border border-black/[.08] px-3 py-3 text-[0.75rem] text-black/55">O ingresso é de um setor de um local. Cadastre o local e os setores em Configurações, na aba Espaços.</p>
         ) : (
-          <div><span className={ROTULO}>Setor</span><Dropdown ariaLabel="Setor do ingresso" value={setorId} onChange={setSetorId} disabled={salvando} options={opcoes.map(setor => ({ value: setor.id, label: `${locais.find(local => local.id === setor.local_id)?.nome ?? "Local"} · ${setor.nome}` }))} /></div>
+          <div><span className={ROTULO}>Setor</span><Dropdown ariaLabel="Setor do ingresso" value={setorId} onChange={setSetorId} disabled={salvando} options={opcoes.map(setor => ({ value: setor.id, label: rotuloDoSetor({ espaco: locais.find(local => local.id === setor.local_id)?.nome, sala: salas.find(sala => sala.id === setor.sala_id)?.nome, setor: setor.nome, variasSalas: temVariasSalas(salas, setor.local_id) }) }))} /></div>
         )}
         <div><span className={ROTULO}>Categoria</span><Dropdown ariaLabel="Categoria do ingresso" value={categoria} onChange={trocarCategoria} disabled={salvando} options={CATEGORIAS_DO_INGRESSO.map(c => ({ value: c, label: ROTULO_DA_CATEGORIA[c] }))} /></div>
         <div><label className={ROTULO} htmlFor="in-nome">Nome</label><input id="in-nome" autoFocus className={CAMPO} value={nome} onChange={e => setNome(e.target.value)} placeholder="Inteira" maxLength={120} disabled={salvando} /></div>
@@ -236,7 +237,7 @@ function LoteSheet({ organizationId, ingresso, fuso, lote, quantosLotes, sugesta
 
 /** Os ingressos do evento, agrupados por setor, com os lotes e os lugares de cada setor. */
 export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, podeEditar, onMudou }: { organizationId: string; eventoId: string; locaisDasSessoes: string[]; podeEditar: boolean; /** Avisa quando um ingresso ou lote (e o preço por sessão) é salvo. */ onMudou?: () => void }) {
-  const [dados, setDados] = useState<{ locais: Local[]; setores: Setor[]; ingressos: Ingresso[]; lotes: Lote[]; sessoes: SessaoDoEvento[]; precos: PrecoDaSessao[] } | null>(null);
+  const [dados, setDados] = useState<{ salas: SalaDoEspaco[]; locais: Local[]; setores: Setor[]; ingressos: Ingresso[]; lotes: Lote[]; sessoes: SessaoDoEvento[]; precos: PrecoDaSessao[] } | null>(null);
   const [folha, setFolha] = useState<Folha | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
@@ -246,11 +247,12 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
     let ativo = true;
     void (async () => {
       const ticketeria = clienteDaTicketeria(createClient());
-      const [lo, se, ing, ses] = await Promise.all([
+      const [lo, se, ing, ses, sa] = await Promise.all([
         ticketeria.from("ticketeria_locais").select("id, nome, fuso, arquivado").eq("organization_id", organizationId).order("nome"),
-        ticketeria.from("ticketeria_setores").select("id, local_id, nome, lugares, arquivado").eq("organization_id", organizationId).order("ordem").order("nome"),
+        ticketeria.from("ticketeria_setores").select("id, local_id, sala_id, nome, lugares, arquivado").eq("organization_id", organizationId).order("ordem").order("nome"),
         ticketeria.from("ticketeria_ingressos").select("id, setor_id, nome, categoria, limite_por_pedido, publico, ordem, arquivado, meia_de").eq("evento_id", eventoId).order("ordem"),
         ticketeria.from("ticketeria_sessoes").select("id, local_id, inicio, cancelada_em").eq("evento_id", eventoId).order("inicio"),
+        ticketeria.from("ticketeria_salas").select("id, local_id, nome, ordem, arquivado").eq("organization_id", organizationId),
       ]);
       const ids = (ing.data ?? []).map(ingresso => ingresso.id);
       const lt = ids.length > 0 ? await ticketeria.from("ticketeria_lotes").select("id, ingresso_id, nome, ordem, preco_centavos, quantidade, vendas_inicio, vendas_fim").in("ingresso_id", ids).order("ordem") : { data: [], error: null };
@@ -258,7 +260,7 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
       const loteIds = (lt.data ?? []).map(lote => lote.id);
       const pr = loteIds.length > 0 ? await ticketeria.from("ticketeria_precos_da_sessao").select("sessao_id, lote_id, preco_centavos").in("lote_id", loteIds) : { data: [], error: null };
       if (!ativo) return;
-      setDados({ locais: (lo.data ?? []) as Local[], setores: (se.data ?? []) as Setor[], ingressos: (ing.data ?? []) as Ingresso[], lotes: (lt.data ?? []) as Lote[], sessoes: (ses.data ?? []) as SessaoDoEvento[], precos: (pr.data ?? []) as PrecoDaSessao[] });
+      setDados({ salas: (sa.data ?? []) as SalaDoEspaco[], locais: (lo.data ?? []) as Local[], setores: (se.data ?? []) as Setor[], ingressos: (ing.data ?? []) as Ingresso[], lotes: (lt.data ?? []) as Lote[], sessoes: (ses.data ?? []) as SessaoDoEvento[], precos: (pr.data ?? []) as PrecoDaSessao[] });
       setErro(lo.error || se.error || ing.error || lt.error ? "Não foi possível carregar os ingressos. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
@@ -321,7 +323,7 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
           {grupos.map(({ setor, local, lugares, ingressos }) => (
             <div key={setor?.id ?? "sem-setor"} className="overflow-hidden rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b bg-black/[.015] px-4 py-2.5" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <p className="text-[0.75rem] font-normal text-[#282525]">{local?.nome ?? "Local"} · {setor?.nome ?? "Setor"}</p>
+                <p className="text-[0.75rem] font-normal text-[#282525]">{rotuloDoSetor({ espaco: local?.nome, sala: dados.salas.find(sala => sala.id === setor?.sala_id)?.nome, setor: setor?.nome ?? "Setor", variasSalas: temVariasSalas(dados.salas, setor?.local_id ?? "") })}</p>
                 {lugares !== null && <p className="text-[0.6875rem] tabular-nums text-black/50">{numero(lugares)} lugares para todos os ingressos</p>}
               </div>
               <ul className="divide-y divide-black/[.06]">
@@ -367,7 +369,7 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
           ))}
         </div>
       )}
-      {folha?.tipo === "ingresso" && dados && <IngressoSheet organizationId={organizationId} eventoId={eventoId} setores={setoresParaEscolher} locais={dados.locais} ingresso={folha.ingresso} meia={folha.ingresso ? dados.ingressos.find(outro => outro.meia_de === folha.ingresso?.id) : undefined} ordem={dados.ingressos.length} onClose={() => setFolha(null)} onSaved={recarregar} />}
+      {folha?.tipo === "ingresso" && dados && <IngressoSheet organizationId={organizationId} eventoId={eventoId} setores={setoresParaEscolher} locais={dados.locais} salas={dados.salas} ingresso={folha.ingresso} meia={folha.ingresso ? dados.ingressos.find(outro => outro.meia_de === folha.ingresso?.id) : undefined} ordem={dados.ingressos.length} onClose={() => setFolha(null)} onSaved={recarregar} />}
       {folha?.tipo === "lote" && dados && <LoteSheet organizationId={organizationId} ingresso={folha.ingresso} fuso={fusoDo(folha.ingresso)} lote={folha.lote} quantosLotes={dados.lotes.filter(lote => lote.ingresso_id === folha.ingresso.id).length} sugestao={sugestaoDaMeia(folha.ingresso)} sessoes={dados.sessoes.filter(s => !s.cancelada_em && Date.parse(s.inicio) > Date.now())} precosDoLote={folha.lote ? dados.precos.filter(p => p.lote_id === folha.lote?.id) : []} onClose={() => setFolha(null)} onSaved={recarregar} />}
     </section>
   );

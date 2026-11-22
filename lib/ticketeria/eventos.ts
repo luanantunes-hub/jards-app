@@ -198,5 +198,11 @@ export function mensagemDoErroDoEvento(erro: { code?: string; message?: string }
   if (m.includes("sessao_de_evento_publicado")) return "Sessão de evento publicado não se apaga: cancele-a.";
   if (m.includes("ticketeria_sessoes_local_id_fkey")) return "Esse local tem sessões e não se apaga: arquive-o.";
   if (m.includes("ticketeria_setores_nome_key")) return "Já existe um setor com esse nome neste local.";
+  if (m.includes("ticketeria_setores_sala_nome_key")) return "Já existe um setor com esse nome nesta sala.";
+  if (m.includes("ticketeria_salas_nome_key")) return "Já existe uma sala com esse nome neste espaço.";
+  if (m.includes("sala_unica")) return "O espaço precisa de ao menos uma sala em uso.";
+  if (m.includes("sala_arquivada")) return "Essa sala está arquivada. Escolha outra ou tire-a do arquivo.";
+  if (m.includes("sala_incoerente")) return "Essa sala não é deste espaço. Escolha uma sala do espaço.";
+  if (m.includes("ticketeria_sessoes_sala_id_fkey") || m.includes("ticketeria_setores_sala_id_fkey")) return "Essa sala tem sessões ou setores e não se apaga: arquive-a.";
   return "Não foi possível salvar. Tente de novo.";
 }

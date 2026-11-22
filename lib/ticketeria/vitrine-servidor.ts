@@ -24,7 +24,7 @@ export async function siteDaLoja(admin: Admin, lojaId: string): Promise<{ titulo
 /** A vitrine de uma sessão para quem compra (sem login: o servidor lê com a chave de serviço e só devolve o que se pode mostrar). Nula se a sessão não existe. */
 export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: number = Date.now()): Promise<VitrineDaSessao | null> {
   const t = clienteDaTicketeria(admin);
-  const { data: sessao } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").eq("id", sessaoId).maybeSingle();
+  const { data: sessao } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, cancelada_em").eq("id", sessaoId).maybeSingle();
   if (!sessao) return null;
   const [{ data: evento }, { data: local }] = await Promise.all([
     t.from("ticketeria_eventos").select("id, loja_id, titulo, descricao, classificacao, situacao").eq("id", sessao.evento_id).maybeSingle(),
@@ -44,7 +44,7 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
   };
   if (estado !== "aberta") return vitrine;
 
-  const { data: setores } = await t.from("ticketeria_setores").select("id, nome, numerado, lugares").eq("local_id", sessao.local_id);
+  const { data: setores } = await t.from("ticketeria_setores").select("id, nome, numerado, lugares").eq("sala_id", sessao.sala_id);
   const { data: ingressos } = await t.from("ticketeria_ingressos").select("id, nome, descricao, limite_por_pedido, setor_id, ordem, created_at")
     .eq("evento_id", evento.id).eq("publico", true).eq("arquivado", false).in("setor_id", (setores ?? []).map(s => s.id)).order("ordem").order("created_at");
   const ids = (ingressos ?? []).map(i => i.id);
