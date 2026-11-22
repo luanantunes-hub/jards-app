@@ -6,6 +6,8 @@ import { TopSheet } from "@/components/ui/TopSheet";
 import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 import { PONTOS_DO_ACEITE, REGRA_PADRAO, lerRegraDaTela } from "@/lib/ticketeria/preco-dinamico";
 import { PrecoDinamicoView, horasDe, pctDe } from "@/components/ticketeria/PrecoDinamicoView";
+import { EvidenciasDoPrecoDinamico } from "@/components/ticketeria/EvidenciasDoPrecoDinamico";
+import { FAIXAS_PRONTAS } from "@/lib/ticketeria/preco-dinamico-evidencias";
 import type { FatorDaSessao, RegraDoEvento } from "@/lib/ticketeria/preco-dinamico-servidor";
 
 // A adesão do evento ao preço dinâmico (plano da Ticketeria, seção 11, P2b). Só aparece quando a plataforma liberou o recurso (o texto do aceite ainda é um rascunho para o advogado).
@@ -24,6 +26,7 @@ function AdesaoSheet({ lojaId, eventoId, regra, onClose, onSaved }: { lojaId: st
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const ligado = regra?.ativo === true;
+  const lida = lerRegraDaTela({ piso, teto, passo, intervaloHoras: horas });
 
   async function gravar(ativo: boolean, fechar: () => void) {
     const leitura = lerRegraDaTela({ piso, teto, passo, intervaloHoras: horas });
@@ -50,6 +53,16 @@ function AdesaoSheet({ lojaId, eventoId, regra, onClose, onSaved }: { lojaId: st
     <TopSheet titulo={ligado ? "Preço dinâmico: configurar" : "Aderir ao preço dinâmico"} onClose={onClose} footer={fechar => <Rodape fechar={fechar} salvando={salvando} rotulo={ligado ? "Salvar" : "Ligar"} onSalvar={() => void gravar(true, fechar)} onApagar={ligado ? () => void gravar(false, fechar) : undefined} rotuloApagar="Desligar" arquivar />}>
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
+        <div>
+          <p className={ROTULO}>Faixas prontas</p>
+          <div className="flex flex-wrap gap-2">
+            {FAIXAS_PRONTAS.map(f => (
+              <button key={f.nome} type="button" disabled={salvando} onClick={() => { setPiso(f.piso); setTeto(f.teto); setPasso(f.passo); setHoras(f.horas); }} className="rounded-xl border border-black/15 px-3 py-1.5 text-[0.75rem] text-[#282525] hover:bg-black/[.04] disabled:opacity-50">
+                {f.nome} <span className="text-black/45">−{f.piso}% a +{f.teto}%</span>
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div><label className={ROTULO} htmlFor="pd-piso">Pode baixar até (%)</label><input id="pd-piso" inputMode="decimal" className={CAMPO} value={piso} onChange={e => setPiso(e.target.value)} disabled={salvando} /></div>
           <div><label className={ROTULO} htmlFor="pd-teto">Pode subir até (%)</label><input id="pd-teto" inputMode="decimal" className={CAMPO} value={teto} onChange={e => setTeto(e.target.value)} disabled={salvando} /></div>
@@ -57,6 +70,7 @@ function AdesaoSheet({ lojaId, eventoId, regra, onClose, onSaved }: { lojaId: st
           <div><label className={ROTULO} htmlFor="pd-horas">No máximo a cada (horas)</label><input id="pd-horas" inputMode="decimal" className={CAMPO} value={horas} onChange={e => setHoras(e.target.value)} disabled={salvando} /></div>
         </div>
         <p className="text-[0.75rem] text-black/55">As porcentagens são sobre o preço-base (o do lote, ou o que você pôs para a sessão).</p>
+        <EvidenciasDoPrecoDinamico faixa={lida.ok ? lida : null} />
         <div className="rounded-xl border border-black/[.08] px-4 py-3">
           <p className="mb-2 text-[0.75rem] font-normal text-[#282525]">Antes de ligar</p>
           <ul className="list-disc space-y-1.5 pl-4 text-[0.75rem] text-black/60">{PONTOS_DO_ACEITE.map(ponto => <li key={ponto}>{ponto}</li>)}</ul>

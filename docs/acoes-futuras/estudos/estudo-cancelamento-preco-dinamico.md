@@ -51,7 +51,43 @@ Para cada 100 compras: **e** parte que comprou antes de uma queda, **a** parte d
 5. **Um freio automático:** pausar o preço dinâmico de um evento quando a razão de reembolso ou disputa passar de um limite que o dono escolher.
 6. **Garantia de preço só para quem pedir** (devolver a diferença dentro de 7 dias): no cenário médio custa ~0,07% da receita, contra ~3% se devolvêssemos a todos. É decisão de produto e de advogado.
 
-## 6. Fontes
+## 6. Modelo v2: o que a literatura acrescenta (22/11/2026)
+
+O modelo das seções 3 e 4 mede **só um canal**, o vazamento (devolução e disputa). Os estudos que o dono pediu para incorporar apontam mais três. O saldo do preço dinâmico para o produtor, por setor, passa a ser:
+
+> **Saldo = G − V − E − R**, em % da receita do setor.
+
+| Canal | O que é | O que a literatura diz | Número público |
+|---|---|---|---|
+| **G** (ganho) | Receita a mais do que com preço único | Courty e Pagliero (2012): ~5% por categorias de assento em shows. Sweeting (2012): ~16% no ganho esperado de vendedores de ingresso de beisebol em revenda, com preços 40% ou mais menores perto do jogo | **5% a 16%**, de contextos diferentes |
+| **V** (vazamento) | Devolução, cancelamento e chargeback por queda de preço | Sem estudo medido. Cohen-Vernik e Pazgal (2017): devolver a diferença numa janela curta pode aumentar o lucro num modelo teórico | **Nenhum.** Nosso modelo: 0,07% a 3% da receita (seção 4, suposições) |
+| **E** (espera) | Compradores que adiam a compra esperando a queda | Su (2007), Aviv e Pazgal (2008), Levin, McGill e Nediak (2009): ignorar esse comportamento pode reduzir a receita seriamente | **Nenhum** para ingressos |
+| **R** (recompra perdida) | Quem pagou mais e viu o preço menor compra menos depois | Anderson e Simester (2010): experimento de 28 meses, mais de 50 mil clientes, queda de compras por cerca de 20 meses, maior nos melhores clientes (catálogo, não ingresso) | **Nenhum** para ingressos |
+
+**O que isso muda no modelo**
+1. **Compensa enquanto V + E + R < G.** Com G = 5%, o conjunto das três perdas precisa ficar abaixo de 5% da receita; com G = 16%, abaixo de 16%. Como não há número público para E e R em ingressos, o modelo **não os preenche**: eles ficam como incógnitas a medir nas vendas do Jards.
+2. **A faixa escolhida define a exposição.** A queda máxima entre o preço mais alto e o piso é conta direta, sem suposição:
+
+| Faixa pronta | Pior queda para quem comprou no teto | Queda de um passo | Passos até o piso | Tempo mínimo até o piso |
+|---|---|---|---|---|
+| Estreita (−10% a +10%, passo de 5%, 6 h) | 18,2% | 4,5% | 4 | 24 h |
+| Intermediária (−20% a +30%, passo de 10%, 6 h) | 38,5% | 7,7% | 5 | 30 h |
+| Ampla (−30% a +50%, passo de 10%, 6 h) | 53,3% | 6,7% | 8 | 48 h |
+
+   É uma **hipótese** (não um achado) que faixas mais largas aumentem V e R; nenhum dos estudos testa isso em ingressos.
+3. **Regra de últimas 48 h só baixa** pode ensinar o público a esperar (E). É a primeira coisa a medir.
+
+## 7. Como medir, em vez de supor
+
+Ligar o preço dinâmico em alguns setores e sessões e manter preço fixo em outros do mesmo evento ou de eventos parecidos do mesmo produtor. Por grupo: pedidos de reembolso e motivo, chargebacks, **hora da compra em relação à sessão** (espera) e recompra do mesmo comprador em eventos seguintes (recompra perdida). Só com isso as taxas da seção 4 e os canais E e R deixam de ser suposição.
+
+## 8. O que o produtor vê (no produto)
+
+Na folha **Aderir ao preço dinâmico**, antes do aceite: (a) **faixas prontas** (Estreita, Intermediária, Ampla) que só preenchem os campos, sem tirar a liberdade de digitar qualquer valor dentro dos limites; (b) a frase da **exposição da faixa** escolhida, atualizada enquanto ele digita; (c) o bloco **O que a literatura registra**, com quatro grupos (ganhos estimados, riscos registrados, o que a literatura associa a menos risco, sem medição pública), cada item com a fonte e o link, em tom neutro, sem recomendar nem desaconselhar. Código: `lib/ticketeria/preco-dinamico-evidencias.ts` e `components/ticketeria/EvidenciasDoPrecoDinamico.tsx`. O texto do aceite (rascunho para o advogado) não mudou.
+
+**Limite deste levantamento:** os números dos estudos vêm de resumos e páginas dos artigos; os artigos completos, quando pagos, não foram lidos. Revisar este bloco quando houver dado real das vendas.
+
+## 9. Fontes
 
 - Consumer Scotland, relatório sobre preço dinâmico (out/2024): https://consumer.scot/media/anslxeui/dynamic-pricing-a-consumer-scotland-insight-report-october-2024.pdf
 - Which?, preço dinâmico: https://www.which.co.uk/news/article/dynamic-pricing-how-does-it-work-is-it-legal-aJJzK5F74ZP8
@@ -60,3 +96,9 @@ Para cada 100 compras: **e** parte que comprou antes de uma queda, **a** parte d
 - Visa VAMP, limites: https://support.checkout.com/hc/en-us/articles/23330844282514 e https://docs.solidgate.com/risks/monitoring-programs/visa/
 - Idec, direitos na compra de ingresso: https://idec.org.br/dicas-e-direitos/vai-comprar-ingresso-pela-internet-saiba-quais-sao-seus-direitos
 - Procon-MPMG x Sympla (taxa de conveniência): https://www.mpmg.mp.br/data/files/21/95/05/46/AEE9C9103E1129C9B9A8F9C2/Dec%20Adm_CDC_Retencao%20da%20taxa%20de%20conveniencia_anonymous.pdf
+- Anderson e Simester (2010), Price Stickiness and Customer Antagonism, QJE: https://dspace.mit.edu/handle/1721.1/58801
+- Courty e Pagliero (2012), Review of Economics and Statistics: https://econpapers.repec.org/RePEc:tpr:restat:v:94:y:2012:i:1:p:359-369
+- Sweeting (2012), Journal of Political Economy: https://www.econ.umd.edu/publication/price-dynamics-perishable-goods-markets-case-secondary-markets-major-league-baseball
+- Levin, McGill e Nediak (2009), Management Science: https://ideas.repec.org/a/inm/ormnsc/v55y2009i1p32-46.html
+- Su (2007), Intertemporal Pricing with Strategic Customer Behavior: https://repository.upenn.edu/oid_papers/153
+- Resumo do Cohen-Vernik e Pazgal (2017) pela Rice Business: https://business.rice.edu/wisdom/peer-reviewed-research/how-price-adjusting-eases-consumer-regrets-while-boosting-profit
