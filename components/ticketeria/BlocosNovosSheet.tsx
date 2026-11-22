@@ -1,12 +1,12 @@
 "use client";
 
 import { useId, useState } from "react";
-import { CalendarClock, Clock, Columns2, HelpCircle, Image as IconeImagem, ImagePlus, LayoutGrid, MapPin, MousePointerClick, Phone, Play, Store, Ticket, Type, AlignLeft, CalendarDays, Plus, Trash2, type LucideIcon } from "lucide-react";
+import { WalletCards, CalendarClock, Clock, Columns2, HelpCircle, Image as IconeImagem, ImagePlus, LayoutGrid, MapPin, MousePointerClick, Phone, Play, Store, Ticket, Type, AlignLeft, CalendarDays, Plus, Trash2, type LucideIcon } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Aviso, AREA, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 import { CampoDeImagem } from "@/components/ticketeria/CampoDeImagem";
 import { instanteNoFuso, partesNoFuso } from "@/lib/ticketeria/eventos";
-import { GRUPOS_DE_BLOCOS, LAYOUTS_DO_DESTAQUE, LAYOUT_PADRAO_DO_DESTAQUE, MAX_SLIDES_DO_DESTAQUE, ROTULO_DO_LAYOUT_DO_DESTAQUE, type LayoutDoDestaque, type SlideDoDestaque, LAYOUTS_DA_AGENDA, LAYOUT_PADRAO_DA_AGENDA, ROTULO_DO_LAYOUT_DA_AGENDA, ROTULO_DO_TIPO_DE_BLOCO, lerBloco, type Bloco, type LayoutDaAgenda, type TipoDeBloco } from "@/lib/ticketeria/site";
+import { BLOCOS_EM_BREVE, GRUPOS_DE_BLOCOS, LAYOUTS_DO_DESTAQUE, LAYOUT_PADRAO_DO_DESTAQUE, MAX_SLIDES_DO_DESTAQUE, ROTULO_DO_LAYOUT_DO_DESTAQUE, type LayoutDoDestaque, type SlideDoDestaque, LAYOUTS_DA_AGENDA, LAYOUT_PADRAO_DA_AGENDA, ROTULO_DO_LAYOUT_DA_AGENDA, ROTULO_DO_TIPO_DE_BLOCO, lerBloco, type Bloco, type LayoutDaAgenda, type TipoDeBloco } from "@/lib/ticketeria/site";
 
 // O seletor "Acrescentar bloco" (blocos em três grupos) e as folhas dos blocos novos do construtor (capa, duas colunas, galeria, vídeo, mapa, contagem regressiva, perguntas e patrocinadores).
 // Desenho aprovado pelo dono em 20/11/2026. Os blocos antigos seguem na folha de EditorDoSite.tsx.
@@ -49,8 +49,26 @@ export function AcrescentarBlocoSheet({ temEspacos, temEventos, onEscolher, onCl
             </section>
           );
         })}
+        <BlocosEmBreve />
       </div>
     </TopSheet>
+  );
+}
+
+/** O grupo "Em breve" do seletor: os blocos que ainda vão ser criados (o passe na carteira do celular), desabilitados. */
+export function BlocosEmBreve() {
+  return (
+    <section aria-label="Em breve">
+      <h3 className="mb-1.5 text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Em breve</h3>
+      <div className="grid grid-cols-3 gap-1.5">
+        {BLOCOS_EM_BREVE.map(b => (
+          <button key={b.id} type="button" disabled aria-disabled="true" className="flex min-h-[4.25rem] cursor-not-allowed flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-black/[.14] bg-transparent px-1.5 py-2 text-center text-[0.75rem] text-black/40">
+            <WalletCards size={17} aria-hidden="true" className="text-black/35" />
+            <span>{b.rotulo}</span>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 

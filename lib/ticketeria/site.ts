@@ -45,6 +45,15 @@ export const GRUPOS_DE_BLOCOS: { titulo: string; tipos: readonly TipoDeBloco[] }
   { titulo: "Venda e confiança", tipos: ["ingressos", "agenda", "botao", "contagem", "faq", "patrocinadores", "programacao"] },
 ];
 
+/**
+ * Blocos já previstos que ainda não existem: aparecem no seletor "Acrescentar bloco" desabilitados, com o título "Em breve". Não são tipos de bloco
+ * (não entram em TIPOS_DE_BLOCO nem no banco). São o passe do ingresso na carteira do celular: "Adicionar à Google Wallet" e "Adicionar à Apple Wallet".
+ */
+export const BLOCOS_EM_BREVE: readonly { id: "google_wallet" | "apple_wallet"; rotulo: string }[] = [
+  { id: "google_wallet", rotulo: "Google Wallet" },
+  { id: "apple_wallet", rotulo: "Apple Wallet" },
+];
+
 /** Uma das duas colunas do bloco "Duas colunas": um texto ou uma imagem. */
 export type ColunaDoBloco = { tipo: "texto"; texto: string } | { tipo: "imagem"; url: string; alt: string };
 export type ImagemDaGaleria = { url: string; alt: string };
