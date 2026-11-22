@@ -125,5 +125,23 @@ export function mensagemDoErroDoCatalogo(erro: { code?: string; message?: string
   if (m.includes("setor_arquivado")) return "Esse setor está arquivado. Escolha outro.";
   if (m.includes("evento_cancelado")) return "O evento está cancelado e não muda mais.";
   if (m.includes("ticketeria_ingressos_setor_id_fkey")) return "Esse setor tem ingressos e não se apaga: arquive-o.";
+  if (m.includes("meia_acompanha_a_inteira")) return "A meia não tem preço próprio por sessão: ela vale metade do preço da inteira.";
+  if (m.includes("lote_de_outro_evento") || m.includes("preco_da_sessao_de_outra_organizacao")) return "Esse lote não é deste evento.";
   return "Não foi possível salvar. Tente de novo.";
+}
+
+/**
+ * Os preços por sessão digitados no lote (plano da Ticketeria, seção 11, P0): sessão → preço em centavos, ou null quando o campo está em branco
+ * (a sessão volta a cobrar o preço do lote). Mesmos limites do preço do lote: mais que zero e até R$ 100.000.
+ */
+export function lerPrecosDaSessao(campos: Readonly<Record<string, string>>): { ok: true; precos: Map<string, number | null> } | { ok: false; erro: string; sessao: string } {
+  const precos = new Map<string, number | null>();
+  for (const [sessao, bruto] of Object.entries(campos)) {
+    if (texto(bruto) === "") { precos.set(sessao, null); continue; }
+    const reais = lerValorEmReais(bruto);
+    if (reais === null || reais <= 0) return { ok: false, erro: "Escreva o preço da sessão em reais, como 50 ou 25,50, ou deixe em branco.", sessao };
+    if (reais > 100000) return { ok: false, erro: "O preço vai até R$ 100.000.", sessao };
+    precos.set(sessao, emCentavos(reais));
+  }
+  return { ok: true, precos };
 }
