@@ -5,6 +5,7 @@ import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria, type ClienteDaTicketeria } from "@/lib/ticketeria/cliente";
+import { salaDaSessao, salasDoEspaco, type SalaDoEspaco } from "@/lib/ticketeria/salas";
 import { CLASSIFICACOES_INDICATIVAS } from "@/lib/ticketeria/estados";
 import {
   FUSOS_DO_BRASIL, UFS, ROTULO_DA_CLASSIFICACAO, lerEvento, lerLocal, lerSessao, mensagemDoErroDoEvento, partesNoFuso,
@@ -96,10 +97,10 @@ export function EventoSheet({ organizationId, nomeDaOrganizacao, evento, onClose
 // ─── Sessão ─────────────────────────────────────────────────────────────────
 
 export type LocalDaSessao = { id: string; nome: string; fuso: string; arquivado: boolean };
-export type SessaoEditavel = { id: string; local_id: string; inicio: string; fim: string | null; abertura_portas: string | null };
+export type SessaoEditavel = { id: string; local_id: string; sala_id: string; inicio: string; fim: string | null; abertura_portas: string | null };
 
-export function SessaoSheet({ organizationId, eventoId, locais, sessao, podeApagar, onClose, onSaved, onNovoLocal }: {
-  organizationId: string; eventoId: string; locais: LocalDaSessao[]; sessao?: SessaoEditavel; podeApagar: boolean;
+export function SessaoSheet({ organizationId, eventoId, locais, salas = [], sessao, podeApagar, onClose, onSaved, onNovoLocal }: {
+  organizationId: string; eventoId: string; locais: LocalDaSessao[]; /** As salas dos espaços: com mais de uma no espaço, a sessão escolhe a sala. */ salas?: SalaDoEspaco[]; sessao?: SessaoEditavel; podeApagar: boolean;
   onClose: () => void; onSaved: () => void; onNovoLocal: () => void;
 }) {
   const emUso = locais.filter(local => !local.arquivado || local.id === sessao?.local_id);
@@ -115,6 +116,10 @@ export function SessaoSheet({ organizationId, eventoId, locais, sessao, podeApag
 
   // O local recém-criado (pela própria folha) chega depois que a folha abriu: sem escolha, vale o primeiro em uso.
   const localEscolhido = localId || emUso[0]?.id || "";
+  const [salaId, setSalaId] = useState(sessao?.sala_id ?? "");
+  const salasDoLocal = salasDoEspaco(salas, localEscolhido, sessao?.sala_id);
+  // A sala escolhida vale se for do espaço; senão (espaço trocado, ou ainda sem escolha) a primeira em uso.
+  const salaEscolhida = salaDaSessao(salas, localEscolhido, salaId);
 
   async function salvar(fechar: () => void) {
     const local = locais.find(item => item.id === localEscolhido);
@@ -125,8 +130,8 @@ export function SessaoSheet({ organizationId, eventoId, locais, sessao, podeApag
     setErro(null);
     const ticketeria = clienteDaTicketeria(createClient());
     const { error } = sessao
-      ? await ticketeria.from("ticketeria_sessoes").update({ local_id: localEscolhido, ...leitura.valor }).eq("id", sessao.id)
-      : await ticketeria.from("ticketeria_sessoes").insert({ organization_id: organizationId, evento_id: eventoId, local_id: localEscolhido, ...leitura.valor });
+      ? await ticketeria.from("ticketeria_sessoes").update({ local_id: localEscolhido, ...(salaEscolhida ? { sala_id: salaEscolhida } : {}), ...leitura.valor }).eq("id", sessao.id)
+      : await ticketeria.from("ticketeria_sessoes").insert({ organization_id: organizationId, evento_id: eventoId, local_id: localEscolhido, ...(salaEscolhida ? { sala_id: salaEscolhida } : {}), ...leitura.valor });
     setSalvando(false);
     if (error) { setErro(mensagemDoErroDoEvento(error)); return; }
     onSaved();
@@ -154,6 +159,7 @@ export function SessaoSheet({ organizationId, eventoId, locais, sessao, podeApag
         ) : (
           <div><span className={ROTULO}>Local</span><Dropdown ariaLabel="Local da sessão" value={localEscolhido} onChange={setLocalId} disabled={salvando} options={emUso.map(local => ({ value: local.id, label: local.nome }))} /></div>
         )}
+        {salasDoLocal.length > 1 && <div><span className={ROTULO}>Sala</span><Dropdown ariaLabel="Sala da sessão" value={salaEscolhida} onChange={setSalaId} disabled={salvando} options={salasDoLocal.map(sala => ({ value: sala.id, label: sala.arquivado ? `${sala.nome} (arquivada)` : sala.nome }))} /></div>}
         <div className="grid gap-3 sm:grid-cols-2">
           <div><label className={ROTULO} htmlFor="se-dia">Dia</label><input id="se-dia" type="date" autoFocus className={CAMPO} value={dia} onChange={e => setDia(e.target.value)} disabled={salvando} /></div>
           <div><label className={ROTULO} htmlFor="se-hora">Início</label><input id="se-hora" type="time" className={CAMPO} value={hora} onChange={e => setHora(e.target.value)} disabled={salvando} /></div>

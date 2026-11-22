@@ -12,7 +12,7 @@ import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosE
 export type SetorEditavel = { id: string; nome: string; lugares: number; arquivado: boolean; numerado: boolean; corredor_no_meio: boolean };
 
 /** A folha do setor: nome, e a quantidade de lugares ou, com a chave "Lugares numerados", o mapa de fileiras e lugares (montado num editor próprio). */
-export function SetorSheet({ organizationId, localId, nomeDoLocal, setor, onClose, onSaved }: { organizationId: string; localId: string; nomeDoLocal?: string; setor?: SetorEditavel; onClose: () => void; onSaved: () => void }) {
+export function SetorSheet({ organizationId, localId, salaId, nomeDoLocal, setor, onClose, onSaved }: { organizationId: string; localId: string; /** A sala do setor novo; sem ela, vale a primeira sala em uso do espaço. */ salaId?: string; nomeDoLocal?: string; setor?: SetorEditavel; onClose: () => void; onSaved: () => void }) {
   const [nome, setNome] = useState(setor?.nome ?? "");
   const [lugares, setLugares] = useState(setor ? String(setor.lugares) : "");
   const [numerado, setNumerado] = useState(setor?.numerado ?? false);
@@ -46,7 +46,7 @@ export function SetorSheet({ organizationId, localId, nomeDoLocal, setor, onClos
     const campos = numerado ? { nome: leitura.valor.nome, numerado: true } : { ...leitura.valor, numerado: false };
     const { error } = setor
       ? await ticketeria.from("ticketeria_setores").update({ ...campos, ...mudanca }).eq("id", setor.id)
-      : await ticketeria.from("ticketeria_setores").insert({ organization_id: organizationId, local_id: localId, ...leitura.valor });
+      : await ticketeria.from("ticketeria_setores").insert({ organization_id: organizationId, local_id: localId, ...(salaId ? { sala_id: salaId } : {}), ...leitura.valor });
     setSalvando(false);
     if (error) { setErro(error.message?.includes("mapa_") ? mensagemDoErroDoMapa(error) : mensagemDoErroDoEvento(error)); return; }
     onSaved();

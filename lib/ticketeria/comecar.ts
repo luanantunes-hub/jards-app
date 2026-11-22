@@ -61,6 +61,8 @@ export type RespostasDoComecar = {
   evento: string;
   /** As praças. O nome do espaço (perfil "espaço") fica em `pracas[0].lugar`; nos outros perfis, `lugar` é o nome do lugar (opcional). */
   pracas: Praca[];
+  /** As salas do espaço (só no perfil "espaço"): um nome por sala, na ordem; tamanho = quantas salas. Nome vazio vale o padrão ("Sala única" se for uma só, "Sala 1", "Sala 2"...). */
+  salas: string[];
   lugares: string;
   hora: string; // HH:MM, o mesmo em todas as datas
   /** Lugares numerados: null enquanto a pessoa não respondeu. */
@@ -85,10 +87,11 @@ export type RespostasDoComecar = {
 };
 
 export const RESPOSTAS_VAZIAS: RespostasDoComecar = {
-  perfil: null, evento: "", pracas: [praca()], lugares: "", hora: "20:00", numerada: null, mapa: null, mapaDeLugares: 0, porFileira: "", corredor: true, gratuito: null, venda: [], preco: "", meia: null,
+  perfil: null, evento: "", pracas: [praca()], salas: [""], lugares: "", hora: "20:00", numerada: null, mapa: null, mapaDeLugares: 0, porFileira: "", corredor: true, gratuito: null, venda: [], preco: "", meia: null,
 };
 
 export const MAX_PRACAS = 20;
+export const MAX_SALAS = 12;
 export const MAX_DATAS_POR_PRACA = 60;
 export const MAX_SESSOES = 200;
 
@@ -101,7 +104,7 @@ export const VENDAS: { id: VendaDoEvento; rotulo: string; dica: string }[] = [
   { id: "online", rotulo: "Online", dica: "Pelo site, com pagamento na hora." },
 ];
 
-export type PassoId = "perfil" | "nome" | "onde" | "evento" | "data" | "outra" | "horario" | "numerada" | "lugares" | "auditorio" | "gratuito" | "preco" | "meia" | "venda";
+export type PassoId = "perfil" | "nome" | "salas" | "onde" | "evento" | "data" | "outra" | "horario" | "numerada" | "lugares" | "auditorio" | "gratuito" | "preco" | "meia" | "venda";
 /** Um passo e, nos que se repetem por cidade (onde, data, outra), qual é a praça. */
 export type Passo = { id: PassoId; praca: number };
 
@@ -123,6 +126,7 @@ export function pracasEfetivas(perfil: PerfilDoProdutor | null, pracas: readonly
  */
 export function passosDoComecar(perfil: PerfilDoProdutor | null, pracas: readonly Praca[], numerada: boolean | null, gratuito: boolean | null): Passo[] {
   const lista: Passo[] = [{ id: "perfil", praca: 0 }, { id: "nome", praca: 0 }];
+  if (perfil === "espaco") lista.push({ id: "salas", praca: 0 });
   const cidades = pracasEfetivas(perfil, pracas.length ? pracas : [praca()]);
   cidades.forEach((_, i) => {
     lista.push({ id: "onde", praca: i });
@@ -165,6 +169,13 @@ export function conferirPasso(passo: Passo, r: RespostasDoComecar, hoje: string 
     const nome = (r.perfil === "espaco" ? r.pracas[0]?.lugar ?? "" : r.evento).trim();
     if (!nome) return r.perfil === "espaco" ? "Diga o nome do espaço" : "Dê um nome ao evento";
     if (nome.length > 200) return "O nome pode ter até 200 caracteres";
+    return null;
+  }
+  if (id === "salas") {
+    if (r.salas.length < 1 || r.salas.length > MAX_SALAS) return `São de 1 a ${MAX_SALAS} salas`;
+    if (r.salas.some(nome => nome.trim().length > 120)) return "O nome da sala pode ter até 120 caracteres";
+    const nomes = nomesDasSalas(r.salas).map(nome => nome.toLowerCase());
+    if (new Set(nomes).size !== nomes.length) return "Duas salas têm o mesmo nome";
     return null;
   }
   if (id === "onde") {
@@ -213,6 +224,9 @@ export function conferirPasso(passo: Passo, r: RespostasDoComecar, hoje: string 
   if (centavos > 10000000) return "O preço pode ir até R$ 100.000";
   return null;
 }
+
+/** Os nomes das salas como vão para o banco: o que a pessoa digitou ou, em branco, "Sala única" (uma só) ou "Sala 1", "Sala 2"... */
+export const nomesDasSalas = (salas: readonly string[]): string[] => salas.map((nome, i) => nome.trim() || (salas.length === 1 ? "Sala única" : `Sala ${i + 1}`));
 
 /** Quantas sessões (datas em cidades) o evento vai ter. */
 export const totalDeSessoes = (r: RespostasDoComecar) => pracasEfetivas(r.perfil, r.pracas).reduce((t, p) => t + p.datas.length, 0);

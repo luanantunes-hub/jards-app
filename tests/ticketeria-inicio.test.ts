@@ -23,8 +23,8 @@ const entrada: EntradaDasVendas = {
     pedido("7", "pago", 4000, "2026-06-05T12:00:00.000Z", "2026-06-05T12:01:00.000Z", "d@exemplo.com"),   // meses atrás
   ],
   quantidadePorPedido: { "1": 3, "2": 1, "3": 2, "4": 1, "5": 2, "6": 1, "7": 1 },
-  sessoes: [{ id: "s1", evento_id: "e1", local_id: "l1", inicio: "2026-11-21T23:00:00.000Z", cancelada_em: null }],
-  tituloDoEvento: { e1: "Hamlet" }, fusoDoLocal: { l1: "America/Sao_Paulo" }, lugaresDoLocal: { l1: 10 },
+  sessoes: [{ id: "s1", evento_id: "e1", local_id: "l1", sala_id: "sa1", inicio: "2026-11-21T23:00:00.000Z", cancelada_em: null }],
+  tituloDoEvento: { e1: "Hamlet" }, fusoDoLocal: { l1: "America/Sao_Paulo" }, lugaresDaSala: { sa1: 10 },
   emitidos: [],
   reembolsos: [{ id: "r1", pedido_id: "6", remetente: "c@exemplo.com", recebido_em: "2026-11-13T10:00:00.000Z", situacao: "estornado", valor_centavos: 3000 }],
   liberadoCentavos: 1000, sacadoCentavos: 500, agora: AGORA,

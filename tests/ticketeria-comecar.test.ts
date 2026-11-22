@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import {
-  MAX_DATAS_POR_PRACA, MAX_PRACAS, MAX_SESSOES, PERFIL, PERFIS, RESPOSTAS_VAZIAS, UFS_DO_COMECAR, argumentosDoComecar, auditorioInicial, lugaresParaVender, centavosDe, conferirPasso, divisaoDosLugares, mapaDoAuditorio, mensagemDoErroDoComecar, nomeDoLocal, ondeDaPraca, passosDoComecar, praca, pracasEfetivas, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
+  MAX_DATAS_POR_PRACA, MAX_PRACAS, MAX_SALAS, MAX_SESSOES, PERFIL, PERFIS, RESPOSTAS_VAZIAS, UFS_DO_COMECAR, argumentosDoComecar, auditorioInicial, lugaresParaVender, centavosDe, conferirPasso, divisaoDosLugares, mapaDoAuditorio, mensagemDoErroDoComecar, nomeDoLocal, nomesDasSalas, ondeDaPraca, passosDoComecar, praca, pracasEfetivas, precoDaMeia, sugestaoPorFileira, totalDeSessoes,
   type Passo, type PassoId, type Praca, type RespostasDoComecar,
 } from "../lib/ticketeria/comecar";
 import { alternarBloqueio, maisLugares, menosLugares, adicionarFileira, resumoDoMapa } from "../lib/ticketeria/mapa";
@@ -39,7 +39,7 @@ test("os quatro perfis são os que o banco aceita, na ordem da tela", async () =
 test("a sequência de passos: uma pergunta por tela, as cidades e os dias em laço só na turnê", () => {
   const um = [praca1()];
   assert.deepEqual(ids(passosDoComecar("unico", um, false, false)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia", "venda"]);
-  assert.deepEqual(ids(passosDoComecar("espaco", um, false, false)), ["perfil", "nome", "onde#0", "evento", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia", "venda"], "quem tem espaço dá o nome do primeiro evento num passo só dele");
+  assert.deepEqual(ids(passosDoComecar("espaco", um, false, false)), ["perfil", "nome", "salas", "onde#0", "evento", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia", "venda"], "quem tem espaço diz quantas salas tem e dá o nome do primeiro evento num passo só dele");
   assert.deepEqual(ids(passosDoComecar("festival", um, null, null)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito", "preco", "meia", "venda"], "sem passo de dias: as datas marcadas dizem quantos são");
   assert.deepEqual(ids(passosDoComecar("unico", um, true, false)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "auditorio", "gratuito", "preco", "meia", "venda"], "o auditório só com lugares numerados");
   assert.deepEqual(ids(passosDoComecar("unico", um, false, true)), ["perfil", "nome", "onde#0", "data#0", "horario", "numerada", "lugares", "gratuito", "venda"], "gratuito: acaba na pergunta do gratuito, sem preço nem meia-entrada");
@@ -334,4 +334,19 @@ test("o calendário aceita vários dias, seguidos ou alternados, e o resumo os c
   assert.equal(resumoDasDatas(["2026-12-20"]), "domingo, 20 de dezembro de 2026");
   assert.equal(resumoDasDatas(["2026-12-27", "2026-12-20", "2026-12-21"]), "3 dias: 20, 21 e 27 de dezembro");
   assert.equal(resumoDasDatas(["2026-12-20", "2027-01-03"]), "2 dias: 20 de dezembro · 3 de janeiro");
+});
+
+test("o passo das salas (só no espaço): de 1 a 12, nomes sem repetir, e o padrão quando o nome fica em branco", () => {
+  const base: RespostasDoComecar = { ...RESPOSTAS_VAZIAS, perfil: "espaco" };
+  const passo = { id: "salas" as const, praca: 0 };
+  assert.equal(conferirPasso(passo, { ...base, salas: [""] }), null, "uma sala: o padrão");
+  assert.equal(conferirPasso(passo, { ...base, salas: ["", "", "", ""] }), null, "quatro salas sem nome: Sala 1 a Sala 4");
+  assert.equal(conferirPasso(passo, { ...base, salas: [] }), "São de 1 a 12 salas");
+  assert.equal(conferirPasso(passo, { ...base, salas: Array(MAX_SALAS + 1).fill("") }), "São de 1 a 12 salas");
+  assert.equal(conferirPasso(passo, { ...base, salas: ["Imax", "imax"] }), "Duas salas têm o mesmo nome");
+  assert.equal(conferirPasso(passo, { ...base, salas: ["", "Sala 1"] }), "Duas salas têm o mesmo nome", "o padrão também conta na comparação");
+  assert.equal(conferirPasso(passo, { ...base, salas: ["a".repeat(121)] }), "O nome da sala pode ter até 120 caracteres");
+  assert.deepEqual(nomesDasSalas([""]), ["Sala única"]);
+  assert.deepEqual(nomesDasSalas(["", " Imax ", ""]), ["Sala 1", "Imax", "Sala 3"]);
+  assert.equal(passosDoComecar("turne", [praca()], false, false).some(p => p.id === "salas"), false, "só quem tem espaço responde");
 });

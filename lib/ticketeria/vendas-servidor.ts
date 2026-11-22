@@ -30,16 +30,16 @@ export async function vendasDaLoja(admin: Admin, lojaId: string, agora: number =
   const idsDosEventos = (eventos ?? []).map(e => e.id);
   const idsDosLocais = (locais ?? []).map(l => l.id);
   const [{ data: sessoes }, { data: setores }, { liberado, sacado }] = await Promise.all([
-    idsDosEventos.length > 0 ? t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").in("evento_id", idsDosEventos) : Promise.resolve({ data: [] as LinhaDeSessao[] }),
-    idsDosLocais.length > 0 ? t.from("ticketeria_setores").select("local_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false) : Promise.resolve({ data: [] as { local_id: string; lugares: number }[] }),
+    idsDosEventos.length > 0 ? t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, cancelada_em").in("evento_id", idsDosEventos) : Promise.resolve({ data: [] as LinhaDeSessao[] }),
+    idsDosLocais.length > 0 ? t.from("ticketeria_setores").select("sala_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false) : Promise.resolve({ data: [] as { sala_id: string; lugares: number }[] }),
     saldoEsaques(admin, conta?.cpf_cnpj ?? null, agora),
   ]);
-  const lugaresDoLocal: Record<string, number> = {};
-  for (const s of setores ?? []) lugaresDoLocal[s.local_id] = (lugaresDoLocal[s.local_id] ?? 0) + s.lugares;
+  const lugaresDaSala: Record<string, number> = {};
+  for (const s of setores ?? []) lugaresDaSala[s.sala_id] = (lugaresDaSala[s.sala_id] ?? 0) + s.lugares;
   const vazio: TotaisDasVendas = { compras_pagas: 0, vendido_centavos: 0, repasse_centavos: 0, ingressos: 0, por_sessao: [], reembolsos: [] };
   const resumido = montarResumoDasVendas((totais as unknown as TotaisDasVendas | null) ?? vazio, {
     sessoes: (sessoes ?? []) as LinhaDeSessao[], tituloDoEvento: Object.fromEntries((eventos ?? []).map(e => [e.id, e.titulo])),
-    fusoDoLocal: Object.fromEntries((locais ?? []).map(l => [l.id, l.fuso])), lugaresDoLocal, liberadoCentavos: liberado, sacadoCentavos: sacado, agora,
+    fusoDoLocal: Object.fromEntries((locais ?? []).map(l => [l.id, l.fuso])), lugaresDaSala, liberadoCentavos: liberado, sacadoCentavos: sacado, agora,
   });
   return { ...resumido, compras: primeira.compras, ha_mais: primeira.ha_mais };
 }
@@ -67,7 +67,7 @@ export async function comprasDaLoja(admin: Admin, lojaId: string, o: { pagina: n
   const [{ data: itens }, { data: emitidos }, { data: sessoes }] = await Promise.all([
     t.from("ticketeria_pedido_itens").select("pedido_id, quantidade").in("pedido_id", ids),
     t.from("ticketeria_ingressos_emitidos").select("codigo, nome, assento_rotulo, pedido_id, usado_em, cancelado_em").in("pedido_id", ids),
-    t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").in("id", idsDasSessoes),
+    t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, cancelada_em").in("id", idsDasSessoes),
   ]);
   const idsDosEventos = [...new Set((sessoes ?? []).map(s => s.evento_id))];
   const idsDosLocais = [...new Set((sessoes ?? []).map(s => s.local_id))];
@@ -124,8 +124,8 @@ async function entradaDasVendas(admin: Admin, lojaId: string, agora: number): Pr
   const idsDosEventos = (eventos ?? []).map(e => e.id);
   const idsDosLocais = (locais ?? []).map(l => l.id);
   const [{ data: sessoes }, { data: setores }] = await Promise.all([
-    idsDosEventos.length > 0 ? t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").in("evento_id", idsDosEventos) : Promise.resolve({ data: [] as LinhaDeSessao[] }),
-    idsDosLocais.length > 0 ? t.from("ticketeria_setores").select("local_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false) : Promise.resolve({ data: [] as { local_id: string; lugares: number }[] }),
+    idsDosEventos.length > 0 ? t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, cancelada_em").in("evento_id", idsDosEventos) : Promise.resolve({ data: [] as LinhaDeSessao[] }),
+    idsDosLocais.length > 0 ? t.from("ticketeria_setores").select("sala_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false) : Promise.resolve({ data: [] as { sala_id: string; lugares: number }[] }),
   ]);
   const idsDosPedidos = (pedidos ?? []).map(p => p.id);
   const emitidos: LinhaDeIngressoEmitido[] = [];
@@ -145,11 +145,11 @@ async function entradaDasVendas(admin: Admin, lojaId: string, agora: number): Pr
     reembolsos.push(...(reemb ?? []));
   }));
   const { liberado, sacado } = await saldoEsaques(admin, conta?.cpf_cnpj ?? null, agora);
-  const lugaresDoLocal: Record<string, number> = {};
-  for (const s of setores ?? []) lugaresDoLocal[s.local_id] = (lugaresDoLocal[s.local_id] ?? 0) + s.lugares;
+  const lugaresDaSala: Record<string, number> = {};
+  for (const s of setores ?? []) lugaresDaSala[s.sala_id] = (lugaresDaSala[s.sala_id] ?? 0) + s.lugares;
   return {
     pedidos: (pedidos ?? []) as LinhaDePedido[], quantidadePorPedido, sessoes: (sessoes ?? []) as LinhaDeSessao[],
     tituloDoEvento: Object.fromEntries((eventos ?? []).map(e => [e.id, e.titulo])), fusoDoLocal: Object.fromEntries((locais ?? []).map(l => [l.id, l.fuso])),
-    lugaresDoLocal, emitidos, reembolsos, liberadoCentavos: liberado, sacadoCentavos: sacado, agora,
+    lugaresDaSala, emitidos, reembolsos, liberadoCentavos: liberado, sacadoCentavos: sacado, agora,
   };
 }

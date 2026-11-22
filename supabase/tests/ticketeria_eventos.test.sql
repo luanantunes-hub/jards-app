@@ -117,9 +117,9 @@ select is((select string_agg(conrelid::regclass::text || '.' || conname::text ||
            where contype = 'f' and conrelid in ('public.ticketeria_locais'::regclass, 'public.ticketeria_setores'::regclass, 'public.ticketeria_eventos'::regclass, 'public.ticketeria_sessoes'::regclass)),
           'ticketeria_eventos.ticketeria_eventos_criado_por_fkey=n, ticketeria_eventos.ticketeria_eventos_loja_id_fkey=c, ticketeria_eventos.ticketeria_eventos_organization_id_fkey=c, '
           || 'ticketeria_locais.ticketeria_locais_criado_por_fkey=n, ticketeria_locais.ticketeria_locais_loja_id_fkey=c, ticketeria_locais.ticketeria_locais_organization_id_fkey=c, '
-          || 'ticketeria_sessoes.ticketeria_sessoes_evento_id_fkey=c, ticketeria_sessoes.ticketeria_sessoes_local_id_fkey=a, ticketeria_sessoes.ticketeria_sessoes_organization_id_fkey=c, '
-          || 'ticketeria_setores.ticketeria_setores_local_id_fkey=c, ticketeria_setores.ticketeria_setores_organization_id_fkey=c',
-          'tudo sai com a organização e a loja; o setor com o local; a sessão com o evento; o local com sessão não sai (no action)');
+          || 'ticketeria_sessoes.ticketeria_sessoes_evento_id_fkey=c, ticketeria_sessoes.ticketeria_sessoes_local_id_fkey=a, ticketeria_sessoes.ticketeria_sessoes_organization_id_fkey=c, ticketeria_sessoes.ticketeria_sessoes_sala_id_fkey=a, '
+          || 'ticketeria_setores.ticketeria_setores_local_id_fkey=c, ticketeria_setores.ticketeria_setores_organization_id_fkey=c, ticketeria_setores.ticketeria_setores_sala_id_fkey=a',
+          'tudo sai com a organização e a loja; o setor com o local; a sessão com o evento; o local com sessão não sai (no action); a sala de setor ou sessão não se apaga (no action)');
 select ok(not has_table_privilege('anon', 'public.ticketeria_eventos', 'select') and not has_table_privilege('anon', 'public.ticketeria_sessoes', 'select')
           and not has_table_privilege('anon', 'public.ticketeria_locais', 'select') and not has_table_privilege('anon', 'public.ticketeria_setores', 'select')
           and not has_function_privilege('authenticated', 'public.fn_ticketeria_da_loja_coerencia()', 'execute')
@@ -130,10 +130,10 @@ select ok(not has_table_privilege('anon', 'public.ticketeria_eventos', 'select')
           and not has_function_privilege('authenticated', 'public.fn_ticketeria_sessao_apagar_guarda()', 'execute'), 'o visitante não toca em nada; as funções de gatilho não são chamáveis');
 select is((select string_agg(tgrelid::regclass::text || '.' || tgname::text, ' ' order by tgrelid::regclass::text collate "C", tgname::text collate "C") from pg_trigger
            where not tgisinternal and tgrelid in ('public.ticketeria_locais'::regclass, 'public.ticketeria_setores'::regclass, 'public.ticketeria_eventos'::regclass, 'public.ticketeria_sessoes'::regclass)),
-          'ticketeria_eventos.ticketeria_eventos_apagar ticketeria_eventos.ticketeria_eventos_coerencia ticketeria_eventos.ticketeria_eventos_situacao ticketeria_eventos.ticketeria_eventos_updated_at '
-          || 'ticketeria_locais.ticketeria_locais_coerencia ticketeria_locais.ticketeria_locais_updated_at '
-          || 'ticketeria_sessoes.ticketeria_sessoes_apagar ticketeria_sessoes.ticketeria_sessoes_coerencia ticketeria_sessoes.ticketeria_sessoes_updated_at '
-          || 'ticketeria_setores.ticketeria_setores_coerencia ticketeria_setores.ticketeria_setores_updated_at', 'os gatilhos de cada tabela');
+          'ticketeria_eventos.ticketeria_eventos_apagar ticketeria_eventos.ticketeria_eventos_coerencia ticketeria_eventos.ticketeria_eventos_situacao ticketeria_eventos.ticketeria_eventos_slug ticketeria_eventos.ticketeria_eventos_updated_at '
+          || 'ticketeria_locais.ticketeria_locais_coerencia ticketeria_locais.ticketeria_locais_sala_padrao ticketeria_locais.ticketeria_locais_updated_at '
+          || 'ticketeria_sessoes.ticketeria_sessoes_apagar ticketeria_sessoes.ticketeria_sessoes_coerencia ticketeria_sessoes.ticketeria_sessoes_sala_coerencia ticketeria_sessoes.ticketeria_sessoes_updated_at ticketeria_sessoes.ticketeria_webhooks_sessao '
+          || 'ticketeria_setores.ticketeria_setores_coerencia ticketeria_setores.ticketeria_setores_numerado ticketeria_setores.ticketeria_setores_sala_coerencia ticketeria_setores.ticketeria_setores_updated_at', 'os gatilhos de cada tabela');
 
 -- ─── Quem vê ────────────────────────────────────────────────────────────────
 
