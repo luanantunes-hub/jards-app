@@ -14,6 +14,7 @@ import { PaginaDoEventoNoSite } from "@/components/ticketeria/PaginaDoEventoNoSi
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { CatalogoDoEvento } from "@/components/ticketeria/CatalogoDoEvento";
+import { QuadroDePrecificacao } from "@/components/ticketeria/QuadroDePrecificacao";
 import { LinkDeVenda } from "@/components/ticketeria/LinkDeVenda";
 import { Aviso, EventoSheet, LocalSheet, SessaoSheet, type EventoEditavel, type LocalDaSessao, type SessaoEditavel } from "@/components/ticketeria/FolhasDosEventos";
 
@@ -35,6 +36,7 @@ export default function EventoPage() {
   const { confirmDelete } = useDeleteConfirm();
   const [evento, setEvento] = useState<Evento | null | undefined>(undefined);
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
+  const [versaoDoCatalogo, setVersaoDoCatalogo] = useState(0);
   const [locais, setLocais] = useState<LocalDaSessao[]>([]);
   const [folha, setFolha] = useState<Folha | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -171,7 +173,8 @@ export default function EventoPage() {
             </ul>
           )}
         </section>
-        <CatalogoDoEvento organizationId={organizationId} eventoId={evento.id} locaisDasSessoes={[...new Set(sessoes.map(sessao => sessao.local_id))]} podeEditar={editavel} />
+        <CatalogoDoEvento organizationId={organizationId} eventoId={evento.id} locaisDasSessoes={[...new Set(sessoes.map(sessao => sessao.local_id))]} podeEditar={editavel} onMudou={() => setVersaoDoCatalogo(v => v + 1)} />
+        {editavel && <QuadroDePrecificacao lojaId={evento.loja_id} eventoId={evento.id} chave={versaoDoCatalogo} />}
         {editavel && (
           <div className="mt-12">
             {evento.situacao === "rascunho"

@@ -15,7 +15,7 @@ type Admin = SupabaseClient<Database>;
 const PAGINA = 1000;
 
 /** Todas as linhas de uma consulta, em páginas de 1.000 (a consulta sem .range() corta em silêncio). */
-async function todas<T>(pagina: (de: number, ate: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
+export async function todas<T>(pagina: (de: number, ate: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
   const linhas: T[] = [];
   for (let de = 0; ; de += PAGINA) {
     const { data, error } = await pagina(de, de + PAGINA - 1);

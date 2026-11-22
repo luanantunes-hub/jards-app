@@ -235,12 +235,12 @@ function LoteSheet({ organizationId, ingresso, fuso, lote, quantosLotes, sugesta
 // ─── A seção ────────────────────────────────────────────────────────────────
 
 /** Os ingressos do evento, agrupados por setor, com os lotes e os lugares de cada setor. */
-export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, podeEditar }: { organizationId: string; eventoId: string; locaisDasSessoes: string[]; podeEditar: boolean }) {
+export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, podeEditar, onMudou }: { organizationId: string; eventoId: string; locaisDasSessoes: string[]; podeEditar: boolean; /** Avisa quando um ingresso ou lote (e o preço por sessão) é salvo. */ onMudou?: () => void }) {
   const [dados, setDados] = useState<{ locais: Local[]; setores: Setor[]; ingressos: Ingresso[]; lotes: Lote[]; sessoes: SessaoDoEvento[]; precos: PrecoDaSessao[] } | null>(null);
   const [folha, setFolha] = useState<Folha | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
-  const recarregar = () => setVersao(atual => atual + 1);
+  const recarregar = () => { setVersao(atual => atual + 1); onMudou?.(); };
 
   useEffect(() => {
     let ativo = true;
