@@ -83,7 +83,8 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
     let faixas = faixasDoIngresso((lotes ?? []).filter(l => l.ingresso_id === i.id).map(l => ({ ...l, ocupados: ocupados.get(l.id) ?? 0 })), agora);
     const setor = (setores ?? []).find(s => s.id === i.setor_id);
     if (setor) faixas = limitarFaixas(faixas, baldeDoSetor.get(setor.id) ?? 0);
-    const doIngresso: IngressoDaVitrine = { id: i.id, nome: i.nome, descricao: i.descricao, limite: i.limite_por_pedido, faixas, ...(setor?.numerado ? { numerado: { setor: setor.nome } } : {}) };
+    const ajustado = (fatorDoSetor.get(i.setor_id) ?? 10000) !== 10000 && faixas.some(f => f.preco_centavos > 0);
+    const doIngresso: IngressoDaVitrine = { id: i.id, nome: i.nome, descricao: i.descricao, limite: i.limite_por_pedido, faixas, ...(setor?.numerado ? { numerado: { setor: setor.nome } } : {}), ...(ajustado ? { ajustado: true } : {}) };
     vitrine.ingressos.push(doIngresso);
   }
   return vitrine;

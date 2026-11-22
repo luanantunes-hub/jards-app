@@ -16,6 +16,21 @@ const ROTULO = "mb-1.5 block text-[0.6875rem] font-normal uppercase tracking-[.0
 const CAMPO = "h-12 w-full rounded-xl border border-black/15 bg-white px-3.5 text-[1rem] text-[#282525] placeholder:text-black/30 focus:border-[#282525] focus:outline-none";
 const ETIQUETA = "inline-flex rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal uppercase tracking-[.08em]";
 
+/** O preço de um ingresso, com o ⓘ quando ele está ajustado pela demanda (preço dinâmico): toque no preço abre a explicação, sem clique obrigatório e sem etapa a mais. Sem JavaScript (details). */
+export function PrecoDoIngresso({ centavos, ajustado }: { centavos: number; ajustado?: boolean }) {
+  const texto = centavos === 0 ? "Gratuito" : formatarMoeda(centavos);
+  if (!ajustado || centavos === 0) return <p className="mt-1 text-[0.9375rem] tabular-nums">{texto}</p>;
+  return (
+    <details className="mt-1">
+      <summary className="flex w-fit cursor-pointer list-none items-baseline gap-1.5 text-[0.9375rem] tabular-nums [&::-webkit-details-marker]:hidden">
+        {texto}
+        <span role="img" aria-label="Por que o preço varia?" className="text-[0.8125rem] text-black/45">ⓘ</span>
+      </summary>
+      <p className="mt-1 max-w-[18rem] text-[0.75rem] leading-snug text-black/55">O preço deste ingresso varia conforme a procura. O valor que você vê agora fica garantido durante a sua compra.</p>
+    </details>
+  );
+}
+
 /** A moldura das telas: cabeçalho na cor do site da pessoa e o miolo estreito (34rem), que no celular ocupa a largura toda. */
 export function Moldura({ titulo, cor = "#1C0E33", passo, children, rodape, seletorDeIdioma }: { titulo: string; cor?: string; passo?: { atual: number; total: number }; children: ReactNode; rodape?: ReactNode; seletorDeIdioma?: boolean }) {
   const texto = textoSobreCor(cor);
@@ -109,7 +124,7 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
                   <p className="text-[1rem] font-normal">{i.nome}</p>
                   <p className="mt-0.5 text-[0.8125rem] text-black/55">{i.numerado.setor} · lugares numerados</p>
                   {i.descricao && <p className="mt-0.5 text-[0.8125rem] text-black/55">{i.descricao}</p>}
-                  <p className="mt-1 text-[0.9375rem] tabular-nums">{preco === 0 ? "Gratuito" : formatarMoeda(preco)}</p>
+                  <PrecoDoIngresso centavos={preco} ajustado={i.ajustado} />
                   {escolhidos.length > 0 && (
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       <ul className="flex flex-wrap gap-1.5" aria-label={`Lugares escolhidos: ${i.nome}`}>
@@ -128,7 +143,7 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
               <div className="min-w-0">
                 <p className="text-[1rem] font-normal">{i.nome}</p>
                 {i.descricao && <p className="mt-0.5 text-[0.8125rem] text-black/55">{i.descricao}</p>}
-                {!esgotado && <p className="mt-1 text-[0.9375rem] tabular-nums">{preco === 0 ? "Gratuito" : formatarMoeda(preco)}</p>}
+                {!esgotado && <PrecoDoIngresso centavos={preco} ajustado={i.ajustado} />}
               </div>
               {esgotado
                 ? (
