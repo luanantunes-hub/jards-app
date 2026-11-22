@@ -1,4 +1,4 @@
-// As abas da Ticketeria. O menu lateral tem seis itens e, dentro de Programação, Financeiro, Divulgação e Configurações, uma barra de abas leva às páginas que
+// As abas da Ticketeria. O menu lateral tem seis itens e, dentro de Programação, Financeiro, Marketing e Configurações, uma barra de abas leva às páginas que
 // antes eram itens soltos. Vendas não tem abas: é uma página de caixas, uma por forma de vender (lib/ticketeria/vender.ts), e as páginas de cada caixa
 // (a Bilheteria, a Loja online) têm um "← Vendas" no lugar da barra. O espaço de trabalho se ajusta ao que o produtor faz (migration
 // ticketeria_canais_da_loja): os Espaços só aparecem em Programação para quem trabalha com um espaço, e o que falta aparece como um "+" na própria barra.

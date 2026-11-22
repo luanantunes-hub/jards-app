@@ -98,6 +98,7 @@ test("os títulos das abas usam os nomes novos", () => {
   assert.equal(tituloDaPagina("/ingressos/vendas"), "Pedidos — Jards");
   assert.equal(tituloDaPagina("/ingressos/recebimentos"), "Recebimentos — Jards");
   assert.equal(tituloDaPagina("/ingressos/locais"), "Espaços — Jards");
+  assert.equal(tituloDaPagina("/ingressos/divulgacao"), "Marketing — Jards", "Divulgação virou Marketing");
   assert.equal(tituloDaPagina("/ingressos/site"), "Loja online — Jards");
   assert.equal(tituloDaPagina("/ingressos/porta"), "Controle de entrada — Jards");
   assert.equal(tituloDaPagina("/ingressos"), "Início — Jards");

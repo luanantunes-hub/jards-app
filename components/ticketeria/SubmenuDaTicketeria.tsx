@@ -13,7 +13,7 @@ const TUDO: EscolhasDaLoja = { canais: null, usaEspacos: null };
 const FOCO = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
 
 /**
- * A barra de abas das páginas agrupadas (Programação, Vendas, Divulgação, Configurações). Mostra só o que a loja usa (escolhido no Começar) e, para o que
+ * A barra de abas das páginas agrupadas (Programação, Financeiro, Marketing, Configurações). Mostra só o que a loja usa (escolhido no Começar) e, para o que
  * falta, um "+" que o adiciona com um toque. Nas demais páginas não aparece.
  */
 export function SubmenuDaTicketeria() {

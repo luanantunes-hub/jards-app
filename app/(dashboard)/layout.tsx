@@ -201,7 +201,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
         { label: "Programação", href: "/ingressos/eventos", icon: Ticket },
         { label: "Vendas", href: "/ingressos/vender", icon: Receipt },
         { label: "Financeiro", href: "/ingressos/recebimentos", icon: Wallet },
-        { label: "Divulgação", href: "/ingressos/divulgacao", icon: Megaphone },
+        { label: "Marketing", href: "/ingressos/divulgacao", icon: Megaphone },
         // Integrações e espaços moram aqui; a barra de abas (SubmenuDaTicketeria) leva de um a outro. O href é o da primeira aba.
         { label: "Configurações", href: "/ingressos/integracoes", icon: Settings },
       ],

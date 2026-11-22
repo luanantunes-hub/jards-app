@@ -266,7 +266,7 @@ export default function DivulgacaoPage() {
   );
   return (
     <>
-      <ListPageHeader title="Divulgação" actions={dados ? acoes : undefined} />
+      <ListPageHeader title="Marketing" actions={dados ? acoes : undefined} />
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {dados && (
