@@ -240,3 +240,61 @@ Rascunho em português simples, para o advogado revisar. **O texto dos Termos de
 *(A resposta é cordial e não fecha as outras portas: cancelamento, adiamento e problema com o evento continuam valendo.)*
 
 Observações: (a) o endereço é de uso geral do dono; trocar por um endereço próprio de reembolso deve ser só configuração, sem mudar o texto para o comprador além do endereço; (b) o pedido de endereço diferente do da compra não é atendido automaticamente: cai na fila do Jards (D15).
+
+## 11. Precificação: preço por sessão e preço dinâmico (PLANEJADA; nada construído)
+
+**Origem:** pedido do dono em 21/11/2026. Ele quer **preço dinâmico de verdade**, uma variação sobre os preços estabelecidos, no estilo da Uber e do que a FIFA fez com os ingressos da Copa, e **só por adesão do produtor** (o produtor liga ou não). Não é só "sexta mais cara que quarta": isso é o preço por sessão, que vem antes e vale sozinho. **Nenhuma decisão jurídica nem de valor foi tomada**; os nomes de tabela abaixo são propostas.
+
+### 11.1 Como é hoje
+
+O preço vive em `ticketeria_lotes.preco_centavos`, e cada lote pertence a um `ticketeria_ingressos`, que pertence ao **evento** (e a um setor). A **sessão não tem preço próprio**: todas as sessões de um evento cobram o mesmo valor. Para uma temporada com preços diferentes por sessão, o produtor teria de duplicar os ingressos. O onboarding (`/ingressos/comecar`) não diz que o preço é fixo: a rigidez é da estrutura do banco.
+
+### 11.2 O que muda no modelo
+
+1. **Preço por sessão.** O preço da compra passa a ser **calculado para a sessão**: o do lote, ou o da sessão quando houver um preço próprio dela (algo como `ticketeria_precos_da_sessao`). Resolve as temporadas sem preço dinâmico.
+2. **Regra dinâmica opcional**, por ingresso e sessão: ligada ou desligada, piso, teto, variação máxima por passo e de quanto em quanto tempo o preço pode mudar. Desligada é o padrão.
+3. **Preço vigente calculado no servidor**, nunca no navegador, a partir do preço-base, da regra e do sinal de demanda.
+4. **Preço travado na reserva.** Quem põe no carrinho paga o valor visto até o fim da reserva, e a cobrança Pix nasce com esse valor.
+5. **Registro de cada preço.** O item do pedido grava o preço-base, o preço cobrado, a regra e o motivo; e um histórico por sessão (algo como `ticketeria_precos_historico`) guarda cada mudança com o momento. Serve ao reembolso, à auditoria, ao quadro de precificação e à simulação.
+6. **O que reage ao preço vigente:** a **meia-entrada** (metade do valor cobrado; conferir a lei com o advogado), o **reembolso** (pelo que a pessoa pagou), a **comissão do Jards** (2,5% do preço final, ver D13 e D14) e o **cupom** (decisão aberta: desconta do preço vigente ou do base).
+
+### 11.3 O quadro de precificação (tela futura)
+
+Por evento e sessão: preço-base, preço atual, faixa permitida, curva de vendas esperada contra a real, sugestões, o botão de **aderir ao preço dinâmico** (com o registro de que o produtor aceitou) e o botão **voltar ao preço-base**, sempre à mão. As sugestões vêm de eventos parecidos (o "ritmo comparado") e mostram o raciocínio.
+
+### 11.4 Regras de segurança
+
+- **O sinal de demanda são as vendas pagas, a lotação e o tempo até a sessão. Nunca as visitas à página**: robôs inflariam o tráfego e moveriam o preço.
+- **Preço por demanda e por tempo, nunca por pessoa** (nada de perfil, histórico ou local do comprador): o CDC e a reputação do produtor.
+- **Todos veem o mesmo preço no mesmo momento**, com o preço-base e o aviso de que o valor varia conforme a demanda.
+- **Limites do produtor:** piso, teto e passo máximo. A variação precisa caber nas regras de preço de projetos de **lei de incentivo** (como a Rouanet).
+- **Conflito de interesse:** o Jards ganha uma porcentagem do preço, então a sugestão mira a **receita e a lotação do produtor**, com o raciocínio visível, e nunca empurra para cima por padrão.
+- **A mudança só vale para compras novas**: o que já foi pago ou está reservado não muda.
+
+### 11.5 Fases
+
+| Fase | Entrega | Depende de decisão? |
+|---|---|---|
+| **P0** | Preço por sessão e histórico de preços, com o preço calculado no servidor e gravado no item do pedido. Vale sozinho, para temporadas | Não |
+| **P1** | Quadro de precificação **só de leitura**: faixa sugerida e comparação com eventos parecidos | Não |
+| **P2** | **Adesão ao preço dinâmico**, com piso, teto, passo e frequência; aviso ao comprador; registro do aceite | **Sim: parecer jurídico, texto do aceite e do aviso** |
+| **P3** | Simulação do que teria acontecido com os eventos passados, para o produtor decidir com dados | Depende de volume de vendas |
+
+### 11.6 Decisões em aberto (do dono)
+
+1. A adesão é **por evento** ou **por sessão**?
+2. O cupom desconta do preço **vigente** ou do **base**?
+3. De quanto em quanto tempo o preço pode mudar, e qual a variação máxima por passo?
+4. O preço pode **só subir entre lotes** ou também **baixar** quando a venda está lenta?
+5. O texto do aceite do produtor e do aviso ao comprador, e o **parecer jurídico** sobre CDC, meia-entrada e lei de incentivo.
+6. Como o preço dinâmico convive com o lote por quantidade e a janela de venda que já existem.
+
+### 11.7 Riscos
+
+| Risco | Resposta |
+|---|---|
+| Reação do público a preço que sobe (o caso dos shows internacionais) | Adesão do produtor, teto, aviso claro e botão de voltar ao preço-base |
+| Manipulação do sinal de demanda | Só vendas pagas e reservas pagas contam, nunca o tráfego |
+| Meia-entrada ou lei de incentivo violadas pela variação | Parecer do advogado antes da P2; a meia acompanha o preço vigente; a regra de projeto limita o teto |
+| Produtor pequeno com poucas vendas: sinal ruidoso | A faixa sugerida usa eventos parecidos; o dinâmico só entra quando houver volume mínimo (a definir) |
+| Preço mudando no meio da compra | Preço travado na reserva e Pix gerado com ele |
