@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { EvidenciasDoPrecoDinamico } from "@/components/ticketeria/EvidenciasDoPrecoDinamico";
+import { EvidenciasDoPrecoDinamico, InfoDaFaixa } from "@/components/ticketeria/EvidenciasDoPrecoDinamico";
 import { EVIDENCIAS, FAIXAS_PRONTAS, exposicaoDaFaixa, textoDaExposicao } from "@/lib/ticketeria/preco-dinamico-evidencias";
 import { LIMITES_DA_REGRA, REGRA_PADRAO, lerRegraDaTela } from "@/lib/ticketeria/preco-dinamico";
 
@@ -64,4 +64,15 @@ test("sem faixa válida o bloco não mostra a frase da exposição, só a litera
 
 test("cada evidência tem ao menos uma fonte, e todas com link https", () => {
   for (const e of EVIDENCIAS) { assert.ok(e.fontes.length > 0); for (const f of e.fontes) { assert.ok(f.nome.length > 0); assert.match(f.url, /^https:\/\//); } }
+});
+
+test("o ⓘ da faixa vem fechado: só o rótulo e o ⓘ aparecem de início, e o conteúdo abre ao toque (sem botão, sem JavaScript)", () => {
+  const h = renderToStaticMarkup(createElement(InfoDaFaixa, { faixa: REGRA_PADRAO, titulo: "Faixas prontas" }));
+  assert.match(h, /<details/);
+  assert.doesNotMatch(h, /<details[^>]*\sopen/, "fechado por padrão");
+  assert.match(h, /<summary[^>]*>[\s\S]*Faixas prontas[\s\S]*ⓘ[\s\S]*<\/summary>/);
+  assert.match(h, /aria-label="O que a literatura registra sobre a faixa de variação"/);
+  assert.match(h, /Courty e Pagliero, 2012/);
+  assert.match(h, /38,5%/, "a exposição da faixa também fica dentro do ⓘ");
+  assert.doesNotMatch(h, /<button/);
 });

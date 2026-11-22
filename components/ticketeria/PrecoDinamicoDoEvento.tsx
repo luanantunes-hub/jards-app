@@ -6,7 +6,7 @@ import { TopSheet } from "@/components/ui/TopSheet";
 import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 import { PONTOS_DO_ACEITE, REGRA_PADRAO, lerRegraDaTela } from "@/lib/ticketeria/preco-dinamico";
 import { PrecoDinamicoView, horasDe, pctDe } from "@/components/ticketeria/PrecoDinamicoView";
-import { EvidenciasDoPrecoDinamico } from "@/components/ticketeria/EvidenciasDoPrecoDinamico";
+import { InfoDaFaixa } from "@/components/ticketeria/EvidenciasDoPrecoDinamico";
 import { FAIXAS_PRONTAS } from "@/lib/ticketeria/preco-dinamico-evidencias";
 import type { FatorDaSessao, RegraDoEvento } from "@/lib/ticketeria/preco-dinamico-servidor";
 
@@ -54,7 +54,7 @@ function AdesaoSheet({ lojaId, eventoId, regra, onClose, onSaved }: { lojaId: st
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
         <div>
-          <p className={ROTULO}>Faixas prontas</p>
+          <InfoDaFaixa faixa={lida.ok ? lida : null} titulo="Faixas prontas" classeDoTitulo={ROTULO} />
           <div className="flex flex-wrap gap-2">
             {FAIXAS_PRONTAS.map(f => (
               <button key={f.nome} type="button" disabled={salvando} onClick={() => { setPiso(f.piso); setTeto(f.teto); setPasso(f.passo); setHoras(f.horas); }} className="rounded-xl border border-black/15 px-3 py-1.5 text-[0.75rem] text-[#282525] hover:bg-black/[.04] disabled:opacity-50">
@@ -70,7 +70,6 @@ function AdesaoSheet({ lojaId, eventoId, regra, onClose, onSaved }: { lojaId: st
           <div><label className={ROTULO} htmlFor="pd-horas">No máximo a cada (horas)</label><input id="pd-horas" inputMode="decimal" className={CAMPO} value={horas} onChange={e => setHoras(e.target.value)} disabled={salvando} /></div>
         </div>
         <p className="text-[0.75rem] text-black/55">As porcentagens são sobre o preço-base (o do lote, ou o que você pôs para a sessão).</p>
-        <EvidenciasDoPrecoDinamico faixa={lida.ok ? lida : null} />
         <div className="rounded-xl border border-black/[.08] px-4 py-3">
           <p className="mb-2 text-[0.75rem] font-normal text-[#282525]">Antes de ligar</p>
           <ul className="list-disc space-y-1.5 pl-4 text-[0.75rem] text-black/60">{PONTOS_DO_ACEITE.map(ponto => <li key={ponto}>{ponto}</li>)}</ul>

@@ -6,6 +6,7 @@ import type { RegraDinamica } from "@/lib/ticketeria/preco-dinamico";
 
 const ORDEM: TipoDeEvidencia[] = ["ganho", "risco", "mitigacao"];
 
+/** O conteúdo: a frase da exposição da faixa e o que a literatura registra. */
 export function EvidenciasDoPrecoDinamico({ faixa }: { faixa: Pick<RegraDinamica, "pisoBps" | "tetoBps" | "passoBps" | "intervaloMinutos"> | null }) {
   return (
     <div className="space-y-3 rounded-xl border border-black/[.08] px-4 py-3">
@@ -31,5 +32,21 @@ export function EvidenciasDoPrecoDinamico({ faixa }: { faixa: Pick<RegraDinamica
         );
       })}
     </div>
+  );
+}
+
+/**
+ * O "ⓘ" da faixa de variação, o mesmo gesto do ⓘ do preço ajustado na compra: fechado por padrão, e quem quiser toca para abrir a exposição da faixa e a literatura. Sem JavaScript (details).
+ * `titulo` é o rótulo que fica ao lado do ⓘ e `classeDoTitulo` o estilo dele na folha.
+ */
+export function InfoDaFaixa({ faixa, titulo, classeDoTitulo }: { faixa: Pick<RegraDinamica, "pisoBps" | "tetoBps" | "passoBps" | "intervaloMinutos"> | null; titulo: string; classeDoTitulo?: string }) {
+  return (
+    <details className="group">
+      <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden">
+        <span className={classeDoTitulo ?? "text-[0.75rem] text-[#282525]"}>{titulo}</span>
+        <span role="img" aria-label="O que a literatura registra sobre a faixa de variação" className="mb-1.5 text-[0.8125rem] text-black/45">ⓘ</span>
+      </summary>
+      <div className="mt-1 mb-3"><EvidenciasDoPrecoDinamico faixa={faixa} /></div>
+    </details>
   );
 }
