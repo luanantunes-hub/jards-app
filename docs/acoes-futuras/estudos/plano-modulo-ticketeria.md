@@ -267,7 +267,8 @@ Por evento e sessão: preço-base, preço atual, faixa permitida, curva de venda
 - **O sinal de demanda são as vendas pagas, a lotação e o tempo até a sessão. Nunca as visitas à página**: robôs inflariam o tráfego e moveriam o preço.
 - **Preço por demanda e por tempo, nunca por pessoa** (nada de perfil, histórico ou local do comprador): o CDC e a reputação do produtor.
 - **Todos veem o mesmo preço no mesmo momento**, com o preço-base e o aviso de que o valor varia conforme a demanda.
-- **Limites do produtor:** piso, teto e passo máximo. A variação precisa caber nas regras de preço de projetos de **lei de incentivo** (como a Rouanet).
+- **Limites do produtor:** piso, teto e passo máximo, definidos por ele.
+- **Lei de incentivo (decisão do dono, 21/11/2026): o sistema NÃO impõe os limites de preço de projetos incentivados** (como os da Rouanet). Quem precisa respeitar esse limite não usa o preço dinâmico e coloca o valor que quiser. A tela de adesão mostra um aviso dizendo isso, e o aceite do produtor registra que ele leu.
 - **Conflito de interesse:** o Jards ganha uma porcentagem do preço, então a sugestão mira a **receita e a lotação do produtor**, com o raciocínio visível, e nunca empurra para cima por padrão.
 - **A mudança só vale para compras novas**: o que já foi pago ou está reservado não muda.
 
@@ -286,7 +287,7 @@ Por evento e sessão: preço-base, preço atual, faixa permitida, curva de venda
 2. O cupom desconta do preço **vigente** ou do **base**?
 3. De quanto em quanto tempo o preço pode mudar, e qual a variação máxima por passo?
 4. O preço pode **só subir entre lotes** ou também **baixar** quando a venda está lenta?
-5. O texto do aceite do produtor e do aviso ao comprador, e o **parecer jurídico** sobre CDC, meia-entrada e lei de incentivo.
+5. O texto do aceite do produtor e do aviso ao comprador, e o **parecer jurídico** sobre CDC e meia-entrada (a lei de incentivo foi decidida: o sistema não a impõe).
 6. Como o preço dinâmico convive com o lote por quantidade e a janela de venda que já existem.
 
 ### 11.7 Riscos
@@ -295,6 +296,7 @@ Por evento e sessão: preço-base, preço atual, faixa permitida, curva de venda
 |---|---|
 | Reação do público a preço que sobe (o caso dos shows internacionais) | Adesão do produtor, teto, aviso claro e botão de voltar ao preço-base |
 | Manipulação do sinal de demanda | Só vendas pagas e reservas pagas contam, nunca o tráfego |
-| Meia-entrada ou lei de incentivo violadas pela variação | Parecer do advogado antes da P2; a meia acompanha o preço vigente; a regra de projeto limita o teto |
+| Meia-entrada violada pela variação | Parecer do advogado antes da P2; a meia acompanha o preço vigente |
+| Projeto de lei de incentivo com limite de preço usando o dinâmico | Decisão do dono (21/11/2026): o sistema não impõe o limite; aviso na adesão e aceite do produtor; quem tem limite não usa o dinâmico |
 | Produtor pequeno com poucas vendas: sinal ruidoso | A faixa sugerida usa eventos parecidos; o dinâmico só entra quando houver volume mínimo (a definir) |
 | Preço mudando no meio da compra | Preço travado na reserva e Pix gerado com ele |

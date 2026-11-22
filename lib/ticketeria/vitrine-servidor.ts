@@ -7,6 +7,7 @@ import { ROTULO_DA_CLASSIFICACAO } from "@/lib/ticketeria/eventos";
 import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
 import { MAX_PARCELAS, PARCELAMENTO_LIBERADO } from "@/lib/ticketeria/pagamento/compra";
 import { estadoDaVenda, faixasDoIngresso, limitarFaixas, type IngressoDaVitrine, type VitrineDaSessao } from "@/lib/ticketeria/vitrine";
+import { aplicarPrecosDaSessao } from "@/lib/ticketeria/preco-da-sessao";
 
 type Admin = SupabaseClient<Database>;
 
@@ -47,9 +48,15 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
   const { data: ingressos } = await t.from("ticketeria_ingressos").select("id, nome, descricao, limite_por_pedido, setor_id, ordem, created_at")
     .eq("evento_id", evento.id).eq("publico", true).eq("arquivado", false).in("setor_id", (setores ?? []).map(s => s.id)).order("ordem").order("created_at");
   const ids = (ingressos ?? []).map(i => i.id);
-  const { data: lotes } = ids.length > 0
-    ? await t.from("ticketeria_lotes").select("id, ingresso_id, ordem, preco_centavos, quantidade, vendas_inicio, vendas_fim").in("ingresso_id", ids)
+  const { data: lotesDoBanco } = ids.length > 0
+    ? await t.from("ticketeria_lotes").select("id, ingresso_id, ordem, preco_centavos, espelho_de, quantidade, vendas_inicio, vendas_fim").in("ingresso_id", ids)
     : { data: [] };
+  // O preço que vale NESTA sessão (plano, seção 11): o preço próprio dela para o lote, a metade da inteira dela para a meia, ou o do lote. A reserva
+  // cobra pela mesma conta, no banco (fn_ticketeria_preco_do_lote).
+  const { data: precosDaSessao } = ids.length > 0
+    ? await t.from("ticketeria_precos_da_sessao").select("lote_id, preco_centavos").eq("sessao_id", sessao.id)
+    : { data: [] };
+  const lotes = aplicarPrecosDaSessao(lotesDoBanco ?? [], new Map((precosDaSessao ?? []).map(p => [p.lote_id, p.preco_centavos] as const)));
   const ocupados = new Map<string, number>(await Promise.all((lotes ?? []).map(async l => {
     const { data } = await t.rpc("fn_ticketeria_ocupados", { p_sessao: sessao.id, p_lote: l.id, p_fora: null });
     return [l.id, Number(data ?? 0)] as const;

@@ -626,6 +626,116 @@ export type BancoDaTicketeria = {
           },
         ];
       };
+      ticketeria_precos_da_sessao: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          lote_id: string;
+          preco_centavos: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          lote_id: string;
+          preco_centavos: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          lote_id?: string;
+          preco_centavos?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_precos_da_sessao_lote_id_fkey";
+            columns: ["lote_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lotes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_precos_da_sessao_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_precos_da_sessao_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ticketeria_precos_historico: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          lote_id: string;
+          preco_anterior_centavos: number | null;
+          preco_novo_centavos: number | null;
+          motivo: string;
+          por: string | null;
+          quando: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          lote_id: string;
+          preco_anterior_centavos?: number | null;
+          preco_novo_centavos?: number | null;
+          motivo?: string;
+          por?: string | null;
+          quando?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          lote_id?: string;
+          preco_anterior_centavos?: number | null;
+          preco_novo_centavos?: number | null;
+          motivo?: string;
+          por?: string | null;
+          quando?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticketeria_precos_historico_lote_id_fkey";
+            columns: ["lote_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_lotes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_precos_historico_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ticketeria_precos_historico_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "ticketeria_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticketeria_taxas: {
         Row: {
           id: string;
@@ -822,6 +932,7 @@ export type BancoDaTicketeria = {
           lote_id: string;
           quantidade: number;
           preco_centavos: number;
+          preco_base_centavos: number | null;
           taxa_centavos: number;
           desconto_centavos: number;
           created_at: string;
@@ -834,6 +945,7 @@ export type BancoDaTicketeria = {
           lote_id: string;
           quantidade: number;
           preco_centavos: number;
+          preco_base_centavos?: number | null;
           taxa_centavos: number;
           desconto_centavos?: number;
           created_at?: string;
@@ -846,6 +958,7 @@ export type BancoDaTicketeria = {
           lote_id?: string;
           quantidade?: number;
           preco_centavos?: number;
+          preco_base_centavos?: number | null;
           taxa_centavos?: number;
           desconto_centavos?: number;
           created_at?: string;
@@ -3181,6 +3294,10 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_ocupados_do_setor: {
         Args: { p_sessao: string; p_setor: string; p_fora?: string | null };
+        Returns: number;
+      };
+      fn_ticketeria_preco_do_lote: {
+        Args: { p_lote: string; p_sessao: string };
         Returns: number;
       };
       fn_ticketeria_vendas_da_loja: {
