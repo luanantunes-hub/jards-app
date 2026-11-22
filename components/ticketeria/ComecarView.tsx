@@ -26,7 +26,7 @@ import { Aviso, CAMPO, ROTULO } from "@/components/ticketeria/FolhasDosEventos";
 const ICONE: Record<PerfilDoProdutor, LucideIcon> = { espaco: Building2, turne: Route, unico: PartyPopper, festival: Tent };
 const TITULO = "mt-1 text-[1.875rem] font-normal leading-[1.15] tracking-[-.03em] md:text-[2.375rem] text-[#282525] [text-wrap:balance]";
 const APOIO = "mt-2 text-[0.9375rem] text-black/55";
-const CAMPO_GRANDE = "w-full rounded-xl border border-black/[.15] bg-white px-4 py-4 text-[1.5rem] font-[700] leading-tight tracking-[-.02em] text-[#1C0E33] outline-none transition placeholder:font-[700] placeholder:text-black/20 focus:border-[#7259B5]/50 focus:ring-2 focus:ring-[#7259B5]/10 md:px-5 md:py-5 md:text-[1.875rem]";
+const CAMPO_GRANDE = "w-full rounded-xl border border-black/[.15] bg-white px-4 py-4 text-[1.5rem] font-normal leading-tight tracking-[-.02em] text-[#1C0E33] outline-none transition placeholder:text-black/20 focus:border-[#7259B5]/50 focus:ring-2 focus:ring-[#7259B5]/10 md:px-5 md:py-5 md:text-[1.875rem]";
 const CTA = "inline-flex items-center gap-1.5 rounded-xl bg-[#6450D2] px-4 py-2.5 text-[0.8125rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
 const VOLTAR = "inline-flex items-center gap-1 rounded-xl px-2 py-2.5 text-[0.75rem] font-normal text-black/40 transition hover:text-black/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const LINK = "rounded-xl border border-black/[.12] bg-white px-3.5 py-2 text-[0.75rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
@@ -262,7 +262,7 @@ function Campo({ id, rotulo, valor, exemplo, onChange, autoFocus = false, numeri
   return <div><label className={ROTULO} htmlFor={id}>{rotulo}</label><input id={id} autoFocus={autoFocus} inputMode={numerico ? "decimal" : undefined} className={CAMPO} value={valor} placeholder={exemplo} onChange={e => onChange(e.target.value)} onKeyDown={onEnter ? (e => { if (e.key === "Enter") { e.preventDefault(); onEnter(); } }) : undefined} /></div>;
 }
 
-/** O campo de uma pergunta só: uma caixa grande, com o texto em negrito (peso 700 direto: a Ticketeria limita font-bold a 500 em globals.css), sem rótulo (a pergunta já é o rótulo). O cursor já entra nele; Enter segue. */
+/** O campo de uma pergunta só: uma caixa grande, com o texto e o exemplo em peso normal (sem negrito), sem rótulo (a pergunta já é o rótulo). O cursor já entra nele; Enter segue. */
 function CampoGrande({ valor, exemplo, rotulo, onChange, onEnter, numerico = false, prefixo }: { valor: string; exemplo: string; rotulo: string; onChange: (valor: string) => void; onEnter: () => void; numerico?: boolean; prefixo?: string }) {
   const campo = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -275,7 +275,7 @@ function CampoGrande({ valor, exemplo, rotulo, onChange, onEnter, numerico = fal
       onChange={e => onChange(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); onEnter(); } }} />
   );
   if (!prefixo) return entrada;
-  return <div className="relative">{entrada}<span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[1.25rem] font-[700] text-black/30 md:left-5 md:text-[1.5rem]" aria-hidden="true">{prefixo}</span></div>;
+  return <div className="relative">{entrada}<span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[1.25rem] font-normal text-black/30 md:left-5 md:text-[1.5rem]" aria-hidden="true">{prefixo}</span></div>;
 }
 
 /** Duas opções grandes, Sim e Não, para as perguntas de resposta curta. `valor` é null enquanto a pessoa não respondeu. */
@@ -308,12 +308,13 @@ function EscolherOnde({ praca, mudaPraca, municipios, rotuloDoLugar, exemploDoLu
         <div>
           <label className={ROTULO} htmlFor="co-cidade">{praca.uf ? "Cidade" : "Cidade (ou escolha o estado no mapa)"}</label>
           <div className="relative">
-            <input id="co-cidade" className={`${CAMPO} ${!aberta && exata ? "pr-9" : ""}`} value={praca.cidade} placeholder={praca.uf ? "Digite para filtrar" : "Sorocaba"} autoComplete="off" role="combobox" aria-expanded={aberta} aria-controls="co-cidades"
+            <input id="co-cidade" className={`${CAMPO} ${!aberta && exata ? "pr-9" : ""}`} value={praca.cidade} placeholder={praca.uf ? "Digite para filtrar" : "Sorocaba"} autoComplete="off" role="combobox" aria-expanded={aberta && Boolean(praca.uf || praca.cidade.trim())} aria-controls="co-cidades"
               onFocus={() => setAberta(true)} onChange={e => { mudaPraca({ cidade: e.target.value }); setAberta(true); }}
               onKeyDown={e => { if (e.key === "Escape" || (e.key === "Enter" && praca.cidade.trim())) { e.preventDefault(); setAberta(false); } }} />
             {!aberta && exata && <Check size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#7259B5]" aria-hidden="true" />}
           </div>
-          {aberta && <ul id="co-cidades" role="listbox" aria-label="Cidades" className="mt-2 max-h-48 divide-y divide-black/[.06] overflow-y-auto rounded-xl border border-black/[.12] bg-white">
+          {/* Sem estado escolhido e sem nada digitado, a lista nem aparece: o convite "Digite a cidade." era uma caixa vazia sem serventia. */}
+          {aberta && (praca.uf || praca.cidade.trim()) && <ul id="co-cidades" role="listbox" aria-label="Cidades" className="mt-2 max-h-48 divide-y divide-black/[.06] overflow-y-auto rounded-xl border border-black/[.12] bg-white">
             {!municipios && <li className="px-3 py-2.5 text-[0.75rem] text-black/40">Carregando as cidades…</li>}
             {municipios && lista.length === 0 && <li className="px-3 py-2.5 text-[0.75rem] text-black/40">{praca.cidade.trim() ? "Nenhuma cidade com esse nome na lista. Vale o que você digitou." : "Digite a cidade."}</li>}
             {lista.map(m => {
@@ -355,7 +356,7 @@ function AuditorioDoEvento({ r, muda }: { r: RespostasDoComecar; muda: (parte: P
       <div className="flex flex-wrap items-center gap-3 text-[0.8125rem] text-black/60">
         <span>Refazer a grade com</span>
         <button type="button" className={botao} aria-label="Menos um lugar por fileira" disabled={porFileira <= 1 || lugares < 1} onClick={() => refazer(porFileira - 1)}>−</button>
-        <span className="w-6 text-center text-[1rem] font-[700] tabular-nums text-[#1C0E33]">{porFileira}</span>
+        <span className="w-6 text-center text-[1rem] font-normal tabular-nums text-[#1C0E33]">{porFileira}</span>
         <button type="button" className={botao} aria-label="Mais um lugar por fileira" disabled={porFileira >= 80 || lugares < 1} onClick={() => refazer(porFileira + 1)}>+</button>
         <span>lugares por fileira</span>
       </div>
