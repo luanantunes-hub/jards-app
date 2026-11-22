@@ -3,11 +3,11 @@
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
-import { abasDaRota, barraTemOQueMostrar, depoisDeAdicionar, type Adicao, type EscolhasDaLoja } from "@/lib/ticketeria/menu";
+import { abasDaRota, barraTemOQueMostrar, depoisDeAdicionar, voltaDaRota, type Adicao, type EscolhasDaLoja } from "@/lib/ticketeria/menu";
 
 const TUDO: EscolhasDaLoja = { canais: null, usaEspacos: null };
 const FOCO = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
@@ -33,7 +33,17 @@ export function SubmenuDaTicketeria() {
   }, [organizationId]);
 
   const barra = abasDaRota(path, loja?.escolhas ?? TUDO);
-  if (!barra) return null;
+  if (!barra) {
+    // As páginas de cada caixa de Vendas (a Bilheteria, a Loja online) não têm abas: têm o caminho de volta à página de caixas.
+    const volta = voltaDaRota(path);
+    return volta ? (
+      <nav aria-label="Voltar" className="px-5 pt-4 md:px-10">
+        <Link href={volta.href} prefetch={false} className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[0.8125rem] font-normal text-black/50 transition hover:bg-black/[.04] hover:text-black/75 ${FOCO}`}>
+          <ArrowLeft size={13} aria-hidden="true" /> {volta.rotulo}
+        </Link>
+      </nav>
+    ) : null;
+  }
   // Enquanto a loja carrega, o espaço da barra fica reservado (as abas não pulam quando a escolha chega).
   if (loja === undefined) return <div className="h-[3.25rem]" aria-hidden="true" />;
   if (!barraTemOQueMostrar(barra)) return null;

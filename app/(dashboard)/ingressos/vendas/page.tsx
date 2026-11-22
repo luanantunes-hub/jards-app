@@ -112,7 +112,7 @@ export default function VendasPage() {
   if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   return (
     <>
-      <ListPageHeader title="Vendas" />
+      <ListPageHeader title="Pedidos" />
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {estado.vendas ? (

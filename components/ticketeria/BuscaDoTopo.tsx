@@ -14,8 +14,8 @@ type Compra = { id: string; codigo: string; comprador: string; email: string; ev
 type Resultado = { chave: string; grupo: "Páginas" | "Eventos" | "Compras"; rotulo: string; apoio?: string; href: string; icone: typeof Search };
 
 const PAGINAS: { rotulo: string; href: string }[] = [
-  { rotulo: "Início", href: "/ingressos" }, { rotulo: "Programação", href: "/ingressos/eventos" }, { rotulo: "Vendas", href: "/ingressos/vendas" },
-  { rotulo: "Controle de entrada", href: "/ingressos/porta" }, { rotulo: "Bilheteria", href: "/ingressos/bilheteria" }, { rotulo: "Financeiro", href: "/ingressos/recebimentos" },
+  { rotulo: "Início", href: "/ingressos" }, { rotulo: "Programação", href: "/ingressos/eventos" }, { rotulo: "Vendas", href: "/ingressos/vender" }, { rotulo: "Pedidos", href: "/ingressos/vendas" },
+  { rotulo: "Controle de entrada", href: "/ingressos/porta" }, { rotulo: "Bilheteria", href: "/ingressos/bilheteria" }, { rotulo: "Financeiro", href: "/ingressos/recebimentos" }, { rotulo: "Recebimentos", href: "/ingressos/recebimentos" },
   { rotulo: "Divulgação", href: "/ingressos/divulgacao" }, { rotulo: "Cupons", href: "/ingressos/cupons" }, { rotulo: "Lista de espera", href: "/ingressos/espera" },
   { rotulo: "Público", href: "/ingressos/publico" }, { rotulo: "Loja online", href: "/ingressos/site" }, { rotulo: "Integrações", href: "/ingressos/integracoes" }, { rotulo: "Espaços", href: "/ingressos/locais" },
 ];

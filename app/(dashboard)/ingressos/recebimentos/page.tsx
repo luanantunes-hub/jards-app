@@ -81,7 +81,7 @@ export default function RecebimentosPage() {
   return (
     <>
       <ListPageHeader
-        title="Financeiro"
+        title="Recebimentos"
         actions={podeEditar && !estado.conta ? <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Cadastrar conta</PrimaryListAction> : undefined}
       />
       <ListContent>

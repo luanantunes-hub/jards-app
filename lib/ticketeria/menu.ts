@@ -1,8 +1,8 @@
-// As abas da Ticketeria. O menu lateral tem seis itens e, dentro de Programação, Vendas, Divulgação e Configurações, uma barra de abas leva às páginas que
-// antes eram itens soltos. O espaço de trabalho se ajusta ao que o produtor faz (migration ticketeria_canais_da_loja): a Bilheteria só aparece para quem vende na
-// porta, a Loja online (o site) só para quem vende online e os Espaços só para quem trabalha com um espaço. O que falta aparece como um "+" na própria barra,
-// e um toque o adiciona. Esconder uma aba nunca esconde venda: Pedidos e o Controle de entrada aparecem para todos. Puro (sem imports de servidor): roda nos
-// testes (tests/ticketeria-menu.test.ts).
+// As abas da Ticketeria. O menu lateral tem seis itens e, dentro de Programação, Financeiro, Divulgação e Configurações, uma barra de abas leva às páginas que
+// antes eram itens soltos. Vendas não tem abas: é uma página de caixas, uma por forma de vender (lib/ticketeria/vender.ts), e as páginas de cada caixa
+// (a Bilheteria, a Loja online) têm um "← Vendas" no lugar da barra. O espaço de trabalho se ajusta ao que o produtor faz (migration
+// ticketeria_canais_da_loja): os Espaços só aparecem em Programação para quem trabalha com um espaço, e o que falta aparece como um "+" na própria barra.
+// Pedidos e o Controle de entrada ficam em Financeiro, para todos. Puro (sem imports de servidor): roda nos testes (tests/ticketeria-menu.test.ts).
 
 export type Canal = "porta" | "online";
 
@@ -14,7 +14,7 @@ export type Aba = { rotulo: string; href: string; /** Só esta rota acende a aba
 /** O que um "+" faz: a escolha que ele grava na loja e a página para onde leva em seguida. */
 export type Adicao = { rotulo: string; href: string; grava: { canal: Canal } | { usaEspacos: true } };
 
-export type GrupoId = "programacao" | "vendas" | "divulgacao" | "configuracoes";
+export type GrupoId = "programacao" | "financeiro" | "divulgacao" | "configuracoes";
 
 /** Um trecho da barra: as abas e, logo depois delas, os "+" do que a loja ainda pode acrescentar ali. */
 export type Secao = { abas: Aba[]; mais: Adicao[] };
@@ -24,9 +24,8 @@ export type BarraDeAbas = { grupo: GrupoId; secoes: Secao[]; ativa: Aba };
 
 const EVENTOS: Aba = { rotulo: "Eventos", href: "/ingressos/eventos", exata: true };
 const ESPACOS: Aba = { rotulo: "Espaços", href: "/ingressos/locais" };
+const RECEBIMENTOS: Aba = { rotulo: "Recebimentos", href: "/ingressos/recebimentos" };
 const PEDIDOS: Aba = { rotulo: "Pedidos", href: "/ingressos/vendas" };
-const LOJA_ONLINE: Aba = { rotulo: "Loja online", href: "/ingressos/site" };
-const BILHETERIA: Aba = { rotulo: "Bilheteria", href: "/ingressos/bilheteria" };
 const ENTRADA: Aba = { rotulo: "Controle de entrada", href: "/ingressos/porta" };
 
 const DIVULGACAO: Aba[] = [
@@ -39,13 +38,12 @@ const INTEGRACOES: Aba = { rotulo: "Integrações", href: "/ingressos/integracoe
 
 const casa = (path: string, aba: Aba) => (aba.exata ? path === aba.href : path === aba.href || path.startsWith(aba.href + "/"));
 
-const vende = (loja: EscolhasDaLoja, canal: Canal) => loja.canais === null || loja.canais.includes(canal);
 const comEspacos = (loja: EscolhasDaLoja) => loja.usaEspacos === null || loja.usaEspacos;
 
 /** Toda aba que existe, por grupo, para achar a página aberta mesmo quando a loja não escolheu aquela aba (quem chega por um endereço antigo a vê). */
 const TODAS: Record<GrupoId, Aba[]> = {
   programacao: [EVENTOS, ESPACOS],
-  vendas: [PEDIDOS, LOJA_ONLINE, BILHETERIA, ENTRADA],
+  financeiro: [RECEBIMENTOS, PEDIDOS, ENTRADA],
   divulgacao: DIVULGACAO,
   configuracoes: [INTEGRACOES],
 };
@@ -60,18 +58,10 @@ export function barraDoGrupo(grupo: GrupoId, loja: EscolhasDaLoja, ativa: Aba): 
       secoes: [{ abas: [EVENTOS, ...(espacos ? [ESPACOS] : [])], mais: espacos ? [] : [{ rotulo: "Espaços", href: ESPACOS.href, grava: { usaEspacos: true } }] }],
     };
   }
-  if (grupo === "vendas") {
-    const canais = [...(vende(loja, "online") || noMenu(LOJA_ONLINE) ? [LOJA_ONLINE] : []), ...(vende(loja, "porta") || noMenu(BILHETERIA) ? [BILHETERIA] : [])];
-    const mais: Adicao[] = [
-      ...(canais.includes(LOJA_ONLINE) ? [] : [{ rotulo: "Loja online", href: LOJA_ONLINE.href, grava: { canal: "online" as const } }]),
-      ...(canais.includes(BILHETERIA) ? [] : [{ rotulo: "Bilheteria", href: BILHETERIA.href, grava: { canal: "porta" as const } }]),
-    ];
-    return { grupo, ativa, secoes: [{ abas: [PEDIDOS], mais: [] }, { abas: canais, mais }, { abas: [ENTRADA], mais: [] }].filter(secao => secao.abas.length > 0 || secao.mais.length > 0) };
-  }
   return { grupo, ativa, secoes: [{ abas: TODAS[grupo], mais: [] }] };
 }
 
-/** O grupo de abas da página aberta e a aba acesa; null nas páginas que não pertencem a um grupo (Início, Financeiro, Começar, a página de um evento). */
+/** O grupo de abas da página aberta e a aba acesa; null nas páginas que não pertencem a um grupo (Início, Começar, a página de um evento). */
 export function abasDaRota(path: string, loja: EscolhasDaLoja = { canais: null, usaEspacos: null }): BarraDeAbas | null {
   for (const grupo of Object.keys(TODAS) as GrupoId[]) {
     const ativa = TODAS[grupo].find(aba => casa(path, aba));
@@ -97,4 +87,10 @@ export function depoisDeAdicionar(loja: EscolhasDaLoja, adicao: Adicao): Escolha
 export function escolhasDoComecar(atual: EscolhasDaLoja, respondeu: { canais: readonly Canal[]; temEspaco: boolean }): EscolhasDaLoja {
   const canais = atual.canais === null ? [...respondeu.canais] : [...new Set([...atual.canais, ...respondeu.canais])];
   return { canais, usaEspacos: atual.usaEspacos === null ? respondeu.temEspaco : atual.usaEspacos || respondeu.temEspaco };
+}
+
+/** As páginas de cada caixa de Vendas (a Bilheteria, a Loja online) não têm barra de abas: têm um "← Vendas" que leva de volta à página de caixas. */
+const PAGINAS_DAS_CAIXAS = ["/ingressos/bilheteria", "/ingressos/site"];
+export function voltaDaRota(path: string): { rotulo: string; href: string } | null {
+  return PAGINAS_DAS_CAIXAS.some(rota => path === rota || path.startsWith(rota + "/")) ? { rotulo: "Vendas", href: "/ingressos/vender" } : null;
 }
