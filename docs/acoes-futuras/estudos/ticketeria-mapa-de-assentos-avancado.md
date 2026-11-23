@@ -70,6 +70,27 @@ Nossos clientes (teatros, casas de show, igrejas, auditórios, escolas) cobrem s
 - **Prazo de adaptação:** só há um no texto, de 12 meses da publicação (12/06/2018) para os assentos de pessoa obesa.
 - **Não confirmado:** se o 5.296 consolidado foi mexido depois de 2018; o conteúdo da NBR 9050; regras estaduais e municipais (o Paraná exige 3%). O contador do produto é **informativo** e não deve dizer "em conformidade".
 
+### 4.1 A regra de venda dos lugares reservados (art. 23-A): proposta de 23/11/2026, ainda não ligada à venda
+
+**O que o texto diz** (lido no Planalto; paráfrase, com trechos curtos entre aspas):
+- A reserva vale do início das vendas "até vinte e quatro horas antes de cada evento", em **todos os pontos de venda, físicos ou virtuais** (§ 1º); em locais com capacidade acima de dez mil pessoas, "até setenta e duas horas antes" (§ 2º); em **cinemas**, "até meia hora antes de cada sessão" (§ 4º).
+- Se não houver "procura comprovada", os lugares podem, "excepcionalmente", ser ocupados por pessoas sem deficiência (caput), mas só "depois de esgotados os demais assentos daquele setor" e depois do prazo (§ 3º).
+- **O texto não define "procura comprovada"**: não diz critério, documento nem procedimento. Não traz sanção nem órgão fiscalizador, e não fala de preço dos lugares reservados.
+- Os lugares devem ficar onde caiba o acompanhante ao lado (art. 23, § 3º). A meia-entrada não se restringe aos lugares reservados (art. 23, § 11).
+
+**A proposta para a Ticketeria** (a função pura que a descreve, e os testes, estão em `lib/ticketeria/mapa-reserva.ts`):
+1. **Lugar reservado** = os tipos cadeira de rodas, mobilidade reduzida e pessoa obesa. O lugar de acompanhante não é reservado por si: é comprado junto (decisão 3).
+2. **Quem pode comprar um lugar reservado:** quem **declara** que ele (ou quem acompanha) tem deficiência ou mobilidade reduzida, a qualquer momento. Quem não declara, só **depois do prazo e com os demais lugares do setor esgotados nessa sessão**.
+3. **O prazo** vem da capacidade do local (mais de 10.000: 72 horas; senão, 24) e de uma marca "é um cinema" no espaço (meia hora).
+4. **Na compra:** antes do mapa, uma pergunta ("Alguém do grupo precisa de lugar para cadeira de rodas ou com mobilidade reduzida?"). Sem a declaração, os lugares reservados aparecem no mapa como "reservado" (com o selo, que o decreto manda mostrar) e não podem ser escolhidos; com ela, aparecem livres. A declaração fica gravada no pedido.
+5. **No banco** (precisa do "sim" do Luan): a venda de lugares (`fn_ticketeria_reservar_com_lugares`) e o mapa do comprador (`fn_ticketeria_mapa_da_sessao`) passam a conhecer a declaração. Como não se acrescenta parâmetro a função publicada (PGRST203), nascem funções com outro nome, e o servidor passa a chamar as novas; uma coluna no pedido guarda a declaração e uma no espaço guarda "é cinema".
+
+**O que o produto não consegue fazer, e vale dizer ao produtor:**
+- A regra só vale em **setor numerado** (é nele que há lugar com tipo). O decreto vale para o prédio inteiro: num setor sem lugar marcado, quem organiza tem que garantir à mão o espaço acessível.
+- O Jards **não confere** se a pessoa tem deficiência. A declaração é do comprador, e a conferência, se houver, é na entrada (hoje a Porta não tem esse passo).
+
+**Perguntas para quem entende da lei** (o texto não responde): o que vale como "procura comprovada" e quem decide; se basta a declaração do comprador; se o organizador pode manter os lugares reservados depois do prazo; como tratar setor sem lugar marcado; se a regra do cinema vale também para sala de teatro com sessões.
+
 **Hoje o nosso mapa não tem tipo de lugar.** Cadeira de rodas, acompanhante e mobilidade reduzida não existem, nem aparecem no mapa do comprador. Isso não é "melhoria": é uma lacuna que vale tratar cedo.
 
 ## 5. A proposta
@@ -167,7 +188,7 @@ A minha sugestão é fazer **M0 primeiro**: é a estrutura em que o mapa se pend
 - **M1, empurrar os vizinhos (23/11/2026, na branch):** quando um bloco cresce (lugares, fileiras, curva, ângulo, corredor), os vizinhos que ele passou a atingir saem do caminho, o mínimo para deixar 1,2 lugar de folga, e o empurrado empurra o seguinte (`empurrarVizinhos`, `lib/ticketeria/mapa-layout-editor.ts`). Quem não é atingido não se mexe; arrastar um bloco com a mão não empurra ninguém (o editor só avisa se ficarem em cima um do outro). Visto no navegador: o centro de um modelo de três blocos ganhou 6 lugares por fileira e os lados saíram de ±12,4 para ±15,5.
 - **M1, a alça de girar (23/11/2026, na branch):** no modo Desenho, o bloco escolhido ganha uma alça (círculo roxo com ↻) acima do pivô, ligada a ele por uma linha pontilhada; arrastar a alça em volta do pivô gira o bloco, encaixando de 5 em 5 graus, e os vizinhos são empurrados só ao soltar (`posicaoDaAlca` e `anguloParaPonto`, `lib/ticketeria/mapa-layout-editor.ts`; desenho em `MapaPorLayout.tsx`). Os botões de ângulo do painel seguem para quem usa teclado. Visto no navegador (eventos de ponteiro sintéticos): 0° → 30° → 47° encaixou em 45°.
 - **M1, mais três modelos (23/11/2026, na branch):** **Plateia e balcão** (dois blocos, o balcão atrás, fileiras com nomes seguidos), **Continental** (fileiras longas, sem corredor) e **Arena** (o palco no meio e quatro blocos em volta, os de cima e dos lados girados para a primeira fileira ficar junto ao palco; o palco tem a marca `centralizado` e o editor o mantém no centro quando o desenho muda). São seis modelos no total. O contrato com o banco real foi provado para os três (tamanho de partida, mínimo e máximo, mais uma arena editada): todos aceitos. **Ficam de fora**, porque pedem um tipo novo de objeto no desenho: mesas, camarotes e área em pé (M6).
-- **Falta:** a regra do art. 23-A (quem pode ocupar o lugar reservado); modelos a mais (balcão, mesas, camarote, em pé); a planta de fundo (M4).
+- **Falta:** ligar a regra do art. 23-A à venda (seção 4.1: a regra pura está escrita e testada, falta a decisão do Luan e a troca das funções da venda); modelos a mais (balcão, mesas, camarote, em pé); a planta de fundo (M4).
 
 ## 7. O que o Luan decide
 
