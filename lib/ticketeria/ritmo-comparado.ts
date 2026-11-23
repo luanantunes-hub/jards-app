@@ -11,6 +11,8 @@
 
 import type { Selo } from "@/lib/ticketeria/modelo-painel";
 
+import { MIN_COMPRADORES_PARA_COMPARAR, MIN_PARTE_EM_COMUM } from "@/lib/ticketeria/publico-em-comum";
+
 export const DIAS_DA_CURVA = 60;
 /** Alarga o intervalo de previsão: sem isto ele cobriu a verdade em 77% a 79% das vezes (nominal: 80%) no estudo; com 1,1, em 79% a 82%. */
 export const FATOR_DA_FAIXA = 1.1;
@@ -23,7 +25,11 @@ export const MIN_PARECIDOS_PARA_IMPRECISO = 3;
 const T80: Record<number, number> = { 1: 3.078, 2: 1.886, 3: 1.638, 4: 1.533, 5: 1.476, 6: 1.44, 7: 1.415, 8: 1.397, 9: 1.383 };
 
 /** O que um evento vendeu, dia a dia até a sessão: `acumulado[d]` são os ingressos vendidos até d dias antes da sessão (d de 0 a DIAS_DA_CURVA; o que veio antes de 60 dias entra no 60). */
-export type CurvaDoEvento = { id: string; nome: string; quando: string; local: string; localId: string; precoMedioCentavos: number; lugares: number; acumulado: number[] };
+export type CurvaDoEvento = {
+  id: string; nome: string; quando: string; local: string; localId: string; precoMedioCentavos: number; lugares: number; acumulado: number[];
+  /** O evento da sessão, de quem comprou o evento atual a parte que também comprou este (null sem dado) e se é do mesmo artista (lib/ticketeria/publico-em-comum.ts). */
+  eventoId?: string; publicoEmComum?: number | null; mesmoArtista?: boolean;
+};
 
 const msDoDia = 86400000;
 /** O acumulado de uma sessão: de `vendasPorDia` (dia do pagamento → ingressos) para "ingressos vendidos até d dias antes da sessão", de d = 0 a DIAS_DA_CURVA. Venda depois do dia da sessão não entra; a de mais de 60 dias entra no 60. */
@@ -42,12 +48,20 @@ export function acumuladoDaSessao(diaDaSessao: string, vendasPorDia: Record<stri
 export const vendidoNoFim = (c: CurvaDoEvento): number => c.acumulado[0] ?? 0;
 const fracao = (c: CurvaDoEvento, d: number): number => (c.lugares > 0 ? (c.acumulado[Math.min(DIAS_DA_CURVA, d)] ?? 0) / c.lugares : 0);
 
-export type EventoAtual = { id: string; localId: string; precoMedioCentavos: number };
+export type EventoAtual = { id: string; localId: string; precoMedioCentavos: number; /** Quantos compradores o evento atual tem: com MIN_COMPRADORES_PARA_COMPARAR ou mais, parecido é quem divide o público. */ compradores?: number };
 export type Veredito = { parecido: true } | { parecido: false; motivo: string };
 
-/** Parecido quer dizer: mesmo local, preço médio na mesma faixa e que vendeu pelo menos MIN_VENDIDO_DO_PARECIDO da lotação. Quando não é, o motivo em uma frase. */
+/**
+ * Parecido quer dizer: com público suficiente no evento atual, quem DIVIDE O PÚBLICO com ele (MIN_PARTE_EM_COMUM ou mais dos compradores em comum; vem da casa, não de rótulo de gênero);
+ * sem isso, mesmo local e preço médio na mesma faixa. Nos dois casos, que tenha vendido pelo menos MIN_VENDIDO_DO_PARECIDO da lotação. Quando não é, o motivo em uma frase.
+ */
 export function parecidoCom(atual: EventoAtual, c: CurvaDoEvento): Veredito {
   if (c.id === atual.id) return { parecido: false, motivo: "é o próprio evento" };
+  if ((atual.compradores ?? 0) >= MIN_COMPRADORES_PARA_COMPARAR && typeof c.publicoEmComum === "number") {
+    if (c.publicoEmComum < MIN_PARTE_EM_COMUM) return { parecido: false, motivo: `só ${Math.round(c.publicoEmComum * 100)}% de público em comum` };
+    if (c.lugares <= 0 || vendidoNoFim(c) < MIN_VENDIDO_DO_PARECIDO * c.lugares) return { parecido: false, motivo: "vendeu pouco" };
+    return { parecido: true };
+  }
   if (c.localId !== atual.localId) return { parecido: false, motivo: "outro local" };
   if (atual.precoMedioCentavos > 0 && c.precoMedioCentavos > 0 && (c.precoMedioCentavos < atual.precoMedioCentavos * FAIXA_DE_PRECO.min || c.precoMedioCentavos > atual.precoMedioCentavos * FAIXA_DE_PRECO.max)) return { parecido: false, motivo: "outro preço" };
   if (c.lugares <= 0 || vendidoNoFim(c) < MIN_VENDIDO_DO_PARECIDO * c.lugares) return { parecido: false, motivo: "vendeu pouco" };

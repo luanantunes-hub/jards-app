@@ -21,6 +21,7 @@ import { PlanoBDoModelo } from "@/components/ticketeria/PlanoBView";
 import { CabecalhoDoPainel, PreviaComExemplo, PrimeirosDados } from "@/components/ticketeria/PainelView";
 import { ExpectativaSheet, ParecidosSheet, RitmoComparado, SemParecido, useEscolhasDoRitmo } from "@/components/ticketeria/RitmoComparadoView";
 import { candidatosDoEvento, preverPorComparacao } from "@/lib/ticketeria/ritmo-comparado";
+import { MIN_COMPRADORES_PARA_COMPARAR } from "@/lib/ticketeria/publico-em-comum";
 import { confiancaMostrada } from "@/lib/ticketeria/modelo-confianca";
 import { blocoDeInvestir, blocoDoTamanhoDosCanais } from "@/lib/ticketeria/modelo-painel";
 import { lerDataDePico, type CamposDaDataDePico, type DataDePico } from "@/lib/ticketeria/modelo-controles";
@@ -309,7 +310,7 @@ export default function DivulgacaoPage() {
   }
   if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   const dados = estado.dados;
-  const candidatos = comparacao ? candidatosDoEvento({ id: comparacao.sessaoId, localId: comparacao.localId, precoMedioCentavos: comparacao.precoMedioCentavos }, comparacao.curvas, escolhas) : [];
+  const candidatos = comparacao ? candidatosDoEvento({ id: comparacao.sessaoId, localId: comparacao.localId, precoMedioCentavos: comparacao.precoMedioCentavos, compradores: comparacao.compradores }, comparacao.curvas, escolhas) : [];
   const previsaoPorComparacao = ritmo && comparacao ? preverPorComparacao({ vendidos: ritmo.vendidos, lugares: ritmo.lugares, diasAteASessao: ritmo.diasAteASessao, parecidos: candidatos.filter(c => c.usado).map(c => c.curva) }) : null;
   // O gasto por semana de cada canal (o mais comum nas semanas com gasto): a base da previsão e do simulador.
   const gastoSemanal: Record<string, number> = Object.fromEntries((prontidao?.canais ?? []).filter(c => c.medianaCentavos > 0).map(c => [c.canal, c.medianaCentavos]));
@@ -353,7 +354,7 @@ export default function DivulgacaoPage() {
                       frase={resultadoDoModelo && blocoDoTamanhoDosCanais(resultadoDoModelo.execucao.semanas, confiancaMostrada(resultadoDoModelo.execucao.confianca, prontidao.resumo?.sessoes ?? null)).aberto ? "O modelo já estima o tamanho de cada canal, com margem larga." : "Já dá para ver o que é medido, e cada integração que você faz deixa o resto mais preciso."} />
                     <PrimeirosDados semConta={!!previsaoPorComparacao} ritmo={prontidao.ritmo ?? null} origem={resumirDivulgacao(dados.linhas, null).canais.map(c => ({ rotulo: c.rotulo, ingressos: c.ingressos }))} />
                     {ritmo && (previsaoPorComparacao
-                      ? <RitmoComparado ritmo={ritmo} previsao={previsaoPorComparacao} candidatos={candidatos} onAjustar={() => setFolhaParecidos(true)} />
+                      ? <RitmoComparado ritmo={ritmo} previsao={previsaoPorComparacao} candidatos={candidatos} porPublico={(comparacao?.compradores ?? 0) >= MIN_COMPRADORES_PARA_COMPARAR} onAjustar={() => setFolhaParecidos(true)} />
                       : <SemParecido ritmo={ritmo} temHistorico={(comparacao?.curvas.length ?? 0) > 0} expectativa={expectativa} onExpectativa={() => setFolhaExpectativa(true)} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />)}
                     {plano && resultadoDoModelo && podePlanejar && <CalendarioDeDivulgacao plano={plano} canais={resultadoDoModelo.canais} semanasDoModelo={resultadoDoModelo.execucao.semanas} onAjustar={() => setPlanejando(true)} onFechar={() => setPlano(null)} />}
                     {resultadoDoModelo && <ResultadoDoModelo onPlanejar={podePlanejar ? () => setPlanejando(true) : undefined} resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} sessoes={prontidao.resumo?.sessoes ?? null} eventos={prontidao.resumo?.eventos ?? null} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />}

@@ -428,6 +428,7 @@ export type BancoDaTicketeria = {
           organization_id: string;
           loja_id: string;
           titulo: string;
+          artista: string | null;
           slug: string;
           descricao: string | null;
           imagem_url: string | null;
@@ -442,6 +443,7 @@ export type BancoDaTicketeria = {
           organization_id: string;
           loja_id: string;
           titulo: string;
+          artista?: string | null;
           slug?: string;
           descricao?: string | null;
           imagem_url?: string | null;
@@ -456,6 +458,7 @@ export type BancoDaTicketeria = {
           organization_id?: string;
           loja_id?: string;
           titulo?: string;
+          artista?: string | null;
           slug?: string;
           descricao?: string | null;
           imagem_url?: string | null;

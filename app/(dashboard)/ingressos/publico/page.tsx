@@ -9,6 +9,7 @@ import { ListContent, ListPageHeader, PrimaryListAction, SecondaryListAction } f
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PublicoDaLoja } from "@/components/ticketeria/PublicoView";
 import { ImportarContatosSheet } from "@/components/ticketeria/ImportarContatosSheet";
+import { EventosEmComum, type DadosEmComum, type LinhaEmComum } from "@/components/ticketeria/EventosEmComumView";
 import { EmailDaLoja, AtivarEmailSheet, DominioDoEmailSheet, type DadosDoDominio } from "@/components/ticketeria/EmailView";
 import { EnviosDaLoja, ListaDoWhatsAppSheet, NovoEnvioSheet, type DadosDoNovoEnvio, type EnvioParaLista, type SessaoParaEscolher } from "@/components/ticketeria/EnviosView";
 import type { CorpoDaImportacaoDeContatos } from "@/lib/ticketeria/contatos-importados";
@@ -20,7 +21,7 @@ const VAZIO: DadosDoPublico = { contatos: [], resumo: { contatos: 0, aceitaram: 
 type DadosDosEnvios = { ligado: boolean; email: RemetenteParaATela; segmentos: Segmento[]; segmentos_whatsapp?: Segmento[]; sessoes: SessaoParaEscolher[]; envios: EnvioParaLista[] };
 const SEM_EMAIL: RemetenteParaATela = { assinatura: "nenhuma", periodo_fim: null, cancela_no_fim: false, dominio: null, endereco_local: "ingressos", nome_exibicao: null, responder_para: null, situacao: "sem_dominio", registros: [], usados: 0, cota: COTA_PADRAO_DE_EMAILS, preco_centavos: PRECO_DO_EMAIL_CENTAVOS, pode_enviar: false };
 const SEM_ENVIOS: DadosDosEnvios = { ligado: false, email: SEM_EMAIL, segmentos: [], sessoes: [], envios: [] };
-type Aba = "contatos" | "envios" | "email";
+type Aba = "contatos" | "envios" | "email" | "em_comum";
 const ERROS_DO_EMAIL: Record<string, string> = {
   so_administrador: "Só quem administra a organização pode ativar o e-mail.",
   cobranca_nao_configurada: "A cobrança do e-mail ainda não está ligada. Fale com o suporte do Jards.",
@@ -34,7 +35,7 @@ const ERROS_DO_EMAIL: Record<string, string> = {
   sem_email_para_o_teste: "Sua conta não tem e-mail para receber o teste.",
   muitas_tentativas: "Muitas tentativas seguidas. Espere um pouco.",
 };
-const ABAS: [Aba, string][] = [["contatos", "Contatos"], ["envios", "Envios"], ["email", "E-mail"]];
+const ABAS: [Aba, string][] = [["contatos", "Contatos"], ["envios", "Envios"], ["email", "E-mail"], ["em_comum", "Eventos em comum"]];
 
 function textoDoErroDoEmail(codigo: string | undefined, status: number) { return ERROS_DO_EMAIL[codigo ?? ""] ?? (status === 429 ? ERROS_DO_EMAIL.muitas_tentativas : "Não foi possível agora. Tente de novo em instantes."); }
 
@@ -285,10 +286,31 @@ export default function PublicoPage() {
   const dados = estado?.dados ?? null;
   const contatos = useMemo(() => (dados ? filtrarPublico(dados.contatos, filtro, busca) : []), [dados, filtro, busca]);
 
+  // A aba Eventos em comum: os eventos que dividem público com um evento e o envio "quem foi a este e não comprou aquele" (abre o Novo envio com esse grupo já escolhido).
+  const [emComum, setEmComum] = useState<DadosEmComum | null>(null);
+  const [carregandoEmComum, setCarregandoEmComum] = useState(false);
+  const [segmentoEspecial, setSegmentoEspecial] = useState<Segmento | null>(null);
+  const carregarEmComum = useCallback(async (loja: string, evento?: string) => {
+    setCarregandoEmComum(true);
+    try {
+      const r = await fetch(`/api/ticketeria/lojas/${loja}/publico/em-comum${evento ? `?evento=${evento}` : ""}`, { cache: "no-store" });
+      setEmComum(r.ok ? ((await r.json()) as DadosEmComum) : null);
+    } catch { setEmComum(null); } finally { setCarregandoEmComum(false); }
+  }, []);
+  useEffect(() => {
+    if (aba !== "em_comum" || !lojaId) return;
+    void (async () => { await Promise.resolve(); await carregarEmComum(lojaId); })();
+  }, [aba, lojaId, carregarEmComum]);
+  function enviarParaQuemNaoComprou(l: LinhaEmComum, titulo: string) {
+    if (!l.segmento) return;
+    setSegmentoEspecial({ id: l.segmento, rotulo: `Foram a ${titulo} e não compraram ${l.titulo}`, total: l.alcancaveis });
+    setErroDoEnvio(null); setAvisoDoEnvio(null); setNovo(true);
+  }
+
   if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   return (
     <>
-      <ListPageHeader title="Público" actions={lojaId ? <><SecondaryListAction onClick={() => { setErroDaImportacao(null); setImportar(true); }}><FileUp size={13} aria-hidden="true" /> Importar planilha</SecondaryListAction><PrimaryListAction onClick={() => { setErroDoEnvio(null); setAvisoDoEnvio(null); setNovo(true); }}><Send size={13} aria-hidden="true" /> Novo envio</PrimaryListAction></> : undefined} />
+      <ListPageHeader title="Público" actions={lojaId ? <><SecondaryListAction onClick={() => { setErroDaImportacao(null); setImportar(true); }}><FileUp size={13} aria-hidden="true" /> Importar planilha</SecondaryListAction><PrimaryListAction onClick={() => { setSegmentoEspecial(null); setErroDoEnvio(null); setAvisoDoEnvio(null); setNovo(true); }}><Send size={13} aria-hidden="true" /> Novo envio</PrimaryListAction></> : undefined} />
       <ListContent>
         {avisoDaImportacao && <p role="status" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#2E8932]" style={{ borderColor: "#2E893247" }}>{avisoDaImportacao}</p>}
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
@@ -299,7 +321,9 @@ export default function PublicoPage() {
                 <button key={id} type="button" aria-pressed={aba === id} onClick={() => setAba(id)} className={`h-8 rounded-xl border px-3 text-[0.75rem] font-normal transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${aba === id ? "border-[#7259B5]/40 text-[#7259B5]" : "border-black/[.12] text-black/55 hover:bg-black/[.04]"}`}>{rotulo}</button>
               ))}
             </div>
-            {aba === "email"
+            {aba === "em_comum"
+              ? <EventosEmComum dados={emComum} carregando={carregandoEmComum} onEscolher={id => { if (lojaId) void carregarEmComum(lojaId, id); }} onEnviar={enviarParaQuemNaoComprou} />
+              : aba === "email"
               ? <EmailDaLoja email={envios.email} ocupado={trabalhandoEmail} aviso={avisoDoEmail} erro={erroDoEmail} onAtivar={() => { setErroDaFolhaDoEmail(null); setAtivarEmail(true); }} onEscolherDominio={() => { setErroDaFolhaDoEmail(null); setDominioEmail(true); }} onVerificar={() => void verificarDominio()} onGerenciar={() => void gerenciarAssinatura()} onTeste={() => void testeDoEmail()} />
               : aba === "contatos"
               ? <PublicoDaLoja resumo={dados.resumo} contatos={contatos} filtro={filtro} busca={busca} onFiltrar={setFiltro} onBuscar={setBusca} />
@@ -311,7 +335,7 @@ export default function PublicoPage() {
       {listaWhatsapp && <ListaDoWhatsAppSheet assunto={listaWhatsapp.assunto} pessoas={listaWhatsapp.pessoas} erro={erroDaLista} onAbrir={abrirConversa} onClose={() => setListaWhatsapp(null)} />}
       {ativarEmail && <AtivarEmailSheet cota={envios.email.cota} trabalhando={trabalhandoEmail} erro={erroDaFolhaDoEmail} onContinuar={() => void assinarEmail()} onClose={() => setAtivarEmail(false)} />}
       {dominioEmail && <DominioDoEmailSheet inicial={{ dominio: envios.email.dominio ?? "", endereco_local: envios.email.endereco_local, nome_exibicao: envios.email.nome_exibicao ?? lojaNome, responder_para: envios.email.responder_para ?? "" }} trabalhando={trabalhandoEmail} erro={erroDaFolhaDoEmail} onSalvar={d => void salvarDominio(d)} onClose={() => setDominioEmail(false)} />}
-      {novo && <NovoEnvioSheet segmentos={envios.segmentos} segmentosWhatsapp={envios.segmentos_whatsapp ?? []} sessoes={envios.sessoes} ligado={envios.ligado && envios.email.pode_enviar} motivoDoBloqueio={envios.ligado && !envios.email.pode_enviar ? `${envios.email.assinatura !== "ativa" ? MOTIVOS_DO_REMETENTE.sem_assinatura : envios.email.situacao === "sem_dominio" ? MOTIVOS_DO_REMETENTE.sem_dominio : MOTIVOS_DO_REMETENTE.dominio_nao_verificado} Veja a aba E-mail.` : null} origem={window.location.origin} erro={erroDoEnvio} aviso={avisoDoEnvio} trabalhando={trabalhando} onTeste={d => void enviar(d, true)} onEnviar={d => void enviar(d, false)} onClose={() => setNovo(false)} />}
+      {novo && <NovoEnvioSheet segmentos={segmentoEspecial ? [segmentoEspecial, ...envios.segmentos] : envios.segmentos} segmentosWhatsapp={envios.segmentos_whatsapp ?? []} sessoes={envios.sessoes} ligado={envios.ligado && envios.email.pode_enviar} motivoDoBloqueio={envios.ligado && !envios.email.pode_enviar ? `${envios.email.assinatura !== "ativa" ? MOTIVOS_DO_REMETENTE.sem_assinatura : envios.email.situacao === "sem_dominio" ? MOTIVOS_DO_REMETENTE.sem_dominio : MOTIVOS_DO_REMETENTE.dominio_nao_verificado} Veja a aba E-mail.` : null} origem={window.location.origin} erro={erroDoEnvio} aviso={avisoDoEnvio} trabalhando={trabalhando} onTeste={d => void enviar(d, true)} onEnviar={d => void enviar(d, false)} onClose={() => { setNovo(false); setSegmentoEspecial(null); }} />}
     </>
   );
 }

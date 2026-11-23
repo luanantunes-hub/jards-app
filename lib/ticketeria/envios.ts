@@ -49,10 +49,13 @@ export function destinatariosDoSegmento(e: EntradaParaEnvio, segmento: string, c
   const contatos = montarPublico(e).contatos.filter(c => recebeNovidades(c) && (canal === "email" || !!c.whatsapp));
   const pessoa = (c: { email: string; nome: string; whatsapp: string | null }): Destinatario => ({ email: c.email, nome: c.nome, ...(canal === "whatsapp" ? { whatsapp: c.whatsapp } : {}) });
   if (segmento === SEGMENTO_TODOS) return contatos.map(pessoa);
-  const m = /^evento:(.+)$/.exec(segmento);
-  if (!m || !UUID.test(m[1])) return [];
-  const compraram = new Set(e.pedidos.filter(p => e.eventoIdDaSessao[p.sessao_id] === m[1].toLowerCase()).map(p => p.comprador_email.trim().toLowerCase()));
-  return contatos.filter(c => compraram.has(c.email)).map(pessoa);
+  // "evento:A" (compraram A) ou "evento:A:sem:B" (compraram A e não compraram B: o envio da aba Eventos em comum).
+  const m = /^evento:([^:]+)(?::sem:([^:]+))?$/.exec(segmento);
+  if (!m || !UUID.test(m[1]) || (m[2] !== undefined && !UUID.test(m[2]))) return [];
+  const doEvento = (id: string) => new Set(e.pedidos.filter(p => e.eventoIdDaSessao[p.sessao_id] === id.toLowerCase()).map(p => p.comprador_email.trim().toLowerCase()));
+  const compraram = doEvento(m[1]);
+  const fora = m[2] ? doEvento(m[2]) : new Set<string>();
+  return contatos.filter(c => compraram.has(c.email) && !fora.has(c.email)).map(pessoa);
 }
 
 export type EnvioLido = { canal: CanalDoEnvio; assunto: string; mensagem: string; sessao_id: string; segmento: string; teste: boolean };
@@ -69,7 +72,7 @@ export function lerEnvio(entrada: unknown): { ok: true; envio: EnvioLido } | { o
   const sessao = texto(e.sessao_id).toLowerCase();
   if (!UUID.test(sessao)) problemas.push("sessão");
   const segmento = texto(e.segmento);
-  if (segmento !== SEGMENTO_TODOS && !/^evento:[0-9a-f-]{36}$/i.test(segmento)) problemas.push("para quem");
+  if (segmento !== SEGMENTO_TODOS && !/^evento:[0-9a-f-]{36}(:sem:[0-9a-f-]{36})?$/i.test(segmento)) problemas.push("para quem");
   if (problemas.length > 0) return { ok: false, problemas };
   const canal: CanalDoEnvio = e.canal === "whatsapp" ? "whatsapp" : "email";
   return { ok: true, envio: { canal, assunto, mensagem, sessao_id: sessao, segmento: segmento.toLowerCase(), teste: canal === "email" && e.teste === true } };

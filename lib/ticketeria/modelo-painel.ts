@@ -29,7 +29,7 @@ export type RitmoDoEvento = {
   /** Se o ritmo cair à metade; e se dobrar: o que vendem, e se lotaria antes da data. */ metade: number; dobro: number; dobroLota: boolean;
   serie: { dia: string; ingressos: number }[];
   /** O que a comparação com eventos parecidos precisa (só o servidor preenche): o evento atual e as curvas dos eventos que já aconteceram. */
-  comparacao?: { sessaoId: string; localId: string; precoMedioCentavos: number; acumulado: number[]; curvas: CurvaDoEvento[] };
+  comparacao?: { sessaoId: string; localId: string; precoMedioCentavos: number; /** Quantos compradores o evento atual tem (com 20 ou mais, parecido é quem divide o público). */ compradores?: number; acumulado: number[]; curvas: CurvaDoEvento[] };
 };
 
 /** A conta simples do ritmo: o que já vendeu, o ritmo dos últimos 7 dias e até onde chega se ele continuar, caísse à metade ou dobrasse. NÃO é uma previsão do modelo. */

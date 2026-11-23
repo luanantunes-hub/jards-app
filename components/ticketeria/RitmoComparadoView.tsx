@@ -1,5 +1,6 @@
 "use client";
 
+import { MIN_PARTE_EM_COMUM } from "@/lib/ticketeria/publico-em-comum";
 import { useCallback, useEffect, useState } from "react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
@@ -68,7 +69,7 @@ function Grafico({ ritmo, previsao }: { ritmo: RitmoDoEvento; previsao: Previsao
 }
 
 /** A previsão da lotação por comparação com eventos parecidos: a frase com a faixa e o selo, o gráfico e a tabela dos eventos usados (com o botão de ajustar). */
-export function RitmoComparado({ ritmo, previsao, candidatos, onAjustar }: { ritmo: RitmoDoEvento; previsao: PrevisaoPorComparacao; candidatos: Candidato[]; onAjustar?: () => void }) {
+export function RitmoComparado({ ritmo, previsao, candidatos, onAjustar, porPublico = false }: { ritmo: RitmoDoEvento; previsao: PrevisaoPorComparacao; candidatos: Candidato[]; onAjustar?: () => void; /** Parecido escolhido pelo público em comum (o evento tem compradores suficientes). */ porPublico?: boolean }) {
   const hojePct = ritmo.lugares > 0 ? (ritmo.vendidos / ritmo.lugares) * 100 : 0;
   const { min, max } = previsao.noMesmoPonto;
   const posicao = hojePct / 100 < min ? "abaixo do que eles tinham" : hojePct / 100 > max ? "acima do que eles tinham" : "dentro do que eles tinham";
@@ -97,14 +98,16 @@ export function RitmoComparado({ ritmo, previsao, candidatos, onAjustar }: { rit
       </div>
       <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>
         <table className="w-full min-w-[40rem] border-collapse">
-          <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Evento</th><th className={CABECALHO}>Quando</th><th className={CABECALHO}>Onde</th><th className={`${CABECALHO} text-right`}>Preço médio</th><th className={`${CABECALHO} text-right`}>Vendido a {ritmo.diasAteASessao} dias</th><th className={`${CABECALHO} text-right`}>Vendido no fim</th></tr></thead>
+          <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Evento</th><th className={CABECALHO}>Quando</th>{porPublico ? <th className={`${CABECALHO} text-right`}>Público em comum</th> : <><th className={CABECALHO}>Onde</th><th className={`${CABECALHO} text-right`}>Preço médio</th></>}<th className={`${CABECALHO} text-right`}>Vendido a {ritmo.diasAteASessao} dias</th><th className={`${CABECALHO} text-right`}>Vendido no fim</th></tr></thead>
           <tbody className="divide-y divide-black/[.08]">
             {candidatos.map(c => (
               <tr key={c.curva.id} className={c.usado ? "" : "text-black/35"}>
-                <td className={`${CELULA} ${c.usado ? "" : "!text-black/35"}`}><span className={`mr-2 inline-block size-3.5 rounded border-[1.5px] align-[-2px] ${c.usado ? "border-[#7259B5] bg-[#7259B5]" : "border-black/25"}`} aria-hidden="true" />{c.curva.nome}{!c.usado && !c.veredito.parecido && <span className="ml-2 text-[0.6875rem]">({c.veredito.motivo})</span>}</td>
+                <td className={`${CELULA} ${c.usado ? "" : "!text-black/35"}`}><span className={`mr-2 inline-block size-3.5 rounded border-[1.5px] align-[-2px] ${c.usado ? "border-[#7259B5] bg-[#7259B5]" : "border-black/25"}`} aria-hidden="true" />{c.curva.nome}{c.curva.mesmoArtista && <span className="ml-2 rounded-xl border px-2 py-0.5 text-[0.625rem] text-[#7259B5]" style={{ borderColor: "rgba(114,89,181,.35)" }}>mesmo artista</span>}{!c.usado && !c.veredito.parecido && <span className="ml-2 text-[0.6875rem]">({c.veredito.motivo})</span>}</td>
                 <td className={`${CELULA} ${c.usado ? "" : "!text-black/35"}`}>{c.curva.quando}</td>
-                <td className={`${CELULA} ${c.usado ? "" : "!text-black/35"}`}>{c.curva.local}</td>
-                <td className={`${CELULA} text-right tabular-nums ${c.usado ? "" : "!text-black/35"}`}>{c.curva.precoMedioCentavos > 0 ? formatarMoeda(c.curva.precoMedioCentavos) : "—"}</td>
+                {porPublico
+                  ? <td className={`${CELULA} text-right tabular-nums ${c.usado ? "" : "!text-black/35"}`}>{typeof c.curva.publicoEmComum === "number" ? `${Math.round(c.curva.publicoEmComum * 100)}%` : "—"}{typeof c.curva.publicoEmComum === "number" && c.curva.publicoEmComum > 0 && <span aria-hidden="true" className="ml-2 inline-block h-1.5 rounded-full bg-[#7259B5]/60 align-middle" style={{ width: `${Math.min(60, c.curva.publicoEmComum * 120)}px` }} />}</td>
+                  : <><td className={`${CELULA} ${c.usado ? "" : "!text-black/35"}`}>{c.curva.local}</td>
+                    <td className={`${CELULA} text-right tabular-nums ${c.usado ? "" : "!text-black/35"}`}>{c.curva.precoMedioCentavos > 0 ? formatarMoeda(c.curva.precoMedioCentavos) : "—"}</td></>}
                 <td className={`${CELULA} text-right tabular-nums ${c.usado ? "" : "!text-black/35"}`}>{c.usado ? `${pontoDe(c.curva)}%` : "—"}</td>
                 <td className={`${CELULA} text-right tabular-nums ${c.usado ? "" : "!text-black/35"}`}>{c.usado ? `${fimDe(c.curva)}%` : "—"}</td>
               </tr>
@@ -112,7 +115,8 @@ export function RitmoComparado({ ritmo, previsao, candidatos, onAjustar }: { rit
           </tbody>
         </table>
       </div>
-      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Parecido quer dizer mesmo local, preço na mesma faixa e que vendeu pelo menos {Math.round(MIN_VENDIDO_DO_PARECIDO * 100)}% da lotação. A faixa estreita com mais eventos. É uma comparação, não uma garantia: um grande nome ou uma final muda tudo, e o Jards não sabe disso.</p>
+      {porPublico && <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Público em comum: de quem comprou este evento, a parte que também comprou aquele. Entra quem divide {Math.round(MIN_PARTE_EM_COMUM * 100)}% ou mais e vendeu pelo menos {Math.round(MIN_VENDIDO_DO_PARECIDO * 100)}% da lotação. O Jards não usa rótulo de gênero (comédia, rock, infantil): o que é parecido vem do seu público.</p>}
+      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45" hidden={porPublico}>Parecido quer dizer mesmo local, preço na mesma faixa e que vendeu pelo menos {Math.round(MIN_VENDIDO_DO_PARECIDO * 100)}% da lotação. A faixa estreita com mais eventos. É uma comparação, não uma garantia: um grande nome ou uma final muda tudo, e o Jards não sabe disso.</p>
     </section>
   );
 }
@@ -162,7 +166,7 @@ export function ParecidosSheet({ candidatos, onSalvar, onClose }: { candidatos: 
             <li key={c.curva.id}>
               <label className="flex cursor-pointer items-start gap-3 px-4 py-3 text-[0.8125rem] text-[#282525]">
                 <input type="checkbox" className="mt-0.5 size-4 accent-[#7259B5]" checked={!!marcados[c.curva.id]} onChange={e => setMarcados(m => ({ ...m, [c.curva.id]: e.target.checked }))} />
-                <span><span className="block">{c.curva.nome} <span className="text-black/45">· {c.curva.quando} · {c.curva.local}</span></span><span className="block text-[0.6875rem] text-black/45">{c.veredito.parecido ? "Sugerido: mesmo local, preço na faixa." : `Não sugerido: ${c.veredito.motivo}.`}</span></span>
+                <span><span className="block">{c.curva.nome} <span className="text-black/45">· {c.curva.quando} · {c.curva.local}</span></span><span className="block text-[0.6875rem] text-black/45">{c.veredito.parecido ? (typeof c.curva.publicoEmComum === "number" ? `Sugerido: ${Math.round(c.curva.publicoEmComum * 100)}% de público em comum.` : "Sugerido: mesmo local, preço na faixa.") : `Não sugerido: ${c.veredito.motivo}.`}</span></span>
               </label>
             </li>
           ))}

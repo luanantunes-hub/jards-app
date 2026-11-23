@@ -58,7 +58,7 @@ export default function EventoPage() {
       const ticketeria = clienteDaTicketeria(createClient());
       const [ev, se, lo, sa] = await Promise.all([
 
-        ticketeria.from("ticketeria_eventos").select("id, loja_id, slug, titulo, descricao, imagem_url, classificacao, situacao").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
+        ticketeria.from("ticketeria_eventos").select("id, loja_id, slug, titulo, descricao, imagem_url, classificacao, situacao, artista").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
         ticketeria.from("ticketeria_sessoes").select("id, local_id, sala_id, inicio, fim, abertura_portas, cancelada_em").eq("evento_id", id).order("inicio"),
         ticketeria.from("ticketeria_locais").select("id, nome, fuso, arquivado").eq("organization_id", organizationId).order("nome"),
         ticketeria.from("ticketeria_salas").select("id, local_id, nome, ordem, arquivado").eq("organization_id", organizationId),

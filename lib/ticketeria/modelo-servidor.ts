@@ -7,6 +7,7 @@ import { divulgacaoDaLoja } from "@/lib/ticketeria/divulgacao-servidor";
 import { ritmoDoEvento, type RitmoDoEvento } from "@/lib/ticketeria/modelo-painel";
 import { acumuladoDaSessao, type CurvaDoEvento } from "@/lib/ticketeria/ritmo-comparado";
 import { gastoDaMarca } from "@/lib/ticketeria/campanhas-servidor";
+import { compradoresPorEvento, eventosEmComum, normalizarArtista } from "@/lib/ticketeria/publico-em-comum";
 import { separarMarca } from "@/lib/ticketeria/campanhas";
 import { abrirSessoesLongas, atracaoOAnoTodo, curvaDaCasa, controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
 import { compararComOsLinks, lerPartesDaBase, type CanalDoResultado, type ParteDaBase } from "@/lib/ticketeria/modelo-resultado";
@@ -178,14 +179,14 @@ export async function resultadoDaLoja(admin: Admin, lojaId: string): Promise<Res
  */
 export async function ritmoDoProximoEvento(admin: Admin, lojaId: string, agora: number = Date.now()): Promise<RitmoDoEvento | null> {
   const t = clienteDaTicketeria(admin);
-  const { data: eventos } = await t.from("ticketeria_eventos").select("id, titulo").eq("loja_id", lojaId);
+  const { data: eventos } = await t.from("ticketeria_eventos").select("id, titulo, artista").eq("loja_id", lojaId);
   const idsDosEventos = (eventos ?? []).map(e => e.id);
   if (idsDosEventos.length === 0) return null;
   const { data: sessoesBrutas } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, cancelada_em").in("evento_id", idsDosEventos);
   const validas = (sessoesBrutas ?? []).filter(s => !s.cancelada_em);
   const futuras = validas.filter(s => Date.parse(s.inicio) > agora).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
   if (futuras.length === 0) return null;
-  const pagos = (await todas(async (de, ate) => t.from("ticketeria_pedidos").select("id, sessao_id, pago_em").eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, ate))).filter(p => p.pago_em);
+  const pagos = (await todas(async (de, ate) => t.from("ticketeria_pedidos").select("id, sessao_id, pago_em, comprador_email").eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, ate))).filter(p => p.pago_em);
   const idsDasSessoes = new Set(validas.map(s => s.id));
   const dasSessoes = pagos.filter(p => idsDasSessoes.has(p.sessao_id));
   // Quantidade e valor de cada pedido (preço médio só de ingresso pago: cortesia e gratuito não dizem do preço).
@@ -227,6 +228,11 @@ export async function ritmoDoProximoEvento(admin: Admin, lojaId: string, agora: 
   const lugares = lugaresDaSala.get(escolhida.sala_id) ?? 0;
   const ritmo = ritmoDoEvento({ evento: titulo.get(escolhida.evento_id) ?? "Evento", vendasPorDia: atual.porDia, vendidos: atual.total, lugares, hoje: diaNoFuso(new Date(agora), atual.fuso), diaDaSessao: atual.diaDaSessao });
   if (!ritmo) return null;
+  // O público em comum com o evento atual (quem comprou os dois) e o mesmo artista: o que é "parecido" vem da casa (lib/ticketeria/publico-em-comum.ts).
+  const compradores = compradoresPorEvento(dasSessoes.map(p => ({ comprador_email: p.comprador_email, sessao_id: p.sessao_id })), Object.fromEntries(validas.map(s => [s.id, s.evento_id])));
+  const emComum = new Map(eventosEmComum(compradores, escolhida.evento_id).map(x => [x.eventoId, x.parte]));
+  const artistaDe = new Map((eventos ?? []).map(e => [e.id, normalizarArtista(e.artista)]));
+  const artistaAtual = artistaDe.get(escolhida.evento_id) ?? "";
   // As curvas dos eventos que já aconteceram (para a comparação): cada sessão passada que vendeu.
   const curvas: CurvaDoEvento[] = [];
   for (const s of validas.filter(x => Date.parse(x.inicio) <= agora)) {
@@ -235,7 +241,8 @@ export async function ritmoDoProximoEvento(admin: Admin, lojaId: string, agora: 
     curvas.push({
       id: s.id, nome: titulo.get(s.evento_id) ?? "Evento", quando: new Intl.DateTimeFormat("pt-BR", { month: "short", year: "numeric", timeZone: v.fuso ?? "America/Sao_Paulo" }).format(new Date(s.inicio)).replace(" de ", "/").replace(".", ""),
       local: doLocal.get(s.local_id)?.nome ?? "Local", localId: s.local_id, precoMedioCentavos: v.precoMedioCentavos, lugares: lugaresDaSala.get(s.sala_id) ?? 0, acumulado: acumuladoDaSessao(v.diaDaSessao, v.porDia),
+      eventoId: s.evento_id, publicoEmComum: s.evento_id === escolhida.evento_id ? null : emComum.get(s.evento_id) ?? 0, mesmoArtista: !!artistaAtual && artistaDe.get(s.evento_id) === artistaAtual && s.evento_id !== escolhida.evento_id,
     });
   }
-  return { ...ritmo, comparacao: { sessaoId: escolhida.id, localId: escolhida.local_id, precoMedioCentavos: atual.precoMedioCentavos, acumulado: acumuladoDaSessao(atual.diaDaSessao, atual.porDia), curvas } };
+  return { ...ritmo, comparacao: { sessaoId: escolhida.id, localId: escolhida.local_id, precoMedioCentavos: atual.precoMedioCentavos, compradores: compradores.get(escolhida.evento_id)?.size ?? 0, acumulado: acumuladoDaSessao(atual.diaDaSessao, atual.porDia), curvas } };
 }
