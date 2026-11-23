@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script>document.documentElement.classList.add('js');if('scrollRestoration' in history)history.scrollRestoration='manual';</script>
+  <script>document.documentElement.classList.add('js');if('scrollRestoration' in history)history.scrollRestoration='manual';(function(){var u=navigator.userAgent;if((/AppleWebKit/.test(u)&&!/Chrome|Chromium|Edg|Android/.test(u))||/iPhone|iPad|iPod/.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('wk');})();</script>
   <script src="/consentimento.js" defer></script>
   <script src="/origem-campanha.js" defer></script>
   <meta charset="UTF-8" />
@@ -269,6 +269,8 @@
    por transform (vai para a placa de vídeo) e é misturada em "hue" sobre a arte: recolore só o que tem cor (as faces) e
    mantém o brilho e o grão da tinta; o branco do fundo e os cinzas não mudam. */
 .tku-hero-arte { position:relative; isolation:isolate; }
+/* Safari e todo navegador de iPhone/iPad (WebKit): a mistura hue da camada não foi aplicada na prática e a camada cobria a arena; ficam sem o efeito até haver uma versão testada neles */
+.wk .tku-fx { display:none; }
 .tku-hero-arte::before { content:""; position:absolute; top:0; bottom:0; left:-9%; right:-9%; z-index:-1; background:var(--tku-papel); }   /* fundo opaco: o "hue" só recolore o que tem cor e deixa o branco */
 .tku-fx { position:absolute; top:0; bottom:0; left:-9%; right:-9%; z-index:1; overflow:hidden; pointer-events:none; background:#A63CFF; mix-blend-mode:hue; }
 .tku-fx i { position:absolute; width:62%; aspect-ratio:1; border-radius:50%; will-change:transform; }
