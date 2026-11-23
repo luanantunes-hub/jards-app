@@ -10,6 +10,7 @@ import { adicionarFileira, alternarBloqueio, comCorredor, comTipoNoLugar, lerMap
 import { MapaEditorSheet } from "@/components/ticketeria/AssentosView";
 import { comEstadosDoMapa, conferirLayout, lerLayout, mapaDoLayout, type Layout } from "@/lib/ticketeria/mapa-layout";
 import { ERRO_DO_LAYOUT_EM_TEXTO } from "@/lib/ticketeria/mapa-layout-editor";
+import { desfazer, podeDesfazer, podeRefazer, refazer, registrar, versoesNovas, type Versoes } from "@/lib/ticketeria/desfazer-refazer";
 import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 
 export type SetorEditavel = { id: string; nome: string; lugares: number; arquivado: boolean; numerado: boolean; corredor_no_meio: boolean };
@@ -25,7 +26,9 @@ export function SetorSheet({ organizationId, localId, salaId, nomeDoLocal, setor
   const [rascunho, setRascunho] = useState<FileiraDoMapa[] | null>(null);
   // O layout (o desenho em blocos) guardado no banco (null: o setor é só a lista de fileiras) e o do editor aberto.
   const [layoutDoBanco, setLayoutDoBanco] = useState<Layout | null>(null);
-  const [layout, setLayout] = useState<Layout | null>(null);
+  // O desenho do editor aberto, com o que dá para desfazer e refazer (começa de novo a cada vez que o editor abre).
+  const [versoes, setVersoes] = useState<Versoes<Layout | null>>(() => versoesNovas<Layout | null>(null));
+  const layout = versoes.atual;
   const [blocoEscolhido, setBlocoEscolhido] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -48,6 +51,19 @@ export function SetorSheet({ organizationId, localId, salaId, nomeDoLocal, setor
   }, [setor]);
 
   const temMapa = (mapa?.length ?? 0) > 0;
+
+  /** Troca o desenho e acerta os lugares do rascunho; `agrupar`: faz parte de um arraste, que desfaz de uma vez. */
+  function mudarLayout(l: Layout | null, agrupar = false) {
+    const agora = Date.now();
+    setVersoes(v => registrar(v, l, agora, agrupar));
+    if (l) setRascunho(m => comEstadosDoMapa(mapaDoLayout(l), m ?? []));
+  }
+  function irParaVersao(v: Versoes<Layout | null>) {
+    setVersoes(v);
+    const l = v.atual;
+    if (l) setRascunho(m => comEstadosDoMapa(mapaDoLayout(l), m ?? []));
+    setBlocoEscolhido(b => (l && l.blocos.some(x => x.id === b) ? b : l?.blocos[0]?.id ?? null));
+  }
 
   async function gravar(fechar: () => void, mudanca?: { arquivado: boolean }) {
     const leitura = lerSetor({ nome, lugares: numerado ? String(setor?.lugares ?? 1) : lugares });
@@ -88,7 +104,7 @@ export function SetorSheet({ organizationId, localId, salaId, nomeDoLocal, setor
     return (
       <MapaEditorSheet setor={nome.trim() || setor.nome} local={nomeDoLocal ?? ""} fileiras={comCorredor(rascunho, corredor)} lugares={r.aVenda} bloqueados={r.bloqueados} vendidos={r.vendidos} corredor={corredor} erro={erroDoMapa} salvando={salvando}
         onCorredor={setCorredor} onAlternar={(f, n) => setRascunho(m => (m ? alternarBloqueio(m, f, n) : m))} onMarcarTipo={(f, n, t) => setRascunho(m => (m ? comTipoNoLugar(m, f, n, t) : m))}
-        layout={layout} onLayout={l => { setLayout(l); if (l) setRascunho(m => comEstadosDoMapa(mapaDoLayout(l), m ?? [])); }} blocoEscolhido={blocoEscolhido} onEscolherBloco={setBlocoEscolhido} onAdicionarFileira={() => setRascunho(m => (m ? adicionarFileira(m) : m))}
+        layout={layout} onLayout={mudarLayout} historico={{ podeDesfazer: podeDesfazer(versoes), podeRefazer: podeRefazer(versoes), onDesfazer: () => irParaVersao(desfazer(versoes)), onRefazer: () => irParaVersao(refazer(versoes)) }} blocoEscolhido={blocoEscolhido} onEscolherBloco={setBlocoEscolhido} onAdicionarFileira={() => setRascunho(m => (m ? adicionarFileira(m) : m))}
         onMaisLugares={f => setRascunho(m => (m ? maisLugares(m, f) : m))} onMenosLugares={f => setRascunho(m => (m ? menosLugares(m, f) : m))} onClose={() => { setRascunho(null); setErroDoMapa(null); }} onSalvar={() => void salvarMapa()} />
     );
   }
@@ -113,7 +129,7 @@ export function SetorSheet({ organizationId, localId, salaId, nomeDoLocal, setor
               <div className="rounded-xl border px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <p className="text-[0.6875rem] font-normal uppercase tracking-[.08em] text-black/40">Mapa</p>
                 <p className="mt-1 text-[0.8125rem] text-[#282525]">{mapa === null ? "Lendo o mapa…" : temMapa ? resumoEmTexto(resumoDoMapa(mapa)) : "Ainda sem mapa. Monte as fileiras e os lugares."}</p>
-                <button type="button" disabled={salvando || mapa === null} onClick={() => { setErroDoMapa(null); setRascunho(temMapa && mapa ? mapa : mapaNovo()); setLayout(layoutDoBanco); setBlocoEscolhido(layoutDoBanco?.blocos[0]?.id ?? null); }} className="mt-3 inline-flex h-9 items-center rounded-xl border border-black/[.12] bg-white px-3.5 text-[0.75rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">{temMapa ? "Editar o mapa" : "Montar o mapa"}</button>
+                <button type="button" disabled={salvando || mapa === null} onClick={() => { setErroDoMapa(null); setRascunho(temMapa && mapa ? mapa : mapaNovo()); setVersoes(versoesNovas(layoutDoBanco)); setBlocoEscolhido(layoutDoBanco?.blocos[0]?.id ?? null); }} className="mt-3 inline-flex h-9 items-center rounded-xl border border-black/[.12] bg-white px-3.5 text-[0.75rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">{temMapa ? "Editar o mapa" : "Montar o mapa"}</button>
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-[8rem_1fr]">

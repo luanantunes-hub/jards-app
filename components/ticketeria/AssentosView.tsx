@@ -10,7 +10,7 @@ import { SELO_DO_TIPO, TIPO_CURTO, TIPO_EM_TEXTO, TIPOS_DE_LUGAR, conferirAcessi
 import { tiposDoMapa } from "@/lib/ticketeria/mapa";
 import { LegendaDeTiposDoMapa, MapaPorLayout, chaveDoLugar } from "@/components/ticketeria/MapaPorLayout";
 import type { Layout } from "@/lib/ticketeria/mapa-layout";
-import { EditorDoLayout } from "@/components/ticketeria/EditorDoLayout";
+import { EditorDoLayout, type HistoricoDoEditor } from "@/components/ticketeria/EditorDoLayout";
 import { comAngulo, comPalcoAcima, empurrarVizinhos, moverBloco } from "@/lib/ticketeria/mapa-layout-editor";
 import { ehLugarReservado } from "@/lib/ticketeria/mapa-reserva";
 
@@ -193,7 +193,9 @@ type PropsDoEditor = {
   /** Com ele, o editor ganha a ferramenta "Tipo do lugar" (cadeira de rodas, acompanhante, mobilidade reduzida, pessoa obesa) e o painel de acessibilidade; sem ele (o onboarding), fica como era. */
   onMarcarTipo?: (fileira: string, numero: number, tipo: TipoDeLugar) => void;
   /** Com `onLayout`, o editor ganha a ferramenta "Desenho" (modelos, blocos, curva, ângulo, corredores) e, havendo `layout`, mostra o mapa pelo desenho dos blocos. */
-  layout?: Layout | null; onLayout?: (l: Layout | null) => void; blocoEscolhido?: string | null; onEscolherBloco?: (id: string | null) => void;
+  layout?: Layout | null; onLayout?: (l: Layout | null, agrupar?: boolean) => void; blocoEscolhido?: string | null; onEscolherBloco?: (id: string | null) => void;
+  /** Desfazer e refazer do desenho (opcional: sem ele, ficam sem os botões e os atalhos). */
+  historico?: HistoricoDoEditor;
   /** Só para as imagens e os testes: com qual ferramenta e qual tipo o editor abre. */
   ferramentaInicial?: "bloquear" | "tipo" | "desenho"; tipoInicial?: Exclude<TipoDeLugar, "comum">;
 };
@@ -267,7 +269,7 @@ export function PainelDeAcessibilidade({ fileiras }: { fileiras: FileiraDoMapa[]
  * O editor do mapa de um setor, sem moldura: as fileiras com a quantidade de lugares de cada uma, e os lugares que se bloqueiam tocando neles. É o mesmo na
  * folha do setor (MapaEditorSheet) e no onboarding (passo "Monte o auditório"): o que se desenha num vale no outro.
  */
-export function EditorDoMapa({ fileiras, lugares, bloqueados, vendidos, corredor = true, onCorredor, onAlternar, onAdicionarFileira, onMaisLugares, onMenosLugares, erro, onMarcarTipo, layout = null, onLayout, blocoEscolhido = null, onEscolherBloco, ferramentaInicial = "bloquear", tipoInicial = "cadeira_rodas" }: PropsDoEditor) {
+export function EditorDoMapa({ fileiras, lugares, bloqueados, vendidos, corredor = true, onCorredor, onAlternar, onAdicionarFileira, onMaisLugares, onMenosLugares, erro, onMarcarTipo, layout = null, onLayout, blocoEscolhido = null, onEscolherBloco, historico, ferramentaInicial = "bloquear", tipoInicial = "cadeira_rodas" }: PropsDoEditor) {
   const [ferramenta, setFerramenta] = useState<"bloquear" | "tipo" | "desenho">(ferramentaInicial);
   const [tipo, setTipo] = useState<Exclude<TipoDeLugar, "comum"> | "comum">(tipoInicial);
   const comTipos = !!onMarcarTipo;
@@ -288,8 +290,8 @@ export function EditorDoMapa({ fileiras, lugares, bloqueados, vendidos, corredor
         <div className={`overflow-x-auto rounded-xl border px-4 py-5 ${modoDesenho ? "sticky top-0 z-10 bg-[#fbfbfb] shadow-[0_6px_16px_-8px_rgba(13,13,13,.18)]" : "bg-black/[.015]"}`} style={{ borderColor: "rgba(13,13,13,.08)" }}>
           {layout ? (
             <MapaPorLayout layout={layout} modo="produtor" estados={estadosDoMapa(fileiras)} tipos={tiposDoMapa(fileiras, (f, n) => chaveDoLugar(null, f, n))} rotuloDoMapa="Mapa do setor, por blocos"
-              desenho={modoDesenho ? { blocoEscolhido, onEscolher: onEscolherBloco, onMover: (id, x, y) => onLayout(comPalcoAcima(moverBloco(layout, id, x, y))),
-                onGirar: (id, angulo, fim) => { const girado = comAngulo(layout, id, angulo); onLayout(comPalcoAcima(fim ? empurrarVizinhos(girado, id) : girado)); } } : undefined}
+              desenho={modoDesenho ? { blocoEscolhido, onEscolher: onEscolherBloco, onMover: (id, x, y) => onLayout(comPalcoAcima(moverBloco(layout, id, x, y)), true),
+                onGirar: (id, angulo, fim) => { const girado = comAngulo(layout, id, angulo); onLayout(comPalcoAcima(fim ? empurrarVizinhos(girado, id) : girado), true); } } : undefined}
               onAlternar={l => (modoTipo ? onMarcarTipo?.(l.fileira, l.numero, tipoDoLugar(l.fileira, l.numero) === tipo ? "comum" : tipo) : onAlternar?.(l.fileira, l.numero))} />
           ) : (
             <>
@@ -318,7 +320,7 @@ export function EditorDoMapa({ fileiras, lugares, bloqueados, vendidos, corredor
           )}
           <LegendaDoMapa modo="produtor" tipos={tiposPresentes(tiposDoMapa(fileiras, (f, n) => `${f}|${n}`))} />
         </div>
-        {modoDesenho && <EditorDoLayout layout={layout} onLayout={onLayout} blocoEscolhido={blocoEscolhido} onEscolherBloco={onEscolherBloco} />}
+        {modoDesenho && <EditorDoLayout layout={layout} onLayout={onLayout} blocoEscolhido={blocoEscolhido} onEscolherBloco={onEscolherBloco} historico={historico} />}
         {comTipos && <PainelDeAcessibilidade fileiras={fileiras} />}
         <div className="flex flex-wrap items-center justify-between gap-3">
           {layout ? <span /> : <div className="flex flex-wrap items-center gap-3">

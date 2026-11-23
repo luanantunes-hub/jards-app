@@ -251,6 +251,15 @@ function proximoId(layout: Layout): string {
 export function maisUmBloco(layout: Layout): Layout {
   if (layout.blocos.length >= MAX_BLOCOS) return layout;
   const modelo = layout.blocos[layout.blocos.length - 1];
+  const maiorX = Math.max(...layout.blocos.map(b => b.x));
+  return copiaDoBloco(layout, modelo, maiorX + larguraDoBloco(modelo));
+}
+
+const larguraDoBloco = (b: Bloco) => Math.max(...b.fileiras.map(f => f.lugares)) + 3;
+
+/** Um bloco igual ao `modelo` (curva, ângulo, numeração, lugares por fileira) com o centro em `x`; as fileiras ganham nomes que ainda não existem e a contagem recomeça em 1. */
+function copiaDoBloco(layout: Layout, modelo: Bloco, x: number): Layout {
+  if (layout.blocos.length >= MAX_BLOCOS) return layout;
   const usados = new Set(layout.blocos.flatMap(b => b.fileiras.map(f => f.nome)));
   let nome = layout.blocos.flatMap(b => b.fileiras.map(f => f.nome)).sort((a, b) => a.length - b.length || a.localeCompare(b)).pop() ?? "";
   const fileiras = modelo.fileiras.map(f => {
@@ -258,10 +267,25 @@ export function maisUmBloco(layout: Layout): Layout {
     usados.add(nome);
     return { nome, lugares: f.lugares, ...(f.corredores ? { corredores: [...f.corredores] } : {}) };
   });
-  const maiorX = Math.max(...layout.blocos.map(b => b.x));
-  const largura = Math.max(...modelo.fileiras.map(f => f.lugares)) + 3;
-  const novo = blocoNovo({ ...modelo, id: proximoId(layout), x: limita(maiorX + largura, -500, 500), primeiroNumero: 1, fileiras, ...(modelo.corredores ? { corredores: [...modelo.corredores] } : {}) });
+  const novo = blocoNovo({ ...modelo, id: proximoId(layout), x: limita(x, -500, 500), primeiroNumero: 1, fileiras, ...(modelo.corredores ? { corredores: [...modelo.corredores] } : {}) });
   return comPalcoAcima({ ...layout, blocos: [...layout.blocos, novo] });
+}
+
+/** Duplica o bloco escolhido: a cópia sai ao lado dele (o último bloco da lista) e empurra o que estiver no caminho. */
+export function duplicarBloco(layout: Layout, id: string): Layout {
+  const modelo = layout.blocos.find(b => b.id === id);
+  if (!modelo || layout.blocos.length >= MAX_BLOCOS) return layout;
+  const copia = copiaDoBloco(layout, modelo, modelo.x + larguraDoBloco(modelo));
+  return empurrarVizinhos(copia, copia.blocos[copia.blocos.length - 1].id);
+}
+
+/** Põe o bloco no meio (na horizontal) dos outros blocos: o balcão atrás do meio da plateia, o centro entre as laterais. Com um bloco só, não há em relação a quê. */
+export function centralizarBloco(layout: Layout, id: string): Layout {
+  const bloco = layout.blocos.find(b => b.id === id);
+  if (!bloco || layout.blocos.length < 2) return layout;
+  const dele = calcularLayout({ ...layout, blocos: [bloco], palco: null }).caixa;
+  const dosOutros = calcularLayout({ ...layout, blocos: layout.blocos.filter(b => b.id !== id), palco: null }).caixa;
+  return deslocarBloco(layout, id, (dosOutros.x0 + dosOutros.x1) / 2 - (dele.x0 + dele.x1) / 2, 0);
 }
 
 export function tirarBloco(layout: Layout, id: string): Layout {

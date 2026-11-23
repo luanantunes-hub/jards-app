@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Copy, Redo2, Undo2 } from "lucide-react";
 import { conferirLayout, type Layout, type Numeracao } from "@/lib/ticketeria/mapa-layout";
 import {
   CAMPOS_DO_MODELO, ERRO_DO_LAYOUT_EM_TEXTO, MODELOS, MODELO_EM_TEXTO, PARAMETROS_PADRAO, comAngulo, comCorredorNoMeio, comNumeracao, comPalcoAcima, comPrimeiroNumero, comRaio,
-  deslocarBloco, empurrarVizinhos, layoutDoModelo, maisLugaresNoBloco, maisUmBloco, maisUmaFileira, menosUmaFileira, temCorredorNoMeio, tirarBloco, type ModeloId, type ParametrosDoModelo,
+  centralizarBloco, deslocarBloco, duplicarBloco, empurrarVizinhos, layoutDoModelo, maisLugaresNoBloco, maisUmBloco, maisUmaFileira, menosUmaFileira, temCorredorNoMeio, tirarBloco, type ModeloId, type ParametrosDoModelo,
 } from "@/lib/ticketeria/mapa-layout-editor";
 
 // Os controles do desenho do mapa: o modelo para começar e, para o bloco escolhido, a numeração, a curva, o ângulo, o corredor, as fileiras e a posição.
@@ -37,11 +37,16 @@ const RAIO_MINIMO = 6;
 const RAIO_MAXIMO = 40;
 const PASSO_DO_RAIO = 4;
 
-export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBloco }: {
+/** Desfazer e refazer do desenho: o estado fica com quem guarda o layout (a folha do setor); aqui só os botões e os atalhos. */
+export type HistoricoDoEditor = { podeDesfazer: boolean; podeRefazer: boolean; onDesfazer: () => void; onRefazer: () => void };
+
+export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBloco, historico }: {
   layout: Layout | null;
-  onLayout: (l: Layout | null) => void;
+  /** `agrupar`: a mudança faz parte de um gesto (arrastar, girar) e entra no histórico junto com as vizinhas dele. */
+  onLayout: (l: Layout | null, agrupar?: boolean) => void;
   blocoEscolhido: string | null;
   onEscolherBloco: (id: string | null) => void;
+  historico?: HistoricoDoEditor;
 }) {
   const [modelo, setModelo] = useState<ModeloId | null>(null);
   const [parametros, setParametros] = useState<ParametrosDoModelo>(PARAMETROS_PADRAO);
@@ -65,12 +70,42 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
     onLayout(comPalcoAcima(empurrar ? empurrarVizinhos(novo, bloco.id) : novo));
   };
 
+  const duplicar = () => {
+    if (!layout || !bloco) return;
+    const novo = duplicarBloco(layout, bloco.id);
+    if (novo === layout) return;
+    onLayout(novo);
+    onEscolherBloco(novo.blocos[novo.blocos.length - 1].id);
+  };
+
+  // Atalhos: Ctrl/Cmd+Z desfaz, Ctrl/Cmd+Shift+Z (ou Ctrl+Y) refaz, Ctrl/Cmd+D duplica o bloco. Não valem dentro de campo de texto.
+  useEffect(() => {
+    if (!historico) return;
+    const aoTeclar = (e: KeyboardEvent) => {
+      const alvo = e.target as HTMLElement | null;
+      if (alvo && (alvo.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(alvo.tagName))) return;
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const tecla = e.key.toLowerCase();
+      if (tecla === "z" && !e.shiftKey && historico.podeDesfazer) { e.preventDefault(); historico.onDesfazer(); }
+      else if (((tecla === "z" && e.shiftKey) || (tecla === "y" && !e.shiftKey)) && historico.podeRefazer) { e.preventDefault(); historico.onRefazer(); }
+      else if (tecla === "d" && !e.shiftKey && bloco) { e.preventDefault(); duplicar(); }
+    };
+    window.addEventListener("keydown", aoTeclar);
+    return () => window.removeEventListener("keydown", aoTeclar);
+  });
+
   const lugaresDasFileiras = bloco ? bloco.fileiras.map(f => f.lugares) : [];
   const lugaresTexto = lugaresDasFileiras.length === 0 ? "" : Math.min(...lugaresDasFileiras) === Math.max(...lugaresDasFileiras) ? String(lugaresDasFileiras[0]) : `${Math.min(...lugaresDasFileiras)} a ${Math.max(...lugaresDasFileiras)}`;
   const raio = bloco?.raio ?? null;
 
   return (
     <div className="space-y-4">
+      {historico && (
+        <div className="flex items-center justify-end gap-1.5">
+          <button type="button" className={BOTAO} onClick={historico.onDesfazer} disabled={!historico.podeDesfazer} aria-label="Desfazer" title="Desfazer (Ctrl+Z)"><Undo2 size={14} aria-hidden="true" className="mr-1.5" />Desfazer</button>
+          <button type="button" className={BOTAO} onClick={historico.onRefazer} disabled={!historico.podeRefazer} aria-label="Refazer" title="Refazer (Ctrl+Shift+Z)"><Redo2 size={14} aria-hidden="true" className="mr-1.5" />Refazer</button>
+        </div>
+      )}
       <div>
         <p className="text-[0.6875rem] uppercase tracking-[.08em] text-black/40">Modelo</p>
         <div role="radiogroup" aria-label="Modelo do desenho" className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -149,6 +184,10 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
                   <button type="button" className={BOTAO_PASSO} aria-label="Mover para baixo" onClick={() => muda(l => deslocarBloco(l, bloco.id, 0, 1))}><ArrowDown size={14} aria-hidden="true" /></button>
                   <button type="button" className={BOTAO_PASSO} aria-label="Mover para a direita" onClick={() => muda(l => deslocarBloco(l, bloco.id, 1, 0))}><ArrowRight size={14} aria-hidden="true" /></button>
                 </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button type="button" className={BOTAO} onClick={duplicar} disabled={layout.blocos.length >= 30} title="Duplicar o bloco (Ctrl+D)"><Copy size={14} aria-hidden="true" className="mr-1.5" />Duplicar bloco</button>
+                {layout.blocos.length > 1 && <button type="button" className={BOTAO} onClick={() => muda(l => centralizarBloco(l, bloco.id))} title="Pôr o bloco no meio dos outros">Centralizar</button>}
               </div>
               {layout.blocos.length > 1 && (
                 <div className="pt-1">

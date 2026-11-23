@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { calcularLayout, type Layout } from "@/lib/ticketeria/mapa-layout";
 import { anguloParaPonto, posicaoDaAlca } from "@/lib/ticketeria/mapa-layout-editor";
 import type { EstadoDoAssento } from "@/lib/ticketeria/mapa";
@@ -15,6 +15,8 @@ export const chaveDoLugar = (setor: string | null, fileira: string, numero: numb
 const PASSO = 28; // pixels de um passo (distância entre dois lugares) no tamanho natural
 const LADO = 0.84; // o lado do lugar, em passos
 const COM_NUMERO_ATE = 400; // acima disso o número do lugar não cabe e sai do desenho
+const ZOOM_MAXIMO = 4;
+const BOTAO_ZOOM = "flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-[0.75rem] text-black/65 transition hover:bg-black/[.05] disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5]";
 
 /** O enquadramento do desenho (o que o SVG mostra), em passos. */
 type Quadro = { x0: number; y0: number; largura: number; altura: number };
@@ -48,6 +50,28 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
   const [congelado, setCongelado] = useState<Quadro | null>(null);
   const q = congelado ?? natural;
   const svgRef = useRef<SVGSVGElement>(null);
+  // Zoom e deslocamento só no editor: o enquadramento `q` é o desenho inteiro, e o que se vê é uma janela menor, deslocada do centro (em passos).
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const panando = useRef<{ px: number; py: number; x: number; y: number; escala: number } | null>(null);
+  const idDaGrade = useId().replace(/:/g, "");
+  const z = desenho ? zoom : 1;
+  const vw = q.largura / z;
+  const vh = q.altura / z;
+  const vista: Quadro = z === 1 && pan.x === 0 && pan.y === 0 ? q : { x0: q.x0 + q.largura / 2 + pan.x - vw / 2, y0: q.y0 + q.altura / 2 + pan.y - vh / 2, largura: vw, altura: vh };
+  const mudarZoom = (f: (z: number) => number) => setZoom(atual => { const novo = Math.min(ZOOM_MAXIMO, Math.max(1, Math.round(f(atual) * 100) / 100)); if (novo === 1) setPan({ x: 0, y: 0 }); return novo; });
+  // Ctrl/Cmd + roda (e o gesto de pinça do trackpad) dão zoom; o ouvinte é nativo porque o do React não pode cancelar a rolagem da página.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!desenho || !svg) return;
+    const aoRolar = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      mudarZoom(atual => atual * (e.deltaY < 0 ? 1.12 : 1 / 1.12));
+    };
+    svg.addEventListener("wheel", aoRolar, { passive: false });
+    return () => svg.removeEventListener("wheel", aoRolar);
+  }, [!!desenho]); // eslint-disable-line react-hooks/exhaustive-deps
   const arraste = useRef<{ id: string; px: number; py: number; x: number; y: number; escala: number } | null>(null);
   const girando = useRef<{ id: string; ultimo: number | null } | null>(null);
   const comNumero = lugares.length <= COM_NUMERO_ATE;
@@ -79,12 +103,21 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
     desenho.onEscolher(id);
     const svg = svgRef.current;
     const bloco = id ? layout.blocos.find(b => b.id === id) : undefined;
+    const escala = svg ? Math.min(svg.getBoundingClientRect().width / vista.largura, svg.getBoundingClientRect().height / vista.altura) : 0;
+    // Com zoom, arrastar o fundo desloca a vista.
+    if (!id && svg && z > 1 && escala > 0) { panando.current = { px: e.clientX, py: e.clientY, x: pan.x, y: pan.y, escala }; capturar(svg, e.pointerId); return; }
     if (!id || !svg || !bloco) return;
-    arraste.current = { id, px: e.clientX, py: e.clientY, x: bloco.x, y: bloco.y, escala: Math.min(svg.getBoundingClientRect().width / q.largura, svg.getBoundingClientRect().height / q.altura) };
+    arraste.current = { id, px: e.clientX, py: e.clientY, x: bloco.x, y: bloco.y, escala };
     setCongelado(natural);
     capturar(svg, e.pointerId);
   }
   function arrastar(e: React.PointerEvent<SVGSVGElement>) {
+    const p0 = panando.current;
+    if (p0) {
+      const limite = (v: number, max: number) => Math.min(max, Math.max(-max, v));
+      setPan({ x: limite(p0.x - (e.clientX - p0.px) / p0.escala, q.largura / 2), y: limite(p0.y - (e.clientY - p0.py) / p0.escala, q.altura / 2) });
+      return;
+    }
     const g = girando.current;
     if (desenho && g) {
       const svg = svgRef.current;
@@ -108,16 +141,32 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
     if (g && g.ultimo !== null) desenho?.onGirar?.(g.id, g.ultimo, true);
     girando.current = null;
     arraste.current = null;
+    panando.current = null;
     setCongelado(null);
   }
 
   return (
-    <div className={ampliado ? "overflow-x-auto pb-1" : ""}>
+    <div className={`${ampliado ? "overflow-x-auto pb-1" : ""} ${desenho ? "relative" : ""}`}>
+    {desenho && (
+      <div className="absolute right-0 top-0 z-[1] flex items-center gap-1 rounded-lg border border-black/[.1] bg-white/90 p-1 shadow-sm backdrop-blur">
+        <button type="button" aria-label="Menos zoom" disabled={zoom <= 1} onClick={() => mudarZoom(a => a - 0.25)} className={BOTAO_ZOOM}>−</button>
+        <button type="button" aria-label="Ajustar o desenho à tela" title="Ajustar à tela" disabled={zoom === 1 && pan.x === 0 && pan.y === 0} onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className={`${BOTAO_ZOOM} w-12 tabular-nums`}>{Math.round(zoom * 100)}%</button>
+        <button type="button" aria-label="Mais zoom" disabled={zoom >= ZOOM_MAXIMO} onClick={() => mudarZoom(a => a + 0.25)} className={BOTAO_ZOOM}>+</button>
+      </div>
+    )}
     <svg
-      ref={svgRef} viewBox={`${q.x0} ${q.y0} ${q.largura} ${q.altura}`} width={ampliado ? q.largura * PASSO * 1.35 : "100%"}
-      style={{ maxWidth: ampliado ? undefined : q.largura * PASSO, height: "auto", maxHeight: desenho ? "42vh" : undefined, touchAction: desenho ? "none" : undefined }} role="group" aria-label={rotuloDoMapa} className="mx-auto block"
+      ref={svgRef} viewBox={`${vista.x0} ${vista.y0} ${vista.largura} ${vista.altura}`} width={ampliado ? q.largura * PASSO * 1.35 : "100%"}
+      style={{ maxWidth: ampliado ? undefined : q.largura * PASSO, height: "auto", maxHeight: desenho ? "42vh" : undefined, touchAction: desenho ? "none" : undefined, userSelect: desenho ? "none" : undefined }} role="group" aria-label={rotuloDoMapa} className="mx-auto block"
       onPointerDown={desenho ? comecarArraste : undefined} onPointerMove={desenho ? arrastar : undefined} onPointerUp={desenho ? soltar : undefined} onPointerCancel={desenho ? soltar : undefined}
     >
+      {desenho && (
+        <g aria-hidden="true" pointerEvents="none">
+          <defs>
+            <pattern id={idDaGrade} x={-0.5} y={-0.5} width={1} height={1} patternUnits="userSpaceOnUse"><circle cx={0.5} cy={0.5} r={0.035} fill="rgba(0,0,0,.2)" /></pattern>
+          </defs>
+          <rect x={vista.x0} y={vista.y0} width={vista.largura} height={vista.altura} fill={`url(#${idDaGrade})`} />
+        </g>
+      )}
       {p && (
         <g aria-hidden="true">
           <rect x={p.x - p.largura / 2} y={p.y - p.altura / 2} width={p.largura} height={p.altura} rx={0.5} fill="rgba(0,0,0,.04)" stroke="rgba(0,0,0,.15)" strokeWidth={0.06} />
