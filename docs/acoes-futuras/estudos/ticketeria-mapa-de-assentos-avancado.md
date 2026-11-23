@@ -59,11 +59,16 @@ Nossos clientes (teatros, casas de show, igrejas, auditórios, escolas) cobrem s
 
 ## 4. Acessibilidade: a parte que tem lei
 
-Pelos resultados da pesquisa (a conferir no texto oficial antes de qualquer promessa):
-- O **Decreto 9.404/2018**, que alterou o Decreto 5.296/2004, manda reservar em teatros, cinemas e auditórios **espaços para cadeira de rodas** (20, mais 1% do que passar de mil lugares) e **assentos para pessoas com deficiência ou mobilidade reduzida** (20, mais 1% do que passar de mil lugares).
-- Esses espaços e assentos devem aparecer **identificados no mapa de assentos** dos pontos de venda e da divulgação do evento.
-- Há versões anteriores, com 2% e mínimo de um, então confira qual vale.
-- A **NBR 9050** traz parâmetros para assentos de pessoas obesas, e há regras estaduais e municipais (o Paraná exige 3% adaptados). O percentual e as medidas precisam ser conferidos na norma da ABNT e com quem entende da lei.
+**Conferido no texto oficial em 23/11/2026** ([Decreto 9.404/2018](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9404.htm), que deu nova redação ao art. 23 do Decreto 5.296/2004; li o decreto alterador, não o 5.296 consolidado). A primeira versão deste estudo trazia "20, mais 1%" para qualquer lotação: estava errada para quem tem até mil lugares.
+
+- **Até 1.000 lugares:** **2%** de espaços para pessoas em cadeira de rodas e **2%** de assentos para pessoas com deficiência ou mobilidade reduzida, cada um com **no mínimo 1**.
+- **Acima de 1.000:** **20** de cada **mais 1% do que passar de mil**.
+- **Pessoas obesas:** **50% dos assentos reservados** para deficiência ou mobilidade reduzida têm que servir a pessoa obesa (medidas da norma da ABNT), no mínimo 1. Não é um número à parte: são lugares que contam também como os de mobilidade reduzida.
+- **Fração:** vale o primeiro número inteiro acima (§ 9º).
+- **Mapa:** os espaços e assentos devem ser **identificados no mapa de assentos** dos pontos de venda e de divulgação, físicos ou virtuais, e esses pontos devem ser acessíveis e trazer as informações de acessibilidade do evento (art. 23-B).
+- **Venda a quem não tem deficiência (art. 23-A):** o lugar reservado só pode ser ocupado por outra pessoa se não houver procura comprovada, depois de prazos (o resumo que li cita 24 horas antes do evento, 72 horas em locais com mais de 10 mil pessoas e 30 minutos antes em cinemas). **Não está construído**: hoje o lugar de acessibilidade seria vendido como qualquer outro. Precisa de uma regra de liberação (decisão do Luan e conferência com quem entende da lei).
+- **Prazo de adaptação:** só há um no texto, de 12 meses da publicação (12/06/2018) para os assentos de pessoa obesa.
+- **Não confirmado:** se o 5.296 consolidado foi mexido depois de 2018; o conteúdo da NBR 9050; regras estaduais e municipais (o Paraná exige 3%). O contador do produto é **informativo** e não deve dizer "em conformidade".
 
 **Hoje o nosso mapa não tem tipo de lugar.** Cadeira de rodas, acompanhante e mobilidade reduzida não existem, nem aparecem no mapa do comprador. Isso não é "melhoria": é uma lacuna que vale tratar cedo.
 
@@ -151,6 +156,11 @@ Espaço (hoje: local)  →  Sala (novo)  →  Setor  →  Lugar
 
 A minha sugestão é fazer **M0 primeiro**: é a estrutura em que o mapa se pendura, e é mais barato mexer nela agora, antes de haver mais eventos e vendas. Depois **M1 e M2 juntas**, porque a acessibilidade é a lacuna com peso de lei, e **M4 logo depois**, porque é o que o produtor sentiria mais.
 
+**Andamento (23/11/2026):**
+- **M0 (salas):** feita (commits 5a54000, 7c80fd1, a62a77a).
+- **M1, 1ª fatia:** o motor de layout, só em código (`lib/ticketeria/mapa-layout.ts`, desenho `components/ticketeria/MapaPorLayout.tsx`): blocos, corredores livres, fileira curva, ângulo, três regras de numeração, três modelos, conferência (inclui blocos sobrepostos) e a conversão do mapa de hoje. **Fora das telas e sem banco.** Falta: guardar o layout, ligar o desenho à compra e ao editor, o editor de arrastar e girar, mais modelos.
+- **M2, 1ª fatia:** os tipos de lugar (`lib/ticketeria/mapa-acessibilidade.ts`): cadeira de rodas, acompanhante, mobilidade reduzida e pessoa obesa; a conta de referência da seção 4; as frases do contador; o selo com letra, o texto falado e a legenda no desenho. **Fora das telas e sem banco.** Falta: a coluna do tipo no banco (`ticketeria_assentos`) e a função que salva o mapa levar o tipo (troca de função publicada: precisa do "sim"), o editor para marcar o tipo, a regra do art. 23-A e a numeração por bloco gravada.
+
 ## 7. O que o Luan decide
 
 **Já decidido (22/11/2026):**
@@ -169,7 +179,7 @@ A minha sugestão é fazer **M0 primeiro**: é a estrutura em que o mapa se pend
 
 - **Salas em eventos que já têm vendas.** A migração para a sala padrão não pode mexer em sessões vendidas: a conta de lugares e o conferir da venda precisam dar o mesmo resultado de antes para quem tem uma sala só. Teste pesado, como no resto.
 - **Mapas com vendas.** Mudar o desenho não pode mudar quem é cada lugar. A migração do mapa de hoje precisa de teste pesado com lugares vendidos. Mudar a regra de numeração só vale sem vendas.
-- **Leitura da lei.** Os números de acessibilidade vêm de resumos da pesquisa, não do texto oficial. Conferir antes de mostrar qualquer "mínimo".
+- **Leitura da lei.** Os números da seção 4 foram conferidos no texto do Decreto 9.404/2018, mas não no 5.296 consolidado, na NBR 9050 nem nas regras estaduais e municipais. O contador é informativo e nunca diz "em conformidade".
 - **Desempenho** com milhares de lugares na tela, em celular fraco.
 - **Tamanho.** Isto é um produto dentro do produto. M1 sozinha é de semanas, e cada fase com tela passa pelo ok do Luan nas imagens, como no resto da Ticketeria.
 
