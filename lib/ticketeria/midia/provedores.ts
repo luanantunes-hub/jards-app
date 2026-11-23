@@ -2,8 +2,8 @@
 // imports de servidor: o `fetch` entra por parâmetro e roda nos testes (tests/ticketeria-provedores.test.ts).
 
 import { lerVisitasDoGa4, listarPropriedadesDoGa4, urlDeLoginDoGa4, type VisitaDiaria } from "@/lib/ticketeria/midia/ga4";
-import { configDoGoogle, lerGastoDoGoogleAds, listarContasDoGoogleAds, trocarCodigoDoGoogle, urlDeLoginDoGoogle } from "@/lib/ticketeria/midia/google-ads";
-import { configDaMeta, lerGastoDiario, listarContasDaMeta, trocarCodigoPeloToken, urlDeLoginDaMeta, type BuscarHttp, type ContaDeAnuncios, type DiaDeMidia } from "@/lib/ticketeria/midia/meta";
+import { configDoGoogle, lerGastoDoGoogleAds, lerGastoPorCampanhaDoGoogleAds, listarContasDoGoogleAds, trocarCodigoDoGoogle, urlDeLoginDoGoogle } from "@/lib/ticketeria/midia/google-ads";
+import { configDaMeta, lerGastoDiario, lerGastoPorCampanhaDaMeta, listarContasDaMeta, trocarCodigoPeloToken, urlDeLoginDaMeta, type BuscarHttp, type ContaDeAnuncios, type DiaDeCampanha, type DiaDeMidia } from "@/lib/ticketeria/midia/meta";
 
 export type ProvedorDeMidia = "meta" | "google_ads" | "ga4";
 export const PROVEDORES_DE_MIDIA: readonly ProvedorDeMidia[] = ["meta", "google_ads", "ga4"];
@@ -13,7 +13,12 @@ export const PEDACO_NA_URL: Record<ProvedorDeMidia, string> = { meta: "meta", go
 export const provedorDaUrl = (pedaco: string): ProvedorDeMidia | null => PROVEDORES_DE_MIDIA.find(p => PEDACO_NA_URL[p] === pedaco) ?? null;
 
 /** O que uma leitura traz: gasto por dia (anúncios) ou visitas por dia e origem (Analytics). */
-export type DadosLidos = { gasto: DiaDeMidia[]; visitas?: undefined } | { visitas: VisitaDiaria[]; gasto?: undefined };
+export type DadosLidos = { gasto: DiaDeMidia[]; visitas?: undefined; /** O gasto por campanha (para separar marca de evento); ausente se a plataforma não devolveu. */ campanhas?: DiaDeCampanha[] } | { visitas: VisitaDiaria[]; gasto?: undefined; campanhas?: undefined };
+
+/** Lê as campanhas sem deixar a falha delas derrubar a leitura do gasto da conta (que é o que o modelo precisa para funcionar). */
+async function campanhasOuNada(ler: () => Promise<DiaDeCampanha[]>): Promise<DiaDeCampanha[] | undefined> {
+  try { return await ler(); } catch { return undefined; }
+}
 
 export type AdaptadorDeMidia = {
   provedor: ProvedorDeMidia;
@@ -40,7 +45,7 @@ export function adaptadorDeMidia(provedor: ProvedorDeMidia, env: Record<string, 
       urlDeLogin: state => urlDeLoginDaMeta(c, state),
       trocarCodigo: codigo => trocarCodigoPeloToken(c, codigo, buscar),
       listarContas: token => listarContasDaMeta(c, token, buscar),
-      ler: async (token, conta, de, ate) => ({ gasto: await lerGastoDiario(c, token, conta, de, ate, buscar) }),
+      ler: async (token, conta, de, ate) => ({ gasto: await lerGastoDiario(c, token, conta, de, ate, buscar), campanhas: await campanhasOuNada(() => lerGastoPorCampanhaDaMeta(c, token, conta, de, ate, buscar)) }),
     };
   }
   const g = configDoGoogle(env, origem);
@@ -59,6 +64,6 @@ export function adaptadorDeMidia(provedor: ProvedorDeMidia, env: Record<string, 
     urlDeLogin: state => urlDeLoginDoGoogle(g, state),
     trocarCodigo: codigo => trocarCodigoDoGoogle(g, codigo, buscar),
     listarContas: token => listarContasDoGoogleAds(g, token, buscar),
-    ler: async (token, conta, de, ate, gerente) => ({ gasto: await lerGastoDoGoogleAds(g, token, conta, de, ate, gerente, buscar) }),
+    ler: async (token, conta, de, ate, gerente) => ({ gasto: await lerGastoDoGoogleAds(g, token, conta, de, ate, gerente, buscar), campanhas: await campanhasOuNada(() => lerGastoPorCampanhaDoGoogleAds(g, token, conta, de, ate, gerente, buscar)) }),
   };
 }

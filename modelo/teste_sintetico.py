@@ -72,6 +72,24 @@ def main() -> int:
     if chaves_curtas & {"preco_e_lotes", "cupom", "visitas"}:
         falhas.append(f"com 40 semanas entraram controles a mais: {sorted(chaves_curtas)}")
 
+    # A marca separada: efeito que dura meses (atraso 0,85). O modelo tem de achar a parte dela perto da verdadeira e um atraso maior que o dos anúncios de evento.
+    tabela_m, verdade_m = gerar(semanas=104, semente=7, com_marca=True)
+    rm = ajustar(tabela_m, draws=600, tune=600)
+    por_canal = {c["canal"]: c for c in rm["canais"]}
+    print("com marca:", {k: (c["porcento"], c["atraso"]) for k, c in por_canal.items()}, "verdade:", {k: round(v, 1) for k, v in verdade_m.items() if not k.startswith("parte:")}, "semanas do atraso:", rm.get("semanas_do_atraso"))
+    if "meta-ads-marca" not in por_canal:
+        falhas.append("o canal da marca não saiu")
+    else:
+        marca = por_canal["meta-ads-marca"]
+        if abs(marca["porcento"] - verdade_m["meta-ads-marca"]) > TOLERANCIA_EM_PONTOS:
+            falhas.append(f"marca: estimado {marca['porcento']}% longe do verdadeiro {verdade_m['meta-ads-marca']:.1f}%")
+        if not marca["atraso"] > por_canal["meta-ads"]["atraso"]:
+            falhas.append(f"o atraso da marca ({marca['atraso']}) devia ser maior que o do Meta de eventos ({por_canal['meta-ads']['atraso']})")
+    if rm.get("semanas_do_atraso") != 13:
+        falhas.append("com marca o atraso devia ir até 13 semanas")
+    if rm["diagnosticos"]["r_hat_maximo"] > 1.05:
+        falhas.append(f"com marca não convergiu: r-hat {rm['diagnosticos']['r_hat_maximo']}")
+
     # Tabela sem dado suficiente: tem de recusar com uma frase, não quebrar.
     try:
         ajustar(gerar(semanas=10)[0])

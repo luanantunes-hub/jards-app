@@ -302,7 +302,7 @@ export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eve
             </tr>
             {comparacao.linhas.map(l => (
               <tr key={l.canal}>
-                <td className={CELULA}>{rotuloDoCanalDeGasto(l.canal)}{l.gastoConstante && <span className="ml-2 inline-flex rounded-xl border px-2 py-0.5 text-[0.625rem] text-black/50" style={{ borderColor: BORDA }}>gasto quase constante</span>}</td>
+                <td className={CELULA}>{rotuloDoCanalDeGasto(l.canal)}{l.canal.endsWith("-marca") && <span className="ml-2 inline-flex rounded-xl border px-2 py-0.5 text-[0.625rem]" style={{ color: "#B07A14", borderColor: "rgba(176,122,20,.4)" }}>efeito de até 3 meses · impreciso</span>}{l.gastoConstante && <span className="ml-2 inline-flex rounded-xl border px-2 py-0.5 text-[0.625rem] text-black/50" style={{ borderColor: BORDA }}>gasto quase constante</span>}</td>
                 <td className={`${CELULA} text-right tabular-nums`}>{l.gastoCentavos > 0 ? formatarMoeda(l.gastoCentavos) : "—"}</td>
                 <td className={`${CELULA} text-right tabular-nums`}>{pontos(l.modelo)}% <span className="text-black/35">±{margem(l.baixo, l.alto, l.modelo)}</span></td>
                 <td className={`${CELULA} text-right tabular-nums`}>{l.links === null ? <span className="text-black/30">—</span> : `${l.links}%`}</td>
@@ -313,6 +313,7 @@ export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eve
         </table>
       </div>
       <QuebraDaBase base={e.base} />
+      {comparacao.linhas.some(l => l.canal.endsWith("-marca")) && <MarcaDoModelo nivel={e.base.partes.find(p => p.chave === "nivel")?.porcento ?? null} />}
       {comparacao.anuncios && <p className="text-[0.75rem] text-black/50">Anúncios pagos (Meta e Google juntos, porque os links só dizem “anúncio pago”): modelo {comparacao.anuncios.modelo}%{comparacao.anuncios.links !== null ? ` · links ${comparacao.anuncios.links}%` : ""}.</p>}
       {saturacoes.length > 0 && (
         <ul className="space-y-1 text-[0.75rem] text-black/50">
@@ -322,6 +323,24 @@ export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eve
       <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Os links só contam quem clicou e comprou. O modelo também enxerga quem viu o anúncio e comprou depois por outro caminho. Quando os dois números se parecem, a leitura é mais segura; quando diferem muito, desconfie do modelo até ter mais semanas. É uma estimativa, não uma prova: o ± é o quanto o modelo acha que ainda pode errar, já alargado {FATOR_DE_CAUTELA} vezes: nos testes com dados inventados ele errou até {FATOR_DE_CAUTELA} vezes mais do que dizia. Leia a margem como o mínimo de incerteza.</p>
         </div>
       ) : <PreviaComExemplo tipo="canais" motivo={tamanho.motivo ?? ""} acao="Importar vendas anteriores encurta isso." onAcao={onImportar} />}
+    </div>
+  );
+}
+
+/** Quando o modelo separa a marca dos eventos: por que ela é a parte mais difícil de medir e como saber mais sem mexer no total. */
+function MarcaDoModelo({ nivel }: { nivel: number | null }) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <div className="rounded-xl border bg-white px-5 py-4" style={{ borderColor: BORDA }}>
+        <div className="flex items-start justify-between gap-3"><p className="text-[0.875rem] text-[#282525]">A marca rende devagar</p><SeloDePrecisao selo="impreciso" /></div>
+        <p className="mt-1.5 text-[0.75rem] leading-relaxed text-black/50">O anúncio de marca (o nome da casa, a instituição) faz a casa vender mais aos poucos e por meses, em todos os eventos. O modelo dá a ele até 3 meses de efeito; ao anúncio de evento, até 6 semanas.</p>
+        <p className="mt-1.5 text-[0.75rem] leading-relaxed text-black/50">Por isso a marca é a parte mais difícil de medir: o efeito se mistura com a casa crescendo sozinha. Com 2 anos de histórico o número fica mais firme.</p>
+      </div>
+      <div className="rounded-xl border bg-white px-5 py-4" style={{ borderColor: BORDA }}>
+        <p className="text-[0.875rem] text-[#282525]">O que a marca pode estar ajudando a construir</p>
+        <p className="mt-1.5 text-[0.75rem] leading-relaxed text-black/50">Parte do “Nível normal da loja”{nivel !== null ? ` (${pontos(nivel)}% das vendas)` : ""} pode ser efeito de marca que já se acumulou e o modelo não consegue separar.</p>
+        <p className="mt-1.5 text-[0.75rem] leading-relaxed text-black/50">Para saber, o caminho é um teste pequeno, sem mudar o total: passar 20% da marca para os eventos por 4 semanas, num período sem estreia, e comparar.</p>
+      </div>
     </div>
   );
 }

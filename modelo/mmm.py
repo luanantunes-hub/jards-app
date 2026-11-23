@@ -24,6 +24,9 @@ VARIACAO_MINIMA = 0.25
 PONTOS_DA_CURVA = 16
 # Quantas semanas o efeito de um anúncio pode durar no modelo (o l_max do adstock). A tela usa o mesmo número para montar o calendário de divulgação (lib/ticketeria/modelo-calendario.ts).
 SEMANAS_DO_ATRASO = 6
+# Com um canal de MARCA (sufixo "-marca", ver lib/ticketeria/campanhas.ts) o efeito pode durar até 3 meses: o adstock de todos os canais vai até 13 semanas, e a marca começa
+# esperando um atraso alto (Beta(4; 1,5), média 0,73) enquanto os outros mantêm o de sempre (Beta(1; 3), média 0,25). Os dados decidem o resto.
+SEMANAS_DO_ATRASO_DA_MARCA = 13
 SEMENTE = 42
 SEMANAS_DOS_CONTROLES_EXTRAS = 52
 # Os controles de cada grupo (as chaves da coluna `controles` da tabela semanal) e o nome da parte que aparece no resultado. `extra`: só entra com SEMANAS_DOS_CONTROLES_EXTRAS semanas.
@@ -146,9 +149,17 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
 
     x, y, canais, resumo, controles = montar_entrada(semanas)
     n = len(y)
+    tem_marca = any(c.endswith("-marca") for c in canais)
+    if tem_marca:
+        from pymc_extras.prior import Prior
+
+        adstock = GeometricAdstock(l_max=SEMANAS_DO_ATRASO_DA_MARCA, normalize=True, priors={"alpha": Prior(
+            "Beta", alpha=np.array([4.0 if c.endswith("-marca") else 1.0 for c in canais]), beta=np.array([1.5 if c.endswith("-marca") else 3.0 for c in canais]), dims="channel")})
+    else:
+        adstock = GeometricAdstock(l_max=SEMANAS_DO_ATRASO, normalize=True)
     mmm = MMM(
         date_column="date_week", channel_columns=canais, control_columns=["t", *controles],
-        adstock=GeometricAdstock(l_max=SEMANAS_DO_ATRASO, normalize=True), saturation=LogisticSaturation(),
+        adstock=adstock, saturation=LogisticSaturation(),
         yearly_seasonality=2 if n >= SEMANAS_PARA_SAZONALIDADE_ANUAL else None,
     )
     mmm.fit(x, y, random_seed=semente, sample_kwargs={"nuts_sampler": "nutpie", "chains": chains, "draws": draws, "tune": tune, "target_accept": 0.9, "progressbar": False})
@@ -198,6 +209,7 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
     divergencias = int(mmm.idata["sample_stats"]["diverging"].sum())
     return {
         "motor": "pymc-marketing", "versao_motor": str(pymc_marketing.__version__), "semanas": n,
+        "semanas_do_atraso": SEMANAS_DO_ATRASO_DA_MARCA if tem_marca else SEMANAS_DO_ATRASO,
         "diagnosticos": {"r_hat_maximo": round(r_hat if math.isfinite(r_hat) else 99.0, 4), "divergencias": divergencias, "ess_minimo": int(ess) if math.isfinite(ess) else 0},
         "base": {"porcento": round(_limitar(b_meio), 2), "baixo": round(_limitar(b_baixo), 2), "alto": round(_limitar(b_alto), 2), "partes": partes},
         "canais": resultado_canais,

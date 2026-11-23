@@ -135,14 +135,17 @@ const ANUNCIOS = new Set(["meta-ads", "google-ads"]);
  * O que o modelo diz de cada canal ao lado do que os links de divulgação mostram (a parte de cada canal nos ingressos vendidos por link, em %). Anúncios pagos de Meta e de Google não se
  * separam nos links (o produtor escolhe "Anúncio pago"): ficam sem número nos links e entram juntos em `anuncios`.
  */
+/** O canal antes da separação de marca e eventos ("meta-ads-marca" → "meta-ads"): os links não sabem dessa divisão. */
+const canalSemParte = (canal: string): string => canalDoGasto(canal.replace(/-(marca|eventos)$/, ""));
+
 export function compararComOsLinks(canais: CanalDoResultado[], ingressosPorCanalDoLink: Record<string, number>): { linhas: LinhaDaComparacao[]; anuncios: { modelo: number; links: number | null } | null } {
   const total = Object.values(ingressosPorCanalDoLink).reduce((s, n) => s + n, 0);
   const parteDoLink = (chave: string): number | null => (total > 0 ? Math.round(((ingressosPorCanalDoLink[chave] ?? 0) / total) * 100) : null);
   const linhas = canais.map(c => ({
-    canal: c.canal, modelo: c.porcento, baixo: c.baixo, alto: c.alto, links: ANUNCIOS.has(canalDoGasto(c.canal)) ? null : parteDoLink(canalDoGasto(c.canal)),
+    canal: c.canal, modelo: c.porcento, baixo: c.baixo, alto: c.alto, links: ANUNCIOS.has(canalSemParte(c.canal)) || /-(marca|eventos)$/.test(c.canal) ? null : parteDoLink(canalDoGasto(c.canal)),
     custoPorIngressoCentavos: c.custo_por_ingresso_centavos, gastoCentavos: c.gasto_centavos, margemGrande: c.margem_grande, gastoConstante: c.gasto_constante,
   }));
-  const pagos = canais.filter(c => ANUNCIOS.has(canalDoGasto(c.canal)));
+  const pagos = canais.filter(c => ANUNCIOS.has(canalSemParte(c.canal)));
   return { linhas, anuncios: pagos.length > 0 ? { modelo: Math.round(pagos.reduce((s, c) => s + c.porcento, 0)), links: parteDoLink("anuncio-pago") } : null };
 }
 

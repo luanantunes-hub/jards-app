@@ -115,8 +115,8 @@ export function ingressosPorSemana(c: CanalComCurva, gastos: number[], ate: numb
 
 const ateASessao = (c: CanalComCurva, gastos: number[], semanas: number) => ingressosPorSemana(c, gastos, semanas).reduce((s, x) => s + x, 0);
 
-/** Os canais que servem ao calendário: com curva e com o atraso gravado (rodadas antigas não têm). */
-export const canaisDoCalendario = (canais: CanalComCurva[]): CanalComCurva[] => canais.filter(c => typeof c.atraso === "number");
+/** Os canais que servem ao calendário: com curva e com o atraso gravado (rodadas antigas não têm). A marca (canal "-marca") fica de fora: ela não é de um evento. */
+export const canaisDoCalendario = (canais: CanalComCurva[]): CanalComCurva[] => canais.filter(c => typeof c.atraso === "number" && !c.canal.endsWith("-marca"));
 /** O resultado do modelo é de uma rodada antiga, sem o atraso: o calendário espera a próxima. */
 export const faltaAtraso = (canais: CanalComCurva[]): boolean => canais.length > 0 && canaisDoCalendario(canais).length === 0;
 

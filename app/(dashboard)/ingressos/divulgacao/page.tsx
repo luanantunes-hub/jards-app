@@ -11,6 +11,7 @@ import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from 
 import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
 import { DatasDePicoSheet } from "@/components/ticketeria/DatasDePicoSheet";
 import { SimularOrcamentoSheet } from "@/components/ticketeria/SimularOrcamentoSheet";
+import { CampanhasDaLoja, type CampanhaDaTela, type EventoDaTela } from "@/components/ticketeria/CampanhasView";
 import { CalendarioDeDivulgacao, PlanejarDivulgacaoSheet, PreviaDoCalendario, type PlanoDoCalendario } from "@/components/ticketeria/CalendarioDeDivulgacaoView";
 import { faltaAtraso } from "@/lib/ticketeria/modelo-calendario";
 import { canaisComCurva } from "@/lib/ticketeria/modelo-recomendacao";
@@ -73,6 +74,11 @@ export default function DivulgacaoPage() {
   // O calendário de divulgação de um evento: a folha aberta e o plano montado (aparece no topo da aba Modelo).
   const [planejando, setPlanejando] = useState(false);
   const [plano, setPlano] = useState<PlanoDoCalendario | null>(null);
+  // As campanhas do Meta e do Google com a marcação marca/evento (aba Conexões).
+  const [campanhas, setCampanhas] = useState<{ campanhas: CampanhaDaTela[]; eventos: EventoDaTela[] } | null>(null);
+  const [salvandoCampanhas, setSalvandoCampanhas] = useState(false);
+  const [erroDasCampanhas, setErroDasCampanhas] = useState<string | null>(null);
+  const [avisoDasCampanhas, setAvisoDasCampanhas] = useState<string | null>(null);
   const [folhaParecidos, setFolhaParecidos] = useState(false);
   const [folhaExpectativa, setFolhaExpectativa] = useState(false);
   // O ritmo comparado com eventos parecidos: a escolha dos parecidos e a expectativa ficam neste navegador.
@@ -252,6 +258,36 @@ export default function DivulgacaoPage() {
     try { await fetch(`/api/ticketeria/lojas/${estado.lojaId}/historico/${id}`, { method: "DELETE" }); } finally { setDesfazendo(null); setVersao(v => v + 1); }
   }
 
+  const lojaDasCampanhas = estado?.lojaId ?? null;
+  useEffect(() => {
+    if (aba !== "conexoes" || !lojaDasCampanhas) return;
+    let ativo = true;
+    void (async () => {
+      try {
+        const r = await fetch(`/api/ticketeria/lojas/${lojaDasCampanhas}/campanhas`, { cache: "no-store" });
+        if (r.ok && ativo) setCampanhas((await r.json()) as { campanhas: CampanhaDaTela[]; eventos: EventoDaTela[] });
+      } catch { /* a lista fica como estava */ }
+    })();
+    return () => { ativo = false; };
+  }, [aba, lojaDasCampanhas]);
+
+  async function salvarCampanhas(itens: { id: string; marcacao: "marca" | "evento" | null; evento_id: string | null }[]): Promise<boolean> {
+    if (!lojaDasCampanhas) return false;
+    setSalvandoCampanhas(true); setErroDasCampanhas(null); setAvisoDasCampanhas(null);
+    try {
+      const r = await fetch(`/api/ticketeria/lojas/${lojaDasCampanhas}/campanhas`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ itens }) });
+      const d = (await r.json().catch(() => ({}))) as { campanhas?: CampanhaDaTela[] };
+      if (!r.ok || !d.campanhas) { setErroDasCampanhas("Não foi possível salvar agora. Tente de novo em instantes."); return false; }
+      setCampanhas(c => (c ? { ...c, campanhas: d.campanhas as CampanhaDaTela[] } : c));
+      setAvisoDasCampanhas("Salvo. O modelo usa a marcação na próxima rodada.");
+      return true;
+    } catch {
+      setErroDasCampanhas("Sem conexão. Tente de novo.");
+      return false;
+    } finally {
+      setSalvandoCampanhas(false);
+    }
+  }
   if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   const dados = estado.dados;
   const candidatos = comparacao ? candidatosDoEvento({ id: comparacao.sessaoId, localId: comparacao.localId, precoMedioCentavos: comparacao.precoMedioCentavos }, comparacao.curvas, escolhas) : [];
@@ -317,7 +353,7 @@ export default function DivulgacaoPage() {
               : aba === "historico"
               ? <HistoricoDaLoja importacoes={historico.importacoes} semanas={historico.semanas} desfazendo={desfazendo} onDesfazer={id => void desfazerImportacao(id)} onImportar={() => { setErroDeImportar(null); setFolhaDeImportar(true); }} />
               : aba === "conexoes"
-              ? <ConexoesDaLoja estados={conexoes} aviso={avisoMidia} ocupado={ocupadoMidia} onConectar={conectar} onEscolherConta={p => void abrirEscolha(p)} onLer={p => void ler(p)} onDesconectar={p => void desconectar(p)} />
+              ? <div className="space-y-6"><ConexoesDaLoja estados={conexoes} aviso={avisoMidia} ocupado={ocupadoMidia} onConectar={conectar} onEscolherConta={p => void abrirEscolha(p)} onLer={p => void ler(p)} onDesconectar={p => void desconectar(p)} />{campanhas && <CampanhasDaLoja campanhas={campanhas.campanhas} eventos={campanhas.eventos} salvando={salvandoCampanhas} erro={erroDasCampanhas} aviso={avisoDasCampanhas} onSalvar={salvarCampanhas} />}</div>
               : <AcoesDaLoja acoes={dados.acoes} por_dia={dados.por_dia} hoje={dados.hoje} onRegistrar={() => abrirNova(dados.hoje)}
                   onAbrir={id => { const a = dados.acoes.find(x => x.id === id); if (a) { setAcaoErro(null); setAcao({ id, valores: { nome: a.nome, canal: a.canal, inicio: a.inicio, fim: a.fim, gasto: gastoParaCampo(a.gasto_centavos) } }); } }} />}
           </div>

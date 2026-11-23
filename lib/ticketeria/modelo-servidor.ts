@@ -6,10 +6,12 @@ import { diaNoFuso } from "@/lib/ticketeria/divulgacao";
 import { divulgacaoDaLoja } from "@/lib/ticketeria/divulgacao-servidor";
 import { ritmoDoEvento, type RitmoDoEvento } from "@/lib/ticketeria/modelo-painel";
 import { acumuladoDaSessao, type CurvaDoEvento } from "@/lib/ticketeria/ritmo-comparado";
+import { gastoDaMarca } from "@/lib/ticketeria/campanhas-servidor";
+import { separarMarca } from "@/lib/ticketeria/campanhas";
 import { abrirSessoesLongas, controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
 import { compararComOsLinks, lerPartesDaBase, type CanalDoResultado, type ParteDaBase } from "@/lib/ticketeria/modelo-resultado";
 import type { Confianca } from "@/lib/ticketeria/modelo";
-import { avaliarProntidao, consolidarGasto, montarTabelaSemanal, type EntradaDaProntidao, type ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
+import { avaliarProntidao, consolidarGasto, gastoDasAcoes, montarTabelaSemanal, type EntradaDaProntidao, type ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
 
 type Admin = SupabaseClient<Database>;
 const PAGINA = 1000;
@@ -58,7 +60,12 @@ export async function entradaDaLoja(admin: Admin, lojaId: string): Promise<Entra
     ultimoDiaDeVisitas = ultimo?.[0]?.dia ?? null;
     if (primeiroDiaDeVisitas) visitas = (await todas(async (de, ate) => t.from("ticketeria_visitas_diarias").select("dia, origem, sessoes").eq("conexao_id", ga4.id).order("dia", { ascending: true }).order("origem", { ascending: true }).range(de, ate))).map(v => ({ dia: v.dia, origem: v.origem, sessoes: Number(v.sessoes) }));
   }
-  const semanal = montarTabelaSemanal({ vendas, gasto });
+  // Marca x evento: o gasto de marca (campanhas marcadas como marca e ações sem evento) vira um canal à parte quando cada lado tem semanas suficientes (lib/ticketeria/campanhas.ts).
+  const marca = [
+    ...(await gastoDaMarca(admin, lojaId)),
+    ...gastoDasAcoes(painel.acoes.filter(a => !a.evento_id).map(a => ({ nome: a.nome, canal: a.canal, inicio: a.inicio, fim: a.fim, gasto_centavos: a.gasto_centavos }))).map(l => ({ dia: l.dia, canal: l.canal, centavos: l.centavos })),
+  ];
+  const semanal = separarMarca(montarTabelaSemanal({ vendas, gasto }), marca).tabela;
   const { controles, resumo } = await controlesDaLoja(t, lojaId, semanal.map(s => s.semana));
   const doGa4 = controleDeVisitas(visitas, primeiroDiaDeVisitas, ultimoDiaDeVisitas, semanal.map(s => s.semana));
   const tabela = semanal.map(s => ({ ...s, controles: { ...controles[s.semana], visitas: doGa4.valores[s.semana] ?? 0 } }));

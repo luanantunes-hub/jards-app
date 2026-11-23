@@ -1506,6 +1506,78 @@ export type BancoDaTicketeria = {
         };
         Relationships: [];
       };
+      ticketeria_campanhas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          conexao_id: string;
+          canal: string;
+          campanha_externa_id: string;
+          nome: string;
+          marcacao: string | null;
+          evento_id: string | null;
+          sugerida: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          conexao_id: string;
+          canal: string;
+          campanha_externa_id: string;
+          nome: string;
+          marcacao?: string | null;
+          evento_id?: string | null;
+          sugerida?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          conexao_id?: string;
+          canal?: string;
+          campanha_externa_id?: string;
+          nome?: string;
+          marcacao?: string | null;
+          evento_id?: string | null;
+          sugerida?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ticketeria_campanhas_diaria: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          campanha_id: string;
+          dia: string;
+          gasto_centavos: number;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          campanha_id: string;
+          dia: string;
+          gasto_centavos?: number;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          campanha_id?: string;
+          dia?: string;
+          gasto_centavos?: number;
+        };
+        Relationships: [];
+      };
       ticketeria_saidas: {
         Row: {
           id: string;

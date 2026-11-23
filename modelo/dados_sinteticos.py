@@ -19,7 +19,11 @@ def _adstock(x: np.ndarray, a: float) -> np.ndarray:
     return saida
 
 
-def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False, com_controles: bool = False, variacao: float = 1.0) -> tuple[list[dict], dict[str, float]]:
+# A MARCA (só com `com_marca`): anúncio da instituição, de efeito pequeno por semana mas que dura meses (atraso alto).
+VERDADE_DA_MARCA = {"meta-ads-marca": {"beta": 22.0, "adstock": 0.85, "escala": 900.0, "lam": 1.5}}
+
+
+def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False, com_controles: bool = False, variacao: float = 1.0, com_marca: bool = False) -> tuple[list[dict], dict[str, float]]:
     """Devolve a tabela semanal (no formato do Jards, centavos) e a parte verdadeira de cada canal nas vendas, em % (mais a base)."""
     rng = np.random.default_rng(semente)
     n = semanas
@@ -33,7 +37,10 @@ def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, g
 
     gastos = {"meta-ads": gasto(150, 120, 11), "google-ads": gasto(60, 50, 7)}
     gastos["instagram"] = np.full(n, 40.0) if gasto_constante else np.where(rng.random(n) < 0.5, rng.uniform(20, 80, n), 0.0)
-    contribuicoes = {c: v["beta"] * (1 - np.exp(-v["lam"] * _adstock(gastos[c], v["adstock"]) / v["escala"])) for c, v in VERDADE.items()}
+    verdades = {**VERDADE, **(VERDADE_DA_MARCA if com_marca else {})}
+    if com_marca:
+        gastos["meta-ads-marca"] = gasto(90, 70, 26)  # a marca muda devagar (campanhas de meses)
+    contribuicoes = {c: v["beta"] * (1 - np.exp(-v["lam"] * _adstock(gastos[c], v["adstock"]) / v["escala"])) for c, v in verdades.items()}
     base = 40 + 0.05 * t + 6 * np.sin(t * 2 * np.pi / 52)
     # Os controles (só com `com_controles`): a proximidade da sessão (uma sessão a cada 13 semanas), as semanas de feriado, a virada de lote (junto da abertura de cada sessão), o cupom e as visitas sem anúncio.
     efeitos: dict[str, np.ndarray] = {}
