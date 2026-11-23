@@ -11,6 +11,9 @@ import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from 
 import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
 import { DatasDePicoSheet } from "@/components/ticketeria/DatasDePicoSheet";
 import { SimularOrcamentoSheet } from "@/components/ticketeria/SimularOrcamentoSheet";
+import { CalendarioDeDivulgacao, PlanejarDivulgacaoSheet, PreviaDoCalendario, type PlanoDoCalendario } from "@/components/ticketeria/CalendarioDeDivulgacaoView";
+import { faltaAtraso } from "@/lib/ticketeria/modelo-calendario";
+import { canaisComCurva } from "@/lib/ticketeria/modelo-recomendacao";
 import { PlanoBDoModelo } from "@/components/ticketeria/PlanoBView";
 import { CabecalhoDoPainel, PreviaComExemplo, PrimeirosDados } from "@/components/ticketeria/PainelView";
 import { ExpectativaSheet, ParecidosSheet, RitmoComparado, SemParecido, useEscolhasDoRitmo } from "@/components/ticketeria/RitmoComparadoView";
@@ -67,6 +70,9 @@ export default function DivulgacaoPage() {
   // As datas de pico da loja (a folha "Adicionar uma data sua" da aba Modelo).
   const [datasDePico, setDatasDePico] = useState<DataDePico[]>([]);
   const [simulando, setSimulando] = useState(false);
+  // O calendário de divulgação de um evento: a folha aberta e o plano montado (aparece no topo da aba Modelo).
+  const [planejando, setPlanejando] = useState(false);
+  const [plano, setPlano] = useState<PlanoDoCalendario | null>(null);
   const [folhaParecidos, setFolhaParecidos] = useState(false);
   const [folhaExpectativa, setFolhaExpectativa] = useState(false);
   // O ritmo comparado com eventos parecidos: a escolha dos parecidos e a expectativa ficam neste navegador.
@@ -256,10 +262,13 @@ export default function DivulgacaoPage() {
   const proximaSessao = (dados?.sessoes ?? []).filter(x => x.a_venda && x.dia && x.dia >= (dados?.hoje ?? "")).map(x => x.dia as string).sort()[0] ?? null;
   // O ranking de canais e o simulador só abrem com confiança boa (ver lib/ticketeria/modelo-painel.ts).
   const podeSimular = !!resultadoDoModelo && blocoDeInvestir(confiancaMostrada(resultadoDoModelo.execucao.confianca, prontidao?.resumo?.sessoes ?? null), resultadoDoModelo.execucao.semanas, resultadoDoModelo.canais.some(c => c.gasto_constante)).aberto;
+  // O calendário abre onde o simulador abre, e só com o atraso de cada canal (rodadas novas do modelo).
+  const podePlanejar = podeSimular && !!resultadoDoModelo && canaisComCurva(resultadoDoModelo.canais).length > 0 && !faltaAtraso(canaisComCurva(resultadoDoModelo.canais));
   const acoes = (
     <>
       {dados && aba === "acoes" && <SecondaryListAction onClick={() => abrirNova(dados.hoje)}>Registrar ação</SecondaryListAction>}
       {dados && aba === "modelo" && podeSimular && Object.keys(gastoSemanal).length > 0 && <SecondaryListAction onClick={() => setSimulando(true)}>Simular orçamento</SecondaryListAction>}
+      {dados && aba === "modelo" && podePlanejar && <SecondaryListAction onClick={() => setPlanejando(true)}>Planejar evento</SecondaryListAction>}
       {dados && aba === "historico" && <SecondaryListAction onClick={() => { setErroDeImportar(null); setFolhaDeImportar(true); }}>Importar planilha</SecondaryListAction>}
       {dados && <PrimaryListAction onClick={() => setCriando(true)}><Link2 size={13} aria-hidden="true" /> Criar link de divulgação</PrimaryListAction>}
     </>
@@ -291,12 +300,14 @@ export default function DivulgacaoPage() {
                     {ritmo && (previsaoPorComparacao
                       ? <RitmoComparado ritmo={ritmo} previsao={previsaoPorComparacao} candidatos={candidatos} onAjustar={() => setFolhaParecidos(true)} />
                       : <SemParecido ritmo={ritmo} temHistorico={(comparacao?.curvas.length ?? 0) > 0} expectativa={expectativa} onExpectativa={() => setFolhaExpectativa(true)} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />)}
-                    {resultadoDoModelo && <ResultadoDoModelo resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} sessoes={prontidao.resumo?.sessoes ?? null} eventos={prontidao.resumo?.eventos ?? null} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />}
+                    {plano && resultadoDoModelo && podePlanejar && <CalendarioDeDivulgacao plano={plano} canais={resultadoDoModelo.canais} semanasDoModelo={resultadoDoModelo.execucao.semanas} onAjustar={() => setPlanejando(true)} onFechar={() => setPlano(null)} />}
+                    {resultadoDoModelo && <ResultadoDoModelo onPlanejar={podePlanejar ? () => setPlanejando(true) : undefined} resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} sessoes={prontidao.resumo?.sessoes ?? null} eventos={prontidao.resumo?.eventos ?? null} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />}
                     {!resultadoDoModelo && (
                       <div className="space-y-3">
                         <h3 className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">O que abre com mais dados (prévia com exemplo)</h3>
                         <PreviaComExemplo tipo="canais" motivo={blocoDoTamanhoDosCanais(prontidao.semanas, "baixa").motivo ?? ""} acao="Conectar o Meta e o Google Ads" onAcao={() => setAba("conexoes")} />
                         <PreviaComExemplo tipo="investir" motivo={blocoDeInvestir("baixa", prontidao.semanas, false).motivo ?? ""} acao="Importar vendas anteriores encurta isso." onAcao={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />
+                        <PreviaDoCalendario motivo={blocoDeInvestir("baixa", prontidao.semanas, false).motivo ?? ""} acao="Importar vendas anteriores encurta isso." onAcao={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />
                       </div>
                     )}
                     {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} />}
@@ -317,6 +328,7 @@ export default function DivulgacaoPage() {
       {escolhendo && <EscolherContaSheet fonte={CARTOES[escolhendo.provedor].fonte} tipo={escolhendo.provedor === "ga4" ? "visitas" : "gasto"} contas={escolhendo.contas} escolhida={escolhendo.escolhida} erro={escolhendo.erro} salvando={salvando} onEscolher={id => setEscolhendo(e => (e ? { ...e, escolhida: id } : e))} onClose={() => setEscolhendo(null)} onSalvar={() => void confirmarConta()} />}
       {folhaParecidos && <ParecidosSheet candidatos={candidatos} onSalvar={salvarEscolhas} onClose={() => setFolhaParecidos(false)} />}
       {folhaExpectativa && ritmo && <ExpectativaSheet lugares={ritmo.lugares} valorInicial={expectativa} onSalvar={salvarExpectativa} onClose={() => setFolhaExpectativa(false)} />}
+      {planejando && dados && resultadoDoModelo && <PlanejarDivulgacaoSheet sessoes={dados.sessoes} canais={resultadoDoModelo.canais} gastoSemanal={gastoSemanal} hoje={dados.hoje} inicial={plano} onMontar={p => { setPlano(p); setPlanejando(false); }} onClose={() => setPlanejando(false)} />}
       {simulando && resultadoDoModelo && <SimularOrcamentoSheet canais={resultadoDoModelo.canais} gastoSemanal={gastoSemanal} confianca={resultadoDoModelo.execucao.confianca} semanas={resultadoDoModelo.execucao.semanas} onClose={() => setSimulando(false)} />}
       {folhaDeDatas && <DatasDePicoSheet datas={datasDePico} valores={folhaDeDatas.valores} erro={folhaDeDatas.erro} salvando={salvando} onMudar={(campo, valor) => setFolhaDeDatas(f => (f ? { ...f, valores: { ...f.valores, [campo]: valor } } : f))} onClose={() => setFolhaDeDatas(null)} onAdicionar={() => void adicionarData()} onApagar={id => void apagarData(id)} />}
       {acao && <AcaoSheet editando={acao.id !== null} valores={acao.valores} erro={acaoErro} salvando={salvando} onMudar={(campo, valor) => setAcao(a => (a ? { ...a, valores: { ...a.valores, [campo]: valor } } : a))} onClose={() => setAcao(null)} onSalvar={() => void salvar()} onApagar={() => void apagar()} />}

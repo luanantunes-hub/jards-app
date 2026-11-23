@@ -9,6 +9,8 @@ import { canaisComCurva, linhasDeInvestimento, recomendar } from "@/lib/ticketer
 import { confiancaMostrada, fatoresDaConfianca, oQueAConfiancaPermite } from "@/lib/ticketeria/modelo-confianca";
 import { blocoDeInvestir, blocoDoTamanhoDosCanais } from "@/lib/ticketeria/modelo-painel";
 import { PreviaComExemplo, SeloDePrecisao } from "@/components/ticketeria/PainelView";
+import { PreviaDoCalendario } from "@/components/ticketeria/CalendarioDeDivulgacaoView";
+import { faltaAtraso } from "@/lib/ticketeria/modelo-calendario";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 
 // A aba Modelo da Divulgação (fatia M-A): se já há dado para o modelo de marketing rodar, e o que falta. Ainda não há o cálculo do modelo (é a fatia seguinte). Só desenho: os dados
@@ -261,7 +263,7 @@ export function QuebraDaBase({ base }: { base: ResultadoParaATela["execucao"]["b
 }
 
 /** O que o modelo estimou: o selo de confiança, a tabela canal a canal com o modelo ao lado dos links e, para cada canal, o gasto semanal a partir do qual rende pouco. */
-export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eventos = null, onImportar }: { resultado: ResultadoParaATela; gastoSemanal?: Record<string, number>; sessoes?: number | null; eventos?: number | null; onImportar?: () => void }) {
+export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eventos = null, onImportar, onPlanejar }: { resultado: ResultadoParaATela; gastoSemanal?: Record<string, number>; sessoes?: number | null; eventos?: number | null; onImportar?: () => void; /** Abre a folha do calendário de divulgação de um evento. */ onPlanejar?: () => void }) {
   const { execucao: e, comparacao, canais, ultimaFalha } = resultado;
   const mostrada = confiancaMostrada(e.confianca, sessoes);
   const tamanho = blocoDoTamanhoDosCanais(e.semanas, mostrada);
@@ -273,6 +275,17 @@ export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eve
       {investir.aberto
         ? gastoSemanal && <RecomendacaoDeInvestimento canais={canais} gastoSemanal={gastoSemanal} confianca={mostrada} semanas={e.semanas} />
         : <PreviaComExemplo tipo="investir" motivo={investir.motivo ?? ""} acao={e.semanas < SEMANAS_IDEAIS ? "Importar vendas anteriores encurta isso." : undefined} onAcao={onImportar} />}
+      {investir.aberto
+        ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white px-5 py-4" style={{ borderColor: BORDA }}>
+            <div>
+              <p className="text-[0.875rem] text-[#282525]">Calendário de divulgação do evento</p>
+              <p className="mt-0.5 text-[0.75rem] text-black/50">{faltaAtraso(canaisComCurva(canais)) ? "Aparece na próxima rodada do modelo: ela passa a medir quanto tempo o efeito de cada canal dura." : "Quanto pôr em cada canal, semana a semana, até a sessão."}</p>
+            </div>
+            {!faltaAtraso(canaisComCurva(canais)) && onPlanejar && <button type="button" onClick={onPlanejar} className="rounded-xl border bg-white px-3.5 py-2 text-[0.75rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]" style={{ borderColor: BORDA }}>Planejar um evento</button>}
+          </div>
+        )
+        : <PreviaDoCalendario motivo={investir.motivo ?? ""} acao={e.semanas < SEMANAS_IDEAIS ? "Importar vendas anteriores encurta isso." : undefined} onAcao={onImportar} />}
       {ultimaFalha && <p role="alert" className="rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-black/55" style={{ borderColor: "rgba(176,122,20,.25)" }}>A rodada de {dataBr(ultimaFalha.created_at)} não deu: {ultimaFalha.motivo} Esta tela mostra a anterior.</p>}
       {tamanho.aberto && tamanho.selo ? (
         <div className="space-y-4">

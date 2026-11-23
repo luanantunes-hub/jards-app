@@ -16,10 +16,10 @@ const GOOGLE = canal("google-ads", 10, 150, 0.15);
 const PEDIDO = { totalCentavos: 300000, inicio: "2026-10-27", diaDaSessao: "2026-12-08" };
 
 test("lerPedidoDoCalendario conta as semanas até a da sessão e recusa o que não faz sentido", () => {
-  assert.deepEqual(lerPedidoDoCalendario(PEDIDO), { ok: true, semanas: 7, totalCentavos: 300000 });
+  assert.deepEqual(lerPedidoDoCalendario(PEDIDO), { ok: true, semanas: 6, totalCentavos: 300000 }, "27/10 a 08/12: 6 semanas, a última termina na véspera da sessão");
   assert.deepEqual(lerPedidoDoCalendario({ ...PEDIDO, diaDaSessao: "2026-10-27" }), { ok: true, semanas: 1, totalCentavos: 300000 }, "sessão hoje: uma semana");
-  assert.deepEqual(lerPedidoDoCalendario({ ...PEDIDO, diaDaSessao: "2026-11-02" }), { ok: true, semanas: 1, totalCentavos: 300000 });
-  assert.deepEqual(lerPedidoDoCalendario({ ...PEDIDO, diaDaSessao: "2026-11-03" }), { ok: true, semanas: 2, totalCentavos: 300000 });
+  assert.deepEqual(lerPedidoDoCalendario({ ...PEDIDO, diaDaSessao: "2026-11-03" }), { ok: true, semanas: 1, totalCentavos: 300000 });
+  assert.deepEqual(lerPedidoDoCalendario({ ...PEDIDO, diaDaSessao: "2026-11-04" }), { ok: true, semanas: 2, totalCentavos: 300000 });
   assert.equal((lerPedidoDoCalendario({ ...PEDIDO, diaDaSessao: "2026-10-01" }) as { problema: string }).problema, "sessao_passou");
   assert.equal((lerPedidoDoCalendario({ ...PEDIDO, diaDaSessao: "2027-06-01" }) as { problema: string }).problema, "longe_demais");
   assert.equal((lerPedidoDoCalendario({ ...PEDIDO, totalCentavos: 1000 }) as { problema: string }).problema, "valor");
@@ -47,7 +47,7 @@ test("com gasto igual toda semana, depois que o atraso enche, a venda da semana 
 test("o calendário gasta todo o orçamento, vende mais que gastar igual e muito mais que deixar para o fim", () => {
   const cal = montarCalendario([META, GOOGLE], PEDIDO)!;
   assert.ok(cal);
-  assert.equal(cal.semanas.length, 7);
+  assert.equal(cal.semanas.length, 6);
   assert.equal(cal.totalCentavos, 300000);
   assert.equal(cal.sobraCentavos, 0);
   assert.equal(cal.semanas.reduce((s, x) => s + x.totalCentavos, 0), 300000);
@@ -58,16 +58,16 @@ test("o calendário gasta todo o orçamento, vende mais que gastar igual e muito
   assert.ok(cal.baixo <= cal.ingressos && cal.ingressos <= cal.alto);
   // O canal de efeito longo vai mais no começo; o de efeito curto não para antes da sessão.
   const meta = cal.semanas.map(s => s.porCanal["meta-ads"]);
-  assert.ok(meta[0] + meta[1] + meta[2] > meta[4] + meta[5] + meta[6], meta.join(","));
+  assert.ok(meta[0] + meta[1] + meta[2] > meta[3] + meta[4] + meta[5], meta.join(","));
   assert.ok(cal.semanas.at(-1)!.porCanal["google-ads"] > 0);
   // Depois da sessão ainda sobra efeito (e ele não conta).
-  assert.equal(cal.porSemana["meta-ads"].length, 7 + SEMANAS_DO_ATRASO);
-  assert.ok(cal.porSemana["meta-ads"][8] > 0);
+  assert.equal(cal.porSemana["meta-ads"].length, 6 + SEMANAS_DO_ATRASO);
+  assert.ok(cal.porSemana["meta-ads"][7] > 0);
 });
 
 test("o orçamento acima do que as curvas cobrem vira sobra, e a sessão na mesma semana ainda monta", () => {
   const pequeno = canal("instagram", 5, 50, 0.3, 100);
-  const cal = montarCalendario([pequeno], { ...PEDIDO, totalCentavos: 1000000, diaDaSessao: "2026-11-10" })!;
+  const cal = montarCalendario([pequeno], { ...PEDIDO, totalCentavos: 1000000, diaDaSessao: "2026-11-17" })!;
   assert.equal(cal.semanas.length, 3);
   assert.equal(cal.totalCentavos, 3 * 10000);
   assert.equal(cal.sobraCentavos, 1000000 - 30000);
@@ -86,6 +86,7 @@ test("sem o atraso (rodada antiga) não há calendário", () => {
 });
 
 test("porQueAssim descreve o canal pelo atraso e por onde o dinheiro caiu", () => {
+  assert.equal(porQueAssim({ atraso: 0.1 }, [150, 100, 100, 100, 100, 100]), "Quem vê compra logo, e o efeito passa rápido. Espalhado pelas semanas.", "quase igual não é 'mais no começo'");
   assert.equal(porQueAssim({ atraso: 0.6 }, [600, 300, 100, 0]), "Demora a pegar e o efeito dura semanas. Mais no começo, e para antes da semana da sessão.");
   assert.equal(porQueAssim({ atraso: 0.1 }, [100, 100, 100, 100]), "Quem vê compra logo, e o efeito passa rápido. Espalhado pelas semanas.");
   assert.equal(porQueAssim({ atraso: 0.3 }, [0, 100, 200, 300]), "O efeito dura uma ou duas semanas. Mais perto da sessão.");
@@ -97,8 +98,8 @@ test("a planilha tem uma linha por semana, a da sessão marcada e o total", () =
   const cal = montarCalendario([META, GOOGLE], PEDIDO)!;
   const csv = planilhaDoCalendario(cal, c => (c === "meta-ads" ? "Meta Ads" : "Google Ads")).split("\r\n");
   assert.equal(csv[0], "Semana de;Meta Ads;Google Ads;Total da semana");
-  assert.equal(csv.length, 1 + 7 + 1);
+  assert.equal(csv.length, 1 + 6 + 1);
   assert.match(csv[1], /^27\/10\/2026;/);
-  assert.match(csv[7], /\(sessão\)/);
-  assert.match(csv[8], /^Total;.*;3000,00$/);
+  assert.match(csv[6], /\(sessão\)/);
+  assert.match(csv[7], /^Total;.*;3000,00$/);
 });

@@ -41,13 +41,13 @@ const DIA = 86400000;
 const dataUtc = (iso: string): number | null => (/^\d{4}-\d{2}-\d{2}$/.test(iso) ? Date.parse(`${iso}T00:00:00Z`) : null);
 export const somarDias = (iso: string, dias: number): string => new Date((dataUtc(iso) ?? 0) + dias * DIA).toISOString().slice(0, 10);
 
-/** Quantas semanas há do início até a semana da sessão (contando a da sessão). */
+/** Quantas semanas há do início até a sessão: semanas de 7 dias a partir do início, a última termina no dia da sessão ou logo antes (sessão no mesmo dia ou em menos de uma semana: uma semana). */
 export function lerPedidoDoCalendario(p: PedidoDoCalendario): LeituraDoPedido {
   if (!Number.isFinite(p.totalCentavos) || p.totalCentavos < PASSO_MINIMO_CENTAVOS || p.totalCentavos > 100_000_000_00) return { ok: false, problema: "valor" };
   const a = dataUtc(p.inicio), b = dataUtc(p.diaDaSessao);
   if (a === null || b === null) return { ok: false, problema: "datas" };
   if (b < a) return { ok: false, problema: "sessao_passou" };
-  const semanas = Math.floor((b - a) / DIA / 7) + 1;
+  const semanas = Math.max(1, Math.ceil((b - a) / DIA / 7));
   if (semanas > MAX_SEMANAS_DO_CALENDARIO) return { ok: false, problema: "longe_demais" };
   return { ok: true, semanas, totalCentavos: Math.round(p.totalCentavos) };
 }
@@ -146,9 +146,11 @@ export function porQueAssim(c: { atraso?: number | null }, gastos: number[]): st
   if (total <= 0) return "Ficou de fora: nestas semanas, o dinheiro rende mais nos outros canais.";
   const a = c.atraso ?? 0;
   const jeito = a >= 0.45 ? "Demora a pegar e o efeito dura semanas." : a <= 0.2 ? "Quem vê compra logo, e o efeito passa rápido." : "O efeito dura uma ou duas semanas.";
-  const meio = Math.ceil(gastos.length / 2);
-  const comeco = gastos.slice(0, meio).reduce((s, x) => s + x, 0) / total;
-  const onde = gastos.length < 2 ? "" : comeco >= 0.6 ? " Mais no começo" : comeco <= 0.4 ? " Mais perto da sessão" : " Espalhado pelas semanas";
+  // Começo x fim: a média por semana de cada metade (com número ímpar de semanas, a do meio fica fora).
+  const metade = Math.floor(gastos.length / 2);
+  const media = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / Math.max(1, xs.length);
+  const [antes, depois] = [media(gastos.slice(0, metade)), media(gastos.slice(gastos.length - metade))];
+  const onde = gastos.length < 2 ? "" : antes >= 1.3 * depois ? " Mais no começo" : depois >= 1.3 * antes ? " Mais perto da sessão" : " Espalhado pelas semanas";
   const para = gastos.length >= 2 && gastos.at(-1) === 0 ? (onde ? ", e para antes da semana da sessão." : " Para antes da semana da sessão.") : onde ? "." : "";
   return `${jeito}${onde}${para}`;
 }
