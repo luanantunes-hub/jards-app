@@ -14,7 +14,9 @@ test("os tipos guardados são os da lista fechada do banco, e SVG e GIF ficam de
   assert.deepEqual([...TIPOS_DE_IMAGEM], ["image/webp", "image/jpeg", "image/png"]);
   assert.equal(validarArquivo({ type: "image/svg+xml", size: 1000 }).ok, false);
   assert.equal(validarArquivo({ type: "image/gif", size: 1000 }).ok, false);
-  assert.equal(validarArquivo({ type: "application/pdf", size: 1000 }).ok, false);
+  assert.equal(validarArquivo({ type: "application/pdf", size: 1000 }).ok, false, "PDF só quando a tela pede (a planta da sala)");
+  assert.equal(validarArquivo({ type: "application/pdf", size: 1000 }, { aceitaPdf: true }).ok, true);
+  assert.equal(validarArquivo({ type: "image/gif", size: 1000 }, { aceitaPdf: true }).ok, false, "GIF segue de fora, mesmo com PDF aceito");
   assert.equal(validarArquivo({ type: "", size: 1000 }).ok, false);
 });
 
@@ -113,7 +115,7 @@ test("preparar a imagem: reduz às medidas certas, devolve WebP (ou JPEG) e recu
 
 test("a folha envia pelo storage com a regra do banco, desfaz o arquivo se o registro falha e apaga os dois", () => {
   const folha = readFileSync("components/ticketeria/BibliotecaDeImagens.tsx", "utf8");
-  for (const t of ["prepararImagem(arquivo)", ".upload(caminho, pronta.blob", "cacheControl: \"31536000\"", "upsert: false", "ticketeria_site_imagens", ".insert({ id, organization_id: organizationId, caminho", ".remove([caminho])", ".remove([imagem.caminho])", ".delete().eq(\"id\", imagem.id)", "createPortal(", "Usar esta imagem", "Apagar de vez", "Enviar imagem", "Se ela estiver em algum bloco do site, o bloco fica sem a imagem", "tira os dados da foto", "As imagens são públicas", 'accept="image/jpeg,image/png,image/webp"']) assert.ok(folha.includes(t), t);
+  for (const t of ["prepararImagem(arquivo, undefined, { aceitaPdf })", ".upload(caminho, pronta.blob", "cacheControl: \"31536000\"", "upsert: false", "ticketeria_site_imagens", ".insert({ id, organization_id: organizationId, caminho", ".remove([caminho])", ".remove([imagem.caminho])", ".delete().eq(\"id\", imagem.id)", "createPortal(", "Usar esta imagem", "Apagar de vez", "Enviar imagem", "Se ela estiver em algum bloco do site, o bloco fica sem a imagem", "tira os dados da foto", "As imagens são públicas", 'application/pdf" : "image/jpeg,image/png,image/webp"}']) assert.ok(folha.includes(t), t);
   const remocaoAntes = folha.indexOf(".remove([imagem.caminho])"), delecao = folha.indexOf(".delete().eq(\"id\", imagem.id)");
   assert.ok(remocaoAntes > 0 && remocaoAntes < delecao, "o arquivo sai antes do registro");
   assert.doesNotMatch(folha, /from "node:|server-only/);

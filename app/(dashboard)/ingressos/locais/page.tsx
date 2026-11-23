@@ -143,7 +143,7 @@ export default function LocaisPage() {
       </ListContent>
       {folha?.tipo === "local" && organizationId && <LocalSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} local={folha.local} onClose={() => setFolha(null)} onSaved={recarregar} />}
       {folha?.tipo === "setor" && organizationId && <SetorSheet organizationId={organizationId} localId={folha.local.id} salaId={folha.setor?.sala_id ?? folha.sala?.id} nomeDoLocal={[folha.local.nome, folha.sala && salasDoEspaco(salas, folha.local.id).length > 1 ? folha.sala.nome : null].filter(Boolean).join(" · ")} setor={folha.setor} onClose={() => setFolha(null)} onSaved={recarregar} />}
-      {folha?.tipo === "mapa-sala" && <MapaDaSalaSheet sala={folha.sala} nomeDoLocal={folha.local.nome} onClose={() => setFolha(null)} onSaved={recarregar} />}
+      {folha?.tipo === "mapa-sala" && organizationId && <MapaDaSalaSheet organizationId={organizationId} sala={folha.sala} nomeDoLocal={folha.local.nome} onClose={() => setFolha(null)} onSaved={recarregar} />}
       {folha?.tipo === "sala" && organizationId && <SalaSheet organizationId={organizationId} localId={folha.local.id} nomeDoLocal={folha.local.nome} salasDoLocal={salas.filter(sala => sala.local_id === folha.local.id)} setoresPorSala={setoresPorSala} sala={folha.sala} onClose={() => setFolha(null)} onSaved={recarregar} onAviso={setAviso} />}
     </>
   );

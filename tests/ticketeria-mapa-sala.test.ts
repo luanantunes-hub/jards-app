@@ -3,7 +3,8 @@ import test from "node:test";
 import { calcularLayout, conferirLayout } from "../lib/ticketeria/mapa-layout";
 import { layoutDoModelo } from "../lib/ticketeria/mapa-layout-editor";
 import {
-  CORES_DOS_SETORES, ESPACO_ENTRE_SETORES, comCorDoSetor, completarPlanta, comporSala, conferirPlanta, idDoBlocoNaSala, lerPlanta, lerSalaDoMapa, moverSetor, partesDoBlocoNaSala, plantaAutomatica,
+  CORES_DOS_SETORES, ESPACO_ENTRE_SETORES, caminhoDoFundoPelaUrl, comCorDoSetor, comFundo, comOpacidadeDoFundo, completarPlanta, comporSala, conferirPlanta, escalarFundo, fundoNovo, idDoBlocoNaSala, lerPlanta,
+  lerSalaDoMapa, moverSetor, partesDoBlocoNaSala, plantaAutomatica, posicionarFundo, urlDoFundo,
   type SetorDesenhado,
 } from "../lib/ticketeria/mapa-sala";
 
@@ -97,4 +98,61 @@ test("lerSalaDoMapa lê a planta e os setores que se desenham, e ignora o setor 
   assert.equal(lerSalaDoMapa({ planta, setores: [] }), null);
   assert.equal(lerSalaDoMapa({ planta: null, setores: [] }), null);
   assert.equal(lerSalaDoMapa(null), null);
+});
+
+const CAMINHO = "0d810000-0000-4000-8000-0000000000a0/0d810000-0000-4000-8000-0000000000b1.webp";
+
+test("o fundo novo cobre o desenho dos setores, centrado, com a proporção da imagem e a opacidade de partida", () => {
+  const planta = plantaAutomatica([plateia, balcao]);
+  const fundo = fundoNovo(CAMINHO, 2000, 1000, [plateia, balcao], planta);
+  assert.equal(fundo.caminho, CAMINHO);
+  assert.equal(fundo.opacidade, 40);
+  assert.ok(Math.abs(fundo.largura / fundo.altura - 2) < 0.01, "a proporção é a da imagem");
+  const lugaresDaSala = calcularLayout(comporSala(planta, [plateia, balcao]).layout).lugares;
+  assert.ok(lugaresDaSala.every(l => l.x >= fundo.x && l.x <= fundo.x + fundo.largura && l.y >= fundo.y && l.y <= fundo.y + fundo.altura), "todos os lugares ficam em cima do fundo");
+  assert.equal(fundoNovo(CAMINHO, 0, 0, [], { versao: 1, setores: [], palco: null }).largura >= 20, true, "sem setores e sem medidas, ainda dá um fundo");
+});
+
+test("a planta com fundo é lida de volta igual, e fundo fora do formato derruba a leitura", () => {
+  const base = plantaAutomatica([plateia]);
+  const planta = comFundo(base, fundoNovo(CAMINHO, 1600, 900, [plateia], base));
+  assert.deepEqual(lerPlanta(JSON.parse(JSON.stringify(planta))), planta);
+  assert.equal(lerPlanta(base)?.fundo, undefined, "sem fundo, a planta é a de antes");
+  const com = (muda: object) => ({ ...JSON.parse(JSON.stringify(planta)), fundo: { ...planta.fundo, ...muda } });
+  assert.equal(lerPlanta(com({ caminho: "../outro/arquivo.webp" })), null, "o caminho tem de ser <organização>/<imagem>.<webp|jpg|png>");
+  assert.equal(lerPlanta(com({ caminho: "https://exemplo.com/x.png" })), null, "endereço de fora não vale");
+  assert.equal(lerPlanta(com({ opacidade: 5 })), null);
+  assert.equal(lerPlanta(com({ opacidade: 40.5 })), null);
+  assert.equal(lerPlanta(com({ largura: 0 })), null);
+  assert.equal(lerPlanta(com({ x: 99999 })), null);
+  assert.equal(lerPlanta({ ...JSON.parse(JSON.stringify(planta)), fundo: "texto" }), null);
+  assert.equal(lerPlanta({ ...JSON.parse(JSON.stringify(planta)), fundo: null })?.fundo, undefined, "fundo nulo é sem fundo");
+});
+
+test("mover, escalar e a opacidade do fundo: encaixam, mantêm a proporção e ficam nos limites", () => {
+  const base = plantaAutomatica([plateia]);
+  const planta = comFundo(base, fundoNovo(CAMINHO, 1600, 900, [plateia], base));
+  const f = planta.fundo!;
+  const movida = posicionarFundo(planta, 3.3, -2.2).fundo!;
+  assert.deepEqual([movida.x, movida.y], [3.5, -2], "encaixa em meio lugar");
+  const maior = escalarFundo(planta, 1.5).fundo!;
+  assert.ok(Math.abs(maior.largura / maior.altura - f.largura / f.altura) < 0.01, "a proporção se mantém");
+  assert.ok(Math.abs((maior.x + maior.largura / 2) - (f.x + f.largura / 2)) <= 0.5 && Math.abs((maior.y + maior.altura / 2) - (f.y + f.altura / 2)) <= 0.5, "o centro fica onde estava");
+  assert.equal(escalarFundo(planta, 0), planta, "fator inválido não muda nada");
+  assert.ok(escalarFundo(planta, 0.0001).fundo!.largura >= 20, "não diminui além de 20");
+  assert.ok(escalarFundo(planta, 1000).fundo!.largura <= 4000, "não passa de 4.000");
+  assert.equal(comOpacidadeDoFundo(planta, 3).fundo!.opacidade, 10);
+  assert.equal(comOpacidadeDoFundo(planta, 400).fundo!.opacidade, 100);
+  assert.equal(comOpacidadeDoFundo(planta, 55.4).fundo!.opacidade, 55);
+  assert.equal(comOpacidadeDoFundo(base, 50), base, "sem fundo não há o que mudar");
+  assert.equal(comFundo(planta, null).fundo, undefined, "tirar o fundo");
+});
+
+test("o endereço do fundo vai e volta: o caminho vem da URL pública da biblioteca, e só dela", () => {
+  const url = urlDoFundo(CAMINHO, "https://abc.supabase.co/");
+  assert.equal(url, `https://abc.supabase.co/storage/v1/object/public/ticketeria-site/${CAMINHO}`);
+  assert.equal(caminhoDoFundoPelaUrl(url), CAMINHO);
+  assert.equal(caminhoDoFundoPelaUrl(`${url}?v=2`), CAMINHO);
+  assert.equal(caminhoDoFundoPelaUrl("https://abc.supabase.co/storage/v1/object/public/outro-espaco/x.webp"), null);
+  assert.equal(caminhoDoFundoPelaUrl("https://abc.supabase.co/storage/v1/object/public/ticketeria-site/../../etc/passwd"), null);
 });

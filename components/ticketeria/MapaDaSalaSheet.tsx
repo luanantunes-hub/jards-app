@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Redo2, Undo2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ImageIcon, Redo2, Undo2 } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { createClient } from "@/lib/supabase/client";
 import type { Json } from "@/lib/supabase/types";
@@ -9,11 +9,12 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { desfazer, podeDesfazer, podeRefazer, refazer, registrar, versoesNovas, type Versoes } from "@/lib/ticketeria/desfazer-refazer";
 import { lerLayout } from "@/lib/ticketeria/mapa-layout";
 import {
-  CORES_DOS_SETORES, ERRO_DA_PLANTA_EM_TEXTO, comCorDoSetor, comPalcoDaSala, completarPlanta, comporSala, conferirPlanta, lerPlanta, moverSetor, partesDoBlocoNaSala, plantaAutomatica, posicionarSetor,
-  type Planta, type SetorDesenhado,
+  CORES_DOS_SETORES, ERRO_DA_PLANTA_EM_TEXTO, caminhoDoFundoPelaUrl, comCorDoSetor, comFundo, comOpacidadeDoFundo, comPalcoDaSala, completarPlanta, comporSala, conferirPlanta, escalarFundo, fundoNovo, lerPlanta, moverSetor,
+  partesDoBlocoNaSala, plantaAutomatica, posicionarFundo, posicionarSetor, urlDoFundo, type Planta, type SetorDesenhado,
 } from "@/lib/ticketeria/mapa-sala";
 import type { SalaDoEspaco } from "@/lib/ticketeria/salas";
 import { MapaPorLayout } from "@/components/ticketeria/MapaPorLayout";
+import { BibliotecaDeImagens } from "@/components/ticketeria/BibliotecaDeImagens";
 import { Aviso, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 
 // O editor do mapa da sala inteira: os setores da sala (cada um com o seu desenho em blocos) num desenho só, para o produtor pôr cada um no lugar e escolher a cor. As contas estão em
@@ -23,12 +24,26 @@ const FOCO = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visib
 const BOTAO = `inline-flex h-8 items-center justify-center rounded-xl border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] transition hover:bg-black/[.04] disabled:cursor-not-allowed disabled:opacity-40 ${FOCO}`;
 const BOTAO_PASSO = `flex h-7 w-7 items-center justify-center rounded-lg border border-black/[.12] bg-white text-black/60 transition hover:bg-black/[.05] disabled:cursor-not-allowed disabled:opacity-35 ${FOCO}`;
 
-export function MapaDaSalaSheet({ sala, nomeDoLocal, onClose, onSaved }: { sala: SalaDoEspaco; nomeDoLocal: string; onClose: () => void; onSaved: () => void }) {
+/** As medidas da imagem (em pixels), lidas pelo navegador a partir do endereço público; nulo se não abre. */
+function medirImagem(url: string): Promise<{ largura: number; altura: number } | null> {
+  return new Promise(resolve => {
+    const imagem = new Image();
+    imagem.onload = () => resolve({ largura: imagem.naturalWidth, altura: imagem.naturalHeight });
+    imagem.onerror = () => resolve(null);
+    imagem.src = url;
+  });
+}
+
+const urlDoSupabase = () => process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+
+export function MapaDaSalaSheet({ organizationId, sala, nomeDoLocal, onClose, onSaved }: { organizationId: string; sala: SalaDoEspaco; nomeDoLocal: string; onClose: () => void; onSaved: () => void }) {
   const [desenhados, setDesenhados] = useState<SetorDesenhado[] | null>(null);
   const [semDesenho, setSemDesenho] = useState<string[]>([]);
   const [tinhaPlanta, setTinhaPlanta] = useState(false);
   const [versoes, setVersoes] = useState<Versoes<Planta> | null>(null);
   const [escolhido, setEscolhido] = useState<string | null>(null); // o id do bloco tocado (na sala: "setor:bloco")
+  const [biblioteca, setBiblioteca] = useState(false);
+  const [ajustandoFundo, setAjustandoFundo] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const partida = useRef<{ bx: number; by: number; ex: number; ey: number } | null>(null);
@@ -72,6 +87,16 @@ export function MapaDaSalaSheet({ sala, nomeDoLocal, onClose, onSaved }: { sala:
     setVersoes(v => (v ? registrar(v, comPalco, agora, agrupar) : v));
   }
 
+  async function escolherFundo(url: string) {
+    if (!planta || !desenhados) return;
+    const caminho = caminhoDoFundoPelaUrl(url);
+    const medidas = caminho ? await medirImagem(url) : null;
+    if (!caminho || !medidas) { setErro("Não foi possível usar essa imagem como planta. Escolha outra."); return; }
+    setErro(null);
+    mudar(comFundo(planta, fundoNovo(caminho, medidas.largura, medidas.altura, desenhados, planta)));
+    setAjustandoFundo(true);
+  }
+
   async function gravar(fechar: () => void, tirar = false) {
     if (!desenhados || (!tirar && (!planta || erros.length > 0))) { if (erros.length > 0) setErro(ERRO_DA_PLANTA_EM_TEXTO[erros[0]]); return; }
     setSalvando(true);
@@ -100,7 +125,9 @@ export function MapaDaSalaSheet({ sala, nomeDoLocal, onClose, onSaved }: { sala:
             <p className="text-[0.8125rem] text-black/60">Arraste um setor para pô-lo no lugar na sala. Quem compra vê a sala inteira, cada setor na sua cor, e escolhe os lugares no setor do ingresso.</p>
             <div className="sticky top-0 z-10 rounded-xl border bg-[#fbfbfb] px-4 py-5 shadow-[0_6px_16px_-8px_rgba(13,13,13,.18)]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <MapaPorLayout layout={montada.layout} modo="produtor" rotuloDoMapa="Mapa da sala" cores={montada.cores} rotulos={nomes}
+                fundo={montada.fundo ? { ...montada.fundo, url: urlDoFundo(montada.fundo.caminho, urlDoSupabase()) } : undefined}
                 desenho={{
+                  fundoAtivo: ajustandoFundo && !!planta.fundo, onMoverFundo: (x, y) => mudar(posicionarFundo(planta, x, y), true),
                   blocoEscolhido: escolhido,
                   onEscolher: id => {
                     setEscolhido(id);
@@ -116,7 +143,7 @@ export function MapaDaSalaSheet({ sala, nomeDoLocal, onClose, onSaved }: { sala:
                 }} />
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <button type="button" className={BOTAO} onClick={() => desenhados && mudar(plantaAutomatica(desenhados, planta.palco?.rotulo))}>Arrumar sozinho</button>
+              <button type="button" className={BOTAO} onClick={() => desenhados && mudar(comFundo(plantaAutomatica(desenhados, planta.palco?.rotulo), planta.fundo ?? null))}>Arrumar sozinho</button>
               <div className="flex items-center gap-1.5">
                 <button type="button" className={BOTAO} onClick={() => setVersoes(v => (v ? desfazer(v) : v))} disabled={!podeDesfazer(versoes)} aria-label="Desfazer"><Undo2 size={14} aria-hidden="true" className="mr-1.5" />Desfazer</button>
                 <button type="button" className={BOTAO} onClick={() => setVersoes(v => (v ? refazer(v) : v))} disabled={!podeRefazer(versoes)} aria-label="Refazer"><Redo2 size={14} aria-hidden="true" className="mr-1.5" />Refazer</button>
@@ -137,6 +164,49 @@ export function MapaDaSalaSheet({ sala, nomeDoLocal, onClose, onSaved }: { sala:
                 </li>
               ))}
             </ul>
+            <div className="space-y-3 rounded-xl border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[0.8125rem] text-[#282525]">Planta de fundo</span>
+                <button type="button" className={BOTAO} onClick={() => setBiblioteca(true)}><ImageIcon size={14} aria-hidden="true" className="mr-1.5" />{planta.fundo ? "Trocar a planta" : "Escolher a planta"}</button>
+              </div>
+              {!planta.fundo && <p className="text-[0.75rem] leading-relaxed text-black/50">Suba a planta da sala (um PDF ou uma imagem) para desenhar os setores em cima dela. Ela só ajuda você e quem compra a se situar: não muda nenhum lugar.</p>}
+              {planta.fundo && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[0.8125rem] text-black/65">Arrastar a planta no desenho</span>
+                    <button type="button" role="switch" aria-checked={ajustandoFundo} aria-label="Arrastar a planta no desenho" onClick={() => setAjustandoFundo(v => !v)} className={`relative h-6 w-11 shrink-0 rounded-full transition ${FOCO} ${ajustandoFundo ? "bg-[#6450D2]" : "bg-black/20"}`}>
+                      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${ajustandoFundo ? "left-[1.375rem]" : "left-0.5"}`} />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[0.8125rem] text-black/65">Tamanho</span>
+                    <div className="flex items-center gap-1.5">
+                      <button type="button" className={BOTAO_PASSO} aria-label="Diminuir a planta" onClick={() => mudar(escalarFundo(planta, 0.9))}>−</button>
+                      <span className="min-w-[4.5rem] text-center text-[0.8125rem] tabular-nums text-[#282525]" aria-live="polite">{Math.round(planta.fundo.largura)} lugares</span>
+                      <button type="button" className={BOTAO_PASSO} aria-label="Aumentar a planta" onClick={() => mudar(escalarFundo(planta, 1.1))}>+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[0.8125rem] text-black/65">Transparência</span>
+                    <div className="flex items-center gap-1.5">
+                      <button type="button" className={BOTAO_PASSO} aria-label="Planta mais transparente" disabled={planta.fundo.opacidade <= 10} onClick={() => mudar(comOpacidadeDoFundo(planta, planta.fundo!.opacidade - 10))}>−</button>
+                      <span className="min-w-[4.5rem] text-center text-[0.8125rem] tabular-nums text-[#282525]" aria-live="polite">{planta.fundo.opacidade}%</span>
+                      <button type="button" className={BOTAO_PASSO} aria-label="Planta mais visível" disabled={planta.fundo.opacidade >= 100} onClick={() => mudar(comOpacidadeDoFundo(planta, planta.fundo!.opacidade + 10))}>+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[0.8125rem] text-black/65">Mover</span>
+                    <div className="flex items-center gap-1.5">
+                      <button type="button" className={BOTAO_PASSO} aria-label="Mover a planta para a esquerda" onClick={() => mudar(posicionarFundo(planta, planta.fundo!.x - 1, planta.fundo!.y))}><ArrowLeft size={14} aria-hidden="true" /></button>
+                      <button type="button" className={BOTAO_PASSO} aria-label="Mover a planta para cima" onClick={() => mudar(posicionarFundo(planta, planta.fundo!.x, planta.fundo!.y - 1))}><ArrowUp size={14} aria-hidden="true" /></button>
+                      <button type="button" className={BOTAO_PASSO} aria-label="Mover a planta para baixo" onClick={() => mudar(posicionarFundo(planta, planta.fundo!.x, planta.fundo!.y + 1))}><ArrowDown size={14} aria-hidden="true" /></button>
+                      <button type="button" className={BOTAO_PASSO} aria-label="Mover a planta para a direita" onClick={() => mudar(posicionarFundo(planta, planta.fundo!.x + 1, planta.fundo!.y))}><ArrowRight size={14} aria-hidden="true" /></button>
+                    </div>
+                  </div>
+                  <button type="button" className="text-[0.75rem] text-[#B23B3B] underline underline-offset-2 hover:text-[#8f2e2e]" onClick={() => { mudar(comFundo(planta, null)); setAjustandoFundo(false); }}>Tirar a planta</button>
+                </div>
+              )}
+            </div>
             {entrada && (
               <div className="flex items-center justify-between gap-3 rounded-xl border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <span className="text-[0.8125rem] text-black/65">Mover {nomes.get(entrada.setor)}</span>
@@ -155,6 +225,7 @@ export function MapaDaSalaSheet({ sala, nomeDoLocal, onClose, onSaved }: { sala:
           <p className="text-[0.75rem] leading-relaxed text-black/50">Ficam de fora do mapa da sala, por ainda serem só uma lista de fileiras: {semDesenho.join(", ")}. Desenhe-os em blocos para incluí-los.</p>
         )}
       </div>
+      {biblioteca && <BibliotecaDeImagens organizationId={organizationId} aceitaPdf aoEscolher={url => void escolherFundo(url)} onClose={() => setBiblioteca(false)} />}
     </TopSheet>
   );
 }

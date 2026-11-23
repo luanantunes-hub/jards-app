@@ -10,7 +10,7 @@ import { SELO_DO_TIPO, TIPO_CURTO, TIPO_EM_TEXTO, TIPOS_DE_LUGAR, conferirAcessi
 import { tiposDoMapa } from "@/lib/ticketeria/mapa";
 import { LegendaDeTiposDoMapa, MapaPorLayout, chaveDoLugar } from "@/components/ticketeria/MapaPorLayout";
 import type { Layout } from "@/lib/ticketeria/mapa-layout";
-import { comporSala, conferirPlanta, lerSalaDoMapa } from "@/lib/ticketeria/mapa-sala";
+import { comporSala, conferirPlanta, lerSalaDoMapa, urlDoFundo } from "@/lib/ticketeria/mapa-sala";
 import { EditorDoLayout, type HistoricoDoEditor } from "@/components/ticketeria/EditorDoLayout";
 import { comAngulo, comPalcoAcima, empurrarVizinhos, moverBloco } from "@/lib/ticketeria/mapa-layout-editor";
 import { ehLugarReservado } from "@/lib/ticketeria/mapa-reserva";
@@ -178,7 +178,7 @@ export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, e
           <div className="mt-4 flex justify-end"><button type="button" onClick={onAmpliar} aria-pressed={ampliado} className="rounded-xl text-[0.8125rem] text-black/60 underline underline-offset-2 hover:text-black/80">{ampliado ? "Ver o mapa inteiro" : "Ampliar o mapa"}</button></div>
           <div className="mt-2">
             {daSala
-              ? <MapaPorLayout layout={daSala.layout} modo="comprador" ampliado={ampliado} cores={daSala.cores} contexto={new Set(daSala.setores.filter(x => x.id !== daSala.atual).map(x => x.id))} rotulos={new Map(daSala.setores.map(x => [x.id, x.nome]))}
+              ? <MapaPorLayout layout={daSala.layout} modo="comprador" ampliado={ampliado} cores={daSala.cores} fundo={daSala.fundo ? { ...daSala.fundo, url: urlDoFundo(daSala.fundo.caminho, process.env.NEXT_PUBLIC_SUPABASE_URL ?? "") } : undefined} contexto={new Set(daSala.setores.filter(x => x.id !== daSala.atual).map(x => x.id))} rotulos={new Map(daSala.setores.map(x => [x.id, x.nome]))}
                   rotuloDoMapa="Mapa da sala" estados={estadosDoMapa(fileiras, daSala.atual)} tipos={tiposDoMapa(fileiras, (f, n) => chaveDoLugar(daSala.atual, f, n))} onAlternar={l => { if (l.setor === daSala.atual) onAlternar?.(l.fileira, l.numero); }} />
               : layout
               ? <MapaPorLayout layout={layout} modo="comprador" ampliado={ampliado} estados={estadosDoMapa(fileiras)} tipos={tiposDoMapa(fileiras, (f, n) => chaveDoLugar(null, f, n))} onAlternar={l => onAlternar?.(l.fileira, l.numero)} />

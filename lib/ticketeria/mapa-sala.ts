@@ -15,8 +15,29 @@ const LIMITE_DE_COORDENADA = 2000;
 export const ESPACO_ENTRE_SETORES = 4;
 
 export type SetorNaPlanta = { setor: string; x: number; y: number; cor: string };
+/**
+ * A planta da sala por baixo do desenho (M4): uma imagem da biblioteca de imagens da loja (`caminho` no espaço `ticketeria-site`), com o canto de cima à esquerda em (x, y), do tamanho
+ * `largura` x `altura` (em lugares) e com a opacidade de 10 a 100. Só ajuda a pessoa a desenhar e a situar quem compra; não muda lugar nenhum.
+ */
+export type FundoDaPlanta = { caminho: string; x: number; y: number; largura: number; altura: number; opacidade: number };
 /** `palco`: o palco da sala; null deixa a sala sem palco desenhado. */
-export type Planta = { versao: 1; setores: SetorNaPlanta[]; palco: Palco | null };
+export type Planta = { versao: 1; setores: SetorNaPlanta[]; palco: Palco | null; fundo?: FundoDaPlanta | null };
+
+export const OPACIDADE_MINIMA_DO_FUNDO = 10;
+export const OPACIDADE_MAXIMA_DO_FUNDO = 100;
+export const OPACIDADE_PADRAO_DO_FUNDO = 40;
+const LIMITE_DE_TAMANHO_DO_FUNDO = 4000;
+const CAMINHO_DO_FUNDO = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(webp|jpg|png)$/i;
+const ESPACO_DAS_IMAGENS_DO_SITE = "ticketeria-site";
+
+/** O endereço público da imagem do fundo, a partir do endereço do Supabase do projeto (o espaço de arquivos é público). */
+export const urlDoFundo = (caminho: string, baseDoSupabase: string) => `${baseDoSupabase.replace(/\/+$/, "")}/storage/v1/object/public/${ESPACO_DAS_IMAGENS_DO_SITE}/${caminho}`;
+/** O caminho da imagem a partir do endereço público que a biblioteca devolve (nulo se não é uma imagem dela). */
+export function caminhoDoFundoPelaUrl(url: string): string | null {
+  const i = url.indexOf(`/${ESPACO_DAS_IMAGENS_DO_SITE}/`);
+  const caminho = i < 0 ? "" : url.slice(i + ESPACO_DAS_IMAGENS_DO_SITE.length + 2).split("?")[0];
+  return CAMINHO_DO_FUNDO.test(caminho) ? caminho : null;
+}
 /** Um setor numerado que tem desenho em blocos: o que a sala sabe dele. */
 export type SetorDesenhado = { id: string; nome: string; layout: Layout };
 
@@ -52,7 +73,16 @@ export function lerPlanta(resposta: unknown): Planta | null {
     if (!p || !numero(p.x, -LIMITE_DE_COORDENADA, LIMITE_DE_COORDENADA) || !numero(p.y, -LIMITE_DE_COORDENADA, LIMITE_DE_COORDENADA) || !numero(p.largura, 1, 2000) || !numero(p.altura, 0.5, 100) || typeof p.rotulo !== "string" || p.rotulo.length < 1 || p.rotulo.length > 30) return null;
     palco = { x: p.x, y: p.y, largura: p.largura, altura: p.altura, rotulo: p.rotulo };
   }
-  return { versao: 1, setores, palco };
+  let fundo: FundoDaPlanta | null = null;
+  if (r.fundo !== undefined && r.fundo !== null) {
+    const f = objeto(r.fundo);
+    if (!f || typeof f.caminho !== "string" || !CAMINHO_DO_FUNDO.test(f.caminho)) return null;
+    if (!numero(f.x, -LIMITE_DE_COORDENADA, LIMITE_DE_COORDENADA) || !numero(f.y, -LIMITE_DE_COORDENADA, LIMITE_DE_COORDENADA)) return null;
+    if (!numero(f.largura, 1, LIMITE_DE_TAMANHO_DO_FUNDO) || !numero(f.altura, 1, LIMITE_DE_TAMANHO_DO_FUNDO)) return null;
+    if (!numero(f.opacidade, OPACIDADE_MINIMA_DO_FUNDO, OPACIDADE_MAXIMA_DO_FUNDO) || !Number.isInteger(f.opacidade)) return null;
+    fundo = { caminho: f.caminho, x: f.x, y: f.y, largura: f.largura, altura: f.altura, opacidade: f.opacidade };
+  }
+  return { versao: 1, setores, palco, ...(fundo ? { fundo } : {}) };
 }
 
 /** O que a compra recebe da sala: a planta e o desenho de cada setor dela (só os que se desenham). null se não vem nada que se entenda. */
@@ -81,7 +111,7 @@ export function partesDoBlocoNaSala(id: string): { setor: string; bloco: string 
  * O desenho da sala: os blocos de cada setor da planta (na ordem dela), deslocados para o lugar do setor, e o palco da sala. Setor que a planta cita e que não tem
  * desenho (apagado, ou sem layout) fica de fora, e o desenho dele que a planta não cita também.
  */
-export function comporSala(planta: Planta, setores: readonly SetorDesenhado[]): { layout: Layout; cores: Map<string, string> } {
+export function comporSala(planta: Planta, setores: readonly SetorDesenhado[]): { layout: Layout; cores: Map<string, string>; fundo: FundoDaPlanta | null } {
   const cores = new Map<string, string>();
   const blocos = planta.setores.flatMap(entrada => {
     const setor = setores.find(s => s.id === entrada.setor);
@@ -89,7 +119,7 @@ export function comporSala(planta: Planta, setores: readonly SetorDesenhado[]): 
     cores.set(setor.id, entrada.cor);
     return setor.layout.blocos.map(b => ({ ...b, id: idDoBlocoNaSala(setor.id, b.id), setor: setor.id, x: b.x + entrada.x, y: b.y + entrada.y }));
   });
-  return { layout: { versao: 1, blocos, palco: planta.palco }, cores };
+  return { layout: { versao: 1, blocos, palco: planta.palco }, cores, fundo: planta.fundo ?? null };
 }
 
 /** O retângulo (do desenho do próprio setor) que o setor ocupa, sem palco. */
@@ -164,4 +194,51 @@ export function conferirPlanta(planta: Planta, setores: readonly SetorDesenhado[
   const { layout } = comporSala(planta, setores);
   if (layout.blocos.length === 0) return ["sem_setores"];
   return lugaresSeSobrepoem(calcularLayout(layout).lugares) ? ["setores_sobrepostos"] : [];
+}
+
+// ─── A planta de fundo ──────────────────────────────────────────────────────
+
+const arredondaMeio = (v: number) => semMenosZero(Math.round(v * 2) / 2);
+
+/**
+ * O fundo recém-escolhido: a imagem (de `larguraPx` x `alturaPx` pixels) cobrindo o desenho dos setores com uma folga, centrada nele e com a proporção da imagem. Sem setor desenhado, um
+ * retângulo de 60 lugares de largura em volta da origem.
+ */
+export function fundoNovo(caminho: string, larguraPx: number, alturaPx: number, setores: readonly SetorDesenhado[], planta: Planta): FundoDaPlanta {
+  const { layout } = comporSala(planta, setores);
+  const caixa = layout.blocos.length > 0 ? calcularLayout({ ...layout, palco: null }).caixa : { x0: -30, x1: 30, y0: -20, y1: 20 };
+  const proporcao = larguraPx > 0 && alturaPx > 0 ? larguraPx / alturaPx : 1.5;
+  const largura = limita(Math.max(caixa.x1 - caixa.x0 + 12, (caixa.y1 - caixa.y0 + 12) * proporcao), 20, LIMITE_DE_TAMANHO_DO_FUNDO);
+  const altura = largura / proporcao;
+  return {
+    caminho, largura: Math.round(largura * 100) / 100, altura: Math.round(altura * 100) / 100, opacidade: OPACIDADE_PADRAO_DO_FUNDO,
+    x: arredondaMeio((caixa.x0 + caixa.x1) / 2 - largura / 2), y: arredondaMeio((caixa.y0 + caixa.y1) / 2 - altura / 2),
+  };
+}
+
+export function comFundo(planta: Planta, fundo: FundoDaPlanta | null): Planta {
+  const { fundo: _antigo, ...resto } = planta;
+  void _antigo;
+  return fundo ? { ...resto, fundo } : resto;
+}
+
+/** O canto de cima à esquerda do fundo em (x, y), encaixado em meio lugar. */
+export function posicionarFundo(planta: Planta, x: number, y: number): Planta {
+  return planta.fundo ? { ...planta, fundo: { ...planta.fundo, x: limita(arredondaMeio(x), -LIMITE_DE_COORDENADA, LIMITE_DE_COORDENADA), y: limita(arredondaMeio(y), -LIMITE_DE_COORDENADA, LIMITE_DE_COORDENADA) } } : planta;
+}
+
+/** Aumenta ou diminui o fundo por `fator` mantendo a proporção e o centro onde está (de 20 a 4.000 lugares de largura). */
+export function escalarFundo(planta: Planta, fator: number): Planta {
+  const f = planta.fundo;
+  if (!f || !(fator > 0)) return planta;
+  const largura = limita(f.largura * fator, 20, LIMITE_DE_TAMANHO_DO_FUNDO);
+  const real = largura / f.largura;
+  const altura = f.altura * real;
+  if (altura > LIMITE_DE_TAMANHO_DO_FUNDO || altura < 1) return planta;
+  return { ...planta, fundo: { ...f, largura: Math.round(largura * 100) / 100, altura: Math.round(altura * 100) / 100, x: arredondaMeio(f.x + (f.largura - largura) / 2), y: arredondaMeio(f.y + (f.altura - altura) / 2) } };
+}
+
+export function comOpacidadeDoFundo(planta: Planta, opacidade: number): Planta {
+  const f = planta.fundo;
+  return f ? { ...planta, fundo: { ...f, opacidade: limita(Math.round(opacidade), OPACIDADE_MINIMA_DO_FUNDO, OPACIDADE_MAXIMA_DO_FUNDO) } } : planta;
 }

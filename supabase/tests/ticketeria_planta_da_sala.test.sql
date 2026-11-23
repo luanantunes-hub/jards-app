@@ -7,7 +7,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(22);
+select plan(28);
 
 create schema tl;
 grant usage on schema tl to authenticated, anon;
@@ -124,6 +124,17 @@ select is(public.fn_ticketeria_mapa_da_sessao(tl.id('81'), tl.id('31')) -> 'sala
 select is((select jsonb_agg(x ->> 'id') from jsonb_array_elements(public.fn_ticketeria_mapa_da_sessao(tl.id('81'), tl.id('31')) -> 'sala' -> 'setores') x), jsonb_build_array(tl.id('42')::text, tl.id('41')::text), 'só os setores desenhados e à venda neste evento (Balcão e Plateia, por nome); o Interno e a Lista ficam de fora');
 select is(public.fn_ticketeria_mapa_da_sessao(tl.id('81'), tl.id('31')) -> 'sala' -> 'setores' -> 0 -> 'layout', tl.layout(4), 'cada setor com o seu layout');
 select is(jsonb_array_length(public.fn_ticketeria_mapa_da_sessao(tl.id('81'), tl.id('31')) -> 'fileiras'), 1, 'e o mapa do setor segue como sempre');
+
+-- O fundo da planta (migration ticketeria_planta_fundo): uma imagem da biblioteca da loja, nunca um endereço de fora.
+create function tl.fundo(muda jsonb default '{}') returns jsonb language sql stable as $$
+  select jsonb_set(tl.planta(array['41']), '{fundo}', jsonb_build_object('caminho', tl.id('a0')::text || '/' || tl.id('b1')::text || '.webp', 'x', -5, 'y', -3.5, 'largura', 60, 'altura', 40, 'opacidade', 40) || muda)
+$$;
+select ok(public.fn_ticketeria_planta_ok(tl.fundo()), 'uma planta com fundo serve');
+select ok(public.fn_ticketeria_planta_ok(jsonb_set(tl.planta(array['41']), '{fundo}', 'null')), 'o fundo pode ser nulo');
+select ok(not public.fn_ticketeria_planta_ok(tl.fundo('{"caminho": "https://exemplo.com/planta.png"}')), 'endereço de fora não serve');
+select ok(not public.fn_ticketeria_planta_ok(tl.fundo('{"opacidade": 5}')) and not public.fn_ticketeria_planta_ok(tl.fundo('{"opacidade": 40.5}')), 'opacidade fora de 10 a 100, ou fracionada');
+select ok(not public.fn_ticketeria_planta_ok(tl.fundo('{"largura": 0}')) and not public.fn_ticketeria_planta_ok(tl.fundo('{"altura": 5000}')) and not public.fn_ticketeria_planta_ok(tl.fundo('{"x": "dez"}')), 'tamanho ou posição fora do limite, ou que não é número');
+select is(tl.tenta(format($t$update public.ticketeria_salas set planta = %L::jsonb where id = %L$t$, tl.fundo('{"caminho": "../x.webp"}'), tl.sala())), '23514 ticketeria_salas_planta_check', 'a tabela recusa o fundo que não serve');
 
 -- Quem executa.
 select ok(has_function_privilege('authenticated', 'public.fn_ticketeria_planta_ok(jsonb)', 'execute') and not has_function_privilege('anon', 'public.fn_ticketeria_planta_ok(jsonb)', 'execute'), 'a conferência do formato: logado sim, visitante não');
