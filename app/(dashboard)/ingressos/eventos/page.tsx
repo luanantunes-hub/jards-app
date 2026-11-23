@@ -4,14 +4,13 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Plus, Ticket } from "lucide-react";
-import { useOrganizationId, useOrganizationName, useOrganizationRole } from "@/contexts/OrganizationContext";
+import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { podeEditarATicketeria } from "@/lib/ticketeria/permissoes";
 import type { SituacaoDoEvento } from "@/lib/ticketeria/estados";
 import { ROTULO_DA_SITUACAO_DO_EVENTO, proximaSessao, quandoDaSessao } from "@/lib/ticketeria/eventos";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
-import { EventoSheet } from "@/components/ticketeria/FolhasDosEventos";
 
 type Evento = { id: string; titulo: string; situacao: SituacaoDoEvento };
 type Sessao = { id: string; evento_id: string; local_id: string; inicio: string; fim: string | null; cancelada_em: string | null };
@@ -19,16 +18,14 @@ type Local = { id: string; nome: string; fuso: string };
 
 const COR_DA_SITUACAO: Record<SituacaoDoEvento, string> = { rascunho: "#6B6767", publicado: "#2E8932", cancelado: "#B23B3B" };
 
-/** Os eventos da loja (T2): título, situação, a próxima sessão e quantas sessões há. A venda chega na T3. */
+/** Os eventos da loja (T2): título, situação, a próxima sessão e quantas sessões há. "Novo evento" abre o assistente em tela cheia (/ingressos/eventos/novo). */
 export default function IngressosPage() {
   const organizationId = useOrganizationId();
-  const nomeDaOrganizacao = useOrganizationName();
   const papel = useOrganizationRole();
   const router = useRouter();
   const [eventos, setEventos] = useState<Evento[] | null>(null);
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
   const [locais, setLocais] = useState<Local[]>([]);
-  const [folha, setFolha] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const podeEditar = podeEditarATicketeria(papel);
 
@@ -58,7 +55,7 @@ export default function IngressosPage() {
     return { evento, total: delas.filter(sessao => !sessao.cancelada_em).length, proxima: proxima && local ? `${quandoDaSessao(proxima.inicio, local.fuso)} · ${local.nome}` : null };
   }), [eventos, sessoes, locais]);
 
-  const novo = podeEditar ? <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo evento</PrimaryListAction> : undefined;
+  const novo = podeEditar ? <PrimaryListAction onClick={() => router.push("/ingressos/eventos/novo")}><Plus size={13} aria-hidden="true" /> Novo evento</PrimaryListAction> : undefined;
 
   return (
     <>
@@ -91,7 +88,6 @@ export default function IngressosPage() {
           )}
         </ListTableSurface>
       </ListContent>
-      {folha && organizationId && <EventoSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} onClose={() => setFolha(false)} onSaved={id => router.push(`/ingressos/eventos/${id}`)} />}
     </>
   );
 }

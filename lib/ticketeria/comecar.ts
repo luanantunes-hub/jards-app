@@ -124,9 +124,10 @@ export function pracasEfetivas(perfil: PerfilDoProdutor | null, pracas: readonly
  * auditório só com lugares numerados; e o preço e a meia-entrada só se o ingresso não for gratuito. Enquanto uma resposta não vem, vale o caminho mais
  * comum (uma cidade; sem auditório; ingresso pago).
  */
-export function passosDoComecar(perfil: PerfilDoProdutor | null, pracas: readonly Praca[], numerada: boolean | null, gratuito: boolean | null): Passo[] {
-  const lista: Passo[] = [{ id: "perfil", praca: 0 }, { id: "nome", praca: 0 }];
-  if (perfil === "espaco") lista.push({ id: "salas", praca: 0 });
+export function passosDoComecar(perfil: PerfilDoProdutor | null, pracas: readonly Praca[], numerada: boolean | null, gratuito: boolean | null, novoEvento = false): Passo[] {
+  // Um evento novo de quem já fez o onboarding não pergunta de novo como a pessoa trabalha nem quantas salas o espaço tem (a loja já sabe).
+  const lista: Passo[] = novoEvento ? [{ id: "nome", praca: 0 }] : [{ id: "perfil", praca: 0 }, { id: "nome", praca: 0 }];
+  if (perfil === "espaco" && !novoEvento) lista.push({ id: "salas", praca: 0 });
   const cidades = pracasEfetivas(perfil, pracas.length ? pracas : [praca()]);
   cidades.forEach((_, i) => {
     lista.push({ id: "onde", praca: i });

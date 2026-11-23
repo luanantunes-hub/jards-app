@@ -36,15 +36,20 @@ const reais = (centavos: number) => (centavos / 100).toLocaleString("pt-BR", { s
 /** O que a tela final precisa saber além da resposta do banco: como terminou a gravação do mapa de assentos desenhado (em todas as cidades). */
 type Pronto = ResultadoDoComecar & { mapa: "montado" | "falhou" | "mantido" | null; erroDoMapa: string | null; salasFalharam: boolean };
 
-export function ComecarView({ organizationId }: { organizationId: string }) {
-  const [r, setR] = useState<RespostasDoComecar>(RESPOSTAS_VAZIAS);
+/**
+ * O assistente em tela cheia. No onboarding (sem `perfilDaLoja`) começa perguntando como a pessoa trabalha. Para um EVENTO NOVO de quem já fez o onboarding, `perfilDaLoja` é o perfil
+ * que a loja já tem: o assistente pula o perfil e as salas e vai direto ao nome, ao lugar e à data, e cria o evento do mesmo jeito (o lugar que já existe é reaproveitado).
+ */
+export function ComecarView({ organizationId, perfilDaLoja }: { organizationId: string; perfilDaLoja?: PerfilDoProdutor }) {
+  const inicial: RespostasDoComecar = perfilDaLoja ? { ...RESPOSTAS_VAZIAS, perfil: perfilDaLoja } : RESPOSTAS_VAZIAS;
+  const [r, setR] = useState<RespostasDoComecar>(inicial);
   const [passo, setPasso] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [pronto, setPronto] = useState<Pronto | null>(null);
   const [municipios, setMunicipios] = useState<TabelaMunicipios | null>(null);
 
-  const PASSOS = passosDoComecar(r.perfil, r.pracas, r.numerada, r.gratuito);
+  const PASSOS = passosDoComecar(r.perfil, r.pracas, r.numerada, r.gratuito, perfilDaLoja !== undefined);
   const atual = PASSOS[Math.min(passo, PASSOS.length - 1)];
   const passoAtual = atual.id;
   const ip = atual.praca;
@@ -95,7 +100,7 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
     setPronto({ ...resultado, ...montagem, salasFalharam });
   }
 
-  if (pronto) return <EventoPronto r={r} resultado={pronto} recomecar={() => { setPronto(null); setR({ ...RESPOSTAS_VAZIAS, pracas: [pracaVazia()] }); setPasso(0); }} />;
+  if (pronto) return <EventoPronto r={r} resultado={pronto} recomecar={() => { setPronto(null); setR({ ...inicial, pracas: [pracaVazia()] }); setPasso(0); }} />;
 
   const perfil = r.perfil ? PERFIL[r.perfil] : null;
   return (
@@ -104,7 +109,7 @@ export function ComecarView({ organizationId }: { organizationId: string }) {
         <div className="h-full rounded-full bg-[#7259B5] transition-[width] duration-300 ease-out motion-reduce:transition-none" style={{ width: `${((passo + 1) / PASSOS.length) * 100}%` }} />
       </div>
 
-      {passo === 0 && (
+      {passoAtual === "perfil" && (
         <section aria-labelledby="comecar-titulo">
           <p className="text-[0.75rem] text-black/45">Bem-vindo à Ticketeria</p>
           <h1 id="comecar-titulo" className="mt-1 text-[1.875rem] font-normal leading-[1.15] tracking-[-.03em] md:text-[2.375rem] text-[#282525] [text-wrap:balance]">Como você costuma fazer seus eventos?</h1>

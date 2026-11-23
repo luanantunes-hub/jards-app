@@ -90,7 +90,7 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
 const ROTAS_SO_SUPER_ADMIN: string[] = [];
 
 // Telas de foco, sem menu lateral nem barra do topo: o onboarding da Ticketeria ocupa a tela toda (pedido do dono em 21/11/2026).
-const ROTAS_TELA_CHEIA = ["/ingressos/comecar"];
+const ROTAS_TELA_CHEIA = ["/ingressos/comecar", "/ingressos/eventos/novo"];
 
 // `icone`: o grupo aparece no menu como uma seção que abre e fecha para baixo (como no Apollo), com este ícone no título e as telas dele logo abaixo.
 const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementType; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {

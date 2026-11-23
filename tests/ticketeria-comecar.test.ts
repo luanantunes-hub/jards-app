@@ -350,3 +350,11 @@ test("o passo das salas (só no espaço): de 1 a 12, nomes sem repetir, e o padr
   assert.deepEqual(nomesDasSalas(["", " Imax ", ""]), ["Sala 1", "Imax", "Sala 3"]);
   assert.equal(passosDoComecar("turne", [praca()], false, false).some(p => p.id === "salas"), false, "só quem tem espaço responde");
 });
+
+test("evento novo de quem já fez o onboarding: sem o passo do perfil e sem o das salas, o resto igual", () => {
+  const um = [praca()];
+  const ids = (l: ReturnType<typeof passosDoComecar>) => l.map(p => p.id);
+  assert.deepEqual(ids(passosDoComecar("unico", um, false, false, true)), ["nome", "onde", "data", "horario", "numerada", "lugares", "gratuito", "preco", "meia", "venda"]);
+  assert.deepEqual(ids(passosDoComecar("espaco", um, false, false, true)), ["nome", "onde", "evento", "data", "horario", "numerada", "lugares", "gratuito", "preco", "meia", "venda"], "o espaço não pergunta de novo quantas salas tem");
+  assert.deepEqual(ids(passosDoComecar("unico", um, false, false)), ids(passosDoComecar("unico", um, false, false, false)), "sem o quinto argumento nada muda");
+});

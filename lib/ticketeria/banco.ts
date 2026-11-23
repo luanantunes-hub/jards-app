@@ -20,6 +20,7 @@ export type BancoDaTicketeria = {
           organization_id: string;
           nome: string;
           parcelas_max: number;
+          perfil: string | null;
           canais: string[] | null;
           usa_espacos: boolean | null;
           criado_por: string | null;
@@ -31,6 +32,7 @@ export type BancoDaTicketeria = {
           organization_id: string;
           nome: string;
           parcelas_max?: number;
+          perfil?: string | null;
           canais?: string[] | null;
           usa_espacos?: boolean | null;
           criado_por?: string | null;
@@ -42,6 +44,7 @@ export type BancoDaTicketeria = {
           organization_id?: string;
           nome?: string;
           parcelas_max?: number;
+          perfil?: string | null;
           canais?: string[] | null;
           usa_espacos?: boolean | null;
           criado_por?: string | null;
