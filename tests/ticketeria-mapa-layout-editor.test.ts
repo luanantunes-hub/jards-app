@@ -8,9 +8,9 @@ import { comEstadosDoMapa, mapaDoLayout } from "../lib/ticketeria/mapa-layout";
 import { mapaNovo } from "../lib/ticketeria/mapa";
 import {
   CAMPOS_DO_MODELO, ERRO_DO_LAYOUT_EM_TEXTO, MODELOS, PARAMETROS_PADRAO, comAngulo, comCorredorNoMeio, comNumeracao, comPrimeiroNumero, comRaio, deslocarBloco, encaixa, layoutDoModelo,
-  maisLugaresNoBloco, maisUmBloco, maisUmaFileira, menosUmaFileira, moverBloco, temCorredorNoMeio, tirarBloco,
+  empurrarVizinhos, FOLGA_ENTRE_BLOCOS, maisLugaresNoBloco, maisUmBloco, maisUmaFileira, menosUmaFileira, moverBloco, temCorredorNoMeio, tirarBloco,
 } from "../lib/ticketeria/mapa-layout-editor";
-import { calcularLayout, conferirLayout, type ErroDoLayout } from "../lib/ticketeria/mapa-layout";
+import { blocoNovo, calcularLayout, conferirLayout, type ErroDoLayout, type Layout } from "../lib/ticketeria/mapa-layout";
 
 const lugares = (l: ReturnType<typeof layoutDoModelo>) => calcularLayout(l).lugares.length;
 
@@ -191,4 +191,78 @@ test("o editor do mapa: a ferramenta Desenho só existe com onLayout; com layout
   assert.equal(com.includes("+ Fileira"), false, "com layout, quem manda é o painel do bloco");
   const bloquear = html(createElement(EditorDoMapa, { ...base, onLayout: naoFaz, onEscolherBloco: naoFaz, layout, blocoEscolhido: null }));
   assert.equal((bloquear.match(/role="button"/g) ?? []).length >= 240, true, "com a ferramenta Bloquear, cada lugar é um botão");
+});
+
+/** Os blocos se encostam (com a folga mínima) se a distância entre os lugares mais próximos de dois blocos é menor que a folga. */
+function menorDistanciaEntreBlocos(l: ReturnType<typeof layoutDoModelo>): number {
+  const lugares = calcularLayout(l).lugares;
+  let menor = Infinity;
+  for (let i = 0; i < lugares.length; i++) for (let j = i + 1; j < lugares.length; j++) {
+    if (lugares[i].bloco === lugares[j].bloco) continue;
+    menor = Math.min(menor, Math.hypot(lugares[i].x - lugares[j].x, lugares[i].y - lugares[j].y));
+  }
+  return menor;
+}
+
+test("empurrar vizinhos: o centro cresce e os lados saem para fora, cada um o mínimo; o centro não se mexe", () => {
+  const l = layoutDoModelo("tres-blocos", { ...PARAMETROS_PADRAO, fileiras: 3 });
+  const cresceu = maisLugaresNoBloco(l, "centro", 6);
+  assert.ok(menorDistanciaEntreBlocos(cresceu) < 0.84 + FOLGA_ENTRE_BLOCOS, "sem empurrar, o centro já invade a folga dos lados");
+  const empurrado = empurrarVizinhos(cresceu, "centro");
+  const por = (x: typeof empurrado, id: string) => x.blocos.find(b => b.id === id)!;
+  assert.ok(por(empurrado, "esq").x < por(cresceu, "esq").x, "a esquerda saiu para a esquerda");
+  assert.ok(por(empurrado, "dir").x > por(cresceu, "dir").x, "a direita saiu para a direita");
+  assert.equal(por(empurrado, "centro").x, por(cresceu, "centro").x, "o bloco que cresceu fica onde estava");
+  assert.equal(por(empurrado, "esq").y, por(cresceu, "esq").y, "e só andou no eixo certo");
+  assert.ok(menorDistanciaEntreBlocos(empurrado) >= 0.84 + FOLGA_ENTRE_BLOCOS - 1e-9, "depois, a folga mínima");
+  assert.deepEqual(conferirLayout(empurrado), []);
+  assert.ok(Math.abs((por(cresceu, "esq").x - por(empurrado, "esq").x) - (por(empurrado, "dir").x - por(cresceu, "dir").x)) < 1e-9, "os dois lados andam o mesmo");
+  assert.equal(empurrarVizinhos(empurrado, "centro"), empurrado, "de novo: nada a empurrar");
+});
+
+test("empurrar vizinhos: quem não é atingido não se mexe, e o layout folgado volta o mesmo", () => {
+  const l = layoutDoModelo("tres-blocos");
+  assert.equal(empurrarVizinhos(l, "centro"), l);
+  assert.equal(empurrarVizinhos(l, "nao-existe"), l);
+  // Com bastante espaço entre os blocos, crescer um não atinge ninguém.
+  const largo = moverBloco(moverBloco(l, "esq", l.blocos[0].x - 8, 0), "dir", l.blocos[2].x + 8, 0);
+  const cresceu = maisLugaresNoBloco(largo, "centro", 4);
+  assert.equal(empurrarVizinhos(cresceu, "centro"), cresceu, "ninguém foi atingido: o mesmo layout");
+});
+
+test("empurrar vizinhos: o vizinho empurrado empurra o seguinte, o mínimo (cascata de lado)", () => {
+  const l = layoutDoModelo("tres-blocos", { ...PARAMETROS_PADRAO, fileiras: 3 });
+  const r = empurrarVizinhos(maisLugaresNoBloco(l, "esq", 1), "esq");
+  const x = (layout: typeof r, id: string) => layout.blocos.find(b => b.id === id)!.x;
+  assert.ok(x(r, "dir") > x(l, "dir"), "a direita também saiu: o centro empurrado a atingiu");
+  assert.ok(x(r, "centro") > x(l, "centro"), "e andaram para fora");
+  assert.ok(menorDistanciaEntreBlocos(r) >= 0.84 + FOLGA_ENTRE_BLOCOS - 1e-9);
+});
+
+test("empurrar vizinhos: bloco que cresce para baixo (mais fileiras) empurra o de baixo, e o empurrado empurra o seguinte (cascata)", () => {
+  const bloco = (id: string, y: number, nomes: string[]) => blocoNovo({ id, y, fileiras: nomes.map(nome => ({ nome, lugares: 8 })) });
+  const l: Layout = { versao: 1, blocos: [bloco("b1", 0, ["A", "B", "C"]), bloco("b2", 6, ["P", "Q", "R"]), bloco("b3", 12, ["S", "T", "U"])], palco: null };
+  assert.deepEqual(conferirLayout(l), []);
+  const mais = maisUmaFileira(maisUmaFileira(l, "b1"), "b1");
+  const empurrado = empurrarVizinhos(mais, "b1");
+  const y = (id: string) => empurrado.blocos.find(b => b.id === id)!.y;
+  assert.ok(y("b2") > 6, "o de baixo desceu");
+  assert.ok(y("b3") > 12, "e o seguinte também");
+  assert.equal(y("b1"), 0);
+  assert.ok(menorDistanciaEntreBlocos(empurrado) >= 0.84 + FOLGA_ENTRE_BLOCOS - 1e-9);
+  assert.deepEqual(conferirLayout(empurrado), []);
+});
+
+test("empurrar vizinhos: depois de girar ou curvar um bloco, também afasta quem ele passou a atingir", () => {
+  const l = layoutDoModelo("tres-blocos", { ...PARAMETROS_PADRAO, fileiras: 6 });
+  const girado = comAngulo(l, "esq", 40);
+  const r = empurrarVizinhos(girado, "esq");
+  assert.ok(menorDistanciaEntreBlocos(r) >= 0.84 + FOLGA_ENTRE_BLOCOS - 1e-9);
+  assert.deepEqual(conferirLayout(r), []);
+});
+
+test("empurrar vizinhos: o palco acompanha quando alguém se mexeu", () => {
+  const l = layoutDoModelo("tres-blocos", { ...PARAMETROS_PADRAO, fileiras: 3 });
+  const empurrado = empurrarVizinhos(maisLugaresNoBloco(l, "centro", 12), "centro");
+  assert.ok(empurrado.palco!.largura >= l.palco!.largura);
 });

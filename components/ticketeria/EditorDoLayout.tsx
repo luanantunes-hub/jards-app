@@ -5,7 +5,7 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "lucide-react";
 import { conferirLayout, type Layout, type Numeracao } from "@/lib/ticketeria/mapa-layout";
 import {
   CAMPOS_DO_MODELO, ERRO_DO_LAYOUT_EM_TEXTO, MODELOS, MODELO_EM_TEXTO, PARAMETROS_PADRAO, comAngulo, comCorredorNoMeio, comNumeracao, comPalcoAcima, comPrimeiroNumero, comRaio,
-  deslocarBloco, layoutDoModelo, maisLugaresNoBloco, maisUmBloco, maisUmaFileira, menosUmaFileira, temCorredorNoMeio, tirarBloco, type ModeloId, type ParametrosDoModelo,
+  deslocarBloco, empurrarVizinhos, layoutDoModelo, maisLugaresNoBloco, maisUmBloco, maisUmaFileira, menosUmaFileira, temCorredorNoMeio, tirarBloco, type ModeloId, type ParametrosDoModelo,
 } from "@/lib/ticketeria/mapa-layout-editor";
 
 // Os controles do desenho do mapa: o modelo para começar e, para o bloco escolhido, a numeração, a curva, o ângulo, o corredor, as fileiras e a posição.
@@ -57,8 +57,13 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
   const erros = layout ? conferirLayout(layout) : [];
   const bloco = layout?.blocos.find(b => b.id === blocoEscolhido) ?? null;
   const indice = layout && bloco ? layout.blocos.indexOf(bloco) + 1 : 0;
-  // Todas as mudanças de um bloco passam por aqui: o palco acompanha o desenho.
-  const muda = (f: (l: Layout) => Layout) => { if (layout) onLayout(comPalcoAcima(f(layout))); };
+  // Todas as mudanças de um bloco passam por aqui: o palco acompanha o desenho e, quando a mudança aumenta o bloco (lugares, fileiras, curva, ângulo, corredor), os vizinhos
+  // que ele passou a atingir saem do caminho.
+  const muda = (f: (l: Layout) => Layout, empurrar = false) => {
+    if (!layout || !bloco) return;
+    const novo = f(layout);
+    onLayout(comPalcoAcima(empurrar ? empurrarVizinhos(novo, bloco.id) : novo));
+  };
 
   const lugaresDasFileiras = bloco ? bloco.fileiras.map(f => f.lugares) : [];
   const lugaresTexto = lugaresDasFileiras.length === 0 ? "" : Math.min(...lugaresDasFileiras) === Math.max(...lugaresDasFileiras) ? String(lugaresDasFileiras[0]) : `${Math.min(...lugaresDasFileiras)} a ${Math.max(...lugaresDasFileiras)}`;
@@ -120,18 +125,18 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
               <Passo rotulo="Primeiro número" valor={String(bloco.primeiroNumero)} menosDesligado={bloco.primeiroNumero <= 1} maisDesligado={bloco.primeiroNumero >= 999}
                 onMenos={() => muda(l => comPrimeiroNumero(l, bloco.id, bloco.primeiroNumero - 1))} onMais={() => muda(l => comPrimeiroNumero(l, bloco.id, bloco.primeiroNumero + 1))} />
               <Passo rotulo="Fileiras" valor={String(bloco.fileiras.length)} menosDesligado={bloco.fileiras.length <= 1} maisDesligado={bloco.fileiras.length >= 60}
-                onMenos={() => muda(l => menosUmaFileira(l, bloco.id))} onMais={() => muda(l => maisUmaFileira(l, bloco.id))} />
+                onMenos={() => muda(l => menosUmaFileira(l, bloco.id), true)} onMais={() => muda(l => maisUmaFileira(l, bloco.id), true)} />
               <Passo rotulo="Lugares por fileira" valor={lugaresTexto} menosDesligado={Math.min(...lugaresDasFileiras) <= 1} maisDesligado={Math.max(...lugaresDasFileiras) >= 80}
-                onMenos={() => muda(l => maisLugaresNoBloco(l, bloco.id, -1))} onMais={() => muda(l => maisLugaresNoBloco(l, bloco.id, 1))} />
+                onMenos={() => muda(l => maisLugaresNoBloco(l, bloco.id, -1), true)} onMais={() => muda(l => maisLugaresNoBloco(l, bloco.id, 1), true)} />
               <Passo rotulo="Curva" valor={raio === null ? "Reta" : `Raio ${raio}`} menosDesligado={raio === null} maisDesligado={raio !== null && raio <= RAIO_MINIMO}
                 rotuloMenos="Menos curva" rotuloMais="Mais curva"
-                onMenos={() => muda(l => comRaio(l, bloco.id, raio === null ? null : raio + PASSO_DO_RAIO > RAIO_MAXIMO ? null : raio + PASSO_DO_RAIO))}
-                onMais={() => muda(l => comRaio(l, bloco.id, raio === null ? RAIO_MAXIMO - PASSO_DO_RAIO : Math.max(RAIO_MINIMO, raio - PASSO_DO_RAIO)))} />
+                onMenos={() => muda(l => comRaio(l, bloco.id, raio === null ? null : raio + PASSO_DO_RAIO > RAIO_MAXIMO ? null : raio + PASSO_DO_RAIO), true)}
+                onMais={() => muda(l => comRaio(l, bloco.id, raio === null ? RAIO_MAXIMO - PASSO_DO_RAIO : Math.max(RAIO_MINIMO, raio - PASSO_DO_RAIO)), true)} />
               <Passo rotulo="Ângulo" valor={`${bloco.angulo}°`} menosDesligado={bloco.angulo <= -360} maisDesligado={bloco.angulo >= 360} rotuloMenos="Girar para a esquerda" rotuloMais="Girar para a direita"
-                onMenos={() => muda(l => comAngulo(l, bloco.id, bloco.angulo - 5))} onMais={() => muda(l => comAngulo(l, bloco.id, bloco.angulo + 5))} />
+                onMenos={() => muda(l => comAngulo(l, bloco.id, bloco.angulo - 5), true)} onMais={() => muda(l => comAngulo(l, bloco.id, bloco.angulo + 5), true)} />
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[0.8125rem] text-black/65">Corredor no meio</span>
-                <button type="button" role="switch" aria-checked={temCorredorNoMeio(bloco)} aria-label="Corredor no meio do bloco" onClick={() => muda(l => comCorredorNoMeio(l, bloco.id, !temCorredorNoMeio(bloco)))}
+                <button type="button" role="switch" aria-checked={temCorredorNoMeio(bloco)} aria-label="Corredor no meio do bloco" onClick={() => muda(l => comCorredorNoMeio(l, bloco.id, !temCorredorNoMeio(bloco)), true)}
                   className={`relative h-6 w-11 shrink-0 rounded-full transition ${FOCO} ${temCorredorNoMeio(bloco) ? "bg-[#6450D2]" : "bg-black/20"}`}>
                   <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${temCorredorNoMeio(bloco) ? "left-[1.375rem]" : "left-0.5"}`} />
                 </button>

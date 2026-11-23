@@ -3,7 +3,7 @@
 
 import { MAX_FILEIRAS, MAX_LUGARES_NA_FILEIRA, proximoNomeDeFileira } from "@/lib/ticketeria/mapa";
 import {
-  MAX_BLOCOS, blocoNovo, modeloCorredorCentral, modeloLeque, modeloTresBlocos, palcoAcima, type Bloco, type ErroDoLayout, type Layout, type Numeracao,
+  MAX_BLOCOS, blocoNovo, calcularLayout, modeloCorredorCentral, modeloLeque, modeloTresBlocos, palcoAcima, type Bloco, type ErroDoLayout, type Layout, type Numeracao,
 } from "@/lib/ticketeria/mapa-layout";
 
 // ─── Os modelos para começar ────────────────────────────────────────────────
@@ -139,6 +139,58 @@ export function maisUmaFileira(layout: Layout, id: string): Layout {
 /** Tira a última fileira do bloco (o bloco guarda ao menos uma). */
 export function menosUmaFileira(layout: Layout, id: string): Layout {
   return trocaBloco(layout, id, b => (b.fileiras.length <= 1 ? b : { ...b, fileiras: b.fileiras.slice(0, -1) }));
+}
+
+// ─── Empurrar os vizinhos ───────────────────────────────────────────────────
+
+/** Quanto sobra de espaço, no mínimo, entre a borda de um bloco e a do vizinho (em lugares). O desenho de partida dos modelos deixa 1,56 entre os blocos. */
+export const FOLGA_ENTRE_BLOCOS = 1.2;
+
+type Caixa = { x0: number; y0: number; x1: number; y1: number };
+
+/** O retângulo de cada bloco (de ponta a ponta dos lugares, com meio lugar de borda), já com metade da folga de cada lado. */
+function caixasDosBlocos(layout: Layout): Map<string, Caixa> {
+  const caixas = new Map<string, Caixa>();
+  const borda = 0.5 + FOLGA_ENTRE_BLOCOS / 2;
+  for (const l of calcularLayout(layout).lugares) {
+    const c = caixas.get(l.bloco);
+    if (!c) caixas.set(l.bloco, { x0: l.x - borda, y0: l.y - borda, x1: l.x + borda, y1: l.y + borda });
+    else { c.x0 = Math.min(c.x0, l.x - borda); c.y0 = Math.min(c.y0, l.y - borda); c.x1 = Math.max(c.x1, l.x + borda); c.y1 = Math.max(c.y1, l.y + borda); }
+  }
+  return caixas;
+}
+
+/**
+ * Depois de um bloco crescer (mais lugares, mais fileiras, curva, ângulo), afasta os vizinhos que ele passou a atingir: cada um sai para o lado em que há menos a andar, o mínimo
+ * para deixar a folga, e o que foi empurrado empurra o seguinte. Quem não é atingido não se mexe, e o layout que já estava folgado volta o mesmo.
+ */
+export function empurrarVizinhos(layout: Layout, id: string): Layout {
+  if (!layout.blocos.some(b => b.id === id)) return layout;
+  let atual = layout;
+  const fila = [id];
+  for (let voltas = 0; fila.length > 0 && voltas < 400; voltas++) {
+    const quem = fila[0];
+    const caixas = caixasDosBlocos(atual);
+    const a = caixas.get(quem);
+    let empurrou = false;
+    if (a) {
+      for (const [outro, b] of caixas) {
+        if (outro === quem) continue;
+        const ox = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
+        const oy = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+        if (ox <= 1e-9 || oy <= 1e-9) continue;
+        const horizontal = ox <= oy;
+        const centro = horizontal ? (b.x0 + b.x1) / 2 - (a.x0 + a.x1) / 2 : (b.y0 + b.y1) / 2 - (a.y0 + a.y1) / 2;
+        const distancia = Math.ceil((horizontal ? ox : oy) * 2) / 2 * (centro < 0 ? -1 : 1);
+        atual = deslocarBloco(atual, outro, horizontal ? distancia : 0, horizontal ? 0 : distancia);
+        fila.push(outro);
+        empurrou = true;
+        break; // as caixas mudaram: confere de novo
+      }
+    }
+    if (!empurrou) fila.shift();
+  }
+  return atual === layout ? layout : comPalcoAcima(atual);
 }
 
 // ─── Blocos novos e blocos a menos ──────────────────────────────────────────
