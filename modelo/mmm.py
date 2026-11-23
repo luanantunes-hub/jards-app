@@ -30,6 +30,8 @@ SEMANAS_DOS_CONTROLES_EXTRAS = 52
 GRUPOS_DE_CONTROLE = [
     {"parte": "proximidade", "chaves": ["proximidade"], "extra": False},
     {"parte": "feriado", "chaves": ["feriado"], "extra": False},
+    # O tamanho do que está à venda (lugares das próximas sessões): quem espera vender mais anuncia mais; sem isto o anúncio leva o mérito do evento maior (Kang, 2019).
+    {"parte": "lugares", "chaves": ["lugares"], "extra": False},
     {"parte": "preco_e_lotes", "chaves": ["lote", "preco"], "extra": True},
     {"parte": "cupom", "chaves": ["cupom"], "extra": True},
     {"parte": "visitas", "chaves": ["visitas"], "extra": True},

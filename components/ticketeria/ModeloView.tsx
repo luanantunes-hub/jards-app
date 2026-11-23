@@ -225,6 +225,7 @@ const PARTES: Record<ChaveDaParte, { rotulo: string; dica: string; cor: string }
   tendencia: { rotulo: "Tendência e época do ano", dica: "a loja vem crescendo ou caindo; as estações", cor: "#3A2466" },
   proximidade: { rotulo: "Proximidade da sessão", dica: "vende mais nas semanas antes da data", cor: "#7259B5" },
   feriado: { rotulo: "Feriados e datas de pico", dica: "Natal, Dia das Mães, as datas suas", cor: "#A894D6" },
+  lugares: { rotulo: "Tamanho do evento", dica: "semanas com mais lugares à venda vendem mais", cor: "#B8A8DE" },
   preco_e_lotes: { rotulo: "Preço e lotes", dica: "a troca de lote puxa uma corrida de compra", cor: "#C9BCE6" },
   cupom: { rotulo: "Cupons", dica: "semanas com cupom venderam diferente", cor: "#DDD4F0" },
   visitas: { rotulo: "Visitas sem anúncio (GA4)", dica: "busca, direto, e-mail, indicação", cor: "#EAE4F6" },

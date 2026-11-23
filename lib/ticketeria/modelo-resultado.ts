@@ -17,7 +17,7 @@ export type CanalDoResultado = {
 };
 export type DiagnosticosDoModelo = { r_hat_maximo: number; divergencias: number; ess_minimo: number };
 /** As partes em que a base ("venderia de qualquer jeito") se divide: o nível normal da loja, a tendência e a época do ano e cada controle que entrou no modelo. */
-export const CHAVES_DAS_PARTES = ["nivel", "tendencia", "proximidade", "feriado", "preco_e_lotes", "cupom", "visitas"] as const;
+export const CHAVES_DAS_PARTES = ["nivel", "tendencia", "proximidade", "feriado", "lugares", "preco_e_lotes", "cupom", "visitas"] as const;
 export type ChaveDaParte = (typeof CHAVES_DAS_PARTES)[number];
 /** Pode ser negativa: o preço mais alto ou a falta de uma data de pico também seguram a venda. */
 export type ParteDaBase = { chave: ChaveDaParte; porcento: number; baixo: number; alto: number };

@@ -97,8 +97,9 @@ const grupo = (l: ControleDaTela[], g: string) => l.find(c => c.grupo === g) as 
 test("com 41 semanas: proximidade e feriados em uso; preço, lotes e cupons entram com 52 (faltam 11); visitas opcional", () => {
   const t = tabela(41, i => ({ proximidade: (i % 9) / 9, feriado: i % 7 === 0 ? 1 : 0, lote: i % 10 === 0 ? 1 : 0, preco: (i % 3) / 10, cupom: (i % 4) / 10, visitas: 0 }));
   const l = controlesDaTela(t, resumo, { conectado: false, semanas: 0 });
-  assert.deepEqual(l.map(c => c.grupo), ["proximidade", "feriados", "preco_e_lotes", "cupons", "visitas"]);
+  assert.deepEqual(l.map(c => c.grupo), ["proximidade", "feriados", "lugares", "preco_e_lotes", "cupons", "visitas"]);
   assert.equal(grupo(l, "proximidade").estado, "em_uso");
+  assert.equal(grupo(l, "lugares").estado, "sem_dados", "lugares iguais em todas as semanas não entram");
   assert.match(grupo(l, "proximidade").detalhe, /3 eventos, 12 sessões/);
   assert.equal(grupo(l, "feriados").estado, "em_uso");
   assert.equal(grupo(l, "feriados").acao, "datas");
@@ -175,4 +176,21 @@ test("a tela das visitas: poucas semanas lidas, entra com 52 e em uso", () => {
   assert.equal(dos(controlesDaTela(t(60, true), resumo, { conectado: true, semanas: 40 })).estado, "em_uso");
   assert.equal(dos(controlesDaTela(t(60, false), resumo, { conectado: true, semanas: 40 })).estado, "sem_dados");
   assert.equal(dos(controlesDaTela(t(60, true), resumo, { conectado: false, semanas: 0 })).estado, "opcional");
+});
+
+test("o tamanho do que está à venda: lugares das sessões das próximas 8 semanas, em relação à mediana; antes da primeira sessão vale 1", () => {
+  const semanas = Array.from({ length: 30 }, (_, i) => new Date(Date.UTC(2026, 0, 5) + i * 7 * 86400000).toISOString().slice(0, 10));
+  const base = { semanas, datasProprias: [], viradasDeLote: [], itens: [] };
+  // Uma sessão pequena (200 lugares) na semana 15 e uma grande (800) na semana 25.
+  const sessoes = [{ dia: semanas[15], lugares: 200 }, { dia: semanas[25], lugares: 800 }];
+  const c = controlesDasSemanas({ ...base, sessoes: sessoes.map(x => x.dia), lugaresDasSessoes: sessoes });
+  const v = (i: number) => c[semanas[i]].lugares;
+  assert.equal(v(0), 1, "antes da janela da primeira sessão: o de sempre");
+  assert.ok(v(10) > 0 && v(10) < v(20), `a sessão grande pesa mais: ${v(10)} x ${v(20)}`);
+  assert.equal(v(16), 0, "a grande ainda está a mais de 8 semanas");
+  assert.equal(v(17), v(18), "entre as duas sessões, só a grande está à frente");
+  assert.ok(v(17) > 0);
+  assert.equal(v(26), 0, "depois da última sessão, nada à venda");
+  const sem = controlesDasSemanas({ ...base, sessoes: sessoes.map(x => x.dia) });
+  assert.ok(semanas.every(s => sem[s].lugares === 0), "sem a lotação, o controle fica em zero (e não entra)");
 });

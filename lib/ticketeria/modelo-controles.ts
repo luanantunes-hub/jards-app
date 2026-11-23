@@ -8,8 +8,11 @@
 //   - lote: 1 se um lote (que não o primeiro de cada ingresso) começou a ser vendido na semana: a virada de lote puxa uma corrida de compra;
 //   - preco: o preço médio por ingresso pago na semana em relação ao preço mediano da loja (0 = o de sempre; 0,2 = 20% mais caro); semana sem venda repete a anterior;
 //   - cupom: a parte dos ingressos pagos da semana comprados com cupom (0 a 1);
-//   - visitas: as visitas ao site que NÃO vieram de anúncio pago, em relação à mediana (log): só vem do GA4 (outra fatia).
-// Com pouca história o modelo usa só os dois primeiros (proximidade e feriado); os outros entram a partir de SEMANAS_DOS_CONTROLES_EXTRAS semanas, para não confundir um efeito com outro.
+//   - visitas: as visitas ao site que NÃO vieram de anúncio pago, em relação à mediana (log): só vem do GA4 (outra fatia);
+//   - lugares: o TAMANHO do que está à venda na semana: os lugares das sessões que acontecem nas próximas HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS semanas, em relação à mediana (1 = o de sempre,
+//     2 = o dobro). Quem espera vender mais anuncia mais (Kang, International Journal of Market Research, 2019): sem isto o modelo credita ao anúncio a venda que veio do evento ser maior.
+//     Nas semanas de antes da primeira sessão conhecida (histórico importado, que não tem sessão) vale 1, "o de sempre", para o controle não marcar a diferença entre o histórico e a Ticketeria.
+// Com pouca história o modelo usa só os três primeiros (proximidade, feriado e lugares); os outros entram a partir de SEMANAS_DOS_CONTROLES_EXTRAS semanas, para não confundir um efeito com outro.
 
 import { inicioDaSemana, semanasEntre } from "@/lib/ticketeria/modelo";
 
@@ -18,12 +21,13 @@ export const SEMANAS_DOS_CONTROLES_EXTRAS = 52;
 export const MIN_SEMANAS_DE_VISITAS = 26;
 export const HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS = 8;
 
-export type ChaveDoControle = "proximidade" | "feriado" | "lote" | "preco" | "cupom" | "visitas";
-export type GrupoDeControle = "proximidade" | "feriados" | "preco_e_lotes" | "cupons" | "visitas";
+export type ChaveDoControle = "proximidade" | "feriado" | "lugares" | "lote" | "preco" | "cupom" | "visitas";
+export type GrupoDeControle = "proximidade" | "feriados" | "lugares" | "preco_e_lotes" | "cupons" | "visitas";
 
 export const GRUPOS_DE_CONTROLE: { grupo: GrupoDeControle; rotulo: string; chaves: ChaveDoControle[]; extra: boolean }[] = [
   { grupo: "proximidade", rotulo: "Proximidade da sessão", chaves: ["proximidade"], extra: false },
   { grupo: "feriados", rotulo: "Feriados e datas de pico", chaves: ["feriado"], extra: false },
+  { grupo: "lugares", rotulo: "Tamanho do que está à venda", chaves: ["lugares"], extra: false },
   { grupo: "preco_e_lotes", rotulo: "Preço e lotes", chaves: ["lote", "preco"], extra: true },
   { grupo: "cupons", rotulo: "Cupons", chaves: ["cupom"], extra: true },
   { grupo: "visitas", rotulo: "Visitas ao site, sem anúncio (GA4)", chaves: ["visitas"], extra: true },
@@ -69,6 +73,8 @@ export type EntradaDosControles = {
   semanas: string[];
   /** O dia de início (AAAA-MM-DD, no fuso da loja) das sessões que não foram canceladas. */
   sessoes: string[];
+  /** Os lugares de cada sessão (a lotação da sala), para o controle de tamanho; sem isto o controle fica de fora. */
+  lugaresDasSessoes?: { dia: string; lugares: number }[];
   /** As datas de pico que o produtor acrescentou. */
   datasProprias: { dia: string; nome: string }[];
   /** O dia em que cada lote que não é o primeiro do ingresso começa a ser vendido. */
@@ -100,6 +106,15 @@ export function controlesDasSemanas(e: EntradaDosControles): Record<string, Reco
   const precoMedio = new Map([...porSemana].map(([s, a]) => [s, a.valor / a.quantidade]));
   const referencia = mediana([...precoMedio.values()]);
 
+  // O tamanho do que está à venda: os lugares das sessões que acontecem desta semana até HORIZONTE semanas à frente, em relação à mediana das semanas com sessão à frente.
+  const comLugares = (e.lugaresDasSessoes ?? []).filter(x => x.lugares > 0).map(x => ({ semana: inicioDaSemana(x.dia), lugares: x.lugares }));
+  const lugaresBrutos = new Map(e.semanas.map(semana => [semana, comLugares.reduce((soma, x) => {
+    const d = semanasEntre(semana, x.semana) - 1;
+    return x.semana >= semana && d <= HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS ? soma + x.lugares : soma;
+  }, 0)]));
+  const lugaresDeReferencia = mediana([...lugaresBrutos.values()].filter(v => v > 0));
+  const primeiraJanela = comLugares.length > 0 ? comLugares.map(x => x.semana).sort()[0] : null;
+
   const saida: Record<string, Record<ChaveDoControle, number>> = {};
   let precoAnterior = 0;
   for (const semana of e.semanas) {
@@ -111,7 +126,11 @@ export function controlesDasSemanas(e: EntradaDosControles): Record<string, Reco
     precoAnterior = relativo;
     const compras = porSemana.get(semana);
     saida[semana] = {
-      proximidade: arredondar(proximidade), feriado: semanasDePico.has(semana) ? 1 : 0, lote: semanasDeLote.has(semana) ? 1 : 0, preco: arredondar(relativo),
+      proximidade: arredondar(proximidade), feriado: semanasDePico.has(semana) ? 1 : 0,
+      lugares: lugaresDeReferencia <= 0 ? 0
+        : primeiraJanela !== null && semanasEntre(semana, primeiraJanela) - 1 > HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS && semana < primeiraJanela ? 1
+        : arredondar(Math.min(10, (lugaresBrutos.get(semana) ?? 0) / lugaresDeReferencia)),
+      lote: semanasDeLote.has(semana) ? 1 : 0, preco: arredondar(relativo),
       cupom: compras && compras.pagos > 0 ? arredondar(compras.comCupom / compras.pagos) : 0, visitas: 0,
     };
   }
@@ -183,6 +202,11 @@ export function controlesDaTela(tabela: { controles?: Partial<Record<ChaveDoCont
       return { ...base, estado: varia ? "em_uso" : "sem_dados", faltam: null, acao: null, detalhe: varia
         ? `Ingresso vende mais perto da data. O modelo lê as datas das suas sessões (${plural(resumo.eventos, "evento", "eventos")}, ${plural(resumo.sessoes, "sessão", "sessões")}) e aprende essa curva sozinho.`
         : "Ingresso vende mais perto da data. Quando houver sessões dentro do período do histórico, o modelo aprende essa curva sozinho." } satisfies ControleDaTela;
+    }
+    if (g.grupo === "lugares") {
+      return { ...base, estado: varia ? "em_uso" : "sem_dados", faltam: null, acao: null, detalhe: varia
+        ? "Quantos lugares estão à venda nas próximas semanas. Evento maior vende mais e costuma receber mais anúncio: o modelo separa uma coisa da outra para não dar ao anúncio o mérito do tamanho do evento."
+        : "Quantos lugares estão à venda nas próximas semanas. Quando os eventos tiverem tamanhos diferentes, o modelo usa isso para não dar ao anúncio o mérito do tamanho do evento." } satisfies ControleDaTela;
     }
     if (g.grupo === "feriados") {
       return { ...base, estado: varia ? "em_uso" : "sem_dados", faltam: null, acao: "datas", detalhe: "Carnaval, Dia das Mães, Black Friday, Natal. Vem de um calendário nacional pronto." + (resumo.datasProprias > 0 ? ` Mais ${plural(resumo.datasProprias, "data sua", "datas suas")}.` : "") } satisfies ControleDaTela;

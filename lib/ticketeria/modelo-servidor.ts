@@ -77,11 +77,18 @@ async function controlesDaLoja(t: Cliente, lojaId: string, semanas: string[]): P
   const idsDosEventos = (eventos ?? []).map(e => e.id);
   const fuso = new Map((locais ?? []).map(l => [l.id, l.fuso]));
   const [{ data: sessoesBrutas }, { data: ingressos }, { count: cupons }] = idsDosEventos.length === 0 ? [{ data: [] }, { data: [] }, { count: 0 }] : await Promise.all([
-    t.from("ticketeria_sessoes").select("local_id, inicio, cancelada_em").in("evento_id", idsDosEventos),
+    t.from("ticketeria_sessoes").select("local_id, sala_id, inicio, cancelada_em").in("evento_id", idsDosEventos),
     t.from("ticketeria_ingressos").select("id").in("evento_id", idsDosEventos),
     t.from("ticketeria_cupons").select("id", { count: "exact", head: true }).in("evento_id", idsDosEventos),
   ]);
-  const sessoes = (sessoesBrutas ?? []).filter(s => !s.cancelada_em).map(s => diaNoFuso(s.inicio, fuso.get(s.local_id)));
+  const validas = (sessoesBrutas ?? []).filter(s => !s.cancelada_em);
+  const sessoes = validas.map(s => diaNoFuso(s.inicio, fuso.get(s.local_id)));
+  // A lotação de cada sessão (os lugares dos setores em uso da sala), para o controle do tamanho do que está à venda.
+  const idsDosLocais = [...new Set(validas.map(s => s.local_id))];
+  const { data: setores } = idsDosLocais.length > 0 ? await t.from("ticketeria_setores").select("sala_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false) : { data: [] };
+  const lugaresDaSala = new Map<string, number>();
+  for (const x of setores ?? []) lugaresDaSala.set(x.sala_id, (lugaresDaSala.get(x.sala_id) ?? 0) + x.lugares);
+  const lugaresDasSessoes = validas.map(s => ({ dia: diaNoFuso(s.inicio, fuso.get(s.local_id)), lugares: lugaresDaSala.get(s.sala_id) ?? 0 }));
   const idsDosIngressos = (ingressos ?? []).map(i => i.id);
   const lotes: { ordem: number; vendas_inicio: string | null }[] = [];
   for (let i = 0; i < idsDosIngressos.length; i += 150) {
@@ -100,7 +107,7 @@ async function controlesDaLoja(t: Cliente, lojaId: string, semanas: string[]): P
     }
   }
   const viradasDeLote = lotes.filter(l => l.ordem > 0 && l.vendas_inicio).map(l => diaNoFuso(l.vendas_inicio as string));
-  const controles = controlesDasSemanas({ semanas, sessoes, datasProprias: (datas ?? []).map(d => ({ dia: d.dia, nome: d.nome })), viradasDeLote, itens });
+  const controles = controlesDasSemanas({ semanas, sessoes, lugaresDasSessoes, datasProprias: (datas ?? []).map(d => ({ dia: d.dia, nome: d.nome })), viradasDeLote, itens });
   return { controles, resumo: { eventos: idsDosEventos.length, sessoes: sessoes.length, lotes: lotes.length, cupons: cupons ?? 0, datasProprias: (datas ?? []).length } };
 }
 
