@@ -23,7 +23,7 @@ def _adstock(x: np.ndarray, a: float) -> np.ndarray:
 VERDADE_DA_MARCA = {"meta-ads-marca": {"beta": 22.0, "adstock": 0.85, "escala": 900.0, "lam": 1.5}}
 
 
-def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False, com_controles: bool = False, variacao: float = 1.0, com_marca: bool = False, ferias: float | None = None, curva_da_proximidade: list[float] | None = None, lotacao: float | None = None) -> tuple[list[dict], dict[str, float]]:
+def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False, com_controles: bool = False, variacao: float = 1.0, com_marca: bool = False, ferias: float | None = None, curva_da_proximidade: list[float] | None = None, lotacao: float | None = None, boca_a_boca: float | None = None, publico: float = 4000.0, sem_canal: str | None = None) -> tuple[list[dict], dict[str, float]]:
     """Devolve a tabela semanal (no formato do Jards, centavos) e a parte verdadeira de cada canal nas vendas, em % (mais a base)."""
     rng = np.random.default_rng(semente)
     n = semanas
@@ -41,6 +41,9 @@ def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, g
     if com_marca:
         gastos["meta-ads-marca"] = gasto(90, 70, 26)  # a marca muda devagar (campanhas de meses)
     contribuicoes = {c: v["beta"] * (1 - np.exp(-v["lam"] * _adstock(gastos[c], v["adstock"]) / v["escala"])) for c, v in verdades.items()}
+    if sem_canal is not None:
+        # O contrafactual: o mesmo mundo (mesmo sorteio) sem o efeito deste canal, para medir o efeito TOTAL dele (com o boca a boca que ele puxa).
+        contribuicoes[sem_canal] = np.zeros(n)
     base = 40 + 0.05 * t + 6 * np.sin(t * 2 * np.pi / 52)
     # Os controles (só com `com_controles`): a proximidade da sessão (uma sessão a cada 13 semanas), as semanas de feriado, a virada de lote (junto da abertura de cada sessão), o cupom e as visitas sem anúncio.
     efeitos: dict[str, np.ndarray] = {}
@@ -70,6 +73,23 @@ def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, g
             controles["ferias"] = np.array([de_ferias(d) for d in dias])
             efeitos["ferias"] = ferias * controles["ferias"]
     y = base + sum(contribuicoes.values()) + sum(efeitos.values()) + rng.normal(0, 3, n)
+    if boca_a_boca is not None:
+        # O BOCA A BOCA (Bass, 1969; Jørgensen, Kort e Zaccour, 2006; só com `com_controles`): cada evento (bloco de 13 semanas, a sessão na última) vende também pelo que já
+        # vendeu: quem comprou conta para quem não sabe. Na semana, `boca_a_boca` × vendidos até a semana passada × (1 − parte do `publico` que já comprou). O controle "boca" é o
+        # que o Jards pode calcular: z(1 − z), com z = a parte dos lugares (aqui, o público) já vendida antes da semana.
+        sem_boca = y.copy()
+        boca = np.zeros(n)
+        z = np.zeros(n)
+        acumulado = 0.0
+        for i in range(n):
+            if i % 13 == 0:
+                acumulado = 0.0
+            z[i] = min(1.0, acumulado / publico)
+            boca[i] = boca_a_boca * acumulado * (1 - z[i])
+            acumulado += max(0.0, sem_boca[i] + boca[i])
+        y = sem_boca + boca
+        controles = {**controles, "boca": z * (1 - z)}
+        efeitos["boca"] = boca
     if lotacao is not None:
         # A LOTAÇÃO: a venda da semana não passa de `lotacao` ingressos (as sessões esgotam). O que a procura passaria disso some, e a semana fica marcada como esgotada
         # (`esgotou`, a mesma coluna que o Jards calcula). A verdade de cada canal continua a da procura (sem o teto): é o que o anúncio rende quando há lugar.
