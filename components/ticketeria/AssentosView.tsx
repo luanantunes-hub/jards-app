@@ -10,6 +10,7 @@ import { SELO_DO_TIPO, TIPO_CURTO, TIPO_EM_TEXTO, TIPOS_DE_LUGAR, conferirAcessi
 import { tiposDoMapa } from "@/lib/ticketeria/mapa";
 import { LegendaDeTiposDoMapa, MapaPorLayout, chaveDoLugar } from "@/components/ticketeria/MapaPorLayout";
 import type { Layout } from "@/lib/ticketeria/mapa-layout";
+import { comporSala, conferirPlanta, lerSalaDoMapa } from "@/lib/ticketeria/mapa-sala";
 import { EditorDoLayout, type HistoricoDoEditor } from "@/components/ticketeria/EditorDoLayout";
 import { comAngulo, comPalcoAcima, empurrarVizinhos, moverBloco } from "@/lib/ticketeria/mapa-layout-editor";
 import { ehLugarReservado } from "@/lib/ticketeria/mapa-reserva";
@@ -119,21 +120,25 @@ function temLugarReservado(fileiras: readonly FileiraDoMapa[]): boolean {
 }
 
 /** O estado de cada lugar (o que não é livre) pela chave que o desenho por layout usa. */
-function estadosDoMapa(fileiras: readonly FileiraDoMapa[]): Map<string, EstadoDoAssento> {
+function estadosDoMapa(fileiras: readonly FileiraDoMapa[], setor: string | null = null): Map<string, EstadoDoAssento> {
   const estados = new Map<string, EstadoDoAssento>();
-  for (const f of fileiras) for (const a of f.assentos) if (a.estado !== "livre") estados.set(chaveDoLugar(null, f.nome, a.numero), a.estado);
+  for (const f of fileiras) for (const a of f.assentos) if (a.estado !== "livre") estados.set(chaveDoLugar(setor, f.nome, a.numero), a.estado);
   return estados;
 }
 
 /** A tela de escolher os lugares de um ingresso no mapa do setor. `escolhidos` são os rótulos ("C7") na ordem em que a pessoa os tocou. */
-export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, escolhidos, max, totalCentavos, ampliado = false, carregando = false, erroDoMapa = null, onTentarDeNovo, layout, declarouAcessibilidade = false, onDeclarar, onAmpliar, onAlternar, onVoltar, onConfirmar }: {
+export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, escolhidos, max, totalCentavos, ampliado = false, carregando = false, erroDoMapa = null, onTentarDeNovo, layout, sala = null, declarouAcessibilidade = false, onDeclarar, onAmpliar, onAlternar, onVoltar, onConfirmar }: {
   site: Site; evento: EventoParaComprar; ingresso: { nome: string; preco_centavos: number }; setor: string; fileiras: FileiraDoMapa[]; escolhidos: string[]; max: number; totalCentavos: number; ampliado?: boolean; carregando?: boolean; erroDoMapa?: string | null; onTentarDeNovo?: () => void;
   /** O layout do setor (já conferido com `lerLayout`): com ele o mapa é o desenho dos blocos; sem ele, a lista de fileiras de sempre. */
   layout?: Layout | null;
+  /** O mapa da sala inteira (lido com `lerSalaDoMapa`): com ele, o comprador vê todos os setores da sala, cada um com a sua cor, e escolhe lugares no setor do ingresso; os outros só situam. */
+  sala?: ReturnType<typeof lerSalaDoMapa>;
   /** A pergunta de acessibilidade (art. 23-A): aparece quando o mapa tem lugares reservados; marcar libera os lugares reservados. */
   declarouAcessibilidade?: boolean; onDeclarar?: (v: boolean) => void;
   onAmpliar?: () => void; onAlternar?: (fileira: string, numero: number) => void; onVoltar?: () => void; onConfirmar?: () => void;
 }) {
+  // O mapa da sala só vale se a planta se desenha sem setor em cima de setor; senão, o mapa do setor, como sempre.
+  const daSala = sala && conferirPlanta(sala.planta, sala.setores).length === 0 ? { ...comporSala(sala.planta, sala.setores), atual: sala.atual, setores: sala.setores } : null;
   return (
     <Moldura titulo={site.titulo} cor={site.cor}
       rodape={
@@ -172,10 +177,23 @@ export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, e
           )}
           <div className="mt-4 flex justify-end"><button type="button" onClick={onAmpliar} aria-pressed={ampliado} className="rounded-xl text-[0.8125rem] text-black/60 underline underline-offset-2 hover:text-black/80">{ampliado ? "Ver o mapa inteiro" : "Ampliar o mapa"}</button></div>
           <div className="mt-2">
-            {layout
+            {daSala
+              ? <MapaPorLayout layout={daSala.layout} modo="comprador" ampliado={ampliado} cores={daSala.cores} contexto={new Set(daSala.setores.filter(x => x.id !== daSala.atual).map(x => x.id))} rotulos={new Map(daSala.setores.map(x => [x.id, x.nome]))}
+                  rotuloDoMapa="Mapa da sala" estados={estadosDoMapa(fileiras, daSala.atual)} tipos={tiposDoMapa(fileiras, (f, n) => chaveDoLugar(daSala.atual, f, n))} onAlternar={l => { if (l.setor === daSala.atual) onAlternar?.(l.fileira, l.numero); }} />
+              : layout
               ? <MapaPorLayout layout={layout} modo="comprador" ampliado={ampliado} estados={estadosDoMapa(fileiras)} tipos={tiposDoMapa(fileiras, (f, n) => chaveDoLugar(null, f, n))} onAlternar={l => onAlternar?.(l.fileira, l.numero)} />
               : <MapaDeAssentos fileiras={fileiras} modo="comprador" ampliado={ampliado} onAlternar={onAlternar} />}
           </div>
+          {daSala && (
+            <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5" aria-label="Setores da sala">
+              {daSala.setores.map(x => (
+                <li key={x.id} className="flex items-center gap-2 text-[0.75rem] text-black/60">
+                  <span aria-hidden="true" className="h-3.5 w-3.5 rounded-md border" style={{ borderColor: daSala.cores.get(x.id), background: `${daSala.cores.get(x.id)}${x.id === daSala.atual ? "14" : "38"}` }} />
+                  {x.nome}{x.id === daSala.atual ? " (o seu)" : ""}
+                </li>
+              ))}
+            </ul>
+          )}
           <LegendaDoMapa modo="comprador" tipos={tiposPresentes(tiposDoMapa(fileiras, (f, n) => `${f}|${n}`))} reservados={fileiras.some(f => f.assentos.some(a => a.estado === "reservado"))} />
         </>
       )}

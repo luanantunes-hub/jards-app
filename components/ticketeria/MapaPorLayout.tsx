@@ -28,7 +28,7 @@ export type DesenhoDoMapa = {
   onGirar?: (id: string, angulo: number, fim: boolean) => void;
 };
 
-export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotuloDoMapa = "Mapa de lugares", ampliado = false, desenho }: {
+export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotuloDoMapa = "Mapa de lugares", ampliado = false, desenho, cores, contexto, rotulos }: {
   layout: Layout;
   /** O estado de cada lugar, pela `chaveDoLugar`; o que não está aqui é livre. */
   estados?: ReadonlyMap<string, EstadoDoAssento>;
@@ -41,6 +41,12 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
   ampliado?: boolean;
   /** O modo desenho do editor: escolher e arrastar blocos (os lugares deixam de alternar). */
   desenho?: DesenhoDoMapa;
+  /** O mapa da sala: a cor de cada setor (pelo id que os blocos levam em `setor`). Sem ela, o desenho é o de sempre. */
+  cores?: ReadonlyMap<string, string>;
+  /** Setores só para situar a pessoa (o resto da sala): tingidos e sem resposta ao toque, nem para o leitor de tela. */
+  contexto?: ReadonlySet<string>;
+  /** O nome de cada setor, escrito em cima dele no desenho. */
+  rotulos?: ReadonlyMap<string, string>;
 }) {
   const { lugares, caixa } = calcularLayout(layout);
   // No modo desenho sobra espaço em volta, para o bloco poder ser arrastado para fora do que já está desenhado.
@@ -83,6 +89,18 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
     if (dele.length === 0) return null;
     const xs = dele.map(l => l.x), ys = dele.map(l => l.y);
     return { x: Math.min(...xs) - 0.8, y: Math.min(...ys) - 0.8, largura: Math.max(...xs) - Math.min(...xs) + 1.6, altura: Math.max(...ys) - Math.min(...ys) + 1.6, nome: `Bloco ${layout.blocos.findIndex(b => b.id === escolhido) + 1}` };
+  })();
+
+  const nomesNoDesenho = (() => {
+    if (!rotulos || rotulos.size === 0) return [];
+    const caixas = new Map<string, { x0: number; x1: number; y0: number }>();
+    for (const l of lugares) {
+      if (!l.setor || !rotulos.has(l.setor)) continue;
+      const c = caixas.get(l.setor);
+      if (!c) caixas.set(l.setor, { x0: l.x, x1: l.x, y0: l.y });
+      else { c.x0 = Math.min(c.x0, l.x); c.x1 = Math.max(c.x1, l.x); c.y0 = Math.min(c.y0, l.y); }
+    }
+    return [...caixas].map(([setor, c]) => ({ setor, nome: rotulos.get(setor) ?? "", x: (c.x0 + c.x1) / 2, y: c.y0 - 0.95 }));
   })();
 
   /** Prende o ponteiro ao desenho (o arraste continua mesmo fora dele); se o ponteiro já acabou, segue sem prender. */
@@ -194,14 +212,26 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
           </g>
         );
       })()}
+      {nomesNoDesenho.map(n => (
+        <text key={n.setor} x={n.x} y={n.y} textAnchor="middle" dominantBaseline="central" fontSize={0.7} fontWeight={600} letterSpacing={0.05} fill={cores?.get(n.setor) ?? "rgba(0,0,0,.55)"} opacity={contexto?.has(n.setor) ? 0.7 : 1} pointerEvents="none" aria-hidden="true">{n.nome}</text>
+      ))}
       {lugares.map(l => {
         const estado = estados?.get(chaveDoLugar(l.setor, l.fileira, l.numero)) ?? "livre";
         const tipo = tipos?.get(chaveDoLugar(l.setor, l.fileira, l.numero)) ?? "comum";
         const selo = tipo === "comum" ? null : SELO_DO_TIPO[tipo];
         const nome = `Fileira ${l.fileira}, lugar ${l.numero}${tipo === "comum" ? "" : `, ${TIPO_CURTO[tipo]}`}`;
+        const cor = l.setor ? cores?.get(l.setor) : undefined;
+        const soContexto = !!l.setor && !!contexto?.has(l.setor);
+        if (soContexto) {
+          return (
+            <g key={`${l.bloco}|${l.fileira}|${l.numero}`} data-bloco={desenho ? l.bloco : undefined} aria-hidden="true" pointerEvents={desenho ? undefined : "none"}>
+              <rect x={l.x - LADO / 2} y={l.y - LADO / 2} width={LADO} height={LADO} rx={0.2} fill={cor ? `${cor}38` : "rgba(0,0,0,.08)"} />
+            </g>
+          );
+        }
         const desligado = estado === "ocupado" || (modo === "comprador" && (estado === "bloqueado" || estado === "reservado"));
-        const preenchimento = estado === "selecionado" ? "#282525" : estado === "ocupado" ? "rgba(0,0,0,.09)" : estado === "bloqueado" ? "rgba(0,0,0,.05)" : estado === "reservado" ? "rgba(29,78,216,.07)" : "#fff";
-        const borda = estado === "selecionado" || estado === "ocupado" ? "none" : estado === "reservado" ? "rgba(29,78,216,.5)" : "rgba(0,0,0,.3)";
+        const preenchimento = estado === "selecionado" ? "#282525" : estado === "ocupado" ? "rgba(0,0,0,.09)" : estado === "bloqueado" ? "rgba(0,0,0,.05)" : estado === "reservado" ? "rgba(29,78,216,.07)" : cor ? `${cor}14` : "#fff";
+        const borda = estado === "selecionado" || estado === "ocupado" ? "none" : estado === "reservado" ? "rgba(29,78,216,.5)" : cor ?? "rgba(0,0,0,.3)";
         const texto = estado === "selecionado" ? "#fff" : estado === "ocupado" ? "rgba(0,0,0,.25)" : estado === "reservado" ? "rgba(29,78,216,.6)" : "#282525";
         const aoTocar = () => onAlternar?.({ setor: l.setor, fileira: l.fileira, numero: l.numero });
         const rotulo = `${nome}, ${estado === "selecionado" ? "escolhido" : estado === "ocupado" ? "ocupado" : estado === "bloqueado" ? "bloqueado" : estado === "reservado" ? "reservado" : "livre"}`;

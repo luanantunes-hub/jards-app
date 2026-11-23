@@ -10,6 +10,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { lerMapaDaSessao } from "@/lib/ticketeria/mapa";
+import { lerSalaDoMapa } from "@/lib/ticketeria/mapa-sala";
 import { marcarReservados } from "@/lib/ticketeria/mapa-reserva";
 import { lerLayout } from "@/lib/ticketeria/mapa-layout";
 
@@ -39,7 +40,9 @@ export async function GET(req: NextRequest) {
     const liberada = !!reserva && typeof reserva === "object" && !Array.isArray(reserva) && (reserva as { liberada?: unknown }).liberada === true;
     fileiras = marcarReservados(mapa.fileiras, { declarou: false, liberada });
   }
-  const { layout: bruto, ...resto } = { ...mapa, fileiras };
+  const { layout: bruto, sala: salaBruta, ...resto } = { ...mapa, fileiras };
   const layout = lerLayout(bruto);
-  return resposta(layout ? { ...resto, layout } : resto, 200);
+  // O mapa da sala só segue se se entende (planta e setores desenhados); o navegador o confere de novo antes de desenhar.
+  const sala = lerSalaDoMapa(salaBruta);
+  return resposta({ ...resto, ...(layout ? { layout } : {}), ...(sala ? { sala } : {}) }, 200);
 }

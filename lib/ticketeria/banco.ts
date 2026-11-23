@@ -387,6 +387,7 @@ export type BancoDaTicketeria = {
           arquivado: boolean;
           created_at: string;
           updated_at: string;
+          planta: Json | null;
         };
         Insert: {
           id?: string;
@@ -397,6 +398,7 @@ export type BancoDaTicketeria = {
           arquivado?: boolean;
           created_at?: string;
           updated_at?: string;
+          planta?: Json | null;
         };
         Update: {
           id?: string;
@@ -407,6 +409,7 @@ export type BancoDaTicketeria = {
           arquivado?: boolean;
           created_at?: string;
           updated_at?: string;
+          planta?: Json | null;
         };
         Relationships: [
           {

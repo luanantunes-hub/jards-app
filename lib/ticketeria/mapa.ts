@@ -151,11 +151,11 @@ export function mensagemDoErroDoMapa(erro: { code?: string; message?: string }):
 
 /** O mapa de um setor numerado numa sessão, como o comprador o vê: cada lugar livre ou ocupado (o bloqueado também aparece como ocupado). */
 /** `layout`: o layout do setor, como veio (confira com `lerLayout` de mapa-layout.ts antes de desenhar); ausente quando o setor é só a lista de fileiras. */
-export type MapaDaSessao = { setor: string; corredor: boolean; fileiras: FileiraDoMapa[]; layout?: unknown };
+export type MapaDaSessao = { setor: string; corredor: boolean; fileiras: FileiraDoMapa[]; layout?: unknown; /** O mapa da sala (a planta e os setores desenhados), quando a sala tem; quem usa lê com `lerSalaDoMapa`. */ sala?: unknown };
 
 /** A resposta de fn_ticketeria_mapa_da_sessao, conferida; null se veio algo que não se entende. */
 export function lerMapaDaSessao(resposta: unknown): MapaDaSessao | null {
-  const r = (resposta && typeof resposta === "object" ? resposta : {}) as { setor?: unknown; corredor?: unknown; fileiras?: unknown; layout?: unknown };
+  const r = (resposta && typeof resposta === "object" ? resposta : {}) as { setor?: unknown; corredor?: unknown; fileiras?: unknown; layout?: unknown; sala?: unknown };
   if (typeof r.setor !== "string" || !Array.isArray(r.fileiras)) return null;
   const fileiras: FileiraDoMapa[] = [];
   for (const bruta of r.fileiras) {
@@ -169,7 +169,7 @@ export function lerMapaDaSessao(resposta: unknown): MapaDaSessao | null {
     }
     fileiras.push({ nome: f.nome, assentos });
   }
-  return { setor: r.setor, corredor: r.corredor !== false, fileiras, ...(r.layout && typeof r.layout === "object" ? { layout: r.layout } : {}) };
+  return { setor: r.setor, corredor: r.corredor !== false, fileiras, ...(r.layout && typeof r.layout === "object" ? { layout: r.layout } : {}), ...(r.sala && typeof r.sala === "object" ? { sala: r.sala } : {}) };
 }
 
 /** "C7": o lugar como a pessoa o vê. */
