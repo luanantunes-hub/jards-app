@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Copy, Redo2, Undo2 } from "lucide-react";
-import { conferirLayout, type Layout, type Numeracao } from "@/lib/ticketeria/mapa-layout";
+import { CAMAROTE_MAX, COLUNAS_MAX, MESA_MAX, MESA_MIN, colunasDoCamarote, conferirLayout, rotuloDoGrupo, type Layout, type Numeracao } from "@/lib/ticketeria/mapa-layout";
 import {
   CAMPOS_DO_MODELO, ERRO_DO_LAYOUT_EM_TEXTO, MODELOS, MODELO_EM_TEXTO, PARAMETROS_PADRAO, comAngulo, comCorredorNoMeio, comNumeracao, comPalcoAcima, comPrimeiroNumero, comRaio,
-  centralizarBloco, deslocarBloco, duplicarBloco, empurrarVizinhos, layoutDoModelo, maisLugaresNoBloco, maisUmBloco, maisUmaFileira, menosUmaFileira, temCorredorNoMeio, tirarBloco, type ModeloId, type ParametrosDoModelo,
+  centralizarBloco, comColunasDoGrupo, comLugaresDoGrupo, comVendaInteira, deslocarBloco, duplicarBloco, maisUmCamarote, maisUmaMesa, empurrarVizinhos, layoutDoModelo, maisLugaresNoBloco, maisUmBloco, maisUmaFileira, menosUmaFileira, temCorredorNoMeio, tirarBloco, type ModeloId, type ParametrosDoModelo,
 } from "@/lib/ticketeria/mapa-layout-editor";
 
 // Os controles do desenho do mapa: o modelo para começar e, para o bloco escolhido, a numeração, a curva, o ângulo, o corredor, as fileiras e a posição.
@@ -138,15 +138,19 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
             <div role="radiogroup" aria-label="Bloco" className="flex flex-wrap items-center gap-1.5">
               {layout.blocos.map((b, i) => (
                 <button key={b.id} type="button" role="radio" aria-checked={b.id === blocoEscolhido} onClick={() => onEscolherBloco(b.id)}
-                  className={`h-8 rounded-xl border px-3 text-[0.75rem] transition ${FOCO} ${b.id === blocoEscolhido ? "border-[#6450D2] bg-[#6450D2]/[.06] text-[#282525]" : "border-black/[.12] bg-white text-black/60 hover:bg-black/[.04]"}`}>Bloco {i + 1}</button>
+                  className={`h-8 rounded-xl border px-3 text-[0.75rem] transition ${FOCO} ${b.id === blocoEscolhido ? "border-[#6450D2] bg-[#6450D2]/[.06] text-[#282525]" : "border-black/[.12] bg-white text-black/60 hover:bg-black/[.04]"}`}>{b.grupo ? rotuloDoGrupo(b.fileiras[0]?.nome ?? "", b.grupo.forma) : `Bloco ${i + 1}`}</button>
               ))}
             </div>
             <button type="button" className={BOTAO} onClick={() => { const novo = maisUmBloco(layout); onLayout(novo); onEscolherBloco(novo.blocos[novo.blocos.length - 1].id); }} disabled={layout.blocos.length >= 30}>+ Bloco</button>
+            <button type="button" className={BOTAO} onClick={() => { const novo = maisUmaMesa(layout); onLayout(novo); onEscolherBloco(novo.blocos[novo.blocos.length - 1].id); }} disabled={layout.blocos.length >= 30}>+ Mesa</button>
+            <button type="button" className={BOTAO} onClick={() => { const novo = maisUmCamarote(layout); onLayout(novo); onEscolherBloco(novo.blocos[novo.blocos.length - 1].id); }} disabled={layout.blocos.length >= 30}>+ Camarote</button>
           </div>
 
           {bloco ? (
             <div className="mt-3 space-y-3 rounded-xl border bg-white px-4 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[0.8125rem] font-medium text-[#282525]">Bloco {indice}</p>
+              <p className="text-[0.8125rem] font-medium text-[#282525]">{bloco.grupo ? rotuloDoGrupo(bloco.fileiras[0]?.nome ?? "", bloco.grupo.forma) : `Bloco ${indice}`}</p>
+              {!bloco.grupo ? (
+              <>
               <div>
                 <p className="mb-1.5 text-[0.8125rem] text-black/65">Numeração</p>
                 <div role="radiogroup" aria-label="Numeração do bloco" className="flex flex-wrap gap-1.5">
@@ -167,8 +171,27 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
                 rotuloMenos="Menos curva" rotuloMais="Mais curva"
                 onMenos={() => muda(l => comRaio(l, bloco.id, raio === null ? null : raio + PASSO_DO_RAIO > RAIO_MAXIMO ? null : raio + PASSO_DO_RAIO), true)}
                 onMais={() => muda(l => comRaio(l, bloco.id, raio === null ? RAIO_MAXIMO - PASSO_DO_RAIO : Math.max(RAIO_MINIMO, raio - PASSO_DO_RAIO)), true)} />
+              </>
+              ) : (
+              <>
+                <Passo rotulo="Lugares" valor={String(bloco.fileiras[0]?.lugares ?? 0)} menosDesligado={(bloco.fileiras[0]?.lugares ?? 0) <= (bloco.grupo?.forma === "mesa" ? MESA_MIN : 1)} maisDesligado={(bloco.fileiras[0]?.lugares ?? 0) >= (bloco.grupo?.forma === "mesa" ? MESA_MAX : CAMAROTE_MAX)}
+                  onMenos={() => muda(l => comLugaresDoGrupo(l, bloco.id, (bloco.fileiras[0]?.lugares ?? 0) - 1), true)} onMais={() => muda(l => comLugaresDoGrupo(l, bloco.id, (bloco.fileiras[0]?.lugares ?? 0) + 1), true)} />
+                {bloco.grupo?.forma === "camarote" && (
+                  <Passo rotulo="Lugares por fila" valor={String(colunasDoCamarote(bloco.fileiras[0]?.lugares ?? 1, bloco.grupo.colunas))} menosDesligado={colunasDoCamarote(bloco.fileiras[0]?.lugares ?? 1, bloco.grupo.colunas) <= 1} maisDesligado={colunasDoCamarote(bloco.fileiras[0]?.lugares ?? 1, bloco.grupo.colunas) >= Math.min(COLUNAS_MAX, bloco.fileiras[0]?.lugares ?? 1)}
+                    onMenos={() => muda(l => comColunasDoGrupo(l, bloco.id, colunasDoCamarote(bloco.fileiras[0]?.lugares ?? 1, bloco.grupo?.colunas) - 1), true)} onMais={() => muda(l => comColunasDoGrupo(l, bloco.id, colunasDoCamarote(bloco.fileiras[0]?.lugares ?? 1, bloco.grupo?.colunas) + 1), true)} />
+                )}
+                <div className="flex items-start justify-between gap-3">
+                  <span className="min-w-0"><span className="block text-[0.8125rem] text-black/65">Vende inteiro</span><span className="block text-[0.6875rem] leading-snug text-black/45">{bloco.grupo?.inteiro ? "Só se compra com todos os lugares, num pedido só." : "Dá para comprar só alguns lugares."}</span></span>
+                  <button type="button" role="switch" aria-checked={!!bloco.grupo?.inteiro} aria-label="Vende inteiro" onClick={() => muda(l => comVendaInteira(l, bloco.id, !bloco.grupo?.inteiro))}
+                    className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition ${FOCO} ${bloco.grupo?.inteiro ? "bg-[#6450D2]" : "bg-black/20"}`}>
+                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${bloco.grupo?.inteiro ? "left-[1.375rem]" : "left-0.5"}`} />
+                  </button>
+                </div>
+              </>
+              )}
               <Passo rotulo="Ângulo" valor={`${bloco.angulo}°`} menosDesligado={bloco.angulo <= -360} maisDesligado={bloco.angulo >= 360} rotuloMenos="Girar para a esquerda" rotuloMais="Girar para a direita"
                 onMenos={() => muda(l => comAngulo(l, bloco.id, bloco.angulo - 5), true)} onMais={() => muda(l => comAngulo(l, bloco.id, bloco.angulo + 5), true)} />
+              {!bloco.grupo && (
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[0.8125rem] text-black/65">Corredor no meio</span>
                 <button type="button" role="switch" aria-checked={temCorredorNoMeio(bloco)} aria-label="Corredor no meio do bloco" onClick={() => muda(l => comCorredorNoMeio(l, bloco.id, !temCorredorNoMeio(bloco)), true)}
@@ -176,6 +199,7 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
                   <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${temCorredorNoMeio(bloco) ? "left-[1.375rem]" : "left-0.5"}`} />
                 </button>
               </div>
+              )}
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[0.8125rem] text-black/65">Mover</span>
                 <div className="flex items-center gap-1.5">
@@ -191,7 +215,7 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
               </div>
               {layout.blocos.length > 1 && (
                 <div className="pt-1">
-                  <button type="button" className="text-[0.75rem] text-[#B23B3B] underline underline-offset-2 hover:text-[#8f2e2e]" onClick={() => { const novo = tirarBloco(layout, bloco.id); onLayout(novo); onEscolherBloco(novo.blocos[0]?.id ?? null); }}>Apagar o bloco {indice}</button>
+                  <button type="button" className="text-[0.75rem] text-[#B23B3B] underline underline-offset-2 hover:text-[#8f2e2e]" onClick={() => { const novo = tirarBloco(layout, bloco.id); onLayout(novo); onEscolherBloco(novo.blocos[0]?.id ?? null); }}>Apagar {bloco.grupo ? rotuloDoGrupo(bloco.fileiras[0]?.nome ?? "", bloco.grupo.forma).toLowerCase() : `o bloco ${indice}`}</button>
                 </div>
               )}
             </div>

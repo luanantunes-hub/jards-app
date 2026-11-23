@@ -127,8 +127,8 @@ function estadosDoMapa(fileiras: readonly FileiraDoMapa[], setor: string | null 
 }
 
 /** A tela de escolher os lugares de um ingresso no mapa do setor. `escolhidos` são os rótulos ("C7") na ordem em que a pessoa os tocou. */
-export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, escolhidos, max, totalCentavos, ampliado = false, carregando = false, erroDoMapa = null, onTentarDeNovo, layout, sala = null, declarouAcessibilidade = false, onDeclarar, onAmpliar, onAlternar, onVoltar, onConfirmar }: {
-  site: Site; evento: EventoParaComprar; ingresso: { nome: string; preco_centavos: number }; setor: string; fileiras: FileiraDoMapa[]; escolhidos: string[]; max: number; totalCentavos: number; ampliado?: boolean; carregando?: boolean; erroDoMapa?: string | null; onTentarDeNovo?: () => void;
+export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, escolhidos, max, totalCentavos, ampliado = false, carregando = false, erroDoMapa = null, avisoDoMapa = null, onTentarDeNovo, layout, sala = null, declarouAcessibilidade = false, onDeclarar, onAmpliar, onAlternar, onVoltar, onConfirmar }: {
+  site: Site; evento: EventoParaComprar; ingresso: { nome: string; preco_centavos: number }; setor: string; fileiras: FileiraDoMapa[]; escolhidos: string[]; max: number; totalCentavos: number; ampliado?: boolean; carregando?: boolean; erroDoMapa?: string | null; /** Um recado sobre a escolha (por exemplo, o grupo não cabe), logo abaixo do mapa. */ avisoDoMapa?: string | null; onTentarDeNovo?: () => void;
   /** O layout do setor (já conferido com `lerLayout`): com ele o mapa é o desenho dos blocos; sem ele, a lista de fileiras de sempre. */
   layout?: Layout | null;
   /** O mapa da sala inteira (lido com `lerSalaDoMapa`): com ele, o comprador vê todos os setores da sala, cada um com a sua cor, e escolhe lugares no setor do ingresso; os outros só situam. */
@@ -194,6 +194,7 @@ export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, e
               ))}
             </ul>
           )}
+          {avisoDoMapa && <p role="status" className="mt-3 text-center text-[0.8125rem] text-[#B45309]">{avisoDoMapa}</p>}
           <LegendaDoMapa modo="comprador" tipos={tiposPresentes(tiposDoMapa(fileiras, (f, n) => `${f}|${n}`))} reservados={fileiras.some(f => f.assentos.some(a => a.estado === "reservado"))} />
         </>
       )}

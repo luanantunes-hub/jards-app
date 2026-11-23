@@ -3,7 +3,7 @@
 
 import { MAX_FILEIRAS, MAX_LUGARES_NA_FILEIRA, proximoNomeDeFileira } from "@/lib/ticketeria/mapa";
 import {
-  MAX_BLOCOS, blocoNovo, calcularLayout, modeloArena, modeloContinental, modeloCorredorCentral, modeloLeque, modeloPlateiaEBalcao, modeloTresBlocos, palcoAcima, type Bloco, type ErroDoLayout, type Layout, type Numeracao,
+  CAMAROTE_MAX, COLUNAS_MAX, MAX_BLOCOS, MESA_MAX, MESA_MIN, blocoNovo, calcularLayout, raioDaMesa, type FormaDoGrupo, type Grupo, modeloArena, modeloContinental, modeloCorredorCentral, modeloLeque, modeloPlateiaEBalcao, modeloTresBlocos, palcoAcima, type Bloco, type ErroDoLayout, type Layout, type Numeracao,
 } from "@/lib/ticketeria/mapa-layout";
 
 // ─── Os modelos para começar ────────────────────────────────────────────────
@@ -275,6 +275,7 @@ function copiaDoBloco(layout: Layout, modelo: Bloco, x: number): Layout {
 export function duplicarBloco(layout: Layout, id: string): Layout {
   const modelo = layout.blocos.find(b => b.id === id);
   if (!modelo || layout.blocos.length >= MAX_BLOCOS) return layout;
+  if (modelo.grupo) return maisUmGrupo(layout, modelo.grupo.forma, modelo.fileiras[0].lugares, { colunas: modelo.grupo.colunas, inteiro: modelo.grupo.inteiro });
   const copia = copiaDoBloco(layout, modelo, modelo.x + larguraDoBloco(modelo));
   return empurrarVizinhos(copia, copia.blocos[copia.blocos.length - 1].id);
 }
@@ -286,6 +287,57 @@ export function centralizarBloco(layout: Layout, id: string): Layout {
   const dele = calcularLayout({ ...layout, blocos: [bloco], palco: null }).caixa;
   const dosOutros = calcularLayout({ ...layout, blocos: layout.blocos.filter(b => b.id !== id), palco: null }).caixa;
   return deslocarBloco(layout, id, (dosOutros.x0 + dosOutros.x1) / 2 - (dele.x0 + dele.x1) / 2, 0);
+}
+
+// ─── Mesas e camarotes ──────────────────────────────────────────────────────
+
+/** O primeiro nome livre de grupo: M1, M2... (mesa) ou C1, C2... (camarote), sem repetir nenhum nome de fileira do setor. */
+function proximoNomeDeGrupo(layout: Layout, forma: FormaDoGrupo): string {
+  const usados = new Set(layout.blocos.flatMap(b => b.fileiras.map(f => f.nome)));
+  const prefixo = forma === "mesa" ? "M" : "C";
+  for (let i = 1; ; i++) if (!usados.has(`${prefixo}${i}`)) return `${prefixo}${i}`;
+}
+
+export const LUGARES_DA_MESA_DE_PARTIDA = 4;
+export const LUGARES_DO_CAMAROTE_DE_PARTIDA = 6;
+
+/**
+ * Uma mesa ou um camarote novo, à direita de tudo o que já está desenhado (e empurrando o que estiver no caminho). A mesa nasce com 4 lugares e vende inteira só se `inteiro`; o camarote
+ * com 6 lugares em duas filas de 3 e, por padrão, vendendo inteiro.
+ */
+export function maisUmGrupo(layout: Layout, forma: FormaDoGrupo, lugares?: number, opcoes: { colunas?: number; inteiro?: boolean } = {}): Layout {
+  if (layout.blocos.length >= MAX_BLOCOS) return layout;
+  const n = Math.max(forma === "mesa" ? MESA_MIN : 1, Math.min(forma === "mesa" ? MESA_MAX : CAMAROTE_MAX, Math.round(lugares ?? (forma === "mesa" ? LUGARES_DA_MESA_DE_PARTIDA : LUGARES_DO_CAMAROTE_DE_PARTIDA))));
+  const grupo: Grupo = { forma, inteiro: opcoes.inteiro ?? forma === "camarote", ...(forma === "camarote" ? { colunas: Math.max(1, Math.min(n, COLUNAS_MAX, opcoes.colunas ?? Math.min(n, 3))) } : {}) };
+  const { caixa } = calcularLayout({ ...layout, palco: null });
+  const meia = forma === "mesa" ? raioDaMesa(n) : ((grupo.colunas ?? 3) * 1.25 + 0.5) / 2;
+  const novo = blocoNovo({ id: proximoId(layout), x: limita(Math.round((caixa.x1 + meia + 2) * 2) / 2, -500, 500), y: limita(Math.round(((caixa.y0 + caixa.y1) / 2) * 2) / 2, -500, 500), fileiras: [{ nome: proximoNomeDeGrupo(layout, forma), lugares: n }], grupo });
+  const comNovo = comPalcoAcima({ ...layout, blocos: [...layout.blocos, novo] });
+  return empurrarVizinhos(comNovo, novo.id);
+}
+
+const maisUmaMesa = (layout: Layout) => maisUmGrupo(layout, "mesa");
+const maisUmCamarote = (layout: Layout) => maisUmGrupo(layout, "camarote");
+export { maisUmaMesa, maisUmCamarote };
+
+/** Muda quantos lugares tem a mesa ou o camarote (mesa de 2 a 12, camarote de 1 a 24); as colunas do camarote nunca passam do número de lugares. */
+export function comLugaresDoGrupo(layout: Layout, id: string, lugares: number): Layout {
+  return trocaBloco(layout, id, b => {
+    if (!b.grupo || b.fileiras.length !== 1) return b;
+    const n = Math.max(b.grupo.forma === "mesa" ? MESA_MIN : 1, Math.min(b.grupo.forma === "mesa" ? MESA_MAX : CAMAROTE_MAX, Math.round(lugares)));
+    const colunas = b.grupo.colunas === undefined ? undefined : Math.max(1, Math.min(b.grupo.colunas, n));
+    return { ...b, fileiras: [{ ...b.fileiras[0], lugares: n }], grupo: { ...b.grupo, ...(colunas !== undefined ? { colunas } : {}) } };
+  });
+}
+
+/** Quantos lugares por fila tem o camarote (de 1 até o número de lugares, no máximo 12). */
+export function comColunasDoGrupo(layout: Layout, id: string, colunas: number): Layout {
+  return trocaBloco(layout, id, b => (b.grupo?.forma === "camarote" && b.fileiras.length === 1 ? { ...b, grupo: { ...b.grupo, colunas: Math.max(1, Math.min(b.fileiras[0].lugares, COLUNAS_MAX, Math.round(colunas))) } } : b));
+}
+
+/** O grupo só se vende completo (num pedido só)? */
+export function comVendaInteira(layout: Layout, id: string, inteiro: boolean): Layout {
+  return trocaBloco(layout, id, b => (b.grupo ? { ...b, grupo: { ...b.grupo, inteiro } } : b));
 }
 
 export function tirarBloco(layout: Layout, id: string): Layout {
@@ -310,4 +362,5 @@ export const ERRO_DO_LAYOUT_EM_TEXTO: Record<ErroDoLayout, string> = {
   setor_grande_demais: "O setor passa de 5.000 lugares.",
   numero_fora_do_limite: "Os números de um bloco passam de 999. Diminua os lugares ou o primeiro número.",
   blocos_sobrepostos: "Há blocos um em cima do outro. Afaste-os.",
+  grupo_invalido: `Uma mesa ou um camarote ficou fora do limite: a mesa tem de 2 a ${MESA_MAX} lugares e o camarote de 1 a ${CAMAROTE_MAX}.`,
 };

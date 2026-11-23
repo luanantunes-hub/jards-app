@@ -6,9 +6,9 @@ import { TelaAbrindoPagamento, TelaAviso, TelaDados, TelaEscolherIngressos, Tela
 import { TelaEscolherLugares } from "@/components/ticketeria/AssentosView";
 import { TelaListaDeEspera, TelaNaListaDeEspera } from "@/components/ticketeria/ListaDeEsperaView";
 import { lerCorpoDaEspera } from "@/lib/ticketeria/espera";
-import { lerLayout } from "@/lib/ticketeria/mapa-layout";
+import { gruposQueVendemInteiro, lerLayout } from "@/lib/ticketeria/mapa-layout";
 import { lerSalaDoMapa } from "@/lib/ticketeria/mapa-sala";
-import { alternarEscolha, comCorredor, comEscolhidos, lerMapaDaSessao, rotuloDoLugar, type LugarEscolhido, type MapaDaSessao } from "@/lib/ticketeria/mapa";
+import { alternarEscolha, alternarGrupo, comCorredor, comEscolhidos, lerMapaDaSessao, rotuloDoLugar, type LugarEscolhido, type MapaDaSessao } from "@/lib/ticketeria/mapa";
 import { mascararWhatsapp } from "@/lib/ticketeria/novidades";
 import { origemDaPagina } from "@/lib/ticketeria/origem";
 import { lerCorpoDaCompra } from "@/lib/ticketeria/pagamento/compra";
@@ -90,6 +90,7 @@ export function CompraDaSessao({ vitrine, cupomInicial = null }: { vitrine: Vitr
   const [mapaErro, setMapaErro] = useState<string | null>(null);
   const [carregandoMapa, setCarregandoMapa] = useState(false);
   const [escolhaAtual, setEscolhaAtual] = useState<LugarEscolhido[]>([]);
+  const [avisoDoGrupo, setAvisoDoGrupo] = useState<string | null>(null);
   const [mapaAmpliado, setMapaAmpliado] = useState(false);
   // A declaração de quem precisa de lugar de acessibilidade (art. 23-A): libera os lugares reservados do mapa e vai junto no pedido.
   const [acessibilidade, setAcessibilidade] = useState(false);
@@ -253,7 +254,17 @@ export function CompraDaSessao({ vitrine, cupomInicial = null }: { vitrine: Vitr
     return <TelaEscolherLugares site={site} evento={evento} ingresso={{ nome: ingressoDosLugares.nome, preco_centavos: ingressoDosLugares.faixas[0]?.preco_centavos ?? 0 }} setor={ingressoDosLugares.numerado?.setor ?? ""}
       fileiras={mapa ? comEscolhidos(comCorredor(mapa.fileiras, mapa.corredor), escolhaAtual) : []} layout={mapa ? lerLayout(mapa.layout) : null} sala={mapa ? lerSalaDoMapa(mapa.sala) : null} escolhidos={escolhaAtual.map(l => rotuloDoLugar(l.fileira, l.numero))} max={max} totalCentavos={totalNasFaixas(ingressoDosLugares.faixas, escolhaAtual.length) ?? 0}
       ampliado={mapaAmpliado} carregando={carregandoMapa} erroDoMapa={mapaErro} onTentarDeNovo={() => void carregarMapa(ingressoDosLugares.id, escolhaAtual)} declarouAcessibilidade={acessibilidade} onDeclarar={v => { setAcessibilidade(v); void carregarMapa(ingressoDosLugares.id, escolhaAtual, v); }} onAmpliar={() => setMapaAmpliado(v => !v)}
-      onAlternar={(fileira, numero) => setEscolhaAtual(atual => alternarEscolha(atual, fileira, numero, max))} onVoltar={() => setPasso("escolher")}
+      avisoDoMapa={avisoDoGrupo}
+      onAlternar={(fileira, numero) => {
+        // Mesa ou camarote que só vende inteiro: tocar num lugar escolhe (ou solta) o grupo todo.
+        const grupo = mapa ? gruposQueVendemInteiro(lerLayout(mapa.layout)).get(fileira) : undefined;
+        if (!grupo) { setAvisoDoGrupo(null); setEscolhaAtual(atual => alternarEscolha(atual, fileira, numero, max)); return; }
+        const livre = (f: string, n: number) => !!mapa?.fileiras.find(x => x.nome === f)?.assentos.find(a => a.numero === n && a.estado === "livre");
+        const novo = alternarGrupo(escolhaAtual, fileira, grupo, max, livre);
+        if (!novo) { setAvisoDoGrupo(`Este grupo só se compra inteiro, com ${grupo.length} lugares, e ${grupo.every(n => livre(fileira, n)) ? `você pode escolher mais ${Math.max(0, max - escolhaAtual.filter(e => e.fileira !== fileira).length)} agora` : "algum deles já não está livre"}.`); return; }
+        setAvisoDoGrupo(null);
+        setEscolhaAtual(novo);
+      }} onVoltar={() => setPasso("escolher")}
       onConfirmar={() => { setLugares(l => ({ ...l, [ingressoDosLugares.id]: escolhaAtual })); setQuantidades(q => ({ ...q, [ingressoDosLugares.id]: escolhaAtual.length })); setPasso("escolher"); }} />;
   }
   const ingressoDaEspera = ingressos.find(i => i.id === esperaIngresso);

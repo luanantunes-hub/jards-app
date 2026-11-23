@@ -2360,6 +2360,7 @@ export type BancoDaTicketeria = {
           bloqueado: boolean;
           created_at: string;
           tipo: string;
+          venda_em_grupo: boolean;
         };
         Insert: {
           id?: string;
@@ -2370,6 +2371,7 @@ export type BancoDaTicketeria = {
           bloqueado?: boolean;
           created_at?: string;
           tipo?: string;
+          venda_em_grupo?: boolean;
         };
         Update: {
           id?: string;
@@ -2380,6 +2382,7 @@ export type BancoDaTicketeria = {
           bloqueado?: boolean;
           created_at?: string;
           tipo?: string;
+          venda_em_grupo?: boolean;
         };
         Relationships: [
           {

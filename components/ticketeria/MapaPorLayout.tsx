@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { calcularLayout, type Layout } from "@/lib/ticketeria/mapa-layout";
+import { calcularLayout, rotuloDoGrupo, type Layout } from "@/lib/ticketeria/mapa-layout";
 import { anguloParaPonto, posicaoDaAlca } from "@/lib/ticketeria/mapa-layout-editor";
 import type { EstadoDoAssento } from "@/lib/ticketeria/mapa";
 import type { AreaNoDesenho } from "@/lib/ticketeria/mapa-sala";
@@ -60,7 +60,7 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
   /** As áreas em pé (pista): retângulos coloridos com nome e capacidade, entre os setores. Os setores de `contexto` ficam tingidos e sem resposta ao toque. */
   areas?: readonly AreaNoDesenho[];
 }) {
-  const { lugares, caixa } = calcularLayout(layout);
+  const { lugares, caixa, grupos } = calcularLayout(layout);
   // No modo desenho sobra espaço em volta, para o bloco poder ser arrastado para fora do que já está desenhado.
   const folga = desenho ? 4 : 0.8;
   const dosLugares: Quadro = { x0: caixa.x0 - folga, y0: caixa.y0 - folga, largura: caixa.x1 - caixa.x0 + 2 * folga, altura: caixa.y1 - caixa.y0 + 2 * folga };
@@ -80,6 +80,8 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
   // Zoom e deslocamento só no editor: o enquadramento `q` é o desenho inteiro, e o que se vê é uma janela menor, deslocada do centro (em passos).
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  // Quem navega pelo teclado precisa ver onde está: o anel do navegador, dentro de um SVG, sai em unidades do desenho (enorme), então cada lugar desenha o próprio foco.
+  const [focado, setFocado] = useState<string | null>(null);
   const arrasteDaArea = useRef<{ setor: string; px: number; py: number; x: number; y: number; escala: number } | null>(null);
   const arrasteDoFundo = useRef<{ px: number; py: number; x: number; y: number; escala: number } | null>(null);
   const panando = useRef<{ px: number; py: number; x: number; y: number; escala: number } | null>(null);
@@ -111,7 +113,7 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
     const dele = lugares.filter(l => l.bloco === escolhido);
     if (dele.length === 0) return null;
     const xs = dele.map(l => l.x), ys = dele.map(l => l.y);
-    return { x: Math.min(...xs) - 0.8, y: Math.min(...ys) - 0.8, largura: Math.max(...xs) - Math.min(...xs) + 1.6, altura: Math.max(...ys) - Math.min(...ys) + 1.6, nome: `Bloco ${layout.blocos.findIndex(b => b.id === escolhido) + 1}` };
+    return { x: Math.min(...xs) - 0.8, y: Math.min(...ys) - 0.8, largura: Math.max(...xs) - Math.min(...xs) + 1.6, altura: Math.max(...ys) - Math.min(...ys) + 1.6, nome: (() => { const b = layout.blocos.find(x => x.id === escolhido); return b?.grupo ? rotuloDoGrupo(b.fileiras[0]?.nome ?? "", b.grupo.forma) : `Bloco ${layout.blocos.findIndex(x => x.id === escolhido) + 1}`; })() };
   })();
 
   const nomesNoDesenho = (() => {
@@ -275,6 +277,23 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
           </g>
         );
       })}
+      {grupos.map(g => {
+        // Mesa (disco com as cadeiras em volta) ou camarote (caixa com os lugares dentro). No editor, tocar no corpo do grupo o escolhe e o arrasta; ao comprar, tocar num grupo que vende inteiro o escolhe todo.
+        const cor = g.setor ? cores?.get(g.setor) : undefined;
+        const soContexto = !!g.setor && !!contexto?.has(g.setor);
+        const traco = cor ?? "rgba(0,0,0,.2)";
+        const preenche = cor ? `${cor}${soContexto ? "26" : "10"}` : "rgba(0,0,0,.035)";
+        const primeiro = lugares.find(l => l.bloco === g.bloco);
+        const aoTocarNoGrupo = modo === "comprador" && !desenho && !soContexto && g.inteiro && primeiro ? () => onAlternar?.({ setor: primeiro.setor, fileira: primeiro.fileira, numero: primeiro.numero }) : undefined;
+        return (
+          <g key={`grupo-${g.bloco}`} data-bloco={desenho ? g.bloco : undefined} aria-hidden="true" onClick={aoTocarNoGrupo} pointerEvents={desenho || aoTocarNoGrupo ? undefined : "none"} style={{ cursor: desenho ? "grab" : aoTocarNoGrupo ? "pointer" : undefined }}>
+            {g.forma === "mesa"
+              ? <circle cx={g.x} cy={g.y} r={Math.max(0.5, g.raio - 0.75)} fill={preenche} stroke={traco} strokeWidth={0.07} />
+              : <rect x={g.x - g.largura / 2} y={g.y - g.altura / 2} width={g.largura} height={g.altura} rx={0.5} fill={preenche} stroke={traco} strokeWidth={0.07} strokeDasharray={g.inteiro ? undefined : "0.3 0.2"} transform={`rotate(${g.angulo} ${g.x} ${g.y})`} />}
+            <text x={g.x} y={g.forma === "mesa" ? g.y : g.y - g.altura / 2 - 0.45} textAnchor="middle" dominantBaseline="central" fontSize={0.5} fontWeight={600} fill={cor ?? "rgba(0,0,0,.55)"} pointerEvents="none"><title>{rotuloDoGrupo(g.nome, g.forma)}</title>{g.nome}</text>
+          </g>
+        );
+      })}
       {nomesNoDesenho.map(n => (
         <text key={n.setor} x={n.x} y={n.y} textAnchor="middle" dominantBaseline="central" fontSize={0.7} fontWeight={600} letterSpacing={0.05} fill={cores?.get(n.setor) ?? "rgba(0,0,0,.55)"} opacity={contexto?.has(n.setor) ? 0.7 : 1} pointerEvents="none" aria-hidden="true">{n.nome}</text>
       ))}
@@ -309,8 +328,10 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
             aria-disabled={desenho ? undefined : desligado || undefined}
             onClick={desenho || desligado ? undefined : aoTocar}
             onKeyDown={desenho || desligado ? undefined : e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); aoTocar(); } }}
-            style={{ cursor: desenho ? "grab" : desligado ? "not-allowed" : "pointer" }}
+            onFocus={e => { if (e.currentTarget.matches(":focus-visible")) setFocado(`${l.bloco}|${l.fileira}|${l.numero}`); }} onBlur={() => setFocado(null)}
+            style={{ cursor: desenho ? "grab" : desligado ? "not-allowed" : "pointer", outline: "none" }}
           >
+            {focado === `${l.bloco}|${l.fileira}|${l.numero}` && <rect x={l.x - LADO / 2 - 0.12} y={l.y - LADO / 2 - 0.12} width={LADO + 0.24} height={LADO + 0.24} rx={0.3} fill="none" stroke="#6450D2" strokeWidth={0.14} pointerEvents="none" />}
             <rect x={l.x - LADO / 2} y={l.y - LADO / 2} width={LADO} height={LADO} rx={0.2} fill={preenchimento} stroke={borda} strokeWidth={0.05} strokeDasharray={estado === "bloqueado" || estado === "reservado" ? "0.18 0.12" : undefined} />
             {comNumero && <text x={l.x} y={l.y} textAnchor="middle" dominantBaseline="central" fontSize={0.4} fill={texto} pointerEvents="none">{l.numero}</text>}
             {selo && (

@@ -173,13 +173,26 @@ export function lerMapaDaSessao(resposta: unknown): MapaDaSessao | null {
 }
 
 /** "C7": o lugar como a pessoa o vê. */
-export const rotuloDoLugar = (fileira: string, numero: number) => `${fileira}${numero}`;
+export const rotuloDoLugar = (fileira: string, numero: number) => (/\d$/.test(fileira) ? `${fileira}-${numero}` : `${fileira}${numero}`);
 
 export type LugarEscolhido = { fileira: string; numero: number };
 
 /** Marca no mapa os lugares escolhidos (só os que ainda estão livres). */
 export function comEscolhidos(fileiras: readonly FileiraDoMapa[], escolhidos: readonly LugarEscolhido[]): FileiraDoMapa[] {
   return fileiras.map(f => ({ ...f, assentos: f.assentos.map(a => a.estado === "livre" && escolhidos.some(e => e.fileira === f.nome && e.numero === a.numero) ? { ...a, estado: "selecionado" as const } : a) }));
+}
+
+/**
+ * Escolhe ou solta o grupo inteiro (mesa ou camarote que só se vende completo): se todos os lugares dele já estão escolhidos, solta todos; senão escolhe todos, desde que caibam no que
+ * ainda se pode escolher (`max`) e que nenhum deles esteja tomado (`livres`). Devolve `null` se o grupo não cabe ou não está livre, para quem chama avisar a pessoa.
+ */
+export function alternarGrupo(escolhidos: readonly LugarEscolhido[], fileira: string, numeros: readonly number[], max: number, livres: (fileira: string, numero: number) => boolean): LugarEscolhido[] | null {
+  const jaEscolhidos = escolhidos.filter(e => e.fileira === fileira);
+  if (jaEscolhidos.length === numeros.length && numeros.every(n => jaEscolhidos.some(e => e.numero === n))) return escolhidos.filter(e => e.fileira !== fileira);
+  if (!numeros.every(n => livres(fileira, n))) return null;
+  const restantes = escolhidos.filter(e => e.fileira !== fileira);
+  if (restantes.length + numeros.length > max) return null;
+  return [...restantes, ...numeros.map(numero => ({ fileira, numero }))];
 }
 
 /** Escolhe ou solta um lugar, no máximo `max` (ao passar disso o lugar novo não entra). Mantém a ordem em que a pessoa tocou. */

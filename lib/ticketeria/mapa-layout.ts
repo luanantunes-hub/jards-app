@@ -24,6 +24,24 @@ export type FileiraDoBloco = {
   corredores?: number[];
 };
 
+/**
+ * Mesa ou camarote: um bloco de UMA fileira só (o nome dela é o do grupo, "M4", "C2") cujos lugares ficam em círculo (mesa) ou numa caixa (camarote). `inteiro`: o grupo só se vende completo,
+ * num pedido só. Os lugares seguem com a identidade de sempre (setor, fileira, número): o grupo é uma fileira com forma.
+ */
+export type FormaDoGrupo = "mesa" | "camarote";
+export type Grupo = { forma: FormaDoGrupo; inteiro: boolean; /** Camarote: quantos lugares por fila. */ colunas?: number };
+export const MESA_MIN = 2;
+export const MESA_MAX = 12;
+export const CAMAROTE_MAX = 24;
+export const COLUNAS_MAX = 12;
+export const FORMA_DO_GRUPO_EM_TEXTO: Record<FormaDoGrupo, string> = { mesa: "Mesa", camarote: "Camarote" };
+
+/** O nome de um grupo como a pessoa o lê: "M4" vira "Mesa 4", "C2" vira "Camarote 2"; outro nome fica como está. */
+export function rotuloDoGrupo(nome: string, forma: FormaDoGrupo): string {
+  const numero = /^[MC](\d+)$/.exec(nome)?.[1];
+  return numero ? `${FORMA_DO_GRUPO_EM_TEXTO[forma]} ${numero}` : nome;
+}
+
 export type Bloco = {
   id: string;
   /** O setor a que o bloco pertence (a unidade de preço e de ingresso); null enquanto o layout é de um setor só. */
@@ -42,6 +60,8 @@ export type Bloco = {
   /** Corredores de todas as fileiras do bloco que não dizem outra coisa. */
   corredores?: number[];
   fileiras: FileiraDoBloco[];
+  /** Mesa ou camarote (ver `Grupo`); sem isto, o bloco é de fileiras, como sempre. */
+  grupo?: Grupo | null;
 };
 
 /** `centralizado`: o palco fica no meio dos blocos (arena), em vez de em cima deles; o editor o mantém no centro quando o desenho muda. */
@@ -82,7 +102,7 @@ export function numerosDaFileira(n: number, numeracao: Numeracao, primeiro = 1):
 
 export type ErroDoLayout =
   | "sem_blocos" | "blocos_demais" | "fileiras_demais" | "fileira_vazia" | "lugares_demais" | "nome_invalido" | "corredor_invalido"
-  | "raio_pequeno" | "numero_invalido" | "lugar_repetido" | "setor_grande_demais" | "numero_fora_do_limite" | "blocos_sobrepostos";
+  | "raio_pequeno" | "numero_invalido" | "lugar_repetido" | "setor_grande_demais" | "numero_fora_do_limite" | "blocos_sobrepostos" | "grupo_invalido";
 
 const NOME_DE_FILEIRA = /^[A-Z0-9]{1,4}$/;
 
@@ -100,6 +120,13 @@ export function conferirLayout(layout: Layout): ErroDoLayout[] {
   const usados = new Set<string>();
   const porSetor = new Map<string, number>();
   for (const b of layout.blocos) {
+    if (b.grupo) {
+      const f = b.fileiras[0];
+      const max = b.grupo.forma === "mesa" ? MESA_MAX : CAMAROTE_MAX;
+      const min = b.grupo.forma === "mesa" ? MESA_MIN : 1;
+      const colunasOk = b.grupo.forma !== "camarote" || b.grupo.colunas === undefined || (Number.isInteger(b.grupo.colunas) && b.grupo.colunas >= 1 && b.grupo.colunas <= COLUNAS_MAX);
+      if ((b.grupo.forma !== "mesa" && b.grupo.forma !== "camarote") || typeof b.grupo.inteiro !== "boolean" || b.fileiras.length !== 1 || !f || !Number.isInteger(f.lugares) || f.lugares < min || f.lugares > max || !colunasOk || (f.corredores ?? []).length > 0 || (b.corredores ?? []).length > 0 || b.raio !== null) erros.add("grupo_invalido");
+    }
     if (b.fileiras.length === 0) erros.add("fileira_vazia");
     if (b.fileiras.length > MAX_FILEIRAS) erros.add("fileiras_demais");
     if (!Number.isInteger(b.primeiroNumero) || b.primeiroNumero < 1) erros.add("numero_invalido");
@@ -162,7 +189,16 @@ export function lugaresSeSobrepoem(lugares: readonly { x: number; y: number }[])
 
 export type LugarPosicionado = { bloco: string; setor: string | null; fileira: string; numero: number; indice: number; x: number; y: number };
 export type Caixa = { x0: number; y0: number; x1: number; y1: number };
-export type LayoutCalculado = { lugares: LugarPosicionado[]; caixa: Caixa };
+/** Um grupo (mesa ou camarote) já posicionado: o centro, o tamanho da mesa (`raio`) ou da caixa do camarote, e a inclinação. */
+export type GrupoCalculado = { bloco: string; setor: string | null; nome: string; forma: FormaDoGrupo; inteiro: boolean; x: number; y: number; raio: number; largura: number; altura: number; angulo: number; lugares: number };
+export type LayoutCalculado = { lugares: LugarPosicionado[]; caixa: Caixa; grupos: GrupoCalculado[] };
+
+/** O espaço, em lugares, entre dois lugares vizinhos de um camarote. */
+export const ESPACO_NO_CAMAROTE = 1.25;
+/** Quantas fileiras (filas) um camarote de `n` lugares com `colunas` por fila tem. */
+export const colunasDoCamarote = (n: number, colunas: number | undefined) => Math.max(1, Math.min(n, colunas ?? Math.min(n, 3)));
+/** O raio do círculo de cadeiras de uma mesa de `n` lugares (cadeiras a pelo menos 1,05 de distância uma da outra). */
+export const raioDaMesa = (n: number) => Math.max(1.5, (n * 1.05) / (2 * Math.PI));
 
 /** Arredonda para 1/10.000 de lugar: o desenho não muda e as contas dos testes ficam estáveis. */
 const arredonda = (v: number) => Math.round(v * 10000) / 10000;
@@ -185,9 +221,36 @@ function posicoesDaFileira(n: number, corredores: readonly number[], larguraCorr
 /** A posição de todos os lugares do layout (confira com `conferirLayout` antes: um layout com erro pode dar posição sem sentido). */
 export function calcularLayout(layout: Layout): LayoutCalculado {
   const lugares: LugarPosicionado[] = [];
+  const grupos: GrupoCalculado[] = [];
   for (const b of layout.blocos) {
     const a = (b.angulo * Math.PI) / 180;
     const cos = Math.cos(a), sen = Math.sin(a);
+    if (b.grupo && b.fileiras.length === 1) {
+      // Mesa ou camarote: os lugares em círculo ou numa caixa, em volta do centro do bloco; os números vão de 1 a n (a partir do primeiro número) na ordem do desenho.
+      const f = b.fileiras[0];
+      const n = f.lugares;
+      const pontos: { x: number; y: number }[] = [];
+      let raio = 0, largura = 0, altura = 0;
+      if (b.grupo.forma === "mesa") {
+        raio = raioDaMesa(n);
+        for (let i = 0; i < n; i++) pontos.push({ x: raio * Math.cos(-Math.PI / 2 + (2 * Math.PI * i) / n), y: raio * Math.sin(-Math.PI / 2 + (2 * Math.PI * i) / n) });
+      } else {
+        const colunas = colunasDoCamarote(n, b.grupo.colunas);
+        const filas = Math.ceil(n / colunas);
+        for (let i = 0; i < n; i++) {
+          const fila = Math.floor(i / colunas);
+          const naFila = fila === filas - 1 ? n - fila * colunas : colunas;
+          pontos.push({ x: ((i - fila * colunas) - (naFila - 1) / 2) * ESPACO_NO_CAMAROTE, y: (fila - (filas - 1) / 2) * ESPACO_NO_CAMAROTE });
+        }
+        largura = colunas * ESPACO_NO_CAMAROTE + 0.5;
+        altura = filas * ESPACO_NO_CAMAROTE + 0.5;
+      }
+      pontos.forEach((p, i) => {
+        lugares.push({ bloco: b.id, setor: b.setor, fileira: f.nome, numero: b.primeiroNumero + i, indice: i, x: arredonda(b.x + p.x * cos - p.y * sen), y: arredonda(b.y + p.x * sen + p.y * cos) });
+      });
+      grupos.push({ bloco: b.id, setor: b.setor, nome: f.nome, forma: b.grupo.forma, inteiro: b.grupo.inteiro, x: b.x, y: b.y, raio, largura, altura, angulo: b.angulo, lugares: n });
+      continue;
+    }
     b.fileiras.forEach((f, k) => {
       const pontos = posicoesDaFileira(f.lugares, f.corredores ?? b.corredores ?? [], b.larguraCorredor, b.raio, k * b.espacoFileira);
       const numeros = numerosDaFileira(f.lugares, b.numeracao, b.primeiroNumero);
@@ -205,7 +268,19 @@ export function calcularLayout(layout: Layout): LayoutCalculado {
     : { x0: 0, y0: 0, x1: 0, y1: 0 };
   const p = layout.palco;
   if (p) caixa = { x0: Math.min(caixa.x0, p.x - p.largura / 2), y0: Math.min(caixa.y0, p.y - p.altura / 2), x1: Math.max(caixa.x1, p.x + p.largura / 2), y1: Math.max(caixa.y1, p.y + p.altura / 2) };
-  return { lugares, caixa };
+  return { lugares, caixa, grupos };
+}
+
+/**
+ * Os grupos (mesas e camarotes) do desenho que só se vendem inteiros: o nome do grupo (a fileira) e os números dos lugares dele. Quem recebe nada ou um layout sem grupos recebe um mapa vazio.
+ */
+export function gruposQueVendemInteiro(layout: Layout | null): Map<string, number[]> {
+  const grupos = new Map<string, number[]>();
+  if (!layout) return grupos;
+  const inteiros = new Set(layout.blocos.filter(b => b.grupo?.inteiro).map(b => b.id));
+  if (inteiros.size === 0) return grupos;
+  for (const l of calcularLayout(layout).lugares) if (inteiros.has(l.bloco)) grupos.set(l.fileira, [...(grupos.get(l.fileira) ?? []), l.numero]);
+  return grupos;
 }
 
 // ─── O mapa de hoje vira um layout ─────────────────────────────────────────
@@ -337,6 +412,13 @@ export function lerLayout(resposta: unknown): Layout | null {
     if (!NUMERACOES.includes(b.numeracao as Numeracao) || !inteiro(b.primeiroNumero, 1, 999)) return null;
     const corredores = listaDeInteiros(b.corredores);
     if (corredores === "erro" || !Array.isArray(b.fileiras) || b.fileiras.length < 1 || b.fileiras.length > MAX_FILEIRAS) return null;
+    let grupo: Grupo | undefined;
+    if (b.grupo !== undefined && b.grupo !== null) {
+      const g = objeto(b.grupo);
+      if (!g || (g.forma !== "mesa" && g.forma !== "camarote") || typeof g.inteiro !== "boolean") return null;
+      if (g.colunas !== undefined && (g.forma !== "camarote" || !inteiro(g.colunas, 1, COLUNAS_MAX))) return null;
+      grupo = { forma: g.forma, inteiro: g.inteiro, ...(g.colunas !== undefined ? { colunas: g.colunas as number } : {}) };
+    }
     const fileiras: FileiraDoBloco[] = [];
     for (const fb of b.fileiras) {
       const f = objeto(fb);
@@ -347,7 +429,7 @@ export function lerLayout(resposta: unknown): Layout | null {
     }
     blocos.push({
       id: b.id, setor: null, x: b.x, y: b.y, angulo: b.angulo, raio: typeof b.raio === "number" ? b.raio : null, espacoFileira: b.espacoFileira, larguraCorredor: b.larguraCorredor,
-      numeracao: b.numeracao as Numeracao, primeiroNumero: b.primeiroNumero, ...(corredores ? { corredores } : {}), fileiras,
+      numeracao: b.numeracao as Numeracao, primeiroNumero: b.primeiroNumero, ...(corredores ? { corredores } : {}), fileiras, ...(grupo ? { grupo } : {}),
     });
   }
   let palco: Palco | null = null;

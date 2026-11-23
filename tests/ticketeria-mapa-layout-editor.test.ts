@@ -140,7 +140,7 @@ test("o palco vai para cima dos blocos quando o desenho muda", () => {
 });
 
 test("todo erro do layout tem uma frase", () => {
-  const codigos: ErroDoLayout[] = ["sem_blocos", "blocos_demais", "fileiras_demais", "fileira_vazia", "lugares_demais", "nome_invalido", "corredor_invalido", "raio_pequeno", "numero_invalido", "lugar_repetido", "setor_grande_demais", "numero_fora_do_limite", "blocos_sobrepostos"];
+  const codigos: ErroDoLayout[] = ["sem_blocos", "blocos_demais", "fileiras_demais", "fileira_vazia", "lugares_demais", "nome_invalido", "corredor_invalido", "raio_pequeno", "numero_invalido", "lugar_repetido", "setor_grande_demais", "numero_fora_do_limite", "blocos_sobrepostos", "grupo_invalido"];
   for (const c of codigos) assert.ok(ERRO_DO_LAYOUT_EM_TEXTO[c].length > 10, c);
   assert.equal(Object.keys(ERRO_DO_LAYOUT_EM_TEXTO).length, codigos.length);
 });
