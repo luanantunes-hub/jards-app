@@ -2263,6 +2263,7 @@ export type BancoDaTicketeria = {
           numero: number;
           bloqueado: boolean;
           created_at: string;
+          tipo: string;
         };
         Insert: {
           id?: string;
@@ -2272,6 +2273,7 @@ export type BancoDaTicketeria = {
           numero: number;
           bloqueado?: boolean;
           created_at?: string;
+          tipo?: string;
         };
         Update: {
           id?: string;
@@ -2281,6 +2283,7 @@ export type BancoDaTicketeria = {
           numero?: number;
           bloqueado?: boolean;
           created_at?: string;
+          tipo?: string;
         };
         Relationships: [
           {

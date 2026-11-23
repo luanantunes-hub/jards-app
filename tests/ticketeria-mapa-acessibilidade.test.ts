@@ -4,6 +4,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { LegendaDeTiposDoMapa, MapaPorLayout, chaveDoLugar } from "../components/ticketeria/MapaPorLayout";
 import { modeloCorredorCentral } from "../lib/ticketeria/mapa-layout";
+import { comTipoNoLugar, lerMapa, lerMapaDaSessao, mapaNovo, paraSalvar, tiposDoMapa } from "../lib/ticketeria/mapa";
 import {
   TIPOS_DE_LUGAR, TIPO_EM_TEXTO, comTipo, conferirAcessibilidade, contagemVazia, contarTipos, ehTipoDeLugar, frasesDaAcessibilidade, referenciaDeAcessibilidade, tiposPresentes,
   type TipoDeLugar,
@@ -103,4 +104,42 @@ test("o desenho: o lugar de acessibilidade leva selo com letra e é dito em pala
   assert.ok(legenda.includes("Espaço para cadeira de rodas") && legenda.includes("Assento para deficiência ou mobilidade reduzida"));
   assert.equal(legenda.includes("pessoa obesa"), false);
   assert.equal(renderToStaticMarkup(createElement(LegendaDeTiposDoMapa, { tipos: [] })), "");
+});
+
+test("o mapa do banco traz o tipo só quando não é comum; tipo que não existe é ignorado", () => {
+  const mapa = lerMapa([{ nome: "A", assentos: [
+    { numero: 1, bloqueado: false, tipo: "cadeira_rodas" }, { numero: 2, bloqueado: true, tipo: "obeso" }, { numero: 3, bloqueado: false }, { numero: 4, bloqueado: false, tipo: "comum" }, { numero: 5, bloqueado: false, tipo: "vip" },
+  ] }]);
+  assert.deepEqual(mapa[0].assentos, [
+    { numero: 1, estado: "livre", tipo: "cadeira_rodas" }, { numero: 2, estado: "bloqueado", tipo: "obeso" }, { numero: 3, estado: "livre" }, { numero: 4, estado: "livre" }, { numero: 5, estado: "livre" },
+  ], "comum e o que não é tipo ficam sem a chave: o formato de antes");
+  const sessao = lerMapaDaSessao({ setor: "Plateia", corredor: true, fileiras: [{ nome: "A", assentos: [{ numero: 1, estado: "livre", tipo: "mobilidade_reduzida" }, { numero: 2, estado: "ocupado" }] }] });
+  assert.deepEqual(sessao?.fileiras[0].assentos, [{ numero: 1, estado: "livre", tipo: "mobilidade_reduzida" }, { numero: 2, estado: "ocupado" }]);
+});
+
+test("salvar: o tipo só vai quando o lugar tem tipo (inclusive 'comum', para desfazer); quem nunca mexeu não manda e não apaga nada", () => {
+  const novo = mapaNovo(1, 3);
+  assert.deepEqual(paraSalvar(novo)[0].assentos, [{ numero: 1, bloqueado: false }, { numero: 2, bloqueado: false }, { numero: 3, bloqueado: false }]);
+  const marcado = comTipoNoLugar(comTipoNoLugar(novo, "A", 1, "cadeira_rodas"), "A", 3, "comum");
+  assert.deepEqual(paraSalvar(marcado)[0].assentos, [{ numero: 1, bloqueado: false, tipo: "cadeira_rodas" }, { numero: 2, bloqueado: false }, { numero: 3, bloqueado: false, tipo: "comum" }]);
+  assert.equal(novo[0].assentos[0].tipo, undefined, "o mapa de antes não muda");
+});
+
+test("trocar o tipo: lugar vendido e lugar que não existe não mudam", () => {
+  const mapa = mapaNovo(1, 3).map(f => ({ ...f, assentos: f.assentos.map(a => (a.numero === 2 ? { ...a, estado: "ocupado" as const } : a)) }));
+  assert.deepEqual(comTipoNoLugar(mapa, "A", 2, "obeso"), mapa);
+  assert.deepEqual(comTipoNoLugar(mapa, "Z", 1, "obeso"), mapa);
+  assert.equal(comTipoNoLugar(mapa, "A", 1, "obeso")[0].assentos[0].tipo, "obeso");
+});
+
+test("os tipos do mapa viram o mapa de tipos do desenho, e a contagem confere com a referência", () => {
+  let mapa = mapaNovo(2, 5);
+  mapa = comTipoNoLugar(comTipoNoLugar(comTipoNoLugar(mapa, "A", 1, "cadeira_rodas"), "A", 2, "mobilidade_reduzida"), "B", 5, "comum");
+  const tipos = tiposDoMapa(mapa, (f, n) => chaveDoLugar(null, f, n));
+  assert.deepEqual([...tipos.entries()], [["|A|1", "cadeira_rodas"], ["|A|2", "mobilidade_reduzida"]], "comum não entra");
+  const todos = mapa.flatMap(f => f.assentos.map(a => chaveDoLugar(null, f.nome, a.numero)));
+  const contagem = contarTipos(todos, tipos);
+  assert.deepEqual(contagem, { comum: 8, cadeira_rodas: 1, acompanhante: 0, mobilidade_reduzida: 1, obeso: 0 });
+  // 10 lugares: a referência é 1 de cada, e 1 assento para pessoa obesa.
+  assert.deepEqual(conferirAcessibilidade(contagem).map(s => [s.item, s.ok]), [["cadeira_rodas", true], ["mobilidade_reduzida", true], ["obesos", false]]);
 });

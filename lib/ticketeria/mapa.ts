@@ -2,8 +2,11 @@
 // formato do banco (fn_ticketeria_salvar_mapa e fn_ticketeria_mapa_do_setor) e as frases dos erros. Só lógica: sem banco, sem tela e sem import de servidor.
 // As regras de formato são as mesmas do banco: fileira de 1 a 4 letras ou números, até 60 fileiras e 80 lugares por fileira (o banco ainda guarda um teto de 5.000 no setor).
 
+import { ehTipoDeLugar, type TipoDeLugar } from "@/lib/ticketeria/mapa-acessibilidade";
+
 export type EstadoDoAssento = "livre" | "ocupado" | "selecionado" | "bloqueado";
-export type AssentoDoMapa = { numero: number; estado: EstadoDoAssento };
+/** `tipo`: o tipo do lugar (cadeira de rodas, mobilidade reduzida...). Ausente = comum: o banco só traz quando não é comum, e quem não o manda ao salvar não apaga o que está gravado. */
+export type AssentoDoMapa = { numero: number; estado: EstadoDoAssento; tipo?: TipoDeLugar };
 /** `vaos`: depois de quais lugares (pelo número) há um corredor. */
 export type FileiraDoMapa = { nome: string; assentos: AssentoDoMapa[]; vaos?: number[] };
 
@@ -90,9 +93,21 @@ export function comCorredor(mapa: readonly FileiraDoMapa[], ligado: boolean): Fi
   return mapa.map(f => ({ ...f, vaos: ligado && f.assentos.length >= 6 ? [f.assentos[Math.floor(f.assentos.length / 2) - 1].numero] : undefined }));
 }
 
-/** O que a função do banco recebe: fileiras e lugares com o bloqueio de cada um. */
-export function paraSalvar(mapa: readonly FileiraDoMapa[]): { nome: string; assentos: { numero: number; bloqueado: boolean }[] }[] {
-  return mapa.map(f => ({ nome: f.nome, assentos: f.assentos.map(a => ({ numero: a.numero, bloqueado: a.estado === "bloqueado" })) }));
+/** O que a função do banco recebe: fileiras e lugares com o bloqueio de cada um e, quando o lugar tem `tipo` (inclusive "comum", para desfazer um tipo), o tipo. */
+export function paraSalvar(mapa: readonly FileiraDoMapa[]): { nome: string; assentos: { numero: number; bloqueado: boolean; tipo?: TipoDeLugar }[] }[] {
+  return mapa.map(f => ({ nome: f.nome, assentos: f.assentos.map(a => ({ numero: a.numero, bloqueado: a.estado === "bloqueado", ...(a.tipo ? { tipo: a.tipo } : {}) })) }));
+}
+
+/** Troca o tipo de um lugar (`"comum"` desfaz o tipo e é gravado como comum). Lugar que não existe, ou que já foi vendido, não muda. */
+export function comTipoNoLugar(mapa: readonly FileiraDoMapa[], nome: string, numero: number, tipo: TipoDeLugar): FileiraDoMapa[] {
+  return mapa.map(f => f.nome !== nome ? f : { ...f, assentos: f.assentos.map(a => a.numero !== numero || a.estado === "ocupado" ? a : { ...a, tipo }) });
+}
+
+/** O tipo de cada lugar que não é comum, pela chave que o desenho usa (a de `chaveDoLugar`: setor, fileira e número). */
+export function tiposDoMapa(fileiras: readonly FileiraDoMapa[], chave: (fileira: string, numero: number) => string): Map<string, TipoDeLugar> {
+  const tipos = new Map<string, TipoDeLugar>();
+  for (const f of fileiras) for (const a of f.assentos) if (a.tipo && a.tipo !== "comum") tipos.set(chave(f.nome, a.numero), a.tipo);
+  return tipos;
 }
 
 /** O que o banco devolve (fn_ticketeria_mapa_do_setor), conferido; fileira ou lugar fora do formato é ignorado. */
@@ -104,8 +119,10 @@ export function lerMapa(resposta: unknown): FileiraDoMapa[] {
     if (typeof f.nome !== "string" || !Array.isArray(f.assentos)) continue;
     const assentos: AssentoDoMapa[] = [];
     for (const x of f.assentos) {
-      const a = (x && typeof x === "object" ? x : {}) as { numero?: unknown; bloqueado?: unknown };
-      if (typeof a.numero === "number" && Number.isInteger(a.numero)) assentos.push({ numero: a.numero, estado: a.bloqueado === true ? "bloqueado" : "livre" });
+      const a = (x && typeof x === "object" ? x : {}) as { numero?: unknown; bloqueado?: unknown; tipo?: unknown };
+      if (typeof a.numero === "number" && Number.isInteger(a.numero)) {
+        assentos.push({ numero: a.numero, estado: a.bloqueado === true ? "bloqueado" : "livre", ...(ehTipoDeLugar(a.tipo) && a.tipo !== "comum" ? { tipo: a.tipo } : {}) });
+      }
     }
     if (assentos.length > 0) saida.push({ nome: f.nome, assentos });
   }
@@ -142,9 +159,9 @@ export function lerMapaDaSessao(resposta: unknown): MapaDaSessao | null {
     if (typeof f.nome !== "string" || !Array.isArray(f.assentos)) return null;
     const assentos: AssentoDoMapa[] = [];
     for (const x of f.assentos) {
-      const a = (x && typeof x === "object" ? x : {}) as { numero?: unknown; estado?: unknown };
+      const a = (x && typeof x === "object" ? x : {}) as { numero?: unknown; estado?: unknown; tipo?: unknown };
       if (typeof a.numero !== "number" || !Number.isInteger(a.numero) || (a.estado !== "livre" && a.estado !== "ocupado")) return null;
-      assentos.push({ numero: a.numero, estado: a.estado });
+      assentos.push({ numero: a.numero, estado: a.estado, ...(ehTipoDeLugar(a.tipo) && a.tipo !== "comum" ? { tipo: a.tipo } : {}) });
     }
     fileiras.push({ nome: f.nome, assentos });
   }
