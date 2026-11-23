@@ -267,3 +267,15 @@ test("a tela de escolher lugares: com layout desenha os blocos (SVG) com os luga
   const ampliado = renderToStaticMarkup(createElement(TelaEscolherLugares, { ...base, layout, ampliado: true }));
   assert.ok(ampliado.includes("overflow-x-auto") && ampliado.includes("Ver o mapa inteiro"));
 });
+
+test("os limites do banco valem para o setor inteiro: até 80 lugares por fileira (somando os blocos) e 60 fileiras (somando os blocos)", () => {
+  const tres = modeloTresBlocos(2, 30, 30); // cada fileira: 30 + 30 + 30 = 90
+  assert.ok(conferirLayout(tres).includes("lugares_demais"));
+  assert.deepEqual(conferirLayout(modeloTresBlocos(2, 20, 40)), [], "20 + 40 + 20 = 80 serve");
+  assert.ok(conferirLayout(modeloTresBlocos(2, 21, 40)).includes("lugares_demais"), "81 não");
+  const a = blocoNovo({ id: "a", fileiras: Array.from({ length: 40 }, (_, i) => ({ nome: `F${i}`, lugares: 2 })) });
+  const b = blocoNovo({ id: "b", x: 20, fileiras: Array.from({ length: 40 }, (_, i) => ({ nome: `G${i}`, lugares: 2 })) });
+  assert.ok(conferirLayout({ versao: 1, blocos: [a, b], palco: null }).includes("fileiras_demais"), "80 nomes de fileira no setor");
+  const mesmas = blocoNovo({ id: "b", x: 20, primeiroNumero: 3, fileiras: a.fileiras });
+  assert.deepEqual(conferirLayout({ versao: 1, blocos: [a, mesmas], palco: null }), [], "as mesmas 40 fileiras passando pelos dois blocos são 40");
+});

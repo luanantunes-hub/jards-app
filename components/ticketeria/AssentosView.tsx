@@ -10,6 +10,8 @@ import { SELO_DO_TIPO, TIPO_CURTO, TIPO_EM_TEXTO, TIPOS_DE_LUGAR, conferirAcessi
 import { tiposDoMapa } from "@/lib/ticketeria/mapa";
 import { LegendaDeTiposDoMapa, MapaPorLayout, chaveDoLugar } from "@/components/ticketeria/MapaPorLayout";
 import type { Layout } from "@/lib/ticketeria/mapa-layout";
+import { EditorDoLayout } from "@/components/ticketeria/EditorDoLayout";
+import { comPalcoAcima, moverBloco } from "@/lib/ticketeria/mapa-layout-editor";
 
 // Os assentos marcados da Ticketeria, desenhados: o produtor monta o mapa de um setor (fileiras, lugares, lugares bloqueados) e quem compra escolhe os lugares
 // no mapa. Só desenho: os dados e as ações chegam por props. Um setor "com lugares numerados" tem uma grade de fileiras (A, B, C...) com lugares 1, 2, 3...
@@ -168,17 +170,19 @@ type PropsDoEditor = {
   onAlternar?: (fileira: string, numero: number) => void; onAdicionarFileira?: () => void; onMaisLugares?: (fileira: string) => void; onMenosLugares?: (fileira: string) => void; erro?: string | null;
   /** Com ele, o editor ganha a ferramenta "Tipo do lugar" (cadeira de rodas, acompanhante, mobilidade reduzida, pessoa obesa) e o painel de acessibilidade; sem ele (o onboarding), fica como era. */
   onMarcarTipo?: (fileira: string, numero: number, tipo: TipoDeLugar) => void;
+  /** Com `onLayout`, o editor ganha a ferramenta "Desenho" (modelos, blocos, curva, ângulo, corredores) e, havendo `layout`, mostra o mapa pelo desenho dos blocos. */
+  layout?: Layout | null; onLayout?: (l: Layout | null) => void; blocoEscolhido?: string | null; onEscolherBloco?: (id: string | null) => void;
   /** Só para as imagens e os testes: com qual ferramenta e qual tipo o editor abre. */
-  ferramentaInicial?: "bloquear" | "tipo"; tipoInicial?: Exclude<TipoDeLugar, "comum">;
+  ferramentaInicial?: "bloquear" | "tipo" | "desenho"; tipoInicial?: Exclude<TipoDeLugar, "comum">;
 };
 
 const FOCO_DO_EDITOR = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
 
 /** "Bloquear lugares" ou "Tipo do lugar", e, com o tipo, qual tipo se aplica ao tocar. */
-function FerramentasDoMapa({ ferramenta, onFerramenta, tipo, onTipo }: {
-  ferramenta: "bloquear" | "tipo"; onFerramenta: (f: "bloquear" | "tipo") => void; tipo: TipoDeLugar; onTipo: (t: TipoDeLugar) => void;
+function FerramentasDoMapa({ ferramenta, onFerramenta, tipo, onTipo, comTipos, comDesenho }: {
+  ferramenta: "bloquear" | "tipo" | "desenho"; onFerramenta: (f: "bloquear" | "tipo" | "desenho") => void; tipo: TipoDeLugar; onTipo: (t: TipoDeLugar) => void; comTipos: boolean; comDesenho: boolean;
 }) {
-  const aba = (id: "bloquear" | "tipo", rotulo: string) => (
+  const aba = (id: "bloquear" | "tipo" | "desenho", rotulo: string) => (
     <button type="button" role="radio" aria-checked={ferramenta === id} onClick={() => onFerramenta(id)}
       className={`h-8 rounded-[10px] px-3.5 text-[0.75rem] transition ${FOCO_DO_EDITOR} ${ferramenta === id ? "bg-white font-medium text-[#282525] shadow-[0_1px_2px_rgba(13,13,13,.12)]" : "text-black/55 hover:text-black/75"}`}>{rotulo}</button>
   );
@@ -187,7 +191,8 @@ function FerramentasDoMapa({ ferramenta, onFerramenta, tipo, onTipo }: {
     <div className="space-y-3">
       <div role="radiogroup" aria-label="Ferramenta" className="inline-flex rounded-xl bg-black/[.05] p-0.5">
         {aba("bloquear", "Bloquear lugares")}
-        {aba("tipo", "Tipo do lugar")}
+        {comTipos && aba("tipo", "Tipo do lugar")}
+        {comDesenho && aba("desenho", "Desenho")}
       </div>
       {ferramenta === "tipo" && (
         <div role="radiogroup" aria-label="Tipo de lugar" className="flex flex-wrap gap-2">
@@ -240,20 +245,31 @@ export function PainelDeAcessibilidade({ fileiras }: { fileiras: FileiraDoMapa[]
  * O editor do mapa de um setor, sem moldura: as fileiras com a quantidade de lugares de cada uma, e os lugares que se bloqueiam tocando neles. É o mesmo na
  * folha do setor (MapaEditorSheet) e no onboarding (passo "Monte o auditório"): o que se desenha num vale no outro.
  */
-export function EditorDoMapa({ fileiras, lugares, bloqueados, vendidos, corredor = true, onCorredor, onAlternar, onAdicionarFileira, onMaisLugares, onMenosLugares, erro, onMarcarTipo, ferramentaInicial = "bloquear", tipoInicial = "cadeira_rodas" }: PropsDoEditor) {
-  const [ferramenta, setFerramenta] = useState<"bloquear" | "tipo">(ferramentaInicial);
+export function EditorDoMapa({ fileiras, lugares, bloqueados, vendidos, corredor = true, onCorredor, onAlternar, onAdicionarFileira, onMaisLugares, onMenosLugares, erro, onMarcarTipo, layout = null, onLayout, blocoEscolhido = null, onEscolherBloco, ferramentaInicial = "bloquear", tipoInicial = "cadeira_rodas" }: PropsDoEditor) {
+  const [ferramenta, setFerramenta] = useState<"bloquear" | "tipo" | "desenho">(ferramentaInicial);
   const [tipo, setTipo] = useState<Exclude<TipoDeLugar, "comum"> | "comum">(tipoInicial);
   const comTipos = !!onMarcarTipo;
+  const comDesenho = !!onLayout && !!onEscolherBloco;
   const modoTipo = comTipos && ferramenta === "tipo";
+  const modoDesenho = comDesenho && ferramenta === "desenho";
+  const tipoDoLugar = (f: string, n: number) => fileiras.find(x => x.nome === f)?.assentos.find(a => a.numero === n)?.tipo;
   const botao = "flex h-7 w-7 items-center justify-center rounded-lg border border-black/[.12] bg-white text-[0.875rem] leading-none text-black/60 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
   return (
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
-        {comTipos && <FerramentasDoMapa ferramenta={ferramenta} onFerramenta={setFerramenta} tipo={tipo} onTipo={setTipo} />}
-        <p className="text-[0.8125rem] text-black/60">{modoTipo
+        {(comTipos || comDesenho) && <FerramentasDoMapa ferramenta={ferramenta} onFerramenta={setFerramenta} tipo={tipo} onTipo={setTipo} comTipos={comTipos} comDesenho={comDesenho} />}
+        <p className="text-[0.8125rem] text-black/60">{modoDesenho
+          ? (layout ? "Arraste um bloco no desenho para movê-lo, ou use as setas do painel." : "Escolha um modelo para desenhar o mapa em blocos.")
+          : modoTipo
           ? "Escolha o tipo e toque nos lugares para marcá-los. Tocar de novo num lugar do mesmo tipo o devolve a comum."
           : "Toque num lugar para bloqueá-lo: ele não vai à venda (cadeira de som e luz, lugar da produção, visão ruim). Use − e + para mudar quantos lugares tem cada fileira."}</p>
-        <div className="overflow-x-auto rounded-xl border bg-black/[.015] px-4 py-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className={`overflow-x-auto rounded-xl border px-4 py-5 ${modoDesenho ? "sticky top-0 z-10 bg-[#fbfbfb] shadow-[0_6px_16px_-8px_rgba(13,13,13,.18)]" : "bg-black/[.015]"}`} style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          {layout ? (
+            <MapaPorLayout layout={layout} modo="produtor" estados={estadosDoMapa(fileiras)} tipos={tiposDoMapa(fileiras, (f, n) => chaveDoLugar(null, f, n))} rotuloDoMapa="Mapa do setor, por blocos"
+              desenho={modoDesenho ? { blocoEscolhido, onEscolher: onEscolherBloco, onMover: (id, x, y) => onLayout(comPalcoAcima(moverBloco(layout, id, x, y))) } : undefined}
+              onAlternar={l => (modoTipo ? onMarcarTipo?.(l.fileira, l.numero, tipoDoLugar(l.fileira, l.numero) === tipo ? "comum" : tipo) : onAlternar?.(l.fileira, l.numero))} />
+          ) : (
+            <>
           <PalcoDoMapa largura="max-w-[60%]" />
           <div className="space-y-1.5">
             {fileiras.map(f => (
@@ -275,14 +291,17 @@ export function EditorDoMapa({ fileiras, lugares, bloqueados, vendidos, corredor
               </div>
             ))}
           </div>
+            </>
+          )}
           <LegendaDoMapa modo="produtor" tipos={tiposPresentes(tiposDoMapa(fileiras, (f, n) => `${f}|${n}`))} />
         </div>
+        {modoDesenho && <EditorDoLayout layout={layout} onLayout={onLayout} blocoEscolhido={blocoEscolhido} onEscolherBloco={onEscolherBloco} />}
         {comTipos && <PainelDeAcessibilidade fileiras={fileiras} />}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
+          {layout ? <span /> : <div className="flex flex-wrap items-center gap-3">
             <button type="button" onClick={onAdicionarFileira} className="inline-flex h-9 items-center rounded-xl border border-black/[.12] bg-white px-3.5 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">+ Fileira</button>
             <button type="button" role="switch" aria-checked={corredor} onClick={() => onCorredor?.(!corredor)} className="inline-flex h-9 items-center gap-2 rounded-xl px-2 text-[0.75rem] text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><span className={`relative h-5 w-9 rounded-full transition ${corredor ? "bg-[#7259B5]" : "bg-black/20"}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${corredor ? "left-[1.125rem]" : "left-0.5"}`} /></span>Corredor no meio</button>
-          </div>
+          </div>}
           <p className="text-[0.8125rem] tabular-nums text-black/60"><strong className="font-medium text-[#282525]">{lugares} lugares</strong> à venda · {bloqueados} bloqueados{vendidos > 0 ? ` · ${vendidos} já vendidos` : ""}</p>
         </div>
       </div>

@@ -122,6 +122,21 @@ export function conferirLayout(layout: Layout): ErroDoLayout[] {
     }
   }
   if ([...porSetor.values()].some(total => total > MAX_LUGARES_NO_SETOR)) erros.add("setor_grande_demais");
+  // O banco guarda o mapa por fileira (setor, nome): uma fileira que passa por vários blocos soma os lugares deles (até 80), e um setor tem até 60 fileiras.
+  const lugaresPorFileira = new Map<string, number>();
+  const nomesPorSetor = new Map<string, Set<string>>();
+  for (const b of layout.blocos) {
+    for (const f of b.fileiras) {
+      if (!Number.isInteger(f.lugares) || f.lugares < 1) continue;
+      const chave = `${b.setor ?? ""}|${f.nome}`;
+      lugaresPorFileira.set(chave, (lugaresPorFileira.get(chave) ?? 0) + f.lugares);
+      const nomes = nomesPorSetor.get(b.setor ?? "") ?? new Set<string>();
+      nomes.add(f.nome);
+      nomesPorSetor.set(b.setor ?? "", nomes);
+    }
+  }
+  if ([...lugaresPorFileira.values()].some(n => n > MAX_LUGARES_NA_FILEIRA)) erros.add("lugares_demais");
+  if ([...nomesPorSetor.values()].some(nomes => nomes.size > MAX_FILEIRAS)) erros.add("fileiras_demais");
   // O desenho só se calcula quando o resto está certo (com erro, a posição pode não fazer sentido).
   if (erros.size === 0 && lugaresSeSobrepoem(calcularLayout(layout).lugares)) erros.add("blocos_sobrepostos");
   return [...erros];
