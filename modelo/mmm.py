@@ -22,6 +22,8 @@ MIN_SEMANAS_DO_MODELO = 26
 SEMANAS_PARA_SAZONALIDADE_ANUAL = 52
 VARIACAO_MINIMA = 0.25
 PONTOS_DA_CURVA = 16
+# Quantas semanas o efeito de um anúncio pode durar no modelo (o l_max do adstock). A tela usa o mesmo número para montar o calendário de divulgação (lib/ticketeria/modelo-calendario.ts).
+SEMANAS_DO_ATRASO = 6
 SEMENTE = 42
 SEMANAS_DOS_CONTROLES_EXTRAS = 52
 # Os controles de cada grupo (as chaves da coluna `controles` da tabela semanal) e o nome da parte que aparece no resultado. `extra`: só entra com SEMANAS_DOS_CONTROLES_EXTRAS semanas.
@@ -144,7 +146,7 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
     n = len(y)
     mmm = MMM(
         date_column="date_week", channel_columns=canais, control_columns=["t", *controles],
-        adstock=GeometricAdstock(l_max=6), saturation=LogisticSaturation(),
+        adstock=GeometricAdstock(l_max=SEMANAS_DO_ATRASO, normalize=True), saturation=LogisticSaturation(),
         yearly_seasonality=2 if n >= SEMANAS_PARA_SAZONALIDADE_ANUAL else None,
     )
     mmm.fit(x, y, random_seed=semente, sample_kwargs={"nuts_sampler": "nutpie", "chains": chains, "draws": draws, "tune": tune, "target_accept": 0.9, "progressbar": False})
@@ -159,6 +161,9 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
     ingressos_mediana = por_canal.median(("chain", "draw"))
     escala_dos_canais = mmm.get_scales_as_xarray()["channel_scale"]
 
+    # O atraso de cada canal: a parte do efeito de uma semana que passa para a seguinte (o alpha do adstock geométrico, mediana). Com normalize=True a curva de resposta é a do gasto semanal
+    # constante; o atraso diz como um gasto que muda de semana para semana se espalha (o calendário de divulgação usa os dois).
+    atrasos = posterior["adstock_alpha"].median(("chain", "draw")) if "adstock_alpha" in posterior else None
     curva_bruta = mmm.sample_saturation_curve(max_value=1.5, num_points=PONTOS_DA_CURVA, num_samples=200, random_state=semente, original_scale=True)
     curva_mediana = curva_bruta.median([d for d in curva_bruta.dims if d not in ("x", "channel")])
 
@@ -178,6 +183,7 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
             "custo_por_ingresso_centavos": int(round(gasto_centavos / ingressos)) if gasto_centavos > 0 and ingressos >= 1 else None,
             "saturacao_gasto_centavos": int(round(saturacao)) if saturacao is not None else None,
             "gasto_constante": resumo[canal]["variacao"] < VARIACAO_MINIMA, "curva": pontos,
+            "atraso": round(min(0.95, max(0.0, float(atrasos.sel(channel=canal)))), 3) if atrasos is not None else None,
         })
 
     b_baixo, b_meio, b_alto = _quantis(np.asarray(base).ravel())

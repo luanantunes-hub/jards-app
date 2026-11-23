@@ -1964,6 +1964,7 @@ export type BancoDaTicketeria = {
           margem_grande: boolean;
           gasto_constante: boolean;
           curva: Json;
+          atraso: number | null;
         };
         Insert: {
           id?: string;
@@ -1981,6 +1982,7 @@ export type BancoDaTicketeria = {
           margem_grande?: boolean;
           gasto_constante?: boolean;
           curva?: Json;
+          atraso?: number | null;
         };
         Update: {
           id?: string;
@@ -1998,6 +2000,7 @@ export type BancoDaTicketeria = {
           margem_grande?: boolean;
           gasto_constante?: boolean;
           curva?: Json;
+          atraso?: number | null;
         };
         Relationships: [
           {

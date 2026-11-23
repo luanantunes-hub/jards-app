@@ -12,6 +12,8 @@ export type PontoDaCurva = { gasto_centavos: number; ingressos: number };
 export type CanalDoResultado = {
   canal: string; porcento: number; baixo: number; alto: number; ingressos: number; gasto_centavos: number; custo_por_ingresso_centavos: number | null;
   saturacao_gasto_centavos: number | null; margem_grande: boolean; gasto_constante: boolean; curva: PontoDaCurva[];
+  /** A parte do efeito de uma semana que passa para a seguinte (o adstock do canal, de 0 a 0,95); null nas rodadas antigas, que não o gravavam. */
+  atraso?: number | null;
 };
 export type DiagnosticosDoModelo = { r_hat_maximo: number; divergencias: number; ess_minimo: number };
 /** As partes em que a base ("venderia de qualquer jeito") se divide: o nível normal da loja, a tendência e a época do ano e cada controle que entrou no modelo. */
@@ -114,7 +116,9 @@ export function lerResultadoDoModelo(entrada: unknown): { ok: true; resultado: R
     }
     vistos.add(canal);
     const constante = c.gasto_constante === true;
-    canais.push({ canal, porcento: casas(p, 2), baixo: casas(lo, 2), alto: casas(hi, 2), ingressos, gasto_centavos: gasto, custo_por_ingresso_centavos: custo, saturacao_gasto_centavos: sat, margem_grande: temMargemGrande(p, lo, hi), gasto_constante: constante, curva });
+    const atraso = c.atraso === null || c.atraso === undefined ? null : numero(c.atraso, 0, 0.95);
+    if (c.atraso != null && atraso === null) return { ok: false, problema: "atraso" };
+    canais.push({ canal, porcento: casas(p, 2), baixo: casas(lo, 2), alto: casas(hi, 2), ingressos, gasto_centavos: gasto, custo_por_ingresso_centavos: custo, saturacao_gasto_centavos: sat, margem_grande: temMargemGrande(p, lo, hi), gasto_constante: constante, curva, atraso: atraso === null ? null : casas(atraso, 3) });
   }
   const soma = bp + canais.reduce((s, c) => s + c.porcento, 0);
   if (soma < 90 || soma > 110) return { ok: false, problema: "soma" };

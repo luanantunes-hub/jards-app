@@ -25,6 +25,8 @@ def main() -> int:
         # A cobertura do intervalo é só informação (o modelo costuma ser otimista: a tela avisa); o que barra é o erro grande, a ordem errada e o ajuste que não convergiu.
         dentro = c["baixo"] <= v <= c["alto"]
         print(f"   o verdadeiro {'está' if dentro else 'NÃO está'} dentro do intervalo de 80%")
+        if c.get("atraso") is None or not 0 <= c["atraso"] <= 0.95:
+            falhas.append(f"{c['canal']}: sem o atraso do canal")
         if len(c["curva"]) < 5 or c["curva"][0]["gasto_centavos"] != 0:
             falhas.append(f"{c['canal']}: curva de resposta inválida")
     if r["diagnosticos"]["r_hat_maximo"] > 1.05:

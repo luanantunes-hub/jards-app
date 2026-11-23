@@ -128,11 +128,11 @@ export async function resultadoDaLoja(admin: Admin, lojaId: string): Promise<Res
   const e = boa?.[0];
   const falha = ultima?.[0]?.situacao === "falhou" ? ultima[0] : null;
   if (!e) return null;
-  const { data: linhas } = await t.from("ticketeria_mmm_canais").select("canal, porcento, intervalo_baixo, intervalo_alto, ingressos, gasto_centavos, custo_por_ingresso_centavos, saturacao_gasto_centavos, margem_grande, gasto_constante, curva").eq("execucao_id", e.id).order("porcento", { ascending: false });
+  const { data: linhas } = await t.from("ticketeria_mmm_canais").select("canal, porcento, intervalo_baixo, intervalo_alto, ingressos, gasto_centavos, custo_por_ingresso_centavos, saturacao_gasto_centavos, margem_grande, gasto_constante, curva, atraso").eq("execucao_id", e.id).order("porcento", { ascending: false });
   const canais: CanalDoResultado[] = (linhas ?? []).map(c => ({
     canal: c.canal, porcento: Number(c.porcento), baixo: Number(c.intervalo_baixo), alto: Number(c.intervalo_alto), ingressos: Number(c.ingressos), gasto_centavos: Number(c.gasto_centavos),
     custo_por_ingresso_centavos: c.custo_por_ingresso_centavos === null ? null : Number(c.custo_por_ingresso_centavos), saturacao_gasto_centavos: c.saturacao_gasto_centavos === null ? null : Number(c.saturacao_gasto_centavos),
-    margem_grande: c.margem_grande, gasto_constante: c.gasto_constante, curva: Array.isArray(c.curva) ? (c.curva as { gasto_centavos: number; ingressos: number }[]) : [],
+    margem_grande: c.margem_grande, gasto_constante: c.gasto_constante, curva: Array.isArray(c.curva) ? (c.curva as { gasto_centavos: number; ingressos: number }[]) : [], atraso: c.atraso === null ? null : Number(c.atraso),
   }));
   // O que os links mostram: os ingressos vendidos por canal de origem (todas as sessões).
   const painel = await divulgacaoDaLoja(admin, lojaId);
