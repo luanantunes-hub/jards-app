@@ -65,6 +65,28 @@ export function datasNacionaisDoAno(ano: number): { dia: string; nome: string }[
   return lista.map(([ms, nome]) => ({ dia: diaDe(ms), nome })).sort((a, b) => a.dia.localeCompare(b.dia));
 }
 
+// ─── Sessões longas (exposição) ─────────────────────────────────────────────
+
+/** Uma sessão como o banco guarda: o dia em que começa, o dia em que termina (exposição: dias depois; sessão comum: o mesmo dia ou nulo) e os lugares. */
+export type SessaoDoPeriodo = { inicio: string; fim: string | null; lugares: number };
+export const MAX_SEMANAS_DE_UMA_SESSAO = 52;
+
+/**
+ * Abre cada sessão longa (uma exposição de 20 a 30 de abril, cadastrada como uma sessão só) em um dia por semana em cartaz, para a proximidade e o tamanho do que está à venda valerem no
+ * período inteiro, e não só no dia da abertura. Os lugares de uma sessão longa se dividem igualmente entre as semanas em que ela fica aberta. Sessão de um dia fica como está.
+ */
+export function abrirSessoesLongas(sessoes: SessaoDoPeriodo[]): { dias: string[]; lugares: { dia: string; lugares: number }[] } {
+  const dias: string[] = [];
+  const lugares: { dia: string; lugares: number }[] = [];
+  for (const s of sessoes) {
+    const fim = s.fim && s.fim > s.inicio ? s.fim : s.inicio;
+    const semanas: string[] = [];
+    for (let semana = inicioDaSemana(s.inicio), i = 0; semana <= inicioDaSemana(fim) && i < MAX_SEMANAS_DE_UMA_SESSAO; semana = diaDe(Date.parse(`${semana}T00:00:00Z`) + 7 * msDoDia), i++) semanas.push(i === 0 ? s.inicio : semana);
+    for (const d of semanas) { dias.push(d); lugares.push({ dia: d, lugares: s.lugares / semanas.length }); }
+  }
+  return { dias, lugares };
+}
+
 // ─── Os controles semana a semana ───────────────────────────────────────────
 
 export type ItemDePedidoPago = { dia: string; quantidade: number; precoCentavos: number; comCupom: boolean };

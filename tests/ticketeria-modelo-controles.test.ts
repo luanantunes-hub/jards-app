@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { controleDeVisitas, controlesDaTela, controlesDasSemanas, controlesQueEntram, datasNacionaisDoAno, lerDataDePico, pascoa, SEMANAS_DOS_CONTROLES_EXTRAS, variaNaTabela, visitaDeAnuncioPago, type ControleDaTela, type EntradaDosControles, type VisitaDoDia } from "../lib/ticketeria/modelo-controles";
+import { abrirSessoesLongas, controleDeVisitas, controlesDaTela, controlesDasSemanas, controlesQueEntram, datasNacionaisDoAno, lerDataDePico, pascoa, SEMANAS_DOS_CONTROLES_EXTRAS, variaNaTabela, visitaDeAnuncioPago, type ControleDaTela, type EntradaDosControles, type VisitaDoDia } from "../lib/ticketeria/modelo-controles";
 import { inicioDaSemana } from "../lib/ticketeria/modelo";
 
 const dia = (ms: number) => new Date(ms).toISOString().slice(0, 10);
@@ -193,4 +193,15 @@ test("o tamanho do que está à venda: lugares das sessões das próximas 8 sema
   assert.equal(v(26), 0, "depois da última sessão, nada à venda");
   const sem = controlesDasSemanas({ ...base, sessoes: sessoes.map(x => x.dia) });
   assert.ok(semanas.every(s => sem[s].lugares === 0), "sem a lotação, o controle fica em zero (e não entra)");
+});
+
+test("a exposição (uma sessão que fica aberta vários dias) vale todas as semanas em cartaz, e os lugares se dividem entre elas", () => {
+  const { dias, lugares } = abrirSessoesLongas([{ inicio: "2026-04-20", fim: "2026-05-05", lugares: 900 }, { inicio: "2026-03-12", fim: null, lugares: 200 }, { inicio: "2026-03-13", fim: "2026-03-13", lugares: 200 }]);
+  assert.deepEqual(dias, ["2026-04-20", "2026-04-27", "2026-05-04", "2026-03-12", "2026-03-13"]);
+  assert.deepEqual(lugares.map(l => l.lugares), [300, 300, 300, 200, 200]);
+  // Com a exposição aberta, a proximidade fica no máximo nas três semanas, e não só na da abertura.
+  const semanas = ["2026-04-13", "2026-04-20", "2026-04-27", "2026-05-04", "2026-05-11"];
+  const c = controlesDasSemanas({ semanas, sessoes: dias.slice(0, 3), lugaresDasSessoes: lugares.slice(0, 3), datasProprias: [], viradasDeLote: [], itens: [] });
+  assert.deepEqual(semanas.map(s => c[s].proximidade), [c["2026-04-13"].proximidade, 1, 1, 1, 0]);
+  assert.ok(c["2026-04-13"].proximidade < 1 && c["2026-04-13"].proximidade > 0);
 });

@@ -6,7 +6,7 @@ import { diaNoFuso } from "@/lib/ticketeria/divulgacao";
 import { divulgacaoDaLoja } from "@/lib/ticketeria/divulgacao-servidor";
 import { ritmoDoEvento, type RitmoDoEvento } from "@/lib/ticketeria/modelo-painel";
 import { acumuladoDaSessao, type CurvaDoEvento } from "@/lib/ticketeria/ritmo-comparado";
-import { controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
+import { abrirSessoesLongas, controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
 import { compararComOsLinks, lerPartesDaBase, type CanalDoResultado, type ParteDaBase } from "@/lib/ticketeria/modelo-resultado";
 import type { Confianca } from "@/lib/ticketeria/modelo";
 import { avaliarProntidao, consolidarGasto, montarTabelaSemanal, type EntradaDaProntidao, type ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
@@ -77,18 +77,20 @@ async function controlesDaLoja(t: Cliente, lojaId: string, semanas: string[]): P
   const idsDosEventos = (eventos ?? []).map(e => e.id);
   const fuso = new Map((locais ?? []).map(l => [l.id, l.fuso]));
   const [{ data: sessoesBrutas }, { data: ingressos }, { count: cupons }] = idsDosEventos.length === 0 ? [{ data: [] }, { data: [] }, { count: 0 }] : await Promise.all([
-    t.from("ticketeria_sessoes").select("local_id, sala_id, inicio, cancelada_em").in("evento_id", idsDosEventos),
+    t.from("ticketeria_sessoes").select("local_id, sala_id, inicio, fim, cancelada_em").in("evento_id", idsDosEventos),
     t.from("ticketeria_ingressos").select("id").in("evento_id", idsDosEventos),
     t.from("ticketeria_cupons").select("id", { count: "exact", head: true }).in("evento_id", idsDosEventos),
   ]);
   const validas = (sessoesBrutas ?? []).filter(s => !s.cancelada_em);
-  const sessoes = validas.map(s => diaNoFuso(s.inicio, fuso.get(s.local_id)));
   // A lotação de cada sessão (os lugares dos setores em uso da sala), para o controle do tamanho do que está à venda.
   const idsDosLocais = [...new Set(validas.map(s => s.local_id))];
   const { data: setores } = idsDosLocais.length > 0 ? await t.from("ticketeria_setores").select("sala_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false) : { data: [] };
   const lugaresDaSala = new Map<string, number>();
   for (const x of setores ?? []) lugaresDaSala.set(x.sala_id, (lugaresDaSala.get(x.sala_id) ?? 0) + x.lugares);
-  const lugaresDasSessoes = validas.map(s => ({ dia: diaNoFuso(s.inicio, fuso.get(s.local_id)), lugares: lugaresDaSala.get(s.sala_id) ?? 0 }));
+  // A exposição (uma sessão que fica aberta vários dias) vale o período inteiro, não só o dia da abertura.
+  const abertas = abrirSessoesLongas(validas.map(s => ({ inicio: diaNoFuso(s.inicio, fuso.get(s.local_id)), fim: s.fim ? diaNoFuso(s.fim, fuso.get(s.local_id)) : null, lugares: lugaresDaSala.get(s.sala_id) ?? 0 })));
+  const sessoes = abertas.dias;
+  const lugaresDasSessoes = abertas.lugares;
   const idsDosIngressos = (ingressos ?? []).map(i => i.id);
   const lotes: { ordem: number; vendas_inicio: string | null }[] = [];
   for (let i = 0; i < idsDosIngressos.length; i += 150) {
@@ -108,7 +110,7 @@ async function controlesDaLoja(t: Cliente, lojaId: string, semanas: string[]): P
   }
   const viradasDeLote = lotes.filter(l => l.ordem > 0 && l.vendas_inicio).map(l => diaNoFuso(l.vendas_inicio as string));
   const controles = controlesDasSemanas({ semanas, sessoes, lugaresDasSessoes, datasProprias: (datas ?? []).map(d => ({ dia: d.dia, nome: d.nome })), viradasDeLote, itens });
-  return { controles, resumo: { eventos: idsDosEventos.length, sessoes: sessoes.length, lotes: lotes.length, cupons: cupons ?? 0, datasProprias: (datas ?? []).length } };
+  return { controles, resumo: { eventos: idsDosEventos.length, sessoes: validas.length, lotes: lotes.length, cupons: cupons ?? 0, datasProprias: (datas ?? []).length } };
 }
 
 /** A prontidão do modelo de uma loja: confere se há dado para o modelo rodar. */
