@@ -3,6 +3,7 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { LegendaDeTiposDoMapa, MapaPorLayout, chaveDoLugar } from "../components/ticketeria/MapaPorLayout";
+import { EditorDoMapa, LegendaDoMapa, MapaDeAssentos } from "../components/ticketeria/AssentosView";
 import { modeloCorredorCentral } from "../lib/ticketeria/mapa-layout";
 import { comTipoNoLugar, lerMapa, lerMapaDaSessao, mapaNovo, paraSalvar, tiposDoMapa } from "../lib/ticketeria/mapa";
 import {
@@ -142,4 +143,50 @@ test("os tipos do mapa viram o mapa de tipos do desenho, e a contagem confere co
   assert.deepEqual(contagem, { comum: 8, cadeira_rodas: 1, acompanhante: 0, mobilidade_reduzida: 1, obeso: 0 });
   // 10 lugares: a referência é 1 de cada, e 1 assento para pessoa obesa.
   assert.deepEqual(conferirAcessibilidade(contagem).map(s => [s.item, s.ok]), [["cadeira_rodas", true], ["mobilidade_reduzida", true], ["obesos", false]]);
+});
+
+const editor = (extra: Record<string, unknown> = {}) => {
+  const fileiras = comTipoNoLugar(mapaNovo(5, 10), "A", 1, "cadeira_rodas");
+  return renderToStaticMarkup(createElement(EditorDoMapa, { fileiras, lugares: 50, bloqueados: 0, vendidos: 0, ...extra }));
+};
+
+test("o editor sem a função de marcar tipo (o onboarding) fica como era: sem ferramentas e sem painel", () => {
+  const html = editor();
+  assert.equal(html.includes("Tipo do lugar"), false);
+  assert.equal(html.includes("Acessibilidade"), false);
+  assert.ok(html.includes("Toque num lugar para bloqueá-lo"));
+});
+
+test("o editor com a função de marcar tipo: duas ferramentas, o painel com a referência e o aviso de que não impede salvar", () => {
+  const html = editor({ onMarcarTipo: () => undefined });
+  assert.ok(html.includes("Bloquear lugares") && html.includes("Tipo do lugar"));
+  assert.ok(html.includes('aria-checked="true"') , "uma ferramenta marcada");
+  assert.equal(html.includes('aria-label="Tipo de lugar"'), false, "a escolha do tipo só aparece com a ferramenta Tipo");
+  assert.ok(html.includes("Acessibilidade") && html.includes("Espaços para cadeira de rodas") && html.includes("Assentos para pessoa obesa"));
+  // 50 lugares: referência 1 de cada e 1 para obesos; há 1 cadeira de rodas.
+  assert.ok(html.includes("1 de 1") && html.includes("0 de 1"));
+  assert.ok(html.includes("Faltam 1") && html.includes(">Ok<"));
+  assert.ok(html.includes("não impede de salvar") && html.includes("Decreto 9.404/2018"));
+  assert.equal(html.includes("conformidade"), false, "nunca promete conformidade");
+});
+
+test("com a ferramenta Tipo: os cinco tipos para escolher, o texto muda, e o lugar marcado leva selo e nome falado", () => {
+  const html = editor({ onMarcarTipo: () => undefined, ferramentaInicial: "tipo", tipoInicial: "mobilidade_reduzida" });
+  for (const t of TIPOS_DE_LUGAR.filter(t => t !== "comum")) assert.ok(html.includes(TIPO_EM_TEXTO[t]), TIPO_EM_TEXTO[t]);
+  assert.ok(html.includes('aria-label="Tipo de lugar"') && html.includes(">Comum<"));
+  assert.ok(html.includes("Escolha o tipo e toque nos lugares") && !html.includes("Toque num lugar para bloqueá-lo"));
+  assert.ok(html.includes('aria-label="Fileira A, lugar 1, cadeira de rodas, livre"'));
+  assert.ok(html.includes(">R</span>"), "o selo com a letra");
+  assert.ok(html.includes("Legenda dos lugares de acessibilidade"), "a legenda do que aparece no mapa");
+});
+
+test("o mapa do comprador mostra o selo e a legenda de quem tem acessibilidade (art. 23-B), e nada se não há", () => {
+  const com = comTipoNoLugar(comTipoNoLugar(mapaNovo(1, 4), "A", 1, "cadeira_rodas"), "A", 2, "obeso");
+  const html = renderToStaticMarkup(createElement(MapaDeAssentos, { fileiras: com, modo: "comprador" }));
+  assert.ok(html.includes('aria-label="Fileira A, lugar 1, cadeira de rodas, livre"') && html.includes(">R</span>") && html.includes(">O</span>"));
+  const legenda = renderToStaticMarkup(createElement(LegendaDoMapa, { modo: "comprador", tipos: ["cadeira_rodas", "obeso"] }));
+  assert.ok(legenda.includes("Espaço para cadeira de rodas") && legenda.includes("Assento para pessoa obesa") && legenda.includes("Livre"));
+  assert.equal(renderToStaticMarkup(createElement(LegendaDoMapa, { modo: "comprador" })).includes("acessibilidade"), false);
+  const sem = renderToStaticMarkup(createElement(MapaDeAssentos, { fileiras: mapaNovo(1, 4), modo: "comprador" }));
+  assert.equal(sem.includes("font-bold"), false, "sem tipo, o mapa é o de antes");
 });

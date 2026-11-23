@@ -5,7 +5,7 @@ import { TopSheet } from "@/components/ui/TopSheet";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { lerSetor, mensagemDoErroDoEvento } from "@/lib/ticketeria/eventos";
-import { adicionarFileira, alternarBloqueio, comCorredor, lerMapa, maisLugares, mapaNovo, menosLugares, mensagemDoErroDoMapa, paraSalvar, resumoDoMapa, resumoEmTexto, type FileiraDoMapa } from "@/lib/ticketeria/mapa";
+import { adicionarFileira, alternarBloqueio, comCorredor, comTipoNoLugar, lerMapa, maisLugares, mapaNovo, menosLugares, mensagemDoErroDoMapa, paraSalvar, resumoDoMapa, resumoEmTexto, type FileiraDoMapa } from "@/lib/ticketeria/mapa";
 import { MapaEditorSheet } from "@/components/ticketeria/AssentosView";
 import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 
@@ -70,7 +70,7 @@ export function SetorSheet({ organizationId, localId, salaId, nomeDoLocal, setor
     const r = resumoDoMapa(rascunho);
     return (
       <MapaEditorSheet setor={nome.trim() || setor.nome} local={nomeDoLocal ?? ""} fileiras={comCorredor(rascunho, corredor)} lugares={r.aVenda} bloqueados={r.bloqueados} vendidos={r.vendidos} corredor={corredor} erro={erroDoMapa} salvando={salvando}
-        onCorredor={setCorredor} onAlternar={(f, n) => setRascunho(m => (m ? alternarBloqueio(m, f, n) : m))} onAdicionarFileira={() => setRascunho(m => (m ? adicionarFileira(m) : m))}
+        onCorredor={setCorredor} onAlternar={(f, n) => setRascunho(m => (m ? alternarBloqueio(m, f, n) : m))} onMarcarTipo={(f, n, t) => setRascunho(m => (m ? comTipoNoLugar(m, f, n, t) : m))} onAdicionarFileira={() => setRascunho(m => (m ? adicionarFileira(m) : m))}
         onMaisLugares={f => setRascunho(m => (m ? maisLugares(m, f) : m))} onMenosLugares={f => setRascunho(m => (m ? menosLugares(m, f) : m))} onClose={() => { setRascunho(null); setErroDoMapa(null); }} onSalvar={() => void salvarMapa()} />
     );
   }
