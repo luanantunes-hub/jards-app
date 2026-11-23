@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { calcularLayout, type Layout } from "@/lib/ticketeria/mapa-layout";
+import { anguloParaPonto, posicaoDaAlca } from "@/lib/ticketeria/mapa-layout-editor";
 import type { EstadoDoAssento } from "@/lib/ticketeria/mapa";
 import { SELO_DO_TIPO, TIPO_CURTO, TIPO_EM_TEXTO, type TipoDeLugar } from "@/lib/ticketeria/mapa-acessibilidade";
 
@@ -19,7 +20,11 @@ const COM_NUMERO_ATE = 400; // acima disso o número do lugar não cabe e sai do
 type Quadro = { x0: number; y0: number; largura: number; altura: number };
 
 /** Para quem monta o mapa: tocar num lugar escolhe o bloco dele e arrastar move o bloco todo. */
-export type DesenhoDoMapa = { blocoEscolhido: string | null; onEscolher: (id: string | null) => void; onMover: (id: string, x: number, y: number) => void };
+export type DesenhoDoMapa = {
+  blocoEscolhido: string | null; onEscolher: (id: string | null) => void; onMover: (id: string, x: number, y: number) => void;
+  /** Girar o bloco escolhido arrastando a alça (`fim`: a pessoa soltou; é quando os vizinhos podem ser empurrados). Sem isto não há alça. */
+  onGirar?: (id: string, angulo: number, fim: boolean) => void;
+};
 
 export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotuloDoMapa = "Mapa de lugares", ampliado = false, desenho }: {
   layout: Layout;
@@ -44,6 +49,7 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
   const q = congelado ?? natural;
   const svgRef = useRef<SVGSVGElement>(null);
   const arraste = useRef<{ id: string; px: number; py: number; x: number; y: number; escala: number } | null>(null);
+  const girando = useRef<{ id: string; ultimo: number | null } | null>(null);
   const comNumero = lugares.length <= COM_NUMERO_ATE;
   const p = layout.palco;
   const escolhido = desenho?.blocoEscolhido ?? null;
@@ -55,8 +61,20 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
     return { x: Math.min(...xs) - 0.8, y: Math.min(...ys) - 0.8, largura: Math.max(...xs) - Math.min(...xs) + 1.6, altura: Math.max(...ys) - Math.min(...ys) + 1.6, nome: `Bloco ${layout.blocos.findIndex(b => b.id === escolhido) + 1}` };
   })();
 
+  /** Prende o ponteiro ao desenho (o arraste continua mesmo fora dele); se o ponteiro já acabou, segue sem prender. */
+  function capturar(svg: SVGSVGElement, pointerId: number) {
+    try { svg.setPointerCapture(pointerId); } catch { /* ponteiro que já não existe */ }
+  }
   function comecarArraste(e: React.PointerEvent<SVGSVGElement>) {
     if (!desenho) return;
+    // A alça de girar (não é um bloco: não muda o bloco escolhido).
+    if (desenho.onGirar && escolhido && (e.target as Element).closest("[data-alca]")) {
+      if (!svgRef.current) return;
+      girando.current = { id: escolhido, ultimo: null };
+      setCongelado(natural);
+      capturar(svgRef.current, e.pointerId);
+      return;
+    }
     const id = (e.target as Element).closest("[data-bloco]")?.getAttribute("data-bloco") ?? null;
     desenho.onEscolher(id);
     const svg = svgRef.current;
@@ -64,14 +82,31 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
     if (!id || !svg || !bloco) return;
     arraste.current = { id, px: e.clientX, py: e.clientY, x: bloco.x, y: bloco.y, escala: Math.min(svg.getBoundingClientRect().width / q.largura, svg.getBoundingClientRect().height / q.altura) };
     setCongelado(natural);
-    svg.setPointerCapture(e.pointerId);
+    capturar(svg, e.pointerId);
   }
   function arrastar(e: React.PointerEvent<SVGSVGElement>) {
+    const g = girando.current;
+    if (desenho && g) {
+      const svg = svgRef.current;
+      const bloco = layout.blocos.find(b => b.id === g.id);
+      const matriz = svg?.getScreenCTM();
+      if (!svg || !bloco || !matriz) return;
+      const ponto = svg.createSVGPoint();
+      ponto.x = e.clientX;
+      ponto.y = e.clientY;
+      const noDesenho = ponto.matrixTransform(matriz.inverse());
+      const angulo = anguloParaPonto(bloco, noDesenho);
+      if (angulo !== null) { g.ultimo = angulo; desenho.onGirar?.(g.id, angulo, false); }
+      return;
+    }
     const a = arraste.current;
     if (!desenho || !a || a.escala <= 0) return;
     desenho.onMover(a.id, a.x + (e.clientX - a.px) / a.escala, a.y + (e.clientY - a.py) / a.escala);
   }
   function soltar() {
+    const g = girando.current;
+    if (g && g.ultimo !== null) desenho?.onGirar?.(g.id, g.ultimo, true);
+    girando.current = null;
     arraste.current = null;
     setCongelado(null);
   }
@@ -95,6 +130,21 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
           <text x={contorno.x + 0.2} y={contorno.y - 0.3} fontSize={0.6} fill="#6450D2">{contorno.nome}</text>
         </g>
       )}
+      {desenho?.onGirar && escolhido && (() => {
+        const bloco = layout.blocos.find(b => b.id === escolhido);
+        if (!bloco) return null;
+        const alca = posicaoDaAlca(bloco);
+        return (
+          <g>
+            <line x1={bloco.x} y1={bloco.y} x2={alca.x} y2={alca.y} stroke="#6450D2" strokeWidth={0.08} strokeDasharray="0.3 0.2" pointerEvents="none" aria-hidden="true" />
+            <g data-alca="1" role="img" aria-label="Alça para girar o bloco" style={{ cursor: "grab" }}>
+              <title>Girar o bloco</title>
+              <circle cx={alca.x} cy={alca.y} r={0.75} fill="#6450D2" stroke="#fff" strokeWidth={0.12} />
+              <text x={alca.x} y={alca.y + 0.04} textAnchor="middle" dominantBaseline="central" fontSize={0.95} fill="#fff" pointerEvents="none">↻</text>
+            </g>
+          </g>
+        );
+      })()}
       {lugares.map(l => {
         const estado = estados?.get(chaveDoLugar(l.setor, l.fileira, l.numero)) ?? "livre";
         const tipo = tipos?.get(chaveDoLugar(l.setor, l.fileira, l.numero)) ?? "comum";

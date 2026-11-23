@@ -141,6 +141,31 @@ export function menosUmaFileira(layout: Layout, id: string): Layout {
   return trocaBloco(layout, id, b => (b.fileiras.length <= 1 ? b : { ...b, fileiras: b.fileiras.slice(0, -1) }));
 }
 
+// ─── A alça de girar ────────────────────────────────────────────────────────
+
+/** A que distância do centro da primeira fileira (o pivô do bloco) fica a alça de girar, em lugares. */
+export const DISTANCIA_DA_ALCA = 3.2;
+/** De quantos em quantos graus a alça encaixa. */
+export const PASSO_DA_ALCA = 5;
+
+/** Onde fica a alça de um bloco: acima do pivô, na direção em que o bloco aponta (ela gira junto com ele). */
+export function posicaoDaAlca(b: Pick<Bloco, "x" | "y" | "angulo">): { x: number; y: number } {
+  const a = (b.angulo * Math.PI) / 180;
+  return { x: b.x + Math.sin(a) * DISTANCIA_DA_ALCA, y: b.y - Math.cos(a) * DISTANCIA_DA_ALCA };
+}
+
+/**
+ * O ângulo do bloco quando a alça está em `ponto`: o ângulo do pivô até o ponto, a partir de "para cima", no sentido horário (o mesmo de `Bloco.angulo`), encaixado de
+ * `passo` em `passo` graus e entre -180 e 180. null com o ponto em cima do pivô (não há direção).
+ */
+export function anguloParaPonto(pivo: { x: number; y: number }, ponto: { x: number; y: number }, passo = PASSO_DA_ALCA): number | null {
+  const dx = ponto.x - pivo.x;
+  const dy = ponto.y - pivo.y;
+  if (Math.hypot(dx, dy) < 0.5) return null;
+  const graus = Math.round(((Math.atan2(dx, -dy) * 180) / Math.PI) / passo) * passo;
+  return graus === 0 ? 0 : graus; // sem -0
+}
+
 // ─── Empurrar os vizinhos ───────────────────────────────────────────────────
 
 /** Quanto sobra de espaço, no mínimo, entre a borda de um bloco e a do vizinho (em lugares). O desenho de partida dos modelos deixa 1,56 entre os blocos. */

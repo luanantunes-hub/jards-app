@@ -11,7 +11,7 @@ import { tiposDoMapa } from "@/lib/ticketeria/mapa";
 import { LegendaDeTiposDoMapa, MapaPorLayout, chaveDoLugar } from "@/components/ticketeria/MapaPorLayout";
 import type { Layout } from "@/lib/ticketeria/mapa-layout";
 import { EditorDoLayout } from "@/components/ticketeria/EditorDoLayout";
-import { comPalcoAcima, moverBloco } from "@/lib/ticketeria/mapa-layout-editor";
+import { comAngulo, comPalcoAcima, empurrarVizinhos, moverBloco } from "@/lib/ticketeria/mapa-layout-editor";
 
 // Os assentos marcados da Ticketeria, desenhados: o produtor monta o mapa de um setor (fileiras, lugares, lugares bloqueados) e quem compra escolhe os lugares
 // no mapa. Só desenho: os dados e as ações chegam por props. Um setor "com lugares numerados" tem uma grade de fileiras (A, B, C...) com lugares 1, 2, 3...
@@ -266,7 +266,8 @@ export function EditorDoMapa({ fileiras, lugares, bloqueados, vendidos, corredor
         <div className={`overflow-x-auto rounded-xl border px-4 py-5 ${modoDesenho ? "sticky top-0 z-10 bg-[#fbfbfb] shadow-[0_6px_16px_-8px_rgba(13,13,13,.18)]" : "bg-black/[.015]"}`} style={{ borderColor: "rgba(13,13,13,.08)" }}>
           {layout ? (
             <MapaPorLayout layout={layout} modo="produtor" estados={estadosDoMapa(fileiras)} tipos={tiposDoMapa(fileiras, (f, n) => chaveDoLugar(null, f, n))} rotuloDoMapa="Mapa do setor, por blocos"
-              desenho={modoDesenho ? { blocoEscolhido, onEscolher: onEscolherBloco, onMover: (id, x, y) => onLayout(comPalcoAcima(moverBloco(layout, id, x, y))) } : undefined}
+              desenho={modoDesenho ? { blocoEscolhido, onEscolher: onEscolherBloco, onMover: (id, x, y) => onLayout(comPalcoAcima(moverBloco(layout, id, x, y))),
+                onGirar: (id, angulo, fim) => { const girado = comAngulo(layout, id, angulo); onLayout(comPalcoAcima(fim ? empurrarVizinhos(girado, id) : girado)); } } : undefined}
               onAlternar={l => (modoTipo ? onMarcarTipo?.(l.fileira, l.numero, tipoDoLugar(l.fileira, l.numero) === tipo ? "comum" : tipo) : onAlternar?.(l.fileira, l.numero))} />
           ) : (
             <>

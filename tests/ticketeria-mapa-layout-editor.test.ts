@@ -8,7 +8,7 @@ import { comEstadosDoMapa, mapaDoLayout } from "../lib/ticketeria/mapa-layout";
 import { mapaNovo } from "../lib/ticketeria/mapa";
 import {
   CAMPOS_DO_MODELO, ERRO_DO_LAYOUT_EM_TEXTO, MODELOS, PARAMETROS_PADRAO, comAngulo, comCorredorNoMeio, comNumeracao, comPrimeiroNumero, comRaio, deslocarBloco, encaixa, layoutDoModelo,
-  empurrarVizinhos, FOLGA_ENTRE_BLOCOS, maisLugaresNoBloco, maisUmBloco, maisUmaFileira, menosUmaFileira, moverBloco, temCorredorNoMeio, tirarBloco,
+  DISTANCIA_DA_ALCA, anguloParaPonto, empurrarVizinhos, FOLGA_ENTRE_BLOCOS, posicaoDaAlca, maisLugaresNoBloco, maisUmBloco, maisUmaFileira, menosUmaFileira, moverBloco, temCorredorNoMeio, tirarBloco,
 } from "../lib/ticketeria/mapa-layout-editor";
 import { blocoNovo, calcularLayout, conferirLayout, type ErroDoLayout, type Layout } from "../lib/ticketeria/mapa-layout";
 
@@ -187,7 +187,7 @@ test("o editor do mapa: a ferramenta Desenho só existe com onLayout; com layout
   const layout = layoutDoModelo("tres-blocos");
   const com = html(createElement(EditorDoMapa, { ...base, onLayout: naoFaz, onEscolherBloco: naoFaz, layout, blocoEscolhido: "centro", ferramentaInicial: "desenho" }));
   assert.ok(com.includes('aria-label="Mapa do setor, por blocos"') && com.includes("Arraste um bloco no desenho"));
-  assert.equal((com.match(/role="img"/g) ?? []).length, 8 * 30, "no modo desenho os lugares não alternam: 240 desenhados");
+  assert.equal((com.match(/role="img"/g) ?? []).length, 8 * 30 + 1, "no modo desenho os lugares não alternam: 240 desenhados, mais a alça de girar do bloco escolhido");
   assert.equal(com.includes("+ Fileira"), false, "com layout, quem manda é o painel do bloco");
   const bloquear = html(createElement(EditorDoMapa, { ...base, onLayout: naoFaz, onEscolherBloco: naoFaz, layout, blocoEscolhido: null }));
   assert.equal((bloquear.match(/role="button"/g) ?? []).length >= 240, true, "com a ferramenta Bloquear, cada lugar é um botão");
@@ -265,4 +265,51 @@ test("empurrar vizinhos: o palco acompanha quando alguém se mexeu", () => {
   const l = layoutDoModelo("tres-blocos", { ...PARAMETROS_PADRAO, fileiras: 3 });
   const empurrado = empurrarVizinhos(maisLugaresNoBloco(l, "centro", 12), "centro");
   assert.ok(empurrado.palco!.largura >= l.palco!.largura);
+});
+
+test("a alça de girar: fica acima do pivô, a uma distância fixa, e gira junto com o bloco", () => {
+  const reto = posicaoDaAlca({ x: 10, y: 4, angulo: 0 });
+  assert.ok(Math.abs(reto.x - 10) < 1e-9 && Math.abs(reto.y - (4 - DISTANCIA_DA_ALCA)) < 1e-9, "sem girar: bem em cima");
+  const direita = posicaoDaAlca({ x: 0, y: 0, angulo: 90 });
+  assert.ok(Math.abs(direita.x - DISTANCIA_DA_ALCA) < 1e-9 && Math.abs(direita.y) < 1e-9, "girado 90° no sentido horário: à direita");
+  const baixo = posicaoDaAlca({ x: 0, y: 0, angulo: 180 });
+  assert.ok(Math.abs(baixo.y - DISTANCIA_DA_ALCA) < 1e-9);
+  for (const a of [-180, -135, -90, -45, -5, 0, 5, 45, 90, 135, 175]) {
+    const p = posicaoDaAlca({ x: 3, y: -2, angulo: a });
+    assert.ok(Math.abs(Math.hypot(p.x - 3, p.y + 2) - DISTANCIA_DA_ALCA) < 1e-9, `${a}°: a distância não muda`);
+  }
+});
+
+test("o ângulo que a alça dá: para cima 0, para a direita 90, para baixo 180, para a esquerda -90, e encaixa de 5 em 5", () => {
+  const pivo = { x: 2, y: 2 };
+  assert.equal(anguloParaPonto(pivo, { x: 2, y: -3 }), 0);
+  assert.equal(anguloParaPonto(pivo, { x: 7, y: 2 }), 90);
+  assert.equal(anguloParaPonto(pivo, { x: 2, y: 7 }), 180);
+  assert.equal(anguloParaPonto(pivo, { x: -3, y: 2 }), -90);
+  assert.equal(anguloParaPonto(pivo, { x: 7, y: -3 }), 45);
+  assert.equal(anguloParaPonto(pivo, { x: 2 + Math.sin((12 * Math.PI) / 180) * 5, y: 2 - Math.cos((12 * Math.PI) / 180) * 5 }), 10, "12° encaixa em 10");
+  assert.equal(anguloParaPonto(pivo, { x: 2 + Math.sin((13 * Math.PI) / 180) * 5, y: 2 - Math.cos((13 * Math.PI) / 180) * 5 }), 15, "13° encaixa em 15");
+  assert.equal(anguloParaPonto(pivo, { x: 2.1, y: 2.1 }), null, "em cima do pivô não há direção");
+  assert.equal(Object.is(anguloParaPonto(pivo, { x: 2, y: -3 }), -0), false, "sem menos zero");
+  assert.equal(anguloParaPonto(pivo, { x: 2.01, y: -3 }), 0);
+});
+
+test("ida e volta: a alça de um bloco girado devolve o mesmo ângulo", () => {
+  for (const a of [-175, -90, -45, -10, 0, 15, 60, 90, 120, 180]) {
+    const b = { x: -4, y: 6, angulo: a };
+    const volta = anguloParaPonto(b, posicaoDaAlca(b));
+    assert.equal(volta === 180 || volta === -180 ? Math.abs(volta) : volta, Math.abs(a) === 180 ? 180 : a, `${a}°`);
+  }
+});
+
+test("a alça de girar só aparece no modo Desenho, com um bloco escolhido, e na posição que a conta manda", () => {
+  const layout = layoutDoModelo("tres-blocos");
+  const fileiras = comEstadosDoMapa(mapaDoLayout(layout), mapaNovo(1, 1));
+  const base = { fileiras, lugares: 240, bloqueados: 0, vendidos: 0, layout, onLayout: naoFaz, onEscolherBloco: naoFaz };
+  const com = html(createElement(EditorDoMapa, { ...base, blocoEscolhido: "centro", ferramentaInicial: "desenho" }));
+  assert.ok(com.includes('data-alca="1"') && com.includes('aria-label="Alça para girar o bloco"') && com.includes("↻"));
+  const alca = posicaoDaAlca(layout.blocos.find(b => b.id === "centro")!);
+  assert.ok(com.includes(`cy="${alca.y}"`) || com.includes(`cy="${alca.y.toFixed(1)}"`) || com.includes(`cy="${Math.round(alca.y * 1000) / 1000}"`), "a alça está acima do pivô do bloco");
+  assert.equal(html(createElement(EditorDoMapa, { ...base, blocoEscolhido: null, ferramentaInicial: "desenho" })).includes("data-alca"), false, "sem bloco escolhido, sem alça");
+  assert.equal(html(createElement(EditorDoMapa, { ...base, blocoEscolhido: "centro" })).includes("data-alca"), false, "com a ferramenta Bloquear, sem alça");
 });
