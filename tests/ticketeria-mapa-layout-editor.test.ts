@@ -4,7 +4,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { EditorDoLayout } from "../components/ticketeria/EditorDoLayout";
 import { EditorDoMapa } from "../components/ticketeria/AssentosView";
-import { comEstadosDoMapa, mapaDoLayout } from "../lib/ticketeria/mapa-layout";
+import { comEstadosDoMapa, lerLayout, mapaDoLayout } from "../lib/ticketeria/mapa-layout";
 import { mapaNovo } from "../lib/ticketeria/mapa";
 import {
   CAMPOS_DO_MODELO, ERRO_DO_LAYOUT_EM_TEXTO, MODELOS, PARAMETROS_PADRAO, comAngulo, comCorredorNoMeio, comNumeracao, comPrimeiroNumero, comRaio, deslocarBloco, encaixa, layoutDoModelo,
@@ -16,7 +16,7 @@ const lugares = (l: ReturnType<typeof layoutDoModelo>) => calcularLayout(l).luga
 
 test("os três modelos, com os números de partida, servem e têm o número certo de lugares", () => {
   const p = PARAMETROS_PADRAO;
-  assert.deepEqual(MODELOS, ["corredor", "tres-blocos", "leque"]);
+  assert.deepEqual(MODELOS, ["corredor", "tres-blocos", "leque", "balcao", "continental", "arena"]);
   for (const m of MODELOS) assert.deepEqual(conferirLayout(layoutDoModelo(m)), [], m);
   assert.equal(lugares(layoutDoModelo("corredor")), p.fileiras * p.lugares);
   assert.equal(lugares(layoutDoModelo("tres-blocos")), p.fileiras * (p.laterais * 2 + p.centro));
@@ -312,4 +312,69 @@ test("a alça de girar só aparece no modo Desenho, com um bloco escolhido, e na
   assert.ok(com.includes(`cy="${alca.y}"`) || com.includes(`cy="${alca.y.toFixed(1)}"`) || com.includes(`cy="${Math.round(alca.y * 1000) / 1000}"`), "a alça está acima do pivô do bloco");
   assert.equal(html(createElement(EditorDoMapa, { ...base, blocoEscolhido: null, ferramentaInicial: "desenho" })).includes("data-alca"), false, "sem bloco escolhido, sem alça");
   assert.equal(html(createElement(EditorDoMapa, { ...base, blocoEscolhido: "centro" })).includes("data-alca"), false, "com a ferramenta Bloquear, sem alça");
+});
+
+test("os três modelos novos: o número certo de lugares, fileiras com nomes diferentes e nenhum erro", () => {
+  const p = PARAMETROS_PADRAO;
+  const balcao = layoutDoModelo("balcao");
+  assert.equal(lugares(balcao), (p.fileiras + p.balcao) * p.lugares);
+  assert.deepEqual(balcao.blocos.map(b => b.id), ["plateia", "balcao"]);
+  assert.deepEqual(balcao.blocos[1].fileiras.map(f => f.nome), ["I", "J", "K", "L"], "o balcão continua as fileiras da plateia");
+  assert.ok(balcao.blocos[1].y > balcao.blocos[0].y + 7 * 1.25, "o balcão fica atrás (embaixo) da plateia");
+  assert.ok(balcao.palco!.y < 0, "o palco fica em cima da plateia");
+
+  const continental = layoutDoModelo("continental");
+  assert.equal(lugares(continental), p.fileiras * p.largura);
+  assert.equal(temCorredorNoMeio(continental.blocos[0]), false, "continental não tem corredor");
+
+  const arena = layoutDoModelo("arena");
+  assert.equal(lugares(arena), 2 * p.fileiras * p.lugares + 2 * p.fileiras * p.laterais);
+  assert.deepEqual(arena.blocos.map(b => b.id), ["frente", "fundo", "esquerda", "direita"]);
+  assert.deepEqual(arena.blocos.map(b => b.angulo), [0, 180, 90, -90], "os blocos de cima e dos lados vêm virados para o palco");
+  assert.equal(new Set(arena.blocos.flatMap(b => b.fileiras.map(f => f.nome))).size, 4 * p.fileiras, "as 32 fileiras têm nomes diferentes");
+  assert.deepEqual([arena.palco!.x, arena.palco!.y, arena.palco!.centralizado], [0, 0, true], "o palco no meio");
+  for (const m of ["balcao", "continental", "arena"] as const) assert.deepEqual(conferirLayout(layoutDoModelo(m)), [], m);
+});
+
+test("arena: a primeira fileira de cada bloco fica junto ao palco, e os blocos não se tocam", () => {
+  const arena = layoutDoModelo("arena", { ...PARAMETROS_PADRAO, fileiras: 4, lugares: 12, laterais: 8 });
+  const lugaresDoBloco = (id: string) => calcularLayout(arena).lugares.filter(l => l.bloco === id);
+  const distanciaAoPalco = (l: { x: number; y: number }) => Math.hypot(l.x - arena.palco!.x, l.y - arena.palco!.y);
+  for (const id of ["frente", "fundo", "esquerda", "direita"]) {
+    const primeira = lugaresDoBloco(id).filter(l => l.fileira === arena.blocos.find(b => b.id === id)!.fileiras[0].nome);
+    const ultima = lugaresDoBloco(id).filter(l => l.fileira === arena.blocos.find(b => b.id === id)!.fileiras[3].nome);
+    const media = (ls: { x: number; y: number }[]) => ls.reduce((s, l) => s + distanciaAoPalco(l), 0) / ls.length;
+    assert.ok(media(primeira) < media(ultima), `${id}: a primeira fileira é a mais perto do palco`);
+  }
+  // Frente embaixo, fundo em cima, esquerda à esquerda, direita à direita.
+  const centro = (id: string) => { const ls = lugaresDoBloco(id); return { x: ls.reduce((s, l) => s + l.x, 0) / ls.length, y: ls.reduce((s, l) => s + l.y, 0) / ls.length }; };
+  assert.ok(centro("frente").y > 0 && centro("fundo").y < 0 && centro("esquerda").x < 0 && centro("direita").x > 0);
+  assert.deepEqual(conferirLayout(arena), []);
+});
+
+test("arena: o palco continua no meio quando o desenho muda (sem mudar de tamanho)", () => {
+  const arena = layoutDoModelo("arena", { ...PARAMETROS_PADRAO, fileiras: 3 });
+  const maisFrente = empurrarVizinhos(maisLugaresNoBloco(arena, "frente", 6), "frente");
+  assert.equal(maisFrente.palco!.largura, arena.palco!.largura, "o palco não muda de tamanho");
+  assert.equal(maisFrente.palco!.centralizado, true);
+  assert.ok(Math.abs(maisFrente.palco!.x - arena.palco!.x) < 1.5, "e fica no centro do que está desenhado");
+  const maisUm = maisUmBloco(arena);
+  assert.equal(maisUm.palco!.centralizado, true);
+  assert.ok(maisUm.palco!.x > arena.palco!.x, "um bloco novo à direita puxa o centro para lá");
+});
+
+test("o palco central sobrevive à ida e volta pelo banco", () => {
+  const arena = layoutDoModelo("arena");
+  assert.deepEqual(lerLayout(JSON.parse(JSON.stringify(arena))), arena);
+  const comum = layoutDoModelo("corredor");
+  assert.equal(lerLayout(JSON.parse(JSON.stringify(comum)))!.palco!.centralizado, undefined, "o palco comum não ganha a marca");
+});
+
+test("os limites de cada modelo novo (mínimo e máximo) servem", () => {
+  for (const m of ["balcao", "continental", "arena"] as const) for (const c of CAMPOS_DO_MODELO[m]) {
+    assert.deepEqual(conferirLayout(layoutDoModelo(m, { ...PARAMETROS_PADRAO, [c.campo]: c.min })), [], `${m} com ${c.campo} no mínimo`);
+    assert.deepEqual(conferirLayout(layoutDoModelo(m, { ...PARAMETROS_PADRAO, [c.campo]: c.max })), [], `${m} com ${c.campo} no máximo`);
+  }
+  const tudoNoMaximo = (m: "balcao" | "continental" | "arena") => Object.fromEntries(CAMPOS_DO_MODELO[m].map(c => [c.campo, c.max]));
+  for (const m of ["balcao", "continental", "arena"] as const) assert.deepEqual(conferirLayout(layoutDoModelo(m, { ...PARAMETROS_PADRAO, ...tudoNoMaximo(m) })), [], `${m} com tudo no máximo`);
 });

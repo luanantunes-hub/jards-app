@@ -44,7 +44,8 @@ export type Bloco = {
   fileiras: FileiraDoBloco[];
 };
 
-export type Palco = { x: number; y: number; largura: number; altura: number; rotulo: string };
+/** `centralizado`: o palco fica no meio dos blocos (arena), em vez de em cima deles; o editor o mantém no centro quando o desenho muda. */
+export type Palco = { x: number; y: number; largura: number; altura: number; rotulo: string; centralizado?: boolean };
 
 export type Layout = { versao: 1; blocos: Bloco[]; palco: Palco | null };
 
@@ -261,6 +262,41 @@ export function modeloLeque(fileiras: number, primeira: number, aumento: number,
   return { versao: 1, blocos: [bloco], palco: palcoAcima([bloco]) };
 }
 
+/**
+ * Plateia e balcão: dois blocos, o da frente (a plateia, com corredor no meio) e, atrás dele, o balcão (menos fileiras, mesma largura). O palco fica em cima da plateia.
+ * As fileiras do balcão continuam o nome das da plateia (A..H, depois I..L).
+ */
+export function modeloPlateiaEBalcao(fileiras: number, lugares: number, fileirasDoBalcao: number): Layout {
+  const nomes = nomesDeFileira(fileiras + fileirasDoBalcao);
+  const corredores = lugares >= 6 ? [Math.floor(lugares / 2)] : [];
+  const plateia = blocoNovo({ id: "plateia", fileiras: nomes.slice(0, fileiras).map(nome => ({ nome, lugares })), corredores });
+  const balcao = blocoNovo({ id: "balcao", y: (fileiras - 1) * ESPACO_PADRAO_FILEIRA + 4, fileiras: nomes.slice(fileiras).map(nome => ({ nome, lugares })), corredores });
+  const blocos = [plateia, balcao];
+  return { versao: 1, blocos, palco: palcoAcima(blocos) };
+}
+
+/** Continental: fileiras longas, sem corredor no meio (a saída é pelas pontas), num bloco só. */
+export function modeloContinental(fileiras: number, lugares: number): Layout {
+  const bloco = blocoNovo({ id: "b1", fileiras: nomesDeFileira(fileiras).map(nome => ({ nome, lugares })) });
+  return { versao: 1, blocos: [bloco], palco: palcoAcima([bloco]) };
+}
+
+/**
+ * Arena: o palco no meio e quatro blocos em volta, de frente para ele (frente e fundo com `lugares` por fileira, as laterais com `laterais`). Os blocos de cima, da esquerda e da
+ * direita vêm girados (180°, 90° e -90°) para a primeira fileira ficar junto ao palco. As fileiras têm nomes seguidos pelos quatro blocos.
+ */
+export function modeloArena(fileiras: number, lugares: number, laterais: number): Layout {
+  const nomes = nomesDeFileira(fileiras * 4);
+  const grupo = (i: number, n: number) => nomes.slice(i * fileiras, (i + 1) * fileiras).map(nome => ({ nome, lugares: n }));
+  const altura = Math.max(3, laterais - 1); // o palco é tão alto quanto as laterais são largas
+  const folga = 2.5;
+  const baixo = blocoNovo({ id: "frente", y: altura / 2 + folga, fileiras: grupo(0, lugares) });
+  const cima = blocoNovo({ id: "fundo", y: -(altura / 2 + folga), angulo: 180, fileiras: grupo(1, lugares) });
+  const esquerda = blocoNovo({ id: "esquerda", x: -(lugares / 2 + folga), angulo: 90, fileiras: grupo(2, laterais) });
+  const direita = blocoNovo({ id: "direita", x: lugares / 2 + folga, angulo: -90, fileiras: grupo(3, laterais) });
+  return { versao: 1, blocos: [baixo, cima, esquerda, direita], palco: { x: 0, y: 0, largura: Math.max(6, lugares - 1), altura, rotulo: "Palco", centralizado: true } };
+}
+
 /** A, B, C... Z, AA, AB... (o mesmo caminho do editor de hoje). */
 function nomesDeFileira(n: number): string[] {
   const nomes: string[] = [];
@@ -318,7 +354,7 @@ export function lerLayout(resposta: unknown): Layout | null {
   const p = objeto(r.palco);
   if (r.palco !== undefined && r.palco !== null) {
     if (!p || !numero(p.x, -1000, 1000) || !numero(p.y, -1000, 1000) || !numero(p.largura, 1, 1000) || !numero(p.altura, 0.5, 100) || typeof p.rotulo !== "string" || p.rotulo.length < 1 || p.rotulo.length > 30) return null;
-    palco = { x: p.x, y: p.y, largura: p.largura, altura: p.altura, rotulo: p.rotulo };
+    palco = { x: p.x, y: p.y, largura: p.largura, altura: p.altura, rotulo: p.rotulo, ...(p.centralizado === true ? { centralizado: true } : {}) };
   }
   const layout: Layout = { versao: 1, blocos, palco };
   return conferirLayout(layout).length === 0 ? layout : null;

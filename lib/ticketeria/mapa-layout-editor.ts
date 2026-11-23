@@ -3,30 +3,36 @@
 
 import { MAX_FILEIRAS, MAX_LUGARES_NA_FILEIRA, proximoNomeDeFileira } from "@/lib/ticketeria/mapa";
 import {
-  MAX_BLOCOS, blocoNovo, calcularLayout, modeloCorredorCentral, modeloLeque, modeloTresBlocos, palcoAcima, type Bloco, type ErroDoLayout, type Layout, type Numeracao,
+  MAX_BLOCOS, blocoNovo, calcularLayout, modeloArena, modeloContinental, modeloCorredorCentral, modeloLeque, modeloPlateiaEBalcao, modeloTresBlocos, palcoAcima, type Bloco, type ErroDoLayout, type Layout, type Numeracao,
 } from "@/lib/ticketeria/mapa-layout";
 
 // ─── Os modelos para começar ────────────────────────────────────────────────
 
-export type ModeloId = "corredor" | "tres-blocos" | "leque";
-export const MODELOS: readonly ModeloId[] = ["corredor", "tres-blocos", "leque"];
+export type ModeloId = "corredor" | "tres-blocos" | "leque" | "balcao" | "continental" | "arena";
+export const MODELOS: readonly ModeloId[] = ["corredor", "tres-blocos", "leque", "balcao", "continental", "arena"];
 
 export const MODELO_EM_TEXTO: Record<ModeloId, { nome: string; descricao: string }> = {
   corredor: { nome: "Corredor central", descricao: "Um bloco reto, com um corredor no meio." },
   "tres-blocos": { nome: "Três blocos", descricao: "Esquerda, centro e direita, com dois corredores." },
   leque: { nome: "Leque", descricao: "Fileiras em arco em volta do palco." },
+  balcao: { nome: "Plateia e balcão", descricao: "A plateia na frente e o balcão atrás." },
+  continental: { nome: "Continental", descricao: "Fileiras longas, sem corredor no meio." },
+  arena: { nome: "Arena", descricao: "O palco no meio e blocos em volta." },
 };
 
 /** Os números de cada modelo, e o que cada um quer dizer na tela. */
-export type ParametrosDoModelo = { fileiras: number; lugares: number; laterais: number; centro: number; primeira: number; aumento: number };
+export type ParametrosDoModelo = { fileiras: number; lugares: number; laterais: number; centro: number; primeira: number; aumento: number; balcao: number; largura: number };
 
-export const PARAMETROS_PADRAO: ParametrosDoModelo = { fileiras: 8, lugares: 14, laterais: 8, centro: 14, primeira: 10, aumento: 2 };
+export const PARAMETROS_PADRAO: ParametrosDoModelo = { fileiras: 8, lugares: 14, laterais: 8, centro: 14, primeira: 10, aumento: 2, balcao: 4, largura: 30 };
 
 /** Quais números cada modelo usa, com o menor, o maior e o nome na tela. */
 export const CAMPOS_DO_MODELO: Record<ModeloId, { campo: keyof ParametrosDoModelo; rotulo: string; min: number; max: number }[]> = {
   corredor: [{ campo: "fileiras", rotulo: "Fileiras", min: 1, max: 40 }, { campo: "lugares", rotulo: "Lugares por fileira", min: 2, max: 60 }],
   "tres-blocos": [{ campo: "fileiras", rotulo: "Fileiras", min: 1, max: 40 }, { campo: "laterais", rotulo: "Lugares de cada lado", min: 2, max: 20 }, { campo: "centro", rotulo: "Lugares no centro", min: 2, max: 40 }],
   leque: [{ campo: "fileiras", rotulo: "Fileiras", min: 2, max: 30 }, { campo: "primeira", rotulo: "Lugares na 1ª fileira", min: 4, max: 40 }, { campo: "aumento", rotulo: "A mais em cada fileira", min: 0, max: 4 }],
+  balcao: [{ campo: "fileiras", rotulo: "Fileiras da plateia", min: 1, max: 30 }, { campo: "balcao", rotulo: "Fileiras do balcão", min: 1, max: 20 }, { campo: "lugares", rotulo: "Lugares por fileira", min: 2, max: 60 }],
+  continental: [{ campo: "fileiras", rotulo: "Fileiras", min: 1, max: 40 }, { campo: "largura", rotulo: "Lugares por fileira", min: 10, max: 80 }],
+  arena: [{ campo: "fileiras", rotulo: "Fileiras de cada lado", min: 1, max: 12 }, { campo: "lugares", rotulo: "Lugares na frente e no fundo", min: 6, max: 40 }, { campo: "laterais", rotulo: "Lugares nas laterais", min: 4, max: 30 }],
 };
 
 const entre = (v: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(v)));
@@ -39,6 +45,9 @@ export function layoutDoModelo(modelo: ModeloId, p: ParametrosDoModelo = PARAMET
   };
   if (modelo === "corredor") return modeloCorredorCentral(v("fileiras"), v("lugares"));
   if (modelo === "tres-blocos") return modeloTresBlocos(v("fileiras"), v("laterais"), v("centro"));
+  if (modelo === "balcao") return modeloPlateiaEBalcao(v("fileiras"), v("lugares"), v("balcao"));
+  if (modelo === "continental") return modeloContinental(v("fileiras"), v("largura"));
+  if (modelo === "arena") return modeloArena(v("fileiras"), v("lugares"), v("laterais"));
   // O raio acompanha a largura da fileira mais larga (uma fileira de 54 lugares num raio de 12 daria a volta no palco).
   const larga = Math.min(MAX_LUGARES_NA_FILEIRA, v("primeira") + (v("fileiras") - 1) * v("aumento"));
   return modeloLeque(v("fileiras"), v("primeira"), v("aumento"), Math.max(12, Math.ceil(larga / 2)));
@@ -47,7 +56,16 @@ export function layoutDoModelo(modelo: ModeloId, p: ParametrosDoModelo = PARAMET
 // ─── Mexer num bloco ────────────────────────────────────────────────────────
 
 /** Um layout com o palco de novo em cima dos blocos (depois de crescer, girar ou mover). */
-export const comPalcoAcima = (layout: Layout): Layout => (layout.palco ? { ...layout, palco: palcoAcima(layout.blocos, layout.palco.rotulo) } : layout);
+export function comPalcoAcima(layout: Layout): Layout {
+  const palco = layout.palco;
+  if (!palco) return layout;
+  if (palco.centralizado) {
+    // Palco do meio (arena): fica no centro do que está desenhado, sem mudar de tamanho.
+    const { caixa } = calcularLayout({ ...layout, palco: null });
+    return { ...layout, palco: { ...palco, x: (caixa.x0 + caixa.x1) / 2, y: (caixa.y0 + caixa.y1) / 2 } };
+  }
+  return { ...layout, palco: palcoAcima(layout.blocos, palco.rotulo) };
+}
 
 function trocaBloco(layout: Layout, id: string, muda: (b: Bloco) => Bloco): Layout {
   if (!layout.blocos.some(b => b.id === id)) return layout;
