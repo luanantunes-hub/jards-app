@@ -8,6 +8,33 @@ import { avisosDeEsgotamento, quandoEsgotou, type EventoParaAvisar, type GastoDe
 type Admin = SupabaseClient<Database>;
 const PAGINA = 1000;
 
+/** As compras pagas de cada sessão: dia (no fuso padrão) e quantidade, por item. Paginado (o Supabase corta em 1.000 linhas sem erro). */
+export async function vendasPorSessao(admin: Admin, idsDasSessoes: string[]): Promise<Map<string, { dia: string; quantidade: number }[]>> {
+  const t = clienteDaTicketeria(admin);
+  const vendas = new Map<string, { dia: string; quantidade: number }[]>();
+  for (let i = 0; i < idsDasSessoes.length; i += 100) {
+    for (let de = 0; ; de += PAGINA) {
+      const { data: pedidos, error } = await t.from("ticketeria_pedidos").select("id, sessao_id, pago_em").in("sessao_id", idsDasSessoes.slice(i, i + 100)).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, de + PAGINA - 1);
+      if (error) throw new Error(error.message);
+      const porId = new Map((pedidos ?? []).map(p => [p.id, p]));
+      const lista = pedidos ?? [];
+      for (let j = 0; j < lista.length; j += 150) {
+        const { data: itens } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade").in("pedido_id", lista.slice(j, j + 150).map(p => p.id));
+        for (const it of itens ?? []) {
+          const p = porId.get(it.pedido_id);
+          if (p?.pago_em && p.sessao_id) {
+            const doDia = vendas.get(p.sessao_id) ?? [];
+            doDia.push({ dia: diaNoFuso(p.pago_em), quantidade: it.quantidade });
+            vendas.set(p.sessao_id, doDia);
+          }
+        }
+      }
+      if (lista.length < PAGINA) break;
+    }
+  }
+  return vendas;
+}
+
 /** Os avisos de esgotamento de uma loja: os eventos esgotados com anúncio ainda gastando (pelas campanhas marcadas com o evento) e os quase esgotados. Lido com a chave de serviço. */
 export async function esgotamentoDaLoja(admin: Admin, lojaId: string, hoje: string = diaNoFuso(new Date())) {
   const t = clienteDaTicketeria(admin);
@@ -25,25 +52,7 @@ export async function esgotamentoDaLoja(admin: Admin, lojaId: string, hoje: stri
   const { data: setores } = await t.from("ticketeria_setores").select("sala_id, lugares").in("local_id", [...new Set(validas.map(s => s.local_id))]).eq("arquivado", false);
   const lugaresDaSala = new Map<string, number>();
   for (const x of setores ?? []) lugaresDaSala.set(x.sala_id, (lugaresDaSala.get(x.sala_id) ?? 0) + x.lugares);
-  // As compras pagas dessas sessões: dia e quantidade.
-  const vendas = new Map<string, { dia: string; quantidade: number }[]>();
-  const idsDasSessoes = validas.map(s => s.id);
-  for (let i = 0; i < idsDasSessoes.length; i += 100) {
-    for (let de = 0; ; de += PAGINA) {
-      const { data: pedidos, error } = await t.from("ticketeria_pedidos").select("id, sessao_id, pago_em").in("sessao_id", idsDasSessoes.slice(i, i + 100)).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, de + PAGINA - 1);
-      if (error) throw new Error(error.message);
-      const porId = new Map((pedidos ?? []).map(p => [p.id, p]));
-      const lista = pedidos ?? [];
-      for (let j = 0; j < lista.length; j += 150) {
-        const { data: itens } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade").in("pedido_id", lista.slice(j, j + 150).map(p => p.id));
-        for (const it of itens ?? []) {
-          const p = porId.get(it.pedido_id);
-          if (p?.pago_em && p.sessao_id) vendas.set(p.sessao_id, [...(vendas.get(p.sessao_id) ?? []), { dia: diaNoFuso(p.pago_em), quantidade: it.quantidade }]);
-        }
-      }
-      if (lista.length < PAGINA) break;
-    }
-  }
+  const vendas = await vendasPorSessao(admin, validas.map(s => s.id));
   const titulo = new Map((eventos ?? []).map(e => [e.id, e.titulo]));
   const porEvento = new Map<string, EventoParaAvisar>();
   for (const s of validas) {

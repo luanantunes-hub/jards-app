@@ -112,14 +112,16 @@ export function EventoSheet({ organizationId, nomeDaOrganizacao, evento, onClose
 export type LocalDaSessao = { id: string; nome: string; fuso: string; arquivado: boolean };
 export type SessaoEditavel = { id: string; local_id: string; sala_id: string; inicio: string; fim: string | null; abertura_portas: string | null };
 
-export function SessaoSheet({ organizationId, eventoId, locais, salas = [], sessao, podeApagar, onClose, onSaved, onNovoLocal }: {
+export function SessaoSheet({ organizationId, eventoId, locais, salas = [], sessao, sugestao, podeApagar, onClose, onSaved, onNovoLocal }: {
   organizationId: string; eventoId: string; locais: LocalDaSessao[]; /** As salas dos espaços: com mais de uma no espaço, a sessão escolhe a sala. */ salas?: SalaDoEspaco[]; sessao?: SessaoEditavel; podeApagar: boolean;
+  /** Sessão nova já preenchida (o "e se eu acrescentar uma sessão?"): dia e hora no fuso do local, e o espaço e a sala. */ sugestao?: { dia: string; hora: string; localId?: string; salaId?: string };
   onClose: () => void; onSaved: () => void; onNovoLocal: () => void;
 }) {
   const emUso = locais.filter(local => !local.arquivado || local.id === sessao?.local_id);
-  const [localId, setLocalId] = useState(sessao?.local_id ?? emUso[0]?.id ?? "");
-  const fusoInicial = locais.find(local => local.id === (sessao?.local_id ?? emUso[0]?.id))?.fuso ?? "America/Sao_Paulo";
-  const inicio = sessao ? partesNoFuso(sessao.inicio, fusoInicial) : { dia: "", hora: "20:00" };
+  const localSugerido = sugestao?.localId && emUso.some(local => local.id === sugestao.localId) ? sugestao.localId : undefined;
+  const [localId, setLocalId] = useState(sessao?.local_id ?? localSugerido ?? emUso[0]?.id ?? "");
+  const fusoInicial = locais.find(local => local.id === (sessao?.local_id ?? localSugerido ?? emUso[0]?.id))?.fuso ?? "America/Sao_Paulo";
+  const inicio = sessao ? partesNoFuso(sessao.inicio, fusoInicial) : sugestao ? { dia: sugestao.dia, hora: sugestao.hora } : { dia: "", hora: "20:00" };
   const [dia, setDia] = useState(inicio.dia);
   const [hora, setHora] = useState(inicio.hora);
   const [fim, setFim] = useState(sessao?.fim ? partesNoFuso(sessao.fim, fusoInicial).hora : "");
@@ -129,7 +131,7 @@ export function SessaoSheet({ organizationId, eventoId, locais, salas = [], sess
 
   // O local recém-criado (pela própria folha) chega depois que a folha abriu: sem escolha, vale o primeiro em uso.
   const localEscolhido = localId || emUso[0]?.id || "";
-  const [salaId, setSalaId] = useState(sessao?.sala_id ?? "");
+  const [salaId, setSalaId] = useState(sessao?.sala_id ?? sugestao?.salaId ?? "");
   const salasDoLocal = salasDoEspaco(salas, localEscolhido, sessao?.sala_id);
   // A sala escolhida vale se for do espaço; senão (espaço trocado, ou ainda sem escolha) a primeira em uso.
   const salaEscolhida = salaDaSessao(salas, localEscolhido, salaId);

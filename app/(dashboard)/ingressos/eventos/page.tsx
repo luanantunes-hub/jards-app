@@ -10,6 +10,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { podeEditarATicketeria } from "@/lib/ticketeria/permissoes";
 import type { SituacaoDoEvento } from "@/lib/ticketeria/estados";
 import { ROTULO_DA_SITUACAO_DO_EVENTO, proximaSessao, quandoDaSessao } from "@/lib/ticketeria/eventos";
+import { ComoCadaDiaVende, usePrevisaoDaSessao } from "@/components/ticketeria/PrevisaoDeSessaoView";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 
 type Evento = { id: string; titulo: string; situacao: SituacaoDoEvento };
@@ -27,22 +28,27 @@ export default function IngressosPage() {
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
   const [locais, setLocais] = useState<Local[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [lojaId, setLojaId] = useState<string | null>(null);
   const podeEditar = podeEditarATicketeria(papel);
+  // Como cada dia vende na casa: só quem edita a Ticketeria lê.
+  const previsao = usePrevisaoDaSessao(podeEditar ? lojaId : null, null);
 
   useEffect(() => {
     if (!organizationId) return;
     let ativo = true;
     void (async () => {
       const ticketeria = clienteDaTicketeria(createClient());
-      const [ev, se, lo] = await Promise.all([
+      const [ev, se, lo, loja] = await Promise.all([
         ticketeria.from("ticketeria_eventos").select("id, titulo, situacao").eq("organization_id", organizationId).order("created_at", { ascending: false }),
         ticketeria.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, fim, cancelada_em").eq("organization_id", organizationId).order("inicio"),
         ticketeria.from("ticketeria_locais").select("id, nome, fuso").eq("organization_id", organizationId),
+        ticketeria.from("ticketeria_lojas").select("id").eq("organization_id", organizationId).maybeSingle(),
       ]);
       if (!ativo) return;
       setEventos((ev.data ?? []) as Evento[]);
       setSessoes((se.data ?? []) as Sessao[]);
       setLocais((lo.data ?? []) as Local[]);
+      setLojaId(loja.data?.id ?? null);
       setErro(ev.error || se.error || lo.error ? "Não foi possível carregar os eventos. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
@@ -62,6 +68,7 @@ export default function IngressosPage() {
       <ListPageHeader title="Programação" actions={eventos && eventos.length > 0 ? novo : undefined} />
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {previsao && <ComoCadaDiaVende dias={previsao.dias} frase={previsao.frase} />}
         <ListTableSurface>
           {eventos === null ? (
             <div className="h-32 bg-black/[.02] motion-safe:animate-pulse" />

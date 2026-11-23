@@ -21,10 +21,11 @@ import { LinkDeVenda } from "@/components/ticketeria/LinkDeVenda";
 import { SubAbas } from "@/components/producao/SubAbas";
 import { abaDoEndereco, abasDoEvento, type AbaDoEvento } from "@/lib/ticketeria/abas-do-evento";
 import { Aviso, EventoSheet, LocalSheet, SessaoSheet, type EventoEditavel, type LocalDaSessao, type SessaoEditavel } from "@/components/ticketeria/FolhasDosEventos";
+import { ESeAcrescentarSessao, ProcuraSobrandoAviso, VendaDaSessao, usePrevisaoDaSessao } from "@/components/ticketeria/PrevisaoDeSessaoView";
 
 type Evento = EventoEditavel & { situacao: SituacaoDoEvento; loja_id: string; slug: string };
 type Sessao = SessaoEditavel & { cancelada_em: string | null };
-type Folha = { tipo: "evento" } | { tipo: "sessao"; sessao?: Sessao } | { tipo: "local" };
+type Folha = { tipo: "evento" } | { tipo: "sessao"; sessao?: Sessao; sugestao?: { dia: string; hora: string; localId?: string; salaId?: string } } | { tipo: "local" };
 
 const BOTAO_ESCURO = "inline-flex h-10 items-center rounded-xl bg-[#6450D2] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const BOTAO_CLARO = "inline-flex h-10 items-center rounded-xl border border-black/[.12] bg-white px-4 text-[0.75rem] font-normal text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
@@ -48,8 +49,12 @@ export default function EventoPage() {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
+  const [eSe, setESe] = useState(false);
   const podeEditar = podeEditarATicketeria(papel);
   const recarregar = () => setVersao(atual => atual + 1);
+  // A previsão por sessão (procura sobrando, "e se", a venda de cada sessão): só quem edita a Ticketeria lê.
+  const previsao = usePrevisaoDaSessao(podeEditar && evento ? evento.loja_id : null, id, versao)?.evento ?? null;
+  const vendaDaSessao = useMemo(() => new Map((previsao?.sessoes ?? []).map(s => [s.id, s])), [previsao]);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -162,6 +167,7 @@ export default function EventoPage() {
             <h2 id="sessoes-do-evento" className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Sessões</h2>
             {editavel && <SecondaryListAction onClick={() => setFolha({ tipo: "sessao" })}><CalendarPlus size={13} aria-hidden="true" /> Nova sessão</SecondaryListAction>}
           </div>
+          {editavel && previsao?.procura && <ProcuraSobrandoAviso procura={previsao.procura} temOpcoes={previsao.opcoes.length > 0} onAbrir={() => setESe(true)} />}
           {linhas.length === 0 ? (
             <div className="rounded-xl border bg-white px-5 py-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <p className="text-[0.8125rem] font-normal text-black/55">Nenhuma sessão ainda</p>
@@ -175,6 +181,7 @@ export default function EventoPage() {
                     <span className={`block text-[0.8125rem] font-normal tabular-nums ${situacao === "cancelada" ? "text-black/40 line-through" : "text-[#282525]"}`}>{quando}</span>
                     <span className="flex items-center gap-1.5 truncate text-[0.6875rem] text-black/45"><MapPin size={12} aria-hidden="true" className="shrink-0 text-black/40" />{[local?.nome ?? "Local", sala?.nome, detalhes].filter(Boolean).join(" · ")}</span>
                   </span>
+                  {situacao !== "cancelada" && vendaDaSessao.get(sessao.id) && <VendaDaSessao {...vendaDaSessao.get(sessao.id)!} />}
                   <span className="text-[0.6875rem] text-black/50">{ROTULO_DA_SESSAO[situacao]}</span>
                   {evento.situacao === "publicado" && situacao === "agendada" && <LinkDeVenda sessaoId={sessao.id} />}
                   {editavel && (
@@ -209,7 +216,11 @@ export default function EventoPage() {
         )}
       </DetailPageContent>
       {folha?.tipo === "evento" && <EventoSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} evento={evento} onClose={() => setFolha(null)} onSaved={recarregar} />}
-      {folha?.tipo === "sessao" && <SessaoSheet organizationId={organizationId} eventoId={evento.id} locais={locais} salas={salas} sessao={folha.sessao} podeApagar={evento.situacao === "rascunho"} onClose={() => setFolha(null)} onSaved={recarregar} onNovoLocal={() => setFolha({ tipo: "local" })} />}
+      {folha?.tipo === "sessao" && <SessaoSheet organizationId={organizationId} eventoId={evento.id} locais={locais} salas={salas} sessao={folha.sessao} sugestao={folha.sugestao} podeApagar={evento.situacao === "rascunho"} onClose={() => setFolha(null)} onSaved={recarregar} onNovoLocal={() => setFolha({ tipo: "local" })} />}
+      {eSe && previsao && previsao.opcoes.length > 0 && (
+        <ESeAcrescentarSessao opcoes={previsao.opcoes} evento={evento.titulo} naEspera={previsao.procura?.naEspera ?? 0} onFechar={() => setESe(false)}
+          onCriar={opcao => { setESe(false); setFolha({ tipo: "sessao", sugestao: { dia: opcao.dia, hora: opcao.hora, localId: previsao.local?.localId, salaId: previsao.local?.salaId } }); }} />
+      )}
       {folha?.tipo === "local" && <LocalSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} onClose={() => setFolha({ tipo: "sessao" })} onSaved={() => recarregar()} />}
     </div>
   );
