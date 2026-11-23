@@ -10,7 +10,7 @@ const ICONES: Record<IconeDaCaixa, LucideIcon> = {
 };
 
 /** Caixas que levam uma ilustração no lugar do ícone (a imagem tem o fundo transparente). */
-const ILUSTRACAO_DA_CAIXA: Partial<Record<string, string>> = { bilheteria: "/ilustracoes/ticketeria/caixa-bilheteria.webp" };
+const ILUSTRACAO_DA_CAIXA: Partial<Record<string, string>> = { bilheteria: "/ilustracoes/ticketeria/caixa-bilheteria.webp", "site-cms": "/ilustracoes/ticketeria/caixa-site.webp" };
 
 const ROTULO_DO_GRUPO = "text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45";
 const FOCO = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
@@ -31,7 +31,7 @@ function CaixaDeVenda({ caixa, onAbrir }: { caixa: Caixa & { estado: EstadoDaCai
   const conteudo = ilustracao ? (
     <span className="flex items-center gap-5">
       {/* eslint-disable-next-line @next/next/no-img-element -- ilustração estática, já reduzida */}
-      <img src={ilustracao} alt="" loading="lazy" className="h-28 w-auto shrink-0 object-contain" />
+      <img src={ilustracao} alt="" loading="lazy" className="h-28 max-w-[8rem] w-auto shrink-0 object-contain" />
       <span className="min-w-0 flex-1">
         <span className="mb-2 flex"><Etiqueta estado={caixa.estado} /></span>
         {titulo}
