@@ -8,7 +8,8 @@ import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 import type { AssentoDoMapa, EstadoDoAssento, FileiraDoMapa } from "@/lib/ticketeria/mapa";
 import { SELO_DO_TIPO, TIPO_CURTO, TIPO_EM_TEXTO, TIPOS_DE_LUGAR, conferirAcessibilidade, contarTipos, frasesDaAcessibilidade, tiposPresentes, type TipoDeLugar } from "@/lib/ticketeria/mapa-acessibilidade";
 import { tiposDoMapa } from "@/lib/ticketeria/mapa";
-import { LegendaDeTiposDoMapa } from "@/components/ticketeria/MapaPorLayout";
+import { LegendaDeTiposDoMapa, MapaPorLayout, chaveDoLugar } from "@/components/ticketeria/MapaPorLayout";
+import type { Layout } from "@/lib/ticketeria/mapa-layout";
 
 // Os assentos marcados da Ticketeria, desenhados: o produtor monta o mapa de um setor (fileiras, lugares, lugares bloqueados) e quem compra escolhe os lugares
 // no mapa. Só desenho: os dados e as ações chegam por props. Um setor "com lugares numerados" tem uma grade de fileiras (A, B, C...) com lugares 1, 2, 3...
@@ -107,9 +108,18 @@ type Site = { titulo: string; cor?: string };
 const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#6450D2] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6450D2] disabled:cursor-not-allowed disabled:bg-black/20";
 const BOTAO_SECUNDARIO = "inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-[0.875rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
 
+/** O estado de cada lugar (o que não é livre) pela chave que o desenho por layout usa. */
+function estadosDoMapa(fileiras: readonly FileiraDoMapa[]): Map<string, EstadoDoAssento> {
+  const estados = new Map<string, EstadoDoAssento>();
+  for (const f of fileiras) for (const a of f.assentos) if (a.estado !== "livre") estados.set(chaveDoLugar(null, f.nome, a.numero), a.estado);
+  return estados;
+}
+
 /** A tela de escolher os lugares de um ingresso no mapa do setor. `escolhidos` são os rótulos ("C7") na ordem em que a pessoa os tocou. */
-export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, escolhidos, max, totalCentavos, ampliado = false, carregando = false, erroDoMapa = null, onTentarDeNovo, onAmpliar, onAlternar, onVoltar, onConfirmar }: {
+export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, escolhidos, max, totalCentavos, ampliado = false, carregando = false, erroDoMapa = null, onTentarDeNovo, layout, onAmpliar, onAlternar, onVoltar, onConfirmar }: {
   site: Site; evento: EventoParaComprar; ingresso: { nome: string; preco_centavos: number }; setor: string; fileiras: FileiraDoMapa[]; escolhidos: string[]; max: number; totalCentavos: number; ampliado?: boolean; carregando?: boolean; erroDoMapa?: string | null; onTentarDeNovo?: () => void;
+  /** O layout do setor (já conferido com `lerLayout`): com ele o mapa é o desenho dos blocos; sem ele, a lista de fileiras de sempre. */
+  layout?: Layout | null;
   onAmpliar?: () => void; onAlternar?: (fileira: string, numero: number) => void; onVoltar?: () => void; onConfirmar?: () => void;
 }) {
   return (
@@ -137,7 +147,11 @@ export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, e
       ) : (
         <>
           <div className="mt-4 flex justify-end"><button type="button" onClick={onAmpliar} aria-pressed={ampliado} className="rounded-xl text-[0.8125rem] text-black/60 underline underline-offset-2 hover:text-black/80">{ampliado ? "Ver o mapa inteiro" : "Ampliar o mapa"}</button></div>
-          <div className="mt-2"><MapaDeAssentos fileiras={fileiras} modo="comprador" ampliado={ampliado} onAlternar={onAlternar} /></div>
+          <div className="mt-2">
+            {layout
+              ? <MapaPorLayout layout={layout} modo="comprador" ampliado={ampliado} estados={estadosDoMapa(fileiras)} tipos={tiposDoMapa(fileiras, (f, n) => chaveDoLugar(null, f, n))} onAlternar={l => onAlternar?.(l.fileira, l.numero)} />
+              : <MapaDeAssentos fileiras={fileiras} modo="comprador" ampliado={ampliado} onAlternar={onAlternar} />}
+          </div>
           <LegendaDoMapa modo="comprador" tipos={tiposPresentes(tiposDoMapa(fileiras, (f, n) => `${f}|${n}`))} />
         </>
       )}

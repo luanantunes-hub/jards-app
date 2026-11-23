@@ -256,3 +256,78 @@ function nomesDeFileira(n: number): string[] {
   }
   return nomes;
 }
+
+// ─── Do banco para o desenho e de volta ─────────────────────────────────────
+
+const objeto = (v: unknown): Record<string, unknown> | null => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
+const numero = (v: unknown, min: number, max: number): v is number => typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
+const inteiro = (v: unknown, min: number, max: number): v is number => numero(v, min, max) && Number.isInteger(v);
+const listaDeInteiros = (v: unknown): number[] | null | "erro" => {
+  if (v === undefined || v === null) return null;
+  if (!Array.isArray(v) || v.length > 40 || !v.every(n => inteiro(n, 1, 79))) return "erro";
+  return v as number[];
+};
+
+/**
+ * O layout que o banco guarda (ticketeria_setores.layout) ou que a compra recebe, conferido; null se não é um layout que se desenha (formato, limites do banco ou
+ * qualquer erro de `conferirLayout`: bloco em cima de bloco, número repetido...). Quem recebe null desenha o mapa como lista de fileiras, que é o que sempre vale.
+ */
+export function lerLayout(resposta: unknown): Layout | null {
+  const r = objeto(resposta);
+  if (!r || r.versao !== 1 || !Array.isArray(r.blocos) || r.blocos.length < 1 || r.blocos.length > MAX_BLOCOS) return null;
+  const blocos: Bloco[] = [];
+  for (const bruto of r.blocos) {
+    const b = objeto(bruto);
+    if (!b || typeof b.id !== "string" || b.id.length < 1 || b.id.length > 30) return null;
+    if (b.setor !== undefined && b.setor !== null) return null;
+    if (!numero(b.x, -500, 500) || !numero(b.y, -500, 500) || !numero(b.angulo, -360, 360)) return null;
+    if (b.raio !== undefined && b.raio !== null && !numero(b.raio, 0.5, 1000)) return null;
+    if (!numero(b.espacoFileira, 0.5, 5) || !numero(b.larguraCorredor, 0, 6)) return null;
+    if (!NUMERACOES.includes(b.numeracao as Numeracao) || !inteiro(b.primeiroNumero, 1, 999)) return null;
+    const corredores = listaDeInteiros(b.corredores);
+    if (corredores === "erro" || !Array.isArray(b.fileiras) || b.fileiras.length < 1 || b.fileiras.length > MAX_FILEIRAS) return null;
+    const fileiras: FileiraDoBloco[] = [];
+    for (const fb of b.fileiras) {
+      const f = objeto(fb);
+      if (!f || typeof f.nome !== "string" || !inteiro(f.lugares, 1, MAX_LUGARES_NA_FILEIRA)) return null;
+      const cs = listaDeInteiros(f.corredores);
+      if (cs === "erro") return null;
+      fileiras.push({ nome: f.nome, lugares: f.lugares, ...(cs ? { corredores: cs } : {}) });
+    }
+    blocos.push({
+      id: b.id, setor: null, x: b.x, y: b.y, angulo: b.angulo, raio: typeof b.raio === "number" ? b.raio : null, espacoFileira: b.espacoFileira, larguraCorredor: b.larguraCorredor,
+      numeracao: b.numeracao as Numeracao, primeiroNumero: b.primeiroNumero, ...(corredores ? { corredores } : {}), fileiras,
+    });
+  }
+  let palco: Palco | null = null;
+  const p = objeto(r.palco);
+  if (r.palco !== undefined && r.palco !== null) {
+    if (!p || !numero(p.x, -1000, 1000) || !numero(p.y, -1000, 1000) || !numero(p.largura, 1, 1000) || !numero(p.altura, 0.5, 100) || typeof p.rotulo !== "string" || p.rotulo.length < 1 || p.rotulo.length > 30) return null;
+    palco = { x: p.x, y: p.y, largura: p.largura, altura: p.altura, rotulo: p.rotulo };
+  }
+  const layout: Layout = { versao: 1, blocos, palco };
+  return conferirLayout(layout).length === 0 ? layout : null;
+}
+
+/**
+ * Os lugares que o layout descreve, como o mapa de fileiras que a venda e o banco conhecem (fileira, número, todos livres): a ordem das fileiras é a da primeira vez que aparecem
+ * no layout, e os lugares de cada uma, por número. É o que se manda como `p_fileiras` junto com o layout.
+ */
+export function mapaDoLayout(layout: Layout): FileiraDoMapa[] {
+  const porFileira = new Map<string, number[]>();
+  for (const l of calcularLayout(layout).lugares) {
+    const lista = porFileira.get(l.fileira);
+    if (lista) lista.push(l.numero); else porFileira.set(l.fileira, [l.numero]);
+  }
+  return [...porFileira.entries()].map(([nome, numeros]) => ({ nome, assentos: numeros.sort((a, b) => a - b).map(n => ({ numero: n, estado: "livre" as const })) }));
+}
+
+/** Passa o bloqueio e o tipo de cada lugar de um mapa antigo para um mapa novo (pela fileira e pelo número); lugar que não existia antes fica como veio. */
+export function comEstadosDoMapa(novo: readonly FileiraDoMapa[], antigo: readonly FileiraDoMapa[]): FileiraDoMapa[] {
+  const antes = new Map<string, FileiraDoMapa["assentos"][number]>();
+  for (const f of antigo) for (const a of f.assentos) antes.set(`${f.nome}|${a.numero}`, a);
+  return novo.map(f => ({ ...f, assentos: f.assentos.map(a => {
+    const velho = antes.get(`${f.nome}|${a.numero}`);
+    return velho ? { ...a, estado: velho.estado === "bloqueado" || velho.estado === "ocupado" ? velho.estado : a.estado, ...(velho.tipo ? { tipo: velho.tipo } : {}) } : a;
+  }) }));
+}

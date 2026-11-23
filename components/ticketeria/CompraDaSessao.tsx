@@ -6,6 +6,7 @@ import { TelaAbrindoPagamento, TelaAviso, TelaDados, TelaEscolherIngressos, Tela
 import { TelaEscolherLugares } from "@/components/ticketeria/AssentosView";
 import { TelaListaDeEspera, TelaNaListaDeEspera } from "@/components/ticketeria/ListaDeEsperaView";
 import { lerCorpoDaEspera } from "@/lib/ticketeria/espera";
+import { lerLayout } from "@/lib/ticketeria/mapa-layout";
 import { alternarEscolha, comCorredor, comEscolhidos, lerMapaDaSessao, rotuloDoLugar, type LugarEscolhido, type MapaDaSessao } from "@/lib/ticketeria/mapa";
 import { mascararWhatsapp } from "@/lib/ticketeria/novidades";
 import { origemDaPagina } from "@/lib/ticketeria/origem";
@@ -246,7 +247,7 @@ export function CompraDaSessao({ vitrine, cupomInicial = null }: { vitrine: Vitr
   if (passo === "lugares" && ingressoDosLugares) {
     const max = Math.min(ingressoDosLugares.limite, disponivelNasFaixas(ingressoDosLugares.faixas));
     return <TelaEscolherLugares site={site} evento={evento} ingresso={{ nome: ingressoDosLugares.nome, preco_centavos: ingressoDosLugares.faixas[0]?.preco_centavos ?? 0 }} setor={ingressoDosLugares.numerado?.setor ?? ""}
-      fileiras={mapa ? comEscolhidos(comCorredor(mapa.fileiras, mapa.corredor), escolhaAtual) : []} escolhidos={escolhaAtual.map(l => rotuloDoLugar(l.fileira, l.numero))} max={max} totalCentavos={totalNasFaixas(ingressoDosLugares.faixas, escolhaAtual.length) ?? 0}
+      fileiras={mapa ? comEscolhidos(comCorredor(mapa.fileiras, mapa.corredor), escolhaAtual) : []} layout={mapa ? lerLayout(mapa.layout) : null} escolhidos={escolhaAtual.map(l => rotuloDoLugar(l.fileira, l.numero))} max={max} totalCentavos={totalNasFaixas(ingressoDosLugares.faixas, escolhaAtual.length) ?? 0}
       ampliado={mapaAmpliado} carregando={carregandoMapa} erroDoMapa={mapaErro} onTentarDeNovo={() => void carregarMapa(ingressoDosLugares.id, escolhaAtual)} onAmpliar={() => setMapaAmpliado(v => !v)}
       onAlternar={(fileira, numero) => setEscolhaAtual(atual => alternarEscolha(atual, fileira, numero, max))} onVoltar={() => setPasso("escolher")}
       onConfirmar={() => { setLugares(l => ({ ...l, [ingressoDosLugares.id]: escolhaAtual })); setQuantidades(q => ({ ...q, [ingressoDosLugares.id]: escolhaAtual.length })); setPasso("escolher"); }} />;

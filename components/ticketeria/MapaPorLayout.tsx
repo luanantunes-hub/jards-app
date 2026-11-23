@@ -12,7 +12,7 @@ const PASSO = 28; // pixels de um passo (distância entre dois lugares) no taman
 const LADO = 0.84; // o lado do lugar, em passos
 const COM_NUMERO_ATE = 400; // acima disso o número do lugar não cabe e sai do desenho
 
-export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotuloDoMapa = "Mapa de lugares" }: {
+export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotuloDoMapa = "Mapa de lugares", ampliado = false }: {
   layout: Layout;
   /** O estado de cada lugar, pela `chaveDoLugar`; o que não está aqui é livre. */
   estados?: ReadonlyMap<string, EstadoDoAssento>;
@@ -21,6 +21,8 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
   modo: "comprador" | "produtor";
   onAlternar?: (lugar: { setor: string | null; fileira: string; numero: number }) => void;
   rotuloDoMapa?: string;
+  /** Lugares maiores, com rolagem para o lado; sem isso o mapa se ajusta à largura da tela. */
+  ampliado?: boolean;
 }) {
   const { lugares, caixa } = calcularLayout(layout);
   const folga = 0.8;
@@ -28,7 +30,8 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
   const comNumero = lugares.length <= COM_NUMERO_ATE;
   const p = layout.palco;
   return (
-    <svg viewBox={`${x0} ${y0} ${largura} ${altura}`} width="100%" style={{ maxWidth: largura * PASSO, height: "auto" }} role="group" aria-label={rotuloDoMapa} className="mx-auto block">
+    <div className={ampliado ? "overflow-x-auto pb-1" : ""}>
+    <svg viewBox={`${x0} ${y0} ${largura} ${altura}`} width={ampliado ? largura * PASSO * 1.35 : "100%"} style={{ maxWidth: ampliado ? undefined : largura * PASSO, height: "auto" }} role="group" aria-label={rotuloDoMapa} className="mx-auto block">
       {p && (
         <g aria-hidden="true">
           <rect x={p.x - p.largura / 2} y={p.y - p.altura / 2} width={p.largura} height={p.altura} rx={0.5} fill="rgba(0,0,0,.04)" stroke="rgba(0,0,0,.15)" strokeWidth={0.06} />
@@ -68,6 +71,7 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
         );
       })}
     </svg>
+    </div>
   );
 }
 

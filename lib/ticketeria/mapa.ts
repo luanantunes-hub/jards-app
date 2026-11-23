@@ -140,6 +140,8 @@ export function mensagemDoErroDoMapa(erro: { code?: string; message?: string }):
   if (m.includes("setor_com_vendas")) return "Este setor já tem ingressos vendidos sem lugar marcado para uma sessão que ainda vai acontecer. Os lugares numerados valem para setores sem vendas.";
   if (m.includes("lugares_excedidos")) return "Os ingressos deste setor oferecem mais lugares do que o mapa tem. Diminua as quantidades dos lotes ou aumente o mapa.";
   if (m.includes("setor_arquivado")) return "Esse setor está arquivado. Tire-o do arquivo antes de montar o mapa.";
+  if (m.includes("layout_inconsistente")) return "O desenho não bate com os lugares do mapa. Refaça o desenho e salve de novo.";
+  if (m.includes("layout_invalido")) return "O desenho do mapa não está no formato aceito.";
   if (m.includes("mapa_invalido")) return "O mapa não está no formato aceito: fileiras de 1 a 4 letras ou números, até 60 fileiras e 80 lugares por fileira.";
   return "Não foi possível salvar o mapa. Tente de novo.";
 }
@@ -147,11 +149,12 @@ export function mensagemDoErroDoMapa(erro: { code?: string; message?: string }):
 // ─── O mapa na hora de comprar ──────────────────────────────────────────────
 
 /** O mapa de um setor numerado numa sessão, como o comprador o vê: cada lugar livre ou ocupado (o bloqueado também aparece como ocupado). */
-export type MapaDaSessao = { setor: string; corredor: boolean; fileiras: FileiraDoMapa[] };
+/** `layout`: o layout do setor, como veio (confira com `lerLayout` de mapa-layout.ts antes de desenhar); ausente quando o setor é só a lista de fileiras. */
+export type MapaDaSessao = { setor: string; corredor: boolean; fileiras: FileiraDoMapa[]; layout?: unknown };
 
 /** A resposta de fn_ticketeria_mapa_da_sessao, conferida; null se veio algo que não se entende. */
 export function lerMapaDaSessao(resposta: unknown): MapaDaSessao | null {
-  const r = (resposta && typeof resposta === "object" ? resposta : {}) as { setor?: unknown; corredor?: unknown; fileiras?: unknown };
+  const r = (resposta && typeof resposta === "object" ? resposta : {}) as { setor?: unknown; corredor?: unknown; fileiras?: unknown; layout?: unknown };
   if (typeof r.setor !== "string" || !Array.isArray(r.fileiras)) return null;
   const fileiras: FileiraDoMapa[] = [];
   for (const bruta of r.fileiras) {
@@ -165,7 +168,7 @@ export function lerMapaDaSessao(resposta: unknown): MapaDaSessao | null {
     }
     fileiras.push({ nome: f.nome, assentos });
   }
-  return { setor: r.setor, corredor: r.corredor !== false, fileiras };
+  return { setor: r.setor, corredor: r.corredor !== false, fileiras, ...(r.layout && typeof r.layout === "object" ? { layout: r.layout } : {}) };
 }
 
 /** "C7": o lugar como a pessoa o vê. */

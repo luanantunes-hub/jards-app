@@ -318,6 +318,7 @@ export type BancoDaTicketeria = {
           arquivado: boolean;
           created_at: string;
           updated_at: string;
+          layout: Json | null;
         };
         Insert: {
           id?: string;
@@ -332,6 +333,7 @@ export type BancoDaTicketeria = {
           arquivado?: boolean;
           created_at?: string;
           updated_at?: string;
+          layout?: Json | null;
         };
         Update: {
           id?: string;
@@ -346,6 +348,7 @@ export type BancoDaTicketeria = {
           arquivado?: boolean;
           created_at?: string;
           updated_at?: string;
+          layout?: Json | null;
         };
         Relationships: [
           {
@@ -3379,6 +3382,10 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_mapa_do_setor: {
         Args: { p_setor: string };
+        Returns: Json;
+      };
+      fn_ticketeria_salvar_mapa_com_layout: {
+        Args: { p_setor: string; p_fileiras: Json; p_corredor: boolean; p_layout: Json | null };
         Returns: Json;
       };
       fn_ticketeria_reservar_com_lugares: {

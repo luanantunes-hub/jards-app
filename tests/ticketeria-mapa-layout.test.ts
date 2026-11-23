@@ -4,10 +4,11 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MapaPorLayout, chaveDoLugar } from "../components/ticketeria/MapaPorLayout";
 import {
-  blocoNovo, calcularLayout, conferirLayout, layoutDoMapa, modeloCorredorCentral, modeloLeque, modeloTresBlocos, numerosDaFileira, palcoAcima,
+  blocoNovo, calcularLayout, comEstadosDoMapa, conferirLayout, layoutDoMapa, lerLayout, mapaDoLayout, modeloCorredorCentral, modeloLeque, modeloTresBlocos, numerosDaFileira, palcoAcima,
   type Layout,
 } from "../lib/ticketeria/mapa-layout";
-import { comCorredor, mapaNovo, type FileiraDoMapa } from "../lib/ticketeria/mapa";
+import { alternarBloqueio, comCorredor, comTipoNoLugar, lerMapaDaSessao, mapaNovo, paraSalvar, mensagemDoErroDoMapa, type FileiraDoMapa } from "../lib/ticketeria/mapa";
+import { TelaEscolherLugares } from "../components/ticketeria/AssentosView";
 
 const perto = (a: number, b: number, folga = 1e-3) => assert.ok(Math.abs(a - b) <= folga, `${a} deveria estar perto de ${b}`);
 const layoutDe = (...blocos: ReturnType<typeof blocoNovo>[]): Layout => ({ versao: 1, blocos, palco: null });
@@ -181,4 +182,88 @@ test("o desenho: um botão por lugar, com o estado dito em palavras; ocupado nã
   assert.ok(html.includes("PALCO"));
   const doProdutor = renderToStaticMarkup(createElement(MapaPorLayout, { layout, estados, modo: "produtor" }));
   assert.equal((doProdutor.match(/aria-disabled="true"/g) ?? []).length, 1, "o produtor ainda toca no bloqueado, para liberar");
+});
+
+const idaEVolta = (l: Layout) => lerLayout(JSON.parse(JSON.stringify(l)));
+
+test("o layout vai ao banco e volta igual (JSON), para os três modelos e para o mapa de hoje", () => {
+  for (const l of [modeloCorredorCentral(6, 12), modeloTresBlocos(5, 6, 10), modeloLeque(6, 10, 2, 12), layoutDoMapa(comCorredor(mapaNovo(4, 10), true))!]) {
+    assert.deepEqual(idaEVolta(l), l);
+  }
+});
+
+test("lerLayout devolve null para o que não se desenha: formato, limites do banco e erros de desenho", () => {
+  const ok = modeloCorredorCentral(3, 8);
+  assert.notEqual(idaEVolta(ok), null);
+  const troca = (parcial: Record<string, unknown>) => ({ ...ok, blocos: [{ ...ok.blocos[0], ...parcial }] });
+  for (const lixo of [null, undefined, "texto", 7, [], {}, { versao: 2, blocos: ok.blocos, palco: null }, { versao: 1, blocos: [], palco: null }, { versao: 1, palco: null }]) assert.equal(lerLayout(lixo), null, JSON.stringify(lixo));
+  assert.equal(lerLayout(troca({ setor: "plateia" })), null, "bloco com setor");
+  assert.equal(lerLayout(troca({ raio: 0 })), null, "raio zero");
+  assert.equal(lerLayout(troca({ angulo: 400 })), null, "ângulo fora");
+  assert.equal(lerLayout(troca({ x: "dez" })), null, "posição que não é número");
+  assert.equal(lerLayout(troca({ numeracao: "x" })), null, "numeração que não existe");
+  assert.equal(lerLayout(troca({ primeiroNumero: 0 })), null);
+  assert.equal(lerLayout(troca({ fileiras: [{ nome: "a", lugares: 3 }] })), null, "nome de fileira em minúscula (erro de desenho)");
+  assert.equal(lerLayout(troca({ fileiras: [{ nome: "A", lugares: 81 }] })), null, "mais de 80 lugares");
+  assert.equal(lerLayout(troca({ corredores: [0] })), null, "corredor em lugar nenhum");
+  assert.equal(lerLayout({ ...ok, palco: { x: 0, y: 0, largura: 8, altura: 1.6, rotulo: "" } }), null, "palco sem nome");
+  const emCima = { ...ok, blocos: [ok.blocos[0], { ...ok.blocos[0], id: "b2", x: 1, primeiroNumero: 20 }] };
+  assert.equal(lerLayout(emCima), null, "blocos um em cima do outro");
+});
+
+test("mapaDoLayout: as fileiras e os lugares do layout, na ordem, todos livres (o que o banco recebe como mapa)", () => {
+  const tres = modeloTresBlocos(3, 2, 4);
+  const mapa = mapaDoLayout(tres);
+  assert.deepEqual(mapa.map(f => f.nome), ["A", "B", "C"]);
+  for (const f of mapa) {
+    assert.deepEqual(f.assentos.map(a => a.numero), [1, 2, 3, 4, 5, 6, 7, 8], "a fileira passa pelos três blocos e a contagem continua");
+    assert.ok(f.assentos.every(a => a.estado === "livre"));
+  }
+  const centro = mapaDoLayout(layoutDoMapa([{ nome: "A", assentos: [1, 2, 3, 4, 5].map(n => ({ numero: n, estado: "livre" as const })) }])!);
+  assert.deepEqual(centro[0].assentos.map(a => a.numero), [1, 2, 3, 4, 5]);
+  // O mapa e o layout falam dos mesmos lugares: é o que o banco confere (as quantidades por fileira).
+  assert.deepEqual(paraSalvar(mapa).map(f => [f.nome, f.assentos.length]), [["A", 8], ["B", 8], ["C", 8]]);
+});
+
+test("comEstadosDoMapa: o bloqueio, o lugar vendido e o tipo do mapa antigo passam para o novo, pela fileira e pelo número", () => {
+  let antigo = alternarBloqueio(mapaNovo(2, 4), "A", 2);
+  antigo = comTipoNoLugar(antigo, "B", 3, "cadeira_rodas");
+  const vendido = antigo.map(f => ({ ...f, assentos: f.assentos.map(a => (f.nome === "B" && a.numero === 4 ? { ...a, estado: "ocupado" as const } : a)) }));
+  const novo = comEstadosDoMapa(mapaDoLayout(modeloCorredorCentral(3, 4)), vendido);
+  const lugar = (f: string, n: number) => novo.find(x => x.nome === f)!.assentos.find(a => a.numero === n)!;
+  assert.equal(lugar("A", 2).estado, "bloqueado");
+  assert.equal(lugar("B", 3).tipo, "cadeira_rodas");
+  assert.equal(lugar("B", 4).estado, "ocupado");
+  assert.equal(lugar("A", 1).estado, "livre");
+  assert.equal(lugar("C", 1).estado, "livre", "a fileira nova começa livre");
+  assert.equal(lugar("C", 1).tipo, undefined);
+});
+
+test("o mapa da sessão leva o layout como veio; quem o lê confere com lerLayout", () => {
+  const layout = modeloCorredorCentral(2, 6);
+  const sessao = lerMapaDaSessao({ setor: "Plateia", corredor: true, fileiras: [{ nome: "A", assentos: [{ numero: 1, estado: "livre" }] }], layout: JSON.parse(JSON.stringify(layout)) });
+  assert.deepEqual(lerLayout(sessao?.layout), layout);
+  assert.equal("layout" in (lerMapaDaSessao({ setor: "P", corredor: true, fileiras: [] }) ?? {}), false, "sem layout, o mapa é o de antes");
+  assert.equal(lerLayout(lerMapaDaSessao({ setor: "P", corredor: true, fileiras: [], layout: "lixo" })?.layout), null);
+});
+
+test("as frases dos erros do layout", () => {
+  assert.match(mensagemDoErroDoMapa({ message: "layout_inconsistente" }), /não bate com os lugares/);
+  assert.match(mensagemDoErroDoMapa({ message: "layout_invalido" }), /não está no formato/);
+});
+
+test("a tela de escolher lugares: com layout desenha os blocos (SVG) com os lugares ocupados e escolhidos; sem layout, a lista de fileiras de sempre", () => {
+  const layout = modeloTresBlocos(3, 2, 4);
+  const fileiras = mapaDoLayout(layout).map(f => ({ ...f, assentos: f.assentos.map(a => (f.nome === "A" && a.numero === 1 ? { ...a, estado: "ocupado" as const } : f.nome === "B" && a.numero === 5 ? { ...a, estado: "selecionado" as const } : a)) }));
+  const evento = { titulo: "Hamlet", quando: "sáb., 29 nov. · 20h", local: "Teatro" };
+  const base = { site: { titulo: "Cia" }, evento, ingresso: { nome: "Inteira", preco_centavos: 6000 }, setor: "Plateia", fileiras, escolhidos: ["B5"], max: 4, totalCentavos: 6000 };
+  const com = renderToStaticMarkup(createElement(TelaEscolherLugares, { ...base, layout }));
+  assert.ok(com.includes("<svg") && com.includes('aria-label="Mapa de lugares"'));
+  assert.ok(com.includes('aria-label="Fileira A, lugar 1, ocupado"') && com.includes('aria-label="Fileira B, lugar 5, escolhido"'));
+  assert.equal((com.match(/role="button"/g) ?? []).length, 24, "um botão por lugar: 3 fileiras x 8");
+  const sem = renderToStaticMarkup(createElement(TelaEscolherLugares, { ...base, layout: null }));
+  assert.equal(sem.includes("<svg"), false);
+  assert.ok(sem.includes('aria-label="Mapa de lugares"') === true, "a lista de fileiras tem o mesmo nome de grupo");
+  const ampliado = renderToStaticMarkup(createElement(TelaEscolherLugares, { ...base, layout, ampliado: true }));
+  assert.ok(ampliado.includes("overflow-x-auto") && ampliado.includes("Ver o mapa inteiro"));
 });
