@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { faltaAtraso, ingressosPorSemana, lerPedidoDoCalendario, montarCalendario, pesosDoAtraso, planilhaDoCalendario, porQueAssim, SEMANAS_DO_ATRASO } from "../lib/ticketeria/modelo-calendario";
+import { faltaAtraso, pesosDaProximidade, PRUDENCIA_DA_PROXIMIDADE, ingressosPorSemana, lerPedidoDoCalendario, montarCalendario, pesosDoAtraso, planilhaDoCalendario, porQueAssim, SEMANAS_DO_ATRASO } from "../lib/ticketeria/modelo-calendario";
 import type { CanalComCurva } from "../lib/ticketeria/modelo-recomendacao";
 
 /** Um canal de exemplo: curva côncava de 0 até `fim` reais por semana. */
@@ -117,4 +117,18 @@ test("o calendário para quando os anúncios já venderiam os lugares que faltam
   const lotado = montarCalendario([META, GOOGLE], { ...PEDIDO, lugaresRestantes: 0 })!;
   assert.equal(lotado.totalCentavos, 0);
   assert.equal(lotado.parouNaLotacao, true);
+});
+
+test("a prudência com a proximidade puxa um pouco do gasto para perto da sessão, sem mudar o total", () => {
+  const w = pesosDaProximidade(6);
+  assert.ok(Math.abs(w.reduce((s, x) => s + x, 0) / 6 - 1) < 1e-9, "média 1");
+  assert.ok(w[5] > w[0], "a semana da sessão pesa mais");
+  assert.deepEqual(pesosDaProximidade(6, 0), [1, 1, 1, 1, 1, 1]);
+  assert.ok(PRUDENCIA_DA_PROXIMIDADE > 0 && PRUDENCIA_DA_PROXIMIDADE < 1);
+  const segundaMetade = (c: NonNullable<ReturnType<typeof montarCalendario>>) => c.semanas.slice(3).reduce((s, x) => s + x.totalCentavos, 0);
+  const puro = montarCalendario([META, GOOGLE], PEDIDO, 0)!;
+  const prudente = montarCalendario([META, GOOGLE], PEDIDO)!;
+  assert.equal(prudente.totalCentavos, puro.totalCentavos);
+  assert.ok(segundaMetade(prudente) >= segundaMetade(puro), `${segundaMetade(prudente)} x ${segundaMetade(puro)}`);
+  assert.ok(prudente.comparacao.ingressos >= puro.comparacao.ingressos * 0.97, "pelo modelo, quase não custa");
 });

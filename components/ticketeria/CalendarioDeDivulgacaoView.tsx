@@ -196,7 +196,8 @@ export function CalendarioDeDivulgacao({ plano, canais, semanasDoModelo, onAjust
           <div className="mt-2 space-y-1 text-[0.78rem] leading-relaxed text-[#282525]">
             {usados.map(c => <p key={c.canal}>{rotuloDoCanalDeGasto(c.canal)}: <span className="text-black/50">{porQueAssim(c, cal.semanas.map(s => s.porCanal[c.canal] ?? 0))}</span></p>)}
           </div>
-          <p className="mt-2 text-[0.75rem] leading-relaxed text-black/50">Se a sessão lotar antes, pare de gastar: o calendário não sabe o que você vende fora dos anúncios.</p>
+          <p className="mt-2 text-[0.75rem] leading-relaxed text-black/50">O calendário deixa um pouco mais perto da data do que a conta pura do modelo manda: o anúncio pode render mais perto da sessão, e esse cuidado custa pouco se não for assim.</p>
+          <p className="mt-1.5 text-[0.75rem] leading-relaxed text-black/50">Se a sessão lotar antes, pare de gastar: o calendário não sabe o que você vende fora dos anúncios.</p>
         </div>
       </div>
       <div className="rounded-xl border bg-white px-5 py-4" style={{ borderColor: BORDA }}>

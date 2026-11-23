@@ -20,6 +20,19 @@ export const PASSO_MINIMO_CENTAVOS = 5000;
 export const MAX_DEGRAUS = 400;
 /** A janela de "tudo no fim" da comparação. */
 export const SEMANAS_DO_FIM = 2;
+/**
+ * A PRUDÊNCIA com a proximidade da sessão. O modelo supõe que o anúncio rende igual em qualquer semana, mas há sinais de que rende mais perto da data (Kang, 2019). O estudo em
+ * modelo/ESTUDO-DA-PROXIMIDADE.md mostrou que montar o calendário como se o anúncio rendesse um pouco mais perto da data (o peso da semana é 1 + K × proximidade, com K = 0,5) quase não custa
+ * se o modelo estiver certo (perda média de 0,2% a 2,5%) e corta o pior caso de 35% para menos de 10% se não estiver. Só a ESCOLHA do calendário usa isso: as previsões na tela são as do modelo.
+ */
+export const PRUDENCIA_DA_PROXIMIDADE = 0.5;
+export const HORIZONTE_DA_PROXIMIDADE = 8;
+/** O peso de cada uma das S semanas na escolha do calendário: 1 + K × proximidade (1 na semana da sessão, caindo até 0 oito semanas antes), com média 1. */
+export function pesosDaProximidade(S: number, k: number = PRUDENCIA_DA_PROXIMIDADE): number[] {
+  const m = Array.from({ length: S }, (_, t) => { const d = S - 1 - t; return 1 + k * (d <= HORIZONTE_DA_PROXIMIDADE ? 1 - d / (HORIZONTE_DA_PROXIMIDADE + 1) : 0); });
+  const media = m.reduce((s, x) => s + x, 0) / S;
+  return m.map(x => x / media);
+}
 
 export type SemanaDoCalendario = { inicio: string; porCanal: Record<string, number>; totalCentavos: number; daSessao: boolean };
 export type ComparacaoDoCalendario = { ingressos: number; igual: number; noFim: number };
@@ -83,7 +96,7 @@ export const faltaAtraso = (canais: CanalComCurva[]): boolean => canais.length >
  * Divide o orçamento entre (canal, semana), de degrau em degrau, sempre na casa em que o próximo degrau vende mais até a sessão. As curvas são côncavas e o atraso é uma média, então a soma
  * é côncava e este jeito acha (quase) a melhor divisão. Cada casa vai até o fim da curva do canal; o que não couber fica como sobra.
  */
-export function montarCalendario(canaisBrutos: CanalComCurva[], pedido: PedidoDoCalendario): Calendario | null {
+export function montarCalendario(canaisBrutos: CanalComCurva[], pedido: PedidoDoCalendario, prudencia: number = PRUDENCIA_DA_PROXIMIDADE): Calendario | null {
   const leitura = lerPedidoDoCalendario(pedido);
   const canais = canaisDoCalendario(canaisBrutos);
   if (!leitura.ok || canais.length === 0) return null;
@@ -92,6 +105,7 @@ export function montarCalendario(canaisBrutos: CanalComCurva[], pedido: PedidoDo
   const gastos: Record<string, number[]> = Object.fromEntries(canais.map(c => [c.canal, Array(S).fill(0)]));
   const pesos: Record<string, number[]> = Object.fromEntries(canais.map(c => [c.canal, pesosDoAtraso(c.atraso ?? 0)]));
   const equiv: Record<string, number[]> = Object.fromEntries(canais.map(c => [c.canal, Array(S).fill(0)]));
+  const prox = pesosDaProximidade(S, prudencia);
   let restante = Math.floor(leitura.totalCentavos / passo) * passo;
   const pedidoArredondado = restante;
   // O teto: os anúncios não vendem mais do que os lugares que faltam (e parte deles ainda vende sem anúncio, então o teto é generoso).
@@ -100,19 +114,20 @@ export function montarCalendario(canaisBrutos: CanalComCurva[], pedido: PedidoDo
   let parouNaLotacao = false;
   while (restante >= passo) {
     let melhor: { c: CanalComCurva; t: number } | null = null;
-    let ganho = 1e-9;
+    let ganho = 1e-9, ganhoDoModelo = 0;
     for (const c of canais) {
       const fim = limiteDaCurva(c), w = pesos[c.canal], e = equiv[c.canal];
       for (let t = 0; t < S; t++) {
         if (gastos[c.canal][t] + passo > fim) continue;
-        let d = 0;
-        for (let u = t; u < S && u - t < SEMANAS_DO_ATRASO; u++) d += ingressosNoGasto(c, e[u] + w[u - t] * passo) - ingressosNoGasto(c, e[u]);
-        if (d > ganho) { ganho = d; melhor = { c, t }; }
+        // A escolha pesa cada semana pela prudência com a proximidade; o teto de lugares conta o ganho do modelo, sem peso.
+        let d = 0, dm = 0;
+        for (let u = t; u < S && u - t < SEMANAS_DO_ATRASO; u++) { const x = ingressosNoGasto(c, e[u] + w[u - t] * passo) - ingressosNoGasto(c, e[u]); d += x * prox[u]; dm += x; }
+        if (d > ganho) { ganho = d; ganhoDoModelo = dm; melhor = { c, t }; }
       }
     }
     if (!melhor) break; // as curvas acabaram ou ficaram planas
-    if (vendidos + ganho > teto) { parouNaLotacao = true; break; }
-    vendidos += ganho;
+    if (vendidos + ganhoDoModelo > teto) { parouNaLotacao = true; break; }
+    vendidos += ganhoDoModelo;
     const { c, t } = melhor;
     gastos[c.canal][t] += passo;
     for (let u = t; u < S && u - t < SEMANAS_DO_ATRASO; u++) equiv[c.canal][u] += pesos[c.canal][u - t] * passo;
