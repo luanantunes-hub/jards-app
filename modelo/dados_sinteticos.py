@@ -23,7 +23,7 @@ def _adstock(x: np.ndarray, a: float) -> np.ndarray:
 VERDADE_DA_MARCA = {"meta-ads-marca": {"beta": 22.0, "adstock": 0.85, "escala": 900.0, "lam": 1.5}}
 
 
-def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False, com_controles: bool = False, variacao: float = 1.0, com_marca: bool = False, ferias: float | None = None, curva_da_proximidade: list[float] | None = None) -> tuple[list[dict], dict[str, float]]:
+def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False, com_controles: bool = False, variacao: float = 1.0, com_marca: bool = False, ferias: float | None = None, curva_da_proximidade: list[float] | None = None, lotacao: float | None = None) -> tuple[list[dict], dict[str, float]]:
     """Devolve a tabela semanal (no formato do Jards, centavos) e a parte verdadeira de cada canal nas vendas, em % (mais a base)."""
     rng = np.random.default_rng(semente)
     n = semanas
@@ -70,6 +70,12 @@ def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, g
             controles["ferias"] = np.array([de_ferias(d) for d in dias])
             efeitos["ferias"] = ferias * controles["ferias"]
     y = base + sum(contribuicoes.values()) + sum(efeitos.values()) + rng.normal(0, 3, n)
+    if lotacao is not None:
+        # A LOTAÇÃO: a venda da semana não passa de `lotacao` ingressos (as sessões esgotam). O que a procura passaria disso some, e a semana fica marcada como esgotada
+        # (`esgotou`, a mesma coluna que o Jards calcula). A verdade de cada canal continua a da procura (sem o teto): é o que o anúncio rende quando há lugar.
+        esgotada = y > lotacao
+        y = np.minimum(y, lotacao)
+        controles = {**controles, "esgotou": esgotada.astype(float)}
     total = float(y.sum())
     verdade = {c: float(v.sum()) / total * 100 for c, v in contribuicoes.items()}
     verdade["base"] = float((y - sum(contribuicoes.values())).sum()) / total * 100

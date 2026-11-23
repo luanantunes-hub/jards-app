@@ -3422,6 +3422,10 @@ export type BancoDaTicketeria = {
         Args: { p_token: string };
         Returns: boolean;
       };
+      fn_ticketeria_avisar: {
+        Args: { p_org: string; p_chave: string; p_titulo: string; p_mensagem: string; p_link: string; p_prioridade: string; p_entidade: string; p_entidade_id: string; p_dedupe: string };
+        Returns: undefined;
+      };
       fn_ticketeria_emails_do_periodo: {
         Args: { p_loja: string; p_desde: string };
         Returns: number;

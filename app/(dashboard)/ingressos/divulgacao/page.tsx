@@ -11,6 +11,8 @@ import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from 
 import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
 import { DatasDePicoSheet } from "@/components/ticketeria/DatasDePicoSheet";
 import { SimularOrcamentoSheet } from "@/components/ticketeria/SimularOrcamentoSheet";
+import { AvisosDeEsgotamento } from "@/components/ticketeria/EsgotamentoView";
+import type { EventoEsgotado, EventoQuaseEsgotado } from "@/lib/ticketeria/esgotamento";
 import { CampanhasDaLoja, type CampanhaDaTela, type EventoDaTela } from "@/components/ticketeria/CampanhasView";
 import { CalendarioDeDivulgacao, PlanejarDivulgacaoSheet, PreviaDoCalendario, type PlanoDoCalendario } from "@/components/ticketeria/CalendarioDeDivulgacaoView";
 import { faltaAtraso } from "@/lib/ticketeria/modelo-calendario";
@@ -261,6 +263,20 @@ export default function DivulgacaoPage() {
     try { await fetch(`/api/ticketeria/lojas/${estado.lojaId}/historico/${id}`, { method: "DELETE" }); } finally { setDesfazendo(null); setVersao(v => v + 1); }
   }
 
+  // Os avisos de esgotamento (aba Ações e gasto): anúncio gastando com o evento esgotado e evento quase esgotado.
+  const [esgotamento, setEsgotamento] = useState<{ esgotados: EventoEsgotado[]; quase: EventoQuaseEsgotado[] } | null>(null);
+  const lojaDoEsgotamento = estado?.lojaId ?? null;
+  useEffect(() => {
+    if (aba !== "acoes" || !lojaDoEsgotamento) return;
+    let ativo = true;
+    void (async () => {
+      try {
+        const r = await fetch(`/api/ticketeria/lojas/${lojaDoEsgotamento}/esgotamento`, { cache: "no-store" });
+        if (r.ok && ativo) setEsgotamento((await r.json()) as { esgotados: EventoEsgotado[]; quase: EventoQuaseEsgotado[] });
+      } catch { /* sem aviso, a aba segue normal */ }
+    })();
+    return () => { ativo = false; };
+  }, [aba, lojaDoEsgotamento]);
   const lojaDasCampanhas = estado?.lojaId ?? null;
   useEffect(() => {
     if (aba !== "conexoes" || !lojaDasCampanhas) return;
@@ -358,8 +374,8 @@ export default function DivulgacaoPage() {
               ? <HistoricoDaLoja importacoes={historico.importacoes} semanas={historico.semanas} desfazendo={desfazendo} onDesfazer={id => void desfazerImportacao(id)} onImportar={() => { setErroDeImportar(null); setFolhaDeImportar(true); }} />
               : aba === "conexoes"
               ? <div className="space-y-6"><ConexoesDaLoja estados={conexoes} aviso={avisoMidia} ocupado={ocupadoMidia} onConectar={conectar} onEscolherConta={p => void abrirEscolha(p)} onLer={p => void ler(p)} onDesconectar={p => void desconectar(p)} />{campanhas && <CampanhasDaLoja campanhas={campanhas.campanhas} eventos={campanhas.eventos} salvando={salvandoCampanhas} erro={erroDasCampanhas} aviso={avisoDasCampanhas} onSalvar={salvarCampanhas} />}</div>
-              : <AcoesDaLoja acoes={dados.acoes} por_dia={dados.por_dia} hoje={dados.hoje} onRegistrar={() => abrirNova(dados.hoje)}
-                  onAbrir={id => { const a = dados.acoes.find(x => x.id === id); if (a) { setAcaoErro(null); setAcao({ id, valores: { nome: a.nome, canal: a.canal, inicio: a.inicio, fim: a.fim, gasto: gastoParaCampo(a.gasto_centavos) } }); } }} />}
+              : <div className="space-y-4">{esgotamento && <AvisosDeEsgotamento esgotados={esgotamento.esgotados} quase={esgotamento.quase} />}<AcoesDaLoja acoes={dados.acoes} por_dia={dados.por_dia} hoje={dados.hoje} onRegistrar={() => abrirNova(dados.hoje)}
+                  onAbrir={id => { const a = dados.acoes.find(x => x.id === id); if (a) { setAcaoErro(null); setAcao({ id, valores: { nome: a.nome, canal: a.canal, inicio: a.inicio, fim: a.fim, gasto: gastoParaCampo(a.gasto_centavos) } }); } }} /></div>}
           </div>
         )}
       </ListContent>
