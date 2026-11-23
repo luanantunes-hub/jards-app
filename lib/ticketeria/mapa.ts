@@ -4,7 +4,8 @@
 
 import { ehTipoDeLugar, type TipoDeLugar } from "@/lib/ticketeria/mapa-acessibilidade";
 
-export type EstadoDoAssento = "livre" | "ocupado" | "selecionado" | "bloqueado";
+/** `reservado`: lugar de acessibilidade que quem compra, sem declarar a necessidade, ainda não pode escolher (art. 23-A); só aparece no mapa do comprador. */
+export type EstadoDoAssento = "livre" | "ocupado" | "selecionado" | "bloqueado" | "reservado";
 /** `tipo`: o tipo do lugar (cadeira de rodas, mobilidade reduzida...). Ausente = comum: o banco só traz quando não é comum, e quem não o manda ao salvar não apaga o que está gravado. */
 export type AssentoDoMapa = { numero: number; estado: EstadoDoAssento; tipo?: TipoDeLugar };
 /** `vaos`: depois de quais lugares (pelo número) há um corredor. */
@@ -163,7 +164,7 @@ export function lerMapaDaSessao(resposta: unknown): MapaDaSessao | null {
     const assentos: AssentoDoMapa[] = [];
     for (const x of f.assentos) {
       const a = (x && typeof x === "object" ? x : {}) as { numero?: unknown; estado?: unknown; tipo?: unknown };
-      if (typeof a.numero !== "number" || !Number.isInteger(a.numero) || (a.estado !== "livre" && a.estado !== "ocupado")) return null;
+      if (typeof a.numero !== "number" || !Number.isInteger(a.numero) || (a.estado !== "livre" && a.estado !== "ocupado" && a.estado !== "reservado")) return null;
       assentos.push({ numero: a.numero, estado: a.estado, ...(ehTipoDeLugar(a.tipo) && a.tipo !== "comum" ? { tipo: a.tipo } : {}) });
     }
     fileiras.push({ nome: f.nome, assentos });

@@ -23,7 +23,7 @@ test("CPF e CNPJ: só com os dígitos verificadores certos", () => {
 test("o corpo da compra: lido, aparado e conferido", () => {
   const r = lerCorpoDaCompra(bom);
   assert.ok(r.ok);
-  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: "pix", parcelas: 1, cupom: null, lugares: [], origem: null, novidades: null });
+  if (r.ok) assert.deepEqual(r.corpo, { sessao_id: SESSAO, itens: [{ ingresso_id: INGRESSO, quantidade: 2 }], nome: "Rita Teste", email: "rita@teste.com", documento: "52998224725", termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: "pix", parcelas: 1, cupom: null, lugares: [], acessibilidade: false, origem: null, novidades: null });
   const ruim = (mudanca: object) => lerCorpoDaCompra({ ...bom, ...mudanca });
   for (const [mudanca, problema] of [
     [{ sessao_id: "x" }, "sessão"], [{ itens: [] }, "ingressos"], [{ itens: "x" }, "ingressos"],
@@ -288,4 +288,13 @@ test("o aceite de novidades: começa desmarcado, só vale com a marca, guarda o 
   assert.equal(compra.situacao, "aguardando_pagamento", "falhar em guardar o aceite não derruba a compra");
   assert.equal(quebrada.chamadas.erros.length, 1);
   assert.equal(quebrada.chamadas.cobrancas.length, 1);
+});
+
+test("a declaração de acessibilidade: só `true` vale; qualquer outra coisa é não declarar", () => {
+  const com = lerCorpoDaCompra({ ...bom, acessibilidade: true });
+  assert.ok(com.ok && com.corpo.acessibilidade === true);
+  for (const valor of [false, "true", "sim", 1, null, undefined, {}]) {
+    const r = lerCorpoDaCompra({ ...bom, acessibilidade: valor });
+    assert.ok(r.ok && r.corpo.acessibilidade === false, String(valor));
+  }
 });

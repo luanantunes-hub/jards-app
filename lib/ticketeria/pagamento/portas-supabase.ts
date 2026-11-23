@@ -130,8 +130,8 @@ export function portasDaCompraDoSupabase(admin: SupabaseClient<Database>, config
       return { chave, aprovada: conta.situacao === "aprovada" };
     },
     async reservar(corpo: CorpoDaCompra, minutos) {
-      // Sempre por esta função: é ela que exige os lugares num setor numerado (não dá para comprar o ingresso sem escolher o lugar).
-      const { data, error } = await ticketeria.rpc("fn_ticketeria_reservar_com_lugares", { p_sessao: corpo.sessao_id, p_itens: corpo.itens as unknown as Json, p_nome: corpo.nome, p_email: corpo.email, p_minutos: minutos, p_codigo: corpo.cupom, p_lugares: corpo.lugares as unknown as Json });
+      // Sempre por esta função: é ela que exige os lugares num setor numerado (não dá para comprar o ingresso sem escolher o lugar) e que aplica a regra dos lugares reservados de acessibilidade (art. 23-A).
+      const { data, error } = await ticketeria.rpc("fn_ticketeria_reservar_com_declaracao", { p_sessao: corpo.sessao_id, p_itens: corpo.itens as unknown as Json, p_nome: corpo.nome, p_email: corpo.email, p_minutos: minutos, p_codigo: corpo.cupom, p_lugares: corpo.lugares as unknown as Json, p_declarou: corpo.acessibilidade });
       if (error) throw new ErroDaCompra("reserva_recusada", mensagemDoErroDaReserva(error));
       const pedido = lerPedidoReservado(data);
       if (!pedido) throw new Error("resposta inesperada do banco ao reservar");

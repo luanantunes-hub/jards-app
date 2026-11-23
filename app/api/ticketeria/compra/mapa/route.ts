@@ -1,4 +1,4 @@
-// GET /api/ticketeria/compra/mapa?sessao={id}&ingresso={id}: o mapa de lugares de um ingresso de setor numerado numa sessão, para quem compra (sem login).
+// GET /api/ticketeria/compra/mapa?sessao={id}&ingresso={id}[&acessivel=1]: o mapa de lugares de um ingresso de setor numerado numa sessão, para quem compra (sem login).
 //
 //   → 200 { setor, corredor, fileiras: [{ nome, assentos: [{ numero, estado: "livre" | "ocupado", tipo? }] }], layout? }   (o lugar bloqueado aparece como ocupado; `tipo` só quando não é comum;
 //           `layout` só quando o setor tem um layout que se desenha: formato e limites conferidos aqui, e a tela confere de novo)
@@ -10,6 +10,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { lerMapaDaSessao } from "@/lib/ticketeria/mapa";
+import { marcarReservados } from "@/lib/ticketeria/mapa-reserva";
 import { lerLayout } from "@/lib/ticketeria/mapa-layout";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,18 @@ export async function GET(req: NextRequest) {
   }
   const mapa = lerMapaDaSessao(data);
   if (!mapa) return resposta({ error: "sem_mapa" }, 404);
-  const { layout: bruto, ...resto } = mapa;
+  // Os lugares reservados de acessibilidade (art. 23-A): sem a declaração (`acessivel=1`) e com a reserva do setor ainda de pé, aparecem como `reservado`. A conferência de verdade é do banco ao reservar.
+  const declarou = req.nextUrl.searchParams.get("acessivel") === "1";
+  const temReservado = mapa.fileiras.some(f => f.assentos.some(a => a.tipo === "cadeira_rodas" || a.tipo === "mobilidade_reduzida" || a.tipo === "obeso"));
+  let fileiras = mapa.fileiras;
+  if (temReservado && !declarou) {
+    const ticketeria = clienteDaTicketeria(createAdminClient());
+    const { data: ing } = await ticketeria.from("ticketeria_ingressos").select("setor_id").eq("id", ingresso).maybeSingle();
+    const { data: reserva } = ing ? await ticketeria.rpc("fn_ticketeria_reserva_do_setor", { p_sessao: sessao, p_setor: ing.setor_id }) : { data: null };
+    const liberada = !!reserva && typeof reserva === "object" && !Array.isArray(reserva) && (reserva as { liberada?: unknown }).liberada === true;
+    fileiras = marcarReservados(mapa.fileiras, { declarou: false, liberada });
+  }
+  const { layout: bruto, ...resto } = { ...mapa, fileiras };
   const layout = lerLayout(bruto);
   return resposta(layout ? { ...resto, layout } : resto, 200);
 }

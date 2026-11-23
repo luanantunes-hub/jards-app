@@ -150,12 +150,12 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
         const tipo = tipos?.get(chaveDoLugar(l.setor, l.fileira, l.numero)) ?? "comum";
         const selo = tipo === "comum" ? null : SELO_DO_TIPO[tipo];
         const nome = `Fileira ${l.fileira}, lugar ${l.numero}${tipo === "comum" ? "" : `, ${TIPO_CURTO[tipo]}`}`;
-        const desligado = estado === "ocupado" || (modo === "comprador" && estado === "bloqueado");
-        const preenchimento = estado === "selecionado" ? "#282525" : estado === "ocupado" ? "rgba(0,0,0,.09)" : estado === "bloqueado" ? "rgba(0,0,0,.05)" : "#fff";
-        const borda = estado === "selecionado" || estado === "ocupado" ? "none" : "rgba(0,0,0,.3)";
-        const texto = estado === "selecionado" ? "#fff" : estado === "ocupado" ? "rgba(0,0,0,.25)" : "#282525";
+        const desligado = estado === "ocupado" || (modo === "comprador" && (estado === "bloqueado" || estado === "reservado"));
+        const preenchimento = estado === "selecionado" ? "#282525" : estado === "ocupado" ? "rgba(0,0,0,.09)" : estado === "bloqueado" ? "rgba(0,0,0,.05)" : estado === "reservado" ? "rgba(29,78,216,.07)" : "#fff";
+        const borda = estado === "selecionado" || estado === "ocupado" ? "none" : estado === "reservado" ? "rgba(29,78,216,.5)" : "rgba(0,0,0,.3)";
+        const texto = estado === "selecionado" ? "#fff" : estado === "ocupado" ? "rgba(0,0,0,.25)" : estado === "reservado" ? "rgba(29,78,216,.6)" : "#282525";
         const aoTocar = () => onAlternar?.({ setor: l.setor, fileira: l.fileira, numero: l.numero });
-        const rotulo = `${nome}, ${estado === "selecionado" ? "escolhido" : estado === "ocupado" ? "ocupado" : estado === "bloqueado" ? "bloqueado" : "livre"}`;
+        const rotulo = `${nome}, ${estado === "selecionado" ? "escolhido" : estado === "ocupado" ? "ocupado" : estado === "bloqueado" ? "bloqueado" : estado === "reservado" ? "reservado" : "livre"}`;
         return (
           <g
             key={`${l.bloco}|${l.fileira}|${l.numero}`}
@@ -169,7 +169,7 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
             onKeyDown={desenho || desligado ? undefined : e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); aoTocar(); } }}
             style={{ cursor: desenho ? "grab" : desligado ? "not-allowed" : "pointer" }}
           >
-            <rect x={l.x - LADO / 2} y={l.y - LADO / 2} width={LADO} height={LADO} rx={0.2} fill={preenchimento} stroke={borda} strokeWidth={0.05} strokeDasharray={estado === "bloqueado" ? "0.18 0.12" : undefined} />
+            <rect x={l.x - LADO / 2} y={l.y - LADO / 2} width={LADO} height={LADO} rx={0.2} fill={preenchimento} stroke={borda} strokeWidth={0.05} strokeDasharray={estado === "bloqueado" || estado === "reservado" ? "0.18 0.12" : undefined} />
             {comNumero && <text x={l.x} y={l.y} textAnchor="middle" dominantBaseline="central" fontSize={0.4} fill={texto} pointerEvents="none">{l.numero}</text>}
             {selo && (
               <g pointerEvents="none" aria-hidden="true">

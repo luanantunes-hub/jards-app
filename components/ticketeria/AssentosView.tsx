@@ -12,6 +12,7 @@ import { LegendaDeTiposDoMapa, MapaPorLayout, chaveDoLugar } from "@/components/
 import type { Layout } from "@/lib/ticketeria/mapa-layout";
 import { EditorDoLayout } from "@/components/ticketeria/EditorDoLayout";
 import { comAngulo, comPalcoAcima, empurrarVizinhos, moverBloco } from "@/lib/ticketeria/mapa-layout-editor";
+import { ehLugarReservado } from "@/lib/ticketeria/mapa-reserva";
 
 // Os assentos marcados da Ticketeria, desenhados: o produtor monta o mapa de um setor (fileiras, lugares, lugares bloqueados) e quem compra escolhe os lugares
 // no mapa. Só desenho: os dados e as ações chegam por props. Um setor "com lugares numerados" tem uma grade de fileiras (A, B, C...) com lugares 1, 2, 3...
@@ -35,9 +36,10 @@ function SeloDoTipo({ tipo }: { tipo: TipoDeLugar }) {
 
 function Assento({ fileira, numero, estado, tipo = "comum", modo, tamanho, onAlternar }: { fileira: string; numero: number; estado: EstadoDoAssento; tipo?: TipoDeLugar; modo: ModoDoMapa; tamanho: string; onAlternar?: () => void }) {
   const nome = `Fileira ${fileira}, lugar ${numero}${tipo === "comum" ? "" : `, ${TIPO_CURTO[tipo]}`}`;
-  const desligado = modo === "comprador" ? estado === "ocupado" || estado === "bloqueado" : estado === "ocupado";
+  const desligado = modo === "comprador" ? estado === "ocupado" || estado === "bloqueado" || estado === "reservado" : estado === "ocupado";
   const base = `relative flex ${tamanho} items-center justify-center rounded-lg tabular-nums transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]`;
   if (estado === "selecionado") return <button type="button" aria-pressed="true" aria-label={`${nome}, escolhido`} onClick={onAlternar} className={`${base} bg-[#282525] text-white`}>{numero}<SeloDoTipo tipo={tipo} /></button>;
+  if (estado === "reservado") return <button type="button" disabled aria-label={`${nome}, reservado`} className={`${base} cursor-not-allowed border border-dashed border-[#1D4ED8]/45 bg-[#1D4ED8]/[.06] text-[#1D4ED8]/55`}>{numero}<SeloDoTipo tipo={tipo} /></button>;
   if (estado === "ocupado") return <button type="button" disabled aria-label={`${nome}, ocupado`} className={`${base} cursor-not-allowed bg-black/[.09] text-black/25`}>{numero}<SeloDoTipo tipo={tipo} /></button>;
   if (estado === "bloqueado") return <button type="button" aria-pressed="true" aria-label={`${nome}, bloqueado`} disabled={desligado} onClick={onAlternar} className={`${base} border border-dashed border-black/35 text-black/35`} style={LISTRAS}>{numero}<SeloDoTipo tipo={tipo} /></button>;
   return <button type="button" aria-pressed="false" aria-label={`${nome}, livre`} onClick={onAlternar} className={`${base} border border-black/25 bg-white text-[#282525] hover:bg-black/[.05]`}>{numero}<SeloDoTipo tipo={tipo} /></button>;
@@ -87,7 +89,7 @@ export function MapaDeAssentos({ fileiras, modo, palco = "Palco", ampliado = fal
 }
 
 /** A legenda do mapa. */
-export function LegendaDoMapa({ modo, tipos = [] }: { modo: "comprador" | "produtor"; tipos?: readonly Exclude<TipoDeLugar, "comum">[] }) {
+export function LegendaDoMapa({ modo, tipos = [], reservados = false }: { modo: "comprador" | "produtor"; tipos?: readonly Exclude<TipoDeLugar, "comum">[]; /** Há lugar reservado de acessibilidade ainda fechado para quem compra. */ reservados?: boolean }) {
   const item = (rotulo: string, amostra: React.ReactNode) => <li className="flex items-center gap-2 text-[0.75rem] text-black/60">{amostra}{rotulo}</li>;
   const caixa = "h-4 w-4 rounded-md";
   return (
@@ -96,6 +98,7 @@ export function LegendaDoMapa({ modo, tipos = [] }: { modo: "comprador" | "produ
       {item("Livre", <span className={`${caixa} border border-black/25 bg-white`} />)}
       {modo === "comprador" && item("Seu lugar", <span className={`${caixa} bg-[#282525]`} />)}
       {modo === "comprador" && item("Ocupado", <span className={`${caixa} bg-black/[.09]`} />)}
+      {modo === "comprador" && reservados && item("Reservado", <span className={`${caixa} border border-dashed border-[#1D4ED8]/45 bg-[#1D4ED8]/[.06]`} />)}
       {modo === "produtor" && item("Bloqueado (não vai à venda)", <span className={`${caixa} border border-dashed border-black/35`} style={LISTRAS} />)}
       {modo === "produtor" && item("Já vendido", <span className={`${caixa} bg-black/[.09]`} />)}
     </ul>
@@ -110,6 +113,11 @@ type Site = { titulo: string; cor?: string };
 const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#6450D2] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6450D2] disabled:cursor-not-allowed disabled:bg-black/20";
 const BOTAO_SECUNDARIO = "inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-[0.875rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
 
+/** O mapa tem lugar de acessibilidade reservado (cadeira de rodas, mobilidade reduzida ou pessoa obesa)? */
+function temLugarReservado(fileiras: readonly FileiraDoMapa[]): boolean {
+  return fileiras.some(f => f.assentos.some(a => a.estado === "reservado" || ehLugarReservado(a.tipo)));
+}
+
 /** O estado de cada lugar (o que não é livre) pela chave que o desenho por layout usa. */
 function estadosDoMapa(fileiras: readonly FileiraDoMapa[]): Map<string, EstadoDoAssento> {
   const estados = new Map<string, EstadoDoAssento>();
@@ -118,10 +126,12 @@ function estadosDoMapa(fileiras: readonly FileiraDoMapa[]): Map<string, EstadoDo
 }
 
 /** A tela de escolher os lugares de um ingresso no mapa do setor. `escolhidos` são os rótulos ("C7") na ordem em que a pessoa os tocou. */
-export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, escolhidos, max, totalCentavos, ampliado = false, carregando = false, erroDoMapa = null, onTentarDeNovo, layout, onAmpliar, onAlternar, onVoltar, onConfirmar }: {
+export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, escolhidos, max, totalCentavos, ampliado = false, carregando = false, erroDoMapa = null, onTentarDeNovo, layout, declarouAcessibilidade = false, onDeclarar, onAmpliar, onAlternar, onVoltar, onConfirmar }: {
   site: Site; evento: EventoParaComprar; ingresso: { nome: string; preco_centavos: number }; setor: string; fileiras: FileiraDoMapa[]; escolhidos: string[]; max: number; totalCentavos: number; ampliado?: boolean; carregando?: boolean; erroDoMapa?: string | null; onTentarDeNovo?: () => void;
   /** O layout do setor (já conferido com `lerLayout`): com ele o mapa é o desenho dos blocos; sem ele, a lista de fileiras de sempre. */
   layout?: Layout | null;
+  /** A pergunta de acessibilidade (art. 23-A): aparece quando o mapa tem lugares reservados; marcar libera os lugares reservados. */
+  declarouAcessibilidade?: boolean; onDeclarar?: (v: boolean) => void;
   onAmpliar?: () => void; onAlternar?: (fileira: string, numero: number) => void; onVoltar?: () => void; onConfirmar?: () => void;
 }) {
   return (
@@ -148,13 +158,25 @@ export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, e
         </div>
       ) : (
         <>
+          {onDeclarar && temLugarReservado(fileiras) && (
+            <div className="mt-4 flex items-start justify-between gap-4 rounded-xl border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.1)" }}>
+              <div className="min-w-0">
+                <p className="text-[0.875rem] text-[#282525]">Alguém do grupo precisa de lugar para cadeira de rodas ou com mobilidade reduzida?</p>
+                <p className="mt-0.5 text-[0.75rem] leading-relaxed text-black/55">Alguns lugares são reservados para essas pessoas e para quem as acompanha. Marque se for o seu caso para poder escolhê-los.</p>
+              </div>
+              <button type="button" role="switch" aria-checked={declarouAcessibilidade} aria-label="Preciso de lugar acessível" onClick={() => onDeclarar(!declarouAcessibilidade)}
+                className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] ${declarouAcessibilidade ? "bg-[#282525]" : "bg-black/20"}`}>
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${declarouAcessibilidade ? "left-[1.375rem]" : "left-0.5"}`} />
+              </button>
+            </div>
+          )}
           <div className="mt-4 flex justify-end"><button type="button" onClick={onAmpliar} aria-pressed={ampliado} className="rounded-xl text-[0.8125rem] text-black/60 underline underline-offset-2 hover:text-black/80">{ampliado ? "Ver o mapa inteiro" : "Ampliar o mapa"}</button></div>
           <div className="mt-2">
             {layout
               ? <MapaPorLayout layout={layout} modo="comprador" ampliado={ampliado} estados={estadosDoMapa(fileiras)} tipos={tiposDoMapa(fileiras, (f, n) => chaveDoLugar(null, f, n))} onAlternar={l => onAlternar?.(l.fileira, l.numero)} />
               : <MapaDeAssentos fileiras={fileiras} modo="comprador" ampliado={ampliado} onAlternar={onAlternar} />}
           </div>
-          <LegendaDoMapa modo="comprador" tipos={tiposPresentes(tiposDoMapa(fileiras, (f, n) => `${f}|${n}`))} />
+          <LegendaDoMapa modo="comprador" tipos={tiposPresentes(tiposDoMapa(fileiras, (f, n) => `${f}|${n}`))} reservados={fileiras.some(f => f.assentos.some(a => a.estado === "reservado"))} />
         </>
       )}
       <p className="mt-4 text-center text-[0.75rem] text-black/50">Até {max} lugares. Os lugares ficam reservados por 15 minutos depois que você continuar.</p>

@@ -1068,6 +1068,7 @@ export type BancoDaTicketeria = {
           origem_acao: string | null;
           origem_referencia: string | null;
           origem_utm: Json | null;
+          declarou_acessibilidade: boolean;
         };
         Insert: {
           id?: string;
@@ -1106,6 +1107,7 @@ export type BancoDaTicketeria = {
           origem_referencia?: string | null;
           origem_utm?: Json | null;
           desconto_centavos?: number;
+          declarou_acessibilidade?: boolean;
         };
         Update: {
           id?: string;
@@ -1144,6 +1146,7 @@ export type BancoDaTicketeria = {
           origem_referencia?: string | null;
           origem_utm?: Json | null;
           desconto_centavos?: number;
+          declarou_acessibilidade?: boolean;
         };
         Relationships: [
           {
@@ -3382,6 +3385,14 @@ export type BancoDaTicketeria = {
       };
       fn_ticketeria_mapa_do_setor: {
         Args: { p_setor: string };
+        Returns: Json;
+      };
+      fn_ticketeria_reserva_do_setor: {
+        Args: { p_sessao: string; p_setor: string; p_fora?: string | null };
+        Returns: Json;
+      };
+      fn_ticketeria_reservar_com_declaracao: {
+        Args: { p_sessao: string; p_itens: Json; p_nome: string; p_email: string; p_minutos: number; p_codigo: string | null; p_lugares: Json | null; p_declarou: boolean };
         Returns: Json;
       };
       fn_ticketeria_salvar_mapa_com_layout: {

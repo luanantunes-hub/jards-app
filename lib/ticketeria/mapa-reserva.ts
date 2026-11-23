@@ -10,6 +10,7 @@
 // O decreto não traz sanção nem fiscalização, e não fala de preço dos lugares reservados.
 
 import { ehTipoDeLugar, type TipoDeLugar } from "@/lib/ticketeria/mapa-acessibilidade";
+import type { FileiraDoMapa } from "@/lib/ticketeria/mapa";
 
 /** Os tipos que a lei reserva (o lugar de acompanhante não é um deles: o decreto manda acomodar o acompanhante AO LADO, art. 23, § 3º). */
 export const TIPOS_RESERVADOS: readonly TipoDeLugar[] = ["cadeira_rodas", "mobilidade_reduzida", "obeso"];
@@ -58,4 +59,13 @@ export function fraseDoLugarReservado(motivo: Extract<SituacaoDoLugarReservado, 
   return motivo === "reservado_ate_o_prazo"
     ? "Este lugar é reservado para pessoas com deficiência ou mobilidade reduzida. Ele só é aberto a outras pessoas perto do evento, se sobrar."
     : "Este lugar é reservado para pessoas com deficiência ou mobilidade reduzida. Só abrimos os reservados depois que os demais lugares do setor se esgotam.";
+}
+
+/**
+ * O mapa do comprador com os lugares reservados de acessibilidade ainda livres marcados como `reservado` (não escolhíveis): para quem NÃO declarou a necessidade e enquanto a reserva do setor
+ * não foi liberada (`liberada`, de fn_ticketeria_reserva_do_setor). Quem declarou, ou com a reserva liberada, vê o mapa como veio. A conferência de verdade é do banco, na reserva.
+ */
+export function marcarReservados(fileiras: readonly FileiraDoMapa[], situacao: { declarou: boolean; liberada: boolean }): FileiraDoMapa[] {
+  if (situacao.declarou || situacao.liberada) return fileiras.map(f => ({ ...f, assentos: [...f.assentos] }));
+  return fileiras.map(f => ({ ...f, assentos: f.assentos.map(a => (a.estado === "livre" && ehLugarReservado(a.tipo) ? { ...a, estado: "reservado" as const } : a)) }));
 }

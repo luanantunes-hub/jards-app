@@ -90,6 +90,8 @@ export function CompraDaSessao({ vitrine, cupomInicial = null }: { vitrine: Vitr
   const [carregandoMapa, setCarregandoMapa] = useState(false);
   const [escolhaAtual, setEscolhaAtual] = useState<LugarEscolhido[]>([]);
   const [mapaAmpliado, setMapaAmpliado] = useState(false);
+  // A declaração de quem precisa de lugar de acessibilidade (art. 23-A): libera os lugares reservados do mapa e vai junto no pedido.
+  const [acessibilidade, setAcessibilidade] = useState(false);
   const [avisoDaEscolha, setAvisoDaEscolha] = useState<string | null>(null);
 
   // Recarregou no meio do Pix: volta a ele (o servidor não sabe do armazenamento do navegador, então só dá para ler depois de montar).
@@ -129,6 +131,7 @@ export function CompraDaSessao({ vitrine, cupomInicial = null }: { vitrine: Vitr
     if (!aceito) { setErro("Aceite os Termos de compra para continuar."); return; }
     const leitura = lerCorpoDaCompra({ sessao_id: sessao, itens: Object.entries(quantidades).filter(([, q]) => q > 0).map(([ingresso_id, quantidade]) => ({ ingresso_id, quantidade })), ...valores, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio, parcelas: meio === "cartao" ? parcelas : 1, cupom: cupom?.codigo ?? null, novidades, whatsapp: novidades ? whatsapp : "",
       lugares: ingressos.filter(i => i.numerado && (quantidades[i.id] ?? 0) > 0).map(i => ({ ingresso_id: i.id, assentos: lugares[i.id] ?? [] })),
+      acessibilidade,
       // De qual link de divulgação a pessoa veio (?canal=, ?acao=, utm_* e o site de onde chegou). Só rótulo, lido do endereço no momento da compra; nada fica guardado no navegador.
       origem: origemDaPagina(window.location.search, document.referrer, window.location.hostname) });
     if (!leitura.ok) { setErro(`Confira: ${leitura.problemas.join(", ")}.`); return; }
@@ -161,7 +164,7 @@ export function CompraDaSessao({ vitrine, cupomInicial = null }: { vitrine: Vitr
     } finally {
       setTrabalhando(false);
     }
-  }, [sessao, quantidades, valores, aceito, novidades, whatsapp, meio, parcelas, cupom, lugares, ingressos, router]);
+  }, [sessao, quantidades, valores, aceito, novidades, whatsapp, meio, parcelas, cupom, lugares, ingressos, acessibilidade, router]);
 
   const entrarNaEspera = useCallback(async () => {
     setEsperaErro(null);
@@ -180,11 +183,11 @@ export function CompraDaSessao({ vitrine, cupomInicial = null }: { vitrine: Vitr
     }
   }, [sessao, esperaIngresso, esperaValores, esperaQuantidade]);
 
-  const carregarMapa = useCallback(async (ingressoId: string, manter: LugarEscolhido[]) => {
+  const carregarMapa = useCallback(async (ingressoId: string, manter: LugarEscolhido[], acessivel: boolean = acessibilidade) => {
     setMapaErro(null);
     setCarregandoMapa(true);
     try {
-      const r = await fetch(`/api/ticketeria/compra/mapa?sessao=${encodeURIComponent(sessao)}&ingresso=${encodeURIComponent(ingressoId)}`, { cache: "no-store" });
+      const r = await fetch(`/api/ticketeria/compra/mapa?sessao=${encodeURIComponent(sessao)}&ingresso=${encodeURIComponent(ingressoId)}${acessivel ? "&acessivel=1" : ""}`, { cache: "no-store" });
       const lido = r.ok ? lerMapaDaSessao(await r.json().catch(() => null)) : null;
       if (!lido) { setMapaErro(r.status === 404 ? "Este ingresso não tem mapa de lugares agora." : "Não foi possível carregar o mapa. Tente de novo."); return; }
       setMapa(lido);
@@ -195,7 +198,7 @@ export function CompraDaSessao({ vitrine, cupomInicial = null }: { vitrine: Vitr
     } finally {
       setCarregandoMapa(false);
     }
-  }, [sessao]);
+  }, [sessao, acessibilidade]);
 
   const abrirMapa = (ingressoId: string) => {
     const antes = lugares[ingressoId] ?? [];
@@ -248,7 +251,7 @@ export function CompraDaSessao({ vitrine, cupomInicial = null }: { vitrine: Vitr
     const max = Math.min(ingressoDosLugares.limite, disponivelNasFaixas(ingressoDosLugares.faixas));
     return <TelaEscolherLugares site={site} evento={evento} ingresso={{ nome: ingressoDosLugares.nome, preco_centavos: ingressoDosLugares.faixas[0]?.preco_centavos ?? 0 }} setor={ingressoDosLugares.numerado?.setor ?? ""}
       fileiras={mapa ? comEscolhidos(comCorredor(mapa.fileiras, mapa.corredor), escolhaAtual) : []} layout={mapa ? lerLayout(mapa.layout) : null} escolhidos={escolhaAtual.map(l => rotuloDoLugar(l.fileira, l.numero))} max={max} totalCentavos={totalNasFaixas(ingressoDosLugares.faixas, escolhaAtual.length) ?? 0}
-      ampliado={mapaAmpliado} carregando={carregandoMapa} erroDoMapa={mapaErro} onTentarDeNovo={() => void carregarMapa(ingressoDosLugares.id, escolhaAtual)} onAmpliar={() => setMapaAmpliado(v => !v)}
+      ampliado={mapaAmpliado} carregando={carregandoMapa} erroDoMapa={mapaErro} onTentarDeNovo={() => void carregarMapa(ingressoDosLugares.id, escolhaAtual)} declarouAcessibilidade={acessibilidade} onDeclarar={v => { setAcessibilidade(v); void carregarMapa(ingressoDosLugares.id, escolhaAtual, v); }} onAmpliar={() => setMapaAmpliado(v => !v)}
       onAlternar={(fileira, numero) => setEscolhaAtual(atual => alternarEscolha(atual, fileira, numero, max))} onVoltar={() => setPasso("escolher")}
       onConfirmar={() => { setLugares(l => ({ ...l, [ingressoDosLugares.id]: escolhaAtual })); setQuantidades(q => ({ ...q, [ingressoDosLugares.id]: escolhaAtual.length })); setPasso("escolher"); }} />;
   }
