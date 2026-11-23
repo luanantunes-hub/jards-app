@@ -29,7 +29,8 @@ SEMANAS_DO_ATRASO = 6
 SEMANAS_DO_ATRASO_DA_MARCA = 13
 # Datas que podem importar ou não, conforme a loja (férias escolares importam para um zoológico e quase nada para um teatro adulto): o efeito começa em zero com prior estreito
 # (Normal(0; 0,1) na escala do modelo, contra Normal(0; 2) dos outros controles). Com dados que mostram diferença, o efeito aparece; sem, fica perto de zero e a tela diz "não faz diferença".
-DATAS_QUE_PODEM_IMPORTAR = {"ferias": 0.1}
+# A imprensa (crítica ou matéria marcada nas Ações) também: uma loja pode ter crítica que move a venda, outra não.
+DATAS_QUE_PODEM_IMPORTAR = {"ferias": 0.1, "imprensa": 0.1}
 SEMENTE = 42
 SEMANAS_DOS_CONTROLES_EXTRAS = 52
 # Os controles de cada grupo (as chaves da coluna `controles` da tabela semanal) e o nome da parte que aparece no resultado. `extra`: só entra com SEMANAS_DOS_CONTROLES_EXTRAS semanas.
@@ -38,6 +39,12 @@ GRUPOS_DE_CONTROLE = [
     {"parte": "feriado", "chaves": ["feriado"], "extra": False},
     # O tamanho do que está à venda (lugares das próximas sessões): quem espera vender mais anuncia mais; sem isto o anúncio leva o mérito do evento maior (Kang, 2019).
     {"parte": "lugares", "chaves": ["lugares"], "extra": False},
+    # O boca a boca (z(1 − z)) e a urgência (z), com z = a parte dos lugares das sessões à venda já vendida antes da semana: "venda puxa venda". Sem eles o modelo põe o efeito na proximidade
+    # da data (ESTUDO-DO-BOCA-A-BOCA.md e ESTUDO-DA-URGENCIA.md). Entram juntos, com 52+ semanas, e com o prior de sempre (o estudo usou esse).
+    {"parte": "boca", "chaves": ["boca"], "extra": True},
+    {"parte": "urgencia", "chaves": ["urgencia"], "extra": True},
+    # A imprensa: semanas com crítica ou matéria (mídia espontânea, sem gasto). Data que pode importar (prior estreito, ver DATAS_QUE_PODEM_IMPORTAR).
+    {"parte": "imprensa", "chaves": ["imprensa"], "extra": False},
     # As férias escolares: entram para todo mundo com 52+ semanas, mas como DATA QUE PODE IMPORTAR (prior estreito em zero, ver DATAS_QUE_PODEM_IMPORTAR): só ganham peso se os dados mostrarem.
     {"parte": "ferias", "chaves": ["ferias"], "extra": True},
     {"parte": "preco_e_lotes", "chaves": ["lote", "preco"], "extra": True},

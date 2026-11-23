@@ -12,6 +12,12 @@
 //   - lugares: o TAMANHO do que está à venda na semana: os lugares das sessões que acontecem nas próximas HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS semanas, em relação à mediana (1 = o de sempre,
 //     2 = o dobro). Quem espera vender mais anuncia mais (Kang, International Journal of Market Research, 2019): sem isto o modelo credita ao anúncio a venda que veio do evento ser maior.
 //     Nas semanas de antes da primeira sessão conhecida (histórico importado, que não tem sessão) vale 1, "o de sempre", para o controle não marcar a diferença entre o histórico e a Ticketeria.
+//   - boca: o BOCA A BOCA (Jørgensen, Kort e Zaccour, 2006): quem comprou conta para quem não sabe, e o evento vende também pelo que já vendeu. Por sessão à venda (as que acontecem desta
+//     semana até HORIZONTE semanas à frente), z = a parte dos lugares vendida ANTES da semana; o controle é a média de z(1 − z), ponderada pelos lugares (mais forte no meio da venda).
+//   - urgencia: "restam poucos lugares" faz comprar mais rápido (Jørgensen e Zaccour, 2019): a mesma média, de z (cresce até esgotar). Os dois juntos: sem eles o modelo põe o efeito na
+//     proximidade da data (modelo/ESTUDO-DO-BOCA-A-BOCA.md e ESTUDO-DA-URGENCIA.md). Só sessões de um dia (a exposição tem outra lógica de lotação).
+//   - imprensa: 1 se na semana saiu crítica ou matéria marcada nas Ações (canal "imprensa"). Mídia espontânea não tem gasto, então o modelo não a veria (Reddy, Swaminathan e Motley, 1998).
+//     Como as férias, é data que pode importar: começa supondo que não faz diferença.
 //   - ferias: 1 se a semana cai nas férias escolares (calendário aproximado, igual no país: julho e de 20 de dezembro a 31 de janeiro). Entra para todo mundo, mas o modelo começa
 //     supondo que não faz diferença (prior estreito em zero em modelo/mmm.py): só ganha peso se os dados da loja mostrarem (zoológico, sim; teatro adulto, em geral não).
 // A proximidade usa a CURVA DA CASA (`curvaDaCasa`): quanto os eventos da própria loja venderam em cada semana antes da sessão, com 3 eventos ou mais; antes disso, a rampa padrão.
@@ -24,13 +30,16 @@ export const SEMANAS_DOS_CONTROLES_EXTRAS = 52;
 export const MIN_SEMANAS_DE_VISITAS = 26;
 export const HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS = 8;
 
-export type ChaveDoControle = "proximidade" | "feriado" | "lugares" | "ferias" | "lote" | "preco" | "cupom" | "visitas";
-export type GrupoDeControle = "proximidade" | "feriados" | "lugares" | "ferias" | "preco_e_lotes" | "cupons" | "visitas";
+export type ChaveDoControle = "proximidade" | "feriado" | "lugares" | "ferias" | "lote" | "preco" | "cupom" | "visitas" | "boca" | "urgencia" | "imprensa";
+export type GrupoDeControle = "proximidade" | "feriados" | "lugares" | "ferias" | "preco_e_lotes" | "cupons" | "visitas" | "boca" | "urgencia" | "imprensa";
 
 export const GRUPOS_DE_CONTROLE: { grupo: GrupoDeControle; rotulo: string; chaves: ChaveDoControle[]; extra: boolean }[] = [
   { grupo: "proximidade", rotulo: "Proximidade da sessão", chaves: ["proximidade"], extra: false },
   { grupo: "feriados", rotulo: "Feriados e datas de pico", chaves: ["feriado"], extra: false },
   { grupo: "lugares", rotulo: "Tamanho do que está à venda", chaves: ["lugares"], extra: false },
+  { grupo: "boca", rotulo: "Quem comprou traz outros", chaves: ["boca"], extra: true },
+  { grupo: "imprensa", rotulo: "Imprensa", chaves: ["imprensa"], extra: false },
+  { grupo: "urgencia", rotulo: "Lugares acabando", chaves: ["urgencia"], extra: true },
   { grupo: "ferias", rotulo: "Férias escolares", chaves: ["ferias"], extra: true },
   { grupo: "preco_e_lotes", rotulo: "Preço e lotes", chaves: ["lote", "preco"], extra: true },
   { grupo: "cupons", rotulo: "Cupons", chaves: ["cupom"], extra: true },
@@ -171,6 +180,10 @@ export type EntradaDosControles = {
   viradasDeLote: string[];
   /** Cada item de ingresso das compras pagas (dia no fuso da loja). */
   itens: ItemDePedidoPago[];
+  /** As sessões de um dia com a lotação e as vendas (dia da compra e quantidade), para o boca a boca e a urgência; sem isto os dois ficam em 0. */
+  vendasDasSessoes?: { dia: string; lugares: number; vendas: { dia: string; quantidade: number }[] }[];
+  /** Os dias em que saiu crítica ou matéria (ações com o canal "imprensa"). */
+  imprensa?: string[];
 };
 
 const arredondar = (n: number, casas = 4): number => Math.round(n * 10 ** casas) / 10 ** casas;
@@ -209,6 +222,9 @@ export function controlesDasSemanas(e: EntradaDosControles): Record<string, Reco
   const maiorDaCurva = e.curvaDaCasa && e.curvaDaCasa.length > 0 ? Math.max(...e.curvaDaCasa) : 0;
   const curva = maiorDaCurva > 0 ? (e.curvaDaCasa as number[]).map(x => x / maiorDaCurva) : null;
 
+  const vendaJaFeita = bocaEUrgencia(e.vendasDasSessoes ?? [], e.semanas);
+  const semanasDeImprensa = new Set((e.imprensa ?? []).map(inicioDaSemana));
+
   const saida: Record<string, Record<ChaveDoControle, number>> = {};
   let precoAnterior = 0;
   for (const semana of e.semanas) {
@@ -229,11 +245,36 @@ export function controlesDasSemanas(e: EntradaDosControles): Record<string, Reco
       ferias: semanaDeFerias(semana) ? 1 : 0,
       lote: semanasDeLote.has(semana) ? 1 : 0, preco: arredondar(relativo),
       cupom: compras && compras.pagos > 0 ? arredondar(compras.comCupom / compras.pagos) : 0, visitas: 0,
+      boca: vendaJaFeita.get(semana)?.boca ?? 0, urgencia: vendaJaFeita.get(semana)?.urgencia ?? 0, imprensa: semanasDeImprensa.has(semana) ? 1 : 0,
     };
   }
   return saida;
 }
 
+/**
+ * O boca a boca e a urgência de cada semana: para cada sessão à venda na semana (acontece desta semana até HORIZONTE semanas à frente), z = a parte dos lugares vendida antes da semana
+ * (até 1); a semana fica com a média de z(1 − z) e a de z, ponderadas pelos lugares. Semana sem sessão à venda: 0 nos dois.
+ */
+export function bocaEUrgencia(sessoes: { dia: string; lugares: number; vendas: { dia: string; quantidade: number }[] }[], semanas: string[]): Map<string, { boca: number; urgencia: number }> {
+  const prontas = sessoes.filter(s => s.lugares > 0).map(s => {
+    const porSemana = new Map<string, number>();
+    for (const v of s.vendas) if (v.quantidade > 0) porSemana.set(inicioDaSemana(v.dia), (porSemana.get(inicioDaSemana(v.dia)) ?? 0) + v.quantidade);
+    return { semana: inicioDaSemana(s.dia), lugares: s.lugares, vendas: [...porSemana].sort((a, b) => a[0].localeCompare(b[0])) };
+  });
+  const saida = new Map<string, { boca: number; urgencia: number }>();
+  for (const semana of semanas) {
+    let b = 0, u = 0, peso = 0;
+    for (const s of prontas) {
+      if (s.semana < semana || semanasEntre(semana, s.semana) - 1 > HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS) continue;
+      let antes = 0;
+      for (const [w, q] of s.vendas) { if (w >= semana) break; antes += q; }
+      const z = Math.min(1, antes / s.lugares);
+      b += s.lugares * z * (1 - z); u += s.lugares * z; peso += s.lugares;
+    }
+    saida.set(semana, peso > 0 ? { boca: arredondar(b / peso), urgencia: arredondar(u / peso) } : { boca: 0, urgencia: 0 });
+  }
+  return saida;
+}
 
 // ─── As visitas sem anúncio (GA4) ───────────────────────────────────────────
 
@@ -270,12 +311,13 @@ export function controleDeVisitas(visitas: VisitaDoDia[], primeiroDia: string | 
 // ─── O que a tela mostra de cada controle ───────────────────────────────────
 
 export type EstadoDoControle = "em_uso" | "entra_depois" | "sem_dados" | "opcional" | "nao_se_aplica";
-export type ControleDaTela = { grupo: GrupoDeControle; rotulo: string; estado: EstadoDoControle; detalhe: string; /** Só em "entra_depois": quantas semanas faltam. */ faltam: number | null; acao: "datas" | "conexoes" | "curva" | null };
+export type ControleDaTela = { grupo: GrupoDeControle; rotulo: string; estado: EstadoDoControle; detalhe: string; /** Só em "entra_depois": quantas semanas faltam. */ faltam: number | null; acao: "datas" | "conexoes" | "curva" | "imprensa" | null };
 /** O que a loja tem de cada coisa (só para o texto da tela). */
 export type ResumoDosControles = {
   eventos: number; sessoes: number; lotes: number; cupons: number; datasProprias: number;
   /** A curva de venda da casa (null: ainda não há eventos suficientes, vale a rampa padrão). */ curva?: { curva: number[]; eventos: number } | null;
   /** A loja é uma atração aberta o ano todo (um evento com sessões quase toda semana por meses). */ permanente?: boolean;
+  /** Quantas críticas ou matérias foram marcadas nas Ações (canal "imprensa"). */ imprensa?: number;
 };
 
 /** Uma coluna "varia" se tem pelo menos dois valores diferentes (constante não ensina nada ao modelo). */
@@ -297,6 +339,19 @@ export function controlesDaTela(tabela: { controles?: Partial<Record<ChaveDoCont
     if (resumo.permanente && (g.grupo === "proximidade" || g.grupo === "lugares")) {
       return { ...base, rotulo: g.grupo === "proximidade" ? "Ritmo de venda até a data" : g.rotulo, estado: "nao_se_aplica", faltam: null, acao: null,
         detalhe: g.grupo === "proximidade" ? "Não se aplica: a atração abre o ano todo, sem data de estreia ou de fim." : "Não se aplica: a capacidade é a mesma toda semana." } satisfies ControleDaTela;
+    }
+    if (g.grupo === "boca" || g.grupo === "urgencia") {
+      if (resumo.permanente) return { ...base, estado: "nao_se_aplica", faltam: null, acao: null, detalhe: "Não se aplica: a atração abre o ano todo, sem uma venda que começa e acaba." } satisfies ControleDaTela;
+      const detalhe = g.grupo === "boca"
+        ? "Quem compra conta para outras pessoas, e o evento vende também pelo que já vendeu. O modelo mede isso pela parte dos lugares já vendida e só dá peso se os seus dados mostrarem."
+        : "Quando restam poucos lugares, quem estava em dúvida compra mais rápido. O modelo mede isso pela parte dos lugares já vendida e só dá peso se os seus dados mostrarem.";
+      if (faltam > 0) return { ...base, estado: "entra_depois", faltam, acao: null, detalhe } satisfies ControleDaTela;
+      return { ...base, estado: varia ? "em_uso" : "sem_dados", faltam: null, acao: null, detalhe: varia ? detalhe : `${detalhe} Ainda não há sessões com lotação e vendas no período.` } satisfies ControleDaTela;
+    }
+    if (g.grupo === "imprensa") {
+      const n = resumo.imprensa ?? 0;
+      if (n === 0 || !varia) return { ...base, estado: "opcional", faltam: null, acao: "imprensa", detalhe: "Crítica, matéria, entrevista: não custa nada, então o modelo não vê sozinho. Marque em Ações e gasto o dia em que saiu, para o modelo não dar ao anúncio o mérito da imprensa." } satisfies ControleDaTela;
+      return { ...base, estado: "em_uso", faltam: null, acao: "imprensa", detalhe: `As semanas em que saiu crítica ou matéria (${plural(n, "marcação", "marcações")} em Ações e gasto). O modelo começa supondo que não faz diferença e só dá peso se os seus dados mostrarem.` } satisfies ControleDaTela;
     }
     if (g.grupo === "ferias") {
       const detalhe = "Julho e de 20 de dezembro a 31 de janeiro (calendário aproximado). O modelo começa supondo que as férias não mexem nas suas vendas e só dá peso a elas se os dados mostrarem.";

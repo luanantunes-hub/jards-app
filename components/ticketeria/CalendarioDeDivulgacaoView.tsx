@@ -165,11 +165,14 @@ function GraficoDoCalendario({ cal, canais, diaDaSessao, periodo, unica }: { cal
 }
 
 /** O calendário de um evento: a tabela semana a semana, o mesmo dinheiro gasto de outros jeitos, por que assim e o gráfico. */
-export function CalendarioDeDivulgacao({ plano, canais, semanasDoModelo, onAjustar, onFechar }: {
-  plano: PlanoDoCalendario; canais: CanalDoResultado[]; semanasDoModelo: number; onAjustar: () => void; onFechar: () => void;
+export function CalendarioDeDivulgacao({ plano, canais, semanasDoModelo, bocaABoca = null, onAjustar, onFechar }: {
+  plano: PlanoDoCalendario; canais: CanalDoResultado[]; semanasDoModelo: number; /** A parte das vendas do boca a boca, quando o modelo mediu e ela pesa (0,09 = 9%). */ bocaABoca?: number | null; onAjustar: () => void; onFechar: () => void;
 }) {
   const usados = useMemo(() => canaisDoCalendario(canaisComCurva(canais)).filter(c => plano.canais.includes(c.canal)), [canais, plano.canais]);
-  const cal = useMemo(() => montarCalendario(usados, { totalCentavos: plano.totalCentavos, inicio: plano.inicio, diaDaSessao: plano.diaDaSessao, lugaresRestantes: plano.lugaresRestantes ?? null, diasEmCartaz: plano.diasEmCartaz }), [usados, plano]);
+  const pedido = useMemo(() => ({ totalCentavos: plano.totalCentavos, inicio: plano.inicio, diaDaSessao: plano.diaDaSessao, lugaresRestantes: plano.lugaresRestantes ?? null, diasEmCartaz: plano.diasEmCartaz }), [plano]);
+  const cal = useMemo(() => montarCalendario(usados, { ...pedido, bocaABoca }), [usados, pedido, bocaABoca]);
+  // Para a frase do boca a boca: quanto a primeira semana teria sem ele.
+  const semBoca = useMemo(() => (bocaABoca ? montarCalendario(usados, pedido) : null), [usados, pedido, bocaABoca]);
   if (!cal) return <Aviso texto="Não deu para montar o calendário com esses dados. Ajuste o evento, o valor ou os canais." />;
   const nomes = Object.keys(cal.totalPorCanal);
   const maxCelula = Math.max(1, ...cal.semanas.flatMap(s => Object.values(s.porCanal)));
@@ -226,6 +229,9 @@ export function CalendarioDeDivulgacao({ plano, canais, semanasDoModelo, onAjust
           <div className="mt-2 space-y-1 text-[0.78rem] leading-relaxed text-[#282525]">
             {usados.map(c => <p key={c.canal}>{rotuloDoCanalDeGasto(c.canal)}: <span className="text-black/50">{porQueAssim(c, cal.semanas.map(s => s.porCanal[c.canal] ?? 0))}</span></p>)}
           </div>
+          {bocaABoca && semBoca && cal.semanas.length > 1 && (
+            <p className="mt-1 text-[0.78rem] leading-relaxed text-[#282525]">Quem comprou traz outros: <span className="text-black/50">na sua casa, cerca de {Math.round(bocaABoca * 100)}% das vendas vêm do boca a boca. Quem compra na primeira semana ainda tem tempo de contar para outras pessoas{cal.semanas[0].totalCentavos !== semBoca.semanas[0].totalCentavos ? `, então o calendário põe ${formatarMoeda(cal.semanas[0].totalCentavos)} nela, e não os ${formatarMoeda(semBoca.semanas[0].totalCentavos)} que poria sem isso` : ", e o calendário já começa forte por isso"}.</span></p>
+          )}
           <p className="mt-2 text-[0.75rem] leading-relaxed text-black/50">O calendário deixa um pouco mais perto da data do que a conta pura do modelo manda: o anúncio pode render mais perto da sessão, e esse cuidado custa pouco se não for assim.</p>
           <p className="mt-1.5 text-[0.75rem] leading-relaxed text-black/50">{plano.tipo === "temporada" ? "Se as sessões lotarem antes, pare de gastar" : "Se a sessão lotar antes, pare de gastar"}: o calendário não sabe o que você vende fora dos anúncios.</p>
         </div>

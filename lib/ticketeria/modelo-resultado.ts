@@ -17,10 +17,10 @@ export type CanalDoResultado = {
 };
 export type DiagnosticosDoModelo = { r_hat_maximo: number; divergencias: number; ess_minimo: number };
 /** As partes em que a base ("venderia de qualquer jeito") se divide: o nível normal da loja, a tendência e a época do ano e cada controle que entrou no modelo. */
-export const CHAVES_DAS_PARTES = ["nivel", "tendencia", "proximidade", "feriado", "lugares", "ferias", "preco_e_lotes", "cupom", "visitas"] as const;
+export const CHAVES_DAS_PARTES = ["nivel", "tendencia", "proximidade", "feriado", "lugares", "boca", "urgencia", "imprensa", "ferias", "preco_e_lotes", "cupom", "visitas"] as const;
 export type ChaveDaParte = (typeof CHAVES_DAS_PARTES)[number];
 /** Pode ser negativa: o preço mais alto ou a falta de uma data de pico também seguram a venda. */
-export type ParteDaBase = { chave: ChaveDaParte; porcento: number; baixo: number; alto: number; /** Só nas datas que podem importar (férias): quanto as semanas delas venderam a mais que sem elas (0,31 = 31%). */ efeito_na_semana?: number | null };
+export type ParteDaBase = { chave: ChaveDaParte; porcento: number; baixo: number; alto: number; /** Só nas datas que podem importar (férias, imprensa): quanto as semanas delas venderam a mais que sem elas (0,31 = 31%). */ efeito_na_semana?: number | null };
 export const MAX_PARTES_DA_BASE = 12;
 /** A soma das partes pode destoar da base por arredondamento (e só por isso). */
 export const TOLERANCIA_DA_SOMA_DAS_PARTES = 3;

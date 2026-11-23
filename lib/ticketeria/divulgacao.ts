@@ -14,14 +14,17 @@ export const CANAIS_DE_DIVULGACAO = [
   { valor: "email", rotulo: "E-mail" },
   { valor: "anuncio-pago", rotulo: "Anúncio pago" },
   { valor: "parceiro", rotulo: "Parceiro ou influenciador" },
+  { valor: "imprensa", rotulo: "Imprensa (crítica ou matéria)" },
   { valor: "outro", rotulo: "Outro" },
 ] as const;
+/** O canal da crítica ou matéria: não tem gasto e vale um dia; o modelo trata como uma data que pode mexer na venda (lib/ticketeria/modelo-controles.ts). */
+export const CANAL_DA_IMPRENSA = "imprensa";
 
 export const SEM_ORIGEM = "sem-origem";
 export const ROTULO_SEM_ORIGEM = "Sem origem conhecida";
 
 const ROTULOS: Record<string, string> = {
-  instagram: "Instagram", whatsapp: "WhatsApp", email: "E-mail", "anuncio-pago": "Anúncio pago", parceiro: "Parceiro ou influenciador", outro: "Outro",
+  instagram: "Instagram", whatsapp: "WhatsApp", email: "E-mail", "anuncio-pago": "Anúncio pago", parceiro: "Parceiro ou influenciador", imprensa: "Imprensa", outro: "Outro",
   facebook: "Facebook", google: "Google", tiktok: "TikTok", youtube: "YouTube", site: "Site do produtor",
 };
 
@@ -220,12 +223,16 @@ export type AcaoLida = { nome: string; canal: string; inicio: string; fim: strin
 
 const DIA_VALIDO = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && diaNoFuso(new Date(`${d}T12:00:00Z`), "UTC") === d;
 
-/** O formulário de registrar ação, conferido: nome de 2 a 80 letras, um canal, o período (o fim não vem antes do início) e o gasto em reais (em branco vale zero). */
+/** O formulário de registrar ação, conferido: nome de 2 a 80 letras, um canal, o período (o fim não vem antes do início) e o gasto em reais (em branco vale zero). Imprensa: um dia só e sem gasto. */
 export function lerAcao(c: CamposDaAcao): { ok: true; valor: AcaoLida } | { ok: false; erro: string } {
   const nome = c.nome.replace(/\s+/g, " ").trim();
-  if (nome.length < 2 || nome.length > 80) return { ok: false, erro: "Dê um nome à ação, de 2 a 80 letras." };
+  if (nome.length < 2 || nome.length > 80) return { ok: false, erro: c.canal === CANAL_DA_IMPRENSA ? "Escreva o veículo e o assunto, de 2 a 80 letras." : "Dê um nome à ação, de 2 a 80 letras." };
   const canal = rotuloDeCampanha(c.canal, MAX_CANAL_DA_ORIGEM);
   if (!canal) return { ok: false, erro: "Escolha onde você divulgou." };
+  if (canal === CANAL_DA_IMPRENSA) {
+    if (!DIA_VALIDO(c.inicio)) return { ok: false, erro: "Escolha o dia em que saiu." };
+    return { ok: true, valor: { nome, canal, inicio: c.inicio, fim: c.inicio, gasto_centavos: 0 } };
+  }
   if (!DIA_VALIDO(c.inicio) || !DIA_VALIDO(c.fim)) return { ok: false, erro: "Escolha o dia em que começou e o dia em que terminou." };
   if (c.fim < c.inicio) return { ok: false, erro: "A ação não pode terminar antes de começar." };
   let gasto = 0;

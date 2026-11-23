@@ -30,7 +30,7 @@ function Marca({ estado }: { estado: Verificacao["estado"] }) {
 }
 
 /** A checklist de prontidão: o aviso (pronto ou não, com o progresso) e cada verificação, com o botão que leva ao que resolve. */
-export function ModeloDaLoja({ prontidao, onImportar, onConexoes, onDatas, onCurva }: { prontidao: ProntidaoDoModelo; onImportar?: () => void; onConexoes?: () => void; onDatas?: () => void; onCurva?: () => void }) {
+export function ModeloDaLoja({ prontidao, onImportar, onConexoes, onDatas, onCurva, onImprensa }: { prontidao: ProntidaoDoModelo; onImportar?: () => void; onConexoes?: () => void; onDatas?: () => void; onCurva?: () => void; onImprensa?: () => void }) {
   const { pronto, prontos, total, confianca, semanas, verificacoes, ignoradas } = prontidao;
   return (
     <div className="space-y-4">
@@ -57,7 +57,7 @@ export function ModeloDaLoja({ prontidao, onImportar, onConexoes, onDatas, onCur
           </div>
         ))}
       </div>
-      <ControlesDoModelo controles={prontidao.controles} permanente={!!prontidao.resumo?.permanente} semanas={prontidao.semanas} onDatas={onDatas} onConexoes={onConexoes} onCurva={onCurva} />
+      <ControlesDoModelo controles={prontidao.controles} permanente={!!prontidao.resumo?.permanente} semanas={prontidao.semanas} marcacoesDeImprensa={prontidao.resumo?.imprensa ?? 0} onDatas={onDatas} onConexoes={onConexoes} onCurva={onCurva} onImprensa={onImprensa} />
       {ignoradas.length > 0 && <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Para não contar o mesmo gasto duas vezes, ficou de fora o gasto {ignoradas.length === 1 ? "da ação" : "das ações"} <span className="text-black/65">{ignoradas.join(", ")}</span>: o gasto de anúncios já vem das conexões.</p>}
     </div>
   );
@@ -73,46 +73,77 @@ function PilulaDoControle({ c, texto: forcado }: { c: ControleDaTela; texto?: st
   return <span className="inline-flex shrink-0 rounded-xl border bg-white px-2 py-0.5 text-[0.625rem] font-normal" style={{ borderColor: c.estado === "em_uso" ? `${VERDE}4D` : c.estado === "entra_depois" ? "rgba(176,122,20,.3)" : BORDA, color: cor }}>{texto}</span>;
 }
 
-/** As férias (data que pode importar) depois de uma rodada: fazem diferença ou não nas vendas desta loja. */
-function feriasDoResultado(partes: ParteDaBase[] | undefined): { pilula: string; detalhe: string } | null {
-  const f = partes?.find(p => p.chave === "ferias");
+/** A parte do boca a boca ou da urgência só aparece como "em uso" com pelo menos tanto das vendas e o intervalo fora do zero: sem efeito, o modelo chega a mostrar até 3% (estudos em modelo/). */
+export const PARTE_MINIMA_DA_VENDA_QUE_PUXA_VENDA = 5;
+
+/** O que a última rodada disse de um controle que só pesa se os dados mostrarem (férias, imprensa, boca a boca, urgência): a pílula e a frase, ou null se não há rodada com ele. */
+export function medidaDoControle(partes: ParteDaBase[] | undefined, chave: "ferias" | "imprensa" | "boca" | "urgencia", marcacoes = 0): { pilula: string; detalhe: string; pesa: boolean } | null {
+  const f = partes?.find(p => p.chave === chave);
   if (!f) return null;
+  if (chave === "boca" || chave === "urgencia") {
+    const pesa = f.porcento >= PARTE_MINIMA_DA_VENDA_QUE_PUXA_VENDA && f.baixo > 0;
+    if (!pesa) return { pesa, pilula: "Não faz diferença", detalhe: chave === "boca"
+      ? "O modelo testou: nas suas vendas, o que já foi vendido não puxa mais venda. Por isso não pesa. Se isso mudar, ele percebe sozinho."
+      : "O modelo testou: quando restam poucos lugares, a venda não acelera na sua casa. Por isso não pesa. Se isso mudar, ele percebe sozinho." };
+    const p = pontos(f.porcento);
+    return { pesa, pilula: `Em uso · ${p}% das vendas`, detalhe: chave === "boca"
+      ? `Os seus eventos vendem também pelo que já venderam: cerca de ${p}% das vendas vêm de quem comprou e contou para outras pessoas (o boca a boca). Por isso o calendário adianta parte do gasto.`
+      : `Quando restam poucos lugares, quem estava em dúvida compra mais rápido: cerca de ${p}% das vendas vêm dessa pressa.` };
+  }
   const nada = (f.baixo <= 0 && f.alto >= 0) || Math.abs(f.porcento) < 0.5;
-  if (nada) return { pilula: "Não faz diferença", detalhe: "O modelo testou: nas suas vendas, as semanas de férias venderam como as outras. Por isso não pesa. Se isso mudar, ele percebe sozinho." };
+  if (chave === "imprensa") {
+    if (nada) return { pesa: false, pilula: "Não faz diferença", detalhe: "O modelo testou: nas semanas em que saiu crítica ou matéria, a venda foi como nas outras. Por isso não pesa. Se isso mudar, ele percebe sozinho." };
+    const efeito = f.efeito_na_semana;
+    const das = marcacoes > 0 ? ` Vem das ${marcacoes === 1 ? "1 marcação" : `${marcacoes} marcações`} em Ações e gasto.` : "";
+    return { pesa: true, pilula: marcacoes > 0 ? `Em uso · ${marcacoes === 1 ? "1 marcação" : `${marcacoes} marcações`}` : "Em uso · faz diferença", detalhe: typeof efeito === "number"
+      ? `As semanas em que saiu crítica ou matéria venderam ${pontos(Math.abs(efeito) * 100)}% ${efeito >= 0 ? "mais" : "menos"}, sem contar os anúncios.${das}`
+      : `A imprensa explica ${pontos(f.porcento)}% das suas vendas, sem contar os anúncios.${das}` };
+  }
+  if (nada) return { pesa: false, pilula: "Não faz diferença", detalhe: "O modelo testou: nas suas vendas, as semanas de férias venderam como as outras. Por isso não pesa. Se isso mudar, ele percebe sozinho." };
   const efeito = f.efeito_na_semana;
   return {
-    pilula: "Em uso · faz diferença",
+    pesa: true, pilula: "Em uso · faz diferença",
     detalhe: typeof efeito === "number"
       ? `As semanas de férias de julho e de dezembro a janeiro venderam ${pontos(Math.abs(efeito) * 100)}% ${efeito >= 0 ? "mais" : "menos"} que as outras, sem contar os anúncios. Calendário aproximado.`
       : `As férias explicam ${pontos(f.porcento)}% das suas vendas, sem contar os anúncios. Calendário aproximado.`,
   };
 }
 
-/** Os controles do modelo (ritmo de venda até a data, tamanho, feriados, férias, preço e lotes, cupons, visitas sem anúncio): quais estão em uso, quais não se aplicam e quando entram os outros. */
-export function ControlesDoModelo({ controles, partes, permanente = false, semanas = null, onDatas, onConexoes, onCurva }: {
-  controles: ControleDaTela[]; /** As partes da última rodada (para dizer se as férias fazem diferença). */ partes?: ParteDaBase[]; permanente?: boolean; semanas?: number | null;
-  onDatas?: () => void; onConexoes?: () => void; onCurva?: () => void;
+/** A parte das vendas do boca a boca (0,09 = 9%) quando ele pesa na última rodada; senão null. O calendário usa isso para adiantar o gasto. */
+export function bocaQuePesa(partes: ParteDaBase[] | undefined): number | null {
+  const m = medidaDoControle(partes, "boca");
+  const p = partes?.find(x => x.chave === "boca");
+  return m?.pesa && p ? p.porcento / 100 : null;
+}
+
+const MEDIDOS = { ferias: "ferias", imprensa: "imprensa", boca: "boca", urgencia: "urgencia" } as const;
+
+/** Os controles do modelo (ritmo de venda até a data, tamanho, boca a boca, imprensa, lugares acabando, feriados, férias, preço e lotes, cupons, visitas sem anúncio): quais estão em uso, quais não se aplicam e quando entram os outros. */
+export function ControlesDoModelo({ controles, partes, permanente = false, semanas = null, marcacoesDeImprensa = 0, onDatas, onConexoes, onCurva, onImprensa }: {
+  controles: ControleDaTela[]; /** As partes da última rodada (para dizer se férias, imprensa, boca a boca e urgência fazem diferença). */ partes?: ParteDaBase[]; permanente?: boolean; semanas?: number | null;
+  marcacoesDeImprensa?: number; onDatas?: () => void; onConexoes?: () => void; onCurva?: () => void; onImprensa?: () => void;
 }) {
   if (controles.length === 0) return null;
-  const ferias = feriasDoResultado(partes);
   return (
     <section className="space-y-2.5" aria-label="O que o modelo leva em conta além dos anúncios">
       {permanente && <p className="rounded-xl border px-4 py-3 text-[0.8125rem] text-black/55" style={{ borderColor: "rgba(114,89,181,.28)", background: "#FAF8FE" }}><span className="text-[#282525]">Atração aberta o ano todo.</span> O Jards percebeu que esta loja tem um evento com sessões o ano inteiro (como um zoológico ou um parque). O que olha para a data de uma sessão sai da conta; as épocas do ano ganham peso.</p>}
       <h3 className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">O que o modelo leva em conta além dos anúncios</h3>
       <div className="divide-y divide-black/[.08] rounded-xl border bg-white" style={{ borderColor: BORDA }}>
         {controles.map(c => {
-          const dasFerias = c.grupo === "ferias" && c.estado === "em_uso" ? ferias : null;
+          const chave = (MEDIDOS as Record<string, keyof typeof MEDIDOS | undefined>)[c.grupo];
+          const medida = chave && c.estado === "em_uso" ? medidaDoControle(partes, chave, marcacoesDeImprensa) : null;
           return (
             <div key={c.grupo} className="flex items-start gap-3.5 px-4 py-4">
-              <Marca estado={c.estado === "em_uso" && dasFerias?.pilula !== "Não faz diferença" ? "ok" : c.estado === "opcional" ? "opcional" : "falta"} />
+              <Marca estado={c.estado === "em_uso" && medida?.pesa !== false ? "ok" : c.estado === "opcional" ? "opcional" : "falta"} />
               <div className="min-w-0 flex-1">
                 <p className="text-[0.8125rem] text-[#282525]">{c.rotulo}</p>
-                <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/45">{dasFerias?.detalhe ?? c.detalhe}</p>
+                <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/45">{medida?.detalhe ?? c.detalhe}</p>
                 {c.acao === "datas" && <button type="button" onClick={onDatas} className={`mt-1.5 ${LINK}`}>Adicionar uma data sua</button>}
                 {c.acao === "conexoes" && <button type="button" onClick={onConexoes} className={`mt-1.5 ${LINK}`}>Conectar o GA4</button>}
                 {c.acao === "curva" && onCurva && <button type="button" onClick={onCurva} className={`mt-1.5 ${LINK}`}>Ver a curva</button>}
+                {c.acao === "imprensa" && onImprensa && <button type="button" onClick={onImprensa} className={`mt-1.5 ${LINK}`}>{c.estado === "opcional" ? "Registrar uma crítica ou matéria" : "Registrar uma"}</button>}
               </div>
-              <PilulaDoControle c={c} texto={dasFerias?.pilula} />
+              <PilulaDoControle c={c} texto={medida?.pilula} />
             </div>
           );
         })}
@@ -127,7 +158,7 @@ export function ControlesDoModelo({ controles, partes, permanente = false, seman
           </div>
         )}
       </div>
-      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Com menos de um ano de histórico, o modelo usa só os controles mais importantes, para não confundir um efeito com outro. O resto entra sozinho a partir de {SEMANAS_DOS_CONTROLES_EXTRAS} semanas, sem você precisar fazer nada. Datas que podem importar (como férias escolares) entram para todo mundo, mas só ganham peso se os seus dados mostrarem diferença.</p>
+      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Com menos de um ano de histórico, o modelo usa só os controles mais importantes, para não confundir um efeito com outro. O resto entra sozinho a partir de {SEMANAS_DOS_CONTROLES_EXTRAS} semanas, sem você precisar fazer nada. Boca a boca, lugares acabando, imprensa e férias entram para todo mundo, mas só ganham peso se os seus dados mostrarem diferença; boca a boca e lugares acabando só aparecem como “em uso” acima de {PARTE_MINIMA_DA_VENDA_QUE_PUXA_VENDA}% das vendas. Sem eles, o modelo poria na conta da proximidade da data o que é de outra coisa.</p>
     </section>
   );
 }
@@ -298,6 +329,9 @@ const PARTES: Record<ChaveDaParte, { rotulo: string; dica: string; cor: string }
   proximidade: { rotulo: "Proximidade da sessão", dica: "vende mais nas semanas antes da data", cor: "#7259B5" },
   feriado: { rotulo: "Feriados e datas de pico", dica: "Natal, Dia das Mães, as datas suas", cor: "#A894D6" },
   lugares: { rotulo: "Tamanho do evento", dica: "semanas com mais lugares à venda vendem mais", cor: "#B8A8DE" },
+  boca: { rotulo: "Quem comprou traz outros", dica: "o boca a boca: o evento vende pelo que já vendeu", cor: "#8E78C8" },
+  urgencia: { rotulo: "Lugares acabando", dica: "com poucos lugares, quem estava em dúvida compra logo", cor: "#9C88CF" },
+  imprensa: { rotulo: "Imprensa", dica: "semanas com crítica ou matéria marcada", cor: "#C3B5E3" },
   ferias: { rotulo: "Férias escolares", dica: "julho e de dezembro a janeiro", cor: "#D2C6EC" },
   preco_e_lotes: { rotulo: "Preço e lotes", dica: "a troca de lote puxa uma corrida de compra", cor: "#C9BCE6" },
   cupom: { rotulo: "Cupons", dica: "semanas com cupom venderam diferente", cor: "#DDD4F0" },

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, Megaphone } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { CANAIS_DE_DIVULGACAO, ROTULO_SEM_ORIGEM, SEM_ORIGEM, enderecoDeDivulgacao, nomeDaAcaoNoLink, resumirDivulgacao, serieDoGrafico, type AcaoComResultado, type CamposDaAcao, type LinhaDaDivulgacao, type SessaoParaDivulgar } from "@/lib/ticketeria/divulgacao";
+import { CANAIS_DE_DIVULGACAO, CANAL_DA_IMPRENSA, ROTULO_SEM_ORIGEM, SEM_ORIGEM, enderecoDeDivulgacao, nomeDaAcaoNoLink, resumirDivulgacao, serieDoGrafico, type AcaoComResultado, type CamposDaAcao, type LinhaDaDivulgacao, type SessaoParaDivulgar } from "@/lib/ticketeria/divulgacao";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 
@@ -208,12 +208,13 @@ export function AcaoSheet({ editando, valores, erro, salvando, onMudar, onClose,
   editando: boolean; valores: CamposDaAcao; erro?: string | null; salvando?: boolean;
   onMudar?: <K extends keyof CamposDaAcao>(campo: K, valor: CamposDaAcao[K]) => void; onClose: () => void; onSalvar?: () => void; onApagar?: () => void;
 }) {
-  const nomeNoLink = nomeDaAcaoNoLink(valores.nome);
+  const imprensa = valores.canal === CANAL_DA_IMPRENSA;
+  const nomeNoLink = imprensa ? null : nomeDaAcaoNoLink(valores.nome);
   return (
     <TopSheet titulo={editando ? "Editar ação" : "Registrar ação"} onClose={onClose} footer={fechar => <Rodape fechar={fechar} salvando={!!salvando} rotulo={editando ? "Salvar" : "Registrar ação"} onSalvar={() => onSalvar?.()} onApagar={editando ? onApagar : undefined} rotuloApagar="Apagar" />}>
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
-        <div><label className={ROTULO} htmlFor="ac-nome">Nome da ação</label><input id="ac-nome" className={CAMPO} value={valores.nome} onChange={e => onMudar?.("nome", e.target.value)} placeholder="Stories do lote 2" maxLength={80} disabled={salvando} />
+        <div><label className={ROTULO} htmlFor="ac-nome">{imprensa ? "Veículo e assunto" : "Nome da ação"}</label><input id="ac-nome" className={CAMPO} value={valores.nome} onChange={e => onMudar?.("nome", e.target.value)} placeholder={imprensa ? "Folha de S.Paulo · crítica do Hamlet" : "Stories do lote 2"} maxLength={80} disabled={salvando} />
           {nomeNoLink && <p className="mt-1.5 text-[0.75rem] text-black/45">Para contar os ingressos, crie o link de divulgação com o nome da ação <span className="text-black/70">{nomeNoLink}</span>.</p>}</div>
         <div>
           <span className={ROTULO}>Onde você divulgou</span>
@@ -225,11 +226,16 @@ export function AcaoSheet({ editando, valores, erro, salvando, onMudar, onClose,
             ))}
           </div>
         </div>
+        {imprensa ? (<>
+          <div className="sm:w-1/2"><label className={ROTULO} htmlFor="ac-inicio">Saiu em</label><input id="ac-inicio" type="date" className={CAMPO} value={valores.inicio} onChange={e => onMudar?.("inicio", e.target.value)} disabled={salvando} /></div>
+          <p className="rounded-xl border bg-white px-3.5 py-2.5 text-[0.75rem] leading-relaxed text-black/55" style={{ borderColor: BORDA }}>Imprensa não tem gasto. O modelo trata como uma data que pode mexer na venda, como um feriado: só ganha peso se as suas vendas mostrarem diferença nas semanas em que algo saiu.</p>
+        </>) : (<>
         <div className="grid gap-3 sm:grid-cols-2">
           <div><label className={ROTULO} htmlFor="ac-inicio">Começou em</label><input id="ac-inicio" type="date" className={CAMPO} value={valores.inicio} onChange={e => onMudar?.("inicio", e.target.value)} disabled={salvando} /></div>
           <div><label className={ROTULO} htmlFor="ac-fim">Terminou em</label><input id="ac-fim" type="date" className={CAMPO} value={valores.fim} onChange={e => onMudar?.("fim", e.target.value)} disabled={salvando} /></div>
         </div>
         <div><label className={ROTULO} htmlFor="ac-gasto">Quanto gastou (opcional)</label><input id="ac-gasto" inputMode="decimal" className={CAMPO} value={valores.gasto} onChange={e => onMudar?.("gasto", e.target.value)} placeholder="150,00" disabled={salvando} /><p className="mt-1.5 text-[0.75rem] text-black/45">Em reais. Deixe em branco se não custou nada, como um e-mail.</p></div>
+        </>)}
       </div>
     </TopSheet>
   );

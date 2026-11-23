@@ -25,13 +25,13 @@ import { MIN_COMPRADORES_PARA_COMPARAR } from "@/lib/ticketeria/publico-em-comum
 import { confiancaMostrada } from "@/lib/ticketeria/modelo-confianca";
 import { blocoDeInvestir, blocoDoTamanhoDosCanais } from "@/lib/ticketeria/modelo-painel";
 import { lerDataDePico, type CamposDaDataDePico, type DataDePico } from "@/lib/ticketeria/modelo-controles";
-import { ControlesDoModelo, CurvaDaCasaSheet, ModeloDaLoja, ResultadoDoModelo } from "@/components/ticketeria/ModeloView";
+import { ControlesDoModelo, CurvaDaCasaSheet, ModeloDaLoja, ResultadoDoModelo, bocaQuePesa } from "@/components/ticketeria/ModeloView";
 import { rampaPadrao } from "@/lib/ticketeria/modelo-controles";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
 import type { ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
 import type { CorpoDaImportacao, ImportacaoDaLista, TipoDeHistorico } from "@/lib/ticketeria/historico";
 import { CARTOES, ConexoesDaLoja, EscolherContaSheet, type ContaParaEscolher, type EstadoDeMidia, type ProvedorDoCartao } from "@/components/ticketeria/ConexoesView";
-import { gastoParaCampo, lerAcao, resumirDivulgacao, type CamposDaAcao, type DivulgacaoDaLoja as DadosDaDivulgacao } from "@/lib/ticketeria/divulgacao";
+import { CANAL_DA_IMPRENSA, gastoParaCampo, lerAcao, resumirDivulgacao, type CamposDaAcao, type DivulgacaoDaLoja as DadosDaDivulgacao } from "@/lib/ticketeria/divulgacao";
 
 type Aba = "origem" | "acoes" | "conexoes" | "historico" | "modelo";
 const ABAS: { valor: Aba; rotulo: string }[] = [{ valor: "origem", rotulo: "De onde vieram" }, { valor: "acoes", rotulo: "Ações e gasto" }, { valor: "conexoes", rotulo: "Conexões" }, { valor: "historico", rotulo: "Histórico" }, { valor: "modelo", rotulo: "Modelo" }];
@@ -147,7 +147,9 @@ export default function DivulgacaoPage() {
     return () => { ativo = false; };
   }, [aba, estado?.lojaId, versao]);
 
-  const abrirNova = useCallback((hoje: string) => { setAcaoErro(null); setAcao({ id: null, valores: { nome: "", canal: "instagram", inicio: hoje, fim: hoje, gasto: "" } }); }, []);
+  const abrirNova = useCallback((hoje: string, canal: string = "instagram") => { setAcaoErro(null); setAcao({ id: null, valores: { nome: "", canal, inicio: hoje, fim: hoje, gasto: "" } }); }, []);
+  // "Registrar uma crítica ou matéria" no Modelo: abre a folha de ação já no canal da imprensa.
+  const abrirImprensa = useCallback(() => { const hoje = estado?.dados?.hoje; if (hoje) abrirNova(hoje, CANAL_DA_IMPRENSA); }, [estado, abrirNova]);
 
   async function salvar() {
     if (!acao || !estado?.lojaId || !organizationId) return;
@@ -356,7 +358,7 @@ export default function DivulgacaoPage() {
                     {ritmo && (previsaoPorComparacao
                       ? <RitmoComparado ritmo={ritmo} previsao={previsaoPorComparacao} candidatos={candidatos} porPublico={(comparacao?.compradores ?? 0) >= MIN_COMPRADORES_PARA_COMPARAR} onAjustar={() => setFolhaParecidos(true)} />
                       : <SemParecido ritmo={ritmo} temHistorico={(comparacao?.curvas.length ?? 0) > 0} expectativa={expectativa} onExpectativa={() => setFolhaExpectativa(true)} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />)}
-                    {plano && resultadoDoModelo && podePlanejar && <CalendarioDeDivulgacao plano={plano} canais={resultadoDoModelo.canais} semanasDoModelo={resultadoDoModelo.execucao.semanas} onAjustar={() => setPlanejando(true)} onFechar={() => setPlano(null)} />}
+                    {plano && resultadoDoModelo && podePlanejar && <CalendarioDeDivulgacao plano={plano} canais={resultadoDoModelo.canais} semanasDoModelo={resultadoDoModelo.execucao.semanas} bocaABoca={bocaQuePesa(resultadoDoModelo.execucao.base.partes)} onAjustar={() => setPlanejando(true)} onFechar={() => setPlano(null)} />}
                     {resultadoDoModelo && <ResultadoDoModelo onPlanejar={podePlanejar ? () => setPlanejando(true) : undefined} resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} sessoes={prontidao.resumo?.sessoes ?? null} eventos={prontidao.resumo?.eventos ?? null} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />}
                     {!resultadoDoModelo && (
                       <div className="space-y-3">
@@ -366,8 +368,8 @@ export default function DivulgacaoPage() {
                         <PreviaDoCalendario motivo={blocoDeInvestir("baixa", prontidao.semanas, false).motivo ?? ""} acao="Importar vendas anteriores encurta isso." onAcao={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />
                       </div>
                     )}
-                    {resultadoDoModelo && prontidao.pronto && <ControlesDoModelo controles={prontidao.controles} partes={resultadoDoModelo.execucao.base.partes} permanente={!!prontidao.resumo?.permanente} semanas={prontidao.semanas} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} onConexoes={() => setAba("conexoes")} onCurva={() => setVerCurva(true)} />}
-                    {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja onCurva={() => setVerCurva(true)} prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} />}
+                    {resultadoDoModelo && prontidao.pronto && <ControlesDoModelo controles={prontidao.controles} partes={resultadoDoModelo.execucao.base.partes} permanente={!!prontidao.resumo?.permanente} semanas={prontidao.semanas} marcacoesDeImprensa={prontidao.resumo?.imprensa ?? 0} onImprensa={abrirImprensa} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} onConexoes={() => setAba("conexoes")} onCurva={() => setVerCurva(true)} />}
+                    {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja onCurva={() => setVerCurva(true)} onImprensa={abrirImprensa} prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} />}
                     {(!resultadoDoModelo || !prontidao.pronto || resultadoDoModelo.execucao.confianca !== "boa") && <PlanoBDoModelo acoes={dados.acoes} canais={prontidao.canais} hoje={dados.hoje} proximaSessao={proximaSessao} onRegistrar={valores => { setAcaoErro(null); setAcao({ id: null, valores }); }} />}
                   </div>)
                 : <p className="text-[0.8125rem] text-black/40" aria-live="polite">Conferindo os dados…</p>)

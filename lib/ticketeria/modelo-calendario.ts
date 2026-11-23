@@ -43,6 +43,16 @@ export function pesosDaProximidade(S: number, k: number = PRUDENCIA_DA_PROXIMIDA
   return m.map(x => x / media);
 }
 
+/**
+ * O BOCA A BOCA na escolha do calendário (Jørgensen, Kort e Zaccour, 2006): quem compra cedo ainda tem tempo de contar para outras pessoas. Com o boca a boca medido pelo modelo como a parte
+ * `b` das vendas (0,09 = 9%), um ingresso vendido na semana t puxa cerca de 2b × (S − 1 − t) / S ingressos a mais até a sessão (venda uniforme ao longo de S semanas, como em Bass). O peso da
+ * semana t é 1 + isso: a primeira semana pesa mais e a da sessão não ganha nada. Sem boca a boca (b nulo ou 0), tudo vale 1. Como a prudência, só a ESCOLHA usa isso.
+ */
+export function pesosDoBocaABoca(S: number, b: number | null | undefined): number[] {
+  const parte = typeof b === "number" && b > 0 ? Math.min(0.5, b) : 0;
+  return Array.from({ length: S }, (_, t) => 1 + (2 * parte * (S - 1 - t)) / S);
+}
+
 export type SemanaDoCalendario = { inicio: string; porCanal: Record<string, number>; totalCentavos: number; /** A última semana (a da sessão, ou a da última sessão). */ daSessao: boolean; /** Há sessão (ou a exposição está aberta) nesta semana. */ emCartaz: boolean };
 export type ComparacaoDoCalendario = { ingressos: number; igual: number; noFim: number };
 export type Calendario = {
@@ -62,6 +72,7 @@ export type PedidoDoCalendario = {
   /** O dia da (última) sessão: o calendário vai até ele. */ diaDaSessao: string;
   /** Os lugares que ainda faltam vender (somados em todas as sessões; null ou ausente: sem teto). */ lugaresRestantes?: number | null;
   /** Os dias com sessão ou com a exposição aberta (AAAA-MM-DD): marcam as semanas em cartaz. Ausente: só a última semana. */ diasEmCartaz?: string[];
+  /** A parte das vendas que vem do boca a boca, quando o modelo mediu (0,09 = 9%); ausente ou nulo: sem boca a boca. */ bocaABoca?: number | null;
 };
 export type LeituraDoPedido = { ok: true; semanas: number; totalCentavos: number } | { ok: false; problema: "valor" | "datas" | "sessao_passou" | "longe_demais" };
 
@@ -135,6 +146,7 @@ export function montarCalendario(canaisBrutos: CanalComCurva[], pedido: PedidoDo
   const equiv: Record<string, number[]> = Object.fromEntries(canais.map(c => [c.canal, Array(S).fill(0)]));
   const emCartaz = semanasEmCartaz(pedido, S);
   const prox = pesosDaProximidade(S, prudencia, emCartaz);
+  const boca = pesosDoBocaABoca(S, pedido.bocaABoca);
   let restante = Math.floor(leitura.totalCentavos / passo) * passo;
   const pedidoArredondado = restante;
   // O teto: os anúncios não vendem mais do que os lugares que faltam (e parte deles ainda vende sem anúncio, então o teto é generoso).
@@ -148,9 +160,9 @@ export function montarCalendario(canaisBrutos: CanalComCurva[], pedido: PedidoDo
       const fim = limiteDaCurva(c), w = pesos[c.canal], e = equiv[c.canal];
       for (let t = 0; t < S; t++) {
         if (gastos[c.canal][t] + passo > fim) continue;
-        // A escolha pesa cada semana pela prudência com a proximidade; o teto de lugares conta o ganho do modelo, sem peso.
+        // A escolha pesa cada semana pela prudência com a proximidade e pelo boca a boca; o teto de lugares conta o ganho do modelo, sem peso.
         let d = 0, dm = 0;
-        for (let u = t; u < S && u - t < SEMANAS_DO_ATRASO; u++) { const x = ingressosNoGasto(c, e[u] + w[u - t] * passo) - ingressosNoGasto(c, e[u]); d += x * prox[u]; dm += x; }
+        for (let u = t; u < S && u - t < SEMANAS_DO_ATRASO; u++) { const x = ingressosNoGasto(c, e[u] + w[u - t] * passo) - ingressosNoGasto(c, e[u]); d += x * prox[u] * boca[u]; dm += x; }
         if (d > ganho) { ganho = d; ganhoDoModelo = dm; melhor = { c, t }; }
       }
     }

@@ -97,8 +97,11 @@ const grupo = (l: ControleDaTela[], g: string) => l.find(c => c.grupo === g) as 
 test("com 41 semanas: proximidade e feriados em uso; preço, lotes e cupons entram com 52 (faltam 11); visitas opcional", () => {
   const t = tabela(41, i => ({ proximidade: (i % 9) / 9, feriado: i % 7 === 0 ? 1 : 0, lote: i % 10 === 0 ? 1 : 0, preco: (i % 3) / 10, cupom: (i % 4) / 10, visitas: 0 }));
   const l = controlesDaTela(t, resumo, { conectado: false, semanas: 0 });
-  assert.deepEqual(l.map(c => c.grupo), ["proximidade", "feriados", "lugares", "ferias", "preco_e_lotes", "cupons", "visitas"]);
+  assert.deepEqual(l.map(c => c.grupo), ["proximidade", "feriados", "lugares", "boca", "imprensa", "urgencia", "ferias", "preco_e_lotes", "cupons", "visitas"]);
   assert.equal(grupo(l, "ferias").estado, "entra_depois");
+  for (const g of ["boca", "urgencia"]) assert.equal(grupo(l, g).estado, "entra_depois", "boca a boca e urgência entram com 52 semanas");
+  assert.equal(grupo(l, "imprensa").estado, "opcional", "sem marcação, a imprensa é opcional");
+  assert.equal(grupo(l, "imprensa").acao, "imprensa");
   assert.match(grupo(l, "proximidade").detalhe, /rampa padrão/);
   assert.equal(grupo(l, "proximidade").estado, "em_uso");
   assert.equal(grupo(l, "lugares").estado, "sem_dados", "lugares iguais em todas as semanas não entram");
