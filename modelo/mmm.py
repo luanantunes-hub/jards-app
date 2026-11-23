@@ -244,6 +244,8 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
     return {
         "motor": "pymc-marketing", "versao_motor": str(pymc_marketing.__version__), "semanas": n,
         "semanas_do_atraso": SEMANAS_DO_ATRASO_DA_MARCA if tem_marca else SEMANAS_DO_ATRASO,
+        # As semanas da tabela e os ingressos de cada uma, na ordem de `por_semana`: o Jards refaz a venda sem cada canal para o efeito total (ESTUDO-DO-EFEITO-TOTAL.md).
+        "datas": [str(d)[:10] for d in pd.to_datetime(x["date_week"])], "ingressos_por_semana": [int(round(float(v))) for v in np.asarray(y)],
         "diagnosticos": {"r_hat_maximo": round(r_hat if math.isfinite(r_hat) else 99.0, 4), "divergencias": divergencias, "ess_minimo": int(ess) if math.isfinite(ess) else 0},
         "base": {"porcento": round(_limitar(b_meio), 2), "baixo": round(_limitar(b_baixo), 2), "alto": round(_limitar(b_alto), 2), "partes": partes},
         "canais": resultado_canais,

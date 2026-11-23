@@ -30,7 +30,7 @@ export async function divulgacaoDaLoja(admin: Admin, lojaId: string, agora: numb
   const [{ data: eventos }, { data: locais }, { data: acoes }] = await Promise.all([
     t.from("ticketeria_eventos").select("id, titulo").eq("loja_id", lojaId),
     t.from("ticketeria_locais").select("id, fuso").eq("loja_id", lojaId),
-    t.from("ticketeria_acoes_divulgacao").select("id, evento_id, nome, canal, inicio, fim, gasto_centavos").eq("loja_id", lojaId).order("inicio", { ascending: false }),
+    t.from("ticketeria_acoes_divulgacao").select("id, evento_id, nome, canal, inicio, fim, gasto_centavos, veiculo").eq("loja_id", lojaId).order("inicio", { ascending: false }),
   ]);
   const ids = (eventos ?? []).map(e => e.id);
   const { data: sessoes } = ids.length > 0 ? await t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, fim, cancelada_em").in("evento_id", ids).order("inicio", { ascending: false }) : { data: [] };

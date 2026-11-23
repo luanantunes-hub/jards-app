@@ -142,7 +142,7 @@ export type DivulgacaoDaLoja = {
 
 // ─── Ações de divulgação (passo B) ──────────────────────────────────────────
 
-export type AcaoDaLoja = { id: string; evento_id: string | null; nome: string; canal: string; inicio: string; fim: string; gasto_centavos: number };
+export type AcaoDaLoja = { id: string; evento_id: string | null; nome: string; canal: string; inicio: string; fim: string; gasto_centavos: number; /** Só na imprensa: o veículo (TV Tem). */ veiculo?: string | null };
 export type AcaoComResultado = AcaoDaLoja & { rotulo_do_canal: string; ingressos: number; vendido_centavos: number; custo_por_ingresso_centavos: number | null };
 
 /** O nome da ação como o link de divulgação o leva (`?acao=`): é por ele que a venda acha a ação. */
@@ -218,21 +218,29 @@ export function serieDoGrafico(porDia: Record<string, number>, acoes: AcaoDaLoja
   return { dias, faixas };
 }
 
-export type CamposDaAcao = { nome: string; canal: string; inicio: string; fim: string; gasto: string };
-export type AcaoLida = { nome: string; canal: string; inicio: string; fim: string; gasto_centavos: number };
+export type CamposDaAcao = { nome: string; canal: string; inicio: string; fim: string; gasto: string;
+  /** Só na imprensa: o veículo (o `nome` vira o assunto, opcional) e o evento de que a matéria fala (null: da casa toda). */ veiculo?: string; eventoId?: string | null };
+export type AcaoLida = { nome: string; canal: string; inicio: string; fim: string; gasto_centavos: number; veiculo: string | null; evento_id?: string | null };
+
+/** Na imprensa o nome gravado é "veículo · assunto" (ou só o veículo); o assunto volta para o campo ao editar. */
+export const SEPARADOR_DO_ASSUNTO = " · ";
+export const assuntoDoNome = (nome: string, veiculo: string | null | undefined): string => (veiculo && nome.startsWith(`${veiculo}${SEPARADOR_DO_ASSUNTO}`) ? nome.slice(veiculo.length + SEPARADOR_DO_ASSUNTO.length) : veiculo && nome === veiculo ? "" : nome);
 
 const DIA_VALIDO = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && diaNoFuso(new Date(`${d}T12:00:00Z`), "UTC") === d;
 
 /** O formulário de registrar ação, conferido: nome de 2 a 80 letras, um canal, o período (o fim não vem antes do início) e o gasto em reais (em branco vale zero). Imprensa: um dia só e sem gasto. */
 export function lerAcao(c: CamposDaAcao): { ok: true; valor: AcaoLida } | { ok: false; erro: string } {
   const nome = c.nome.replace(/\s+/g, " ").trim();
-  if (nome.length < 2 || nome.length > 80) return { ok: false, erro: c.canal === CANAL_DA_IMPRENSA ? "Escreva o veículo e o assunto, de 2 a 80 letras." : "Dê um nome à ação, de 2 a 80 letras." };
+  if (c.canal === CANAL_DA_IMPRENSA) {
+    const veiculo = (c.veiculo ?? "").replace(/\s+/g, " ").trim();
+    if (veiculo.length < 2 || veiculo.length > 60) return { ok: false, erro: "Escreva o veículo, como TV Tem ou Folha de S.Paulo." };
+    if (!DIA_VALIDO(c.inicio)) return { ok: false, erro: "Escolha o dia em que saiu." };
+    const completo = (nome ? `${veiculo}${SEPARADOR_DO_ASSUNTO}${nome}` : veiculo).slice(0, 80).trim();
+    return { ok: true, valor: { nome: completo, canal: CANAL_DA_IMPRENSA, inicio: c.inicio, fim: c.inicio, gasto_centavos: 0, veiculo, evento_id: c.eventoId ?? null } };
+  }
+  if (nome.length < 2 || nome.length > 80) return { ok: false, erro: "Dê um nome à ação, de 2 a 80 letras." };
   const canal = rotuloDeCampanha(c.canal, MAX_CANAL_DA_ORIGEM);
   if (!canal) return { ok: false, erro: "Escolha onde você divulgou." };
-  if (canal === CANAL_DA_IMPRENSA) {
-    if (!DIA_VALIDO(c.inicio)) return { ok: false, erro: "Escolha o dia em que saiu." };
-    return { ok: true, valor: { nome, canal, inicio: c.inicio, fim: c.inicio, gasto_centavos: 0 } };
-  }
   if (!DIA_VALIDO(c.inicio) || !DIA_VALIDO(c.fim)) return { ok: false, erro: "Escolha o dia em que começou e o dia em que terminou." };
   if (c.fim < c.inicio) return { ok: false, erro: "A ação não pode terminar antes de começar." };
   let gasto = 0;
@@ -242,7 +250,7 @@ export function lerAcao(c: CamposDaAcao): { ok: true; valor: AcaoLida } | { ok: 
     if (reais > 10000000) return { ok: false, erro: "O gasto vai até R$ 10.000.000." };
     gasto = emCentavos(reais);
   }
-  return { ok: true, valor: { nome, canal, inicio: c.inicio, fim: c.fim, gasto_centavos: gasto } };
+  return { ok: true, valor: { nome, canal, inicio: c.inicio, fim: c.fim, gasto_centavos: gasto, veiculo: null } };
 }
 
 /** O gasto como o formulário o mostra: "150,00"; zero fica em branco. */

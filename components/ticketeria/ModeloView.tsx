@@ -1,5 +1,6 @@
 "use client";
 
+import { PARTE_MINIMA_DA_VENDA_QUE_PUXA_VENDA, puxaVenda } from "@/lib/ticketeria/efeito-total";
 import { Check } from "lucide-react";
 import { SEMANAS_IDEAIS, rotuloDoCanalDeGasto, type Confianca, type ProntidaoDoModelo, type Verificacao } from "@/lib/ticketeria/modelo";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
@@ -73,15 +74,13 @@ function PilulaDoControle({ c, texto: forcado }: { c: ControleDaTela; texto?: st
   return <span className="inline-flex shrink-0 rounded-xl border bg-white px-2 py-0.5 text-[0.625rem] font-normal" style={{ borderColor: c.estado === "em_uso" ? `${VERDE}4D` : c.estado === "entra_depois" ? "rgba(176,122,20,.3)" : BORDA, color: cor }}>{texto}</span>;
 }
 
-/** A parte do boca a boca ou da urgência só aparece como "em uso" com pelo menos tanto das vendas e o intervalo fora do zero: sem efeito, o modelo chega a mostrar até 3% (estudos em modelo/). */
-export const PARTE_MINIMA_DA_VENDA_QUE_PUXA_VENDA = 5;
 
 /** O que a última rodada disse de um controle que só pesa se os dados mostrarem (férias, imprensa, boca a boca, urgência): a pílula e a frase, ou null se não há rodada com ele. */
 export function medidaDoControle(partes: ParteDaBase[] | undefined, chave: "ferias" | "imprensa" | "boca" | "urgencia", marcacoes = 0): { pilula: string; detalhe: string; pesa: boolean } | null {
   const f = partes?.find(p => p.chave === chave);
   if (!f) return null;
   if (chave === "boca" || chave === "urgencia") {
-    const pesa = f.porcento >= PARTE_MINIMA_DA_VENDA_QUE_PUXA_VENDA && f.baixo > 0;
+    const pesa = puxaVenda(f);
     if (!pesa) return { pesa, pilula: "Não faz diferença", detalhe: chave === "boca"
       ? "O modelo testou: nas suas vendas, o que já foi vendido não puxa mais venda. Por isso não pesa. Se isso mudar, ele percebe sozinho."
       : "O modelo testou: quando restam poucos lugares, a venda não acelera na sua casa. Por isso não pesa. Se isso mudar, ele percebe sozinho." };
@@ -373,6 +372,8 @@ export function QuebraDaBase({ base }: { base: ResultadoParaATela["execucao"]["b
 /** O que o modelo estimou: o selo de confiança, a tabela canal a canal com o modelo ao lado dos links e, para cada canal, o gasto semanal a partir do qual rende pouco. */
 export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eventos = null, onImportar, onPlanejar }: { resultado: ResultadoParaATela; gastoSemanal?: Record<string, number>; sessoes?: number | null; eventos?: number | null; onImportar?: () => void; /** Abre a folha do calendário de divulgação de um evento. */ onPlanejar?: () => void }) {
   const { execucao: e, comparacao, canais, ultimaFalha } = resultado;
+  // O "sozinho" e o "no total" lado a lado só quando algum canal tem efeito total (o boca a boca ou a urgência pesam nesta rodada).
+  const comTotal = comparacao.linhas.some(l => l.total !== null);
   const mostrada = confiancaMostrada(e.confianca, sessoes);
   const tamanho = blocoDoTamanhoDosCanais(e.semanas, mostrada);
   const investir = blocoDeInvestir(mostrada, e.semanas, canais.some(c => c.gasto_constante));
@@ -400,11 +401,12 @@ export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eve
           <div className="flex items-center gap-2.5"><h3 className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Quanto cada canal vendeu</h3><SeloDePrecisao selo={tamanho.selo} /></div>
       <div className="overflow-x-auto rounded-xl border bg-white" style={{ borderColor: BORDA }}>
         <table className="w-full min-w-[46rem] border-collapse">
-          <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Canal</th><th className={`${CABECALHO} text-right`}>Gasto</th><th className={`${CABECALHO} text-right`}>Ingressos, segundo o modelo</th><th className={`${CABECALHO} text-right`}>Ingressos, segundo os links</th><th className={`${CABECALHO} text-right`}>Custo por ingresso</th></tr></thead>
+          <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Canal</th><th className={`${CABECALHO} text-right`}>Gasto</th>{comTotal ? <><th className={`${CABECALHO} text-right`}>Sozinho</th><th className={`${CABECALHO} text-right`} style={{ background: "#FAF8FE" }}>No total</th></> : <th className={`${CABECALHO} text-right`}>Ingressos, segundo o modelo</th>}<th className={`${CABECALHO} text-right`}>{comTotal ? "Segundo os links" : "Ingressos, segundo os links"}</th><th className={`${CABECALHO} text-right`}>Custo por ingresso</th></tr></thead>
           <tbody className="divide-y divide-black/[.08]">
             <tr>
               <td className={CELULA}>Venderia de qualquer jeito</td><td className={`${CELULA} text-right text-black/30`}>—</td>
               <td className={`${CELULA} text-right tabular-nums`}>{pontos(e.base.porcento)}% <span className="text-black/35">±{margem(e.base.baixo, e.base.alto, e.base.porcento)}</span></td>
+              {comTotal && <td className={`${CELULA} text-right text-black/30`} style={{ background: "#FAF8FE" }}>—</td>}
               <td className={`${CELULA} text-right text-black/30`}>—</td><td className={`${CELULA} text-right text-black/30`}>—</td>
             </tr>
             {comparacao.linhas.map(l => (
@@ -412,13 +414,15 @@ export function ResultadoDoModelo({ resultado, gastoSemanal, sessoes = null, eve
                 <td className={CELULA}>{rotuloDoCanalDeGasto(l.canal)}{l.canal.endsWith("-marca") && <span className="ml-2 inline-flex rounded-xl border px-2 py-0.5 text-[0.625rem]" style={{ color: "#B07A14", borderColor: "rgba(176,122,20,.4)" }}>efeito de até 3 meses · impreciso</span>}{l.gastoConstante && <span className="ml-2 inline-flex rounded-xl border px-2 py-0.5 text-[0.625rem] text-black/50" style={{ borderColor: BORDA }}>gasto quase constante</span>}</td>
                 <td className={`${CELULA} text-right tabular-nums`}>{l.gastoCentavos > 0 ? formatarMoeda(l.gastoCentavos) : "—"}</td>
                 <td className={`${CELULA} text-right tabular-nums`}>{pontos(l.modelo)}% <span className="text-black/35">±{margem(l.baixo, l.alto, l.modelo)}</span></td>
+                {comTotal && <td className={`${CELULA} text-right tabular-nums text-[#282525]`} style={{ background: "#FAF8FE" }}>{l.total !== null ? `${pontos(l.total)}%` : `${pontos(l.modelo)}%`}</td>}
                 <td className={`${CELULA} text-right tabular-nums`}>{l.links === null ? <span className="text-black/30">—</span> : `${l.links}%`}</td>
-                <td className={`${CELULA} text-right tabular-nums`}>{l.custoPorIngressoCentavos === null ? <span className="text-black/30">—</span> : formatarMoeda(l.custoPorIngressoCentavos)}{l.margemGrande && <span className="ml-2 inline-flex rounded-xl border px-2 py-0.5 text-[0.625rem] text-black/50" style={{ borderColor: BORDA }}>margem grande</span>}</td>
+                <td className={`${CELULA} text-right tabular-nums`}>{(comTotal && l.custoNoTotalCentavos !== null ? l.custoNoTotalCentavos : l.custoPorIngressoCentavos) === null ? <span className="text-black/30">—</span> : formatarMoeda((comTotal && l.custoNoTotalCentavos !== null ? l.custoNoTotalCentavos : l.custoPorIngressoCentavos) as number)}{l.margemGrande && <span className="ml-2 inline-flex rounded-xl border px-2 py-0.5 text-[0.625rem] text-black/50" style={{ borderColor: BORDA }}>margem grande</span>}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {comTotal && <p className="rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] leading-relaxed text-black/55" style={{ borderColor: BORDA }}><span className="text-[#282525]">Sozinho</span> é o que o anúncio vendeu direto. <span className="text-[#282525]">No total</span> soma o que veio depois por causa dele: na sua casa, quem compra traz outras pessoas (o boca a boca) e a sala que enche faz o resto comprar mais rápido. Sem o anúncio, essas vendas também não teriam acontecido. O custo por ingresso, o “onde vale investir mais” e o calendário usam o total. É uma conta em cima do que o modelo mediu; nos testes com dados inventados, chegou mais perto da verdade que o “sozinho”, mas ainda fica um pouco abaixo.</p>}
       <QuebraDaBase base={e.base} />
       {comparacao.linhas.some(l => l.canal.endsWith("-marca")) && <MarcaDoModelo nivel={e.base.partes.find(p => p.chave === "nivel")?.porcento ?? null} />}
       {comparacao.anuncios && <p className="text-[0.75rem] text-black/50">Anúncios pagos (Meta e Google juntos, porque os links só dizem “anúncio pago”): modelo {comparacao.anuncios.modelo}%{comparacao.anuncios.links !== null ? ` · links ${comparacao.anuncios.links}%` : ""}.</p>}

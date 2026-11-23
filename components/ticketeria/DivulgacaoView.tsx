@@ -204,8 +204,9 @@ export function AcoesDaLoja({ acoes, por_dia, hoje, onAbrir, onRegistrar }: { ac
 }
 
 /** A folha de registrar ou editar uma ação: nome, onde divulgou, o período e quanto gastou. */
-export function AcaoSheet({ editando, valores, erro, salvando, onMudar, onClose, onSalvar, onApagar }: {
+export function AcaoSheet({ editando, valores, erro, salvando, veiculos = [], eventos = [], onMudar, onClose, onSalvar, onApagar }: {
   editando: boolean; valores: CamposDaAcao; erro?: string | null; salvando?: boolean;
+  /** Na imprensa: os veículos já marcados na casa (para reconhecer o mesmo) e os eventos (de qual a matéria fala). */ veiculos?: { nome: string; vezes: number }[]; eventos?: { id: string; titulo: string }[];
   onMudar?: <K extends keyof CamposDaAcao>(campo: K, valor: CamposDaAcao[K]) => void; onClose: () => void; onSalvar?: () => void; onApagar?: () => void;
 }) {
   const imprensa = valores.canal === CANAL_DA_IMPRENSA;
@@ -214,8 +215,8 @@ export function AcaoSheet({ editando, valores, erro, salvando, onMudar, onClose,
     <TopSheet titulo={editando ? "Editar ação" : "Registrar ação"} onClose={onClose} footer={fechar => <Rodape fechar={fechar} salvando={!!salvando} rotulo={editando ? "Salvar" : "Registrar ação"} onSalvar={() => onSalvar?.()} onApagar={editando ? onApagar : undefined} rotuloApagar="Apagar" />}>
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
-        <div><label className={ROTULO} htmlFor="ac-nome">{imprensa ? "Veículo e assunto" : "Nome da ação"}</label><input id="ac-nome" className={CAMPO} value={valores.nome} onChange={e => onMudar?.("nome", e.target.value)} placeholder={imprensa ? "Folha de S.Paulo · crítica do Hamlet" : "Stories do lote 2"} maxLength={80} disabled={salvando} />
-          {nomeNoLink && <p className="mt-1.5 text-[0.75rem] text-black/45">Para contar os ingressos, crie o link de divulgação com o nome da ação <span className="text-black/70">{nomeNoLink}</span>.</p>}</div>
+        {!imprensa && <div><label className={ROTULO} htmlFor="ac-nome">Nome da ação</label><input id="ac-nome" className={CAMPO} value={valores.nome} onChange={e => onMudar?.("nome", e.target.value)} placeholder="Stories do lote 2" maxLength={80} disabled={salvando} />
+          {nomeNoLink && <p className="mt-1.5 text-[0.75rem] text-black/45">Para contar os ingressos, crie o link de divulgação com o nome da ação <span className="text-black/70">{nomeNoLink}</span>.</p>}</div>}
         <div>
           <span className={ROTULO}>Onde você divulgou</span>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Onde você divulgou">
@@ -227,8 +228,25 @@ export function AcaoSheet({ editando, valores, erro, salvando, onMudar, onClose,
           </div>
         </div>
         {imprensa ? (<>
-          <div className="sm:w-1/2"><label className={ROTULO} htmlFor="ac-inicio">Saiu em</label><input id="ac-inicio" type="date" className={CAMPO} value={valores.inicio} onChange={e => onMudar?.("inicio", e.target.value)} disabled={salvando} /></div>
-          <p className="rounded-xl border bg-white px-3.5 py-2.5 text-[0.75rem] leading-relaxed text-black/55" style={{ borderColor: BORDA }}>Imprensa não tem gasto. O modelo trata como uma data que pode mexer na venda, como um feriado: só ganha peso se as suas vendas mostrarem diferença nas semanas em que algo saiu.</p>
+          <CampoDoVeiculo valor={valores.veiculo ?? ""} veiculos={veiculos} desligado={!!salvando} onMudar={v => onMudar?.("veiculo", v)} />
+          <div><label className={ROTULO} htmlFor="ac-assunto">Assunto (opcional)</label><input id="ac-assunto" className={CAMPO} value={valores.nome} onChange={e => onMudar?.("nome", e.target.value)} placeholder="agenda cultural, crítica, entrevista…" maxLength={60} disabled={salvando} /></div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div><label className={ROTULO} htmlFor="ac-inicio">Saiu em</label><input id="ac-inicio" type="date" className={CAMPO} value={valores.inicio} onChange={e => onMudar?.("inicio", e.target.value)} disabled={salvando} /></div>
+            {eventos.length > 0 && (
+              <div>
+                <span className={ROTULO}>De qual evento</span>
+                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="De qual evento">
+                  {[...eventos.map(e => ({ id: e.id as string | null, titulo: e.titulo })), { id: null, titulo: "Da casa toda" }].map(e => {
+                    const on = (valores.eventoId ?? null) === e.id;
+                    return <button key={e.id ?? "casa"} type="button" role="radio" aria-checked={on} disabled={salvando} onClick={() => onMudar?.("eventoId", e.id)}
+                      className={`rounded-xl border px-3 py-1.5 text-[0.8125rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${on ? "border-[#7259B5] bg-[#F5F2FB] font-normal text-[#1C0E33]" : "bg-white text-black/60 hover:bg-black/[.03]"}`}
+                      style={on ? undefined : { borderColor: BORDA }}>{e.titulo}</button>;
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+          <p className="rounded-xl border bg-white px-3.5 py-2.5 text-[0.75rem] leading-relaxed text-black/55" style={{ borderColor: BORDA }}>Imprensa não tem gasto. O Jards reconhece o mesmo veículo quando ele aparece de novo e mede quanto ele pesa para o seu público pelas vendas do evento nos dias seguintes. O modelo trata como uma data que pode mexer na venda, como um feriado.</p>
         </>) : (<>
         <div className="grid gap-3 sm:grid-cols-2">
           <div><label className={ROTULO} htmlFor="ac-inicio">Começou em</label><input id="ac-inicio" type="date" className={CAMPO} value={valores.inicio} onChange={e => onMudar?.("inicio", e.target.value)} disabled={salvando} /></div>
@@ -238,5 +256,31 @@ export function AcaoSheet({ editando, valores, erro, salvando, onMudar, onClose,
         </>)}
       </div>
     </TopSheet>
+  );
+}
+
+/** O veículo da crítica ou matéria: o que já foi marcado na casa aparece enquanto se digita, com quantas vezes; escolher um deles garante que o Jards reconheça o mesmo veículo. */
+function CampoDoVeiculo({ valor, veiculos, desligado, onMudar }: { valor: string; veiculos: { nome: string; vezes: number }[]; desligado: boolean; onMudar: (v: string) => void }) {
+  const [aberto, setAberto] = useState(false);
+  const termo = valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const iguais = veiculos.filter(v => termo && v.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(termo)).slice(0, 5);
+  const exato = veiculos.some(v => v.nome.toLowerCase() === valor.trim().toLowerCase());
+  return (
+    <div className="relative">
+      <label className={ROTULO} htmlFor="ac-veiculo">Veículo</label>
+      <input id="ac-veiculo" className={CAMPO} value={valor} onChange={e => { onMudar(e.target.value); setAberto(true); }} onFocus={() => setAberto(true)} onBlur={() => setTimeout(() => setAberto(false), 150)}
+        placeholder="TV Tem, Folha de S.Paulo, portal da cidade…" maxLength={60} disabled={desligado} autoComplete="off" role="combobox" aria-expanded={aberto && iguais.length > 0} aria-controls="ac-veiculos" />
+      {aberto && iguais.length > 0 && !exato && (
+        <ul id="ac-veiculos" role="listbox" className="absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-xl border bg-white shadow-lg" style={{ borderColor: BORDA }}>
+          {iguais.map(v => (
+            <li key={v.nome} role="option" aria-selected={false}>
+              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => { onMudar(v.nome); setAberto(false); }} className="flex w-full items-center justify-between px-3.5 py-2 text-left text-[0.8125rem] text-[#282525] hover:bg-[#F5F2FB]">
+                {v.nome}<span className="text-[0.75rem] text-black/45">{v.vezes === 1 ? "1 vez" : `já marcado ${v.vezes} vezes`}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

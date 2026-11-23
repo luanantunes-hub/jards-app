@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { bocaEUrgencia, controlesDaTela, controlesDasSemanas, controlesQueEntram, type ResumoDosControles } from "../lib/ticketeria/modelo-controles";
-import { CANAL_DA_IMPRENSA, lerAcao } from "../lib/ticketeria/divulgacao";
+import { CANAL_DA_IMPRENSA, assuntoDoNome, lerAcao } from "../lib/ticketeria/divulgacao";
 import { montarCalendario, pesosDoBocaABoca } from "../lib/ticketeria/modelo-calendario";
 import { bocaQuePesa, medidaDoControle } from "../components/ticketeria/ModeloView";
 import type { CanalComCurva } from "../lib/ticketeria/modelo-recomendacao";
@@ -50,11 +50,13 @@ test("na tela: imprensa em uso com marcações; boca a boca e urgência entram c
   assert.equal(p.find(c => c.grupo === "imprensa")!.estado, "opcional", "sem marcação, opcional mesmo com a coluna variando");
 });
 
-test("registrar imprensa: veículo e assunto, um dia só e sem gasto", () => {
-  const r = lerAcao({ nome: "Folha · crítica do Hamlet", canal: CANAL_DA_IMPRENSA, inicio: "2026-03-14", fim: "2026-03-20", gasto: "150" });
-  assert.deepEqual(r, { ok: true, valor: { nome: "Folha · crítica do Hamlet", canal: "imprensa", inicio: "2026-03-14", fim: "2026-03-14", gasto_centavos: 0 } });
-  const sem = lerAcao({ nome: "x", canal: CANAL_DA_IMPRENSA, inicio: "2026-03-14", fim: "", gasto: "" });
-  assert.deepEqual(sem, { ok: false, erro: "Escreva o veículo e o assunto, de 2 a 80 letras." });
+test("registrar imprensa: veículo obrigatório, assunto opcional, um dia só, sem gasto e com o evento", () => {
+  const r = lerAcao({ nome: "crítica do Hamlet", canal: CANAL_DA_IMPRENSA, inicio: "2026-03-14", fim: "2026-03-20", gasto: "150", veiculo: " Folha  de S.Paulo ", eventoId: "e1" });
+  assert.deepEqual(r, { ok: true, valor: { nome: "Folha de S.Paulo · crítica do Hamlet", canal: "imprensa", inicio: "2026-03-14", fim: "2026-03-14", gasto_centavos: 0, veiculo: "Folha de S.Paulo", evento_id: "e1" } });
+  assert.deepEqual(lerAcao({ nome: "", canal: CANAL_DA_IMPRENSA, inicio: "2026-03-14", fim: "", gasto: "", veiculo: "TV Tem" }), { ok: true, valor: { nome: "TV Tem", canal: "imprensa", inicio: "2026-03-14", fim: "2026-03-14", gasto_centavos: 0, veiculo: "TV Tem", evento_id: null } });
+  assert.deepEqual(lerAcao({ nome: "x", canal: CANAL_DA_IMPRENSA, inicio: "2026-03-14", fim: "", gasto: "" }), { ok: false, erro: "Escreva o veículo, como TV Tem ou Folha de S.Paulo." });
+  assert.equal(assuntoDoNome("Folha de S.Paulo · crítica do Hamlet", "Folha de S.Paulo"), "crítica do Hamlet");
+  assert.equal(assuntoDoNome("TV Tem", "TV Tem"), "");
 });
 
 const parte = (chave: ParteDaBase["chave"], porcento: number, baixo: number, alto: number, efeito?: number): ParteDaBase => ({ chave, porcento, baixo, alto, ...(efeito !== undefined ? { efeito_na_semana: efeito } : {}) });

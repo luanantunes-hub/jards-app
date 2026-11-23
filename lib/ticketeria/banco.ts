@@ -1264,6 +1264,7 @@ export type BancoDaTicketeria = {
           inicio: string;
           fim: string;
           gasto_centavos: number;
+          veiculo: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -1277,6 +1278,7 @@ export type BancoDaTicketeria = {
           inicio: string;
           fim: string;
           gasto_centavos?: number;
+          veiculo?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1290,6 +1292,7 @@ export type BancoDaTicketeria = {
           inicio?: string;
           fim?: string;
           gasto_centavos?: number;
+          veiculo?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -2040,6 +2043,7 @@ export type BancoDaTicketeria = {
           gasto_constante: boolean;
           curva: Json;
           atraso: number | null;
+          porcento_total: number | null;
         };
         Insert: {
           id?: string;
@@ -2058,6 +2062,7 @@ export type BancoDaTicketeria = {
           gasto_constante?: boolean;
           curva?: Json;
           atraso?: number | null;
+          porcento_total?: number | null;
         };
         Update: {
           id?: string;
@@ -2076,6 +2081,7 @@ export type BancoDaTicketeria = {
           gasto_constante?: boolean;
           curva?: Json;
           atraso?: number | null;
+          porcento_total?: number | null;
         };
         Relationships: [
           {
@@ -2923,6 +2929,33 @@ export type BancoDaTicketeria = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      ticketeria_picos_descartados: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          evento_id: string | null;
+          dia: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          evento_id?: string | null;
+          dia: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          evento_id?: string | null;
+          dia?: string;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       ticketeria_partidas: {
         Row: {

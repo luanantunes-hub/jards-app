@@ -10,6 +10,7 @@ import { gastoDaMarca } from "@/lib/ticketeria/campanhas-servidor";
 import { compradoresPorEvento, eventosEmComum, normalizarArtista } from "@/lib/ticketeria/publico-em-comum";
 import { separarMarca } from "@/lib/ticketeria/campanhas";
 import { abrirSessoesLongas, atracaoOAnoTodo, curvaDaCasa, controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
+import { totalVale } from "@/lib/ticketeria/efeito-total";
 import { compararComOsLinks, lerPartesDaBase, type CanalDoResultado, type ParteDaBase } from "@/lib/ticketeria/modelo-resultado";
 import type { Confianca } from "@/lib/ticketeria/modelo";
 import { avaliarProntidao, consolidarGasto, gastoDasAcoes, montarTabelaSemanal, type EntradaDaProntidao, type ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
@@ -162,12 +163,15 @@ export async function resultadoDaLoja(admin: Admin, lojaId: string): Promise<Res
   const e = boa?.[0];
   const falha = ultima?.[0]?.situacao === "falhou" ? ultima[0] : null;
   if (!e) return null;
-  const { data: linhas } = await t.from("ticketeria_mmm_canais").select("canal, porcento, intervalo_baixo, intervalo_alto, ingressos, gasto_centavos, custo_por_ingresso_centavos, saturacao_gasto_centavos, margem_grande, gasto_constante, curva, atraso").eq("execucao_id", e.id).order("porcento", { ascending: false });
+  const { data: linhas } = await t.from("ticketeria_mmm_canais").select("canal, porcento, intervalo_baixo, intervalo_alto, ingressos, gasto_centavos, custo_por_ingresso_centavos, saturacao_gasto_centavos, margem_grande, gasto_constante, curva, atraso, porcento_total").eq("execucao_id", e.id).order("porcento", { ascending: false });
   const canais: CanalDoResultado[] = (linhas ?? []).map(c => ({
     canal: c.canal, porcento: Number(c.porcento), baixo: Number(c.intervalo_baixo), alto: Number(c.intervalo_alto), ingressos: Number(c.ingressos), gasto_centavos: Number(c.gasto_centavos),
     custo_por_ingresso_centavos: c.custo_por_ingresso_centavos === null ? null : Number(c.custo_por_ingresso_centavos), saturacao_gasto_centavos: c.saturacao_gasto_centavos === null ? null : Number(c.saturacao_gasto_centavos),
     margem_grande: c.margem_grande, gasto_constante: c.gasto_constante, curva: Array.isArray(c.curva) ? (c.curva as { gasto_centavos: number; ingressos: number }[]) : [], atraso: c.atraso === null ? null : Number(c.atraso),
+    porcento_total: c.porcento_total === null ? null : Number(c.porcento_total),
   }));
+  // O efeito total só vale quando o boca a boca ou a urgência pesam nesta rodada (senão é ruído em cima do direto): fica nulo e a tela mostra só o "sozinho".
+  if (!totalVale(lerPartesDaBase(e.base_partes) ?? [])) for (const c of canais) c.porcento_total = null;
   // O que os links mostram: os ingressos vendidos por canal de origem (todas as sessões).
   const painel = await divulgacaoDaLoja(admin, lojaId);
   const porCanalDoLink: Record<string, number> = {};

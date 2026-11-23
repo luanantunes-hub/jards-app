@@ -8,6 +8,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { ListContent, ListPageHeader, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from "@/components/ticketeria/DivulgacaoView";
+import { ImprensaDaLojaView, PicoSemExplicacaoAviso, useImprensa } from "@/components/ticketeria/ImprensaView";
 import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
 import { DatasDePicoSheet } from "@/components/ticketeria/DatasDePicoSheet";
 import { SimularOrcamentoSheet } from "@/components/ticketeria/SimularOrcamentoSheet";
@@ -31,7 +32,7 @@ import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
 import type { ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
 import type { CorpoDaImportacao, ImportacaoDaLista, TipoDeHistorico } from "@/lib/ticketeria/historico";
 import { CARTOES, ConexoesDaLoja, EscolherContaSheet, type ContaParaEscolher, type EstadoDeMidia, type ProvedorDoCartao } from "@/components/ticketeria/ConexoesView";
-import { CANAL_DA_IMPRENSA, gastoParaCampo, lerAcao, resumirDivulgacao, type CamposDaAcao, type DivulgacaoDaLoja as DadosDaDivulgacao } from "@/lib/ticketeria/divulgacao";
+import { CANAL_DA_IMPRENSA, assuntoDoNome, gastoParaCampo, lerAcao, resumirDivulgacao, type CamposDaAcao, type DivulgacaoDaLoja as DadosDaDivulgacao } from "@/lib/ticketeria/divulgacao";
 
 type Aba = "origem" | "acoes" | "conexoes" | "historico" | "modelo";
 const ABAS: { valor: Aba; rotulo: string }[] = [{ valor: "origem", rotulo: "De onde vieram" }, { valor: "acoes", rotulo: "Ações e gasto" }, { valor: "conexoes", rotulo: "Conexões" }, { valor: "historico", rotulo: "Histórico" }, { valor: "modelo", rotulo: "Modelo" }];
@@ -148,8 +149,20 @@ export default function DivulgacaoPage() {
   }, [aba, estado?.lojaId, versao]);
 
   const abrirNova = useCallback((hoje: string, canal: string = "instagram") => { setAcaoErro(null); setAcao({ id: null, valores: { nome: "", canal, inicio: hoje, fim: hoje, gasto: "" } }); }, []);
+  // A imprensa da loja (só na aba Ações e gasto): cada marcação medida pelas vendas, o peso de cada veículo e o pico de venda sem explicação.
+  const imprensa = useImprensa(aba === "acoes" ? estado?.lojaId ?? null : null, versao);
   // "Registrar uma crítica ou matéria" no Modelo: abre a folha de ação já no canal da imprensa.
   const abrirImprensa = useCallback(() => { const hoje = estado?.dados?.hoje; if (hoje) abrirNova(hoje, CANAL_DA_IMPRENSA); }, [estado, abrirNova]);
+
+  /** Abre uma ação para editar; na imprensa, o veículo, o assunto (o nome sem o veículo) e o evento voltam aos campos. */
+  function abrirAcao(id: string) {
+    const a = estado?.dados?.acoes.find(x => x.id === id);
+    if (!a) return;
+    setAcaoErro(null);
+    setAcao({ id, valores: a.canal === CANAL_DA_IMPRENSA
+      ? { nome: assuntoDoNome(a.nome, a.veiculo), canal: a.canal, inicio: a.inicio, fim: a.fim, gasto: "", veiculo: a.veiculo ?? a.nome, eventoId: a.evento_id }
+      : { nome: a.nome, canal: a.canal, inicio: a.inicio, fim: a.fim, gasto: gastoParaCampo(a.gasto_centavos) } });
+  }
 
   async function salvar() {
     if (!acao || !estado?.lojaId || !organizationId) return;
@@ -377,8 +390,13 @@ export default function DivulgacaoPage() {
               ? <HistoricoDaLoja importacoes={historico.importacoes} semanas={historico.semanas} desfazendo={desfazendo} onDesfazer={id => void desfazerImportacao(id)} onImportar={() => { setErroDeImportar(null); setFolhaDeImportar(true); }} />
               : aba === "conexoes"
               ? <div className="space-y-6"><ConexoesDaLoja estados={conexoes} aviso={avisoMidia} ocupado={ocupadoMidia} onConectar={conectar} onEscolherConta={p => void abrirEscolha(p)} onLer={p => void ler(p)} onDesconectar={p => void desconectar(p)} />{campanhas && <CampanhasDaLoja campanhas={campanhas.campanhas} eventos={campanhas.eventos} salvando={salvandoCampanhas} erro={erroDasCampanhas} aviso={avisoDasCampanhas} onSalvar={salvarCampanhas} />}</div>
-              : <div className="space-y-4">{esgotamento && <AvisosDeEsgotamento esgotados={esgotamento.esgotados} quase={esgotamento.quase} />}<AcoesDaLoja acoes={dados.acoes} por_dia={dados.por_dia} hoje={dados.hoje} onRegistrar={() => abrirNova(dados.hoje)}
-                  onAbrir={id => { const a = dados.acoes.find(x => x.id === id); if (a) { setAcaoErro(null); setAcao({ id, valores: { nome: a.nome, canal: a.canal, inicio: a.inicio, fim: a.fim, gasto: gastoParaCampo(a.gasto_centavos) } }); } }} /></div>}
+              : <div className="space-y-4">
+                  {imprensa?.pico && <PicoSemExplicacaoAviso pico={imprensa.pico}
+                    onRegistrar={() => { const p = imprensa.pico; if (p) { setAcaoErro(null); setAcao({ id: null, valores: { nome: "", canal: CANAL_DA_IMPRENSA, inicio: p.dia, fim: p.dia, gasto: "", veiculo: "", eventoId: p.eventoId } }); } }}
+                    onDescartar={() => { const p = imprensa.pico; if (p && estado?.lojaId) void fetch(`/api/ticketeria/lojas/${estado.lojaId}/imprensa/pico`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ evento_id: p.eventoId, dia: p.dia }) }).then(() => setVersao(v => v + 1)); }} />}
+                  {esgotamento && <AvisosDeEsgotamento esgotados={esgotamento.esgotados} quase={esgotamento.quase} />}<AcoesDaLoja acoes={imprensa ? dados.acoes.filter(x => x.canal !== CANAL_DA_IMPRENSA) : dados.acoes} por_dia={dados.por_dia} hoje={dados.hoje} onRegistrar={() => abrirNova(dados.hoje)}
+                  onAbrir={id => abrirAcao(id)} />
+                  {imprensa && <ImprensaDaLojaView imprensa={imprensa} onAbrir={id => abrirAcao(id)} />}</div>}
           </div>
         )}
       </ListContent>
@@ -391,7 +409,8 @@ export default function DivulgacaoPage() {
       {planejando && dados && resultadoDoModelo && <PlanejarDivulgacaoSheet sessoes={dados.sessoes} canais={resultadoDoModelo.canais} gastoSemanal={gastoSemanal} hoje={dados.hoje} inicial={plano} onMontar={p => { setPlano(p); setPlanejando(false); }} onClose={() => setPlanejando(false)} />}
       {simulando && resultadoDoModelo && <SimularOrcamentoSheet canais={resultadoDoModelo.canais} gastoSemanal={gastoSemanal} confianca={resultadoDoModelo.execucao.confianca} semanas={resultadoDoModelo.execucao.semanas} onClose={() => setSimulando(false)} />}
       {folhaDeDatas && <DatasDePicoSheet datas={datasDePico} valores={folhaDeDatas.valores} erro={folhaDeDatas.erro} salvando={salvando} onMudar={(campo, valor) => setFolhaDeDatas(f => (f ? { ...f, valores: { ...f.valores, [campo]: valor } } : f))} onClose={() => setFolhaDeDatas(null)} onAdicionar={() => void adicionarData()} onApagar={id => void apagarData(id)} />}
-      {acao && <AcaoSheet editando={acao.id !== null} valores={acao.valores} erro={acaoErro} salvando={salvando} onMudar={(campo, valor) => setAcao(a => (a ? { ...a, valores: { ...a.valores, [campo]: valor } } : a))} onClose={() => setAcao(null)} onSalvar={() => void salvar()} onApagar={() => void apagar()} />}
+      {acao && <AcaoSheet editando={acao.id !== null} valores={acao.valores} erro={acaoErro} salvando={salvando} veiculos={imprensa?.conhecidos ?? []}
+        eventos={[...new Map((estado?.dados?.sessoes ?? []).filter(x => x.evento_id).map(x => [x.evento_id as string, { id: x.evento_id as string, titulo: x.evento }])).values()]} onMudar={(campo, valor) => setAcao(a => (a ? { ...a, valores: { ...a.valores, [campo]: valor } } : a))} onClose={() => setAcao(null)} onSalvar={() => void salvar()} onApagar={() => void apagar()} />}
     </>
   );
 }
