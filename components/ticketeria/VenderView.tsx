@@ -21,21 +21,31 @@ function Etiqueta({ estado }: { estado: EstadoDaCaixa }) {
   return null;
 }
 
-/** Uma caixa: o ícone (ou a ilustração), o nome, uma frase e, quando cabe, "Em uso" ou "Em breve". Sem destino ainda, não é um botão. */
+/** Uma caixa: o ícone (ou a ilustração, com o texto ao lado), o nome, uma frase e, quando cabe, "Em uso" ou "Em breve". Sem destino ainda, não é um botão. */
 function CaixaDeVenda({ caixa, onAbrir }: { caixa: Caixa & { estado: EstadoDaCaixa }; onAbrir: (caixa: Caixa) => void }) {
   const Icone = ICONES[caixa.icone];
   const ilustracao = ILUSTRACAO_DA_CAIXA[caixa.id];
-  const conteudo = (
+  const titulo = <span className={`block text-[1rem] font-normal ${caixa.estado === "em_breve" ? "text-black/45" : "text-[#282525]"}`}>{caixa.titulo}</span>;
+  const descricao = <span className={`mt-1 block text-[0.8125rem] ${caixa.estado === "em_breve" ? "text-black/35" : "text-black/55"}`}>{caixa.descricao}</span>;
+  // Com ilustração: ela à esquerda e, à direita, a etiqueta, o nome e a frase.
+  const conteudo = ilustracao ? (
+    <span className="flex items-center gap-5">
+      {/* eslint-disable-next-line @next/next/no-img-element -- ilustração estática, já reduzida */}
+      <img src={ilustracao} alt="" loading="lazy" className="h-28 w-auto shrink-0 object-contain" />
+      <span className="min-w-0 flex-1">
+        <span className="mb-2 flex"><Etiqueta estado={caixa.estado} /></span>
+        {titulo}
+        {descricao}
+      </span>
+    </span>
+  ) : (
     <>
       <span className="flex items-start justify-between gap-3">
-        {ilustracao
-          // eslint-disable-next-line @next/next/no-img-element -- ilustração estática, já reduzida
-          ? <img src={ilustracao} alt="" loading="lazy" className="h-28 w-auto object-contain" />
-          : <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${caixa.estado === "em_breve" ? "bg-black/[.04] text-black/35" : "bg-[#6450D2]/10 text-[#6450D2]"}`}><Icone size={17} aria-hidden="true" /></span>}
+        <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${caixa.estado === "em_breve" ? "bg-black/[.04] text-black/35" : "bg-[#6450D2]/10 text-[#6450D2]"}`}><Icone size={17} aria-hidden="true" /></span>
         <Etiqueta estado={caixa.estado} />
       </span>
-      <span className={`mt-4 block text-[1rem] font-normal ${caixa.estado === "em_breve" ? "text-black/45" : "text-[#282525]"}`}>{caixa.titulo}</span>
-      <span className={`mt-1 block text-[0.8125rem] ${caixa.estado === "em_breve" ? "text-black/35" : "text-black/55"}`}>{caixa.descricao}</span>
+      <span className="mt-4 block">{titulo}</span>
+      {descricao}
     </>
   );
   if (caixa.estado === "em_breve") return <div className="rounded-xl border border-dashed border-black/[.14] p-5" aria-label={`${caixa.titulo}, em breve`}>{conteudo}</div>;
