@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { compararComOsLinks, confiancaDoResultado, gastoQuaseConstante, lerPartesDaBase, lerResultadoDoModelo, temMargemGrande } from "../lib/ticketeria/modelo-resultado";
+import { compararComOsLinks, confiancaDoResultado, gastoQuaseConstante, lerResultadoDoModelo, temMargemGrande } from "../lib/ticketeria/modelo-resultado";
 
 const bom = () => ({
   motor: "pymc-marketing", versao_motor: "1.5.0", semanas: 59, diagnosticos: { r_hat_maximo: 1.01, divergencias: 0, ess_minimo: 650 },
