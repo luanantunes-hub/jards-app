@@ -110,6 +110,8 @@ select ok(not public.fn_ticketeria_planta_ok(jsonb_set(tl.planta(array['41']), '
 -- A trava da tabela, e quem edita a sala grava.
 select is(tl.tenta(format($t$update public.ticketeria_salas set planta = '{"versao": 1, "setores": []}'::jsonb where id = %L$t$, tl.sala())), '23514 ticketeria_salas_planta_check', 'a tabela recusa uma planta que não serve');
 select is(tl.tenta(format($t$update public.ticketeria_salas set planta = %L::jsonb where id = %L$t$, tl.planta(array['41', '42', '43', '44']), tl.sala())), 'aceito', 'a tabela aceita uma planta que serve');
+-- `tl.tenta` desfaz o que executa: grava de verdade para conferir que fica.
+update public.ticketeria_salas set planta = tl.planta(array['41', '42', '43', '44']) where id = tl.sala();
 select is((select planta from public.ticketeria_salas where id = tl.sala()), tl.planta(array['41', '42', '43', '44']), 'e ela fica guardada como veio');
 update public.ticketeria_salas set planta = null where id = tl.sala();
 
