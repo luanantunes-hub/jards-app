@@ -146,34 +146,25 @@
   .acao-principal:focus-visible { outline-color: Highlight; }
 }
 
-/* Dentro da Ticketeria (a classe `cantos-ticketeria` vai no body quando o módulo está aberto) o botão de criar usa o violeta íris da logo (#6450D2), mais LEVE que o roxo noite do resto do
-   app (pedido do dono em 22/11/2026, "tirar um pouco do peso"): cor lisa (sem degradê), letra normal em vez de média, sem sombra no texto e só uma linha de luz no topo com uma sombra curta e
-   clara. O restante do Jards não muda. */
+/* Dentro da Ticketeria (a classe `cantos-ticketeria` vai no body quando o módulo está aberto) o botão de criar é BRANCO, com letra e borda escuras (#282525), menor e menos arredondado que o
+   resto (pedido do dono em 22/11/2026): 32px de altura, canto de 8px (a regra geral da Ticketeria dá 12px; o seletor com `.rounded` vence), sem degradê nem sombra. Passar por cima acinzenta
+   de leve. O restante do Jards não muda. */
 body.cantos-ticketeria .acao-principal {
-  background-color: #6450D2;
+  background-color: #fff;
   background-image: none;
+  border-color: #282525;
+  color: #282525;
   font-weight: 400;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .14),
-    0 1px 2px rgba(60, 45, 150, .18);
+  box-shadow: none;
   text-shadow: none;
+  height: 2rem;
+  padding-inline: .75rem;
+  gap: .375rem;
 }
-body.cantos-ticketeria .acao-principal:hover {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .14),
-    inset 0 0 0 999px rgba(255, 255, 255, .07),
-    0 1px 2px rgba(60, 45, 150, .18);
-}
-body.cantos-ticketeria .acao-principal:active {
-  box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, .25),
-    inset 0 0 0 999px rgba(0, 0, 0, .05);
-}
-body.cantos-ticketeria .acao-principal:focus-visible {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .16),
-    0 4px 14px -4px rgba(100, 80, 210, .55);
-}
+body.cantos-ticketeria .acao-principal.rounded { border-radius: .5rem; }
+body.cantos-ticketeria .acao-principal:hover { background-color: rgba(13, 13, 13, .05); box-shadow: none; }
+body.cantos-ticketeria .acao-principal:active { background-color: rgba(13, 13, 13, .09); box-shadow: none; }
+body.cantos-ticketeria .acao-principal:focus-visible { box-shadow: 0 0 0 3px rgba(40, 37, 37, .16); }
 body.cantos-ticketeria .acao-principal:disabled { box-shadow: none; text-shadow: none; }
 
 /* Ação de salvar (o botão verde dos rodapés de folha, modal e formulário): o mesmo volume discreto do
