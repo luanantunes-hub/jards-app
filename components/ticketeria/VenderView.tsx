@@ -9,6 +9,9 @@ const ICONES: Record<IconeDaCaixa, LucideIcon> = {
   parceria: Handshake, pessoas: Users, api: Braces, webhook: Webhook, plug: Plug, passe: Ticket, assinatura: Repeat,
 };
 
+/** Caixas que levam uma ilustração no lugar do ícone (a imagem tem o fundo transparente). */
+const ILUSTRACAO_DA_CAIXA: Partial<Record<string, string>> = { bilheteria: "/ilustracoes/ticketeria/caixa-bilheteria.webp" };
+
 const ROTULO_DO_GRUPO = "text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45";
 const FOCO = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
 
@@ -18,13 +21,17 @@ function Etiqueta({ estado }: { estado: EstadoDaCaixa }) {
   return null;
 }
 
-/** Uma caixa: o ícone, o nome, uma frase e, quando cabe, "Em uso" ou "Em breve". Sem destino ainda, não é um botão. */
+/** Uma caixa: o ícone (ou a ilustração), o nome, uma frase e, quando cabe, "Em uso" ou "Em breve". Sem destino ainda, não é um botão. */
 function CaixaDeVenda({ caixa, onAbrir }: { caixa: Caixa & { estado: EstadoDaCaixa }; onAbrir: (caixa: Caixa) => void }) {
   const Icone = ICONES[caixa.icone];
+  const ilustracao = ILUSTRACAO_DA_CAIXA[caixa.id];
   const conteudo = (
     <>
       <span className="flex items-start justify-between gap-3">
-        <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${caixa.estado === "em_breve" ? "bg-black/[.04] text-black/35" : "bg-[#6450D2]/10 text-[#6450D2]"}`}><Icone size={17} aria-hidden="true" /></span>
+        {ilustracao
+          // eslint-disable-next-line @next/next/no-img-element -- ilustração estática, já reduzida
+          ? <img src={ilustracao} alt="" loading="lazy" className="h-28 w-auto object-contain" />
+          : <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${caixa.estado === "em_breve" ? "bg-black/[.04] text-black/35" : "bg-[#6450D2]/10 text-[#6450D2]"}`}><Icone size={17} aria-hidden="true" /></span>}
         <Etiqueta estado={caixa.estado} />
       </span>
       <span className={`mt-4 block text-[1rem] font-normal ${caixa.estado === "em_breve" ? "text-black/45" : "text-[#282525]"}`}>{caixa.titulo}</span>
