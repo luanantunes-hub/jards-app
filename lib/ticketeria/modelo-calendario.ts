@@ -27,14 +27,15 @@ export type Calendario = {
   semanas: SemanaDoCalendario[];
   totalPorCanal: Record<string, number>;
   /** O que de fato foi dividido (pode ser menos que o pedido quando as curvas acabam). */ totalCentavos: number;
-  /** O pedido que não coube: acima do que as curvas dos canais cobrem nessas semanas. */ sobraCentavos: number;
+  /** O pedido que não coube: acima do que as curvas dos canais cobrem nessas semanas, ou além do que os lugares que faltam permitem vender. */ sobraCentavos: number;
+  /** A divisão parou porque os anúncios já venderiam os lugares que faltam: mais dinheiro não teria onde virar ingresso. */ parouNaLotacao: boolean;
   /** Ingressos pelos anúncios até a sessão, e a faixa (a incerteza do modelo sobre cada canal, alargada por FATOR_DE_CAUTELA). */ ingressos: number; baixo: number; alto: number;
   /** O mesmo dinheiro de cada canal gasto igual toda semana, e todo nas SEMANAS_DO_FIM últimas semanas. */ comparacao: ComparacaoDoCalendario;
   /** Ingressos esperados por semana e por canal, até SEMANAS_DO_ATRASO semanas depois da sessão (o que cai depois não vende). */ porSemana: Record<string, number[]>;
   /** Canais com alguma semana acima do maior gasto semanal que já tiveram: a previsão fica menos firme. */ foraDaFaixa: string[];
 };
 
-export type PedidoDoCalendario = { totalCentavos: number; inicio: string; diaDaSessao: string };
+export type PedidoDoCalendario = { totalCentavos: number; inicio: string; diaDaSessao: string; /** Os lugares que ainda faltam vender na sessão (null ou ausente: sem teto). */ lugaresRestantes?: number | null };
 export type LeituraDoPedido = { ok: true; semanas: number; totalCentavos: number } | { ok: false; problema: "valor" | "datas" | "sessao_passou" | "longe_demais" };
 
 const DIA = 86400000;
@@ -93,6 +94,10 @@ export function montarCalendario(canaisBrutos: CanalComCurva[], pedido: PedidoDo
   const equiv: Record<string, number[]> = Object.fromEntries(canais.map(c => [c.canal, Array(S).fill(0)]));
   let restante = Math.floor(leitura.totalCentavos / passo) * passo;
   const pedidoArredondado = restante;
+  // O teto: os anúncios não vendem mais do que os lugares que faltam (e parte deles ainda vende sem anúncio, então o teto é generoso).
+  const teto = typeof pedido.lugaresRestantes === "number" && pedido.lugaresRestantes >= 0 ? pedido.lugaresRestantes : Infinity;
+  let vendidos = 0;
+  let parouNaLotacao = false;
   while (restante >= passo) {
     let melhor: { c: CanalComCurva; t: number } | null = null;
     let ganho = 1e-9;
@@ -106,6 +111,8 @@ export function montarCalendario(canaisBrutos: CanalComCurva[], pedido: PedidoDo
       }
     }
     if (!melhor) break; // as curvas acabaram ou ficaram planas
+    if (vendidos + ganho > teto) { parouNaLotacao = true; break; }
+    vendidos += ganho;
     const { c, t } = melhor;
     gastos[c.canal][t] += passo;
     for (let u = t; u < S && u - t < SEMANAS_DO_ATRASO; u++) equiv[c.canal][u] += pesos[c.canal][u - t] * passo;
@@ -135,7 +142,7 @@ export function montarCalendario(canaisBrutos: CanalComCurva[], pedido: PedidoDo
   });
   const um = (x: number) => Math.round(x * 10) / 10;
   return {
-    semanas, totalPorCanal, totalCentavos, sobraCentavos: Math.max(0, Math.round(leitura.totalCentavos) - totalCentavos),
+    semanas, totalPorCanal, totalCentavos, sobraCentavos: Math.max(0, Math.round(leitura.totalCentavos) - totalCentavos), parouNaLotacao,
     ingressos: um(ingressos), baixo: Math.round(baixo), alto: Math.round(alto), comparacao: { ingressos: um(ingressos), igual: um(igual), noFim: um(noFim) }, porSemana, foraDaFaixa: fora,
   };
 }

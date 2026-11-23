@@ -26,7 +26,7 @@ const diaMes = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 const inteiro = (n: number) => Math.round(n).toLocaleString("pt-BR");
 const reaisParaCampo = (centavos: number) => String(Math.round(centavos / 100));
 
-export type PlanoDoCalendario = { sessaoId: string; evento: string; diaDaSessao: string; inicio: string; totalCentavos: number; canais: string[] };
+export type PlanoDoCalendario = { sessaoId: string; evento: string; diaDaSessao: string; inicio: string; totalCentavos: number; canais: string[]; lugaresRestantes?: number | null };
 
 /** A folha "Planejar a divulgação de um evento": escolher a sessão, o total até ela, de quando começa e os canais. */
 export function PlanejarDivulgacaoSheet({ sessoes, canais, gastoSemanal, hoje, inicial, onMontar, onClose }: {
@@ -59,7 +59,7 @@ export function PlanejarDivulgacaoSheet({ sessoes, canais, gastoSemanal, hoje, i
       <>
         <button type="button" onClick={fechar} className={CANCELAR}>Cancelar</button>
         <button type="button" disabled={!pode} className={CONFIRMAR}
-          onClick={() => { if (sessao?.dia && total !== null) onMontar({ sessaoId: sessao.id, evento: sessao.evento, diaDaSessao: sessao.dia, inicio, totalCentavos: total, canais: escolhidos }); }}>Montar calendário</button>
+          onClick={() => { if (sessao?.dia && total !== null) onMontar({ sessaoId: sessao.id, evento: sessao.evento, diaDaSessao: sessao.dia, inicio, totalCentavos: total, canais: escolhidos, lugaresRestantes: sessao.lugares_restantes ?? null }); }}>Montar calendário</button>
       </>
     )}>
       <div className="space-y-4">
@@ -75,7 +75,7 @@ export function PlanejarDivulgacaoSheet({ sessoes, canais, gastoSemanal, hoje, i
             <div>
               <label className={ROTULO} htmlFor="cd-total">Quanto gastar em anúncios até a sessão (em reais)</label>
               <input id="cd-total" inputMode="decimal" className={`${CAMPO} max-w-[12rem]`} value={texto} onChange={e => setTexto(e.target.value)} placeholder="3000" />
-              {porSemana > 0 && <p className="mt-1.5 text-[0.75rem] text-black/45">Em geral você gasta {formatarMoeda(porSemana)} por semana em anúncios.</p>}
+              {porSemana > 0 && <p className="mt-1.5 text-[0.75rem] text-black/45">Em geral você gasta {formatarMoeda(porSemana)} por semana em anúncios.{typeof sessao?.lugares_restantes === "number" ? ` Faltam ${inteiro(sessao.lugares_restantes)} lugares nesta sessão.` : ""}</p>}
             </div>
             <div>
               <label className={ROTULO} htmlFor="cd-inicio">A partir de</label>
@@ -142,7 +142,7 @@ export function CalendarioDeDivulgacao({ plano, canais, semanasDoModelo, onAjust
   plano: PlanoDoCalendario; canais: CanalDoResultado[]; semanasDoModelo: number; onAjustar: () => void; onFechar: () => void;
 }) {
   const usados = useMemo(() => canaisDoCalendario(canaisComCurva(canais)).filter(c => plano.canais.includes(c.canal)), [canais, plano.canais]);
-  const cal = useMemo(() => montarCalendario(usados, { totalCentavos: plano.totalCentavos, inicio: plano.inicio, diaDaSessao: plano.diaDaSessao }), [usados, plano]);
+  const cal = useMemo(() => montarCalendario(usados, { totalCentavos: plano.totalCentavos, inicio: plano.inicio, diaDaSessao: plano.diaDaSessao, lugaresRestantes: plano.lugaresRestantes ?? null }), [usados, plano]);
   if (!cal) return <Aviso texto="Não deu para montar o calendário com esses dados. Ajuste o evento, o valor ou os canais." />;
   const nomes = Object.keys(cal.totalPorCanal);
   const maxCelula = Math.max(1, ...cal.semanas.flatMap(s => Object.values(s.porCanal)));
@@ -178,7 +178,9 @@ export function CalendarioDeDivulgacao({ plano, canais, semanasDoModelo, onAjust
           </tbody>
         </table>
       </div>
-      {cal.sobraCentavos > 0 && <p className="rounded-xl border px-3 py-2 text-[0.75rem] text-black/60" style={{ borderColor: "rgba(176,122,20,.25)", background: "#FFFBF2" }}>{formatarMoeda(cal.sobraCentavos)} ficaram de fora: acima disso, nestas semanas, os canais já rendem quase nada pelo que o modelo viu.</p>}
+      {cal.sobraCentavos > 0 && <p className="rounded-xl border px-3 py-2 text-[0.75rem] text-black/60" style={{ borderColor: "rgba(176,122,20,.25)", background: "#FFFBF2" }}>{cal.parouNaLotacao
+        ? `${formatarMoeda(cal.sobraCentavos)} ficaram de fora: faltam ${inteiro(plano.lugaresRestantes ?? 0)} lugares nesta sessão, e com ${formatarMoeda(cal.totalCentavos)} os anúncios já venderiam isso. Parte dos lugares ainda vende sem anúncio, então dá para gastar até menos.`
+        : `${formatarMoeda(cal.sobraCentavos)} ficaram de fora: acima disso, nestas semanas, os canais já rendem quase nada pelo que o modelo viu.`}</p>}
       <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
         <div className="rounded-xl border bg-white px-5 py-4" style={{ borderColor: BORDA }}>
           <div className="flex items-start justify-between gap-3"><p className="text-[0.875rem] text-[#282525]">O mesmo dinheiro, gasto de outros jeitos</p><SeloDePrecisao selo="razoavel" /></div>

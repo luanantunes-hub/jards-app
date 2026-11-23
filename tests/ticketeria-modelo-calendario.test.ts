@@ -103,3 +103,18 @@ test("a planilha tem uma linha por semana, a da sessão marcada e o total", () =
   assert.match(csv[6], /\(sessão\)/);
   assert.match(csv[7], /^Total;.*;3000,00$/);
 });
+
+test("o calendário para quando os anúncios já venderiam os lugares que faltam", () => {
+  const livre = montarCalendario([META, GOOGLE], PEDIDO)!;
+  assert.equal(livre.parouNaLotacao, false);
+  const cheio = montarCalendario([META, GOOGLE], { ...PEDIDO, lugaresRestantes: 20 })!;
+  assert.equal(cheio.parouNaLotacao, true);
+  assert.ok(cheio.ingressos <= 20.5, String(cheio.ingressos));
+  assert.ok(cheio.totalCentavos < 300000 && cheio.sobraCentavos === 300000 - cheio.totalCentavos);
+  const folgado = montarCalendario([META, GOOGLE], { ...PEDIDO, lugaresRestantes: 100000 })!;
+  assert.equal(folgado.totalCentavos, 300000);
+  assert.equal(folgado.parouNaLotacao, false);
+  const lotado = montarCalendario([META, GOOGLE], { ...PEDIDO, lugaresRestantes: 0 })!;
+  assert.equal(lotado.totalCentavos, 0);
+  assert.equal(lotado.parouNaLotacao, true);
+});
