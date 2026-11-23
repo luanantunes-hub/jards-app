@@ -189,6 +189,9 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
     porcentos = por_canal / total_y * 100.0
     base = 100.0 - porcentos.sum("channel")
     ingressos_mediana = por_canal.median(("chain", "draw"))
+    # Os ingressos de cada canal semana a semana (mediana): servem à conta do EFEITO TOTAL (com o boca a boca e a urgência que as vendas do canal puxam depois), feita no Jards,
+    # que tem as sessões (ESTUDO-DO-EFEITO-TOTAL.md).
+    por_semana_mediana = (posterior["channel_contribution"] * escala_do_alvo).median(("chain", "draw"))
     escala_dos_canais = mmm.get_scales_as_xarray()["channel_scale"]
 
     # O atraso de cada canal: a parte do efeito de uma semana que passa para a seguinte (o alpha do adstock geométrico, mediana). Com normalize=True a curva de resposta é a do gasto semanal
@@ -214,6 +217,7 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
             "saturacao_gasto_centavos": int(round(saturacao)) if saturacao is not None else None,
             "gasto_constante": resumo[canal]["variacao"] < VARIACAO_MINIMA, "curva": pontos,
             "atraso": round(min(0.95, max(0.0, float(atrasos.sel(channel=canal)))), 3) if atrasos is not None else None,
+            "por_semana": [round(float(v), 2) for v in np.asarray(por_semana_mediana.sel(channel=canal))],
         })
 
     b_baixo, b_meio, b_alto = _quantis(np.asarray(base).ravel())
@@ -225,6 +229,12 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
             efeito = np.asarray(posterior["control_contribution"].sel(control=parte["chave"]).median(("chain", "draw"))) * escala_do_alvo
             sem = np.asarray(y)[marcadas] - efeito[marcadas]
             parte["efeito_na_semana"] = round(float(efeito[marcadas].mean() / sem.mean()), 3) if marcadas.any() and sem.mean() > 0 else None
+    # No boca a boca e na urgência: quantos ingressos por semana valem 1 unidade do controle (a inclinação da contribuição sobre a coluna), para a conta do efeito total.
+    for parte in partes:
+        if parte["chave"] in ("boca", "urgencia") and parte["chave"] in controles:
+            col = np.asarray(x[parte["chave"]], dtype=float)
+            contrib = np.asarray(posterior["control_contribution"].sel(control=parte["chave"]).median(("chain", "draw"))) * escala_do_alvo
+            parte["efeito_por_unidade"] = round(float((contrib * col).sum() / (col * col).sum()), 3) if (col * col).sum() > 0 else None
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)  # parâmetros constantes (variância zero) geram avisos de divisão; os diagnósticos ignoram esses valores
         resumo_az = az.summary(posterior.to_dataset())
