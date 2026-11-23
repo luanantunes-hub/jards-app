@@ -138,7 +138,7 @@ export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, e
   onAmpliar?: () => void; onAlternar?: (fileira: string, numero: number) => void; onVoltar?: () => void; onConfirmar?: () => void;
 }) {
   // O mapa da sala só vale se a planta se desenha sem setor em cima de setor; senão, o mapa do setor, como sempre.
-  const daSala = sala && conferirPlanta(sala.planta, sala.setores).length === 0 ? { ...comporSala(sala.planta, sala.setores), atual: sala.atual, setores: sala.setores } : null;
+  const daSala = sala && conferirPlanta(sala.planta, sala.setores, sala.emPe).length === 0 ? { ...comporSala(sala.planta, sala.setores, sala.emPe), atual: sala.atual, setores: sala.setores, emPe: sala.emPe } : null;
   return (
     <Moldura titulo={site.titulo} cor={site.cor}
       rodape={
@@ -178,7 +178,7 @@ export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, e
           <div className="mt-4 flex justify-end"><button type="button" onClick={onAmpliar} aria-pressed={ampliado} className="rounded-xl text-[0.8125rem] text-black/60 underline underline-offset-2 hover:text-black/80">{ampliado ? "Ver o mapa inteiro" : "Ampliar o mapa"}</button></div>
           <div className="mt-2">
             {daSala
-              ? <MapaPorLayout layout={daSala.layout} modo="comprador" ampliado={ampliado} cores={daSala.cores} fundo={daSala.fundo ? { ...daSala.fundo, url: urlDoFundo(daSala.fundo.caminho, process.env.NEXT_PUBLIC_SUPABASE_URL ?? "") } : undefined} contexto={new Set(daSala.setores.filter(x => x.id !== daSala.atual).map(x => x.id))} rotulos={new Map(daSala.setores.map(x => [x.id, x.nome]))}
+              ? <MapaPorLayout layout={daSala.layout} modo="comprador" ampliado={ampliado} cores={daSala.cores} fundo={daSala.fundo ? { ...daSala.fundo, url: urlDoFundo(daSala.fundo.caminho, process.env.NEXT_PUBLIC_SUPABASE_URL ?? "") } : undefined} contexto={new Set([...daSala.setores.filter(x => x.id !== daSala.atual).map(x => x.id), ...daSala.emPe.map(x => x.id)])} rotulos={new Map(daSala.setores.map(x => [x.id, x.nome]))} areas={daSala.areas}
                   rotuloDoMapa="Mapa da sala" estados={estadosDoMapa(fileiras, daSala.atual)} tipos={tiposDoMapa(fileiras, (f, n) => chaveDoLugar(daSala.atual, f, n))} onAlternar={l => { if (l.setor === daSala.atual) onAlternar?.(l.fileira, l.numero); }} />
               : layout
               ? <MapaPorLayout layout={layout} modo="comprador" ampliado={ampliado} estados={estadosDoMapa(fileiras)} tipos={tiposDoMapa(fileiras, (f, n) => chaveDoLugar(null, f, n))} onAlternar={l => onAlternar?.(l.fileira, l.numero)} />
@@ -186,10 +186,10 @@ export function TelaEscolherLugares({ site, evento, ingresso, setor, fileiras, e
           </div>
           {daSala && (
             <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5" aria-label="Setores da sala">
-              {daSala.setores.map(x => (
+              {[...daSala.setores.map(x => ({ id: x.id, nome: x.nome, emPe: false })), ...daSala.areas.map(x => ({ id: x.setor, nome: x.nome, emPe: true }))].map(x => (
                 <li key={x.id} className="flex items-center gap-2 text-[0.75rem] text-black/60">
                   <span aria-hidden="true" className="h-3.5 w-3.5 rounded-md border" style={{ borderColor: daSala.cores.get(x.id), background: `${daSala.cores.get(x.id)}${x.id === daSala.atual ? "14" : "38"}` }} />
-                  {x.nome}{x.id === daSala.atual ? " (o seu)" : ""}
+                  {x.nome}{x.emPe ? " (em pé)" : x.id === daSala.atual ? " (o seu)" : ""}
                 </li>
               ))}
             </ul>

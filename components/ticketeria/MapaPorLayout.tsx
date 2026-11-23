@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { calcularLayout, type Layout } from "@/lib/ticketeria/mapa-layout";
 import { anguloParaPonto, posicaoDaAlca } from "@/lib/ticketeria/mapa-layout-editor";
 import type { EstadoDoAssento } from "@/lib/ticketeria/mapa";
+import type { AreaNoDesenho } from "@/lib/ticketeria/mapa-sala";
 import { SELO_DO_TIPO, TIPO_CURTO, TIPO_EM_TEXTO, type TipoDeLugar } from "@/lib/ticketeria/mapa-acessibilidade";
 
 // O mapa de assentos desenhado pelo motor de layout (lib/ticketeria/mapa-layout.ts): um SVG que se ajusta à largura, com cada lugar na posição que o motor calculou.
@@ -28,12 +29,14 @@ export type DesenhoDoMapa = {
   onGirar?: (id: string, angulo: number, fim: boolean) => void;
   /** Ajustar a planta de fundo: com `fundoAtivo`, arrastar em qualquer ponto do desenho move o fundo (`onMoverFundo` recebe o canto de cima à esquerda) em vez dos blocos. */
   fundoAtivo?: boolean; onMoverFundo?: (x: number, y: number) => void;
+  /** Arrastar uma área em pé (pista): recebe o setor e o canto de cima à esquerda. Tocar nela escolhe `area:<setor>` em `onEscolher`. */
+  onMoverArea?: (setor: string, x: number, y: number) => void;
 };
 
 /** A planta de fundo (M4): a imagem por baixo do desenho, no lugar e tamanho dados (em lugares), com a opacidade de 10 a 100. */
 export type FundoNoDesenho = { url: string; x: number; y: number; largura: number; altura: number; opacidade: number };
 
-export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotuloDoMapa = "Mapa de lugares", ampliado = false, desenho, cores, contexto, rotulos, fundo }: {
+export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotuloDoMapa = "Mapa de lugares", ampliado = false, desenho, cores, contexto, rotulos, fundo, areas }: {
   layout: Layout;
   /** O estado de cada lugar, pela `chaveDoLugar`; o que não está aqui é livre. */
   estados?: ReadonlyMap<string, EstadoDoAssento>;
@@ -54,15 +57,22 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
   rotulos?: ReadonlyMap<string, string>;
   /** A planta de fundo, por baixo de tudo. O enquadramento passa a incluí-la. */
   fundo?: FundoNoDesenho;
+  /** As áreas em pé (pista): retângulos coloridos com nome e capacidade, entre os setores. Os setores de `contexto` ficam tingidos e sem resposta ao toque. */
+  areas?: readonly AreaNoDesenho[];
 }) {
   const { lugares, caixa } = calcularLayout(layout);
   // No modo desenho sobra espaço em volta, para o bloco poder ser arrastado para fora do que já está desenhado.
   const folga = desenho ? 4 : 0.8;
   const dosLugares: Quadro = { x0: caixa.x0 - folga, y0: caixa.y0 - folga, largura: caixa.x1 - caixa.x0 + 2 * folga, altura: caixa.y1 - caixa.y0 + 2 * folga };
   // Com planta de fundo, o enquadramento é a união do desenho com ela.
-  const natural: Quadro = fundo
-    ? (() => { const x0 = Math.min(dosLugares.x0, fundo.x), y0 = Math.min(dosLugares.y0, fundo.y), x1 = Math.max(dosLugares.x0 + dosLugares.largura, fundo.x + fundo.largura), y1 = Math.max(dosLugares.y0 + dosLugares.altura, fundo.y + fundo.altura); return { x0, y0, largura: x1 - x0, altura: y1 - y0 }; })()
-    : dosLugares;
+  // Sem nenhum lugar (só áreas em pé), a caixa dos lugares não traz o palco: ele entra aqui.
+  const palcoSozinho = layout.palco && lugares.length === 0 ? [{ x: layout.palco.x - layout.palco.largura / 2 - folga, y: layout.palco.y - layout.palco.altura / 2 - folga, largura: layout.palco.largura + 2 * folga, altura: layout.palco.altura + 2 * folga }] : [];
+  const retangulos = [...palcoSozinho, ...(fundo ? [{ x: fundo.x, y: fundo.y, largura: fundo.largura, altura: fundo.altura }] : []), ...(areas ?? []).map(a => ({ x: a.x - folga, y: a.y - folga, largura: a.largura + 2 * folga, altura: a.altura + 2 * folga }))];
+  const natural: Quadro = retangulos.length === 0 ? dosLugares : (() => {
+    const todos = [...(lugares.length > 0 ? [{ x: dosLugares.x0, y: dosLugares.y0, largura: dosLugares.largura, altura: dosLugares.altura }] : []), ...retangulos];
+    const x0 = Math.min(...todos.map(r => r.x)), y0 = Math.min(...todos.map(r => r.y)), x1 = Math.max(...todos.map(r => r.x + r.largura)), y1 = Math.max(...todos.map(r => r.y + r.altura));
+    return { x0, y0, largura: x1 - x0, altura: y1 - y0 };
+  })();
   // Enquanto se arrasta, o enquadramento fica parado (senão ele cresce junto com o bloco e o desenho foge do dedo).
   const [congelado, setCongelado] = useState<Quadro | null>(null);
   const q = congelado ?? natural;
@@ -70,6 +80,7 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
   // Zoom e deslocamento só no editor: o enquadramento `q` é o desenho inteiro, e o que se vê é uma janela menor, deslocada do centro (em passos).
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const arrasteDaArea = useRef<{ setor: string; px: number; py: number; x: number; y: number; escala: number } | null>(null);
   const arrasteDoFundo = useRef<{ px: number; py: number; x: number; y: number; escala: number } | null>(null);
   const panando = useRef<{ px: number; py: number; x: number; y: number; escala: number } | null>(null);
   const idDaGrade = useId().replace(/:/g, "");
@@ -137,6 +148,17 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
       capturar(svgRef.current, e.pointerId);
       return;
     }
+    // Tocar numa área em pé: escolhe e arrasta a área.
+    const idDaArea = (e.target as Element).closest("[data-area]")?.getAttribute("data-area") ?? null;
+    const daArea = idDaArea ? areas?.find(a => a.setor === idDaArea) : undefined;
+    if (daArea && svgRef.current) {
+      desenho.onEscolher(`area:${daArea.setor}`);
+      const caixaDoSvg = svgRef.current.getBoundingClientRect();
+      arrasteDaArea.current = { setor: daArea.setor, px: e.clientX, py: e.clientY, x: daArea.x, y: daArea.y, escala: Math.min(caixaDoSvg.width / vista.largura, caixaDoSvg.height / vista.altura) };
+      setCongelado(natural);
+      capturar(svgRef.current, e.pointerId);
+      return;
+    }
     const id = (e.target as Element).closest("[data-bloco]")?.getAttribute("data-bloco") ?? null;
     desenho.onEscolher(id);
     const svg = svgRef.current;
@@ -150,6 +172,8 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
     capturar(svg, e.pointerId);
   }
   function arrastar(e: React.PointerEvent<SVGSVGElement>) {
+    const a0 = arrasteDaArea.current;
+    if (a0 && desenho && a0.escala > 0) { desenho.onMoverArea?.(a0.setor, a0.x + (e.clientX - a0.px) / a0.escala, a0.y + (e.clientY - a0.py) / a0.escala); return; }
     const f0 = arrasteDoFundo.current;
     if (f0 && desenho && f0.escala > 0) { desenho.onMoverFundo?.(f0.x + (e.clientX - f0.px) / f0.escala, f0.y + (e.clientY - f0.py) / f0.escala); return; }
     const p0 = panando.current;
@@ -183,6 +207,7 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
     arraste.current = null;
     panando.current = null;
     arrasteDoFundo.current = null;
+    arrasteDaArea.current = null;
     setCongelado(null);
   }
 
@@ -238,6 +263,18 @@ export function MapaPorLayout({ layout, estados, tipos, modo, onAlternar, rotulo
           </g>
         );
       })()}
+      {areas?.map(a => {
+        const soContexto = !!contexto?.has(a.setor);
+        const escolhida = escolhido === `area:${a.setor}`;
+        return (
+          <g key={`area-${a.setor}`} data-area={desenho ? a.setor : undefined} role="img" aria-label={`${a.nome}, ${a.detalhe}`} pointerEvents={desenho ? undefined : "none"} style={{ cursor: desenho ? "grab" : undefined }}>
+            <rect x={a.x} y={a.y} width={a.largura} height={a.altura} rx={0.8} fill={`${a.cor}${soContexto ? "2E" : "22"}`} stroke={a.cor} strokeWidth={0.1} strokeDasharray={soContexto ? undefined : "0.5 0.3"} />
+            {escolhida && <rect x={a.x - 0.4} y={a.y - 0.4} width={a.largura + 0.8} height={a.altura + 0.8} rx={1} fill="none" stroke="#6450D2" strokeWidth={0.1} strokeDasharray="0.35 0.25" pointerEvents="none" />}
+            <text x={a.x + a.largura / 2} y={a.y + a.altura / 2 - 0.7} textAnchor="middle" dominantBaseline="central" fontSize={1.1} fontWeight={600} fill={a.cor} pointerEvents="none" aria-hidden="true">{a.nome}</text>
+            <text x={a.x + a.largura / 2} y={a.y + a.altura / 2 + 0.7} textAnchor="middle" dominantBaseline="central" fontSize={0.75} fill={a.cor} opacity={0.85} pointerEvents="none" aria-hidden="true">{a.detalhe}</text>
+          </g>
+        );
+      })}
       {nomesNoDesenho.map(n => (
         <text key={n.setor} x={n.x} y={n.y} textAnchor="middle" dominantBaseline="central" fontSize={0.7} fontWeight={600} letterSpacing={0.05} fill={cores?.get(n.setor) ?? "rgba(0,0,0,.55)"} opacity={contexto?.has(n.setor) ? 0.7 : 1} pointerEvents="none" aria-hidden="true">{n.nome}</text>
       ))}

@@ -9,8 +9,8 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { desfazer, podeDesfazer, podeRefazer, refazer, registrar, versoesNovas, type Versoes } from "@/lib/ticketeria/desfazer-refazer";
 import { lerLayout } from "@/lib/ticketeria/mapa-layout";
 import {
-  CORES_DOS_SETORES, ERRO_DA_PLANTA_EM_TEXTO, caminhoDoFundoPelaUrl, comCorDoSetor, comFundo, comOpacidadeDoFundo, comPalcoDaSala, completarPlanta, comporSala, conferirPlanta, escalarFundo, fundoNovo, lerPlanta, moverSetor,
-  partesDoBlocoNaSala, plantaAutomatica, posicionarFundo, posicionarSetor, urlDoFundo, type Planta, type SetorDesenhado,
+  CORES_DOS_SETORES, ERRO_DA_PLANTA_EM_TEXTO, ajustarArea, caminhoDoFundoPelaUrl, comCorDoSetor, comFundo, comOpacidadeDoFundo, comPalcoDaSala, completarPlanta, comporSala, conferirPlanta, escalarFundo, fundoNovo, lerPlanta, moverSetor,
+  partesDoBlocoNaSala, plantaAutomatica, posicionarFundo, posicionarSetor, urlDoFundo, type Planta, type SetorDesenhado, type SetorEmPe,
 } from "@/lib/ticketeria/mapa-sala";
 import type { SalaDoEspaco } from "@/lib/ticketeria/salas";
 import { MapaPorLayout } from "@/components/ticketeria/MapaPorLayout";
@@ -38,6 +38,7 @@ const urlDoSupabase = () => process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
 export function MapaDaSalaSheet({ organizationId, sala, nomeDoLocal, onClose, onSaved }: { organizationId: string; sala: SalaDoEspaco; nomeDoLocal: string; onClose: () => void; onSaved: () => void }) {
   const [desenhados, setDesenhados] = useState<SetorDesenhado[] | null>(null);
+  const [emPe, setEmPe] = useState<SetorEmPe[]>([]);
   const [semDesenho, setSemDesenho] = useState<string[]>([]);
   const [tinhaPlanta, setTinhaPlanta] = useState(false);
   const [versoes, setVersoes] = useState<Versoes<Planta> | null>(null);
@@ -53,37 +54,42 @@ export function MapaDaSalaSheet({ organizationId, sala, nomeDoLocal, onClose, on
     void (async () => {
       const ticketeria = clienteDaTicketeria(createClient());
       const [{ data: setores, error: e1 }, { data: linha, error: e2 }] = await Promise.all([
-        ticketeria.from("ticketeria_setores").select("id, nome, layout, numerado").eq("sala_id", sala.id).eq("arquivado", false).order("ordem").order("nome"),
+        ticketeria.from("ticketeria_setores").select("id, nome, layout, numerado, lugares").eq("sala_id", sala.id).eq("arquivado", false).order("ordem").order("nome"),
         ticketeria.from("ticketeria_salas").select("planta").eq("id", sala.id).maybeSingle(),
       ]);
       if (!ativo) return;
       if (e1 || e2) { setErro("Não foi possível carregar a sala. Feche e abra de novo."); setDesenhados([]); return; }
       const lista: SetorDesenhado[] = [];
       const fora: string[] = [];
+      const pe: SetorEmPe[] = [];
       for (const s of setores ?? []) {
-        if (!s.numerado) continue;
+        // Setor sem lugares numerados (pista, área em pé): entra no mapa como uma área; a venda segue por quantidade.
+        if (!s.numerado) { if (s.lugares >= 1) pe.push({ id: s.id, nome: s.nome, capacidade: s.lugares }); continue; }
         const layout = lerLayout(s.layout);
         if (layout) lista.push({ id: s.id, nome: s.nome, layout }); else fora.push(s.nome);
       }
       const guardada = lerPlanta(linha?.planta);
       setDesenhados(lista);
+      setEmPe(pe);
       setSemDesenho(fora);
       setTinhaPlanta(!!guardada);
-      if (lista.length > 0) setVersoes(versoesNovas(completarPlanta(guardada, lista)));
+      if (lista.length + pe.length > 0) setVersoes(versoesNovas(completarPlanta(guardada, lista, pe)));
     })();
     return () => { ativo = false; };
   }, [sala.id]);
 
   const planta = versoes?.atual ?? null;
-  const montada = useMemo(() => (planta && desenhados ? comporSala(planta, desenhados) : null), [planta, desenhados]);
-  const erros = planta && desenhados ? conferirPlanta(planta, desenhados) : [];
-  const setorEscolhido = escolhido ? partesDoBlocoNaSala(escolhido)?.setor ?? null : null;
-  const nomes = useMemo(() => new Map((desenhados ?? []).map(s => [s.id, s.nome])), [desenhados]);
+  const montada = useMemo(() => (planta && desenhados ? comporSala(planta, desenhados, emPe) : null), [planta, desenhados, emPe]);
+  const erros = planta && desenhados ? conferirPlanta(planta, desenhados, emPe) : [];
+  const setorEscolhido = escolhido ? (escolhido.startsWith("area:") ? escolhido.slice(5) : partesDoBlocoNaSala(escolhido)?.setor ?? null) : null;
+  const nomes = useMemo(() => new Map([...(desenhados ?? []).map(s => [s.id, s.nome] as const), ...emPe.map(s => [s.id, s.nome] as const)]), [desenhados, emPe]);
+  // Os nomes escritos em cima dos setores numerados no desenho (a área em pé escreve o próprio).
+  const nomesDosNumerados = useMemo(() => new Map((desenhados ?? []).map(s => [s.id, s.nome])), [desenhados]);
 
   function mudar(nova: Planta, agrupar = false) {
     if (!desenhados) return;
     const agora = Date.now();
-    const comPalco = comPalcoDaSala(nova, desenhados);
+    const comPalco = comPalcoDaSala(nova, desenhados, emPe);
     setVersoes(v => (v ? registrar(v, comPalco, agora, agrupar) : v));
   }
 
@@ -93,7 +99,7 @@ export function MapaDaSalaSheet({ organizationId, sala, nomeDoLocal, onClose, on
     const medidas = caminho ? await medirImagem(url) : null;
     if (!caminho || !medidas) { setErro("Não foi possível usar essa imagem como planta. Escolha outra."); return; }
     setErro(null);
-    mudar(comFundo(planta, fundoNovo(caminho, medidas.largura, medidas.altura, desenhados, planta)));
+    mudar(comFundo(planta, fundoNovo(caminho, medidas.largura, medidas.altura, desenhados, planta, emPe)));
     setAjustandoFundo(true);
   }
 
@@ -117,18 +123,19 @@ export function MapaDaSalaSheet({ organizationId, sala, nomeDoLocal, onClose, on
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
         {desenhados === null && <p role="status" className="text-[0.8125rem] text-black/55">Lendo a sala…</p>}
-        {desenhados !== null && desenhados.length === 0 && !erro && (
+        {desenhados !== null && desenhados.length === 0 && emPe.length === 0 && !erro && (
           <p className="text-[0.8125rem] leading-relaxed text-black/60">Nenhum setor desta sala está desenhado em blocos. Abra um setor numerado, monte o mapa na ferramenta Desenho e volte aqui para juntá-los no mapa da sala.</p>
         )}
         {planta && montada && versoes && (
           <>
-            <p className="text-[0.8125rem] text-black/60">Arraste um setor para pô-lo no lugar na sala. Quem compra vê a sala inteira, cada setor na sua cor, e escolhe os lugares no setor do ingresso.</p>
+            <p className="text-[0.8125rem] text-black/60">Arraste um setor para pô-lo no lugar na sala; a pista e as áreas em pé também. Quem compra vê a sala inteira, cada setor na sua cor, e escolhe os lugares no setor do ingresso.</p>
             <div className="sticky top-0 z-10 rounded-xl border bg-[#fbfbfb] px-4 py-5 shadow-[0_6px_16px_-8px_rgba(13,13,13,.18)]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <MapaPorLayout layout={montada.layout} modo="produtor" rotuloDoMapa="Mapa da sala" cores={montada.cores} rotulos={nomes}
+              <MapaPorLayout layout={montada.layout} modo="produtor" rotuloDoMapa="Mapa da sala" cores={montada.cores} rotulos={nomesDosNumerados} areas={montada.areas}
                 fundo={montada.fundo ? { ...montada.fundo, url: urlDoFundo(montada.fundo.caminho, urlDoSupabase()) } : undefined}
                 desenho={{
                   fundoAtivo: ajustandoFundo && !!planta.fundo, onMoverFundo: (x, y) => mudar(posicionarFundo(planta, x, y), true),
                   blocoEscolhido: escolhido,
+                  onMoverArea: (setor, x, y) => mudar(posicionarSetor(planta, setor, x, y), true),
                   onEscolher: id => {
                     setEscolhido(id);
                     const b = id ? montada.layout.blocos.find(x => x.id === id) : undefined;
@@ -143,7 +150,7 @@ export function MapaDaSalaSheet({ organizationId, sala, nomeDoLocal, onClose, on
                 }} />
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <button type="button" className={BOTAO} onClick={() => desenhados && mudar(comFundo(plantaAutomatica(desenhados, planta.palco?.rotulo), planta.fundo ?? null))}>Arrumar sozinho</button>
+              <button type="button" className={BOTAO} onClick={() => desenhados && mudar(comFundo(plantaAutomatica(desenhados, planta.palco?.rotulo, emPe), planta.fundo ?? null))}>Arrumar sozinho</button>
               <div className="flex items-center gap-1.5">
                 <button type="button" className={BOTAO} onClick={() => setVersoes(v => (v ? desfazer(v) : v))} disabled={!podeDesfazer(versoes)} aria-label="Desfazer"><Undo2 size={14} aria-hidden="true" className="mr-1.5" />Desfazer</button>
                 <button type="button" className={BOTAO} onClick={() => setVersoes(v => (v ? refazer(v) : v))} disabled={!podeRefazer(versoes)} aria-label="Refazer"><Redo2 size={14} aria-hidden="true" className="mr-1.5" />Refazer</button>
@@ -153,7 +160,7 @@ export function MapaDaSalaSheet({ organizationId, sala, nomeDoLocal, onClose, on
               {planta.setores.map(e => (
                 <li key={e.setor} className={`rounded-xl border bg-white px-4 py-3 ${e.setor === setorEscolhido ? "border-[#6450D2]" : ""}`} style={e.setor === setorEscolhido ? undefined : { borderColor: "rgba(13,13,13,.08)" }}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="flex items-center gap-2 text-[0.8125rem] text-[#282525]"><span aria-hidden="true" className="h-3.5 w-3.5 rounded-md" style={{ background: e.cor }} />{nomes.get(e.setor) ?? "Setor"}</span>
+                    <span className="flex items-center gap-2 text-[0.8125rem] text-[#282525]"><span aria-hidden="true" className="h-3.5 w-3.5 rounded-md" style={{ background: e.cor }} />{nomes.get(e.setor) ?? "Setor"}{e.area && <span className="text-[0.6875rem] text-black/45">em pé</span>}</span>
                     <div role="radiogroup" aria-label={`Cor de ${nomes.get(e.setor) ?? "setor"}`} className="flex items-center gap-1.5">
                       {CORES_DOS_SETORES.map(cor => (
                         <button key={cor} type="button" role="radio" aria-checked={e.cor === cor} aria-label={`Cor ${cor}`} onClick={() => mudar(comCorDoSetor(planta, e.setor, cor))}
@@ -161,6 +168,22 @@ export function MapaDaSalaSheet({ organizationId, sala, nomeDoLocal, onClose, on
                       ))}
                     </div>
                   </div>
+                  {e.area && (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t pt-2.5" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[0.75rem] text-black/55">Largura</span>
+                        <button type="button" className={BOTAO_PASSO} aria-label={`Menos largura em ${nomes.get(e.setor) ?? "área"}`} onClick={() => mudar(ajustarArea(planta, e.setor, -2, 0))}>−</button>
+                        <span className="min-w-8 text-center text-[0.8125rem] tabular-nums text-[#282525]" aria-live="polite">{e.area.largura}</span>
+                        <button type="button" className={BOTAO_PASSO} aria-label={`Mais largura em ${nomes.get(e.setor) ?? "área"}`} onClick={() => mudar(ajustarArea(planta, e.setor, 2, 0))}>+</button>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[0.75rem] text-black/55">Altura</span>
+                        <button type="button" className={BOTAO_PASSO} aria-label={`Menos altura em ${nomes.get(e.setor) ?? "área"}`} onClick={() => mudar(ajustarArea(planta, e.setor, 0, -1))}>−</button>
+                        <span className="min-w-8 text-center text-[0.8125rem] tabular-nums text-[#282525]" aria-live="polite">{e.area.altura}</span>
+                        <button type="button" className={BOTAO_PASSO} aria-label={`Mais altura em ${nomes.get(e.setor) ?? "área"}`} onClick={() => mudar(ajustarArea(planta, e.setor, 0, 1))}>+</button>
+                      </div>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

@@ -7,7 +7,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(28);
+select plan(34);
 
 create schema tl;
 grant usage on schema tl to authenticated, anon;
@@ -135,6 +135,20 @@ select ok(not public.fn_ticketeria_planta_ok(tl.fundo('{"caminho": "https://exem
 select ok(not public.fn_ticketeria_planta_ok(tl.fundo('{"opacidade": 5}')) and not public.fn_ticketeria_planta_ok(tl.fundo('{"opacidade": 40.5}')), 'opacidade fora de 10 a 100, ou fracionada');
 select ok(not public.fn_ticketeria_planta_ok(tl.fundo('{"largura": 0}')) and not public.fn_ticketeria_planta_ok(tl.fundo('{"altura": 5000}')) and not public.fn_ticketeria_planta_ok(tl.fundo('{"x": "dez"}')), 'tamanho ou posição fora do limite, ou que não é número');
 select is(tl.tenta(format($t$update public.ticketeria_salas set planta = %L::jsonb where id = %L$t$, tl.fundo('{"caminho": "../x.webp"}'), tl.sala())), '23514 ticketeria_salas_planta_check', 'a tabela recusa o fundo que não serve');
+
+-- A pista (migration ticketeria_planta_areas): setor sem lugares numerados vira uma área na planta, e o mapa do comprador traz os setores em pé à venda no evento.
+create function tl.com_area(area jsonb) returns jsonb language sql stable as $$
+  select jsonb_set(tl.planta(array['41']), '{setores,0,area}', area)
+$$;
+select ok(public.fn_ticketeria_planta_ok(tl.com_area('{"largura": 30, "altura": 12}')), 'uma planta com uma área em pé serve');
+select ok(public.fn_ticketeria_planta_ok(tl.com_area('null')), 'a área pode ser nula (setor numerado)');
+select ok(not public.fn_ticketeria_planta_ok(tl.com_area('{"largura": 1, "altura": 12}')) and not public.fn_ticketeria_planta_ok(tl.com_area('{"largura": 30, "altura": 401}')), 'área menor que 2 ou maior que 400');
+select ok(not public.fn_ticketeria_planta_ok(tl.com_area('"grande"')) and not public.fn_ticketeria_planta_ok(tl.com_area('{"largura": "dez", "altura": 12}')), 'área que não é um retângulo de números (sem estourar a conversão)');
+select is(tl.tenta(format($t$update public.ticketeria_salas set planta = %L::jsonb where id = %L$t$, tl.com_area('{"largura": 0, "altura": 12}'), tl.sala())), '23514 ticketeria_salas_planta_check', 'a tabela recusa a área que não serve');
+insert into public.ticketeria_setores (id, organization_id, local_id, nome, lugares, arquivado) values
+  (tl.id('45'), tl.id('a0'), tl.id('51'), 'Pista', 800, false), (tl.id('46'), tl.id('a0'), tl.id('51'), 'Pista interna', 50, false);
+insert into public.ticketeria_ingressos (id, organization_id, evento_id, setor_id, nome, categoria) values (tl.id('35'), tl.id('a0'), tl.id('71'), tl.id('45'), 'Inteira', 'inteira');
+select is(public.fn_ticketeria_mapa_da_sessao(tl.id('81'), tl.id('31')) -> 'sala' -> 'em_pe', jsonb_build_array(jsonb_build_object('id', tl.id('45'), 'nome', 'Pista', 'capacidade', 800)), 'o mapa do comprador traz a pista (em pé, à venda no evento) e deixa de fora a que não tem ingresso público');
 
 -- Quem executa.
 select ok(has_function_privilege('authenticated', 'public.fn_ticketeria_planta_ok(jsonb)', 'execute') and not has_function_privilege('anon', 'public.fn_ticketeria_planta_ok(jsonb)', 'execute'), 'a conferência do formato: logado sim, visitante não');
