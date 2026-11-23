@@ -8,7 +8,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { ListContent, ListPageHeader, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from "@/components/ticketeria/DivulgacaoView";
-import { ImprensaDaLojaView, PicoSemExplicacaoAviso, useImprensa } from "@/components/ticketeria/ImprensaView";
+import { AchadosDaImprensaView, ImprensaDaLojaView, PicoSemExplicacaoAviso, VeiculosAcompanhadosView, useDaImprensa, useImprensa, type AchadoDaImprensa, type VeiculoAcompanhado } from "@/components/ticketeria/ImprensaView";
 import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
 import { DatasDePicoSheet } from "@/components/ticketeria/DatasDePicoSheet";
 import { SimularOrcamentoSheet } from "@/components/ticketeria/SimularOrcamentoSheet";
@@ -151,6 +151,30 @@ export default function DivulgacaoPage() {
   const abrirNova = useCallback((hoje: string, canal: string = "instagram") => { setAcaoErro(null); setAcao({ id: null, valores: { nome: "", canal, inicio: hoje, fim: hoje, gasto: "" } }); }, []);
   // A imprensa da loja (só na aba Ações e gasto): cada marcação medida pelas vendas, o peso de cada veículo e o pico de venda sem explicação.
   const imprensa = useImprensa(aba === "acoes" ? estado?.lojaId ?? null : null, versao);
+  // O monitoramento: o que a leitura da imprensa achou e os veículos acompanhados.
+  const achados = useDaImprensa<{ aConfirmar: AchadoDaImprensa[]; registrados: AchadoDaImprensa[] }>(aba === "acoes" ? estado?.lojaId ?? null : null, "achados", versao);
+  const veiculos = useDaImprensa<{ veiculos: VeiculoAcompanhado[]; sugestoes: { nome: string; vezes: number }[] }>(aba === "acoes" ? estado?.lojaId ?? null : null, "veiculos", versao);
+  const [achadoOcupado, setAchadoOcupado] = useState<string | null>(null);
+  async function decidirAchado(id: string, acaoDoAchado: "confirmar" | "descartar" | "desfazer") {
+    if (!estado?.lojaId) return;
+    setAchadoOcupado(id);
+    await fetch(`/api/ticketeria/lojas/${estado.lojaId}/imprensa/achados/${id}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ acao: acaoDoAchado }) }).catch(() => null);
+    setAchadoOcupado(null);
+    setVersao(v => v + 1);
+  }
+  async function acompanharSite(site: string): Promise<string | null> {
+    if (!estado?.lojaId) return "Não foi possível acompanhar agora.";
+    const r = await fetch(`/api/ticketeria/lojas/${estado.lojaId}/imprensa/veiculos`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site }) }).catch(() => null);
+    if (!r) return "Não foi possível acompanhar agora. Tente de novo.";
+    if (!r.ok) { const c = (await r.json().catch(() => null)) as { mensagem?: string } | null; return c?.mensagem ?? "Não foi possível acompanhar agora. Tente de novo."; }
+    setVersao(v => v + 1);
+    return null;
+  }
+  async function pararDeAcompanhar(id: string) {
+    if (!estado?.lojaId) return;
+    await fetch(`/api/ticketeria/lojas/${estado.lojaId}/imprensa/veiculos/${id}`, { method: "DELETE" }).catch(() => null);
+    setVersao(v => v + 1);
+  }
   // "Registrar uma crítica ou matéria" no Modelo: abre a folha de ação já no canal da imprensa.
   const abrirImprensa = useCallback(() => { const hoje = estado?.dados?.hoje; if (hoje) abrirNova(hoje, CANAL_DA_IMPRENSA); }, [estado, abrirNova]);
 
@@ -394,9 +418,11 @@ export default function DivulgacaoPage() {
                   {imprensa?.pico && <PicoSemExplicacaoAviso pico={imprensa.pico}
                     onRegistrar={() => { const p = imprensa.pico; if (p) { setAcaoErro(null); setAcao({ id: null, valores: { nome: "", canal: CANAL_DA_IMPRENSA, inicio: p.dia, fim: p.dia, gasto: "", veiculo: "", eventoId: p.eventoId } }); } }}
                     onDescartar={() => { const p = imprensa.pico; if (p && estado?.lojaId) void fetch(`/api/ticketeria/lojas/${estado.lojaId}/imprensa/pico`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ evento_id: p.eventoId, dia: p.dia }) }).then(() => setVersao(v => v + 1)); }} />}
+                  {achados && <AchadosDaImprensaView aConfirmar={achados.aConfirmar} registrados={achados.registrados} hoje={dados.hoje} ocupado={achadoOcupado} onDecidir={(id, x) => void decidirAchado(id, x)} />}
                   {esgotamento && <AvisosDeEsgotamento esgotados={esgotamento.esgotados} quase={esgotamento.quase} />}<AcoesDaLoja acoes={imprensa ? dados.acoes.filter(x => x.canal !== CANAL_DA_IMPRENSA) : dados.acoes} por_dia={dados.por_dia} hoje={dados.hoje} onRegistrar={() => abrirNova(dados.hoje)}
                   onAbrir={id => abrirAcao(id)} />
-                  {imprensa && <ImprensaDaLojaView imprensa={imprensa} onAbrir={id => abrirAcao(id)} />}</div>}
+                  {imprensa && <ImprensaDaLojaView imprensa={imprensa} onAbrir={id => abrirAcao(id)} />}
+                  {veiculos && <VeiculosAcompanhadosView veiculos={veiculos.veiculos} sugestoes={veiculos.sugestoes} onAcompanhar={acompanharSite} onParar={id => void pararDeAcompanhar(id)} />}</div>}
           </div>
         )}
       </ListContent>

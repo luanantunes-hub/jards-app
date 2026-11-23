@@ -2957,6 +2957,96 @@ export type BancoDaTicketeria = {
         };
         Relationships: [];
       };
+      ticketeria_imprensa_achados: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          veiculo_id: string | null;
+          evento_id: string;
+          acao_id: string | null;
+          titulo: string;
+          link: string;
+          publicado_em: string;
+          motivo: string;
+          situacao: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          veiculo_id?: string | null;
+          evento_id: string;
+          acao_id?: string | null;
+          titulo: string;
+          link: string;
+          publicado_em: string;
+          motivo: string;
+          situacao: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          veiculo_id?: string | null;
+          evento_id?: string;
+          acao_id?: string | null;
+          titulo?: string;
+          link?: string;
+          publicado_em?: string;
+          motivo?: string;
+          situacao?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ticketeria_veiculos_acompanhados: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          nome: string;
+          site: string;
+          feed: string | null;
+          origem: string;
+          situacao: string;
+          parado: boolean;
+          noticias_lidas: number;
+          ultima_leitura: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          nome: string;
+          site: string;
+          feed?: string | null;
+          origem?: string;
+          situacao?: string;
+          parado?: boolean;
+          noticias_lidas?: number;
+          ultima_leitura?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          nome?: string;
+          site?: string;
+          feed?: string | null;
+          origem?: string;
+          situacao?: string;
+          parado?: boolean;
+          noticias_lidas?: number;
+          ultima_leitura?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       ticketeria_partidas: {
         Row: {
           id: string;

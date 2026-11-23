@@ -11,6 +11,10 @@
     {
       "path": "/api/ticketeria/preco-dinamico/atualizar",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/ticketeria/imprensa/ler-todas",
+      "schedule": "0 11,17,23 * * *"
     }
   ]
 }
