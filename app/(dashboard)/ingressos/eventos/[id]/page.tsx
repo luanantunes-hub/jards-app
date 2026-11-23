@@ -18,6 +18,8 @@ import { temVariasSalas, type SalaDoEspaco } from "@/lib/ticketeria/salas";
 import { QuadroDePrecificacao } from "@/components/ticketeria/QuadroDePrecificacao";
 import { PrecoDinamicoDoEvento } from "@/components/ticketeria/PrecoDinamicoDoEvento";
 import { LinkDeVenda } from "@/components/ticketeria/LinkDeVenda";
+import { SubAbas } from "@/components/producao/SubAbas";
+import { abaDoEndereco, abasDoEvento, type AbaDoEvento } from "@/lib/ticketeria/abas-do-evento";
 import { Aviso, EventoSheet, LocalSheet, SessaoSheet, type EventoEditavel, type LocalDaSessao, type SessaoEditavel } from "@/components/ticketeria/FolhasDosEventos";
 
 type Evento = EventoEditavel & { situacao: SituacaoDoEvento; loja_id: string; slug: string };
@@ -37,6 +39,7 @@ export default function EventoPage() {
   const router = useRouter();
   const { confirmDelete } = useDeleteConfirm();
   const [evento, setEvento] = useState<Evento | null | undefined>(undefined);
+  const [abaPedida, setAbaPedida] = useState<AbaDoEvento>(() => (typeof window === "undefined" ? "sessoes" : abaDoEndereco(window.location.hash, true)));
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
   const [versaoDoCatalogo, setVersaoDoCatalogo] = useState(0);
   const [locais, setLocais] = useState<LocalDaSessao[]>([]);
@@ -121,6 +124,9 @@ export default function EventoPage() {
   if (evento === null || !organizationId) return <DetailNotFound title="Evento não encontrado" description="Ele pode ter sido apagado ou você não tem acesso." backHref="/ingressos/eventos" backLabel="Voltar aos eventos" />;
 
   const editavel = podeEditar && evento.situacao !== "cancelado";
+  // A Precificação é só de quem edita; quem não pode vê-la cai em Sessões (mesmo que o endereço peça a outra).
+  const aba: AbaDoEvento = abasDoEvento(editavel).some(item => item.id === abaPedida) ? abaPedida : "sessoes";
+  const escolherAba = (nova: AbaDoEvento) => { setAbaPedida(nova); window.history.replaceState(null, "", `#${nova}`); };
   const resumo = [ROTULO_DA_SITUACAO_DO_EVENTO[evento.situacao], evento.classificacao ? ROTULO_DA_CLASSIFICACAO[evento.classificacao as ClassificacaoIndicativa] : null].filter(Boolean).join(" · ");
 
   return (
@@ -149,6 +155,8 @@ export default function EventoPage() {
         <PaginaDoEventoNoSite lojaId={evento.loja_id} slug={evento.slug} publicado={evento.situacao === "publicado"} />
         {erro && <div className="mb-4"><Aviso texto={erro} /></div>}
         {evento.situacao === "publicado" && <p className="mb-6 max-w-2xl text-[0.75rem] text-black/55">Publicado: o catálogo de ingressos está montado abaixo; a venda e o pagamento entram nas próximas etapas.</p>}
+        <div className="mb-6"><SubAbas ariaLabel="Partes do evento" itens={abasDoEvento(editavel)} ativo={aba} onChange={id => escolherAba(id as AbaDoEvento)} /></div>
+        {aba === "sessoes" && (
         <section aria-labelledby="sessoes-do-evento">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 id="sessoes-do-evento" className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Sessões</h2>
@@ -180,9 +188,18 @@ export default function EventoPage() {
             </ul>
           )}
         </section>
-        <CatalogoDoEvento organizationId={organizationId} eventoId={evento.id} locaisDasSessoes={[...new Set(sessoes.map(sessao => sessao.local_id))]} podeEditar={editavel} onMudou={() => setVersaoDoCatalogo(v => v + 1)} />
-        {editavel && <QuadroDePrecificacao lojaId={evento.loja_id} eventoId={evento.id} chave={versaoDoCatalogo} />}
-        {editavel && <PrecoDinamicoDoEvento lojaId={evento.loja_id} eventoId={evento.id} sessoes={sessoes.filter(s => !s.cancelada_em && Date.parse(s.inicio) > Date.now()).map(s => ({ id: s.id, inicio: s.inicio, fuso: locais.find(l => l.id === s.local_id)?.fuso ?? "America/Sao_Paulo" }))} onMudou={() => setVersaoDoCatalogo(v => v + 1)} />}
+        )}
+        {aba === "ingressos" && (
+          <div className="[&>section:first-child]:mt-0">
+            <CatalogoDoEvento organizationId={organizationId} eventoId={evento.id} locaisDasSessoes={[...new Set(sessoes.map(sessao => sessao.local_id))]} podeEditar={editavel} onMudou={() => setVersaoDoCatalogo(v => v + 1)} />
+          </div>
+        )}
+        {aba === "precificacao" && editavel && (
+          <div className="[&>section:first-child]:mt-0">
+            <QuadroDePrecificacao lojaId={evento.loja_id} eventoId={evento.id} chave={versaoDoCatalogo} />
+            <PrecoDinamicoDoEvento lojaId={evento.loja_id} eventoId={evento.id} sessoes={sessoes.filter(s => !s.cancelada_em && Date.parse(s.inicio) > Date.now()).map(s => ({ id: s.id, inicio: s.inicio, fuso: locais.find(l => l.id === s.local_id)?.fuso ?? "America/Sao_Paulo" }))} onMudou={() => setVersaoDoCatalogo(v => v + 1)} />
+          </div>
+        )}
         {editavel && (
           <div className="mt-12">
             {evento.situacao === "rascunho"
