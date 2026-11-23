@@ -27,14 +27,23 @@ export const SEMANAS_DO_FIM = 2;
  */
 export const PRUDENCIA_DA_PROXIMIDADE = 0.5;
 export const HORIZONTE_DA_PROXIMIDADE = 8;
-/** O peso de cada uma das S semanas na escolha do calendário: 1 + K × proximidade (1 na semana da sessão, caindo até 0 oito semanas antes), com média 1. */
-export function pesosDaProximidade(S: number, k: number = PRUDENCIA_DA_PROXIMIDADE): number[] {
-  const m = Array.from({ length: S }, (_, t) => { const d = S - 1 - t; return 1 + k * (d <= HORIZONTE_DA_PROXIMIDADE ? 1 - d / (HORIZONTE_DA_PROXIMIDADE + 1) : 0); });
+/**
+ * O peso de cada uma das S semanas na escolha do calendário: 1 + K × proximidade, com média 1. A proximidade é 1 nas semanas em cartaz (a última, numa sessão única; todas as da temporada
+ * ou da exposição) e cai até 0 oito semanas antes da primeira delas.
+ */
+export function pesosDaProximidade(S: number, k: number = PRUDENCIA_DA_PROXIMIDADE, emCartaz?: boolean[]): number[] {
+  const cartaz = emCartaz && emCartaz.length === S && emCartaz.some(Boolean) ? emCartaz : Array.from({ length: S }, (_, t) => t === S - 1);
+  const primeira = cartaz.indexOf(true);
+  const m = Array.from({ length: S }, (_, t) => {
+    if (cartaz[t] || t > primeira) return 1 + k;
+    const d = primeira - t;
+    return 1 + k * (d <= HORIZONTE_DA_PROXIMIDADE ? 1 - d / (HORIZONTE_DA_PROXIMIDADE + 1) : 0);
+  });
   const media = m.reduce((s, x) => s + x, 0) / S;
   return m.map(x => x / media);
 }
 
-export type SemanaDoCalendario = { inicio: string; porCanal: Record<string, number>; totalCentavos: number; daSessao: boolean };
+export type SemanaDoCalendario = { inicio: string; porCanal: Record<string, number>; totalCentavos: number; /** A última semana (a da sessão, ou a da última sessão). */ daSessao: boolean; /** Há sessão (ou a exposição está aberta) nesta semana. */ emCartaz: boolean };
 export type ComparacaoDoCalendario = { ingressos: number; igual: number; noFim: number };
 export type Calendario = {
   semanas: SemanaDoCalendario[];
@@ -48,7 +57,12 @@ export type Calendario = {
   /** Canais com alguma semana acima do maior gasto semanal que já tiveram: a previsão fica menos firme. */ foraDaFaixa: string[];
 };
 
-export type PedidoDoCalendario = { totalCentavos: number; inicio: string; diaDaSessao: string; /** Os lugares que ainda faltam vender na sessão (null ou ausente: sem teto). */ lugaresRestantes?: number | null };
+export type PedidoDoCalendario = {
+  totalCentavos: number; inicio: string;
+  /** O dia da (última) sessão: o calendário vai até ele. */ diaDaSessao: string;
+  /** Os lugares que ainda faltam vender (somados em todas as sessões; null ou ausente: sem teto). */ lugaresRestantes?: number | null;
+  /** Os dias com sessão ou com a exposição aberta (AAAA-MM-DD): marcam as semanas em cartaz. Ausente: só a última semana. */ diasEmCartaz?: string[];
+};
 export type LeituraDoPedido = { ok: true; semanas: number; totalCentavos: number } | { ok: false; problema: "valor" | "datas" | "sessao_passou" | "longe_demais" };
 
 const DIA = 86400000;
@@ -64,6 +78,20 @@ export function lerPedidoDoCalendario(p: PedidoDoCalendario): LeituraDoPedido {
   const semanas = Math.max(1, Math.ceil((b - a) / DIA / 7));
   if (semanas > MAX_SEMANAS_DO_CALENDARIO) return { ok: false, problema: "longe_demais" };
   return { ok: true, semanas, totalCentavos: Math.round(p.totalCentavos) };
+}
+
+/** Quais das S semanas (a partir do início) têm sessão ou exposição aberta. Sem a lista, só a última. */
+export function semanasEmCartaz(pedido: Pick<PedidoDoCalendario, "inicio" | "diasEmCartaz">, S: number): boolean[] {
+  const a = dataUtc(pedido.inicio);
+  const marcadas = Array(S).fill(false) as boolean[];
+  for (const d of pedido.diasEmCartaz ?? []) {
+    const b = dataUtc(d);
+    if (a === null || b === null || b < a) continue;
+    const t = Math.min(S - 1, Math.floor((b - a) / DIA / 7));
+    marcadas[t] = true;
+  }
+  if (!marcadas.some(Boolean)) marcadas[S - 1] = true;
+  return marcadas;
 }
 
 /** Os pesos do adstock geométrico normalizado: quanto do gasto de k semanas atrás entra na semana de hoje (somam 1). */
@@ -105,7 +133,8 @@ export function montarCalendario(canaisBrutos: CanalComCurva[], pedido: PedidoDo
   const gastos: Record<string, number[]> = Object.fromEntries(canais.map(c => [c.canal, Array(S).fill(0)]));
   const pesos: Record<string, number[]> = Object.fromEntries(canais.map(c => [c.canal, pesosDoAtraso(c.atraso ?? 0)]));
   const equiv: Record<string, number[]> = Object.fromEntries(canais.map(c => [c.canal, Array(S).fill(0)]));
-  const prox = pesosDaProximidade(S, prudencia);
+  const emCartaz = semanasEmCartaz(pedido, S);
+  const prox = pesosDaProximidade(S, prudencia, emCartaz);
   let restante = Math.floor(leitura.totalCentavos / passo) * passo;
   const pedidoArredondado = restante;
   // O teto: os anúncios não vendem mais do que os lugares que faltam (e parte deles ainda vende sem anúncio, então o teto é generoso).
@@ -153,7 +182,7 @@ export function montarCalendario(canaisBrutos: CanalComCurva[], pedido: PedidoDo
   }
   const semanas: SemanaDoCalendario[] = Array.from({ length: S }, (_, t) => {
     const porCanal = Object.fromEntries(canais.map(c => [c.canal, gastos[c.canal][t]]));
-    return { inicio: somarDias(pedido.inicio, 7 * t), porCanal, totalCentavos: Object.values(porCanal).reduce((s, x) => s + x, 0), daSessao: t === S - 1 };
+    return { inicio: somarDias(pedido.inicio, 7 * t), porCanal, totalCentavos: Object.values(porCanal).reduce((s, x) => s + x, 0), daSessao: t === S - 1, emCartaz: emCartaz[t] };
   });
   const um = (x: number) => Math.round(x * 10) / 10;
   return {
@@ -173,7 +202,7 @@ export function porQueAssim(c: { atraso?: number | null }, gastos: number[]): st
   const media = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / Math.max(1, xs.length);
   const [antes, depois] = [media(gastos.slice(0, metade)), media(gastos.slice(gastos.length - metade))];
   const onde = gastos.length < 2 ? "" : antes >= 1.3 * depois ? " Mais no começo" : depois >= 1.3 * antes ? " Mais perto da sessão" : " Espalhado pelas semanas";
-  const para = gastos.length >= 2 && gastos.at(-1) === 0 ? (onde ? ", e para antes da semana da sessão." : " Para antes da semana da sessão.") : onde ? "." : "";
+  const para = gastos.length >= 2 && gastos.at(-1) === 0 ? (onde ? ", e para antes da última semana." : " Para antes da última semana.") : onde ? "." : "";
   return `${jeito}${onde}${para}`;
 }
 
@@ -186,4 +215,52 @@ export function planilhaDoCalendario(cal: Calendario, rotulo: (canal: string) =>
   for (const s of cal.semanas) linhas.push([data(s.inicio) + (s.daSessao ? " (sessão)" : ""), ...canais.map(c => reais(s.porCanal[c] ?? 0)), reais(s.totalCentavos)].join(";"));
   linhas.push(["Total", ...canais.map(c => reais(cal.totalPorCanal[c])), reais(cal.totalCentavos)].join(";"));
   return linhas.join("\r\n");
+}
+
+// ─── Os eventos para planejar (temporada, exposição, sessão única) ──────────
+
+export type TipoDoEvento = "temporada" | "exposicao" | "sessao_unica";
+export type EventoParaPlanejar = {
+  eventoId: string; evento: string; tipo: TipoDoEvento; primeiroDia: string; ultimoDia: string; sessoes: number;
+  /** Somados nas sessões que ainda vêm; null se alguma não tem a lotação. */ lugaresRestantes: number | null;
+  /** Os dias com sessão ou com a exposição aberta (um por semana basta para marcar a semana). */ diasEmCartaz: string[];
+};
+type SessaoDoEvento = { id: string; evento: string; evento_id?: string; dia?: string; fim?: string | null; lugares_restantes?: number | null };
+
+/** As sessões que ainda vêm (ou a exposição ainda aberta), agrupadas por evento, da estreia mais próxima para a mais distante. Temporada: duas sessões ou mais; exposição: sessão que dura dias. */
+export function eventosParaPlanejar(sessoes: SessaoDoEvento[], hoje: string): EventoParaPlanejar[] {
+  const porEvento = new Map<string, SessaoDoEvento[]>();
+  for (const s of sessoes) {
+    if (!s.dia || (s.fim ?? s.dia) < hoje) continue;
+    const chave = s.evento_id ?? s.id;
+    porEvento.set(chave, [...(porEvento.get(chave) ?? []), s]);
+  }
+  const saida: EventoParaPlanejar[] = [];
+  for (const [eventoId, lista] of porEvento) {
+    const ordenadas = [...lista].sort((a, b) => (a.dia as string).localeCompare(b.dia as string));
+    const longa = ordenadas.some(s => s.fim && s.fim > (s.dia as string));
+    const dias: string[] = [];
+    for (const s of ordenadas) {
+      const de = (s.dia as string) < hoje ? hoje : (s.dia as string), ate = s.fim && s.fim > (s.dia as string) ? s.fim : (s.dia as string);
+      for (let d = de; d <= ate; d = somarDias(d, 7)) dias.push(d);
+      if (!dias.includes(ate)) dias.push(ate);
+    }
+    const restantes = ordenadas.map(s => s.lugares_restantes);
+    saida.push({
+      eventoId, evento: ordenadas[0].evento, tipo: longa ? "exposicao" : ordenadas.length > 1 ? "temporada" : "sessao_unica",
+      primeiroDia: ordenadas[0].dia as string, ultimoDia: ordenadas.reduce((m, s) => { const f = s.fim && s.fim > (s.dia as string) ? s.fim : (s.dia as string); return f > m ? f : m; }, ordenadas[0].dia as string),
+      sessoes: ordenadas.length, lugaresRestantes: restantes.every(x => typeof x === "number") ? restantes.reduce((a, x) => a + (x as number), 0) : null, diasEmCartaz: [...new Set(dias)].sort(),
+    });
+  }
+  return saida.sort((a, b) => a.primeiroDia.localeCompare(b.primeiroDia));
+}
+
+const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+const diaEMes = (iso: string) => `${Number(iso.slice(8, 10))} de ${MESES[Number(iso.slice(5, 7)) - 1]}`;
+/** "Temporada de 12 a 24 de março", "Exposição de 20 a 30 de abril", "8 de maio". */
+export function periodoDoEvento(e: Pick<EventoParaPlanejar, "tipo" | "primeiroDia" | "ultimoDia">): string {
+  if (e.tipo === "sessao_unica" || e.primeiroDia === e.ultimoDia) return diaEMes(e.primeiroDia);
+  const mesmoMes = e.primeiroDia.slice(0, 7) === e.ultimoDia.slice(0, 7);
+  const de = mesmoMes ? String(Number(e.primeiroDia.slice(8, 10))) : diaEMes(e.primeiroDia);
+  return `${e.tipo === "exposicao" ? "Exposição" : "Temporada"} de ${de} a ${diaEMes(e.ultimoDia)}`;
 }

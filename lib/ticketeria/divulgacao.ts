@@ -126,7 +126,7 @@ export function enderecoDeDivulgacao(origem: string, sessaoId: string, canal: st
   return busca === "" ? base : `${base}?${busca}`;
 }
 
-export type SessaoParaDivulgar = { id: string; evento: string; quando: string; a_venda: boolean; /** O dia da sessão (AAAA-MM-DD, no fuso do local). */ dia?: string; /** Os lugares que ainda faltam vender (a lotação da sala menos os ingressos pagos); null se a sala não tem setores. */ lugares_restantes?: number | null };
+export type SessaoParaDivulgar = { id: string; evento: string; /** O evento da sessão (para agrupar temporadas e exposições). */ evento_id?: string; quando: string; a_venda: boolean; /** O último dia (AAAA-MM-DD) de uma sessão que fica aberta vários dias (exposição); nulo numa sessão comum. */ fim?: string | null; /** O dia da sessão (AAAA-MM-DD, no fuso do local). */ dia?: string; /** Os lugares que ainda faltam vender (a lotação da sala menos os ingressos pagos); null se a sala não tem setores. */ lugares_restantes?: number | null };
 export type DivulgacaoDaLoja = {
   linhas: LinhaDaDivulgacao[]; sessoes: SessaoParaDivulgar[];
   /** As ações registradas, com o que cada uma vendeu (pelos pedidos cujo link tinha o nome da ação) e o custo por ingresso. */

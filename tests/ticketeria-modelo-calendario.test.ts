@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { faltaAtraso, pesosDaProximidade, PRUDENCIA_DA_PROXIMIDADE, ingressosPorSemana, lerPedidoDoCalendario, montarCalendario, pesosDoAtraso, planilhaDoCalendario, porQueAssim, SEMANAS_DO_ATRASO } from "../lib/ticketeria/modelo-calendario";
+import { eventosParaPlanejar, periodoDoEvento, semanasEmCartaz, faltaAtraso, pesosDaProximidade, PRUDENCIA_DA_PROXIMIDADE, ingressosPorSemana, lerPedidoDoCalendario, montarCalendario, pesosDoAtraso, planilhaDoCalendario, porQueAssim, SEMANAS_DO_ATRASO } from "../lib/ticketeria/modelo-calendario";
 import type { CanalComCurva } from "../lib/ticketeria/modelo-recomendacao";
 
 /** Um canal de exemplo: curva côncava de 0 até `fim` reais por semana. */
@@ -87,7 +87,7 @@ test("sem o atraso (rodada antiga) não há calendário", () => {
 
 test("porQueAssim descreve o canal pelo atraso e por onde o dinheiro caiu", () => {
   assert.equal(porQueAssim({ atraso: 0.1 }, [150, 100, 100, 100, 100, 100]), "Quem vê compra logo, e o efeito passa rápido. Espalhado pelas semanas.", "quase igual não é 'mais no começo'");
-  assert.equal(porQueAssim({ atraso: 0.6 }, [600, 300, 100, 0]), "Demora a pegar e o efeito dura semanas. Mais no começo, e para antes da semana da sessão.");
+  assert.equal(porQueAssim({ atraso: 0.6 }, [600, 300, 100, 0]), "Demora a pegar e o efeito dura semanas. Mais no começo, e para antes da última semana.");
   assert.equal(porQueAssim({ atraso: 0.1 }, [100, 100, 100, 100]), "Quem vê compra logo, e o efeito passa rápido. Espalhado pelas semanas.");
   assert.equal(porQueAssim({ atraso: 0.3 }, [0, 100, 200, 300]), "O efeito dura uma ou duas semanas. Mais perto da sessão.");
   assert.match(porQueAssim({ atraso: 0.3 }, [0, 0]), /Ficou de fora/);
@@ -131,4 +131,38 @@ test("a prudência com a proximidade puxa um pouco do gasto para perto da sessã
   assert.equal(prudente.totalCentavos, puro.totalCentavos);
   assert.ok(segundaMetade(prudente) >= segundaMetade(puro), `${segundaMetade(prudente)} x ${segundaMetade(puro)}`);
   assert.ok(prudente.comparacao.ingressos >= puro.comparacao.ingressos * 0.97, "pelo modelo, quase não custa");
+});
+
+test("eventosParaPlanejar agrupa temporada, exposição e sessão única, só o que ainda vem", () => {
+  const sessoes = [
+    ...["2027-03-12", "2027-03-13", "2027-03-19", "2027-03-24"].map((dia, i) => ({ id: `h${i}`, evento: "Hamlet", evento_id: "hamlet", dia, lugares_restantes: 100 })),
+    { id: "r", evento: "Retratos", evento_id: "retratos", dia: "2027-04-20", fim: "2027-04-30", lugares_restantes: null },
+    { id: "x", evento: "Ricardo III", evento_id: "ricardo", dia: "2027-05-08", lugares_restantes: 412 },
+    { id: "velha", evento: "Antiga", evento_id: "antiga", dia: "2027-01-02" },
+  ];
+  const e = eventosParaPlanejar(sessoes, "2027-02-09");
+  assert.deepEqual(e.map(x => [x.evento, x.tipo, x.primeiroDia, x.ultimoDia, x.sessoes, x.lugaresRestantes]), [
+    ["Hamlet", "temporada", "2027-03-12", "2027-03-24", 4, 400], ["Retratos", "exposicao", "2027-04-20", "2027-04-30", 1, null], ["Ricardo III", "sessao_unica", "2027-05-08", "2027-05-08", 1, 412],
+  ]);
+  assert.deepEqual(e[1].diasEmCartaz, ["2027-04-20", "2027-04-27", "2027-04-30"]);
+  assert.equal(periodoDoEvento(e[0]), "Temporada de 12 a 24 de março");
+  assert.equal(periodoDoEvento(e[1]), "Exposição de 20 a 30 de abril");
+  assert.equal(periodoDoEvento(e[2]), "8 de maio");
+  assert.equal(periodoDoEvento({ tipo: "temporada", primeiroDia: "2027-03-28", ultimoDia: "2027-04-03" }), "Temporada de 28 de março a 3 de abril");
+  // A exposição já aberta continua planejável até o fim.
+  const aberta = eventosParaPlanejar(sessoes, "2027-04-25");
+  assert.equal(aberta[0].evento, "Retratos");
+  assert.equal(aberta[0].diasEmCartaz[0], "2027-04-25");
+});
+
+test("o calendário de uma temporada vai até a última sessão e marca as semanas em cartaz", () => {
+  const pedido = { totalCentavos: 400000, inicio: "2027-02-09", diaDaSessao: "2027-03-24", diasEmCartaz: ["2027-03-12", "2027-03-13", "2027-03-19", "2027-03-24"] };
+  assert.deepEqual(semanasEmCartaz(pedido, 7), [false, false, false, false, true, true, true]);
+  const cal = montarCalendario([META, GOOGLE], pedido)!;
+  assert.equal(cal.semanas.length, 7);
+  assert.deepEqual(cal.semanas.map(s => s.emCartaz), [false, false, false, false, true, true, true]);
+  assert.ok(cal.semanas.at(-1)!.daSessao);
+  assert.equal(cal.totalCentavos, 400000);
+  // Sem a lista, só a última semana fica em cartaz (sessão única).
+  assert.deepEqual(semanasEmCartaz({ inicio: "2027-02-09" }, 3), [false, false, true]);
 });

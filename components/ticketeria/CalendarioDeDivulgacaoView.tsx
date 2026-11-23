@@ -7,7 +7,7 @@ import { SeloDePrecisao } from "@/components/ticketeria/PainelView";
 import { emCentavos, lerValorEmReais } from "@/lib/producao/dinheiro";
 import { rotuloDoCanalDeGasto } from "@/lib/ticketeria/modelo";
 import { canaisComCurva } from "@/lib/ticketeria/modelo-recomendacao";
-import { canaisDoCalendario, lerPedidoDoCalendario, montarCalendario, planilhaDoCalendario, porQueAssim, SEMANAS_DO_ATRASO, type Calendario } from "@/lib/ticketeria/modelo-calendario";
+import { canaisDoCalendario, eventosParaPlanejar, lerPedidoDoCalendario, montarCalendario, periodoDoEvento, planilhaDoCalendario, porQueAssim, SEMANAS_DO_ATRASO, semanasEmCartaz, type Calendario, type TipoDoEvento } from "@/lib/ticketeria/modelo-calendario";
 import type { CanalDoResultado } from "@/lib/ticketeria/modelo-resultado";
 import type { SessaoParaDivulgar } from "@/lib/ticketeria/divulgacao";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
@@ -26,61 +26,84 @@ const diaMes = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 const inteiro = (n: number) => Math.round(n).toLocaleString("pt-BR");
 const reaisParaCampo = (centavos: number) => String(Math.round(centavos / 100));
 
-export type PlanoDoCalendario = { sessaoId: string; evento: string; diaDaSessao: string; inicio: string; totalCentavos: number; canais: string[]; lugaresRestantes?: number | null };
+export type PlanoDoCalendario = {
+  eventoId: string; evento: string; tipo: TipoDoEvento; periodo: string; diaDaSessao: string; inicio: string; totalCentavos: number; canais: string[];
+  lugaresRestantes?: number | null; diasEmCartaz?: string[];
+};
+const ROTULO_DO_TIPO: Record<TipoDoEvento, string> = { temporada: "temporada", exposicao: "exposição", sessao_unica: "sessão única" };
 
-/** A folha "Planejar a divulgação de um evento": escolher a sessão, o total até ela, de quando começa e os canais. */
+/** A folha "Planejar a divulgação de um evento": escolher o evento (temporada, exposição ou sessão única), o total até a última sessão, de quando começa e os canais. */
 export function PlanejarDivulgacaoSheet({ sessoes, canais, gastoSemanal, hoje, inicial, onMontar, onClose }: {
   sessoes: SessaoParaDivulgar[]; canais: CanalDoResultado[]; gastoSemanal: Record<string, number>; hoje: string; inicial?: PlanoDoCalendario | null;
   onMontar: (p: PlanoDoCalendario) => void; onClose: () => void;
 }) {
-  const futuras = useMemo(() => sessoes.filter(s => s.a_venda && s.dia && s.dia >= hoje).sort((a, b) => (a.dia as string).localeCompare(b.dia as string)), [sessoes, hoje]);
+  const eventos = useMemo(() => eventosParaPlanejar(sessoes, hoje), [sessoes, hoje]);
   const disponiveis = useMemo(() => canaisDoCalendario(canaisComCurva(canais)), [canais]);
-  const [sessaoId, setSessaoId] = useState(inicial?.sessaoId ?? futuras[0]?.id ?? "");
+  const [eventoId, setEventoId] = useState(inicial?.eventoId ?? eventos[0]?.eventoId ?? "");
   const [inicio, setInicio] = useState(inicial?.inicio ?? hoje);
   const [escolhidos, setEscolhidos] = useState<string[]>(inicial?.canais ?? disponiveis.map(c => c.canal));
-  const sessao = futuras.find(s => s.id === sessaoId) ?? null;
+  const evento = eventos.find(e => e.eventoId === eventoId) ?? null;
   const porSemana = disponiveis.reduce((s, c) => s + (gastoSemanal[c.canal] ?? 0), 0);
-  const leituraDasSemanas = sessao?.dia ? lerPedidoDoCalendario({ totalCentavos: 1e9, inicio, diaDaSessao: sessao.dia }) : null;
+  const leituraDasSemanas = evento ? lerPedidoDoCalendario({ totalCentavos: 1e9, inicio, diaDaSessao: evento.ultimoDia }) : null;
   const semanas = leituraDasSemanas?.ok ? leituraDasSemanas.semanas : null;
+  const emCartaz = evento && semanas ? semanasEmCartaz({ inicio, diasEmCartaz: evento.diasEmCartaz }, semanas).filter(Boolean).length : 0;
   const [texto, setTexto] = useState(inicial ? reaisParaCampo(inicial.totalCentavos) : porSemana > 0 && semanas ? reaisParaCampo(Math.round((porSemana * semanas) / 10000) * 10000) : "");
   const reais = lerValorEmReais(texto);
   const total = reais === null ? null : emCentavos(reais);
-  const leitura = sessao?.dia && total !== null ? lerPedidoDoCalendario({ totalCentavos: total, inicio, diaDaSessao: sessao.dia }) : null;
+  const leitura = evento && total !== null ? lerPedidoDoCalendario({ totalCentavos: total, inicio, diaDaSessao: evento.ultimoDia }) : null;
   const problema = !leitura || leitura.ok ? null
     : leitura.problema === "valor" ? "Digite um valor a partir de R$ 50."
-    : leitura.problema === "sessao_passou" ? "A data de início é depois da sessão."
-    : leitura.problema === "longe_demais" ? "A sessão está a mais de 16 semanas: comece mais perto da data."
+    : leitura.problema === "sessao_passou" ? "A data de início é depois da última sessão."
+    : leitura.problema === "longe_demais" ? "A última sessão está a mais de 16 semanas: comece mais perto da data."
     : "Confira a data de início.";
-  const pode = !!sessao && leitura?.ok === true && escolhidos.length > 0;
+  const pode = !!evento && leitura?.ok === true && escolhidos.length > 0;
   const alternar = (c: string) => setEscolhidos(x => (x.includes(c) ? x.filter(y => y !== c) : [...x, c]));
+  const detalhe = (e: (typeof eventos)[number]) => [
+    periodoDoEvento(e), e.tipo === "temporada" ? `${e.sessoes} sessões` : e.tipo === "exposicao" ? "aberta todos os dias" : null,
+    typeof e.lugaresRestantes === "number" ? `faltam ${inteiro(e.lugaresRestantes)} lugares` : null,
+  ].filter(Boolean).join(" · ");
+  const quantasSemanas = semanas === null ? null
+    : evento?.tipo === "sessao_unica" ? (semanas === 1 ? "É a semana da sessão." : `São ${semanas} semanas até a sessão.`)
+    : semanas - emCartaz <= 0 ? `${emCartaz === 1 ? "1 semana" : `${emCartaz} semanas`} em cartaz.`
+    : `São ${semanas - emCartaz === 1 ? "1 semana" : `${semanas - emCartaz} semanas`} antes da estreia e ${emCartaz === 1 ? "1" : emCartaz} em cartaz.`;
 
   return (
-    <TopSheet titulo="Planejar a divulgação de um evento" onClose={onClose} largura="36rem" footer={fechar => (
+    <TopSheet titulo="Planejar a divulgação de um evento" onClose={onClose} largura="38rem" footer={fechar => (
       <>
         <button type="button" onClick={fechar} className={CANCELAR}>Cancelar</button>
         <button type="button" disabled={!pode} className={CONFIRMAR}
-          onClick={() => { if (sessao?.dia && total !== null) onMontar({ sessaoId: sessao.id, evento: sessao.evento, diaDaSessao: sessao.dia, inicio, totalCentavos: total, canais: escolhidos, lugaresRestantes: sessao.lugares_restantes ?? null }); }}>Montar calendário</button>
+          onClick={() => { if (evento && total !== null) onMontar({ eventoId: evento.eventoId, evento: evento.evento, tipo: evento.tipo, periodo: periodoDoEvento(evento), diaDaSessao: evento.ultimoDia, inicio, totalCentavos: total, canais: escolhidos, lugaresRestantes: evento.lugaresRestantes, diasEmCartaz: evento.diasEmCartaz }); }}>Montar calendário</button>
       </>
     )}>
       <div className="space-y-4">
-        <p className="text-[0.8125rem] text-black/55">O modelo sugere quanto pôr em cada canal, semana a semana, até a sessão.</p>
-        {futuras.length === 0 ? <Aviso texto="Não há sessão à venda pela frente. O calendário é montado para uma sessão futura." /> : (
+        <p className="text-[0.8125rem] text-black/55">O modelo sugere quanto pôr em cada canal, semana a semana, até a última sessão.</p>
+        {eventos.length === 0 ? <Aviso texto="Não há sessão à venda pela frente. O calendário é montado para um evento que ainda vai acontecer." /> : (
           <>
             <div>
-              <label className={ROTULO} htmlFor="cd-sessao">Evento</label>
-              <select id="cd-sessao" className={CAMPO} value={sessaoId} onChange={e => setSessaoId(e.target.value)}>
-                {futuras.map(s => <option key={s.id} value={s.id}>{s.evento} · {s.quando}</option>)}
-              </select>
+              <span className={ROTULO}>Evento</span>
+              <div className="space-y-2" role="radiogroup" aria-label="Evento">
+                {eventos.map(e => {
+                  const on = e.eventoId === eventoId;
+                  return (
+                    <button key={e.eventoId} type="button" role="radio" aria-checked={on} onClick={() => setEventoId(e.eventoId)}
+                      className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${on ? "border-[#7259B5] bg-[#F5F2FB]" : "bg-white hover:bg-black/[.02]"}`}
+                      style={on ? undefined : { borderColor: BORDA }}>
+                      <span><span className="block text-[0.8125rem] text-[#282525]">{e.evento}</span><span className="block text-[0.6875rem] text-black/50">{detalhe(e)}</span></span>
+                      <span className="shrink-0 rounded-xl border px-2 py-0.5 text-[0.625rem] text-[#7259B5]" style={{ borderColor: "rgba(114,89,181,.35)" }}>{ROTULO_DO_TIPO[e.tipo]}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div>
-              <label className={ROTULO} htmlFor="cd-total">Quanto gastar em anúncios até a sessão (em reais)</label>
+              <label className={ROTULO} htmlFor="cd-total">Quanto gastar em anúncios até o fim (em reais)</label>
               <input id="cd-total" inputMode="decimal" className={`${CAMPO} max-w-[12rem]`} value={texto} onChange={e => setTexto(e.target.value)} placeholder="3000" />
-              {porSemana > 0 && <p className="mt-1.5 text-[0.75rem] text-black/45">Em geral você gasta {formatarMoeda(porSemana)} por semana em anúncios.{typeof sessao?.lugares_restantes === "number" ? ` Faltam ${inteiro(sessao.lugares_restantes)} lugares nesta sessão.` : ""}</p>}
+              {porSemana > 0 && <p className="mt-1.5 text-[0.75rem] text-black/45">Em geral você gasta {formatarMoeda(porSemana)} por semana em anúncios.</p>}
             </div>
             <div>
               <label className={ROTULO} htmlFor="cd-inicio">A partir de</label>
               <input id="cd-inicio" type="date" className={`${CAMPO} max-w-[12rem]`} value={inicio} min={hoje} onChange={e => setInicio(e.target.value)} />
-              {semanas !== null && <p className="mt-1.5 text-[0.75rem] text-black/45">{semanas === 1 ? "É a semana da sessão." : `São ${semanas} semanas até a sessão.`}</p>}
+              {quantasSemanas && <p className="mt-1.5 text-[0.75rem] text-black/45">{quantasSemanas}</p>}
             </div>
             <div>
               <span className={ROTULO}>Canais</span>
@@ -103,7 +126,7 @@ export function PlanejarDivulgacaoSheet({ sessoes, canais, gastoSemanal, hoje, i
 }
 
 /** O gráfico dos ingressos esperados por semana, empilhados por canal, com o que sobra depois da sessão em cinza. */
-function GraficoDoCalendario({ cal, canais, diaDaSessao }: { cal: Calendario; canais: string[]; diaDaSessao: string }) {
+function GraficoDoCalendario({ cal, canais, diaDaSessao, periodo, unica }: { cal: Calendario; canais: string[]; diaDaSessao: string; periodo: string; unica: boolean }) {
   const S = cal.semanas.length, n = S + Math.min(4, SEMANAS_DO_ATRASO);
   const W = 900, H = 230, pl = 40, pb = 40, pt = 16;
   const totais = Array.from({ length: n }, (_, t) => canais.reduce((s, c) => s + (cal.porSemana[c]?.[t] ?? 0), 0));
@@ -113,8 +136,11 @@ function GraficoDoCalendario({ cal, canais, diaDaSessao }: { cal: Calendario; ca
   const bw = (W - pl - 20) / n;
   const xs = pl + S * bw;
   const linhas = Array.from({ length: Math.floor(maximo / passo) + 1 }, (_, i) => i * passo);
+  const primeira = cal.semanas.findIndex(s => s.emCartaz);
+  const x0 = pl + Math.max(0, primeira) * bw;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Ingressos esperados por semana, pelos anúncios">
+      {!unica && primeira >= 0 && <g><rect x={x0} y={pt} width={xs - x0} height={H - pb - pt} fill="#F3EFFA" /><text x={(x0 + xs) / 2} y={pt + 11} fontSize={11} fill="#7259B5" textAnchor="middle">em cartaz</text></g>}
       {linhas.map(v => <g key={v}><line x1={pl} x2={W - 10} y1={Y(v)} y2={Y(v)} stroke="rgba(13,13,13,.07)" /><text x={4} y={Y(v) + 4} fontSize={10} fill="rgba(13,13,13,.4)">{v}</text></g>)}
       {Array.from({ length: n }, (_, t) => {
         let y0 = H - pb;
@@ -131,8 +157,9 @@ function GraficoDoCalendario({ cal, canais, diaDaSessao }: { cal: Calendario; ca
         );
       })}
       <line x1={xs} x2={xs} y1={pt} y2={H - pb + 4} stroke="#282525" strokeDasharray="3 3" />
-      <text x={xs + 6} y={pt + 10} fontSize={11} fill="#282525">sessão, {diaMes(diaDaSessao)}</text>
-      <text x={xs + ((n - S) * bw) / 2} y={H - pb + 15} fontSize={10} fill="rgba(13,13,13,.45)" textAnchor="middle">depois da sessão: o efeito que sobra não vende mais</text>
+      <text x={xs + 6} y={pt + 10} fontSize={11} fill="#282525">{unica ? `sessão, ${diaMes(diaDaSessao)}` : `fim, ${diaMes(diaDaSessao)}`}</text>
+      <text x={xs + ((n - S) * bw) / 2} y={H - pb + 15} fontSize={10} fill="rgba(13,13,13,.45)" textAnchor="middle">{unica ? "depois da sessão: o efeito que sobra não vende mais" : "depois da última sessão: não vende mais"}</text>
+      <title>{periodo}</title>
     </svg>
   );
 }
@@ -142,17 +169,20 @@ export function CalendarioDeDivulgacao({ plano, canais, semanasDoModelo, onAjust
   plano: PlanoDoCalendario; canais: CanalDoResultado[]; semanasDoModelo: number; onAjustar: () => void; onFechar: () => void;
 }) {
   const usados = useMemo(() => canaisDoCalendario(canaisComCurva(canais)).filter(c => plano.canais.includes(c.canal)), [canais, plano.canais]);
-  const cal = useMemo(() => montarCalendario(usados, { totalCentavos: plano.totalCentavos, inicio: plano.inicio, diaDaSessao: plano.diaDaSessao, lugaresRestantes: plano.lugaresRestantes ?? null }), [usados, plano]);
+  const cal = useMemo(() => montarCalendario(usados, { totalCentavos: plano.totalCentavos, inicio: plano.inicio, diaDaSessao: plano.diaDaSessao, lugaresRestantes: plano.lugaresRestantes ?? null, diasEmCartaz: plano.diasEmCartaz }), [usados, plano]);
   if (!cal) return <Aviso texto="Não deu para montar o calendário com esses dados. Ajuste o evento, o valor ou os canais." />;
   const nomes = Object.keys(cal.totalPorCanal);
   const maxCelula = Math.max(1, ...cal.semanas.flatMap(s => Object.values(s.porCanal)));
   const planilha = `data:text/csv;charset=utf-8,${encodeURIComponent(`﻿${planilhaDoCalendario(cal, rotuloDoCanalDeGasto)}`)}`;
   const diferenca = (x: number) => { const d = Math.round(x - cal.comparacao.ingressos); return d === 0 ? "o mesmo" : `${d > 0 ? "+" : ""}${inteiro(d)} ${Math.abs(d) === 1 ? "ingresso" : "ingressos"}`; };
   const S = cal.semanas.length;
+  const emCartaz = cal.semanas.filter(x => x.emCartaz).length;
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "rgba(114,89,181,.28)", background: "#FAF8FE" }}>
-        <p className="text-[0.8125rem] text-black/55"><span className="text-[#282525]">Calendário de divulgação: {plano.evento}.</span> Como dividir {formatarMoeda(cal.totalCentavos)} em anúncios {S === 1 ? "na semana da sessão" : `nas ${S} semanas até a sessão`}, para vender o máximo antes da data.</p>
+        <p className="text-[0.8125rem] text-black/55"><span className="text-[#282525]">Calendário de divulgação: {plano.evento}{plano.tipo === "sessao_unica" ? "" : `, ${plano.periodo.charAt(0).toLowerCase()}${plano.periodo.slice(1)}`}.</span> {plano.tipo === "sessao_unica"
+          ? `Como dividir ${formatarMoeda(cal.totalCentavos)} em anúncios ${S === 1 ? "na semana da sessão" : `nas ${S} semanas até a sessão`}, para vender o máximo antes da data.`
+          : `Como dividir ${formatarMoeda(cal.totalCentavos)} ${emCartaz === S ? `nas ${S} semanas em cartaz` : `nas ${S - emCartaz} ${S - emCartaz === 1 ? "semana" : "semanas"} antes da estreia e nas ${emCartaz} em cartaz`}, para vender o máximo até a última sessão.`}</p>
         <div className="flex items-center gap-2">
           <button type="button" onClick={onAjustar} className={SECUNDARIO} style={{ borderColor: BORDA }}>Ajustar</button>
           <a href={planilha} download={`calendario-${plano.diaDaSessao}.csv`} className={SECUNDARIO} style={{ borderColor: BORDA }}>Baixar planilha</a>
@@ -165,8 +195,8 @@ export function CalendarioDeDivulgacao({ plano, canais, semanasDoModelo, onAjust
           <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={`${CABECALHO} text-left`}>Semana</th>{nomes.map(c => <th key={c} className={`${CABECALHO} text-right`}>{rotuloDoCanalDeGasto(c)}</th>)}<th className={`${CABECALHO} text-right`}>Total da semana</th></tr></thead>
           <tbody className="divide-y divide-black/[.08]">
             {cal.semanas.map(s => (
-              <tr key={s.inicio}>
-                <td className={CELULA}>Semana de {diaMes(s.inicio)}{s.daSessao ? " (a da sessão)" : ""}</td>
+              <tr key={s.inicio} className={plano.tipo !== "sessao_unica" && s.emCartaz ? "bg-[#FAF8FE]" : undefined}>
+                <td className={CELULA}>Semana de {diaMes(s.inicio)}{plano.tipo === "sessao_unica" ? (s.daSessao ? " (a da sessão)" : "") : s.emCartaz && <span className="ml-2 rounded-xl border px-2 py-0.5 text-[0.625rem] text-[#7259B5]" style={{ borderColor: "rgba(114,89,181,.35)" }}>em cartaz</span>}</td>
                 {nomes.map(c => {
                   const v = s.porCanal[c] ?? 0;
                   return <td key={c} className={`${CELULA} whitespace-nowrap text-right tabular-nums ${v === 0 ? "text-black/25" : ""}`}>{v === 0 ? "—" : formatarMoeda(v)}{v > 0 && <span aria-hidden="true" className="ml-2 inline-block h-1.5 rounded-full bg-[#7259B5]/55 align-middle" style={{ width: `${Math.max(4, (v / maxCelula) * 46)}px` }} />}</td>;
@@ -179,7 +209,7 @@ export function CalendarioDeDivulgacao({ plano, canais, semanasDoModelo, onAjust
         </table>
       </div>
       {cal.sobraCentavos > 0 && <p className="rounded-xl border px-3 py-2 text-[0.75rem] text-black/60" style={{ borderColor: "rgba(176,122,20,.25)", background: "#FFFBF2" }}>{cal.parouNaLotacao
-        ? `${formatarMoeda(cal.sobraCentavos)} ficaram de fora: faltam ${inteiro(plano.lugaresRestantes ?? 0)} lugares nesta sessão, e com ${formatarMoeda(cal.totalCentavos)} os anúncios já venderiam isso. Parte dos lugares ainda vende sem anúncio, então dá para gastar até menos.`
+        ? `${formatarMoeda(cal.sobraCentavos)} ficaram de fora: faltam ${inteiro(plano.lugaresRestantes ?? 0)} lugares ${plano.tipo === "temporada" ? "nas sessões" : "nesta sessão"}, e com ${formatarMoeda(cal.totalCentavos)} os anúncios já venderiam isso. Parte dos lugares ainda vende sem anúncio, então dá para gastar até menos.`
         : `${formatarMoeda(cal.sobraCentavos)} ficaram de fora: acima disso, nestas semanas, os canais já rendem quase nada pelo que o modelo viu.`}</p>}
       <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
         <div className="rounded-xl border bg-white px-5 py-4" style={{ borderColor: BORDA }}>
@@ -189,7 +219,7 @@ export function CalendarioDeDivulgacao({ plano, canais, semanasDoModelo, onAjust
             <div className="rounded-xl border px-3.5 py-3" style={{ borderColor: BORDA }}><p className="text-[0.78rem] text-[#282525]">Igual toda semana</p><p className="mt-1 text-[1.25rem] tabular-nums text-[#282525]">{inteiro(cal.comparacao.igual)}</p><p className="text-[0.6875rem] text-black/50">{diferenca(cal.comparacao.igual)}</p></div>
             <div className="rounded-xl border px-3.5 py-3" style={{ borderColor: BORDA }}><p className="text-[0.78rem] text-[#282525]">{S <= 2 ? "Tudo no fim" : "Tudo nas 2 últimas semanas"}</p><p className="mt-1 text-[1.25rem] tabular-nums text-[#282525]">{inteiro(cal.comparacao.noFim)}</p><p className="text-[0.6875rem] text-black/50">{diferenca(cal.comparacao.noFim)}</p></div>
           </div>
-          <p className="mt-2.5 text-[0.75rem] leading-relaxed text-black/50">Ingressos vendidos pelos anúncios até a sessão, sem contar o que venderia de qualquer jeito. Deixar para o fim rende menos porque o efeito dos anúncios demora a aparecer e parte dele cai depois da data. Cada canal fica com o mesmo total nos três jeitos.</p>
+          <p className="mt-2.5 text-[0.75rem] leading-relaxed text-black/50">{plano.tipo === "sessao_unica" ? "Ingressos vendidos pelos anúncios até a sessão" : "Ingressos de todas as sessões, pelos anúncios, até a última"}, sem contar o que venderia de qualquer jeito. Deixar para o fim rende menos porque o efeito dos anúncios demora a aparecer e parte dele cai depois da data. Cada canal fica com o mesmo total nos três jeitos.</p>
         </div>
         <div className="rounded-xl border bg-white px-5 py-4" style={{ borderColor: BORDA }}>
           <p className="text-[0.875rem] text-[#282525]">Por que assim</p>
@@ -197,13 +227,13 @@ export function CalendarioDeDivulgacao({ plano, canais, semanasDoModelo, onAjust
             {usados.map(c => <p key={c.canal}>{rotuloDoCanalDeGasto(c.canal)}: <span className="text-black/50">{porQueAssim(c, cal.semanas.map(s => s.porCanal[c.canal] ?? 0))}</span></p>)}
           </div>
           <p className="mt-2 text-[0.75rem] leading-relaxed text-black/50">O calendário deixa um pouco mais perto da data do que a conta pura do modelo manda: o anúncio pode render mais perto da sessão, e esse cuidado custa pouco se não for assim.</p>
-          <p className="mt-1.5 text-[0.75rem] leading-relaxed text-black/50">Se a sessão lotar antes, pare de gastar: o calendário não sabe o que você vende fora dos anúncios.</p>
+          <p className="mt-1.5 text-[0.75rem] leading-relaxed text-black/50">{plano.tipo === "temporada" ? "Se as sessões lotarem antes, pare de gastar" : "Se a sessão lotar antes, pare de gastar"}: o calendário não sabe o que você vende fora dos anúncios.</p>
         </div>
       </div>
       <div className="rounded-xl border bg-white px-5 py-4" style={{ borderColor: BORDA }}>
         <p className="text-[0.8125rem] text-[#282525]">Ingressos esperados por semana, pelos anúncios</p>
         <div className="mb-2 mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[0.6875rem] text-black/50">{nomes.map((c, i) => <span key={c} className="inline-flex items-center gap-1.5"><i aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: CORES[i % CORES.length] }} />{rotuloDoCanalDeGasto(c)}</span>)}</div>
-        <GraficoDoCalendario cal={cal} canais={nomes} diaDaSessao={plano.diaDaSessao} />
+        <GraficoDoCalendario cal={cal} canais={nomes} diaDaSessao={plano.diaDaSessao} periodo={plano.periodo} unica={plano.tipo === "sessao_unica"} />
       </div>
       <p className="max-w-4xl text-[0.75rem] leading-relaxed text-black/50">
         É o que o modelo aponta, não uma garantia: vem das curvas que ele estimou com as suas {semanasDoModelo} semanas de histórico e vale perto do que você já gastou por semana. A faixa costuma ser otimista.
