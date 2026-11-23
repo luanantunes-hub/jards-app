@@ -21,6 +21,27 @@
       "explicacaoSemLoja": "Dejarás de recibir novedades y ofertas del organizador. Las entradas que ya compraste siguen siendo válidas.",
       "feitoExplicacao": "Ya no enviaremos novedades de {loja} a tu correo electrónico.",
       "feitoExplicacaoSemLoja": "Ya no enviaremos novedades del organizador a tu correo electrónico."
+    },
+    "preferencias": {
+      "titulo": "¿Cómo quieres recibir las novedades de {loja}?",
+      "tituloSemLoja": "¿Cómo quieres recibir las novedades del organizador?",
+      "explicacao": "Tú eliges. Puedes cambiarlo cuando quieras, desde el enlace de cualquier correo.",
+      "tudo": "Todo lo que salga",
+      "tudoDetalhe": "Como máximo {limite} correos por semana.",
+      "menos": "Menos correos",
+      "menosDetalhe": "Como máximo 1 al mes, con lo más importante.",
+      "parecidos": "Solo eventos parecidos a los que ya viste",
+      "parecidosDetalhe": "Según lo que también compró quien fue a los mismos eventos que tú.",
+      "dias": "Días que suelen funcionarte (opcional)",
+      "qualquer": "Cualquier día",
+      "fimDeSemana": "Fin de semana",
+      "semana": "Entre semana",
+      "salvar": "Guardar",
+      "salvando": "Guardando…",
+      "salvo": "Listo, guardamos tus preferencias",
+      "salvoExplicacao": "Recibirás las novedades como elegiste. Puedes cambiarlo cuando quieras.",
+      "sairDeTudo": "No quiero recibir nada más",
+      "erro": "No fue posible guardar ahora. Inténtalo de nuevo en un momento."
     }
   }
 }

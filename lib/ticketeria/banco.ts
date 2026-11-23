@@ -26,6 +26,7 @@ export type BancoDaTicketeria = {
           criado_por: string | null;
           created_at: string;
           updated_at: string;
+          limite_emails_semana: number;
         };
         Insert: {
           id?: string;
@@ -38,6 +39,7 @@ export type BancoDaTicketeria = {
           criado_por?: string | null;
           created_at?: string;
           updated_at?: string;
+          limite_emails_semana?: number;
         };
         Update: {
           id?: string;
@@ -50,6 +52,7 @@ export type BancoDaTicketeria = {
           criado_por?: string | null;
           created_at?: string;
           updated_at?: string;
+          limite_emails_semana?: number;
         };
         Relationships: [
           {
@@ -3044,6 +3047,63 @@ export type BancoDaTicketeria = {
           noticias_lidas?: number;
           ultima_leitura?: string | null;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      ticketeria_envio_comparacao: {
+        Row: {
+          id: string;
+          organization_id: string;
+          envio_id: string;
+          email: string;
+          nome: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          envio_id: string;
+          email: string;
+          nome: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          envio_id?: string;
+          email?: string;
+          nome?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ticketeria_preferencias: {
+        Row: {
+          id: string;
+          organization_id: string;
+          loja_id: string;
+          email: string;
+          frequencia: string;
+          dias: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          loja_id: string;
+          email: string;
+          frequencia?: string;
+          dias?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          loja_id?: string;
+          email?: string;
+          frequencia?: string;
+          dias?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

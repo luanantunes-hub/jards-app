@@ -11,14 +11,15 @@ import { PublicoDaLoja } from "@/components/ticketeria/PublicoView";
 import { ImportarContatosSheet } from "@/components/ticketeria/ImportarContatosSheet";
 import { EventosEmComum, type DadosEmComum, type LinhaEmComum } from "@/components/ticketeria/EventosEmComumView";
 import { EmailDaLoja, AtivarEmailSheet, DominioDoEmailSheet, type DadosDoDominio } from "@/components/ticketeria/EmailView";
-import { EnviosDaLoja, ListaDoWhatsAppSheet, NovoEnvioSheet, type DadosDoNovoEnvio, type EnvioParaLista, type SessaoParaEscolher } from "@/components/ticketeria/EnviosView";
+import { EnviosDaLoja, LimitePorSemana, ListaDoWhatsAppSheet, NovoEnvioSheet, ParaQuemFuncionaView, type DadosDoNovoEnvio, type EnvioParaLista, type PreviaDoEnvio, type SessaoParaEscolher } from "@/components/ticketeria/EnviosView";
+import type { ParaQuemFunciona } from "@/lib/ticketeria/envios-controle-servidor";
 import type { CorpoDaImportacaoDeContatos } from "@/lib/ticketeria/contatos-importados";
 import { mensagemDoErroDoEnvio, type PessoaDoWhatsapp, type Segmento } from "@/lib/ticketeria/envios";
 import { COTA_PADRAO_DE_EMAILS, MOTIVOS_DO_REMETENTE, PRECO_DO_EMAIL_CENTAVOS, type RemetenteParaATela } from "@/lib/ticketeria/remetente";
 import { filtrarPublico, type FiltroDoPublico, type PublicoDaLoja as DadosDoPublico } from "@/lib/ticketeria/publico";
 
 const VAZIO: DadosDoPublico = { contatos: [], resumo: { contatos: 0, aceitaram: 0, aceitaram_porcento: 0, com_whatsapp: 0, sairam: 0 } };
-type DadosDosEnvios = { ligado: boolean; email: RemetenteParaATela; segmentos: Segmento[]; segmentos_whatsapp?: Segmento[]; sessoes: SessaoParaEscolher[]; envios: EnvioParaLista[] };
+type DadosDosEnvios = { ligado: boolean; email: RemetenteParaATela; segmentos: Segmento[]; segmentos_whatsapp?: Segmento[]; sessoes: SessaoParaEscolher[]; envios: EnvioParaLista[]; para_quem?: ParaQuemFunciona | null; limite_por_semana?: number };
 const SEM_EMAIL: RemetenteParaATela = { assinatura: "nenhuma", periodo_fim: null, cancela_no_fim: false, dominio: null, endereco_local: "ingressos", nome_exibicao: null, responder_para: null, situacao: "sem_dominio", registros: [], usados: 0, cota: COTA_PADRAO_DE_EMAILS, preco_centavos: PRECO_DO_EMAIL_CENTAVOS, pode_enviar: false };
 const SEM_ENVIOS: DadosDosEnvios = { ligado: false, email: SEM_EMAIL, segmentos: [], sessoes: [], envios: [] };
 type Aba = "contatos" | "envios" | "email" | "em_comum";
@@ -254,6 +255,18 @@ export default function PublicoPage() {
     })();
   }
 
+  // A prévia do envio por e-mail (grupo de comparação, limite da semana, preferências e a sugestão de para quem mandar).
+  const previaDoEnvio = useCallback(async (d: DadosDoNovoEnvio): Promise<PreviaDoEnvio | null> => {
+    if (!lojaId) return null;
+    const r = await fetch(`/api/ticketeria/lojas/${lojaId}/envios/previa`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ segmento: d.segmento, sessao_id: d.sessao_id, comparacao: d.comparacao, so_ultimo_ano: d.so_ultimo_ano }) }).catch(() => null);
+    return r && r.ok ? ((await r.json()) as PreviaDoEnvio) : null;
+  }, [lojaId]);
+  async function mudarLimite(limite: number) {
+    if (!lojaId) return;
+    await fetch(`/api/ticketeria/lojas/${lojaId}/envios/limite`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ limite }) }).catch(() => null);
+    await carregarEnvios(lojaId);
+  }
+
   async function enviar(d: DadosDoNovoEnvio, teste: boolean) {
     if (!lojaId) return;
     setTrabalhando(true);
@@ -327,7 +340,11 @@ export default function PublicoPage() {
               ? <EmailDaLoja email={envios.email} ocupado={trabalhandoEmail} aviso={avisoDoEmail} erro={erroDoEmail} onAtivar={() => { setErroDaFolhaDoEmail(null); setAtivarEmail(true); }} onEscolherDominio={() => { setErroDaFolhaDoEmail(null); setDominioEmail(true); }} onVerificar={() => void verificarDominio()} onGerenciar={() => void gerenciarAssinatura()} onTeste={() => void testeDoEmail()} />
               : aba === "contatos"
               ? <PublicoDaLoja resumo={dados.resumo} contatos={contatos} filtro={filtro} busca={busca} onFiltrar={setFiltro} onBuscar={setBusca} />
-              : <EnviosDaLoja envios={envios.envios} onContinuar={id => void abrirListaWhatsapp(id, envios.envios.find(e => e.id === id)?.assunto ?? "")} />}
+              : <div className="space-y-4">
+                  <ParaQuemFuncionaView dados={envios.para_quem ?? null} />
+                  <EnviosDaLoja envios={envios.envios} onContinuar={id => void abrirListaWhatsapp(id, envios.envios.find(e => e.id === id)?.assunto ?? "")} />
+                  <LimitePorSemana limite={envios.limite_por_semana ?? 3} onMudar={n => void mudarLimite(n)} />
+                </div>}
           </div>
         )}
       </ListContent>
@@ -335,7 +352,7 @@ export default function PublicoPage() {
       {listaWhatsapp && <ListaDoWhatsAppSheet assunto={listaWhatsapp.assunto} pessoas={listaWhatsapp.pessoas} erro={erroDaLista} onAbrir={abrirConversa} onClose={() => setListaWhatsapp(null)} />}
       {ativarEmail && <AtivarEmailSheet cota={envios.email.cota} trabalhando={trabalhandoEmail} erro={erroDaFolhaDoEmail} onContinuar={() => void assinarEmail()} onClose={() => setAtivarEmail(false)} />}
       {dominioEmail && <DominioDoEmailSheet inicial={{ dominio: envios.email.dominio ?? "", endereco_local: envios.email.endereco_local, nome_exibicao: envios.email.nome_exibicao ?? lojaNome, responder_para: envios.email.responder_para ?? "" }} trabalhando={trabalhandoEmail} erro={erroDaFolhaDoEmail} onSalvar={d => void salvarDominio(d)} onClose={() => setDominioEmail(false)} />}
-      {novo && <NovoEnvioSheet segmentos={segmentoEspecial ? [segmentoEspecial, ...envios.segmentos] : envios.segmentos} segmentosWhatsapp={envios.segmentos_whatsapp ?? []} sessoes={envios.sessoes} ligado={envios.ligado && envios.email.pode_enviar} motivoDoBloqueio={envios.ligado && !envios.email.pode_enviar ? `${envios.email.assinatura !== "ativa" ? MOTIVOS_DO_REMETENTE.sem_assinatura : envios.email.situacao === "sem_dominio" ? MOTIVOS_DO_REMETENTE.sem_dominio : MOTIVOS_DO_REMETENTE.dominio_nao_verificado} Veja a aba E-mail.` : null} origem={window.location.origin} erro={erroDoEnvio} aviso={avisoDoEnvio} trabalhando={trabalhando} onTeste={d => void enviar(d, true)} onEnviar={d => void enviar(d, false)} onClose={() => { setNovo(false); setSegmentoEspecial(null); }} />}
+      {novo && <NovoEnvioSheet segmentos={segmentoEspecial ? [segmentoEspecial, ...envios.segmentos] : envios.segmentos} segmentosWhatsapp={envios.segmentos_whatsapp ?? []} sessoes={envios.sessoes} ligado={envios.ligado && envios.email.pode_enviar} motivoDoBloqueio={envios.ligado && !envios.email.pode_enviar ? `${envios.email.assinatura !== "ativa" ? MOTIVOS_DO_REMETENTE.sem_assinatura : envios.email.situacao === "sem_dominio" ? MOTIVOS_DO_REMETENTE.sem_dominio : MOTIVOS_DO_REMETENTE.dominio_nao_verificado} Veja a aba E-mail.` : null} origem={window.location.origin} erro={erroDoEnvio} aviso={avisoDoEnvio} trabalhando={trabalhando} onTeste={d => void enviar(d, true)} onEnviar={d => void enviar(d, false)} onPrevia={previaDoEnvio} onClose={() => { setNovo(false); setSegmentoEspecial(null); }} />}
     </>
   );
 }

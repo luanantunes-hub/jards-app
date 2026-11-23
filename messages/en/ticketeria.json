@@ -21,6 +21,27 @@
       "explicacaoSemLoja": "You will stop receiving news and offers from the organizer. Tickets you have already bought remain valid.",
       "feitoExplicacao": "We will no longer send news from {loja} to your email.",
       "feitoExplicacaoSemLoja": "We will no longer send news from the organizer to your email."
+    },
+    "preferencias": {
+      "titulo": "How would you like to hear from {loja}?",
+      "tituloSemLoja": "How would you like to hear from the organizer?",
+      "explicacao": "It's your choice. You can change it any time from the link in any of our emails.",
+      "tudo": "Everything",
+      "tudoDetalhe": "At most {limite} emails a week.",
+      "menos": "Fewer emails",
+      "menosDetalhe": "At most 1 a month, with the most important news.",
+      "parecidos": "Only events similar to the ones you've attended",
+      "parecidosDetalhe": "Based on what people who went to the same events as you also bought.",
+      "dias": "Days that usually work for you (optional)",
+      "qualquer": "Any day",
+      "fimDeSemana": "Weekends",
+      "semana": "Weekdays",
+      "salvar": "Save",
+      "salvando": "Saving…",
+      "salvo": "Done, we saved your choices",
+      "salvoExplicacao": "You'll hear from us the way you chose. You can change it any time.",
+      "sairDeTudo": "I don't want to receive anything else",
+      "erro": "We couldn't save right now. Please try again in a moment."
     }
   }
 }

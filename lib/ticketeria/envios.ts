@@ -58,7 +58,8 @@ export function destinatariosDoSegmento(e: EntradaParaEnvio, segmento: string, c
   return contatos.filter(c => compraram.has(c.email) && !fora.has(c.email)).map(pessoa);
 }
 
-export type EnvioLido = { canal: CanalDoEnvio; assunto: string; mensagem: string; sessao_id: string; segmento: string; teste: boolean };
+export type EnvioLido = { canal: CanalDoEnvio; assunto: string; mensagem: string; sessao_id: string; segmento: string; teste: boolean;
+  /** Sortear o grupo de comparação (lib/ticketeria/envios-controle.ts); ligado se não vier. */ comparacao: boolean; /** "Mandar só para elas": só quem comprou no último ano. */ soUltimoAno: boolean };
 
 /** O corpo do pedido de envio, conferido. */
 export function lerEnvio(entrada: unknown): { ok: true; envio: EnvioLido } | { ok: false; problemas: string[] } {
@@ -75,11 +76,12 @@ export function lerEnvio(entrada: unknown): { ok: true; envio: EnvioLido } | { o
   if (segmento !== SEGMENTO_TODOS && !/^evento:[0-9a-f-]{36}(:sem:[0-9a-f-]{36})?$/i.test(segmento)) problemas.push("para quem");
   if (problemas.length > 0) return { ok: false, problemas };
   const canal: CanalDoEnvio = e.canal === "whatsapp" ? "whatsapp" : "email";
-  return { ok: true, envio: { canal, assunto, mensagem, sessao_id: sessao, segmento: segmento.toLowerCase(), teste: canal === "email" && e.teste === true } };
+  return { ok: true, envio: { canal, assunto, mensagem, sessao_id: sessao, segmento: segmento.toLowerCase(), teste: canal === "email" && e.teste === true, comparacao: e.comparacao !== false, soUltimoAno: e.so_ultimo_ano === true } };
 }
 
 /** O nome da ação do link do envio: o assunto em letras minúsculas, sem acento, com o dia e o mês ("ultimas-vagas-hamlet-20-11"). */
 export function acaoDoEnvio(assunto: string, agora: Date = new Date(), canal: CanalDoEnvio = "email"): string {
+  assunto = assunto.replace(/\{nome\},?\s*/gi, "");
   const base = assunto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 45).replace(/-+$/g, "");
   const dia = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit" }).format(agora).replace("/", "-");
   return `${base === "" ? "envio" : base}${canal === "whatsapp" ? "-wa" : ""}-${dia}`;
@@ -91,7 +93,9 @@ const primeiroNome = (nome: string) => nome.trim().split(/\s+/)[0] || "";
 /** "Oi, {nome}!" vira o primeiro nome da pessoa (sem nome, some junto com a vírgula). */
 export function comNome(mensagem: string, nome: string): string {
   const n = primeiroNome(nome);
-  return mensagem.replace(/,\s*\{nome\}/gi, n ? `, ${n}` : "").replace(/\{nome\}/gi, n);
+  // Sem nome, o {nome} some junto com a vírgula de antes ("Oi, {nome}!" → "Oi!") ou de depois ("{nome}, últimas vagas" → "últimas vagas").
+  if (!n) return mensagem.replace(/,\s*\{nome\}/gi, "").replace(/\{nome\}\s*,?\s*/gi, "");
+  return mensagem.replace(/\{nome\}/gi, n);
 }
 
 /** O link de compra do envio: a sessão, o canal (e-mail ou WhatsApp) e o nome da ação. */
@@ -103,14 +107,15 @@ export type DadosDoEmail = { loja: string; nome: string; assunto: string; mensag
 export function emailDeDivulgacao(d: DadosDoEmail): { assunto: string; texto: string; html: string } {
   const corpo = comNome(d.mensagem, d.nome);
   const rodape = `Você recebe este e-mail porque aceitou receber novidades de ${d.loja} ao comprar ingressos.`;
-  const texto = [corpo, `Comprar ingressos: ${d.enderecoDeCompra}`, `${rodape} Para sair da lista: ${d.enderecoParaSair}`].join("\n\n");
+  const texto = [corpo, `Comprar ingressos: ${d.enderecoDeCompra}`, `${rodape} Para escolher o que recebe ou sair da lista: ${d.enderecoParaSair}`].join("\n\n");
   const paragrafos = corpo.split(/\n{2,}/).map(p => `<p style="margin:0 0 14px">${escapar(p).replace(/\n/g, "<br>")}</p>`).join("");
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#282525">`
     + paragrafos
     + `<p style="margin:0 0 22px"><a href="${escapar(d.enderecoDeCompra)}" style="display:inline-block;background:#282525;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:12px">Comprar ingressos</a></p>`
-    + `<p style="margin:0;color:#6b6767;font-size:13px">${escapar(rodape)} <a href="${escapar(d.enderecoParaSair)}">Sair da lista</a>.</p>`
+    + `<p style="margin:0;color:#6b6767;font-size:13px">${escapar(rodape)} <a href="${escapar(d.enderecoParaSair)}">Escolher o que recebe ou sair da lista</a>.</p>`
     + `</div>`;
-  return { assunto: d.assunto, texto, html };
+  // O {nome} também vale no assunto: com o nome no assunto, mais gente abre e menos gente sai da lista (Sahni, Wheeler e Chintagunta, Marketing Science 2018).
+  return { assunto: comNome(d.assunto, d.nome), texto, html };
 }
 
 // ─── O WhatsApp simples ─────────────────────────────────────────────────────

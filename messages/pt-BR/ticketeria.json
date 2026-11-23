@@ -21,6 +21,27 @@
       "explicacaoSemLoja": "Você deixa de receber novidades e ofertas do organizador. Os ingressos que você já comprou continuam valendo.",
       "feitoExplicacao": "Não vamos mais mandar novidades de {loja} para o seu e-mail.",
       "feitoExplicacaoSemLoja": "Não vamos mais mandar novidades do organizador para o seu e-mail."
+    },
+    "preferencias": {
+      "titulo": "Como você quer receber as novidades de {loja}?",
+      "tituloSemLoja": "Como você quer receber as novidades do organizador?",
+      "explicacao": "Você escolhe. Dá para mudar quando quiser, pelo link de qualquer e-mail.",
+      "tudo": "Tudo o que sair",
+      "tudoDetalhe": "No máximo {limite} e-mails por semana.",
+      "menos": "Menos e-mails",
+      "menosDetalhe": "No máximo 1 por mês, com o mais importante.",
+      "parecidos": "Só eventos parecidos com os que você já viu",
+      "parecidosDetalhe": "Pelo que quem foi aos mesmos eventos que você também comprou.",
+      "dias": "Dias que costumam dar certo para você (opcional)",
+      "qualquer": "Qualquer dia",
+      "fimDeSemana": "Fim de semana",
+      "semana": "Dias de semana",
+      "salvar": "Salvar",
+      "salvando": "Salvando…",
+      "salvo": "Pronto, guardamos as suas escolhas",
+      "salvoExplicacao": "Você recebe as novidades do jeito que escolheu. Pode mudar quando quiser.",
+      "sairDeTudo": "Não quero receber mais nada",
+      "erro": "Não foi possível salvar agora. Tente de novo em instantes."
     }
   }
 }

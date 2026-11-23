@@ -35,7 +35,7 @@ test("o corpo do envio: lido e conferido", () => {
   const bom = { assunto: "  Últimas   vagas ", mensagem: " Oi, {nome}!\r\nRestam poucas. ", sessao_id: SESSAO.toUpperCase(), segmento: SEGMENTO_TODOS };
   const l = lerEnvio(bom);
   assert.ok(l.ok);
-  if (l.ok) assert.deepEqual(l.envio, { canal: "email", assunto: "Últimas vagas", mensagem: "Oi, {nome}!\nRestam poucas.", sessao_id: SESSAO, segmento: SEGMENTO_TODOS, teste: false });
+  if (l.ok) assert.deepEqual(l.envio, { canal: "email", assunto: "Últimas vagas", mensagem: "Oi, {nome}!\nRestam poucas.", sessao_id: SESSAO, segmento: SEGMENTO_TODOS, teste: false, comparacao: true, soUltimoAno: false });
   const t = lerEnvio({ ...bom, teste: true });
   assert.ok(t.ok && t.envio.teste);
   for (const [mudanca, problema] of [[{ assunto: "" }, "assunto"], [{ assunto: "a".repeat(151) }, "assunto"], [{ mensagem: "  " }, "mensagem"], [{ mensagem: "a".repeat(5001) }, "mensagem"], [{ sessao_id: "x" }, "sessão"], [{ segmento: "todos" }, "para quem"]] as [object, string][]) {
@@ -64,8 +64,8 @@ test("o e-mail: o nome, o botão de comprar, o rodapé e o link de sair; nada do
   assert.ok(!e.html.includes("<b>AMIGOS10"));
   assert.ok(e.html.includes('href="https://x.com/comprar/1?canal=email&amp;acao=a"'));
   assert.ok(e.html.includes("Cia &lt;Atores&gt;"));
-  assert.ok(e.html.includes('<a href="https://x.com/novidades/tok">Sair da lista</a>'));
-  assert.ok(e.texto.includes("Para sair da lista: https://x.com/novidades/tok"));
+  assert.ok(e.html.includes('<a href="https://x.com/novidades/tok">Escolher o que recebe ou sair da lista</a>'));
+  assert.ok(e.texto.includes("Para escolher o que recebe ou sair da lista: https://x.com/novidades/tok"));
   assert.ok(e.texto.includes("aceitou receber novidades de Cia <Atores>"));
 });
 
@@ -180,7 +180,7 @@ test("a fila no servidor: o POST só cria e dispara depois da resposta, o cron �
   const rota = await readFile("app/api/ticketeria/lojas/[id]/envios/route.ts", "utf8");
   assert.match(rota, /import \{ after, type NextRequest \}/);
   assert.match(rota, /after\(async \(\) => \{/);
-  assert.match(rota, /resposta\(\{ envio: criado, total: destinatarios\.length, enviando: true \}, 202\)/);
+  assert.match(rota, /resposta\(\{ envio: criado, total: destinatarios\.length, comparacao: preparo\?\.comparacao\.length \?\? 0, enviando: true \}, 202\)/);
   assert.doesNotMatch(rota, /enviarDivulgacao/, "não manda mais e-mail dentro do pedido");
   const cron = await readFile("app/api/ticketeria/envios/processar/route.ts", "utf8");
   assert.match(cron, /cron_indisponivel"\s*\}, 503/);

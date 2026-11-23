@@ -18,6 +18,8 @@ import { pessoasDoEnvioPorWhatsapp } from "@/lib/ticketeria/envios-whatsapp-serv
 import { enviosDaLoja, portasDoEnvioDoSupabase, processarEnvioDeEmail } from "@/lib/ticketeria/envios-servidor";
 import { autorizarLoja, resposta } from "@/lib/ticketeria/pagamento/autorizar-loja";
 import { entradaDoPublico } from "@/lib/ticketeria/publico-servidor";
+import { gravarComparacao, prepararEnvio, resultadosDosEnvios } from "@/lib/ticketeria/envios-controle-servidor";
+import { diaNoFuso } from "@/lib/ticketeria/divulgacao";
 import { conferirEnvio, emailsDoPeriodo, remetenteDaLoja, remetenteParaATela, remetenteParaEnviar } from "@/lib/ticketeria/remetente-servidor";
 
 export const dynamic = "force-dynamic";
@@ -29,9 +31,12 @@ export async function GET(_req: NextRequest, rota: { params: Promise<{ id: strin
   if (a.erro) return a.erro;
   try {
     const admin = createAdminClient();
-    const [{ envios, sessoes }, entrada, remetente] = await Promise.all([enviosDaLoja(admin, a.loja.id), entradaDoPublico(admin, a.loja.id), remetenteDaLoja(admin, a.loja.id)]);
+    const [{ envios, sessoes }, entrada, remetente, { data: loja }] = await Promise.all([enviosDaLoja(admin, a.loja.id), entradaDoPublico(admin, a.loja.id), remetenteDaLoja(admin, a.loja.id), clienteDaTicketeria(admin).from("ticketeria_lojas").select("limite_emails_semana").eq("id", a.loja.id).maybeSingle()]);
     const email = remetenteParaATela(remetente, remetente ? await emailsDoPeriodo(admin, a.loja.id, remetente) : 0);
-    return resposta({ ligado: divulgacaoConfigurada(), email, segmentos: segmentosDoPublico(entrada), segmentos_whatsapp: segmentosDoPublico(entrada, "whatsapp"), sessoes, envios });
+    // O que cada envio trouxe a mais (grupo de comparação) e para quem o e-mail funciona na casa.
+    const { porEnvio, paraQuem } = await resultadosDosEnvios(admin, a.loja.id, entrada);
+    return resposta({ ligado: divulgacaoConfigurada(), email, segmentos: segmentosDoPublico(entrada), segmentos_whatsapp: segmentosDoPublico(entrada, "whatsapp"), sessoes,
+      envios: envios.map(e => ({ ...e, efeito: porEnvio[e.id]?.efeito ?? null, de_quem_recebeu: porEnvio[e.id]?.deQuemRecebeu ?? null })), para_quem: paraQuem, limite_por_semana: loja?.limite_emails_semana ?? 3 });
   } catch (erro) {
     console.error("[ticketeria] envios da loja:", erro instanceof Error ? erro.message : erro);
     return resposta({ error: "falha_ao_ler" }, 500);
@@ -73,8 +78,14 @@ export async function POST(req: NextRequest, rota: { params: Promise<{ id: strin
     }
 
     const entrada = await entradaDoPublico(admin, a.loja.id);
-    const destinatarios = destinatariosDoSegmento(entrada, envio.segmento, envio.canal);
-    if (destinatarios.length === 0) return resposta({ error: envio.canal === "whatsapp" ? "sem_whatsapp" : "sem_destinatarios" }, 409);
+    const doSegmento = destinatariosDoSegmento(entrada, envio.segmento, envio.canal);
+    if (doSegmento.length === 0) return resposta({ error: envio.canal === "whatsapp" ? "sem_whatsapp" : "sem_destinatarios" }, 409);
+    // No e-mail: só quem comprou no último ano (se pedido), as preferências de cada pessoa, o limite da semana e o sorteio do grupo de comparação (que não recebe).
+    const preparo = envio.canal === "email"
+      ? await prepararEnvio(admin, a.loja.id, entrada, doSegmento, { eventoId: sessao.evento_id, diaDaSemanaDaSessao: new Date(`${diaNoFuso(sessao.inicio)}T12:00:00Z`).getUTCDay(), comparacao: envio.comparacao, soUltimoAno: envio.soUltimoAno })
+      : null;
+    const destinatarios = preparo ? preparo.enviar : doSegmento;
+    if (destinatarios.length === 0) return resposta({ error: "sem_destinatarios", motivo: "limite_ou_preferencias" }, 409);
     const limite = limiteDoCanal(envio.canal);
     if (destinatarios.length > limite) return resposta({ error: "destinatarios_demais", total: destinatarios.length, limite }, 413);
     // O e-mail sai do domínio da loja: assinatura em dia, domínio verificado e cota do mês (o WhatsApp não gasta cota nem depende disso).
@@ -96,10 +107,11 @@ export async function POST(req: NextRequest, rota: { params: Promise<{ id: strin
     }
     // O e-mail não é mandado aqui: o envio e as pessoas ficam "pendente" e a fila (lotes de 100) começa logo depois da resposta; se a rodada acabar antes (muita gente), o cron continua.
     const { envio: criado } = await portas.criar({ canal: "email", assunto: envio.assunto, mensagem: envio.mensagem, sessao_id: envio.sessao_id, acao, segmento: envio.segmento, destinatarios });
+    if (preparo && preparo.comparacao.length > 0) await gravarComparacao(admin, loja.organization_id, criado, preparo.comparacao);
     after(async () => {
       try { await processarEnvioDeEmail(admin, criado, origem); } catch (erro) { console.error("[ticketeria] fila do envio:", erro instanceof Error ? erro.message : erro); }
     });
-    return resposta({ envio: criado, total: destinatarios.length, enviando: true }, 202);
+    return resposta({ envio: criado, total: destinatarios.length, comparacao: preparo?.comparacao.length ?? 0, enviando: true }, 202);
   } catch (erro) {
     console.error("[ticketeria] envio falhou:", erro instanceof Error ? erro.message : erro);
     return resposta({ error: "falha_no_envio" }, 500);
