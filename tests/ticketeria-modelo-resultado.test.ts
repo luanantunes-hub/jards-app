@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { compararComOsLinks, confiancaDoResultado, gastoQuaseConstante, lerResultadoDoModelo, temMargemGrande } from "../lib/ticketeria/modelo-resultado";
+import { compararComOsLinks, confiancaDoResultado, gastoQuaseConstante, lerPartesDaBase, lerResultadoDoModelo, temMargemGrande } from "../lib/ticketeria/modelo-resultado";
 
 const bom = () => ({
   motor: "pymc-marketing", versao_motor: "1.5.0", semanas: 59, diagnosticos: { r_hat_maximo: 1.01, divergencias: 0, ess_minimo: 650 },
@@ -168,4 +168,10 @@ test("o atraso de cada canal (para o calendário) é lido quando vem, e nulo nas
     const r = lerResultadoDoModelo({ ...bom(), canais: bom().canais.map(c => ({ ...c, atraso: ruim })) });
     assert.ok(!r.ok && r.problema === "atraso", String(ruim));
   }
+});
+
+test("a parte das férias traz o efeito na semana quando vem; valor torto vira recusa", () => {
+  const ok = lerPartesDaBase([{ chave: "ferias", porcento: 7.5, baixo: 5, alto: 10, efeito_na_semana: 0.3127 }, { chave: "nivel", porcento: 30, baixo: 25, alto: 35 }]);
+  assert.deepEqual(ok, [{ chave: "ferias", porcento: 7.5, baixo: 5, alto: 10, efeito_na_semana: 0.313 }, { chave: "nivel", porcento: 30, baixo: 25, alto: 35 }]);
+  assert.equal(lerPartesDaBase([{ chave: "ferias", porcento: 1, baixo: 0, alto: 2, efeito_na_semana: null }])?.[0].efeito_na_semana, undefined);
 });

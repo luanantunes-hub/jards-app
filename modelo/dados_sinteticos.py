@@ -23,7 +23,7 @@ def _adstock(x: np.ndarray, a: float) -> np.ndarray:
 VERDADE_DA_MARCA = {"meta-ads-marca": {"beta": 22.0, "adstock": 0.85, "escala": 900.0, "lam": 1.5}}
 
 
-def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False, com_controles: bool = False, variacao: float = 1.0, com_marca: bool = False) -> tuple[list[dict], dict[str, float]]:
+def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, gasto_constante: bool = False, com_controles: bool = False, variacao: float = 1.0, com_marca: bool = False, ferias: float | None = None, curva_da_proximidade: list[float] | None = None) -> tuple[list[dict], dict[str, float]]:
     """Devolve a tabela semanal (no formato do Jards, centavos) e a parte verdadeira de cada canal nas vendas, em % (mais a base)."""
     rng = np.random.default_rng(semente)
     n = semanas
@@ -53,6 +53,22 @@ def gerar(semanas: int = 90, semente: int = 7, embaralhar_gasto: bool = False, g
         visitas = rng.normal(0.1, 0.3, n)  # visitas sem anúncio em log relativo à mediana (pode ser negativo)
         controles = {"proximidade": proximidade, "feriado": feriado, "lote": lote, "preco": np.zeros(n), "cupom": cupom, "visitas": visitas}
         efeitos = {"proximidade": 22 * proximidade, "feriado": 9 * feriado, "preco_e_lotes": 12 * lote, "cupom": 30 * cupom, "visitas": 15 * visitas}
+        if curva_da_proximidade is not None:
+            # A verdade segue a curva de venda da casa (concentrada perto da data), não a rampa: semanas até a sessão (0 a 8) → peso da curva, com a semana de mais venda valendo 1.
+            c = np.asarray(curva_da_proximidade) / max(curva_da_proximidade)
+            ate = (13 - 1 - t % 13) % 13
+            efeitos["proximidade"] = 22 * np.where(ate <= 8, c[np.minimum(ate, 8)], 0.0)
+        if ferias is not None:
+            # Férias escolares (julho, 20/12 a 31/1, pela maior parte da semana): `ferias` ingressos a mais por semana de férias (0 = não mexe nas vendas).
+            dias = np.datetime64("2025-01-06") + t * np.timedelta64(7, "D")
+            def de_ferias(segunda: np.datetime64) -> float:
+                conta = 0
+                for i in range(7):
+                    d = (segunda + np.timedelta64(i, "D")).astype(object)
+                    conta += d.month in (1, 7) or (d.month == 12 and d.day >= 20)
+                return 1.0 if conta >= 4 else 0.0
+            controles["ferias"] = np.array([de_ferias(d) for d in dias])
+            efeitos["ferias"] = ferias * controles["ferias"]
     y = base + sum(contribuicoes.values()) + sum(efeitos.values()) + rng.normal(0, 3, n)
     total = float(y.sum())
     verdade = {c: float(v.sum()) / total * 100 for c, v in contribuicoes.items()}

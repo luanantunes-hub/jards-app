@@ -74,7 +74,7 @@ import { controlesDaTela } from "../lib/ticketeria/modelo-controles";
 test("os controles: os dois primeiros em uso, os outros entram com 52 semanas e o GA4 é opcional", () => {
   const t = Array.from({ length: 41 }, (_, i) => ({ controles: { proximidade: (i % 9) / 9, feriado: i % 7 === 0 ? 1 : 0, lote: 0, preco: 0, cupom: 0, visitas: 0 } }));
   const p = html(createElement(ControlesDoModelo, { controles: controlesDaTela(t, { eventos: 3, sessoes: 12, lotes: 4, cupons: 6, datasProprias: 0 }, { conectado: false, semanas: 0 }) }));
-  for (const x of ["O que o modelo leva em conta além dos anúncios", "Proximidade da sessão", "3 eventos, 12 sessões", "Feriados e datas de pico", "Adicionar uma data sua", "Preço e lotes", "Entra com 52 semanas · faltam 11", "Cupons", "Visitas ao site, sem anúncio (GA4)", "Opcional", "Conectar o GA4", "Em uso", "só os dois controles mais importantes"]) assert.ok(p.includes(x), `falta: ${x}`);
+  for (const x of ["O que o modelo leva em conta além dos anúncios", "Proximidade da sessão", "3 eventos, 12 sessões", "Feriados e datas de pico", "Adicionar uma data sua", "Preço e lotes", "Entra com 52 semanas · faltam 11", "Cupons", "Visitas ao site, sem anúncio (GA4)", "Opcional", "Conectar o GA4", "Em uso", "só os controles mais importantes", "só ganham peso se os seus dados mostrarem"]) assert.ok(p.includes(x), `falta: ${x}`);
   assert.equal(html(createElement(ControlesDoModelo, { controles: [] })), "", "sem controles não desenha nada");
 });
 

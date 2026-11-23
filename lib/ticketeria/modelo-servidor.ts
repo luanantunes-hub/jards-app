@@ -8,7 +8,7 @@ import { ritmoDoEvento, type RitmoDoEvento } from "@/lib/ticketeria/modelo-paine
 import { acumuladoDaSessao, type CurvaDoEvento } from "@/lib/ticketeria/ritmo-comparado";
 import { gastoDaMarca } from "@/lib/ticketeria/campanhas-servidor";
 import { separarMarca } from "@/lib/ticketeria/campanhas";
-import { abrirSessoesLongas, controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
+import { abrirSessoesLongas, atracaoOAnoTodo, curvaDaCasa, controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
 import { compararComOsLinks, lerPartesDaBase, type CanalDoResultado, type ParteDaBase } from "@/lib/ticketeria/modelo-resultado";
 import type { Confianca } from "@/lib/ticketeria/modelo";
 import { avaliarProntidao, consolidarGasto, gastoDasAcoes, montarTabelaSemanal, type EntradaDaProntidao, type ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
@@ -84,7 +84,7 @@ async function controlesDaLoja(t: Cliente, lojaId: string, semanas: string[]): P
   const idsDosEventos = (eventos ?? []).map(e => e.id);
   const fuso = new Map((locais ?? []).map(l => [l.id, l.fuso]));
   const [{ data: sessoesBrutas }, { data: ingressos }, { count: cupons }] = idsDosEventos.length === 0 ? [{ data: [] }, { data: [] }, { count: 0 }] : await Promise.all([
-    t.from("ticketeria_sessoes").select("local_id, sala_id, inicio, fim, cancelada_em").in("evento_id", idsDosEventos),
+    t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, fim, cancelada_em").in("evento_id", idsDosEventos),
     t.from("ticketeria_ingressos").select("id").in("evento_id", idsDosEventos),
     t.from("ticketeria_cupons").select("id", { count: "exact", head: true }).in("evento_id", idsDosEventos),
   ]);
@@ -105,19 +105,30 @@ async function controlesDaLoja(t: Cliente, lojaId: string, semanas: string[]): P
     for (const l of data ?? []) lotes.push({ ordem: l.ordem, vendas_inicio: l.vendas_inicio });
   }
   // As compras pagas: o dia, o cupom e cada item (quantidade e preço).
-  const pagos = await todas(async (de, ate) => t.from("ticketeria_pedidos").select("id, pago_em, cupom_id").eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, ate));
+  const pagos = await todas(async (de, ate) => t.from("ticketeria_pedidos").select("id, sessao_id, pago_em, cupom_id").eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, ate));
   const itens: ItemDePedidoPago[] = [];
   const porPedido = new Map(pagos.map(p => [p.id, p]));
+  // Para a curva da casa: cada ingresso de uma sessão que já aconteceu, com quantas semanas antes dela foi comprado.
+  const hoje = diaNoFuso(new Date());
+  const sessaoPorId = new Map(validas.map(s => [s.id, { evento: s.evento_id, dia: diaNoFuso(s.inicio, fuso.get(s.local_id)) }]));
+  const vendasDaCurva: { evento: string; semanasAntes: number; quantidade: number }[] = [];
   for (let i = 0; i < pagos.length; i += 150) {
     const { data } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade, preco_centavos").in("pedido_id", pagos.slice(i, i + 150).map(p => p.id));
     for (const it of data ?? []) {
       const p = porPedido.get(it.pedido_id);
       if (p?.pago_em) itens.push({ dia: diaNoFuso(p.pago_em), quantidade: it.quantidade, precoCentavos: it.preco_centavos, comCupom: p.cupom_id !== null });
+      const sessao = p?.sessao_id ? sessaoPorId.get(p.sessao_id) : undefined;
+      if (p?.pago_em && sessao && sessao.dia < hoje) {
+        const dias = (Date.parse(`${sessao.dia}T00:00:00Z`) - Date.parse(`${diaNoFuso(p.pago_em)}T00:00:00Z`)) / 86400000;
+        if (dias >= 0) vendasDaCurva.push({ evento: sessao.evento, semanasAntes: Math.floor(dias / 7), quantidade: it.quantidade });
+      }
     }
   }
   const viradasDeLote = lotes.filter(l => l.ordem > 0 && l.vendas_inicio).map(l => diaNoFuso(l.vendas_inicio as string));
-  const controles = controlesDasSemanas({ semanas, sessoes, lugaresDasSessoes, datasProprias: (datas ?? []).map(d => ({ dia: d.dia, nome: d.nome })), viradasDeLote, itens });
-  return { controles, resumo: { eventos: idsDosEventos.length, sessoes: validas.length, lotes: lotes.length, cupons: cupons ?? 0, datasProprias: (datas ?? []).length } };
+  const curva = curvaDaCasa(vendasDaCurva);
+  const controles = controlesDasSemanas({ semanas, sessoes, lugaresDasSessoes, curvaDaCasa: curva?.curva ?? null, datasProprias: (datas ?? []).map(d => ({ dia: d.dia, nome: d.nome })), viradasDeLote, itens });
+  const permanente = atracaoOAnoTodo(validas.map(s => ({ evento: s.evento_id, inicio: diaNoFuso(s.inicio, fuso.get(s.local_id)), fim: s.fim ? diaNoFuso(s.fim, fuso.get(s.local_id)) : null })));
+  return { controles, resumo: { eventos: idsDosEventos.length, sessoes: validas.length, lotes: lotes.length, cupons: cupons ?? 0, datasProprias: (datas ?? []).length, curva, permanente } };
 }
 
 /** A prontidão do modelo de uma loja: confere se há dado para o modelo rodar. */

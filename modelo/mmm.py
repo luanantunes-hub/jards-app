@@ -27,6 +27,9 @@ SEMANAS_DO_ATRASO = 6
 # Com um canal de MARCA (sufixo "-marca", ver lib/ticketeria/campanhas.ts) o efeito pode durar até 3 meses: o adstock de todos os canais vai até 13 semanas, e a marca começa
 # esperando um atraso alto (Beta(4; 1,5), média 0,73) enquanto os outros mantêm o de sempre (Beta(1; 3), média 0,25). Os dados decidem o resto.
 SEMANAS_DO_ATRASO_DA_MARCA = 13
+# Datas que podem importar ou não, conforme a loja (férias escolares importam para um zoológico e quase nada para um teatro adulto): o efeito começa em zero com prior estreito
+# (Normal(0; 0,1) na escala do modelo, contra Normal(0; 2) dos outros controles). Com dados que mostram diferença, o efeito aparece; sem, fica perto de zero e a tela diz "não faz diferença".
+DATAS_QUE_PODEM_IMPORTAR = {"ferias": 0.1}
 SEMENTE = 42
 SEMANAS_DOS_CONTROLES_EXTRAS = 52
 # Os controles de cada grupo (as chaves da coluna `controles` da tabela semanal) e o nome da parte que aparece no resultado. `extra`: só entra com SEMANAS_DOS_CONTROLES_EXTRAS semanas.
@@ -35,6 +38,8 @@ GRUPOS_DE_CONTROLE = [
     {"parte": "feriado", "chaves": ["feriado"], "extra": False},
     # O tamanho do que está à venda (lugares das próximas sessões): quem espera vender mais anuncia mais; sem isto o anúncio leva o mérito do evento maior (Kang, 2019).
     {"parte": "lugares", "chaves": ["lugares"], "extra": False},
+    # As férias escolares: entram para todo mundo com 52+ semanas, mas como DATA QUE PODE IMPORTAR (prior estreito em zero, ver DATAS_QUE_PODEM_IMPORTAR): só ganham peso se os dados mostrarem.
+    {"parte": "ferias", "chaves": ["ferias"], "extra": True},
     {"parte": "preco_e_lotes", "chaves": ["lote", "preco"], "extra": True},
     {"parte": "cupom", "chaves": ["cupom"], "extra": True},
     {"parte": "visitas", "chaves": ["visitas"], "extra": True},
@@ -157,8 +162,13 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
             "Beta", alpha=np.array([4.0 if c.endswith("-marca") else 1.0 for c in canais]), beta=np.array([1.5 if c.endswith("-marca") else 3.0 for c in canais]), dims="channel")})
     else:
         adstock = GeometricAdstock(l_max=SEMANAS_DO_ATRASO, normalize=True)
+    colunas_de_controle = ["t", *controles]
+    from pymc_extras.prior import Prior as PriorDoControle
+
+    config_do_modelo = {"gamma_control": PriorDoControle("Normal", mu=0, sigma=np.array([DATAS_QUE_PODEM_IMPORTAR.get(c, 2.0) for c in colunas_de_controle]), dims="control")}
     mmm = MMM(
-        date_column="date_week", channel_columns=canais, control_columns=["t", *controles],
+        model_config=config_do_modelo,
+        date_column="date_week", channel_columns=canais, control_columns=colunas_de_controle,
         adstock=adstock, saturation=LogisticSaturation(),
         yearly_seasonality=2 if n >= SEMANAS_PARA_SAZONALIDADE_ANUAL else None,
     )
@@ -201,6 +211,13 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
 
     b_baixo, b_meio, b_alto = _quantis(np.asarray(base).ravel())
     partes = _partes_da_base(posterior, escala_do_alvo, total_y, n, base, controles)
+    # Nas datas que podem importar: quanto as semanas delas venderam a mais (ou a menos) que vendiam sem ela, sem contar os anúncios ("as semanas de férias venderam 31% mais").
+    for parte in partes:
+        if parte["chave"] in DATAS_QUE_PODEM_IMPORTAR and parte["chave"] in controles:
+            marcadas = np.asarray(x[parte["chave"]]) > 0
+            efeito = np.asarray(posterior["control_contribution"].sel(control=parte["chave"]).median(("chain", "draw"))) * escala_do_alvo
+            sem = np.asarray(y)[marcadas] - efeito[marcadas]
+            parte["efeito_na_semana"] = round(float(efeito[marcadas].mean() / sem.mean()), 3) if marcadas.any() and sem.mean() > 0 else None
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)  # parâmetros constantes (variância zero) geram avisos de divisão; os diagnósticos ignoram esses valores
         resumo_az = az.summary(posterior.to_dataset())

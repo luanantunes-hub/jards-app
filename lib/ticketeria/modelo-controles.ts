@@ -12,6 +12,9 @@
 //   - lugares: o TAMANHO do que está à venda na semana: os lugares das sessões que acontecem nas próximas HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS semanas, em relação à mediana (1 = o de sempre,
 //     2 = o dobro). Quem espera vender mais anuncia mais (Kang, International Journal of Market Research, 2019): sem isto o modelo credita ao anúncio a venda que veio do evento ser maior.
 //     Nas semanas de antes da primeira sessão conhecida (histórico importado, que não tem sessão) vale 1, "o de sempre", para o controle não marcar a diferença entre o histórico e a Ticketeria.
+//   - ferias: 1 se a semana cai nas férias escolares (calendário aproximado, igual no país: julho e de 20 de dezembro a 31 de janeiro). Entra para todo mundo, mas o modelo começa
+//     supondo que não faz diferença (prior estreito em zero em modelo/mmm.py): só ganha peso se os dados da loja mostrarem (zoológico, sim; teatro adulto, em geral não).
+// A proximidade usa a CURVA DA CASA (`curvaDaCasa`): quanto os eventos da própria loja venderam em cada semana antes da sessão, com 3 eventos ou mais; antes disso, a rampa padrão.
 // Com pouca história o modelo usa só os três primeiros (proximidade, feriado e lugares); os outros entram a partir de SEMANAS_DOS_CONTROLES_EXTRAS semanas, para não confundir um efeito com outro.
 
 import { inicioDaSemana, semanasEntre } from "@/lib/ticketeria/modelo";
@@ -21,13 +24,14 @@ export const SEMANAS_DOS_CONTROLES_EXTRAS = 52;
 export const MIN_SEMANAS_DE_VISITAS = 26;
 export const HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS = 8;
 
-export type ChaveDoControle = "proximidade" | "feriado" | "lugares" | "lote" | "preco" | "cupom" | "visitas";
-export type GrupoDeControle = "proximidade" | "feriados" | "lugares" | "preco_e_lotes" | "cupons" | "visitas";
+export type ChaveDoControle = "proximidade" | "feriado" | "lugares" | "ferias" | "lote" | "preco" | "cupom" | "visitas";
+export type GrupoDeControle = "proximidade" | "feriados" | "lugares" | "ferias" | "preco_e_lotes" | "cupons" | "visitas";
 
 export const GRUPOS_DE_CONTROLE: { grupo: GrupoDeControle; rotulo: string; chaves: ChaveDoControle[]; extra: boolean }[] = [
   { grupo: "proximidade", rotulo: "Proximidade da sessão", chaves: ["proximidade"], extra: false },
   { grupo: "feriados", rotulo: "Feriados e datas de pico", chaves: ["feriado"], extra: false },
   { grupo: "lugares", rotulo: "Tamanho do que está à venda", chaves: ["lugares"], extra: false },
+  { grupo: "ferias", rotulo: "Férias escolares", chaves: ["ferias"], extra: true },
   { grupo: "preco_e_lotes", rotulo: "Preço e lotes", chaves: ["lote", "preco"], extra: true },
   { grupo: "cupons", rotulo: "Cupons", chaves: ["cupom"], extra: true },
   { grupo: "visitas", rotulo: "Visitas ao site, sem anúncio (GA4)", chaves: ["visitas"], extra: true },
@@ -87,6 +91,68 @@ export function abrirSessoesLongas(sessoes: SessaoDoPeriodo[]): { dias: string[]
   return { dias, lugares };
 }
 
+// ─── Férias escolares e a curva da casa ─────────────────────────────────────
+
+/** A semana (a segunda-feira) cai nas férias escolares: a maior parte dela em julho ou entre 20 de dezembro e 31 de janeiro. Calendário aproximado, igual no país todo. */
+export function semanaDeFerias(segunda: string): boolean {
+  let dias = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(Date.parse(`${segunda}T00:00:00Z`) + i * msDoDia);
+    const mes = d.getUTCMonth() + 1, dia = d.getUTCDate();
+    if (mes === 7 || mes === 1 || (mes === 12 && dia >= 20)) dias++;
+  }
+  return dias >= 4;
+}
+
+export const SEMANAS_DE_UMA_ATRACAO = 26;
+/**
+ * A loja é uma ATRAÇÃO ABERTA O ANO TODO (zoológico, parque): algum evento tem sessão (ou fica aberto) em pelo menos 70% das semanas de um período de SEMANAS_DE_UMA_ATRACAO semanas ou
+ * mais. Nesse caso a proximidade e o tamanho não variam e saem sozinhos do modelo; a tela diz "não se aplica" e as épocas do ano ganham peso.
+ */
+export function atracaoOAnoTodo(sessoes: { evento: string; inicio: string; fim: string | null }[]): boolean {
+  const porEvento = new Map<string, Set<string>>();
+  for (const s of sessoes) {
+    const semanas = porEvento.get(s.evento) ?? new Set<string>();
+    for (const d of abrirSessoesLongas([{ inicio: s.inicio, fim: s.fim, lugares: 0 }]).dias) semanas.add(inicioDaSemana(d));
+    porEvento.set(s.evento, semanas);
+  }
+  for (const semanas of porEvento.values()) {
+    const lista = [...semanas].sort();
+    if (lista.length === 0) continue;
+    const vao = semanasEntre(lista[0], lista.at(-1) as string);
+    if (vao >= SEMANAS_DE_UMA_ATRACAO && lista.length >= 0.7 * vao) return true;
+  }
+  return false;
+}
+
+export const MIN_EVENTOS_DA_CURVA = 3;
+export const MIN_INGRESSOS_DO_EVENTO_NA_CURVA = 20;
+
+/**
+ * A curva de venda da casa: para cada evento que já aconteceu e vendeu pelo menos MIN_INGRESSOS_DO_EVENTO_NA_CURVA ingressos, a parte das vendas em cada semana antes da sessão (0 = a semana
+ * da sessão, até HORIZONTE semanas antes; o que veio antes disso conta na última); a curva é a média entre os eventos. null com menos de MIN_EVENTOS_DA_CURVA eventos (vale a rampa padrão).
+ */
+export function curvaDaCasa(vendas: { evento: string; semanasAntes: number; quantidade: number }[]): { curva: number[]; eventos: number } | null {
+  const porEvento = new Map<string, number[]>();
+  for (const v of vendas) {
+    if (v.quantidade <= 0 || v.semanasAntes < 0) continue;
+    const linha = porEvento.get(v.evento) ?? Array(HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS + 1).fill(0);
+    linha[Math.min(HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS, Math.floor(v.semanasAntes))] += v.quantidade;
+    porEvento.set(v.evento, linha);
+  }
+  const usados = [...porEvento.values()].filter(l => l.reduce((s, x) => s + x, 0) >= MIN_INGRESSOS_DO_EVENTO_NA_CURVA);
+  if (usados.length < MIN_EVENTOS_DA_CURVA) return null;
+  const curva = Array.from({ length: HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS + 1 }, (_, d) => usados.reduce((s, l) => s + l[d] / l.reduce((a, x) => a + x, 0), 0) / usados.length);
+  return { curva: curva.map(x => arredondar(x)), eventos: usados.length };
+}
+
+/** A rampa padrão, como parte das vendas (para comparar com a curva da casa na tela): sobe igual nas semanas antes da sessão. */
+export function rampaPadrao(): number[] {
+  const r = Array.from({ length: HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS + 1 }, (_, d) => 1 - d / (HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS + 1));
+  const soma = r.reduce((s, x) => s + x, 0);
+  return r.map(x => arredondar(x / soma));
+}
+
 // ─── Os controles semana a semana ───────────────────────────────────────────
 
 export type ItemDePedidoPago = { dia: string; quantidade: number; precoCentavos: number; comCupom: boolean };
@@ -97,6 +163,8 @@ export type EntradaDosControles = {
   sessoes: string[];
   /** Os lugares de cada sessão (a lotação da sala), para o controle de tamanho; sem isto o controle fica de fora. */
   lugaresDasSessoes?: { dia: string; lugares: number }[];
+  /** A curva de venda da casa (parte das vendas em cada semana antes da sessão, da semana da sessão até HORIZONTE semanas antes); sem ela, a rampa padrão. */
+  curvaDaCasa?: number[] | null;
   /** As datas de pico que o produtor acrescentou. */
   datasProprias: { dia: string; nome: string }[];
   /** O dia em que cada lote que não é o primeiro do ingresso começa a ser vendido. */
@@ -137,12 +205,18 @@ export function controlesDasSemanas(e: EntradaDosControles): Record<string, Reco
   const lugaresDeReferencia = mediana([...lugaresBrutos.values()].filter(v => v > 0));
   const primeiraJanela = comLugares.length > 0 ? comLugares.map(x => x.semana).sort()[0] : null;
 
+  // A curva da casa, normalizada para a semana de mais venda valer 1 (a mesma escala da rampa).
+  const maiorDaCurva = e.curvaDaCasa && e.curvaDaCasa.length > 0 ? Math.max(...e.curvaDaCasa) : 0;
+  const curva = maiorDaCurva > 0 ? (e.curvaDaCasa as number[]).map(x => x / maiorDaCurva) : null;
+
   const saida: Record<string, Record<ChaveDoControle, number>> = {};
   let precoAnterior = 0;
   for (const semana of e.semanas) {
     const proxima = semanasDeSessao.find(s => s >= semana);
     const distancia = proxima ? semanasEntre(semana, proxima) - 1 : null;
-    const proximidade = distancia !== null && distancia <= HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS ? 1 - distancia / (HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS + 1) : 0;
+    const proximidade = distancia === null || distancia > HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS ? 0
+      : curva ? curva[distancia] ?? 0
+      : 1 - distancia / (HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS + 1);
     const preco = precoMedio.get(semana);
     const relativo = preco !== undefined && referencia > 0 ? preco / referencia - 1 : precoAnterior;
     precoAnterior = relativo;
@@ -152,6 +226,7 @@ export function controlesDasSemanas(e: EntradaDosControles): Record<string, Reco
       lugares: lugaresDeReferencia <= 0 ? 0
         : primeiraJanela !== null && semanasEntre(semana, primeiraJanela) - 1 > HORIZONTE_DA_PROXIMIDADE_EM_SEMANAS && semana < primeiraJanela ? 1
         : arredondar(Math.min(10, (lugaresBrutos.get(semana) ?? 0) / lugaresDeReferencia)),
+      ferias: semanaDeFerias(semana) ? 1 : 0,
       lote: semanasDeLote.has(semana) ? 1 : 0, preco: arredondar(relativo),
       cupom: compras && compras.pagos > 0 ? arredondar(compras.comCupom / compras.pagos) : 0, visitas: 0,
     };
@@ -194,10 +269,14 @@ export function controleDeVisitas(visitas: VisitaDoDia[], primeiroDia: string | 
 
 // ─── O que a tela mostra de cada controle ───────────────────────────────────
 
-export type EstadoDoControle = "em_uso" | "entra_depois" | "sem_dados" | "opcional";
-export type ControleDaTela = { grupo: GrupoDeControle; rotulo: string; estado: EstadoDoControle; detalhe: string; /** Só em "entra_depois": quantas semanas faltam. */ faltam: number | null; acao: "datas" | "conexoes" | null };
+export type EstadoDoControle = "em_uso" | "entra_depois" | "sem_dados" | "opcional" | "nao_se_aplica";
+export type ControleDaTela = { grupo: GrupoDeControle; rotulo: string; estado: EstadoDoControle; detalhe: string; /** Só em "entra_depois": quantas semanas faltam. */ faltam: number | null; acao: "datas" | "conexoes" | "curva" | null };
 /** O que a loja tem de cada coisa (só para o texto da tela). */
-export type ResumoDosControles = { eventos: number; sessoes: number; lotes: number; cupons: number; datasProprias: number };
+export type ResumoDosControles = {
+  eventos: number; sessoes: number; lotes: number; cupons: number; datasProprias: number;
+  /** A curva de venda da casa (null: ainda não há eventos suficientes, vale a rampa padrão). */ curva?: { curva: number[]; eventos: number } | null;
+  /** A loja é uma atração aberta o ano todo (um evento com sessões quase toda semana por meses). */ permanente?: boolean;
+};
 
 /** Uma coluna "varia" se tem pelo menos dois valores diferentes (constante não ensina nada ao modelo). */
 export const variaNaTabela = (semanas: { controles?: Partial<Record<ChaveDoControle, number>> }[], chave: ChaveDoControle): boolean => {
@@ -214,16 +293,30 @@ export function controlesDaTela(tabela: { controles?: Partial<Record<ChaveDoCont
   return GRUPOS_DE_CONTROLE.map(g => {
     const varia = g.chaves.some(c => variaNaTabela(tabela, c));
     const base = { grupo: g.grupo, rotulo: g.rotulo };
+    // Atração aberta o ano todo: o que olha para a data de uma sessão não se aplica.
+    if (resumo.permanente && (g.grupo === "proximidade" || g.grupo === "lugares")) {
+      return { ...base, rotulo: g.grupo === "proximidade" ? "Ritmo de venda até a data" : g.rotulo, estado: "nao_se_aplica", faltam: null, acao: null,
+        detalhe: g.grupo === "proximidade" ? "Não se aplica: a atração abre o ano todo, sem data de estreia ou de fim." : "Não se aplica: a capacidade é a mesma toda semana." } satisfies ControleDaTela;
+    }
+    if (g.grupo === "ferias") {
+      const detalhe = "Julho e de 20 de dezembro a 31 de janeiro (calendário aproximado). O modelo começa supondo que as férias não mexem nas suas vendas e só dá peso a elas se os dados mostrarem.";
+      if (faltam > 0) return { ...base, estado: "entra_depois", faltam, acao: null, detalhe } satisfies ControleDaTela;
+      return { ...base, estado: varia ? "em_uso" : "sem_dados", faltam: null, acao: null, detalhe } satisfies ControleDaTela;
+    }
     if (g.grupo === "visitas") {
       if (!visitas.conectado || visitas.semanas === 0) return { ...base, estado: "opcional", faltam: null, acao: "conexoes", detalhe: "Só as visitas que não vieram de anúncio pago: busca, direto, e-mail, indicação. As de anúncio não entram, para o efeito não ser contado duas vezes." } satisfies ControleDaTela;
       if (visitas.semanas < MIN_SEMANAS_DE_VISITAS) return { ...base, estado: "sem_dados", faltam: null, acao: null, detalhe: `O GA4 está conectado, mas só ${plural(visitas.semanas, "semana", "semanas")} de visitas foram lidas. Entra com ${MIN_SEMANAS_DE_VISITAS} semanas lidas.` } satisfies ControleDaTela;
       if (faltam > 0) return { ...base, estado: "entra_depois", faltam, acao: null, detalhe: `O GA4 está conectado (${plural(visitas.semanas, "semana", "semanas")} de visitas). Só entram as que não vieram de anúncio pago.` } satisfies ControleDaTela;
       return { ...base, estado: varia ? "em_uso" : "sem_dados", faltam: null, acao: null, detalhe: varia ? `Só as visitas que não vieram de anúncio pago (${plural(visitas.semanas, "semana", "semanas")} lidas).` : "As visitas sem anúncio ainda não variam o bastante entre as semanas." } satisfies ControleDaTela;
     }
+    if (g.grupo === "proximidade" && resumo.curva) {
+      return { ...base, rotulo: "Ritmo de venda da sua casa", estado: varia ? "em_uso" : "sem_dados", faltam: null, acao: "curva",
+        detalhe: `Como os seus eventos vendem nas semanas antes da data, aprendido dos seus ${plural(resumo.curva.eventos, "evento", "eventos")} com vendas na Ticketeria.` } satisfies ControleDaTela;
+    }
     if (g.grupo === "proximidade") {
       return { ...base, estado: varia ? "em_uso" : "sem_dados", faltam: null, acao: null, detalhe: varia
-        ? `Ingresso vende mais perto da data. O modelo lê as datas das suas sessões (${plural(resumo.eventos, "evento", "eventos")}, ${plural(resumo.sessoes, "sessão", "sessões")}) e aprende essa curva sozinho.`
-        : "Ingresso vende mais perto da data. Quando houver sessões dentro do período do histórico, o modelo aprende essa curva sozinho." } satisfies ControleDaTela;
+        ? `Ingresso vende mais perto da data. Até a casa ter ${MIN_EVENTOS_DA_CURVA} eventos com vendas na Ticketeria, o modelo usa uma rampa padrão; depois, a curva da sua casa (${plural(resumo.eventos, "evento", "eventos")}, ${plural(resumo.sessoes, "sessão", "sessões")} até agora).`
+        : "Ingresso vende mais perto da data. Quando houver sessões dentro do período do histórico, o modelo usa essa proximidade." } satisfies ControleDaTela;
     }
     if (g.grupo === "lugares") {
       return { ...base, estado: varia ? "em_uso" : "sem_dados", faltam: null, acao: null, detalhe: varia

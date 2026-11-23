@@ -4,11 +4,12 @@ import { Check } from "lucide-react";
 import { SEMANAS_IDEAIS, rotuloDoCanalDeGasto, type Confianca, type ProntidaoDoModelo, type Verificacao } from "@/lib/ticketeria/modelo";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
 import { SEMANAS_DOS_CONTROLES_EXTRAS, type ControleDaTela } from "@/lib/ticketeria/modelo-controles";
-import { FATOR_DE_CAUTELA, margemMostrada, temMargemGrande, type CanalDoResultado, type ChaveDaParte } from "@/lib/ticketeria/modelo-resultado";
+import { FATOR_DE_CAUTELA, margemMostrada, temMargemGrande, type CanalDoResultado, type ChaveDaParte, type ParteDaBase } from "@/lib/ticketeria/modelo-resultado";
 import { canaisComCurva, linhasDeInvestimento, recomendar } from "@/lib/ticketeria/modelo-recomendacao";
 import { confiancaMostrada, fatoresDaConfianca, oQueAConfiancaPermite } from "@/lib/ticketeria/modelo-confianca";
 import { blocoDeInvestir, blocoDoTamanhoDosCanais } from "@/lib/ticketeria/modelo-painel";
 import { PreviaComExemplo, SeloDePrecisao } from "@/components/ticketeria/PainelView";
+import { TopSheet } from "@/components/ui/TopSheet";
 import { PreviaDoCalendario } from "@/components/ticketeria/CalendarioDeDivulgacaoView";
 import { faltaAtraso } from "@/lib/ticketeria/modelo-calendario";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
@@ -29,7 +30,7 @@ function Marca({ estado }: { estado: Verificacao["estado"] }) {
 }
 
 /** A checklist de prontidão: o aviso (pronto ou não, com o progresso) e cada verificação, com o botão que leva ao que resolve. */
-export function ModeloDaLoja({ prontidao, onImportar, onConexoes, onDatas }: { prontidao: ProntidaoDoModelo; onImportar?: () => void; onConexoes?: () => void; onDatas?: () => void }) {
+export function ModeloDaLoja({ prontidao, onImportar, onConexoes, onDatas, onCurva }: { prontidao: ProntidaoDoModelo; onImportar?: () => void; onConexoes?: () => void; onDatas?: () => void; onCurva?: () => void }) {
   const { pronto, prontos, total, confianca, semanas, verificacoes, ignoradas } = prontidao;
   return (
     <div className="space-y-4">
@@ -56,7 +57,7 @@ export function ModeloDaLoja({ prontidao, onImportar, onConexoes, onDatas }: { p
           </div>
         ))}
       </div>
-      <ControlesDoModelo controles={prontidao.controles} onDatas={onDatas} onConexoes={onConexoes} />
+      <ControlesDoModelo controles={prontidao.controles} permanente={!!prontidao.resumo?.permanente} semanas={prontidao.semanas} onDatas={onDatas} onConexoes={onConexoes} onCurva={onCurva} />
       {ignoradas.length > 0 && <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Para não contar o mesmo gasto duas vezes, ficou de fora o gasto {ignoradas.length === 1 ? "da ação" : "das ações"} <span className="text-black/65">{ignoradas.join(", ")}</span>: o gasto de anúncios já vem das conexões.</p>}
     </div>
   );
@@ -65,33 +66,104 @@ export function ModeloDaLoja({ prontidao, onImportar, onConexoes, onDatas }: { p
 
 // ─── O que o modelo leva em conta além dos anúncios ─────────────────────────
 
-function PilulaDoControle({ c }: { c: ControleDaTela }) {
-  const [texto, cor] = c.estado === "em_uso" ? ["Em uso", VERDE] : c.estado === "entra_depois" ? [`Entra com ${SEMANAS_DOS_CONTROLES_EXTRAS} semanas · ${c.faltam === 1 ? "falta 1" : `faltam ${c.faltam}`}`, AMBAR] : c.estado === "opcional" ? ["Opcional", "rgba(13,13,13,.55)"] : ["Sem dado ainda", "rgba(13,13,13,.55)"];
+function PilulaDoControle({ c, texto: forcado }: { c: ControleDaTela; texto?: string }) {
+  if (forcado) return <span className="inline-flex shrink-0 rounded-xl border bg-white px-2 py-0.5 text-[0.625rem] font-normal" style={{ borderColor: forcado.startsWith("Em uso") ? `${VERDE}4D` : BORDA, color: forcado.startsWith("Em uso") ? VERDE : "rgba(13,13,13,.55)" }}>{forcado}</span>;
+  if (c.estado === "nao_se_aplica") return <span className="inline-flex shrink-0 rounded-xl border bg-white px-2 py-0.5 text-[0.625rem] font-normal text-black/50" style={{ borderColor: BORDA }}>Não se aplica</span>;
+  const [texto, cor] = c.estado === "em_uso" ? [c.acao === "curva" ? "Em uso · curva da casa" : "Em uso", VERDE] : c.estado === "entra_depois" ? [`Entra com ${SEMANAS_DOS_CONTROLES_EXTRAS} semanas · ${c.faltam === 1 ? "falta 1" : `faltam ${c.faltam}`}`, AMBAR] : c.estado === "opcional" ? ["Opcional", "rgba(13,13,13,.55)"] : ["Sem dado ainda", "rgba(13,13,13,.55)"];
   return <span className="inline-flex shrink-0 rounded-xl border bg-white px-2 py-0.5 text-[0.625rem] font-normal" style={{ borderColor: c.estado === "em_uso" ? `${VERDE}4D` : c.estado === "entra_depois" ? "rgba(176,122,20,.3)" : BORDA, color: cor }}>{texto}</span>;
 }
 
-/** Os controles do modelo (proximidade da sessão, feriados, preço e lotes, cupons, visitas sem anúncio): quais já estão em uso e quando entram os outros. */
-export function ControlesDoModelo({ controles, onDatas, onConexoes }: { controles: ControleDaTela[]; onDatas?: () => void; onConexoes?: () => void }) {
+/** As férias (data que pode importar) depois de uma rodada: fazem diferença ou não nas vendas desta loja. */
+function feriasDoResultado(partes: ParteDaBase[] | undefined): { pilula: string; detalhe: string } | null {
+  const f = partes?.find(p => p.chave === "ferias");
+  if (!f) return null;
+  const nada = (f.baixo <= 0 && f.alto >= 0) || Math.abs(f.porcento) < 0.5;
+  if (nada) return { pilula: "Não faz diferença", detalhe: "O modelo testou: nas suas vendas, as semanas de férias venderam como as outras. Por isso não pesa. Se isso mudar, ele percebe sozinho." };
+  const efeito = f.efeito_na_semana;
+  return {
+    pilula: "Em uso · faz diferença",
+    detalhe: typeof efeito === "number"
+      ? `As semanas de férias de julho e de dezembro a janeiro venderam ${pontos(Math.abs(efeito) * 100)}% ${efeito >= 0 ? "mais" : "menos"} que as outras, sem contar os anúncios. Calendário aproximado.`
+      : `As férias explicam ${pontos(f.porcento)}% das suas vendas, sem contar os anúncios. Calendário aproximado.`,
+  };
+}
+
+/** Os controles do modelo (ritmo de venda até a data, tamanho, feriados, férias, preço e lotes, cupons, visitas sem anúncio): quais estão em uso, quais não se aplicam e quando entram os outros. */
+export function ControlesDoModelo({ controles, partes, permanente = false, semanas = null, onDatas, onConexoes, onCurva }: {
+  controles: ControleDaTela[]; /** As partes da última rodada (para dizer se as férias fazem diferença). */ partes?: ParteDaBase[]; permanente?: boolean; semanas?: number | null;
+  onDatas?: () => void; onConexoes?: () => void; onCurva?: () => void;
+}) {
   if (controles.length === 0) return null;
+  const ferias = feriasDoResultado(partes);
   return (
     <section className="space-y-2.5" aria-label="O que o modelo leva em conta além dos anúncios">
+      {permanente && <p className="rounded-xl border px-4 py-3 text-[0.8125rem] text-black/55" style={{ borderColor: "rgba(114,89,181,.28)", background: "#FAF8FE" }}><span className="text-[#282525]">Atração aberta o ano todo.</span> O Jards percebeu que esta loja tem um evento com sessões o ano inteiro (como um zoológico ou um parque). O que olha para a data de uma sessão sai da conta; as épocas do ano ganham peso.</p>}
       <h3 className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">O que o modelo leva em conta além dos anúncios</h3>
       <div className="divide-y divide-black/[.08] rounded-xl border bg-white" style={{ borderColor: BORDA }}>
-        {controles.map(c => (
-          <div key={c.grupo} className="flex items-start gap-3.5 px-4 py-4">
-            <Marca estado={c.estado === "em_uso" ? "ok" : c.estado === "opcional" ? "opcional" : "falta"} />
-            <div className="min-w-0 flex-1">
-              <p className="text-[0.8125rem] text-[#282525]">{c.rotulo}</p>
-              <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/45">{c.detalhe}</p>
-              {c.acao === "datas" && <button type="button" onClick={onDatas} className={`mt-1.5 ${LINK}`}>Adicionar uma data sua</button>}
-              {c.acao === "conexoes" && <button type="button" onClick={onConexoes} className={`mt-1.5 ${LINK}`}>Conectar o GA4</button>}
+        {controles.map(c => {
+          const dasFerias = c.grupo === "ferias" && c.estado === "em_uso" ? ferias : null;
+          return (
+            <div key={c.grupo} className="flex items-start gap-3.5 px-4 py-4">
+              <Marca estado={c.estado === "em_uso" && dasFerias?.pilula !== "Não faz diferença" ? "ok" : c.estado === "opcional" ? "opcional" : "falta"} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[0.8125rem] text-[#282525]">{c.rotulo}</p>
+                <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/45">{dasFerias?.detalhe ?? c.detalhe}</p>
+                {c.acao === "datas" && <button type="button" onClick={onDatas} className={`mt-1.5 ${LINK}`}>Adicionar uma data sua</button>}
+                {c.acao === "conexoes" && <button type="button" onClick={onConexoes} className={`mt-1.5 ${LINK}`}>Conectar o GA4</button>}
+                {c.acao === "curva" && onCurva && <button type="button" onClick={onCurva} className={`mt-1.5 ${LINK}`}>Ver a curva</button>}
+              </div>
+              <PilulaDoControle c={c} texto={dasFerias?.pilula} />
             </div>
-            <PilulaDoControle c={c} />
+          );
+        })}
+        {semanas !== null && (
+          <div className="flex items-start gap-3.5 px-4 py-4">
+            <Marca estado={semanas >= SEMANAS_DOS_CONTROLES_EXTRAS ? "ok" : "falta"} />
+            <div className="min-w-0 flex-1">
+              <p className="text-[0.8125rem] text-[#282525]">Tendência e época do ano</p>
+              <p className="mt-1 max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Se a loja vem crescendo ou caindo e o ciclo do ano (verão, inverno). Com um ano de histórico o modelo separa isso do resto.</p>
+            </div>
+            <PilulaDoControle c={{ grupo: "proximidade", rotulo: "", detalhe: "", acao: null, estado: semanas >= SEMANAS_DOS_CONTROLES_EXTRAS ? "em_uso" : "entra_depois", faltam: Math.max(0, SEMANAS_DOS_CONTROLES_EXTRAS - semanas) }} />
           </div>
-        ))}
+        )}
       </div>
-      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Com menos de um ano de histórico, o modelo usa só os dois controles mais importantes, para não confundir um efeito com outro. O resto entra sozinho a partir de {SEMANAS_DOS_CONTROLES_EXTRAS} semanas, sem você precisar fazer nada.</p>
+      <p className="max-w-3xl text-[0.75rem] leading-relaxed text-black/45">Com menos de um ano de histórico, o modelo usa só os controles mais importantes, para não confundir um efeito com outro. O resto entra sozinho a partir de {SEMANAS_DOS_CONTROLES_EXTRAS} semanas, sem você precisar fazer nada. Datas que podem importar (como férias escolares) entram para todo mundo, mas só ganham peso se os seus dados mostrarem diferença.</p>
     </section>
+  );
+}
+
+/** A curva de venda da casa: a parte das vendas em cada semana antes da sessão, na média dos eventos, ao lado da rampa padrão. */
+export function CurvaDaCasaSheet({ curva, eventos, rampa, onClose }: { curva: number[]; eventos: number; rampa: number[]; onClose: () => void }) {
+  const W = 760, H = 250, pl = 40, pb = 40, pt = 14, n = curva.length, bw = (W - pl - 20) / n;
+  const maximo = Math.max(0.1, ...curva, ...rampa) * 1.15;
+  const Y = (v: number) => H - pb - (v / maximo) * (H - pb - pt);
+  const ordem = [...curva.keys()].reverse(); // da mais longe para a semana da sessão
+  const ultimas = curva[0] + (curva[1] ?? 0);
+  return (
+    <TopSheet titulo="Como a sua casa vende até a data" onClose={onClose} largura="48rem" footer={fechar => <button type="button" onClick={fechar} className="rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/35 transition hover:text-black/55">Fechar</button>}>
+      <div className="space-y-3">
+        <p className="text-[0.8125rem] text-black/55">A parte das vendas de cada evento em cada semana antes da sessão, na média dos seus {eventos} eventos.</p>
+        <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Curva de venda da casa">
+          {[0, 0.1, 0.2, 0.3, 0.4].filter(v => v <= maximo).map(v => <g key={v}><line x1={pl} x2={W - 10} y1={Y(v)} y2={Y(v)} stroke="rgba(13,13,13,.07)" /><text x={4} y={Y(v) + 4} fontSize={10} fill="rgba(13,13,13,.4)">{Math.round(v * 100)}%</text></g>)}
+          {ordem.map((d, i) => {
+            const x = pl + i * bw + 8;
+            return (
+              <g key={d}>
+                <rect x={x} y={Y(curva[d])} width={bw - 16} height={H - pb - Y(curva[d])} rx={3} fill="#7259B5" />
+                <text x={x + (bw - 16) / 2} y={Y(curva[d]) - 5} fontSize={10} fill="#282525" textAnchor="middle">{Math.round(curva[d] * 100)}%</text>
+                <text x={x + (bw - 16) / 2} y={H - pb + 15} fontSize={10} fill="rgba(13,13,13,.45)" textAnchor="middle">{d === 0 ? "semana da sessão" : `${d} antes`}</text>
+              </g>
+            );
+          })}
+          <polyline fill="none" stroke="#B07A14" strokeWidth={1.6} strokeDasharray="5 4" points={ordem.map((d, i) => `${pl + i * bw + bw / 2},${Y(rampa[d] ?? 0)}`).join(" ")} />
+        </svg>
+        <div className="flex flex-wrap gap-4 text-[0.6875rem] text-black/50">
+          <span className="inline-flex items-center gap-1.5"><i aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-[3px] bg-[#7259B5]" />A sua casa</span>
+          <span className="inline-flex items-center gap-1.5"><i aria-hidden="true" className="inline-block w-4 border-t-2 border-dashed border-[#B07A14]" />A rampa padrão, que o modelo usa até a casa ter 3 eventos</span>
+        </div>
+        <p className="text-[0.75rem] leading-relaxed text-black/50">Na sua casa, {Math.round(ultimas * 100)}% dos ingressos saem nas duas últimas semanas{ultimas > (rampa[0] + rampa[1]) * 1.15 ? ": bem mais concentrado que a rampa padrão" : ultimas < (rampa[0] + rampa[1]) * 0.85 ? ": mais espalhado que a rampa padrão" : ", perto da rampa padrão"}. É isso que o modelo usa para não dar ao anúncio o mérito de uma venda que viria pela proximidade da data.</p>
+      </div>
+    </TopSheet>
   );
 }
 
@@ -226,6 +298,7 @@ const PARTES: Record<ChaveDaParte, { rotulo: string; dica: string; cor: string }
   proximidade: { rotulo: "Proximidade da sessão", dica: "vende mais nas semanas antes da data", cor: "#7259B5" },
   feriado: { rotulo: "Feriados e datas de pico", dica: "Natal, Dia das Mães, as datas suas", cor: "#A894D6" },
   lugares: { rotulo: "Tamanho do evento", dica: "semanas com mais lugares à venda vendem mais", cor: "#B8A8DE" },
+  ferias: { rotulo: "Férias escolares", dica: "julho e de dezembro a janeiro", cor: "#D2C6EC" },
   preco_e_lotes: { rotulo: "Preço e lotes", dica: "a troca de lote puxa uma corrida de compra", cor: "#C9BCE6" },
   cupom: { rotulo: "Cupons", dica: "semanas com cupom venderam diferente", cor: "#DDD4F0" },
   visitas: { rotulo: "Visitas sem anúncio (GA4)", dica: "busca, direto, e-mail, indicação", cor: "#EAE4F6" },

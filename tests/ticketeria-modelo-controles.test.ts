@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { abrirSessoesLongas, controleDeVisitas, controlesDaTela, controlesDasSemanas, controlesQueEntram, datasNacionaisDoAno, lerDataDePico, pascoa, SEMANAS_DOS_CONTROLES_EXTRAS, variaNaTabela, visitaDeAnuncioPago, type ControleDaTela, type EntradaDosControles, type VisitaDoDia } from "../lib/ticketeria/modelo-controles";
+import { abrirSessoesLongas, atracaoOAnoTodo, curvaDaCasa, rampaPadrao, semanaDeFerias, controleDeVisitas, controlesDaTela, controlesDasSemanas, controlesQueEntram, datasNacionaisDoAno, lerDataDePico, pascoa, SEMANAS_DOS_CONTROLES_EXTRAS, variaNaTabela, visitaDeAnuncioPago, type ControleDaTela, type EntradaDosControles, type VisitaDoDia } from "../lib/ticketeria/modelo-controles";
 import { inicioDaSemana } from "../lib/ticketeria/modelo";
 
 const dia = (ms: number) => new Date(ms).toISOString().slice(0, 10);
@@ -97,7 +97,9 @@ const grupo = (l: ControleDaTela[], g: string) => l.find(c => c.grupo === g) as 
 test("com 41 semanas: proximidade e feriados em uso; preço, lotes e cupons entram com 52 (faltam 11); visitas opcional", () => {
   const t = tabela(41, i => ({ proximidade: (i % 9) / 9, feriado: i % 7 === 0 ? 1 : 0, lote: i % 10 === 0 ? 1 : 0, preco: (i % 3) / 10, cupom: (i % 4) / 10, visitas: 0 }));
   const l = controlesDaTela(t, resumo, { conectado: false, semanas: 0 });
-  assert.deepEqual(l.map(c => c.grupo), ["proximidade", "feriados", "lugares", "preco_e_lotes", "cupons", "visitas"]);
+  assert.deepEqual(l.map(c => c.grupo), ["proximidade", "feriados", "lugares", "ferias", "preco_e_lotes", "cupons", "visitas"]);
+  assert.equal(grupo(l, "ferias").estado, "entra_depois");
+  assert.match(grupo(l, "proximidade").detalhe, /rampa padrão/);
   assert.equal(grupo(l, "proximidade").estado, "em_uso");
   assert.equal(grupo(l, "lugares").estado, "sem_dados", "lugares iguais em todas as semanas não entram");
   assert.match(grupo(l, "proximidade").detalhe, /3 eventos, 12 sessões/);
@@ -204,4 +206,52 @@ test("a exposição (uma sessão que fica aberta vários dias) vale todas as sem
   const c = controlesDasSemanas({ semanas, sessoes: dias.slice(0, 3), lugaresDasSessoes: lugares.slice(0, 3), datasProprias: [], viradasDeLote: [], itens: [] });
   assert.deepEqual(semanas.map(s => c[s].proximidade), [c["2026-04-13"].proximidade, 1, 1, 1, 0]);
   assert.ok(c["2026-04-13"].proximidade < 1 && c["2026-04-13"].proximidade > 0);
+});
+
+test("a curva da casa: só com 3 eventos de 20+ ingressos; parte das vendas por semana antes da sessão, na média dos eventos", () => {
+  const v = (evento: string, porSemana: number[]) => porSemana.map((quantidade, semanasAntes) => ({ evento, semanasAntes, quantidade }));
+  assert.equal(curvaDaCasa([...v("a", [30, 10]), ...v("b", [30, 10])]), null, "2 eventos: vale a rampa");
+  assert.equal(curvaDaCasa([...v("a", [30, 10]), ...v("b", [30, 10]), ...v("c", [5, 5])]), null, "o terceiro vendeu pouco");
+  const c = curvaDaCasa([...v("a", [30, 10]), ...v("b", [20, 20]), ...v("c", [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10])])!;
+  assert.equal(c.eventos, 3);
+  assert.equal(c.curva.length, 9);
+  assert.equal(c.curva[0], 0.5833, "(0,75 + 0,5 + 0,5) ÷ 3");
+  assert.equal(c.curva[8], 0.1667, "o que veio antes de 8 semanas conta na última");
+  assert.ok(Math.abs(c.curva.reduce((s, x) => s + x, 0) - 1) < 0.001);
+  const r = rampaPadrao();
+  assert.ok(Math.abs(r.reduce((s, x) => s + x, 0) - 1) < 0.001 && r[0] > r[8]);
+});
+
+test("com a curva da casa, a proximidade segue a curva (a semana de mais venda vale 1); sem ela, a rampa", () => {
+  const semanas = ["2026-04-06", "2026-04-13", "2026-04-20"];
+  const base = { semanas, sessoes: ["2026-04-22"], datasProprias: [], viradasDeLote: [], itens: [] };
+  const rampa = controlesDasSemanas(base);
+  assert.deepEqual(semanas.map(s => rampa[s].proximidade), [0.7778, 0.8889, 1]);
+  const curva = [0.5, 0.3, 0.1, 0.05, 0.05, 0, 0, 0, 0];
+  const casa = controlesDasSemanas({ ...base, curvaDaCasa: curva });
+  assert.deepEqual(semanas.map(s => casa[s].proximidade), [0.2, 0.6, 1]);
+});
+
+test("férias escolares: julho e de 20 de dezembro a 31 de janeiro, pela maior parte da semana", () => {
+  assert.equal(semanaDeFerias("2026-07-06"), true);
+  assert.equal(semanaDeFerias("2026-06-29"), true, "2 dias de junho e 5 de julho");
+  assert.equal(semanaDeFerias("2026-06-22"), false);
+  assert.equal(semanaDeFerias("2026-12-21"), true);
+  assert.equal(semanaDeFerias("2026-12-14"), false);
+  assert.equal(semanaDeFerias("2027-01-25"), true);
+  assert.equal(semanaDeFerias("2026-04-13"), false);
+});
+
+test("atração aberta o ano todo: um evento com sessão em 70% das semanas de 26 ou mais", () => {
+  const zoologico = Array.from({ length: 40 }, (_, i) => ({ evento: "zoo", inicio: new Date(Date.UTC(2026, 0, 6) + i * 7 * 86400000).toISOString().slice(0, 10), fim: null }));
+  assert.equal(atracaoOAnoTodo(zoologico), true);
+  assert.equal(atracaoOAnoTodo([{ evento: "expo", inicio: "2026-01-05", fim: "2026-09-30" }]), true, "uma exposição longa também");
+  const teatro = Array.from({ length: 6 }, (_, i) => ({ evento: `e${i}`, inicio: new Date(Date.UTC(2026, 0, 6) + i * 60 * 86400000).toISOString().slice(0, 10), fim: null }));
+  assert.equal(atracaoOAnoTodo(teatro), false);
+  const l = controlesDaTela([{ controles: { proximidade: 1 } }, { controles: { proximidade: 1 } }], { eventos: 1, sessoes: 200, lotes: 0, cupons: 0, datasProprias: 0, permanente: true }, { conectado: false, semanas: 0 });
+  assert.equal(l.find(c => c.grupo === "proximidade")?.estado, "nao_se_aplica");
+  assert.equal(l.find(c => c.grupo === "lugares")?.estado, "nao_se_aplica");
+  const comCurva = controlesDaTela([{ controles: { proximidade: 1 } }, { controles: { proximidade: 0.2 } }], { eventos: 7, sessoes: 30, lotes: 0, cupons: 0, datasProprias: 0, curva: { curva: [1], eventos: 7 } }, { conectado: false, semanas: 0 });
+  assert.equal(comCurva[0].rotulo, "Ritmo de venda da sua casa");
+  assert.equal(comCurva[0].acao, "curva");
 });

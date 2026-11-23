@@ -22,7 +22,8 @@ import { candidatosDoEvento, preverPorComparacao } from "@/lib/ticketeria/ritmo-
 import { confiancaMostrada } from "@/lib/ticketeria/modelo-confianca";
 import { blocoDeInvestir, blocoDoTamanhoDosCanais } from "@/lib/ticketeria/modelo-painel";
 import { lerDataDePico, type CamposDaDataDePico, type DataDePico } from "@/lib/ticketeria/modelo-controles";
-import { ModeloDaLoja, ResultadoDoModelo } from "@/components/ticketeria/ModeloView";
+import { ControlesDoModelo, CurvaDaCasaSheet, ModeloDaLoja, ResultadoDoModelo } from "@/components/ticketeria/ModeloView";
+import { rampaPadrao } from "@/lib/ticketeria/modelo-controles";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
 import type { ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
 import type { CorpoDaImportacao, ImportacaoDaLista, TipoDeHistorico } from "@/lib/ticketeria/historico";
@@ -74,6 +75,8 @@ export default function DivulgacaoPage() {
   // O calendário de divulgação de um evento: a folha aberta e o plano montado (aparece no topo da aba Modelo).
   const [planejando, setPlanejando] = useState(false);
   const [plano, setPlano] = useState<PlanoDoCalendario | null>(null);
+  // A folha da curva de venda da casa (o "Ver a curva" do ritmo de venda).
+  const [verCurva, setVerCurva] = useState(false);
   // As campanhas do Meta e do Google com a marcação marca/evento (aba Conexões).
   const [campanhas, setCampanhas] = useState<{ campanhas: CampanhaDaTela[]; eventos: EventoDaTela[] } | null>(null);
   const [salvandoCampanhas, setSalvandoCampanhas] = useState(false);
@@ -346,7 +349,8 @@ export default function DivulgacaoPage() {
                         <PreviaDoCalendario motivo={blocoDeInvestir("baixa", prontidao.semanas, false).motivo ?? ""} acao="Importar vendas anteriores encurta isso." onAcao={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />
                       </div>
                     )}
-                    {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} />}
+                    {resultadoDoModelo && prontidao.pronto && <ControlesDoModelo controles={prontidao.controles} partes={resultadoDoModelo.execucao.base.partes} permanente={!!prontidao.resumo?.permanente} semanas={prontidao.semanas} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} onConexoes={() => setAba("conexoes")} onCurva={() => setVerCurva(true)} />}
+                    {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja onCurva={() => setVerCurva(true)} prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} />}
                     {(!resultadoDoModelo || !prontidao.pronto || resultadoDoModelo.execucao.confianca !== "boa") && <PlanoBDoModelo acoes={dados.acoes} canais={prontidao.canais} hoje={dados.hoje} proximaSessao={proximaSessao} onRegistrar={valores => { setAcaoErro(null); setAcao({ id: null, valores }); }} />}
                   </div>)
                 : <p className="text-[0.8125rem] text-black/40" aria-live="polite">Conferindo os dados…</p>)
@@ -364,6 +368,7 @@ export default function DivulgacaoPage() {
       {escolhendo && <EscolherContaSheet fonte={CARTOES[escolhendo.provedor].fonte} tipo={escolhendo.provedor === "ga4" ? "visitas" : "gasto"} contas={escolhendo.contas} escolhida={escolhendo.escolhida} erro={escolhendo.erro} salvando={salvando} onEscolher={id => setEscolhendo(e => (e ? { ...e, escolhida: id } : e))} onClose={() => setEscolhendo(null)} onSalvar={() => void confirmarConta()} />}
       {folhaParecidos && <ParecidosSheet candidatos={candidatos} onSalvar={salvarEscolhas} onClose={() => setFolhaParecidos(false)} />}
       {folhaExpectativa && ritmo && <ExpectativaSheet lugares={ritmo.lugares} valorInicial={expectativa} onSalvar={salvarExpectativa} onClose={() => setFolhaExpectativa(false)} />}
+      {verCurva && prontidao?.resumo?.curva && <CurvaDaCasaSheet curva={prontidao.resumo.curva.curva} eventos={prontidao.resumo.curva.eventos} rampa={rampaPadrao()} onClose={() => setVerCurva(false)} />}
       {planejando && dados && resultadoDoModelo && <PlanejarDivulgacaoSheet sessoes={dados.sessoes} canais={resultadoDoModelo.canais} gastoSemanal={gastoSemanal} hoje={dados.hoje} inicial={plano} onMontar={p => { setPlano(p); setPlanejando(false); }} onClose={() => setPlanejando(false)} />}
       {simulando && resultadoDoModelo && <SimularOrcamentoSheet canais={resultadoDoModelo.canais} gastoSemanal={gastoSemanal} confianca={resultadoDoModelo.execucao.confianca} semanas={resultadoDoModelo.execucao.semanas} onClose={() => setSimulando(false)} />}
       {folhaDeDatas && <DatasDePicoSheet datas={datasDePico} valores={folhaDeDatas.valores} erro={folhaDeDatas.erro} salvando={salvando} onMudar={(campo, valor) => setFolhaDeDatas(f => (f ? { ...f, valores: { ...f.valores, [campo]: valor } } : f))} onClose={() => setFolhaDeDatas(null)} onAdicionar={() => void adicionarData()} onApagar={id => void apagarData(id)} />}
