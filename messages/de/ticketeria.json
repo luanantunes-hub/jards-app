@@ -1,0 +1,47 @@
+{
+  "seletor": {
+    "rotulo": "Sprache"
+  },
+  "sair": {
+    "botao": "Von der Liste abmelden",
+    "saindo": "Wird abgemeldet…",
+    "erro": "Die Abmeldung war gerade nicht möglich. Bitte versuchen Sie es in einem Moment erneut.",
+    "feito": "Erledigt, Sie sind von der Liste abgemeldet",
+    "espera": {
+      "titulo": "Warteliste",
+      "pergunta": "Von der Warteliste abmelden?",
+      "explicacao": "Sie erhalten keine Benachrichtigung mehr, wenn wieder Tickets verfügbar sind. Wenn Sie es sich anders überlegen, können Sie sich jederzeit erneut eintragen.",
+      "feitoExplicacao": "Wir benachrichtigen Sie nicht mehr zu diesem Ticket."
+    },
+    "novidades": {
+      "titulo": "Neuigkeiten",
+      "organizador": "Veranstalter",
+      "pergunta": "Neuigkeiten abbestellen?",
+      "explicacao": "Sie erhalten keine Neuigkeiten und Angebote mehr von {loja}. Bereits gekaufte Tickets bleiben gültig.",
+      "explicacaoSemLoja": "Sie erhalten keine Neuigkeiten und Angebote mehr vom Veranstalter. Bereits gekaufte Tickets bleiben gültig.",
+      "feitoExplicacao": "Wir senden keine Neuigkeiten von {loja} mehr an Ihre E-Mail-Adresse.",
+      "feitoExplicacaoSemLoja": "Wir senden keine Neuigkeiten des Veranstalters mehr an Ihre E-Mail-Adresse."
+    },
+    "preferencias": {
+      "titulo": "Wie möchten Sie Neuigkeiten von {loja} erhalten?",
+      "tituloSemLoja": "Wie möchten Sie Neuigkeiten vom Veranstalter erhalten?",
+      "explicacao": "Sie entscheiden. Sie können es jederzeit über den Link in jeder unserer E-Mails ändern.",
+      "tudo": "Alles",
+      "tudoDetalhe": "Höchstens {limite} E-Mails pro Woche.",
+      "menos": "Weniger E-Mails",
+      "menosDetalhe": "Höchstens 1 pro Monat, mit dem Wichtigsten.",
+      "parecidos": "Nur Veranstaltungen, die denen ähneln, die Sie besucht haben",
+      "parecidosDetalhe": "Danach, was Menschen, die dieselben Veranstaltungen besucht haben, auch gekauft haben.",
+      "dias": "Tage, die Ihnen meist passen (optional)",
+      "qualquer": "Jeder Tag",
+      "fimDeSemana": "Wochenende",
+      "semana": "Wochentage",
+      "salvar": "Speichern",
+      "salvando": "Wird gespeichert…",
+      "salvo": "Erledigt, Ihre Auswahl ist gespeichert",
+      "salvoExplicacao": "Sie erhalten die Neuigkeiten so, wie Sie es gewählt haben. Sie können es jederzeit ändern.",
+      "sairDeTudo": "Ich möchte nichts mehr erhalten",
+      "erro": "Speichern ist gerade nicht möglich. Bitte versuchen Sie es gleich noch einmal."
+    }
+  }
+}

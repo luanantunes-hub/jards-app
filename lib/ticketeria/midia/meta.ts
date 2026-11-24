@@ -103,6 +103,8 @@ export async function listarContasDaMeta(c: ConfigDaMeta, token: string, buscar:
 }
 
 export type DiaDeMidia = { dia: string; gasto_centavos: number; impressoes: number; alcance: number; cliques: number };
+/** O gasto de uma campanha num dia (para separar a marca dos eventos). */
+export type DiaDeCampanha = { dia: string; campanha_id: string; campanha: string; gasto_centavos: number };
 
 /** "5339.5" (reais, texto) em centavos inteiros. Valor torto vira 0. */
 export function reaisEmCentavos(texto: unknown): number {
@@ -125,4 +127,22 @@ export async function lerGastoDiario(c: ConfigDaMeta, token: string, conta: stri
     dias.set(dia, { dia, gasto_centavos: reaisEmCentavos(o.spend), impressoes: inteiro(o.impressions), alcance: inteiro(o.reach), cliques: inteiro(o.clicks) });
   }
   return [...dias.values()].sort((a, b) => a.dia.localeCompare(b.dia));
+}
+
+/** O gasto de cada campanha por dia, de `de` até `ate`: a mesma leitura, no nível de campanha. Campanha sem id ou dia torto fica de fora. */
+export async function lerGastoPorCampanhaDaMeta(c: ConfigDaMeta, token: string, conta: string, de: string, ate: string, buscar: BuscarHttp): Promise<DiaDeCampanha[]> {
+  const p = new URLSearchParams({
+    level: "campaign", time_increment: "1", time_range: JSON.stringify({ since: de, until: ate }), fields: "campaign_id,campaign_name,spend", limit: "500", access_token: token,
+  });
+  const linhas = await todasAsPaginas(buscar, `https://graph.facebook.com/${c.versao}/act_${conta}/insights?${p.toString()}`);
+  const saida: DiaDeCampanha[] = [];
+  for (const l of linhas) {
+    const o = (l && typeof l === "object" ? l : {}) as Record<string, unknown>;
+    const dia = typeof o.date_start === "string" && /^\d{4}-\d{2}-\d{2}$/.test(o.date_start) ? o.date_start : null;
+    const id = typeof o.campaign_id === "string" && /^[0-9A-Za-z_-]{1,64}$/.test(o.campaign_id) ? o.campaign_id : null;
+    if (!dia || !id) continue;
+    const nome = typeof o.campaign_name === "string" && o.campaign_name.trim() ? o.campaign_name.trim().slice(0, 300) : `Campanha ${id}`;
+    saida.push({ dia, campanha_id: id, campanha: nome, gasto_centavos: reaisEmCentavos(o.spend) });
+  }
+  return saida;
 }

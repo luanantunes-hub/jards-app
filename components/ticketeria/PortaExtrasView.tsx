@@ -38,7 +38,7 @@ export function BuscaDaPorta({ termo, onTermo, resultados, buscando, onDarEntrad
                 <li key={r.codigo} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0"><p className="truncate text-[0.875rem] text-[#282525]">{r.comprador}</p><p className="text-[0.6875rem] text-black/45">{r.ingresso}{r.assento ? ` · ${r.assento}` : ""}</p></div>
                   {r.situacao === "nao_entrou" ? (
-                    <button type="button" onClick={() => onDarEntrada?.(r.codigo)} className="h-10 shrink-0 rounded-xl bg-[#1C0E33] px-4 text-[0.8125rem] font-normal text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Dar entrada</button>
+                    <button type="button" onClick={() => onDarEntrada?.(r.codigo)} className="h-10 shrink-0 rounded-xl bg-[#6450D2] px-4 text-[0.8125rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Dar entrada</button>
                   ) : r.situacao === "entrou" ? <Etiqueta texto={`ENTROU ${r.hora ?? ""}`.trim()} cor="#6b6767" /> : <Etiqueta texto="CANCELADO" cor="#D94A4A" />}
                 </li>
               ))}
@@ -59,7 +59,7 @@ export function DesfazerEntrada({ comprador, ingresso, trabalhando, erro, onConf
       {erro && <p role="alert" className="mt-2 text-[0.8125rem] text-[#B23B3B]">{erro}</p>}
       <div className="mt-3 flex gap-2">
         <button type="button" onClick={onCancelar} disabled={trabalhando} className="h-11 flex-1 rounded-xl border border-black/15 bg-white text-[0.875rem] font-normal text-[#282525] transition hover:bg-black/[.04] disabled:opacity-50">Cancelar</button>
-        <button type="button" onClick={onConfirmar} disabled={trabalhando} className="h-11 flex-1 rounded-xl bg-[#1C0E33] text-[0.875rem] font-normal text-white transition hover:bg-[#2D1A53] disabled:opacity-50">{trabalhando ? "Desfazendo…" : "Desfazer entrada"}</button>
+        <button type="button" onClick={onConfirmar} disabled={trabalhando} className="h-11 flex-1 rounded-xl bg-[#6450D2] text-[0.875rem] font-normal text-white transition hover:bg-[#5342BA] disabled:opacity-50">{trabalhando ? "Desfazendo…" : "Desfazer entrada"}</button>
       </div>
     </div>
   );

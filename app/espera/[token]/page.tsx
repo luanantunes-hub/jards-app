@@ -3,11 +3,16 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { SairDaEspera } from "@/components/ticketeria/SairDaEspera";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export const metadata: Metadata = { title: "Lista de espera", robots: { index: false, follow: false } };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("ticketeria.sair.espera");
+  return { title: t("titulo"), robots: { index: false, follow: false } };
+}
 
 export default async function PaginaSairDaEspera({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

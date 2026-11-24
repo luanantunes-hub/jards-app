@@ -16,7 +16,8 @@ import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 // somado AQUI, no navegador: o que sai é só o total por dia e canal. Segue o DESIGN.md da Ticketeria: rótulos pequenos em caixa alta, cantos de 12px.
 
 const BORDA = "rgba(13,13,13,.08)";
-const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
+// `relative`: o texto `sr-only` do cabeçalho (posicionado de forma absoluta) fica dentro da célula; solto, contava como parte da página e criava um segundo scroll, com espaço em branco, em listas compridas.
+const CABECALHO = "relative px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
 const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
 const TEXTO = "rounded-xl px-3 py-2 text-[0.75rem] font-normal text-black/40 transition hover:text-black/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const CANCELAR = "rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";

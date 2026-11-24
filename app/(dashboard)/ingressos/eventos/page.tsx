@@ -4,14 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Plus, Ticket } from "lucide-react";
-import { useOrganizationId, useOrganizationName, useOrganizationRole } from "@/contexts/OrganizationContext";
+import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { podeEditarATicketeria } from "@/lib/ticketeria/permissoes";
 import type { SituacaoDoEvento } from "@/lib/ticketeria/estados";
 import { ROTULO_DA_SITUACAO_DO_EVENTO, proximaSessao, quandoDaSessao } from "@/lib/ticketeria/eventos";
+import { ComoCadaDiaVende, usePrevisaoDaSessao } from "@/components/ticketeria/PrevisaoDeSessaoView";
 import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
-import { EventoSheet } from "@/components/ticketeria/FolhasDosEventos";
 
 type Evento = { id: string; titulo: string; situacao: SituacaoDoEvento };
 type Sessao = { id: string; evento_id: string; local_id: string; inicio: string; fim: string | null; cancelada_em: string | null };
@@ -19,33 +19,36 @@ type Local = { id: string; nome: string; fuso: string };
 
 const COR_DA_SITUACAO: Record<SituacaoDoEvento, string> = { rascunho: "#6B6767", publicado: "#2E8932", cancelado: "#B23B3B" };
 
-/** Os eventos da loja (T2): título, situação, a próxima sessão e quantas sessões há. A venda chega na T3. */
+/** Os eventos da loja (T2): título, situação, a próxima sessão e quantas sessões há. "Novo evento" abre o assistente em tela cheia (/ingressos/eventos/novo). */
 export default function IngressosPage() {
   const organizationId = useOrganizationId();
-  const nomeDaOrganizacao = useOrganizationName();
   const papel = useOrganizationRole();
   const router = useRouter();
   const [eventos, setEventos] = useState<Evento[] | null>(null);
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
   const [locais, setLocais] = useState<Local[]>([]);
-  const [folha, setFolha] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [lojaId, setLojaId] = useState<string | null>(null);
   const podeEditar = podeEditarATicketeria(papel);
+  // Como cada dia vende na casa: só quem edita a Ticketeria lê.
+  const previsao = usePrevisaoDaSessao(podeEditar ? lojaId : null, null);
 
   useEffect(() => {
     if (!organizationId) return;
     let ativo = true;
     void (async () => {
       const ticketeria = clienteDaTicketeria(createClient());
-      const [ev, se, lo] = await Promise.all([
+      const [ev, se, lo, loja] = await Promise.all([
         ticketeria.from("ticketeria_eventos").select("id, titulo, situacao").eq("organization_id", organizationId).order("created_at", { ascending: false }),
         ticketeria.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, fim, cancelada_em").eq("organization_id", organizationId).order("inicio"),
         ticketeria.from("ticketeria_locais").select("id, nome, fuso").eq("organization_id", organizationId),
+        ticketeria.from("ticketeria_lojas").select("id").eq("organization_id", organizationId).maybeSingle(),
       ]);
       if (!ativo) return;
       setEventos((ev.data ?? []) as Evento[]);
       setSessoes((se.data ?? []) as Sessao[]);
       setLocais((lo.data ?? []) as Local[]);
+      setLojaId(loja.data?.id ?? null);
       setErro(ev.error || se.error || lo.error ? "Não foi possível carregar os eventos. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
@@ -58,13 +61,14 @@ export default function IngressosPage() {
     return { evento, total: delas.filter(sessao => !sessao.cancelada_em).length, proxima: proxima && local ? `${quandoDaSessao(proxima.inicio, local.fuso)} · ${local.nome}` : null };
   }), [eventos, sessoes, locais]);
 
-  const novo = podeEditar ? <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo evento</PrimaryListAction> : undefined;
+  const novo = podeEditar ? <PrimaryListAction onClick={() => router.push("/ingressos/eventos/novo")}><Plus size={13} aria-hidden="true" /> Novo evento</PrimaryListAction> : undefined;
 
   return (
     <>
-      <ListPageHeader title="Eventos" actions={eventos && eventos.length > 0 ? novo : undefined} />
+      <ListPageHeader title="Programação" actions={eventos && eventos.length > 0 ? novo : undefined} />
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {previsao && <ComoCadaDiaVende dias={previsao.dias} frase={previsao.frase} />}
         <ListTableSurface>
           {eventos === null ? (
             <div className="h-32 bg-black/[.02] motion-safe:animate-pulse" />
@@ -91,7 +95,6 @@ export default function IngressosPage() {
           )}
         </ListTableSurface>
       </ListContent>
-      {folha && organizationId && <EventoSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} onClose={() => setFolha(false)} onSaved={id => router.push(`/ingressos/eventos/${id}`)} />}
     </>
   );
 }

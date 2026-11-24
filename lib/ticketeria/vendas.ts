@@ -12,7 +12,7 @@ export type LinhaDePedido = {
   total_centavos: number; taxa_centavos: number; produtor_centavos: number; custo_meio_centavos: number; custo_meio_real_centavos: number | null;
   pago_em: string | null; created_at: string;
 };
-export type LinhaDeSessao = { id: string; evento_id: string; local_id: string; inicio: string; cancelada_em: string | null };
+export type LinhaDeSessao = { id: string; evento_id: string; local_id: string; sala_id: string; inicio: string; cancelada_em: string | null };
 export type LinhaDeIngressoEmitido = { codigo: string; nome: string; assento_rotulo?: string | null; pedido_id: string; usado_em: string | null; cancelado_em: string | null };
 
 export type LinhaDeReembolso = { id: string; pedido_id: string | null; remetente: string; recebido_em: string; situacao: string; valor_centavos: number | null; origem?: string };
@@ -25,7 +25,8 @@ export type EntradaDasVendas = {
   tituloDoEvento: Record<string, string>;
   fusoDoLocal: Record<string, string>;
   /** A capacidade de cada local (a soma dos lugares dos setores em uso), pelo id do local. */
-  lugaresDoLocal: Record<string, number>;
+  /** Os lugares de cada sala (a soma dos setores em uso), pela id da sala. */
+  lugaresDaSala: Record<string, number>;
   emitidos: LinhaDeIngressoEmitido[];
   /** O que o produtor já pode sacar agora (`fn_ticketeria_saldo_liberavel`: já descontado o que sacou). */
   /** Os pedidos de reembolso por e-mail dos pedidos da loja (a fila: o que foi devolvido e o que não). */
@@ -55,38 +56,14 @@ export function situacaoDaSessao(s: { inicio: string; cancelada_em: string | nul
   return "a_venda";
 }
 
-export function montarVendas(e: EntradaDasVendas): VendasDaLoja {
-  const agora = e.agora ?? Date.now();
-  const pagos = e.pedidos.filter(p => p.situacao === "pago");
-  const validos = e.emitidos.filter(i => !i.cancelado_em);
+type CompraComDetalhe = CompraDaLista & { detalhe: Omit<DetalheDaCompra, "endereco_do_pedido"> };
+
+/** O que a tela mostra de cada pedido: a linha da lista e o detalhe (com os ingressos), da mais recente para a mais antiga. Usada pela página inteira e pela página de compras (a rota paginada). */
+export function montarCompras(e: Pick<EntradaDasVendas, "pedidos" | "quantidadePorPedido" | "emitidos" | "sessoes" | "tituloDoEvento" | "fusoDoLocal">): CompraComDetalhe[] {
   const sessaoPorId = new Map(e.sessoes.map(s => [s.id, s]));
-
-  const vendido = pagos.reduce((soma, p) => soma + p.total_centavos, 0);
-  const repasse = pagos.reduce((soma, p) => soma + repasseDoPedido(p), 0);
-  const resumo: ResumoDasVendas = {
-    vendido_centavos: vendido, ingressos: validos.length, compras: pagos.length, repasse_centavos: repasse,
-    liberado_centavos: Math.max(0, e.liberadoCentavos), retido_centavos: Math.max(0, repasse - e.sacadoCentavos - e.liberadoCentavos),
-  };
-
-  const vendidosNaSessao = new Map<string, number>();
-  for (const p of pagos) vendidosNaSessao.set(p.sessao_id, (vendidosNaSessao.get(p.sessao_id) ?? 0) + (e.quantidadePorPedido[p.id] ?? 0));
-  const receitaNaSessao = new Map<string, number>();
-  for (const p of pagos) receitaNaSessao.set(p.sessao_id, (receitaNaSessao.get(p.sessao_id) ?? 0) + p.total_centavos);
-  // As que ainda vão acontecer, da mais próxima para a mais distante; depois as que já passaram, da mais recente para a mais antiga.
-  const futuras = e.sessoes.filter(s => Date.parse(s.inicio) > agora).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
-  const passadas = e.sessoes.filter(s => Date.parse(s.inicio) <= agora).sort((a, b) => Date.parse(b.inicio) - Date.parse(a.inicio));
-  const sessoes: SessaoDeVendas[] = [...futuras, ...passadas].map(s => {
-    const vendidos = vendidosNaSessao.get(s.id) ?? 0;
-    const lugares = e.lugaresDoLocal[s.local_id] ?? 0;
-    return {
-      id: s.id, evento: e.tituloDoEvento[s.evento_id] ?? "Evento", quando: maiuscula(diaEHoraDoEvento(s.inicio, e.fusoDoLocal[s.local_id] ?? FUSO_PADRAO)),
-      vendidos, lugares, receita_centavos: receitaNaSessao.get(s.id) ?? 0, situacao: situacaoDaSessao(s, vendidos, lugares, agora),
-    };
-  });
-
   const ingressosDoPedido = new Map<string, LinhaDeIngressoEmitido[]>();
   for (const i of e.emitidos) ingressosDoPedido.set(i.pedido_id, [...(ingressosDoPedido.get(i.pedido_id) ?? []), i]);
-  const compras = [...e.pedidos].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)).map(p => {
+  return [...e.pedidos].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)).map(p => {
     const s = sessaoPorId.get(p.sessao_id);
     const fuso = s ? e.fusoDoLocal[s.local_id] ?? FUSO_PADRAO : FUSO_PADRAO;
     const evento = s ? e.tituloDoEvento[s.evento_id] ?? "Evento" : "Evento";
@@ -103,11 +80,74 @@ export function montarVendas(e: EntradaDasVendas): VendasDaLoja {
       },
     };
   });
-  const codigoDoPedido = new Map(e.pedidos.map(p => [p.id, p.codigo]));
+}
+
+/** A tabela "por sessão": as futuras primeiro (da mais próxima), depois as que já passaram (da mais recente). */
+function montarSessoes(e: Pick<EntradaDasVendas, "sessoes" | "tituloDoEvento" | "fusoDoLocal" | "lugaresDaSala">, vendidosNaSessao: Map<string, number>, receitaNaSessao: Map<string, number>, agora: number): SessaoDeVendas[] {
+  const futuras = e.sessoes.filter(s => Date.parse(s.inicio) > agora).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
+  const passadas = e.sessoes.filter(s => Date.parse(s.inicio) <= agora).sort((a, b) => Date.parse(b.inicio) - Date.parse(a.inicio));
+  return [...futuras, ...passadas].map(s => {
+    const vendidos = vendidosNaSessao.get(s.id) ?? 0;
+    const lugares = e.lugaresDaSala[s.sala_id] ?? 0;
+    return {
+      id: s.id, evento: e.tituloDoEvento[s.evento_id] ?? "Evento", quando: maiuscula(diaEHoraDoEvento(s.inicio, e.fusoDoLocal[s.local_id] ?? FUSO_PADRAO)),
+      vendidos, lugares, receita_centavos: receitaNaSessao.get(s.id) ?? 0, situacao: situacaoDaSessao(s, vendidos, lugares, agora),
+    };
+  });
+}
+
+/** A fila de reembolsos por e-mail: o que foi devolvido e o que não, do mais recente para o mais antigo. */
+function montarReembolsos(reembolsos: readonly LinhaDeReembolso[], codigoDoPedido: Map<string, string>): ReembolsoDaLista[] {
   const SITUACOES: Record<string, SituacaoDoReembolso> = { recebido: "estornando", estornando: "estornando", estornado: "estornado", falhou: "falhou", fora_do_prazo: "fora_do_prazo", remetente_diferente: "remetente_diferente", nao_elegivel: "nao_elegivel", ja_reembolsado: "ja_reembolsado" };
-  const reembolsos: ReembolsoDaLista[] = [...(e.reembolsos ?? [])]
+  return [...reembolsos]
     .filter(r => r.pedido_id !== null && codigoDoPedido.has(r.pedido_id) && r.situacao in SITUACOES)
     .sort((a, b) => Date.parse(b.recebido_em) - Date.parse(a.recebido_em))
     .map(r => ({ id: r.id, codigo: codigoDoPedido.get(r.pedido_id as string) ?? "", remetente: r.remetente, recebido: diaCurtoEHora(r.recebido_em), situacao: SITUACOES[r.situacao], motivo: null, valor_centavos: r.valor_centavos, origem: r.origem === "pagina" ? "pagina" : "email" }));
+}
+
+export function montarVendas(e: EntradaDasVendas): VendasDaLoja {
+  const agora = e.agora ?? Date.now();
+  const pagos = e.pedidos.filter(p => p.situacao === "pago");
+  const validos = e.emitidos.filter(i => !i.cancelado_em);
+
+  const vendido = pagos.reduce((soma, p) => soma + p.total_centavos, 0);
+  const repasse = pagos.reduce((soma, p) => soma + repasseDoPedido(p), 0);
+  const resumo: ResumoDasVendas = {
+    vendido_centavos: vendido, ingressos: validos.length, compras: pagos.length, repasse_centavos: repasse,
+    liberado_centavos: Math.max(0, e.liberadoCentavos), retido_centavos: Math.max(0, repasse - e.sacadoCentavos - e.liberadoCentavos),
+  };
+
+  const vendidosNaSessao = new Map<string, number>();
+  for (const p of pagos) vendidosNaSessao.set(p.sessao_id, (vendidosNaSessao.get(p.sessao_id) ?? 0) + (e.quantidadePorPedido[p.id] ?? 0));
+  const receitaNaSessao = new Map<string, number>();
+  for (const p of pagos) receitaNaSessao.set(p.sessao_id, (receitaNaSessao.get(p.sessao_id) ?? 0) + p.total_centavos);
+
+  const sessoes = montarSessoes(e, vendidosNaSessao, receitaNaSessao, agora);
+  const compras = montarCompras(e);
+  const reembolsos = montarReembolsos(e.reembolsos ?? [], new Map(e.pedidos.map(p => [p.id, p.codigo])));
   return { resumo, sessoes, reembolsos, compras };
+}
+
+/** O que a função do banco `fn_ticketeria_vendas_da_loja` devolve: os totais já somados (só os pedidos pagos) e a fila dos últimos reembolsos. */
+export type TotaisDasVendas = {
+  compras_pagas: number; vendido_centavos: number; repasse_centavos: number; ingressos: number;
+  por_sessao: { sessao_id: string; vendidos: number; receita: number }[];
+  reembolsos: (Omit<LinhaDeReembolso, "pedido_id"> & { pedido_id: string | null; codigo: string })[];
+};
+
+/**
+ * O resumo, as sessões e os reembolsos da tela a partir dos totais que o banco somou (sem ler pedido por pedido): a mesma conta de montarVendas.
+ * As compras vêm à parte, de página em página (montarCompras).
+ */
+export function montarResumoDasVendas(t: TotaisDasVendas, e: Pick<EntradaDasVendas, "sessoes" | "tituloDoEvento" | "fusoDoLocal" | "lugaresDaSala" | "liberadoCentavos" | "sacadoCentavos" | "agora">): Pick<VendasDaLoja, "resumo" | "sessoes" | "reembolsos"> {
+  const agora = e.agora ?? Date.now();
+  const resumo: ResumoDasVendas = {
+    vendido_centavos: Number(t.vendido_centavos), ingressos: Number(t.ingressos), compras: Number(t.compras_pagas), repasse_centavos: Number(t.repasse_centavos),
+    liberado_centavos: Math.max(0, e.liberadoCentavos), retido_centavos: Math.max(0, Number(t.repasse_centavos) - e.sacadoCentavos - e.liberadoCentavos),
+  };
+  const vendidosNaSessao = new Map(t.por_sessao.map(x => [x.sessao_id, Number(x.vendidos)] as const));
+  const receitaNaSessao = new Map(t.por_sessao.map(x => [x.sessao_id, Number(x.receita)] as const));
+  const sessoes = montarSessoes(e, vendidosNaSessao, receitaNaSessao, agora);
+  const reembolsos = montarReembolsos(t.reembolsos, new Map(t.reembolsos.filter(r => r.pedido_id !== null).map(r => [r.pedido_id as string, r.codigo] as const)));
+  return { resumo, sessoes, reembolsos };
 }

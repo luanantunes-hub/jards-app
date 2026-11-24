@@ -7,6 +7,7 @@
 // do número. O tamanho de cada canal, com margem larga, pode aparecer desde 52 semanas.
 
 import { SEMANAS_DA_CONFIANCA_MEDIA, SEMANAS_IDEAIS, type Confianca } from "@/lib/ticketeria/modelo";
+import type { CurvaDoEvento } from "@/lib/ticketeria/ritmo-comparado";
 
 export type Selo = "medido" | "razoavel" | "impreciso" | "muito_impreciso" | "exemplo";
 export const ROTULO_DO_SELO: Record<Selo, string> = { medido: "medido", razoavel: "razoável", impreciso: "impreciso", muito_impreciso: "muito impreciso", exemplo: "exemplo" };
@@ -27,6 +28,8 @@ export type RitmoDoEvento = {
   /** Os ingressos até a sessão se o ritmo dos últimos 7 dias continuar (limitado à lotação). */ projecao: number;
   /** Se o ritmo cair à metade; e se dobrar: o que vendem, e se lotaria antes da data. */ metade: number; dobro: number; dobroLota: boolean;
   serie: { dia: string; ingressos: number }[];
+  /** O que a comparação com eventos parecidos precisa (só o servidor preenche): o evento atual e as curvas dos eventos que já aconteceram. */
+  comparacao?: { sessaoId: string; localId: string; precoMedioCentavos: number; /** Quantos compradores o evento atual tem (com 20 ou mais, parecido é quem divide o público). */ compradores?: number; acumulado: number[]; curvas: CurvaDoEvento[] };
 };
 
 /** A conta simples do ritmo: o que já vendeu, o ritmo dos últimos 7 dias e até onde chega se ele continuar, caísse à metade ou dobrasse. NÃO é uma previsão do modelo. */

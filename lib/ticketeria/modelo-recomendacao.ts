@@ -6,6 +6,7 @@
 // já teve (FATOR_DA_CURVA, o mesmo `max_value` de modelo/mmm.py); acima do maior gasto já testado a estimativa fica bem menos firme e a tela avisa. A faixa de cada previsão reaproveita a
 // incerteza do próprio modelo sobre o canal, que costuma ser otimista. Só entram canais com gasto e curva (o que não tem gasto não tem o que ajustar).
 
+import { razaoDoTotal } from "@/lib/ticketeria/efeito-total";
 import { FATOR_DE_CAUTELA, type CanalDoResultado, type PontoDaCurva } from "@/lib/ticketeria/modelo-resultado";
 
 /** O mesmo `max_value` de `sample_saturation_curve` em modelo/mmm.py: a curva vai até esta parte do maior gasto semanal do canal. */
@@ -18,13 +19,17 @@ export const REFERENCIA_EM_CENTAVOS = 10000;
 export const PARTE_DO_LIMITE = 0.8;
 export const MIN_PONTOS_DA_CURVA = 5;
 
-export type CanalComCurva = { canal: string; curva: PontoDaCurva[]; saturacaoCentavos: number | null; porcento: number; baixo: number; alto: number; margemGrande: boolean };
+export type CanalComCurva = { canal: string; curva: PontoDaCurva[]; saturacaoCentavos: number | null; porcento: number; baixo: number; alto: number; margemGrande: boolean; /** O adstock do canal (null nas rodadas antigas). */ atraso?: number | null };
 
 /** Os canais do resultado que têm curva para prever (poucos pontos ou curva sem subida ficam de fora). */
 export function canaisComCurva(canais: CanalDoResultado[]): CanalComCurva[] {
   return canais
     .filter(c => c.curva.length >= MIN_PONTOS_DA_CURVA && c.curva.at(-1)!.gasto_centavos > 0 && c.curva.at(-1)!.ingressos > c.curva[0].ingressos)
-    .map(c => ({ canal: c.canal, curva: [...c.curva].sort((a, b) => a.gasto_centavos - b.gasto_centavos), saturacaoCentavos: c.saturacao_gasto_centavos, porcento: c.porcento, baixo: c.baixo, alto: c.alto, margemGrande: c.margem_grande }));
+    .map(c => {
+      // Com o efeito total (o boca a boca e a urgência que o canal puxa), a curva e a parte do canal crescem na mesma razão: o "onde investir" e o calendário olham para o total.
+      const r = razaoDoTotal(c.porcento, c.porcento_total);
+      return { canal: c.canal, curva: [...c.curva].sort((a, b) => a.gasto_centavos - b.gasto_centavos).map(p => (r === 1 ? p : { ...p, ingressos: Math.round(p.ingressos * r * 100) / 100 })), saturacaoCentavos: c.saturacao_gasto_centavos, porcento: c.porcento * r, baixo: c.baixo * r, alto: c.alto * r, margemGrande: c.margem_grande, atraso: c.atraso ?? null };
+    });
 }
 
 /** O maior gasto semanal que a curva cobre. */

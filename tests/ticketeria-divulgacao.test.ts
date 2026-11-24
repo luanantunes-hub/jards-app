@@ -130,8 +130,8 @@ test("o gráfico: um dia por barra, faixas das ações em linhas que não se sob
 
 test("registrar ação: o formulário conferido", () => {
   const bom = { nome: "  Stories   do lote 2 ", canal: "instagram", inicio: "2026-11-18", fim: "2026-11-20", gasto: "1.200,50" };
-  assert.deepEqual(lerAcao(bom), { ok: true, valor: { nome: "Stories do lote 2", canal: "instagram", inicio: "2026-11-18", fim: "2026-11-20", gasto_centavos: 120050 } });
-  assert.deepEqual(lerAcao({ ...bom, gasto: "" }), { ok: true, valor: { nome: "Stories do lote 2", canal: "instagram", inicio: "2026-11-18", fim: "2026-11-20", gasto_centavos: 0 } });
+  assert.deepEqual(lerAcao(bom), { ok: true, valor: { nome: "Stories do lote 2", canal: "instagram", inicio: "2026-11-18", fim: "2026-11-20", gasto_centavos: 120050, veiculo: null } });
+  assert.deepEqual(lerAcao({ ...bom, gasto: "" }), { ok: true, valor: { nome: "Stories do lote 2", canal: "instagram", inicio: "2026-11-18", fim: "2026-11-20", gasto_centavos: 0, veiculo: null } });
   const erro = (mudanca: object) => { const r = lerAcao({ ...bom, ...mudanca }); return r.ok ? "ok" : r.erro; };
   assert.match(erro({ nome: "A" }), /nome/);
   assert.match(erro({ canal: "" }), /onde/);

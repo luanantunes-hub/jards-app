@@ -9,7 +9,7 @@
 // (1 real = 1.000.000). O token de desenvolvedor foi descontinuado em 09/09/2026 (o cabeçalho é opcional e ignorado), por isso não é enviado. Versão da API: GOOGLE_ADS_API_VERSION.
 
 import { ErroDeMidia } from "@/lib/ticketeria/midia/erro";
-import type { BuscarHttp, ContaDeAnuncios, DiaDeMidia, RespostaHttp } from "@/lib/ticketeria/midia/meta";
+import type { BuscarHttp, ContaDeAnuncios, DiaDeCampanha, DiaDeMidia, RespostaHttp } from "@/lib/ticketeria/midia/meta";
 
 export const ESCOPO_DO_GOOGLE_ADS = "https://www.googleapis.com/auth/adwords";
 export const VERSAO_PADRAO_DO_GOOGLE_ADS = "v26";
@@ -149,4 +149,21 @@ export async function lerGastoDoGoogleAds(c: ConfigDoGoogle, renovacao: string, 
     dias.set(dia, { dia, gasto_centavos: (anterior?.gasto_centavos ?? 0) + microsEmCentavos(m.costMicros), impressoes: (anterior?.impressoes ?? 0) + inteiro(m.impressions), alcance: 0, cliques: (anterior?.cliques ?? 0) + inteiro(m.clicks) });
   }
   return [...dias.values()].sort((a, b) => a.dia.localeCompare(b.dia));
+}
+
+/** O gasto de cada campanha por dia, de `de` até `ate` (AAAA-MM-DD). */
+export async function lerGastoPorCampanhaDoGoogleAds(c: ConfigDoGoogle, renovacao: string, conta: string, de: string, ate: string, gerente: string | null, buscar: BuscarHttp): Promise<DiaDeCampanha[]> {
+  if (!SO_NUMEROS.test(conta) || !DIA.test(de) || !DIA.test(ate) || (gerente !== null && !SO_NUMEROS.test(gerente))) throw new ErroDeMidia("outro", null, null);
+  const acesso = await renovarAcessoDoGoogle(c, renovacao, buscar);
+  const linhas = await consultar(c, buscar, acesso, conta, gerente, `SELECT campaign.id, campaign.name, segments.date, metrics.cost_micros FROM campaign WHERE segments.date BETWEEN '${de}' AND '${ate}'`);
+  const saida: DiaDeCampanha[] = [];
+  for (const l of linhas) {
+    const dia = texto(dentro(l, "segments").date);
+    const camp = dentro(l, "campaign");
+    const id = texto(camp.id);
+    if (!DIA.test(dia) || !SO_NUMEROS.test(id)) continue;
+    const nome = texto(camp.name).trim().slice(0, 300) || `Campanha ${id}`;
+    saida.push({ dia, campanha_id: id, campanha: nome, gasto_centavos: microsEmCentavos(dentro(l, "metrics").costMicros) });
+  }
+  return saida;
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaTicketeria, type ClienteDaTicketeria } from "@/lib/ticketeria/cliente";
+import { salaDaSessao, salasDoEspaco, type SalaDoEspaco } from "@/lib/ticketeria/salas";
 import { CLASSIFICACOES_INDICATIVAS } from "@/lib/ticketeria/estados";
 import {
   FUSOS_DO_BRASIL, UFS, ROTULO_DA_CLASSIFICACAO, lerEvento, lerLocal, lerSessao, mensagemDoErroDoEvento, partesNoFuso,
@@ -43,18 +44,20 @@ export async function garantirLoja(ticketeria: ClienteDaTicketeria, organization
 
 // ─── Evento ─────────────────────────────────────────────────────────────────
 
-export type EventoEditavel = { id: string; titulo: string; descricao: string | null; imagem_url: string | null; classificacao: string | null };
+export type EventoEditavel = { id: string; titulo: string; descricao: string | null; imagem_url: string | null; classificacao: string | null; artista?: string | null; loja_id?: string };
 
 export function EventoSheet({ organizationId, nomeDaOrganizacao, evento, onClose, onSaved }: { organizationId: string; nomeDaOrganizacao: string; evento?: EventoEditavel; onClose: () => void; onSaved: (id: string) => void }) {
   const [titulo, setTitulo] = useState(evento?.titulo ?? "");
   const [descricao, setDescricao] = useState(evento?.descricao ?? "");
   const [imagem, setImagem] = useState(evento?.imagem_url ?? "");
   const [classificacao, setClassificacao] = useState(evento?.classificacao ?? "");
+  const [artista, setArtista] = useState(evento?.artista ?? "");
+  const historico = useHistoricoDoArtista(organizationId, evento?.loja_id ?? null, artista, evento?.id ?? null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   async function salvar(fechar: () => void) {
-    const leitura = lerEvento({ titulo, descricao, imagem, classificacao });
+    const leitura = lerEvento({ titulo, descricao, imagem, classificacao, artista });
     if (!leitura.ok) { setErro(leitura.erro); return; }
     setSalvando(true);
     setErro(null);
@@ -80,6 +83,17 @@ export function EventoSheet({ organizationId, nomeDaOrganizacao, evento, onClose
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
         <div><label className={ROTULO} htmlFor="ev-titulo">Título</label><input id="ev-titulo" autoFocus className={CAMPO} value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Hamlet" maxLength={200} disabled={salvando} /></div>
+        <div>
+          <label className={ROTULO} htmlFor="ev-artista">Artista ou companhia (opcional)</label>
+          <input id="ev-artista" className={CAMPO} value={artista} onChange={e => setArtista(e.target.value)} placeholder="Cia. Atores de Mar" maxLength={120} disabled={salvando} />
+          <p className="mt-1.5 text-[0.6875rem] text-black/45">Serve para o Jards mostrar como esse artista já vendeu na sua casa. Não é um rótulo: é só o nome.</p>
+          {historico && historico.length > 0 && (
+            <div className="mt-2.5 rounded-xl border px-3.5 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+              <div className="flex items-center justify-between gap-3"><p className="text-[0.8125rem] text-[#282525]">{artista.trim()} na sua casa</p><span className="inline-flex shrink-0 items-center rounded-xl border px-2 py-0.5 text-[0.625rem]" style={{ color: "#2E8932", borderColor: "rgba(46,137,50,.35)" }}>medido</span></div>
+              <p className="mt-1 text-[0.75rem] leading-relaxed text-black/50">Já se apresentou aqui {historico.length === 1 ? "1 vez" : `${historico.length} vezes`}: {historico.map((h, i) => <span key={h.eventoId}>{i > 0 ? (i === historico.length - 1 ? " e " : ", ") : ""}<span className="text-[#282525]">{h.titulo}</span>{h.lotacao !== null ? ` (${Math.round(h.lotacao * 100)}% da lotação)` : ""}</span>)}.</p>
+            </div>
+          )}
+        </div>
         <div><span className={ROTULO}>Classificação indicativa</span><Dropdown ariaLabel="Classificação indicativa" value={classificacao} onChange={setClassificacao} disabled={salvando} placeholder="Sem classificação" options={[{ value: "", label: "Sem classificação" }, ...CLASSIFICACOES_INDICATIVAS.map(c => ({ value: c, label: ROTULO_DA_CLASSIFICACAO[c] }))]} /></div>
         <details className="rounded-xl border border-black/[.08]" open={Boolean(evento?.descricao || evento?.imagem_url)}>
           <summary className="cursor-pointer px-3 py-2.5 text-[0.75rem] font-normal text-black/60">Mais detalhes</summary>
@@ -96,16 +110,18 @@ export function EventoSheet({ organizationId, nomeDaOrganizacao, evento, onClose
 // ─── Sessão ─────────────────────────────────────────────────────────────────
 
 export type LocalDaSessao = { id: string; nome: string; fuso: string; arquivado: boolean };
-export type SessaoEditavel = { id: string; local_id: string; inicio: string; fim: string | null; abertura_portas: string | null };
+export type SessaoEditavel = { id: string; local_id: string; sala_id: string; inicio: string; fim: string | null; abertura_portas: string | null };
 
-export function SessaoSheet({ organizationId, eventoId, locais, sessao, podeApagar, onClose, onSaved, onNovoLocal }: {
-  organizationId: string; eventoId: string; locais: LocalDaSessao[]; sessao?: SessaoEditavel; podeApagar: boolean;
+export function SessaoSheet({ organizationId, eventoId, locais, salas = [], sessao, sugestao, podeApagar, onClose, onSaved, onNovoLocal }: {
+  organizationId: string; eventoId: string; locais: LocalDaSessao[]; /** As salas dos espaços: com mais de uma no espaço, a sessão escolhe a sala. */ salas?: SalaDoEspaco[]; sessao?: SessaoEditavel; podeApagar: boolean;
+  /** Sessão nova já preenchida (o "e se eu acrescentar uma sessão?"): dia e hora no fuso do local, e o espaço e a sala. */ sugestao?: { dia: string; hora: string; localId?: string; salaId?: string };
   onClose: () => void; onSaved: () => void; onNovoLocal: () => void;
 }) {
   const emUso = locais.filter(local => !local.arquivado || local.id === sessao?.local_id);
-  const [localId, setLocalId] = useState(sessao?.local_id ?? emUso[0]?.id ?? "");
-  const fusoInicial = locais.find(local => local.id === (sessao?.local_id ?? emUso[0]?.id))?.fuso ?? "America/Sao_Paulo";
-  const inicio = sessao ? partesNoFuso(sessao.inicio, fusoInicial) : { dia: "", hora: "20:00" };
+  const localSugerido = sugestao?.localId && emUso.some(local => local.id === sugestao.localId) ? sugestao.localId : undefined;
+  const [localId, setLocalId] = useState(sessao?.local_id ?? localSugerido ?? emUso[0]?.id ?? "");
+  const fusoInicial = locais.find(local => local.id === (sessao?.local_id ?? localSugerido ?? emUso[0]?.id))?.fuso ?? "America/Sao_Paulo";
+  const inicio = sessao ? partesNoFuso(sessao.inicio, fusoInicial) : sugestao ? { dia: sugestao.dia, hora: sugestao.hora } : { dia: "", hora: "20:00" };
   const [dia, setDia] = useState(inicio.dia);
   const [hora, setHora] = useState(inicio.hora);
   const [fim, setFim] = useState(sessao?.fim ? partesNoFuso(sessao.fim, fusoInicial).hora : "");
@@ -115,6 +131,10 @@ export function SessaoSheet({ organizationId, eventoId, locais, sessao, podeApag
 
   // O local recém-criado (pela própria folha) chega depois que a folha abriu: sem escolha, vale o primeiro em uso.
   const localEscolhido = localId || emUso[0]?.id || "";
+  const [salaId, setSalaId] = useState(sessao?.sala_id ?? sugestao?.salaId ?? "");
+  const salasDoLocal = salasDoEspaco(salas, localEscolhido, sessao?.sala_id);
+  // A sala escolhida vale se for do espaço; senão (espaço trocado, ou ainda sem escolha) a primeira em uso.
+  const salaEscolhida = salaDaSessao(salas, localEscolhido, salaId);
 
   async function salvar(fechar: () => void) {
     const local = locais.find(item => item.id === localEscolhido);
@@ -125,8 +145,8 @@ export function SessaoSheet({ organizationId, eventoId, locais, sessao, podeApag
     setErro(null);
     const ticketeria = clienteDaTicketeria(createClient());
     const { error } = sessao
-      ? await ticketeria.from("ticketeria_sessoes").update({ local_id: localEscolhido, ...leitura.valor }).eq("id", sessao.id)
-      : await ticketeria.from("ticketeria_sessoes").insert({ organization_id: organizationId, evento_id: eventoId, local_id: localEscolhido, ...leitura.valor });
+      ? await ticketeria.from("ticketeria_sessoes").update({ local_id: localEscolhido, ...(salaEscolhida ? { sala_id: salaEscolhida } : {}), ...leitura.valor }).eq("id", sessao.id)
+      : await ticketeria.from("ticketeria_sessoes").insert({ organization_id: organizationId, evento_id: eventoId, local_id: localEscolhido, ...(salaEscolhida ? { sala_id: salaEscolhida } : {}), ...leitura.valor });
     setSalvando(false);
     if (error) { setErro(mensagemDoErroDoEvento(error)); return; }
     onSaved();
@@ -154,6 +174,7 @@ export function SessaoSheet({ organizationId, eventoId, locais, sessao, podeApag
         ) : (
           <div><span className={ROTULO}>Local</span><Dropdown ariaLabel="Local da sessão" value={localEscolhido} onChange={setLocalId} disabled={salvando} options={emUso.map(local => ({ value: local.id, label: local.nome }))} /></div>
         )}
+        {salasDoLocal.length > 1 && <div><span className={ROTULO}>Sala</span><Dropdown ariaLabel="Sala da sessão" value={salaEscolhida} onChange={setSalaId} disabled={salvando} options={salasDoLocal.map(sala => ({ value: sala.id, label: sala.arquivado ? `${sala.nome} (arquivada)` : sala.nome }))} /></div>}
         <div className="grid gap-3 sm:grid-cols-2">
           <div><label className={ROTULO} htmlFor="se-dia">Dia</label><input id="se-dia" type="date" autoFocus className={CAMPO} value={dia} onChange={e => setDia(e.target.value)} disabled={salvando} /></div>
           <div><label className={ROTULO} htmlFor="se-hora">Início</label><input id="se-hora" type="time" className={CAMPO} value={hora} onChange={e => setHora(e.target.value)} disabled={salvando} /></div>
@@ -229,3 +250,28 @@ export function LocalSheet({ organizationId, nomeDaOrganizacao, local, onClose, 
   );
 }
 
+
+/** As apresentações anteriores do artista na casa (rota /artista da loja), conferidas meio segundo depois de parar de digitar. null enquanto não há nome ou loja. */
+function useHistoricoDoArtista(organizationId: string, lojaInicial: string | null, artista: string, excluir: string | null): { eventoId: string; titulo: string; lotacao: number | null }[] | null {
+  const [loja, setLoja] = useState<string | null>(lojaInicial);
+  const [historico, setHistorico] = useState<{ eventoId: string; titulo: string; lotacao: number | null }[] | null>(null);
+  useEffect(() => {
+    if (loja) return;
+    let ativo = true;
+    void clienteDaTicketeria(createClient()).from("ticketeria_lojas").select("id").eq("organization_id", organizationId).maybeSingle().then(({ data }) => { if (ativo && data) setLoja(data.id); });
+    return () => { ativo = false; };
+  }, [loja, organizationId]);
+  useEffect(() => {
+    const nome = artista.trim();
+    if (!loja || nome.length < 2) return;
+    let ativo = true;
+    const espera = setTimeout(() => {
+      void fetch(`/api/ticketeria/lojas/${loja}/artista?nome=${encodeURIComponent(nome)}${excluir ? `&excluir=${excluir}` : ""}`, { cache: "no-store" })
+        .then(r => (r.ok ? r.json() : { apresentacoes: [] }))
+        .then((d: { apresentacoes?: { eventoId: string; titulo: string; lotacao: number | null }[] }) => { if (ativo) setHistorico(d.apresentacoes ?? []); })
+        .catch(() => { if (ativo) setHistorico(null); });
+    }, 500);
+    return () => { ativo = false; clearTimeout(espera); };
+  }, [loja, artista, excluir]);
+  return artista.trim().length < 2 ? null : historico;
+}

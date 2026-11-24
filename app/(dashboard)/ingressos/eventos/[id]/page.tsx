@@ -14,14 +14,20 @@ import { PaginaDoEventoNoSite } from "@/components/ticketeria/PaginaDoEventoNoSi
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { CatalogoDoEvento } from "@/components/ticketeria/CatalogoDoEvento";
+import { temVariasSalas, type SalaDoEspaco } from "@/lib/ticketeria/salas";
+import { QuadroDePrecificacao } from "@/components/ticketeria/QuadroDePrecificacao";
+import { PrecoDinamicoDoEvento } from "@/components/ticketeria/PrecoDinamicoDoEvento";
 import { LinkDeVenda } from "@/components/ticketeria/LinkDeVenda";
+import { SubAbas } from "@/components/producao/SubAbas";
+import { abaDoEndereco, abasDoEvento, type AbaDoEvento } from "@/lib/ticketeria/abas-do-evento";
 import { Aviso, EventoSheet, LocalSheet, SessaoSheet, type EventoEditavel, type LocalDaSessao, type SessaoEditavel } from "@/components/ticketeria/FolhasDosEventos";
+import { ESeAcrescentarSessao, ProcuraSobrandoAviso, VendaDaSessao, usePrevisaoDaSessao } from "@/components/ticketeria/PrevisaoDeSessaoView";
 
 type Evento = EventoEditavel & { situacao: SituacaoDoEvento; loja_id: string; slug: string };
 type Sessao = SessaoEditavel & { cancelada_em: string | null };
-type Folha = { tipo: "evento" } | { tipo: "sessao"; sessao?: Sessao } | { tipo: "local" };
+type Folha = { tipo: "evento" } | { tipo: "sessao"; sessao?: Sessao; sugestao?: { dia: string; hora: string; localId?: string; salaId?: string } } | { tipo: "local" };
 
-const BOTAO_ESCURO = "inline-flex h-10 items-center rounded-xl bg-[#1C0E33] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
+const BOTAO_ESCURO = "inline-flex h-10 items-center rounded-xl bg-[#6450D2] px-4 text-[0.75rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const BOTAO_CLARO = "inline-flex h-10 items-center rounded-xl border border-black/[.12] bg-white px-4 text-[0.75rem] font-normal text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 const ROTULO_DA_SESSAO = { agendada: "Por vir", realizada: "Realizada", cancelada: "Cancelada" } as const;
 
@@ -34,38 +40,49 @@ export default function EventoPage() {
   const router = useRouter();
   const { confirmDelete } = useDeleteConfirm();
   const [evento, setEvento] = useState<Evento | null | undefined>(undefined);
+  const [abaPedida, setAbaPedida] = useState<AbaDoEvento>(() => (typeof window === "undefined" ? "sessoes" : abaDoEndereco(window.location.hash, true)));
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
+  const [versaoDoCatalogo, setVersaoDoCatalogo] = useState(0);
   const [locais, setLocais] = useState<LocalDaSessao[]>([]);
+  const [salas, setSalas] = useState<SalaDoEspaco[]>([]);
   const [folha, setFolha] = useState<Folha | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
+  const [eSe, setESe] = useState(false);
   const podeEditar = podeEditarATicketeria(papel);
   const recarregar = () => setVersao(atual => atual + 1);
+  // A previsão por sessão (procura sobrando, "e se", a venda de cada sessão): só quem edita a Ticketeria lê.
+  const previsao = usePrevisaoDaSessao(podeEditar && evento ? evento.loja_id : null, id, versao)?.evento ?? null;
+  const vendaDaSessao = useMemo(() => new Map((previsao?.sessoes ?? []).map(s => [s.id, s])), [previsao]);
 
   useEffect(() => {
     if (!organizationId) return;
     let ativo = true;
     void (async () => {
       const ticketeria = clienteDaTicketeria(createClient());
-      const [ev, se, lo] = await Promise.all([
-        ticketeria.from("ticketeria_eventos").select("id, loja_id, slug, titulo, descricao, imagem_url, classificacao, situacao").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
-        ticketeria.from("ticketeria_sessoes").select("id, local_id, inicio, fim, abertura_portas, cancelada_em").eq("evento_id", id).order("inicio"),
+      const [ev, se, lo, sa] = await Promise.all([
+
+        ticketeria.from("ticketeria_eventos").select("id, loja_id, slug, titulo, descricao, imagem_url, classificacao, situacao, artista").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
+        ticketeria.from("ticketeria_sessoes").select("id, local_id, sala_id, inicio, fim, abertura_portas, cancelada_em").eq("evento_id", id).order("inicio"),
         ticketeria.from("ticketeria_locais").select("id, nome, fuso, arquivado").eq("organization_id", organizationId).order("nome"),
+        ticketeria.from("ticketeria_salas").select("id, local_id, nome, ordem, arquivado").eq("organization_id", organizationId),
       ]);
       if (!ativo) return;
       setEvento(ev.error ? null : ((ev.data ?? null) as Evento | null));
       setSessoes((se.data ?? []) as Sessao[]);
       setLocais((lo.data ?? []) as LocalDaSessao[]);
+      setSalas((sa.data ?? []) as SalaDoEspaco[]);
     })();
     return () => { ativo = false; };
   }, [id, organizationId, versao]);
 
   const linhas = useMemo(() => sessoes.map(sessao => {
     const local = locais.find(item => item.id === sessao.local_id);
+    const sala = temVariasSalas(salas, sessao.local_id) ? salas.find(item => item.id === sessao.sala_id) : undefined;
     const fuso = local?.fuso ?? "America/Sao_Paulo";
-    return { sessao, local, quando: quandoDaSessao(sessao.inicio, fuso), situacao: situacaoDaSessao(sessao), detalhes: [sessao.abertura_portas ? `portas às ${partesNoFuso(sessao.abertura_portas, fuso).hora}` : null, sessao.fim ? `até ${partesNoFuso(sessao.fim, fuso).hora}` : null].filter(Boolean).join(" · ") };
-  }), [sessoes, locais]);
+    return { sessao, local, sala, quando: quandoDaSessao(sessao.inicio, fuso), situacao: situacaoDaSessao(sessao), detalhes: [sessao.abertura_portas ? `portas às ${partesNoFuso(sessao.abertura_portas, fuso).hora}` : null, sessao.fim ? `até ${partesNoFuso(sessao.fim, fuso).hora}` : null].filter(Boolean).join(" · ") };
+  }), [sessoes, locais, salas]);
 
   async function mudarSituacao(situacao: SituacaoDoEvento) {
     if (!evento) return;
@@ -112,6 +129,9 @@ export default function EventoPage() {
   if (evento === null || !organizationId) return <DetailNotFound title="Evento não encontrado" description="Ele pode ter sido apagado ou você não tem acesso." backHref="/ingressos/eventos" backLabel="Voltar aos eventos" />;
 
   const editavel = podeEditar && evento.situacao !== "cancelado";
+  // A Precificação é só de quem edita; quem não pode vê-la cai em Sessões (mesmo que o endereço peça a outra).
+  const aba: AbaDoEvento = abasDoEvento(editavel).some(item => item.id === abaPedida) ? abaPedida : "sessoes";
+  const escolherAba = (nova: AbaDoEvento) => { setAbaPedida(nova); window.history.replaceState(null, "", `#${nova}`); };
   const resumo = [ROTULO_DA_SITUACAO_DO_EVENTO[evento.situacao], evento.classificacao ? ROTULO_DA_CLASSIFICACAO[evento.classificacao as ClassificacaoIndicativa] : null].filter(Boolean).join(" · ");
 
   return (
@@ -140,11 +160,14 @@ export default function EventoPage() {
         <PaginaDoEventoNoSite lojaId={evento.loja_id} slug={evento.slug} publicado={evento.situacao === "publicado"} />
         {erro && <div className="mb-4"><Aviso texto={erro} /></div>}
         {evento.situacao === "publicado" && <p className="mb-6 max-w-2xl text-[0.75rem] text-black/55">Publicado: o catálogo de ingressos está montado abaixo; a venda e o pagamento entram nas próximas etapas.</p>}
+        <div className="mb-6"><SubAbas ariaLabel="Partes do evento" itens={abasDoEvento(editavel)} ativo={aba} onChange={id => escolherAba(id as AbaDoEvento)} /></div>
+        {aba === "sessoes" && (
         <section aria-labelledby="sessoes-do-evento">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 id="sessoes-do-evento" className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">Sessões</h2>
             {editavel && <SecondaryListAction onClick={() => setFolha({ tipo: "sessao" })}><CalendarPlus size={13} aria-hidden="true" /> Nova sessão</SecondaryListAction>}
           </div>
+          {editavel && previsao?.procura && <ProcuraSobrandoAviso procura={previsao.procura} temOpcoes={previsao.opcoes.length > 0} onAbrir={() => setESe(true)} />}
           {linhas.length === 0 ? (
             <div className="rounded-xl border bg-white px-5 py-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <p className="text-[0.8125rem] font-normal text-black/55">Nenhuma sessão ainda</p>
@@ -152,12 +175,13 @@ export default function EventoPage() {
             </div>
           ) : (
             <ul className="divide-y divide-black/[.06] overflow-hidden rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              {linhas.map(({ sessao, local, quando, situacao, detalhes }) => (
+              {linhas.map(({ sessao, local, sala, quando, situacao, detalhes }) => (
                 <li key={sessao.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
                   <span className="min-w-0 flex-1 basis-60">
                     <span className={`block text-[0.8125rem] font-normal tabular-nums ${situacao === "cancelada" ? "text-black/40 line-through" : "text-[#282525]"}`}>{quando}</span>
-                    <span className="flex items-center gap-1.5 truncate text-[0.6875rem] text-black/45"><MapPin size={12} aria-hidden="true" className="shrink-0 text-black/40" />{[local?.nome ?? "Local", detalhes].filter(Boolean).join(" · ")}</span>
+                    <span className="flex items-center gap-1.5 truncate text-[0.6875rem] text-black/45"><MapPin size={12} aria-hidden="true" className="shrink-0 text-black/40" />{[local?.nome ?? "Local", sala?.nome, detalhes].filter(Boolean).join(" · ")}</span>
                   </span>
+                  {situacao !== "cancelada" && vendaDaSessao.get(sessao.id) && <VendaDaSessao {...vendaDaSessao.get(sessao.id)!} />}
                   <span className="text-[0.6875rem] text-black/50">{ROTULO_DA_SESSAO[situacao]}</span>
                   {evento.situacao === "publicado" && situacao === "agendada" && <LinkDeVenda sessaoId={sessao.id} />}
                   {editavel && (
@@ -171,7 +195,18 @@ export default function EventoPage() {
             </ul>
           )}
         </section>
-        <CatalogoDoEvento organizationId={organizationId} eventoId={evento.id} locaisDasSessoes={[...new Set(sessoes.map(sessao => sessao.local_id))]} podeEditar={editavel} />
+        )}
+        {aba === "ingressos" && (
+          <div className="[&>section:first-child]:mt-0">
+            <CatalogoDoEvento organizationId={organizationId} eventoId={evento.id} locaisDasSessoes={[...new Set(sessoes.map(sessao => sessao.local_id))]} podeEditar={editavel} onMudou={() => setVersaoDoCatalogo(v => v + 1)} />
+          </div>
+        )}
+        {aba === "precificacao" && editavel && (
+          <div className="[&>section:first-child]:mt-0">
+            <QuadroDePrecificacao lojaId={evento.loja_id} eventoId={evento.id} chave={versaoDoCatalogo} />
+            <PrecoDinamicoDoEvento lojaId={evento.loja_id} eventoId={evento.id} sessoes={sessoes.filter(s => !s.cancelada_em && Date.parse(s.inicio) > Date.now()).map(s => ({ id: s.id, inicio: s.inicio, fuso: locais.find(l => l.id === s.local_id)?.fuso ?? "America/Sao_Paulo" }))} onMudou={() => setVersaoDoCatalogo(v => v + 1)} />
+          </div>
+        )}
         {editavel && (
           <div className="mt-12">
             {evento.situacao === "rascunho"
@@ -181,7 +216,11 @@ export default function EventoPage() {
         )}
       </DetailPageContent>
       {folha?.tipo === "evento" && <EventoSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} evento={evento} onClose={() => setFolha(null)} onSaved={recarregar} />}
-      {folha?.tipo === "sessao" && <SessaoSheet organizationId={organizationId} eventoId={evento.id} locais={locais} sessao={folha.sessao} podeApagar={evento.situacao === "rascunho"} onClose={() => setFolha(null)} onSaved={recarregar} onNovoLocal={() => setFolha({ tipo: "local" })} />}
+      {folha?.tipo === "sessao" && <SessaoSheet organizationId={organizationId} eventoId={evento.id} locais={locais} salas={salas} sessao={folha.sessao} sugestao={folha.sugestao} podeApagar={evento.situacao === "rascunho"} onClose={() => setFolha(null)} onSaved={recarregar} onNovoLocal={() => setFolha({ tipo: "local" })} />}
+      {eSe && previsao && previsao.opcoes.length > 0 && (
+        <ESeAcrescentarSessao opcoes={previsao.opcoes} evento={evento.titulo} naEspera={previsao.procura?.naEspera ?? 0} onFechar={() => setESe(false)}
+          onCriar={opcao => { setESe(false); setFolha({ tipo: "sessao", sugestao: { dia: opcao.dia, hora: opcao.hora, localId: previsao.local?.localId, salaId: previsao.local?.salaId } }); }} />
+      )}
       {folha?.tipo === "local" && <LocalSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} onClose={() => setFolha({ tipo: "sessao" })} onSaved={() => recarregar()} />}
     </div>
   );

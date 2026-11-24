@@ -66,10 +66,11 @@ export function capacidadeDoLocal(setores: readonly { lugares: number; arquivado
 // ─── Evento ─────────────────────────────────────────────────────────────────
 
 export type LeituraDoEvento =
-  | { ok: true; valor: { titulo: string; descricao: string | null; imagem_url: string | null; classificacao: ClassificacaoIndicativa | null } }
+  | { ok: true; valor: { titulo: string; descricao: string | null; imagem_url: string | null; classificacao: ClassificacaoIndicativa | null; artista?: string | null } }
   | { ok: false; erro: string; campo: string };
 
-export function lerEvento(campos: { titulo: string; descricao: string; imagem: string; classificacao: string }): LeituraDoEvento {
+/** `artista` (opcional): o nome do artista ou da companhia, só um nome (não é rótulo). Ausente = não mexe no que está gravado; vazio = apaga. */
+export function lerEvento(campos: { titulo: string; descricao: string; imagem: string; classificacao: string; artista?: string }): LeituraDoEvento {
   const titulo = texto(campos.titulo);
   if (titulo === "" || titulo.length > 200) return { ok: false, erro: "Dê um título ao evento (até 200 letras).", campo: "titulo" };
   const descricao = opcional(campos.descricao);
@@ -82,7 +83,9 @@ export function lerEvento(campos: { titulo: string; descricao: string; imagem: s
   }
   const bruta = texto(campos.classificacao);
   if (bruta !== "" && !(bruta in ROTULO_DA_CLASSIFICACAO)) return { ok: false, erro: "Escolha a classificação indicativa.", campo: "classificacao" };
-  return { ok: true, valor: { titulo, descricao, imagem_url, classificacao: bruta === "" ? null : (bruta as ClassificacaoIndicativa) } };
+  const artista = campos.artista === undefined ? undefined : opcional(campos.artista);
+  if (artista && artista.length > 120) return { ok: false, erro: "O nome do artista ou da companhia pode ter até 120 letras.", campo: "artista" };
+  return { ok: true, valor: { titulo, descricao, imagem_url, classificacao: bruta === "" ? null : (bruta as ClassificacaoIndicativa), ...(artista !== undefined ? { artista } : {}) } };
 }
 
 // ─── Horas no fuso do local ─────────────────────────────────────────────────
@@ -198,5 +201,11 @@ export function mensagemDoErroDoEvento(erro: { code?: string; message?: string }
   if (m.includes("sessao_de_evento_publicado")) return "Sessão de evento publicado não se apaga: cancele-a.";
   if (m.includes("ticketeria_sessoes_local_id_fkey")) return "Esse local tem sessões e não se apaga: arquive-o.";
   if (m.includes("ticketeria_setores_nome_key")) return "Já existe um setor com esse nome neste local.";
+  if (m.includes("ticketeria_setores_sala_nome_key")) return "Já existe um setor com esse nome nesta sala.";
+  if (m.includes("ticketeria_salas_nome_key")) return "Já existe uma sala com esse nome neste espaço.";
+  if (m.includes("sala_unica")) return "O espaço precisa de ao menos uma sala em uso.";
+  if (m.includes("sala_arquivada")) return "Essa sala está arquivada. Escolha outra ou tire-a do arquivo.";
+  if (m.includes("sala_incoerente")) return "Essa sala não é deste espaço. Escolha uma sala do espaço.";
+  if (m.includes("ticketeria_sessoes_sala_id_fkey") || m.includes("ticketeria_setores_sala_id_fkey")) return "Essa sala tem sessões ou setores e não se apaga: arquive-a.";
   return "Não foi possível salvar. Tente de novo.";
 }

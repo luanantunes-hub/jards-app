@@ -2,19 +2,24 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
-import { diaNoFuso } from "@/lib/ticketeria/divulgacao";
+import { CANAL_DA_IMPRENSA, diaNoFuso } from "@/lib/ticketeria/divulgacao";
 import { divulgacaoDaLoja } from "@/lib/ticketeria/divulgacao-servidor";
 import { ritmoDoEvento, type RitmoDoEvento } from "@/lib/ticketeria/modelo-painel";
-import { controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
+import { acumuladoDaSessao, type CurvaDoEvento } from "@/lib/ticketeria/ritmo-comparado";
+import { gastoDaMarca } from "@/lib/ticketeria/campanhas-servidor";
+import { compradoresPorEvento, eventosEmComum, normalizarArtista } from "@/lib/ticketeria/publico-em-comum";
+import { separarMarca } from "@/lib/ticketeria/campanhas";
+import { abrirSessoesLongas, atracaoOAnoTodo, curvaDaCasa, controleDeVisitas, controlesDaTela, controlesDasSemanas, type ItemDePedidoPago, type ResumoDosControles, type VisitaDoDia } from "@/lib/ticketeria/modelo-controles";
+import { totalVale } from "@/lib/ticketeria/efeito-total";
 import { compararComOsLinks, lerPartesDaBase, type CanalDoResultado, type ParteDaBase } from "@/lib/ticketeria/modelo-resultado";
 import type { Confianca } from "@/lib/ticketeria/modelo";
-import { avaliarProntidao, consolidarGasto, montarTabelaSemanal, type EntradaDaProntidao, type ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
+import { avaliarProntidao, consolidarGasto, gastoDasAcoes, montarTabelaSemanal, type EntradaDaProntidao, type ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
 
 type Admin = SupabaseClient<Database>;
 const PAGINA = 1000;
 
 /** Todas as linhas de uma consulta, em páginas de 1.000 (a consulta sem .range() corta em silêncio). */
-async function todas<T>(pagina: (de: number, ate: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
+export async function todas<T>(pagina: (de: number, ate: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
   const linhas: T[] = [];
   for (let de = 0; ; de += PAGINA) {
     const { data, error } = await pagina(de, de + PAGINA - 1);
@@ -57,7 +62,12 @@ export async function entradaDaLoja(admin: Admin, lojaId: string): Promise<Entra
     ultimoDiaDeVisitas = ultimo?.[0]?.dia ?? null;
     if (primeiroDiaDeVisitas) visitas = (await todas(async (de, ate) => t.from("ticketeria_visitas_diarias").select("dia, origem, sessoes").eq("conexao_id", ga4.id).order("dia", { ascending: true }).order("origem", { ascending: true }).range(de, ate))).map(v => ({ dia: v.dia, origem: v.origem, sessoes: Number(v.sessoes) }));
   }
-  const semanal = montarTabelaSemanal({ vendas, gasto });
+  // Marca x evento: o gasto de marca (campanhas marcadas como marca e ações sem evento) vira um canal à parte quando cada lado tem semanas suficientes (lib/ticketeria/campanhas.ts).
+  const marca = [
+    ...(await gastoDaMarca(admin, lojaId)),
+    ...gastoDasAcoes(painel.acoes.filter(a => !a.evento_id).map(a => ({ nome: a.nome, canal: a.canal, inicio: a.inicio, fim: a.fim, gasto_centavos: a.gasto_centavos }))).map(l => ({ dia: l.dia, canal: l.canal, centavos: l.centavos })),
+  ];
+  const semanal = separarMarca(montarTabelaSemanal({ vendas, gasto }), marca).tabela;
   const { controles, resumo } = await controlesDaLoja(t, lojaId, semanal.map(s => s.semana));
   const doGa4 = controleDeVisitas(visitas, primeiroDiaDeVisitas, ultimoDiaDeVisitas, semanal.map(s => s.semana));
   const tabela = semanal.map(s => ({ ...s, controles: { ...controles[s.semana], visitas: doGa4.valores[s.semana] ?? 0 } }));
@@ -68,19 +78,29 @@ type Cliente = ReturnType<typeof clienteDaTicketeria>;
 
 /** Os controles de cada semana (proximidade da sessão, feriado, virada de lote, preço, cupom) e o que a loja tem de cada coisa. Lido com a chave de serviço. */
 async function controlesDaLoja(t: Cliente, lojaId: string, semanas: string[]): Promise<{ controles: ReturnType<typeof controlesDasSemanas>; resumo: ResumoDosControles }> {
-  const [{ data: eventos }, { data: locais }, { data: datas }] = await Promise.all([
+  const [{ data: eventos }, { data: locais }, { data: datas }, { data: imprensa }] = await Promise.all([
     t.from("ticketeria_eventos").select("id").eq("loja_id", lojaId),
     t.from("ticketeria_locais").select("id, fuso").eq("loja_id", lojaId),
     t.from("ticketeria_datas_de_pico").select("dia, nome").eq("loja_id", lojaId),
+    t.from("ticketeria_acoes_divulgacao").select("inicio").eq("loja_id", lojaId).eq("canal", CANAL_DA_IMPRENSA),
   ]);
   const idsDosEventos = (eventos ?? []).map(e => e.id);
   const fuso = new Map((locais ?? []).map(l => [l.id, l.fuso]));
   const [{ data: sessoesBrutas }, { data: ingressos }, { count: cupons }] = idsDosEventos.length === 0 ? [{ data: [] }, { data: [] }, { count: 0 }] : await Promise.all([
-    t.from("ticketeria_sessoes").select("local_id, inicio, cancelada_em").in("evento_id", idsDosEventos),
+    t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, fim, cancelada_em").in("evento_id", idsDosEventos),
     t.from("ticketeria_ingressos").select("id").in("evento_id", idsDosEventos),
     t.from("ticketeria_cupons").select("id", { count: "exact", head: true }).in("evento_id", idsDosEventos),
   ]);
-  const sessoes = (sessoesBrutas ?? []).filter(s => !s.cancelada_em).map(s => diaNoFuso(s.inicio, fuso.get(s.local_id)));
+  const validas = (sessoesBrutas ?? []).filter(s => !s.cancelada_em);
+  // A lotação de cada sessão (os lugares dos setores em uso da sala), para o controle do tamanho do que está à venda.
+  const idsDosLocais = [...new Set(validas.map(s => s.local_id))];
+  const { data: setores } = idsDosLocais.length > 0 ? await t.from("ticketeria_setores").select("sala_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false) : { data: [] };
+  const lugaresDaSala = new Map<string, number>();
+  for (const x of setores ?? []) lugaresDaSala.set(x.sala_id, (lugaresDaSala.get(x.sala_id) ?? 0) + x.lugares);
+  // A exposição (uma sessão que fica aberta vários dias) vale o período inteiro, não só o dia da abertura.
+  const abertas = abrirSessoesLongas(validas.map(s => ({ inicio: diaNoFuso(s.inicio, fuso.get(s.local_id)), fim: s.fim ? diaNoFuso(s.fim, fuso.get(s.local_id)) : null, lugares: lugaresDaSala.get(s.sala_id) ?? 0 })));
+  const sessoes = abertas.dias;
+  const lugaresDasSessoes = abertas.lugares;
   const idsDosIngressos = (ingressos ?? []).map(i => i.id);
   const lotes: { ordem: number; vendas_inicio: string | null }[] = [];
   for (let i = 0; i < idsDosIngressos.length; i += 150) {
@@ -88,19 +108,35 @@ async function controlesDaLoja(t: Cliente, lojaId: string, semanas: string[]): P
     for (const l of data ?? []) lotes.push({ ordem: l.ordem, vendas_inicio: l.vendas_inicio });
   }
   // As compras pagas: o dia, o cupom e cada item (quantidade e preço).
-  const pagos = await todas(async (de, ate) => t.from("ticketeria_pedidos").select("id, pago_em, cupom_id").eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, ate));
+  const pagos = await todas(async (de, ate) => t.from("ticketeria_pedidos").select("id, sessao_id, pago_em, cupom_id").eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, ate));
   const itens: ItemDePedidoPago[] = [];
   const porPedido = new Map(pagos.map(p => [p.id, p]));
+  // Para a curva da casa: cada ingresso de uma sessão que já aconteceu, com quantas semanas antes dela foi comprado.
+  const hoje = diaNoFuso(new Date());
+  const sessaoPorId = new Map(validas.map(s => [s.id, { evento: s.evento_id, dia: diaNoFuso(s.inicio, fuso.get(s.local_id)) }]));
+  // Para o boca a boca e a urgência: as vendas de cada sessão de um dia (a exposição fica de fora: tem outra lógica de lotação).
+  const vendasDasSessoes = new Map(validas.filter(s => !s.fim || diaNoFuso(s.fim, fuso.get(s.local_id)) <= diaNoFuso(s.inicio, fuso.get(s.local_id)))
+    .map(s => [s.id, { dia: diaNoFuso(s.inicio, fuso.get(s.local_id)), lugares: lugaresDaSala.get(s.sala_id) ?? 0, vendas: [] as { dia: string; quantidade: number }[] }]));
+  const vendasDaCurva: { evento: string; semanasAntes: number; quantidade: number }[] = [];
   for (let i = 0; i < pagos.length; i += 150) {
     const { data } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade, preco_centavos").in("pedido_id", pagos.slice(i, i + 150).map(p => p.id));
     for (const it of data ?? []) {
       const p = porPedido.get(it.pedido_id);
       if (p?.pago_em) itens.push({ dia: diaNoFuso(p.pago_em), quantidade: it.quantidade, precoCentavos: it.preco_centavos, comCupom: p.cupom_id !== null });
+      const sessao = p?.sessao_id ? sessaoPorId.get(p.sessao_id) : undefined;
+      const daSessao = p?.sessao_id ? vendasDasSessoes.get(p.sessao_id) : undefined;
+      if (p?.pago_em && daSessao) daSessao.vendas.push({ dia: diaNoFuso(p.pago_em), quantidade: it.quantidade });
+      if (p?.pago_em && sessao && sessao.dia < hoje) {
+        const dias = (Date.parse(`${sessao.dia}T00:00:00Z`) - Date.parse(`${diaNoFuso(p.pago_em)}T00:00:00Z`)) / 86400000;
+        if (dias >= 0) vendasDaCurva.push({ evento: sessao.evento, semanasAntes: Math.floor(dias / 7), quantidade: it.quantidade });
+      }
     }
   }
   const viradasDeLote = lotes.filter(l => l.ordem > 0 && l.vendas_inicio).map(l => diaNoFuso(l.vendas_inicio as string));
-  const controles = controlesDasSemanas({ semanas, sessoes, datasProprias: (datas ?? []).map(d => ({ dia: d.dia, nome: d.nome })), viradasDeLote, itens });
-  return { controles, resumo: { eventos: idsDosEventos.length, sessoes: sessoes.length, lotes: lotes.length, cupons: cupons ?? 0, datasProprias: (datas ?? []).length } };
+  const curva = curvaDaCasa(vendasDaCurva);
+  const controles = controlesDasSemanas({ semanas, sessoes, lugaresDasSessoes, curvaDaCasa: curva?.curva ?? null, datasProprias: (datas ?? []).map(d => ({ dia: d.dia, nome: d.nome })), viradasDeLote, itens, vendasDasSessoes: [...vendasDasSessoes.values()], imprensa: (imprensa ?? []).map(a => a.inicio) });
+  const permanente = atracaoOAnoTodo(validas.map(s => ({ evento: s.evento_id, inicio: diaNoFuso(s.inicio, fuso.get(s.local_id)), fim: s.fim ? diaNoFuso(s.fim, fuso.get(s.local_id)) : null })));
+  return { controles, resumo: { eventos: idsDosEventos.length, sessoes: validas.length, lotes: lotes.length, cupons: cupons ?? 0, datasProprias: (datas ?? []).length, curva, permanente, imprensa: (imprensa ?? []).length } };
 }
 
 /** A prontidão do modelo de uma loja: confere se há dado para o modelo rodar. */
@@ -127,12 +163,15 @@ export async function resultadoDaLoja(admin: Admin, lojaId: string): Promise<Res
   const e = boa?.[0];
   const falha = ultima?.[0]?.situacao === "falhou" ? ultima[0] : null;
   if (!e) return null;
-  const { data: linhas } = await t.from("ticketeria_mmm_canais").select("canal, porcento, intervalo_baixo, intervalo_alto, ingressos, gasto_centavos, custo_por_ingresso_centavos, saturacao_gasto_centavos, margem_grande, gasto_constante, curva").eq("execucao_id", e.id).order("porcento", { ascending: false });
+  const { data: linhas } = await t.from("ticketeria_mmm_canais").select("canal, porcento, intervalo_baixo, intervalo_alto, ingressos, gasto_centavos, custo_por_ingresso_centavos, saturacao_gasto_centavos, margem_grande, gasto_constante, curva, atraso, porcento_total").eq("execucao_id", e.id).order("porcento", { ascending: false });
   const canais: CanalDoResultado[] = (linhas ?? []).map(c => ({
     canal: c.canal, porcento: Number(c.porcento), baixo: Number(c.intervalo_baixo), alto: Number(c.intervalo_alto), ingressos: Number(c.ingressos), gasto_centavos: Number(c.gasto_centavos),
     custo_por_ingresso_centavos: c.custo_por_ingresso_centavos === null ? null : Number(c.custo_por_ingresso_centavos), saturacao_gasto_centavos: c.saturacao_gasto_centavos === null ? null : Number(c.saturacao_gasto_centavos),
-    margem_grande: c.margem_grande, gasto_constante: c.gasto_constante, curva: Array.isArray(c.curva) ? (c.curva as { gasto_centavos: number; ingressos: number }[]) : [],
+    margem_grande: c.margem_grande, gasto_constante: c.gasto_constante, curva: Array.isArray(c.curva) ? (c.curva as { gasto_centavos: number; ingressos: number }[]) : [], atraso: c.atraso === null ? null : Number(c.atraso),
+    porcento_total: c.porcento_total === null ? null : Number(c.porcento_total),
   }));
+  // O efeito total só vale quando o boca a boca ou a urgência pesam nesta rodada (senão é ruído em cima do direto): fica nulo e a tela mostra só o "sozinho".
+  if (!totalVale(lerPartesDaBase(e.base_partes) ?? [])) for (const c of canais) c.porcento_total = null;
   // O que os links mostram: os ingressos vendidos por canal de origem (todas as sessões).
   const painel = await divulgacaoDaLoja(admin, lojaId);
   const porCanalDoLink: Record<string, number> = {};
@@ -150,37 +189,70 @@ export async function resultadoDaLoja(admin: Admin, lojaId: string): Promise<Res
  */
 export async function ritmoDoProximoEvento(admin: Admin, lojaId: string, agora: number = Date.now()): Promise<RitmoDoEvento | null> {
   const t = clienteDaTicketeria(admin);
-  const { data: eventos } = await t.from("ticketeria_eventos").select("id, titulo").eq("loja_id", lojaId);
+  const { data: eventos } = await t.from("ticketeria_eventos").select("id, titulo, artista").eq("loja_id", lojaId);
   const idsDosEventos = (eventos ?? []).map(e => e.id);
   if (idsDosEventos.length === 0) return null;
-  const { data: sessoesBrutas } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").in("evento_id", idsDosEventos);
-  const futuras = (sessoesBrutas ?? []).filter(s => !s.cancelada_em && Date.parse(s.inicio) > agora).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
+  const { data: sessoesBrutas } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, cancelada_em").in("evento_id", idsDosEventos);
+  const validas = (sessoesBrutas ?? []).filter(s => !s.cancelada_em);
+  const futuras = validas.filter(s => Date.parse(s.inicio) > agora).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
   if (futuras.length === 0) return null;
-  const pagos = (await todas(async (de, ate) => t.from("ticketeria_pedidos").select("id, sessao_id, pago_em").eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, ate))).filter(p => p.pago_em);
-  const idsDasFuturas = new Set(futuras.map(s => s.id));
-  const dasFuturas = pagos.filter(p => idsDasFuturas.has(p.sessao_id));
+  const pagos = (await todas(async (de, ate) => t.from("ticketeria_pedidos").select("id, sessao_id, pago_em, comprador_email").eq("loja_id", lojaId).eq("situacao", "pago").order("created_at", { ascending: true }).range(de, ate))).filter(p => p.pago_em);
+  const idsDasSessoes = new Set(validas.map(s => s.id));
+  const dasSessoes = pagos.filter(p => idsDasSessoes.has(p.sessao_id));
+  // Quantidade e valor de cada pedido (preço médio só de ingresso pago: cortesia e gratuito não dizem do preço).
   const quantidade = new Map<string, number>();
-  for (let i = 0; i < dasFuturas.length; i += 150) {
-    const { data } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade").in("pedido_id", dasFuturas.slice(i, i + 150).map(p => p.id));
-    for (const it of data ?? []) quantidade.set(it.pedido_id, (quantidade.get(it.pedido_id) ?? 0) + it.quantidade);
+  const valorPago = new Map<string, { qtd: number; valor: number }>();
+  for (let i = 0; i < dasSessoes.length; i += 150) {
+    const { data } = await t.from("ticketeria_pedido_itens").select("pedido_id, quantidade, preco_centavos").in("pedido_id", dasSessoes.slice(i, i + 150).map(p => p.id));
+    for (const it of data ?? []) {
+      quantidade.set(it.pedido_id, (quantidade.get(it.pedido_id) ?? 0) + it.quantidade);
+      if (it.preco_centavos > 0) { const v = valorPago.get(it.pedido_id) ?? { qtd: 0, valor: 0 }; v.qtd += it.quantidade; v.valor += it.quantidade * it.preco_centavos; valorPago.set(it.pedido_id, v); }
+    }
   }
-  const escolhida = futuras.find(s => dasFuturas.some(p => p.sessao_id === s.id));
+  const escolhida = futuras.find(s => dasSessoes.some(p => p.sessao_id === s.id));
   if (!escolhida) return null;
-  const [{ data: local }, { data: setores }] = await Promise.all([
-    t.from("ticketeria_locais").select("fuso").eq("id", escolhida.local_id).maybeSingle(),
-    t.from("ticketeria_setores").select("lugares").eq("local_id", escolhida.local_id).eq("arquivado", false),
+  const idsDosLocais = [...new Set(validas.map(s => s.local_id))];
+  const [{ data: locais }, { data: setores }] = await Promise.all([
+    t.from("ticketeria_locais").select("id, nome, fuso").in("id", idsDosLocais),
+    t.from("ticketeria_setores").select("sala_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false),
   ]);
-  const fuso = local?.fuso ?? undefined;
-  const vendasPorDia: Record<string, number> = {};
-  let vendidos = 0;
-  for (const p of dasFuturas.filter(x => x.sessao_id === escolhida.id)) {
-    const n = quantidade.get(p.id) ?? 0;
-    vendidos += n;
-    const dia = diaNoFuso(p.pago_em as string, fuso);
-    vendasPorDia[dia] = (vendasPorDia[dia] ?? 0) + n;
+  const lugaresDaSala = new Map<string, number>();
+  for (const x of setores ?? []) lugaresDaSala.set(x.sala_id, (lugaresDaSala.get(x.sala_id) ?? 0) + x.lugares);
+  const doLocal = new Map((locais ?? []).map(l => [l.id, l]));
+  const titulo = new Map((eventos ?? []).map(e => [e.id, e.titulo]));
+  // As vendas de uma sessão: por dia (do pagamento, no fuso do local), o total e o preço médio.
+  const vendasDaSessao = (sessao: (typeof validas)[number]) => {
+    const fuso = doLocal.get(sessao.local_id)?.fuso ?? undefined;
+    const porDia: Record<string, number> = {};
+    let total = 0, qtdPaga = 0, valor = 0;
+    for (const p of dasSessoes.filter(x => x.sessao_id === sessao.id)) {
+      const n = quantidade.get(p.id) ?? 0;
+      total += n;
+      porDia[diaNoFuso(p.pago_em as string, fuso)] = (porDia[diaNoFuso(p.pago_em as string, fuso)] ?? 0) + n;
+      const v = valorPago.get(p.id);
+      if (v) { qtdPaga += v.qtd; valor += v.valor; }
+    }
+    return { fuso, porDia, total, precoMedioCentavos: qtdPaga > 0 ? Math.round(valor / qtdPaga) : 0, diaDaSessao: diaNoFuso(sessao.inicio, fuso) };
+  };
+  const atual = vendasDaSessao(escolhida);
+  const lugares = lugaresDaSala.get(escolhida.sala_id) ?? 0;
+  const ritmo = ritmoDoEvento({ evento: titulo.get(escolhida.evento_id) ?? "Evento", vendasPorDia: atual.porDia, vendidos: atual.total, lugares, hoje: diaNoFuso(new Date(agora), atual.fuso), diaDaSessao: atual.diaDaSessao });
+  if (!ritmo) return null;
+  // O público em comum com o evento atual (quem comprou os dois) e o mesmo artista: o que é "parecido" vem da casa (lib/ticketeria/publico-em-comum.ts).
+  const compradores = compradoresPorEvento(dasSessoes.map(p => ({ comprador_email: p.comprador_email, sessao_id: p.sessao_id })), Object.fromEntries(validas.map(s => [s.id, s.evento_id])));
+  const emComum = new Map(eventosEmComum(compradores, escolhida.evento_id).map(x => [x.eventoId, x.parte]));
+  const artistaDe = new Map((eventos ?? []).map(e => [e.id, normalizarArtista(e.artista)]));
+  const artistaAtual = artistaDe.get(escolhida.evento_id) ?? "";
+  // As curvas dos eventos que já aconteceram (para a comparação): cada sessão passada que vendeu.
+  const curvas: CurvaDoEvento[] = [];
+  for (const s of validas.filter(x => Date.parse(x.inicio) <= agora)) {
+    const v = vendasDaSessao(s);
+    if (v.total <= 0) continue;
+    curvas.push({
+      id: s.id, nome: titulo.get(s.evento_id) ?? "Evento", quando: new Intl.DateTimeFormat("pt-BR", { month: "short", year: "numeric", timeZone: v.fuso ?? "America/Sao_Paulo" }).format(new Date(s.inicio)).replace(" de ", "/").replace(".", ""),
+      local: doLocal.get(s.local_id)?.nome ?? "Local", localId: s.local_id, precoMedioCentavos: v.precoMedioCentavos, lugares: lugaresDaSala.get(s.sala_id) ?? 0, acumulado: acumuladoDaSessao(v.diaDaSessao, v.porDia),
+      eventoId: s.evento_id, publicoEmComum: s.evento_id === escolhida.evento_id ? null : emComum.get(s.evento_id) ?? 0, mesmoArtista: !!artistaAtual && artistaDe.get(s.evento_id) === artistaAtual && s.evento_id !== escolhida.evento_id,
+    });
   }
-  return ritmoDoEvento({
-    evento: (eventos ?? []).find(e => e.id === escolhida.evento_id)?.titulo ?? "Evento", vendasPorDia, vendidos, lugares: (setores ?? []).reduce((s, x) => s + x.lugares, 0),
-    hoje: diaNoFuso(new Date(agora), fuso), diaDaSessao: diaNoFuso(escolhida.inicio, fuso),
-  });
+  return { ...ritmo, comparacao: { sessaoId: escolhida.id, localId: escolhida.local_id, precoMedioCentavos: atual.precoMedioCentavos, compradores: compradores.get(escolhida.evento_id)?.size ?? 0, acumulado: acumuladoDaSessao(atual.diaDaSessao, atual.porDia), curvas } };
 }

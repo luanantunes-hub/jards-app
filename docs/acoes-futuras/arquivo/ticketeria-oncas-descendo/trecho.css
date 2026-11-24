@@ -1,0 +1,13 @@
+/* duas onças descendo de corda até o palco da arena (que fica a ~87,5% da largura do conteúdo). Uma vez só:
+   1 s a corda aparece, 2 s elas entram, 3,6 s param sobre o palco, 6,4 s a corda as puxa para cima, 8 s acabou. */
+.tku-bichos { position:absolute; z-index:2; top:58px; left:calc(87.5% - 0.75 * max(64px, (100% - 1280px - 10vw) / 2 + 64px) - 100px); width:200px; height:384px; pointer-events:none; visibility:hidden; }
+.tku-bichos.desce { visibility:visible; animation:tku-desce-bichos 8s linear both; }
+@keyframes tku-desce-bichos {
+  0%     { transform:translateY(-442px); }
+  12.5%  { transform:translateY(-378px); }
+  25%    { transform:translateY(-149px); animation-timing-function:cubic-bezier(.22,.72,.3,1); }
+  45%    { transform:translateY(0); }
+  80%    { transform:translateY(0); animation-timing-function:cubic-bezier(.55,0,1,.6); }
+  100%   { transform:translateY(-442px); }
+}
+@media (max-width:1023px), (prefers-reduced-motion:reduce) { .tku-bichos { display:none; } }

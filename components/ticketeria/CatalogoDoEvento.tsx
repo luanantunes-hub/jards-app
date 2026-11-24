@@ -1,5 +1,6 @@
 "use client";
 
+import { rotuloDoSetor, temVariasSalas, type SalaDoEspaco } from "@/lib/ticketeria/salas";
 import { useEffect, useMemo, useState } from "react";
 import { EyeOff, Plus } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
@@ -10,7 +11,7 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { CATEGORIAS_DO_INGRESSO, type CategoriaDoIngresso } from "@/lib/ticketeria/estados";
 import { partesNoFuso, quandoDaSessao } from "@/lib/ticketeria/eventos";
 import {
-  NOME_PADRAO, ROTULO_DA_CATEGORIA, lerIngresso, lerLote, loteDaVez, mensagemDoErroDoCatalogo, nomeDoProximoLote, ofertaNoSetor,
+  NOME_PADRAO, ROTULO_DA_CATEGORIA, lerIngresso, lerLote, lerPrecosDaSessao, loteDaVez, mensagemDoErroDoCatalogo, nomeDaMeia, nomeDoProximoLote, podeTerMeia,
   precoDaMeia, precoParaMostrar, publicoPorPadrao, semPreco, situacaoDoLote,
 } from "@/lib/ticketeria/catalogo";
 import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
@@ -18,9 +19,11 @@ import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosE
 // O catálogo do evento (T3): os ingressos por setor e os lotes de cada um. Sem venda ainda (T5): os números são da oferta.
 
 type Local = { id: string; nome: string; fuso: string; arquivado: boolean };
-type Setor = { id: string; local_id: string; nome: string; lugares: number; arquivado: boolean };
-type Ingresso = { id: string; setor_id: string; nome: string; categoria: CategoriaDoIngresso; limite_por_pedido: number; publico: boolean; ordem: number; arquivado: boolean };
+type Setor = { id: string; local_id: string; sala_id: string; nome: string; lugares: number; arquivado: boolean };
+type Ingresso = { id: string; setor_id: string; nome: string; categoria: CategoriaDoIngresso; limite_por_pedido: number; publico: boolean; ordem: number; arquivado: boolean; meia_de: string | null };
 type Lote = { id: string; ingresso_id: string; nome: string; ordem: number; preco_centavos: number; quantidade: number; vendas_inicio: string | null; vendas_fim: string | null };
+type SessaoDoEvento = { id: string; local_id: string; inicio: string; cancelada_em: string | null };
+type PrecoDaSessao = { sessao_id: string; lote_id: string; preco_centavos: number };
 type Folha = { tipo: "ingresso"; ingresso?: Ingresso } | { tipo: "lote"; ingresso: Ingresso; lote?: Lote };
 
 const numero = (n: number) => n.toLocaleString("pt-BR");
@@ -28,8 +31,8 @@ const PEQUENO = "h-8 rounded-xl px-2.5 text-[0.6875rem] font-normal text-black/5
 
 // ─── Folhas ─────────────────────────────────────────────────────────────────
 
-function IngressoSheet({ organizationId, eventoId, setores, locais, ingresso, ordem, onClose, onSaved }: {
-  organizationId: string; eventoId: string; setores: Setor[]; locais: Local[]; ingresso?: Ingresso; ordem: number; onClose: () => void; onSaved: () => void;
+function IngressoSheet({ organizationId, eventoId, setores, locais, salas, ingresso, meia, ordem, onClose, onSaved }: {
+  organizationId: string; eventoId: string; setores: Setor[]; locais: Local[]; salas: SalaDoEspaco[]; ingresso?: Ingresso; /** A meia-entrada ligada a este ingresso, se já existe (ativa ou arquivada). */ meia?: Ingresso; ordem: number; onClose: () => void; onSaved: () => void;
 }) {
   const opcoes = setores.filter(setor => (!setor.arquivado && !locais.find(local => local.id === setor.local_id)?.arquivado) || setor.id === ingresso?.setor_id);
   const [setorId, setSetorId] = useState(ingresso?.setor_id ?? opcoes[0]?.id ?? "");
@@ -37,6 +40,7 @@ function IngressoSheet({ organizationId, eventoId, setores, locais, ingresso, or
   const [nome, setNome] = useState(ingresso?.nome ?? NOME_PADRAO.inteira);
   const [limite, setLimite] = useState(String(ingresso?.limite_por_pedido ?? 10));
   const [publico, setPublico] = useState(ingresso?.publico ?? true);
+  const [comMeia, setComMeia] = useState(Boolean(meia && !meia.arquivado));
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -56,9 +60,26 @@ function IngressoSheet({ organizationId, eventoId, setores, locais, ingresso, or
     setSalvando(true);
     setErro(null);
     const ticketeria = clienteDaTicketeria(createClient());
-    const { error } = ingresso
-      ? await ticketeria.from("ticketeria_ingressos").update({ setor_id: setorId, ...leitura.valor }).eq("id", ingresso.id)
-      : await ticketeria.from("ticketeria_ingressos").insert({ organization_id: organizationId, evento_id: eventoId, setor_id: setorId, ordem, ...leitura.valor });
+    const querMeia = comMeia && podeTerMeia(categoria);
+    let error: { code?: string; message?: string } | null = null;
+    let idDaInteira = ingresso?.id ?? "";
+    if (ingresso) {
+      error = (await ticketeria.from("ticketeria_ingressos").update({ setor_id: setorId, ...leitura.valor }).eq("id", ingresso.id)).error;
+    } else {
+      const criado = await ticketeria.from("ticketeria_ingressos").insert({ organization_id: organizationId, evento_id: eventoId, setor_id: setorId, ordem, ...leitura.valor }).select("id").single();
+      error = criado.error;
+      idDaInteira = criado.data?.id ?? "";
+    }
+    // A meia-entrada é o desconto de 50% da inteira: o banco espelha os lotes dela (metade do preço) e a faz seguir o setor, o limite e o "aparece ao público".
+    if (!error && idDaInteira) {
+      if (querMeia && !meia) {
+        error = (await ticketeria.from("ticketeria_ingressos").insert({ organization_id: organizationId, evento_id: eventoId, setor_id: setorId, nome: nomeDaMeia(leitura.valor.nome), categoria: "meia", ordem: ordem + 1, limite_por_pedido: leitura.valor.limite_por_pedido, publico: leitura.valor.publico, meia_de: idDaInteira })).error;
+      } else if (querMeia && meia?.arquivado) {
+        error = (await ticketeria.from("ticketeria_ingressos").update({ arquivado: false }).eq("id", meia.id)).error;
+      } else if (!querMeia && meia && !meia.arquivado) {
+        error = (await ticketeria.from("ticketeria_ingressos").update({ arquivado: true }).eq("id", meia.id)).error;
+      }
+    }
     setSalvando(false);
     if (error) { setErro(mensagemDoErroDoCatalogo(error)); return; }
     onSaved();
@@ -80,9 +101,9 @@ function IngressoSheet({ organizationId, eventoId, setores, locais, ingresso, or
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
         {opcoes.length === 0 ? (
-          <p className="rounded-xl border border-black/[.08] px-3 py-3 text-[0.75rem] text-black/55">O ingresso é de um setor de um local. Cadastre o local e os setores em Locais, no menu.</p>
+          <p className="rounded-xl border border-black/[.08] px-3 py-3 text-[0.75rem] text-black/55">O ingresso é de um setor de um local. Cadastre o local e os setores em Configurações, na aba Espaços.</p>
         ) : (
-          <div><span className={ROTULO}>Setor</span><Dropdown ariaLabel="Setor do ingresso" value={setorId} onChange={setSetorId} disabled={salvando} options={opcoes.map(setor => ({ value: setor.id, label: `${locais.find(local => local.id === setor.local_id)?.nome ?? "Local"} · ${setor.nome}` }))} /></div>
+          <div><span className={ROTULO}>Setor</span><Dropdown ariaLabel="Setor do ingresso" value={setorId} onChange={setSetorId} disabled={salvando} options={opcoes.map(setor => ({ value: setor.id, label: rotuloDoSetor({ espaco: locais.find(local => local.id === setor.local_id)?.nome, sala: salas.find(sala => sala.id === setor.sala_id)?.nome, setor: setor.nome, variasSalas: temVariasSalas(salas, setor.local_id) }) }))} /></div>
         )}
         <div><span className={ROTULO}>Categoria</span><Dropdown ariaLabel="Categoria do ingresso" value={categoria} onChange={trocarCategoria} disabled={salvando} options={CATEGORIAS_DO_INGRESSO.map(c => ({ value: c, label: ROTULO_DA_CATEGORIA[c] }))} /></div>
         <div><label className={ROTULO} htmlFor="in-nome">Nome</label><input id="in-nome" autoFocus className={CAMPO} value={nome} onChange={e => setNome(e.target.value)} placeholder="Inteira" maxLength={120} disabled={salvando} /></div>
@@ -93,15 +114,26 @@ function IngressoSheet({ organizationId, eventoId, setores, locais, ingresso, or
             Aparece ao público
           </label>
         </div>
-        {categoria === "meia" && <p className="text-[0.75rem] text-black/55">A meia-entrada custa metade da inteira (Lei 12.933/2013). A cota de 40% e a conferência do documento chegam numa etapa seguinte.</p>}
+        {podeTerMeia(categoria) && (
+          <div>
+            <label className="flex items-center gap-2 text-[0.8125rem] text-[#282525]">
+              <input type="checkbox" checked={comMeia} onChange={e => setComMeia(e.target.checked)} disabled={salvando} className="h-4 w-4 accent-[#1C0E33]" />
+              Oferecer meia-entrada (50% de desconto)
+            </label>
+            <p className="mt-1 text-[0.75rem] text-black/55">A meia custa metade da inteira e vende os mesmos lugares. O preço dela acompanha o da inteira: você só cuida dos lotes da inteira.</p>
+          </div>
+        )}
+        {categoria === "meia" && <p className="text-[0.75rem] text-black/55">A meia-entrada custa metade da inteira.</p>}
         {categoria === "cortesia" && <p className="text-[0.75rem] text-black/55">A cortesia não tem preço e, por padrão, não aparece ao público: a produção distribui.</p>}
       </div>
     </TopSheet>
   );
 }
 
-function LoteSheet({ organizationId, ingresso, fuso, lote, quantosLotes, sugestao, onClose, onSaved }: {
-  organizationId: string; ingresso: Ingresso; fuso: string; lote?: Lote; quantosLotes: number; sugestao: number | null; onClose: () => void; onSaved: () => void;
+function LoteSheet({ organizationId, ingresso, fuso, lote, quantosLotes, sugestao, sessoes, precosDoLote, onClose, onSaved }: {
+  organizationId: string; ingresso: Ingresso; fuso: string; lote?: Lote; quantosLotes: number; sugestao: number | null;
+  /** As sessões que ainda vão acontecer (para o preço por sessão) e os preços próprios que este lote já tem nelas. */
+  sessoes: SessaoDoEvento[]; precosDoLote: PrecoDaSessao[]; onClose: () => void; onSaved: () => void;
 }) {
   const inicio = lote?.vendas_inicio ? partesNoFuso(lote.vendas_inicio, fuso) : { dia: "", hora: "" };
   const fim = lote?.vendas_fim ? partesNoFuso(lote.vendas_fim, fuso) : { dia: "", hora: "" };
@@ -115,18 +147,35 @@ function LoteSheet({ organizationId, ingresso, fuso, lote, quantosLotes, sugesta
   const [fimHora, setFimHora] = useState(fim.hora);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  // O preço por sessão (plano, seção 11, P0): só num lote que já existe, de ingresso pago que não é a meia (a meia vale metade da inteira da sessão).
+  const podePrecoPorSessao = Boolean(lote) && !gratis && ingresso.meia_de === null && sessoes.length >= 2;
+  const formatar = (centavos: number) => (centavos / 100).toFixed(2).replace(".", ",");
+  const [porSessao, setPorSessao] = useState<Record<string, string>>(() => Object.fromEntries(sessoes.map(s => [s.id, precosDoLote.find(p => p.sessao_id === s.id) ? formatar(precosDoLote.find(p => p.sessao_id === s.id)!.preco_centavos) : ""])));
 
   async function salvar(fechar: () => void) {
     const leitura = lerLote({ nome, preco, quantidade, inicioDia, inicioHora, fimDia, fimHora }, ingresso.categoria, fuso);
     if (!leitura.ok) { setErro(leitura.erro); return; }
+    const precos = podePrecoPorSessao ? lerPrecosDaSessao(porSessao) : null;
+    if (precos && !precos.ok) { setErro(precos.erro); return; }
     setSalvando(true);
     setErro(null);
     const ticketeria = clienteDaTicketeria(createClient());
     const { error } = lote
       ? await ticketeria.from("ticketeria_lotes").update(leitura.valor).eq("id", lote.id)
       : await ticketeria.from("ticketeria_lotes").insert({ organization_id: organizationId, ingresso_id: ingresso.id, ordem: quantosLotes, ...leitura.valor });
+    if (error) { setSalvando(false); setErro(mensagemDoErroDoCatalogo(error)); return; }
+    // Só o que mudou: preço novo ou alterado grava; em branco apaga (a sessão volta ao preço do lote).
+    if (lote && precos?.ok) {
+      for (const [sessaoId, novo] of precos.precos) {
+        const antigo = precosDoLote.find(p => p.sessao_id === sessaoId)?.preco_centavos ?? null;
+        if (novo === antigo) continue;
+        const { error: erroDoPreco } = novo === null
+          ? await ticketeria.from("ticketeria_precos_da_sessao").delete().eq("sessao_id", sessaoId).eq("lote_id", lote.id)
+          : await ticketeria.from("ticketeria_precos_da_sessao").upsert({ organization_id: organizationId, sessao_id: sessaoId, lote_id: lote.id, preco_centavos: novo }, { onConflict: "sessao_id,lote_id" });
+        if (erroDoPreco) { setSalvando(false); setErro(mensagemDoErroDoCatalogo(erroDoPreco)); onSaved(); return; }
+      }
+    }
     setSalvando(false);
-    if (error) { setErro(mensagemDoErroDoCatalogo(error)); return; }
     onSaved();
     fechar();
   }
@@ -165,6 +214,20 @@ function LoteSheet({ organizationId, ingresso, fuso, lote, quantosLotes, sugesta
             <p className="text-[0.75rem] text-black/55">Sem começo, abre quando o evento é publicado; sem fim, vai até a sessão. O lote seguinte abre quando este esgota ou termina.</p>
           </div>
         </details>
+        {podePrecoPorSessao && lote && (
+          <details className="rounded-xl border border-black/[.08]" open={precosDoLote.length > 0}>
+            <summary className="cursor-pointer px-3 py-2.5 text-[0.75rem] font-normal text-black/60">Preço por sessão</summary>
+            <div className="space-y-2 border-t border-black/[.06] px-3 py-3">
+              <p className="text-[0.75rem] text-black/55">Em branco, a sessão cobra o preço do lote ({precoParaMostrar(lote.preco_centavos)}). A meia acompanha: metade do preço da sessão.</p>
+              {sessoes.map(s => (
+                <div key={s.id} className="grid grid-cols-[1fr_8rem] items-center gap-3">
+                  <label className="text-[0.8125rem] text-[#282525]" htmlFor={`lo-ps-${s.id}`}>{quandoDaSessao(s.inicio, fuso)}</label>
+                  <input id={`lo-ps-${s.id}`} inputMode="decimal" className={CAMPO} value={porSessao[s.id] ?? ""} onChange={e => setPorSessao(atual => ({ ...atual, [s.id]: e.target.value }))} placeholder={formatar(lote.preco_centavos)} disabled={salvando} />
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
       </div>
     </TopSheet>
   );
@@ -172,27 +235,32 @@ function LoteSheet({ organizationId, ingresso, fuso, lote, quantosLotes, sugesta
 
 // ─── A seção ────────────────────────────────────────────────────────────────
 
-/** Os ingressos do evento, agrupados por setor, com os lotes e a oferta de cada setor por sessão. */
-export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, podeEditar }: { organizationId: string; eventoId: string; locaisDasSessoes: string[]; podeEditar: boolean }) {
-  const [dados, setDados] = useState<{ locais: Local[]; setores: Setor[]; ingressos: Ingresso[]; lotes: Lote[] } | null>(null);
+/** Os ingressos do evento, agrupados por setor, com os lotes e os lugares de cada setor. */
+export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, podeEditar, onMudou }: { organizationId: string; eventoId: string; locaisDasSessoes: string[]; podeEditar: boolean; /** Avisa quando um ingresso ou lote (e o preço por sessão) é salvo. */ onMudou?: () => void }) {
+  const [dados, setDados] = useState<{ salas: SalaDoEspaco[]; locais: Local[]; setores: Setor[]; ingressos: Ingresso[]; lotes: Lote[]; sessoes: SessaoDoEvento[]; precos: PrecoDaSessao[] } | null>(null);
   const [folha, setFolha] = useState<Folha | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
-  const recarregar = () => setVersao(atual => atual + 1);
+  const recarregar = () => { setVersao(atual => atual + 1); onMudou?.(); };
 
   useEffect(() => {
     let ativo = true;
     void (async () => {
       const ticketeria = clienteDaTicketeria(createClient());
-      const [lo, se, ing] = await Promise.all([
+      const [lo, se, ing, ses, sa] = await Promise.all([
         ticketeria.from("ticketeria_locais").select("id, nome, fuso, arquivado").eq("organization_id", organizationId).order("nome"),
-        ticketeria.from("ticketeria_setores").select("id, local_id, nome, lugares, arquivado").eq("organization_id", organizationId).order("ordem").order("nome"),
-        ticketeria.from("ticketeria_ingressos").select("id, setor_id, nome, categoria, limite_por_pedido, publico, ordem, arquivado").eq("evento_id", eventoId).order("ordem"),
+        ticketeria.from("ticketeria_setores").select("id, local_id, sala_id, nome, lugares, arquivado").eq("organization_id", organizationId).order("ordem").order("nome"),
+        ticketeria.from("ticketeria_ingressos").select("id, setor_id, nome, categoria, limite_por_pedido, publico, ordem, arquivado, meia_de").eq("evento_id", eventoId).order("ordem"),
+        ticketeria.from("ticketeria_sessoes").select("id, local_id, inicio, cancelada_em").eq("evento_id", eventoId).order("inicio"),
+        ticketeria.from("ticketeria_salas").select("id, local_id, nome, ordem, arquivado").eq("organization_id", organizationId),
       ]);
       const ids = (ing.data ?? []).map(ingresso => ingresso.id);
       const lt = ids.length > 0 ? await ticketeria.from("ticketeria_lotes").select("id, ingresso_id, nome, ordem, preco_centavos, quantidade, vendas_inicio, vendas_fim").in("ingresso_id", ids).order("ordem") : { data: [], error: null };
+      // Os preços próprios das sessões: se faltar o que ler, o catálogo segue sem eles (cada sessão cobra o preço do lote).
+      const loteIds = (lt.data ?? []).map(lote => lote.id);
+      const pr = loteIds.length > 0 ? await ticketeria.from("ticketeria_precos_da_sessao").select("sessao_id, lote_id, preco_centavos").in("lote_id", loteIds) : { data: [], error: null };
       if (!ativo) return;
-      setDados({ locais: (lo.data ?? []) as Local[], setores: (se.data ?? []) as Setor[], ingressos: (ing.data ?? []) as Ingresso[], lotes: (lt.data ?? []) as Lote[] });
+      setDados({ salas: (sa.data ?? []) as SalaDoEspaco[], locais: (lo.data ?? []) as Local[], setores: (se.data ?? []) as Setor[], ingressos: (ing.data ?? []) as Ingresso[], lotes: (lt.data ?? []) as Lote[], sessoes: (ses.data ?? []) as SessaoDoEvento[], precos: (pr.data ?? []) as PrecoDaSessao[] });
       setErro(lo.error || se.error || ing.error || lt.error ? "Não foi possível carregar os ingressos. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
@@ -209,8 +277,13 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
       const local = dados.locais.find(item => item.id === setor?.local_id);
       return {
         setor, local,
-        oferta: setor ? ofertaNoSetor(setor, dados.ingressos, dados.lotes) : null,
-        ingressos: dados.ingressos.filter(ingresso => ingresso.setor_id === setorId).map(ingresso => ({ ingresso, lotes: dados.lotes.filter(lote => lote.ingresso_id === ingresso.id) })),
+        lugares: setor ? setor.lugares : null,
+        // A meia ligada à inteira não é um item à parte: aparece sob a inteira, como o desconto dela.
+        ingressos: dados.ingressos.filter(ingresso => ingresso.setor_id === setorId && !ingresso.meia_de).map(ingresso => {
+          const meia = dados.ingressos.find(outro => outro.meia_de === ingresso.id && !outro.arquivado);
+          const loteDaMeia = meia ? loteDaVez(dados.lotes.filter(lote => lote.ingresso_id === meia.id)) : null;
+          return { ingresso, lotes: dados.lotes.filter(lote => lote.ingresso_id === ingresso.id), meia: meia ?? null, precoDaMeia: loteDaMeia?.preco_centavos ?? null };
+        }),
       };
     });
   }, [dados]);
@@ -247,18 +320,14 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
         </div>
       ) : (
         <div className="space-y-3">
-          {grupos.map(({ setor, local, oferta, ingressos }) => (
+          {grupos.map(({ setor, local, lugares, ingressos }) => (
             <div key={setor?.id ?? "sem-setor"} className="overflow-hidden rounded-xl border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b bg-black/[.015] px-4 py-2.5" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <p className="text-[0.75rem] font-normal text-[#282525]">{local?.nome ?? "Local"} · {setor?.nome ?? "Setor"}</p>
-                {oferta && (
-                  <p className="text-[0.6875rem] tabular-nums text-black/50">
-                    {numero(oferta.lugares)} lugares · {numero(oferta.ofertados)} no catálogo · {oferta.livres >= 0 ? `${numero(oferta.livres)} sem ingresso` : `${numero(-oferta.livres)} a mais que os lugares`}
-                  </p>
-                )}
+                <p className="text-[0.75rem] font-normal text-[#282525]">{rotuloDoSetor({ espaco: local?.nome, sala: dados.salas.find(sala => sala.id === setor?.sala_id)?.nome, setor: setor?.nome ?? "Setor", variasSalas: temVariasSalas(dados.salas, setor?.local_id ?? "") })}</p>
+                {lugares !== null && <p className="text-[0.6875rem] tabular-nums text-black/50">{numero(lugares)} lugares para todos os ingressos</p>}
               </div>
               <ul className="divide-y divide-black/[.06]">
-                {ingressos.map(({ ingresso, lotes }) => {
+                {ingressos.map(({ ingresso, lotes, meia, precoDaMeia: precoDaMeiaNaVez }) => {
                   const fuso = fusoDo(ingresso);
                   return (
                     <li key={ingresso.id} className="px-4 py-3">
@@ -277,6 +346,7 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
                           </span>
                         )}
                       </div>
+                      {meia && <p className="mt-1 text-[0.6875rem] text-black/45">{meia.nome} · 50% de desconto{precoDaMeiaNaVez !== null ? `, ${precoParaMostrar(precoDaMeiaNaVez)}` : ""} · mesmos lugares e lotes da inteira</p>}
                       {lotes.length === 0 ? (
                         <p className="mt-2 text-[0.6875rem] text-black/45">Sem lote: ponha o primeiro, com o preço e a quantidade por sessão.</p>
                       ) : (
@@ -285,7 +355,7 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
                             <li key={lote.id}>
                               <button type="button" disabled={!podeEditar} onClick={() => setFolha({ tipo: "lote", ingresso, lote })} className={`rounded-xl border border-black/[.12] bg-white px-2.5 py-1.5 text-left text-[0.6875rem] transition enabled:hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${situacaoDoLote(lote) === "encerrado" ? "text-black/40" : "text-black/65"}`}>
                                 <span className="block font-normal text-[#282525]">{lote.nome} · {precoParaMostrar(lote.preco_centavos)}</span>
-                                <span className="block tabular-nums">{numero(lote.quantidade)} por sessão · {janela(lote, fuso)}</span>
+                                <span className="block tabular-nums">{numero(lote.quantidade)} por sessão · {janela(lote, fuso)}{(() => { const n = dados.precos.filter(p => p.lote_id === lote.id).length; return n > 0 ? ` · preço próprio em ${n} ${n === 1 ? "sessão" : "sessões"}` : ""; })()}</span>
                               </button>
                             </li>
                           ))}
@@ -299,8 +369,8 @@ export function CatalogoDoEvento({ organizationId, eventoId, locaisDasSessoes, p
           ))}
         </div>
       )}
-      {folha?.tipo === "ingresso" && dados && <IngressoSheet organizationId={organizationId} eventoId={eventoId} setores={setoresParaEscolher} locais={dados.locais} ingresso={folha.ingresso} ordem={dados.ingressos.length} onClose={() => setFolha(null)} onSaved={recarregar} />}
-      {folha?.tipo === "lote" && dados && <LoteSheet organizationId={organizationId} ingresso={folha.ingresso} fuso={fusoDo(folha.ingresso)} lote={folha.lote} quantosLotes={dados.lotes.filter(lote => lote.ingresso_id === folha.ingresso.id).length} sugestao={sugestaoDaMeia(folha.ingresso)} onClose={() => setFolha(null)} onSaved={recarregar} />}
+      {folha?.tipo === "ingresso" && dados && <IngressoSheet organizationId={organizationId} eventoId={eventoId} setores={setoresParaEscolher} locais={dados.locais} salas={dados.salas} ingresso={folha.ingresso} meia={folha.ingresso ? dados.ingressos.find(outro => outro.meia_de === folha.ingresso?.id) : undefined} ordem={dados.ingressos.length} onClose={() => setFolha(null)} onSaved={recarregar} />}
+      {folha?.tipo === "lote" && dados && <LoteSheet organizationId={organizationId} ingresso={folha.ingresso} fuso={fusoDo(folha.ingresso)} lote={folha.lote} quantosLotes={dados.lotes.filter(lote => lote.ingresso_id === folha.ingresso.id).length} sugestao={sugestaoDaMeia(folha.ingresso)} sessoes={dados.sessoes.filter(s => !s.cancelada_em && Date.parse(s.inicio) > Date.now())} precosDoLote={folha.lote ? dados.precos.filter(p => p.lote_id === folha.lote?.id) : []} onClose={() => setFolha(null)} onSaved={recarregar} />}
     </section>
   );
 }

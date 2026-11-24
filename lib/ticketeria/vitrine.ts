@@ -35,7 +35,7 @@ export function totalNasFaixas(faixas: readonly FaixaDePreco[], quantidade: numb
 }
 
 /** `numerado`: o ingresso é de um setor com lugares numerados (a pessoa escolhe os lugares no mapa); traz o nome do setor. */
-export type IngressoDaVitrine = { id: string; nome: string; descricao: string | null; limite: number; faixas: FaixaDePreco[]; numerado?: { setor: string } };
+export type IngressoDaVitrine = { id: string; nome: string; descricao: string | null; limite: number; faixas: FaixaDePreco[]; numerado?: { setor: string }; /** O preço está ajustado pela demanda (preço dinâmico, plano seção 11): a compra mostra o ⓘ com a explicação. Ausente no preço-base. */ ajustado?: boolean };
 
 /** As faixas de preço limitadas a `maximo` ingressos, tirando das primeiras (o que se compra primeiro) e cortando o resto. */
 export function limitarFaixas(faixas: readonly FaixaDePreco[], maximo: number): FaixaDePreco[] {

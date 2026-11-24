@@ -7,6 +7,7 @@ import { ROTULO_DA_CLASSIFICACAO } from "@/lib/ticketeria/eventos";
 import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
 import { MAX_PARCELAS, PARCELAMENTO_LIBERADO } from "@/lib/ticketeria/pagamento/compra";
 import { estadoDaVenda, faixasDoIngresso, limitarFaixas, type IngressoDaVitrine, type VitrineDaSessao } from "@/lib/ticketeria/vitrine";
+import { aplicarPrecosDaSessao } from "@/lib/ticketeria/preco-da-sessao";
 
 type Admin = SupabaseClient<Database>;
 
@@ -23,7 +24,7 @@ export async function siteDaLoja(admin: Admin, lojaId: string): Promise<{ titulo
 /** A vitrine de uma sessão para quem compra (sem login: o servidor lê com a chave de serviço e só devolve o que se pode mostrar). Nula se a sessão não existe. */
 export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: number = Date.now()): Promise<VitrineDaSessao | null> {
   const t = clienteDaTicketeria(admin);
-  const { data: sessao } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").eq("id", sessaoId).maybeSingle();
+  const { data: sessao } = await t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, cancelada_em").eq("id", sessaoId).maybeSingle();
   if (!sessao) return null;
   const [{ data: evento }, { data: local }] = await Promise.all([
     t.from("ticketeria_eventos").select("id, loja_id, titulo, descricao, classificacao, situacao").eq("id", sessao.evento_id).maybeSingle(),
@@ -43,13 +44,25 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
   };
   if (estado !== "aberta") return vitrine;
 
-  const { data: setores } = await t.from("ticketeria_setores").select("id, nome, numerado").eq("local_id", sessao.local_id);
+  const { data: setores } = await t.from("ticketeria_setores").select("id, nome, numerado, lugares").eq("sala_id", sessao.sala_id);
   const { data: ingressos } = await t.from("ticketeria_ingressos").select("id, nome, descricao, limite_por_pedido, setor_id, ordem, created_at")
     .eq("evento_id", evento.id).eq("publico", true).eq("arquivado", false).in("setor_id", (setores ?? []).map(s => s.id)).order("ordem").order("created_at");
   const ids = (ingressos ?? []).map(i => i.id);
-  const { data: lotes } = ids.length > 0
-    ? await t.from("ticketeria_lotes").select("id, ingresso_id, ordem, preco_centavos, quantidade, vendas_inicio, vendas_fim").in("ingresso_id", ids)
+  const { data: lotesDoBanco } = ids.length > 0
+    ? await t.from("ticketeria_lotes").select("id, ingresso_id, ordem, preco_centavos, espelho_de, quantidade, vendas_inicio, vendas_fim").in("ingresso_id", ids)
     : { data: [] };
+  // O preço que vale NESTA sessão (plano, seção 11): o preço próprio dela para o lote, a metade da inteira dela para a meia, ou o do lote. A reserva
+  // cobra pela mesma conta, no banco (fn_ticketeria_preco_do_lote).
+  const { data: precosDaSessao } = ids.length > 0
+    ? await t.from("ticketeria_precos_da_sessao").select("lote_id, preco_centavos").eq("sessao_id", sessao.id)
+    : { data: [] };
+  // O preço dinâmico (plano, seção 11, P2): só com a adesão do evento ativa, o preço da sessão vale vezes o fator dela. A reserva cobra pela mesma conta, no banco (fn_ticketeria_preco_do_lote).
+  const { data: adesao } = await t.from("ticketeria_preco_dinamico").select("ativo").eq("evento_id", evento.id).maybeSingle();
+  // O fator é por setor (cada setor da sessão tem o seu): o do lote é o do setor do ingresso dele.
+  const { data: estadosDoFator } = adesao?.ativo ? await t.from("ticketeria_preco_dinamico_estado").select("setor_id, fator_bps").eq("sessao_id", sessao.id) : { data: [] };
+  const fatorDoSetor = new Map((estadosDoFator ?? []).map(e => [e.setor_id, e.fator_bps] as const));
+  const setorDoIngresso = new Map((ingressos ?? []).map(i => [i.id, i.setor_id] as const));
+  const lotes = aplicarPrecosDaSessao(lotesDoBanco ?? [], new Map((precosDaSessao ?? []).map(p => [p.lote_id, p.preco_centavos] as const)), l => fatorDoSetor.get(setorDoIngresso.get(l.ingresso_id) ?? "") ?? 10000);
   const ocupados = new Map<string, number>(await Promise.all((lotes ?? []).map(async l => {
     const { data } = await t.rpc("fn_ticketeria_ocupados", { p_sessao: sessao.id, p_lote: l.id, p_fora: null });
     return [l.id, Number(data ?? 0)] as const;
@@ -59,12 +72,19 @@ export async function vitrineDaSessao(admin: Admin, sessaoId: string, agora: num
     const { data } = await t.rpc("fn_ticketeria_lugares_livres_do_setor", { p_sessao: sessao.id, p_setor: s.id });
     return [s.id, Number(data ?? 0)] as const;
   })));
+  // O setor é um balde só: o que se compra não passa dos lugares que restam dele (inteira, meia e os outros tipos somados).
+  const baldeDoSetor = new Map<string, number>(await Promise.all((setores ?? []).map(async s => {
+    const { data } = await t.rpc("fn_ticketeria_ocupados_do_setor", { p_sessao: sessao.id, p_setor: s.id, p_fora: null });
+    const balde = Math.max(0, s.lugares - Number(data ?? 0));
+    return [s.id, s.numerado ? Math.min(balde, livresDoSetor.get(s.id) ?? balde) : balde] as const;
+  })));
   for (const i of ingressos ?? []) {
     if (!(lotes ?? []).some(l => l.ingresso_id === i.id)) continue; // sem nenhum lote, o ingresso ainda não tem o que vender
     let faixas = faixasDoIngresso((lotes ?? []).filter(l => l.ingresso_id === i.id).map(l => ({ ...l, ocupados: ocupados.get(l.id) ?? 0 })), agora);
     const setor = (setores ?? []).find(s => s.id === i.setor_id);
-    if (setor?.numerado) faixas = limitarFaixas(faixas, livresDoSetor.get(setor.id) ?? 0);
-    const doIngresso: IngressoDaVitrine = { id: i.id, nome: i.nome, descricao: i.descricao, limite: i.limite_por_pedido, faixas, ...(setor?.numerado ? { numerado: { setor: setor.nome } } : {}) };
+    if (setor) faixas = limitarFaixas(faixas, baldeDoSetor.get(setor.id) ?? 0);
+    const ajustado = (fatorDoSetor.get(i.setor_id) ?? 10000) !== 10000 && faixas.some(f => f.preco_centavos > 0);
+    const doIngresso: IngressoDaVitrine = { id: i.id, nome: i.nome, descricao: i.descricao, limite: i.limite_por_pedido, faixas, ...(setor?.numerado ? { numerado: { setor: setor.nome } } : {}), ...(ajustado ? { ajustado: true } : {}) };
     vitrine.ingressos.push(doIngresso);
   }
   return vitrine;

@@ -49,10 +49,13 @@ export function canalDoGasto(canal: string): string {
   return c;
 }
 
-export const rotuloDoCanalDeGasto = (canal: string): string => (canal === "meta-ads" ? "Meta Ads" : canal === "google-ads" ? "Google Ads" : rotuloDoCanal(canal));
+const rotuloDoCanalBase = (canal: string): string => (canal === "meta-ads" ? "Meta Ads" : canal === "google-ads" ? "Google Ads" : rotuloDoCanal(canal));
+/** O nome do canal na tela. A marca e os eventos separados (lib/ticketeria/campanhas.ts) viram "Meta Ads · marca" e "Meta Ads · eventos". */
+export const rotuloDoCanalDeGasto = (canal: string): string =>
+  canal.endsWith("-marca") ? `${rotuloDoCanalBase(canal.slice(0, -6))} · marca` : canal.endsWith("-eventos") ? `${rotuloDoCanalBase(canal.slice(0, -8))} · eventos` : rotuloDoCanalBase(canal);
 
 /** O gasto de cada ação repartido igualmente pelos dias dela (a ação de um dia só fica inteira nesse dia). */
-function gastoDasAcoes(acoes: AcaoParaGasto[]): GastoDiario[] {
+export function gastoDasAcoes(acoes: AcaoParaGasto[]): GastoDiario[] {
   const linhas: GastoDiario[] = [];
   for (const a of acoes) {
     if (a.gasto_centavos <= 0 || a.fim < a.inicio) continue;

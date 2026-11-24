@@ -157,3 +157,21 @@ test("a confiança: abaixo de 52 semanas é baixa; de 52 a 103, média; 104 ou m
   assert.equal(confiancaDoResultado(120, { ...limpo, divergencias: 2 }, varia), "baixa");
   assert.equal(confiancaDoResultado(120, { ...limpo, r_hat_maximo: 1.2 }, varia), "baixa");
 });
+
+test("o atraso de cada canal (para o calendário) é lido quando vem, e nulo nas rodadas antigas", () => {
+  const com = lerResultadoDoModelo({ ...bom(), canais: bom().canais.map((c, i) => ({ ...c, atraso: i === 0 ? 0.61234 : 0 })) });
+  assert.ok(com.ok);
+  assert.deepEqual(com.resultado.canais.map(c => c.atraso), [0.612, ...bom().canais.slice(1).map(() => 0)]);
+  const antigo = lerResultadoDoModelo(bom());
+  assert.ok(antigo.ok && antigo.resultado.canais.every(c => c.atraso === null));
+  for (const ruim of [0.99, -0.1, "0.5"]) {
+    const r = lerResultadoDoModelo({ ...bom(), canais: bom().canais.map(c => ({ ...c, atraso: ruim })) });
+    assert.ok(!r.ok && r.problema === "atraso", String(ruim));
+  }
+});
+
+test("a parte das férias traz o efeito na semana quando vem; valor torto vira recusa", () => {
+  const ok = lerPartesDaBase([{ chave: "ferias", porcento: 7.5, baixo: 5, alto: 10, efeito_na_semana: 0.3127 }, { chave: "nivel", porcento: 30, baixo: 25, alto: 35 }]);
+  assert.deepEqual(ok, [{ chave: "ferias", porcento: 7.5, baixo: 5, alto: 10, efeito_na_semana: 0.313 }, { chave: "nivel", porcento: 30, baixo: 25, alto: 35 }]);
+  assert.equal(lerPartesDaBase([{ chave: "ferias", porcento: 1, baixo: 0, alto: 2, efeito_na_semana: null }])?.[0].efeito_na_semana, undefined);
+});

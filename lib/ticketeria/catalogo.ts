@@ -104,18 +104,14 @@ export function loteDaVez<T extends { ordem: number; vendas_inicio: string | nul
   return [...lotes].sort((a, b) => a.ordem - b.ordem).find(lote => situacaoDoLote(lote, agora) === "na_janela") ?? null;
 }
 
-export type OfertaDoSetor = { lugares: number; ofertados: number; livres: number };
+/** A meia-entrada é um desconto de 50% sobre a inteira: só quem é "inteira" ou "outra" pode oferecê-la (a meia de meia, de gratuito, de cortesia ou de social não existe). */
+export const podeTerMeia = (categoria: string) => categoria === "inteira" || categoria === "outra";
 
-/** Quantos lugares do setor o catálogo do evento já oferece por sessão (a soma dos lotes dos ingressos em uso) e quantos sobram. */
-export function ofertaNoSetor(
-  setor: { id: string; lugares: number },
-  ingressos: readonly { id: string; setor_id: string; arquivado: boolean }[],
-  lotes: readonly { ingresso_id: string; quantidade: number }[],
-): OfertaDoSetor {
-  const doSetor = new Set(ingressos.filter(ingresso => ingresso.setor_id === setor.id && !ingresso.arquivado).map(ingresso => ingresso.id));
-  const ofertados = lotes.reduce((soma, lote) => soma + (doSetor.has(lote.ingresso_id) ? lote.quantidade : 0), 0);
-  return { lugares: setor.lugares, ofertados, livres: setor.lugares - ofertados };
-}
+/** O nome da meia de um ingresso: "Meia-entrada" para a "Inteira"; nos outros, "<nome> (meia)". */
+export const nomeDaMeia = (nomeDaInteira: string) => {
+  const nome = nomeDaInteira.trim();
+  return nome === "" || nome === NOME_PADRAO.inteira ? NOME_PADRAO.meia : `${nome} (meia)`.slice(0, 120);
+};
 
 /** O preço para mostrar: "R$ 50,00", ou "Grátis". */
 export const precoParaMostrar = (centavos: number) => (centavos === 0 ? "Grátis" : formatarReais(centavos));
@@ -124,10 +120,28 @@ export const precoParaMostrar = (centavos: number) => (centavos === 0 ? "Grátis
 export function mensagemDoErroDoCatalogo(erro: { code?: string; message?: string }): string {
   const m = erro.message ?? "";
   if (erro.code === "42501") return "Você não pode mudar a Ticketeria desta organização.";
-  if (m.includes("lugares_excedidos")) return "Passa dos lugares do setor. Diminua a quantidade ou aumente os lugares do setor em Locais.";
+  if (m.includes("lugares_excedidos")) return "Passa dos lugares do setor. Diminua a quantidade ou aumente os lugares do setor em Espaços.";
   if (m.includes("preco_incoerente")) return "O preço não combina com a categoria: gratuito e cortesia custam zero; as outras, mais que zero.";
   if (m.includes("setor_arquivado")) return "Esse setor está arquivado. Escolha outro.";
   if (m.includes("evento_cancelado")) return "O evento está cancelado e não muda mais.";
   if (m.includes("ticketeria_ingressos_setor_id_fkey")) return "Esse setor tem ingressos e não se apaga: arquive-o.";
+  if (m.includes("meia_acompanha_a_inteira")) return "A meia não tem preço próprio por sessão: ela vale metade do preço da inteira.";
+  if (m.includes("lote_de_outro_evento") || m.includes("preco_da_sessao_de_outra_organizacao")) return "Esse lote não é deste evento.";
   return "Não foi possível salvar. Tente de novo.";
+}
+
+/**
+ * Os preços por sessão digitados no lote (plano da Ticketeria, seção 11, P0): sessão → preço em centavos, ou null quando o campo está em branco
+ * (a sessão volta a cobrar o preço do lote). Mesmos limites do preço do lote: mais que zero e até R$ 100.000.
+ */
+export function lerPrecosDaSessao(campos: Readonly<Record<string, string>>): { ok: true; precos: Map<string, number | null> } | { ok: false; erro: string; sessao: string } {
+  const precos = new Map<string, number | null>();
+  for (const [sessao, bruto] of Object.entries(campos)) {
+    if (texto(bruto) === "") { precos.set(sessao, null); continue; }
+    const reais = lerValorEmReais(bruto);
+    if (reais === null || reais <= 0) return { ok: false, erro: "Escreva o preço da sessão em reais, como 50 ou 25,50, ou deixe em branco.", sessao };
+    if (reais > 100000) return { ok: false, erro: "O preço vai até R$ 100.000.", sessao };
+    precos.set(sessao, emCentavos(reais));
+  }
+  return { ok: true, precos };
 }

@@ -9,6 +9,7 @@ import { diaNoFuso, rotuloDoCanal } from "@/lib/ticketeria/divulgacao";
 import type { BuscarHttp } from "@/lib/ticketeria/midia/meta";
 import { PROVEDORES_DE_MIDIA, adaptadorDeMidia, type AdaptadorDeMidia, type ProvedorDeMidia } from "@/lib/ticketeria/midia/provedores";
 import { lerConexao, type PortasDaLeitura, type ResultadoDaLeitura } from "@/lib/ticketeria/midia/sincronizar";
+import { gravarCampanhas } from "@/lib/ticketeria/campanhas-servidor";
 
 type Admin = SupabaseClient<Database>;
 const LOTE_DE_LINHAS = 500;
@@ -95,6 +96,10 @@ export function portasDaLeituraDoSupabase(admin: Admin, adaptador: AdaptadorDeMi
         const lote = linhas.slice(i, i + LOTE_DE_LINHAS);
         const { error } = dados.visitas ? await t.rpc("fn_ticketeria_midia_gravar_visitas", { p_conexao: conexao, p_visitas: lote }) : await t.rpc("fn_ticketeria_midia_gravar_dias", { p_conexao: conexao, p_dias: lote });
         if (error) throw new Error(error.message);
+      }
+      // O gasto por campanha (para separar marca de evento): se der errado, a leitura da conta continua valendo.
+      if (dados.campanhas && dados.campanhas.length > 0) {
+        try { await gravarCampanhas(admin, conexao, dados.campanhas); } catch (erro) { console.error("[ticketeria] campanhas:", erro instanceof Error ? erro.message : erro); }
       }
       return linhas.length;
     },

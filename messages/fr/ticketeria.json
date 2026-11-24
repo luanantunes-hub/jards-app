@@ -1,0 +1,47 @@
+{
+  "seletor": {
+    "rotulo": "Langue"
+  },
+  "sair": {
+    "botao": "Quitter la liste",
+    "saindo": "Sortie en cours…",
+    "erro": "Impossible de vous retirer pour le moment. Réessayez dans quelques instants.",
+    "feito": "C’est fait, vous avez quitté la liste",
+    "espera": {
+      "titulo": "Liste d’attente",
+      "pergunta": "Quitter la liste d’attente ?",
+      "explicacao": "Vous ne recevrez plus d’alerte lorsque des billets seront de nouveau disponibles. Si vous changez d’avis, vous pouvez vous réinscrire à tout moment.",
+      "feitoExplicacao": "Nous ne vous préviendrons plus au sujet de ce billet."
+    },
+    "novidades": {
+      "titulo": "Actualités",
+      "organizador": "Organisateur",
+      "pergunta": "Se désabonner des actualités ?",
+      "explicacao": "Vous ne recevrez plus les actualités et les offres de {loja}. Les billets que vous avez déjà achetés restent valables.",
+      "explicacaoSemLoja": "Vous ne recevrez plus les actualités et les offres de l’organisateur. Les billets que vous avez déjà achetés restent valables.",
+      "feitoExplicacao": "Nous ne vous enverrons plus les actualités de {loja} par e-mail.",
+      "feitoExplicacaoSemLoja": "Nous ne vous enverrons plus les actualités de l’organisateur par e-mail."
+    },
+    "preferencias": {
+      "titulo": "Comment voulez-vous recevoir les nouveautés de {loja} ?",
+      "tituloSemLoja": "Comment voulez-vous recevoir les nouveautés de l'organisateur ?",
+      "explicacao": "C'est vous qui choisissez. Vous pouvez changer à tout moment, depuis le lien de n'importe quel e-mail.",
+      "tudo": "Tout",
+      "tudoDetalhe": "Au maximum {limite} e-mails par semaine.",
+      "menos": "Moins d'e-mails",
+      "menosDetalhe": "Au maximum 1 par mois, avec l'essentiel.",
+      "parecidos": "Seulement des événements proches de ceux que vous avez vus",
+      "parecidosDetalhe": "Selon ce qu'ont aussi acheté les personnes allées aux mêmes événements que vous.",
+      "dias": "Jours qui vous conviennent (facultatif)",
+      "qualquer": "N'importe quel jour",
+      "fimDeSemana": "Le week-end",
+      "semana": "En semaine",
+      "salvar": "Enregistrer",
+      "salvando": "Enregistrement…",
+      "salvo": "C'est fait, vos choix sont enregistrés",
+      "salvoExplicacao": "Vous recevrez les nouveautés comme vous l'avez choisi. Vous pouvez changer à tout moment.",
+      "sairDeTudo": "Je ne veux plus rien recevoir",
+      "erro": "Impossible d'enregistrer pour le moment. Réessayez dans un instant."
+    }
+  }
+}

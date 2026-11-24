@@ -23,8 +23,9 @@ export const TIPOS_ESCOLHIVEIS: readonly string[] = ["image/jpeg", "image/png", 
 export type LeituraDoArquivo = { ok: true } | { ok: false; erro: string };
 
 /** O arquivo que a pessoa escolheu cabe nas regras? (tipo, tamanho). */
-export function validarArquivo(arquivo: { type: string; size: number }): LeituraDoArquivo {
-  if (!TIPOS_ESCOLHIVEIS.includes(arquivo.type)) return { ok: false, erro: "Escolha uma imagem JPG, PNG ou WebP. GIF e SVG não são aceitos." };
+export function validarArquivo(arquivo: { type: string; size: number }, opcoes: { aceitaPdf?: boolean } = {}): LeituraDoArquivo {
+  const pdf = opcoes.aceitaPdf === true && arquivo.type === "application/pdf";
+  if (!TIPOS_ESCOLHIVEIS.includes(arquivo.type) && !pdf) return { ok: false, erro: opcoes.aceitaPdf ? "Escolha um PDF ou uma imagem JPG, PNG ou WebP. GIF e SVG não são aceitos." : "Escolha uma imagem JPG, PNG ou WebP. GIF e SVG não são aceitos." };
   if (!(arquivo.size > 0)) return { ok: false, erro: "Esse arquivo está vazio." };
   if (arquivo.size > MAX_BYTES_ESCOLHIDO) return { ok: false, erro: `A imagem tem mais de ${MAX_BYTES_ESCOLHIDO / 1024 / 1024} MB. Escolha uma menor.` };
   return { ok: true };

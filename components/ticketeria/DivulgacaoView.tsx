@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, Megaphone } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { CANAIS_DE_DIVULGACAO, ROTULO_SEM_ORIGEM, SEM_ORIGEM, enderecoDeDivulgacao, nomeDaAcaoNoLink, resumirDivulgacao, serieDoGrafico, type AcaoComResultado, type CamposDaAcao, type LinhaDaDivulgacao, type SessaoParaDivulgar } from "@/lib/ticketeria/divulgacao";
+import { CANAIS_DE_DIVULGACAO, CANAL_DA_IMPRENSA, ROTULO_SEM_ORIGEM, SEM_ORIGEM, enderecoDeDivulgacao, nomeDaAcaoNoLink, resumirDivulgacao, serieDoGrafico, type AcaoComResultado, type CamposDaAcao, type LinhaDaDivulgacao, type SessaoParaDivulgar } from "@/lib/ticketeria/divulgacao";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
 import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosEventos";
 
@@ -12,7 +12,8 @@ import { Aviso, CAMPO, ROTULO, Rodape } from "@/components/ticketeria/FolhasDosE
 // Segue o DESIGN.md da Ticketeria: rótulos pequenos em caixa alta, valores em tinta e tabulares, cantos de 12px, sem cor fora de estado e de gráfico.
 
 const BORDA = "rgba(13,13,13,.08)";
-const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
+// `relative`: o texto `sr-only` do cabeçalho (posicionado de forma absoluta) fica dentro da célula; solto, contava como parte da página e criava um segundo scroll, com espaço em branco, em listas compridas.
+const CABECALHO = "relative px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
 const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
 const ROTULO_PEQUENO = "text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45";
 const BOTAO_FINAL = "rounded-xl acao-principal px-4 py-2.5 text-[0.75rem] font-normal text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98]";
@@ -203,17 +204,19 @@ export function AcoesDaLoja({ acoes, por_dia, hoje, onAbrir, onRegistrar }: { ac
 }
 
 /** A folha de registrar ou editar uma ação: nome, onde divulgou, o período e quanto gastou. */
-export function AcaoSheet({ editando, valores, erro, salvando, onMudar, onClose, onSalvar, onApagar }: {
+export function AcaoSheet({ editando, valores, erro, salvando, veiculos = [], eventos = [], onMudar, onClose, onSalvar, onApagar }: {
   editando: boolean; valores: CamposDaAcao; erro?: string | null; salvando?: boolean;
+  /** Na imprensa: os veículos já marcados na casa (para reconhecer o mesmo) e os eventos (de qual a matéria fala). */ veiculos?: { nome: string; vezes: number }[]; eventos?: { id: string; titulo: string }[];
   onMudar?: <K extends keyof CamposDaAcao>(campo: K, valor: CamposDaAcao[K]) => void; onClose: () => void; onSalvar?: () => void; onApagar?: () => void;
 }) {
-  const nomeNoLink = nomeDaAcaoNoLink(valores.nome);
+  const imprensa = valores.canal === CANAL_DA_IMPRENSA;
+  const nomeNoLink = imprensa ? null : nomeDaAcaoNoLink(valores.nome);
   return (
     <TopSheet titulo={editando ? "Editar ação" : "Registrar ação"} onClose={onClose} footer={fechar => <Rodape fechar={fechar} salvando={!!salvando} rotulo={editando ? "Salvar" : "Registrar ação"} onSalvar={() => onSalvar?.()} onApagar={editando ? onApagar : undefined} rotuloApagar="Apagar" />}>
       <div className="space-y-4">
         {erro && <Aviso texto={erro} />}
-        <div><label className={ROTULO} htmlFor="ac-nome">Nome da ação</label><input id="ac-nome" className={CAMPO} value={valores.nome} onChange={e => onMudar?.("nome", e.target.value)} placeholder="Stories do lote 2" maxLength={80} disabled={salvando} />
-          {nomeNoLink && <p className="mt-1.5 text-[0.75rem] text-black/45">Para contar os ingressos, crie o link de divulgação com o nome da ação <span className="text-black/70">{nomeNoLink}</span>.</p>}</div>
+        {!imprensa && <div><label className={ROTULO} htmlFor="ac-nome">Nome da ação</label><input id="ac-nome" className={CAMPO} value={valores.nome} onChange={e => onMudar?.("nome", e.target.value)} placeholder="Stories do lote 2" maxLength={80} disabled={salvando} />
+          {nomeNoLink && <p className="mt-1.5 text-[0.75rem] text-black/45">Para contar os ingressos, crie o link de divulgação com o nome da ação <span className="text-black/70">{nomeNoLink}</span>.</p>}</div>}
         <div>
           <span className={ROTULO}>Onde você divulgou</span>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Onde você divulgou">
@@ -224,12 +227,60 @@ export function AcaoSheet({ editando, valores, erro, salvando, onMudar, onClose,
             ))}
           </div>
         </div>
+        {imprensa ? (<>
+          <CampoDoVeiculo valor={valores.veiculo ?? ""} veiculos={veiculos} desligado={!!salvando} onMudar={v => onMudar?.("veiculo", v)} />
+          <div><label className={ROTULO} htmlFor="ac-assunto">Assunto (opcional)</label><input id="ac-assunto" className={CAMPO} value={valores.nome} onChange={e => onMudar?.("nome", e.target.value)} placeholder="agenda cultural, crítica, entrevista…" maxLength={60} disabled={salvando} /></div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div><label className={ROTULO} htmlFor="ac-inicio">Saiu em</label><input id="ac-inicio" type="date" className={CAMPO} value={valores.inicio} onChange={e => onMudar?.("inicio", e.target.value)} disabled={salvando} /></div>
+            {eventos.length > 0 && (
+              <div>
+                <span className={ROTULO}>De qual evento</span>
+                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="De qual evento">
+                  {[...eventos.map(e => ({ id: e.id as string | null, titulo: e.titulo })), { id: null, titulo: "Da casa toda" }].map(e => {
+                    const on = (valores.eventoId ?? null) === e.id;
+                    return <button key={e.id ?? "casa"} type="button" role="radio" aria-checked={on} disabled={salvando} onClick={() => onMudar?.("eventoId", e.id)}
+                      className={`rounded-xl border px-3 py-1.5 text-[0.8125rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${on ? "border-[#7259B5] bg-[#F5F2FB] font-normal text-[#1C0E33]" : "bg-white text-black/60 hover:bg-black/[.03]"}`}
+                      style={on ? undefined : { borderColor: BORDA }}>{e.titulo}</button>;
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+          <p className="rounded-xl border bg-white px-3.5 py-2.5 text-[0.75rem] leading-relaxed text-black/55" style={{ borderColor: BORDA }}>Imprensa não tem gasto. O Jards reconhece o mesmo veículo quando ele aparece de novo e mede quanto ele pesa para o seu público pelas vendas do evento nos dias seguintes. O modelo trata como uma data que pode mexer na venda, como um feriado.</p>
+        </>) : (<>
         <div className="grid gap-3 sm:grid-cols-2">
           <div><label className={ROTULO} htmlFor="ac-inicio">Começou em</label><input id="ac-inicio" type="date" className={CAMPO} value={valores.inicio} onChange={e => onMudar?.("inicio", e.target.value)} disabled={salvando} /></div>
           <div><label className={ROTULO} htmlFor="ac-fim">Terminou em</label><input id="ac-fim" type="date" className={CAMPO} value={valores.fim} onChange={e => onMudar?.("fim", e.target.value)} disabled={salvando} /></div>
         </div>
         <div><label className={ROTULO} htmlFor="ac-gasto">Quanto gastou (opcional)</label><input id="ac-gasto" inputMode="decimal" className={CAMPO} value={valores.gasto} onChange={e => onMudar?.("gasto", e.target.value)} placeholder="150,00" disabled={salvando} /><p className="mt-1.5 text-[0.75rem] text-black/45">Em reais. Deixe em branco se não custou nada, como um e-mail.</p></div>
+        </>)}
       </div>
     </TopSheet>
+  );
+}
+
+/** O veículo da crítica ou matéria: o que já foi marcado na casa aparece enquanto se digita, com quantas vezes; escolher um deles garante que o Jards reconheça o mesmo veículo. */
+function CampoDoVeiculo({ valor, veiculos, desligado, onMudar }: { valor: string; veiculos: { nome: string; vezes: number }[]; desligado: boolean; onMudar: (v: string) => void }) {
+  const [aberto, setAberto] = useState(false);
+  const termo = valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const iguais = veiculos.filter(v => termo && v.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(termo)).slice(0, 5);
+  const exato = veiculos.some(v => v.nome.toLowerCase() === valor.trim().toLowerCase());
+  return (
+    <div className="relative">
+      <label className={ROTULO} htmlFor="ac-veiculo">Veículo</label>
+      <input id="ac-veiculo" className={CAMPO} value={valor} onChange={e => { onMudar(e.target.value); setAberto(true); }} onFocus={() => setAberto(true)} onBlur={() => setTimeout(() => setAberto(false), 150)}
+        placeholder="TV Tem, Folha de S.Paulo, portal da cidade…" maxLength={60} disabled={desligado} autoComplete="off" role="combobox" aria-expanded={aberto && iguais.length > 0} aria-controls="ac-veiculos" />
+      {aberto && iguais.length > 0 && !exato && (
+        <ul id="ac-veiculos" role="listbox" className="absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-xl border bg-white shadow-lg" style={{ borderColor: BORDA }}>
+          {iguais.map(v => (
+            <li key={v.nome} role="option" aria-selected={false}>
+              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => { onMudar(v.nome); setAberto(false); }} className="flex w-full items-center justify-between px-3.5 py-2 text-left text-[0.8125rem] text-[#282525] hover:bg-[#F5F2FB]">
+                {v.nome}<span className="text-[0.75rem] text-black/45">{v.vezes === 1 ? "1 vez" : `já marcado ${v.vezes} vezes`}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

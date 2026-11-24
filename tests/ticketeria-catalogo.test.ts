@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  lerIngresso, lerLote, loteDaVez, mensagemDoErroDoCatalogo, nomeDoProximoLote, ofertaNoSetor, precoDaMeia, precoParaMostrar, publicoPorPadrao, semPreco, situacaoDoLote,
+  lerIngresso, lerLote, loteDaVez, mensagemDoErroDoCatalogo, nomeDaMeia, nomeDoProximoLote, podeTerMeia, precoDaMeia, precoParaMostrar, publicoPorPadrao, semPreco, situacaoDoLote,
 } from "../lib/ticketeria/catalogo";
 
 const FUSO = "America/Sao_Paulo";
@@ -59,15 +59,19 @@ test("a janela do lote e o lote da vez, na ordem", () => {
   assert.equal(loteDaVez([primeiro], agora), null);
 });
 
-test("a oferta do setor: os lotes dos ingressos em uso nele", () => {
-  const ingressos = [{ id: "i1", setor_id: "s1", arquivado: false }, { id: "i2", setor_id: "s1", arquivado: true }, { id: "i3", setor_id: "s2", arquivado: false }];
-  const lotes = [{ ingresso_id: "i1", quantidade: 60 }, { ingresso_id: "i1", quantidade: 20 }, { ingresso_id: "i2", quantidade: 50 }, { ingresso_id: "i3", quantidade: 10 }];
-  assert.deepEqual(ofertaNoSetor({ id: "s1", lugares: 100 }, ingressos, lotes), { lugares: 100, ofertados: 80, livres: 20 });
-  assert.deepEqual(ofertaNoSetor({ id: "s1", lugares: 50 }, ingressos, lotes), { lugares: 50, ofertados: 80, livres: -30 }, "o setor diminuído depois mostra o que passou");
-});
-
 test("os erros do banco viram frases", () => {
   assert.match(mensagemDoErroDoCatalogo({ message: "lugares_excedidos" }), /lugares do setor/);
   assert.match(mensagemDoErroDoCatalogo({ message: "preco_incoerente" }), /combina/);
   assert.match(mensagemDoErroDoCatalogo({ code: "42501" }), /não pode/);
+});
+
+test("a meia-entrada é o desconto de 50% da inteira: quem pode ter, e o nome dela", () => {
+  assert.deepEqual(["inteira", "outra"].map(podeTerMeia), [true, true]);
+  assert.deepEqual(["meia", "social", "gratuito", "cortesia"].map(podeTerMeia), [false, false, false, false], "meia de meia, social, gratuito ou cortesia não existe");
+  assert.equal(nomeDaMeia("Inteira"), "Meia-entrada");
+  assert.equal(nomeDaMeia("  "), "Meia-entrada");
+  assert.equal(nomeDaMeia("Camarote"), "Camarote (meia)");
+  assert.equal(nomeDaMeia("x".repeat(200)).length, 120, "o nome cabe nos 120 do banco");
+  assert.equal(precoDaMeia(7001), 3501, "a mesma conta do banco: metade, arredondada");
+  assert.equal(precoDaMeia(1), 1, "nunca abaixo de 1 centavo");
 });

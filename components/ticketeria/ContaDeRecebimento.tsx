@@ -205,9 +205,9 @@ export function CartaoDaConta({ conta, troca = null, podeEditar = false, onAlter
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-[0.9375rem] font-normal text-[#282525]">Conta de recebimento</h2>
-          {!aprovada && <p className="mt-1 max-w-xl text-[0.8125rem] text-black/60">{bloqueada ? "O Asaas pediu os documentos do titular ou não aceitou o cadastro. As vendas ficam pausadas. Fale com o suporte do Jards." : "O Asaas está conferindo os dados e os documentos."}</p>}
+          {!aprovada && <p className="mt-1 max-w-xl text-[0.8125rem] text-black/60">{bloqueada ? "O Asaas pediu os documentos do titular ou não aceitou o cadastro. As vendas ficam pausadas. Fale com o suporte do Jards." : "Falta ativar a conta no Asaas: abra o e-mail que o Asaas enviou ao titular, crie a senha e envie os documentos. Se já enviou, o Asaas está conferindo. Até lá, as vendas ficam pausadas."}</p>}
         </div>
-        {aprovada ? <Etiqueta cor="#2E8932" texto="ATIVA" /> : bloqueada ? <Etiqueta cor="#D94A4A" texto="PRECISA DE ATENÇÃO" /> : <Etiqueta cor="#B07A14" texto="EM ANÁLISE" />}
+        {aprovada ? <Etiqueta cor="#2E8932" texto="ATIVA" /> : bloqueada ? <Etiqueta cor="#D94A4A" texto="PRECISA DE ATENÇÃO" /> : <Etiqueta cor="#B07A14" texto="ATIVAR NO ASAAS" />}
       </div>
       {aprovada && (
         <dl className="mt-4 grid gap-4 sm:grid-cols-3">

@@ -13,7 +13,7 @@ import { copiaDeUmaPagina, duplicarBloco, enderecoDaPrevia, moverBloco } from "@
 import { PreviaDoSite } from "@/components/ticketeria/PreviaDoSite";
 import { CampoDeImagem } from "@/components/ticketeria/CampoDeImagem";
 import { VersoesSheet } from "@/components/ticketeria/VersoesDoSite";
-import { blocosDoJson, lerBloco, lerSeo, ordemDasPaginas, ROTULO_DO_LAYOUT_DA_AGENDA, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
+import { blocosDoJson, lerBloco, lerSeo, ordemDasPaginas, ROTULO_DO_LAYOUT_DA_AGENDA, ROTULO_DO_LAYOUT_DO_DESTAQUE, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, type Bloco, type TipoDeBloco } from "@/lib/ticketeria/site";
 import { AcrescentarBlocoSheet, BlocoNovoSheet, TIPOS_DAS_FOLHAS_NOVAS } from "@/components/ticketeria/BlocosNovosSheet";
 
 /** Um evento da loja: a fonte de um bloco de ingressos. */
@@ -43,7 +43,7 @@ const resumoDoBloco = (bloco: Bloco, espacos: readonly EspacoDaProgramacao[], ev
       return [bloco.titulo, evento ? `as sessões de ${evento.titulo}${evento.situacao === "publicado" ? "" : " (o evento ainda não está publicado: o bloco não mostra nada)"}` : "sem evento: o bloco não mostra nada"].filter(Boolean).join(" · ");
     }
     case "contato": return [bloco.endereco, bloco.telefone, bloco.email].filter(Boolean).join(" · ");
-    case "capa": return [bloco.titulo, bloco.subtitulo].filter(Boolean).join(" · ");
+    case "capa": return [ROTULO_DO_LAYOUT_DO_DESTAQUE[bloco.layout].nome, bloco.layout === "carrossel" ? `${bloco.slides.length} ${bloco.slides.length === 1 ? "destaque" : "destaques"}` : bloco.layout === "proximo" ? "o próximo evento" : bloco.titulo, bloco.layout === "carrossel" || bloco.layout === "proximo" ? "" : bloco.subtitulo].filter(Boolean).join(" · ");
     case "colunas": return `${bloco.esquerda.tipo === "texto" ? "texto" : "imagem"} e ${bloco.direita.tipo === "texto" ? "texto" : "imagem"}`;
     case "galeria": return [bloco.titulo, `${bloco.imagens.length} imagens`].filter(Boolean).join(" · ");
     case "video": return [bloco.titulo, bloco.provedor === "youtube" ? "YouTube" : "Vimeo"].filter(Boolean).join(" · ");
@@ -340,7 +340,7 @@ export function EditorDoSite({ siteId, nomeDoSite, organizationId, podeEditar, e
           <div className="flex items-center gap-2 border-t px-4 py-2" style={{ borderColor: "rgba(13,13,13,.06)" }}>
             <div role="tablist" aria-label="Páginas do site" className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
               {paginas.map(pagina => (
-                <button key={pagina.id} type="button" role="tab" aria-selected={atual?.id === pagina.id} onClick={() => { setSlug(pagina.slug); setAviso(null); }} className={`h-9 shrink-0 rounded-xl border px-3.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${atual?.id === pagina.id ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/[.12] bg-white text-black/60 hover:bg-black/[.04]"}`}>{pagina.titulo}</button>
+                <button key={pagina.id} type="button" role="tab" aria-selected={atual?.id === pagina.id} onClick={() => { setSlug(pagina.slug); setAviso(null); }} className={`h-9 shrink-0 rounded-xl border px-3.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${atual?.id === pagina.id ? "border-[#6450D2] bg-[#6450D2] text-white" : "border-black/[.12] bg-white text-black/60 hover:bg-black/[.04]"}`}>{pagina.titulo}</button>
               ))}
             </div>
             {podeEditar && <button type="button" onClick={() => setFolha({ tipo: "pagina" })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Nova página</button>}

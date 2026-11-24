@@ -25,7 +25,9 @@ export function mensagemDoErroDaReserva(erro: { message?: string }): string {
   const m = erro.message ?? "";
   const cupom = mensagemDoErroDoCupom(m);
   if (cupom) return cupom;
+  if (m.includes("lugar_reservado")) return "Esse lugar é reservado para pessoas com deficiência ou mobilidade reduzida. Se alguém do grupo precisa dele, marque a opção na escolha dos lugares.";
   if (m.includes("lugar_ocupado")) return "Alguém acabou de escolher um desses lugares. Escolha de novo.";
+  if (m.includes("grupo_incompleto")) return "Uma mesa ou um camarote só se compra inteiro, com todos os lugares. Escolha de novo.";
   if (m.includes("lugar_indisponivel")) return "Um desses lugares não está mais à venda. Escolha de novo.";
   if (m.includes("lugares_obrigatorios")) return "Escolha os lugares no mapa.";
   if (m.includes("lugares_quantidade") || m.includes("lugares_invalidos") || m.includes("ingresso_sem_mapa")) return "Escolha os lugares de novo.";

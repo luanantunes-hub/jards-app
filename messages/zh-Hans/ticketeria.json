@@ -1,0 +1,47 @@
+{
+  "seletor": {
+    "rotulo": "语言"
+  },
+  "sair": {
+    "botao": "退出名单",
+    "saindo": "正在退出…",
+    "erro": "暂时无法退出，请稍后再试。",
+    "feito": "已退出名单",
+    "espera": {
+      "titulo": "候补名单",
+      "pergunta": "要退出候补名单吗？",
+      "explicacao": "有票可售时，您将不再收到通知。如果改变主意，随时可以重新加入名单。",
+      "feitoExplicacao": "我们不会再就这张票通知您。"
+    },
+    "novidades": {
+      "titulo": "最新动态",
+      "organizador": "主办方",
+      "pergunta": "要退订最新动态吗？",
+      "explicacao": "您将不再收到{loja}的动态和优惠信息。您已购买的票仍然有效。",
+      "explicacaoSemLoja": "您将不再收到主办方的动态和优惠信息。您已购买的票仍然有效。",
+      "feitoExplicacao": "我们不会再向您的邮箱发送{loja}的动态。",
+      "feitoExplicacaoSemLoja": "我们不会再向您的邮箱发送主办方的动态。"
+    },
+    "preferencias": {
+      "titulo": "你希望如何接收{loja}的消息？",
+      "tituloSemLoja": "你希望如何接收主办方的消息？",
+      "explicacao": "由你决定。随时可以通过任何一封邮件里的链接修改。",
+      "tudo": "全部接收",
+      "tudoDetalhe": "每周最多{limite}封邮件。",
+      "menos": "少一些邮件",
+      "menosDetalhe": "每月最多 1 封，只发最重要的。",
+      "parecidos": "只接收与你看过的活动相似的活动",
+      "parecidosDetalhe": "依据和你去过相同活动的人还购买了什么。",
+      "dias": "通常方便的日子（可选）",
+      "qualquer": "任何一天",
+      "fimDeSemana": "周末",
+      "semana": "工作日",
+      "salvar": "保存",
+      "salvando": "正在保存…",
+      "salvo": "好了，你的选择已保存",
+      "salvoExplicacao": "我们会按你的选择发送消息。你随时可以修改。",
+      "sairDeTudo": "我不想再收到任何消息",
+      "erro": "暂时无法保存，请稍后再试。"
+    }
+  }
+}

@@ -2,19 +2,25 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Gloock } from "next/font/google";
+import localFont from "next/font/local";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationName } from "@/contexts/OrganizationContext";
 import { escolherFrase } from "@/lib/saudacao";
 import { FRASES_DAS_SECOES, ilustracaoDoDia, type SecaoComFrase } from "@/lib/frases-das-secoes";
 import { PACOTE_ATIVO, caminhoDaIlustracao } from "@/lib/pacotes-de-ilustracoes";
 
-// A voz das frases (painel e seções): Gloock, serifa de alto contraste com peso de manchete.
-// Tem um único peso (400), já pesado: a classe usa font-normal para o navegador não engrossar de mentira.
-const gloock = Gloock({ subsets: ["latin", "latin-ext"], weight: "400", variable: "--font-frase" });
-export const VARIAVEIS_DA_FRASE = gloock.variable;
-export const FAMILIA_DA_FRASE = "var(--font-frase), Georgia, serif";
-export const CLASSE_DA_FRASE = "text-[1.625rem] font-normal leading-[1.08] tracking-[-.01em] sm:text-[1.875rem]";
+// A voz das frases editoriais do CRM (painel e seções): Cabinet Grotesk ExtraBold,
+// hospedada no próprio projeto. O arquivo contém o peso 800 real, sem síntese do navegador.
+const cabinetGrotesk = localFont({
+  src: "../../public/assets/fontes/cabinet-grotesk-800.woff2",
+  weight: "800",
+  style: "normal",
+  variable: "--font-frase",
+  display: "swap",
+});
+export const VARIAVEIS_DA_FRASE = cabinetGrotesk.variable;
+export const FAMILIA_DA_FRASE = "var(--font-frase), var(--font-google-sans), system-ui, sans-serif";
+export const CLASSE_DA_FRASE = "text-[1.625rem] font-extrabold leading-[1.08] tracking-[-.025em] sm:text-[1.875rem]";
 const FAMILIA = FAMILIA_DA_FRASE;
 const FONTE_FRASE = CLASSE_DA_FRASE;
 

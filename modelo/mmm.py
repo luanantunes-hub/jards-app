@@ -22,12 +22,31 @@ MIN_SEMANAS_DO_MODELO = 26
 SEMANAS_PARA_SAZONALIDADE_ANUAL = 52
 VARIACAO_MINIMA = 0.25
 PONTOS_DA_CURVA = 16
+# Quantas semanas o efeito de um anúncio pode durar no modelo (o l_max do adstock). A tela usa o mesmo número para montar o calendário de divulgação (lib/ticketeria/modelo-calendario.ts).
+SEMANAS_DO_ATRASO = 6
+# Com um canal de MARCA (sufixo "-marca", ver lib/ticketeria/campanhas.ts) o efeito pode durar até 3 meses: o adstock de todos os canais vai até 13 semanas, e a marca começa
+# esperando um atraso alto (Beta(4; 1,5), média 0,73) enquanto os outros mantêm o de sempre (Beta(1; 3), média 0,25). Os dados decidem o resto.
+SEMANAS_DO_ATRASO_DA_MARCA = 13
+# Datas que podem importar ou não, conforme a loja (férias escolares importam para um zoológico e quase nada para um teatro adulto): o efeito começa em zero com prior estreito
+# (Normal(0; 0,1) na escala do modelo, contra Normal(0; 2) dos outros controles). Com dados que mostram diferença, o efeito aparece; sem, fica perto de zero e a tela diz "não faz diferença".
+# A imprensa (crítica ou matéria marcada nas Ações) também: uma loja pode ter crítica que move a venda, outra não.
+DATAS_QUE_PODEM_IMPORTAR = {"ferias": 0.1, "imprensa": 0.1}
 SEMENTE = 42
 SEMANAS_DOS_CONTROLES_EXTRAS = 52
 # Os controles de cada grupo (as chaves da coluna `controles` da tabela semanal) e o nome da parte que aparece no resultado. `extra`: só entra com SEMANAS_DOS_CONTROLES_EXTRAS semanas.
 GRUPOS_DE_CONTROLE = [
     {"parte": "proximidade", "chaves": ["proximidade"], "extra": False},
     {"parte": "feriado", "chaves": ["feriado"], "extra": False},
+    # O tamanho do que está à venda (lugares das próximas sessões): quem espera vender mais anuncia mais; sem isto o anúncio leva o mérito do evento maior (Kang, 2019).
+    {"parte": "lugares", "chaves": ["lugares"], "extra": False},
+    # O boca a boca (z(1 − z)) e a urgência (z), com z = a parte dos lugares das sessões à venda já vendida antes da semana: "venda puxa venda". Sem eles o modelo põe o efeito na proximidade
+    # da data (ESTUDO-DO-BOCA-A-BOCA.md e ESTUDO-DA-URGENCIA.md). Entram juntos, com 52+ semanas, e com o prior de sempre (o estudo usou esse).
+    {"parte": "boca", "chaves": ["boca"], "extra": True},
+    {"parte": "urgencia", "chaves": ["urgencia"], "extra": True},
+    # A imprensa: semanas com crítica ou matéria (mídia espontânea, sem gasto). Data que pode importar (prior estreito, ver DATAS_QUE_PODEM_IMPORTAR).
+    {"parte": "imprensa", "chaves": ["imprensa"], "extra": False},
+    # As férias escolares: entram para todo mundo com 52+ semanas, mas como DATA QUE PODE IMPORTAR (prior estreito em zero, ver DATAS_QUE_PODEM_IMPORTAR): só ganham peso se os dados mostrarem.
+    {"parte": "ferias", "chaves": ["ferias"], "extra": True},
     {"parte": "preco_e_lotes", "chaves": ["lote", "preco"], "extra": True},
     {"parte": "cupom", "chaves": ["cupom"], "extra": True},
     {"parte": "visitas", "chaves": ["visitas"], "extra": True},
@@ -142,9 +161,22 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
 
     x, y, canais, resumo, controles = montar_entrada(semanas)
     n = len(y)
+    tem_marca = any(c.endswith("-marca") for c in canais)
+    if tem_marca:
+        from pymc_extras.prior import Prior
+
+        adstock = GeometricAdstock(l_max=SEMANAS_DO_ATRASO_DA_MARCA, normalize=True, priors={"alpha": Prior(
+            "Beta", alpha=np.array([4.0 if c.endswith("-marca") else 1.0 for c in canais]), beta=np.array([1.5 if c.endswith("-marca") else 3.0 for c in canais]), dims="channel")})
+    else:
+        adstock = GeometricAdstock(l_max=SEMANAS_DO_ATRASO, normalize=True)
+    colunas_de_controle = ["t", *controles]
+    from pymc_extras.prior import Prior as PriorDoControle
+
+    config_do_modelo = {"gamma_control": PriorDoControle("Normal", mu=0, sigma=np.array([DATAS_QUE_PODEM_IMPORTAR.get(c, 2.0) for c in colunas_de_controle]), dims="control")}
     mmm = MMM(
-        date_column="date_week", channel_columns=canais, control_columns=["t", *controles],
-        adstock=GeometricAdstock(l_max=6), saturation=LogisticSaturation(),
+        model_config=config_do_modelo,
+        date_column="date_week", channel_columns=canais, control_columns=colunas_de_controle,
+        adstock=adstock, saturation=LogisticSaturation(),
         yearly_seasonality=2 if n >= SEMANAS_PARA_SAZONALIDADE_ANUAL else None,
     )
     mmm.fit(x, y, random_seed=semente, sample_kwargs={"nuts_sampler": "nutpie", "chains": chains, "draws": draws, "tune": tune, "target_accept": 0.9, "progressbar": False})
@@ -157,8 +189,14 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
     porcentos = por_canal / total_y * 100.0
     base = 100.0 - porcentos.sum("channel")
     ingressos_mediana = por_canal.median(("chain", "draw"))
+    # Os ingressos de cada canal semana a semana (mediana): servem à conta do EFEITO TOTAL (com o boca a boca e a urgência que as vendas do canal puxam depois), feita no Jards,
+    # que tem as sessões (ESTUDO-DO-EFEITO-TOTAL.md).
+    por_semana_mediana = (posterior["channel_contribution"] * escala_do_alvo).median(("chain", "draw"))
     escala_dos_canais = mmm.get_scales_as_xarray()["channel_scale"]
 
+    # O atraso de cada canal: a parte do efeito de uma semana que passa para a seguinte (o alpha do adstock geométrico, mediana). Com normalize=True a curva de resposta é a do gasto semanal
+    # constante; o atraso diz como um gasto que muda de semana para semana se espalha (o calendário de divulgação usa os dois).
+    atrasos = posterior["adstock_alpha"].median(("chain", "draw")) if "adstock_alpha" in posterior else None
     curva_bruta = mmm.sample_saturation_curve(max_value=1.5, num_points=PONTOS_DA_CURVA, num_samples=200, random_state=semente, original_scale=True)
     curva_mediana = curva_bruta.median([d for d in curva_bruta.dims if d not in ("x", "channel")])
 
@@ -178,10 +216,25 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
             "custo_por_ingresso_centavos": int(round(gasto_centavos / ingressos)) if gasto_centavos > 0 and ingressos >= 1 else None,
             "saturacao_gasto_centavos": int(round(saturacao)) if saturacao is not None else None,
             "gasto_constante": resumo[canal]["variacao"] < VARIACAO_MINIMA, "curva": pontos,
+            "atraso": round(min(0.95, max(0.0, float(atrasos.sel(channel=canal)))), 3) if atrasos is not None else None,
+            "por_semana": [round(float(v), 2) for v in np.asarray(por_semana_mediana.sel(channel=canal))],
         })
 
     b_baixo, b_meio, b_alto = _quantis(np.asarray(base).ravel())
     partes = _partes_da_base(posterior, escala_do_alvo, total_y, n, base, controles)
+    # Nas datas que podem importar: quanto as semanas delas venderam a mais (ou a menos) que vendiam sem ela, sem contar os anúncios ("as semanas de férias venderam 31% mais").
+    for parte in partes:
+        if parte["chave"] in DATAS_QUE_PODEM_IMPORTAR and parte["chave"] in controles:
+            marcadas = np.asarray(x[parte["chave"]]) > 0
+            efeito = np.asarray(posterior["control_contribution"].sel(control=parte["chave"]).median(("chain", "draw"))) * escala_do_alvo
+            sem = np.asarray(y)[marcadas] - efeito[marcadas]
+            parte["efeito_na_semana"] = round(float(efeito[marcadas].mean() / sem.mean()), 3) if marcadas.any() and sem.mean() > 0 else None
+    # No boca a boca e na urgência: quantos ingressos por semana valem 1 unidade do controle (a inclinação da contribuição sobre a coluna), para a conta do efeito total.
+    for parte in partes:
+        if parte["chave"] in ("boca", "urgencia") and parte["chave"] in controles:
+            col = np.asarray(x[parte["chave"]], dtype=float)
+            contrib = np.asarray(posterior["control_contribution"].sel(control=parte["chave"]).median(("chain", "draw"))) * escala_do_alvo
+            parte["efeito_por_unidade"] = round(float((contrib * col).sum() / (col * col).sum()), 3) if (col * col).sum() > 0 else None
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)  # parâmetros constantes (variância zero) geram avisos de divisão; os diagnósticos ignoram esses valores
         resumo_az = az.summary(posterior.to_dataset())
@@ -190,6 +243,9 @@ def ajustar(semanas: list[dict[str, Any]], *, semente: int = SEMENTE, draws: int
     divergencias = int(mmm.idata["sample_stats"]["diverging"].sum())
     return {
         "motor": "pymc-marketing", "versao_motor": str(pymc_marketing.__version__), "semanas": n,
+        "semanas_do_atraso": SEMANAS_DO_ATRASO_DA_MARCA if tem_marca else SEMANAS_DO_ATRASO,
+        # As semanas da tabela e os ingressos de cada uma, na ordem de `por_semana`: o Jards refaz a venda sem cada canal para o efeito total (ESTUDO-DO-EFEITO-TOTAL.md).
+        "datas": [str(d)[:10] for d in pd.to_datetime(x["date_week"])], "ingressos_por_semana": [int(round(float(v))) for v in np.asarray(y)],
         "diagnosticos": {"r_hat_maximo": round(r_hat if math.isfinite(r_hat) else 99.0, 4), "divergencias": divergencias, "ess_minimo": int(ess) if math.isfinite(ess) else 0},
         "base": {"porcento": round(_limitar(b_meio), 2), "baixo": round(_limitar(b_baixo), 2), "alto": round(_limitar(b_alto), 2), "partes": partes},
         "canais": resultado_canais,

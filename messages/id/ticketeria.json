@@ -1,0 +1,47 @@
+{
+  "seletor": {
+    "rotulo": "Bahasa"
+  },
+  "sair": {
+    "botao": "Keluar dari daftar",
+    "saindo": "Memproses…",
+    "erro": "Saat ini belum bisa keluar dari daftar. Silakan coba lagi sebentar lagi.",
+    "feito": "Selesai, Anda sudah keluar dari daftar",
+    "espera": {
+      "titulo": "Daftar tunggu",
+      "pergunta": "Keluar dari daftar tunggu?",
+      "explicacao": "Anda tidak akan menerima pemberitahuan lagi saat tiket tersedia kembali. Jika berubah pikiran, Anda bisa bergabung lagi kapan saja.",
+      "feitoExplicacao": "Kami tidak akan memberi tahu Anda lagi tentang tiket ini."
+    },
+    "novidades": {
+      "titulo": "Kabar terbaru",
+      "organizador": "Penyelenggara",
+      "pergunta": "Berhenti berlangganan kabar terbaru?",
+      "explicacao": "Anda tidak akan menerima lagi kabar terbaru dan penawaran dari {loja}. Tiket yang sudah Anda beli tetap berlaku.",
+      "explicacaoSemLoja": "Anda tidak akan menerima lagi kabar terbaru dan penawaran dari penyelenggara. Tiket yang sudah Anda beli tetap berlaku.",
+      "feitoExplicacao": "Kami tidak akan mengirim kabar terbaru dari {loja} ke email Anda.",
+      "feitoExplicacaoSemLoja": "Kami tidak akan mengirim kabar terbaru dari penyelenggara ke email Anda."
+    },
+    "preferencias": {
+      "titulo": "Bagaimana Anda ingin menerima kabar dari {loja}?",
+      "tituloSemLoja": "Bagaimana Anda ingin menerima kabar dari penyelenggara?",
+      "explicacao": "Anda yang memilih. Bisa diubah kapan saja lewat tautan di email kami mana pun.",
+      "tudo": "Semuanya",
+      "tudoDetalhe": "Paling banyak {limite} email per minggu.",
+      "menos": "Lebih sedikit email",
+      "menosDetalhe": "Paling banyak 1 per bulan, berisi yang terpenting.",
+      "parecidos": "Hanya acara yang mirip dengan yang pernah Anda tonton",
+      "parecidosDetalhe": "Berdasarkan apa yang juga dibeli orang yang datang ke acara yang sama dengan Anda.",
+      "dias": "Hari yang biasanya cocok untuk Anda (opsional)",
+      "qualquer": "Kapan saja",
+      "fimDeSemana": "Akhir pekan",
+      "semana": "Hari kerja",
+      "salvar": "Simpan",
+      "salvando": "Menyimpan…",
+      "salvo": "Selesai, pilihan Anda sudah disimpan",
+      "salvoExplicacao": "Anda akan menerima kabar sesuai pilihan Anda. Bisa diubah kapan saja.",
+      "sairDeTudo": "Saya tidak ingin menerima apa pun lagi",
+      "erro": "Tidak bisa menyimpan sekarang. Coba lagi sebentar lagi."
+    }
+  }
+}

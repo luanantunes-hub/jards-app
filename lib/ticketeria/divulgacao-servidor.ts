@@ -30,10 +30,17 @@ export async function divulgacaoDaLoja(admin: Admin, lojaId: string, agora: numb
   const [{ data: eventos }, { data: locais }, { data: acoes }] = await Promise.all([
     t.from("ticketeria_eventos").select("id, titulo").eq("loja_id", lojaId),
     t.from("ticketeria_locais").select("id, fuso").eq("loja_id", lojaId),
-    t.from("ticketeria_acoes_divulgacao").select("id, evento_id, nome, canal, inicio, fim, gasto_centavos").eq("loja_id", lojaId).order("inicio", { ascending: false }),
+    t.from("ticketeria_acoes_divulgacao").select("id, evento_id, nome, canal, inicio, fim, gasto_centavos, veiculo").eq("loja_id", lojaId).order("inicio", { ascending: false }),
   ]);
   const ids = (eventos ?? []).map(e => e.id);
-  const { data: sessoes } = ids.length > 0 ? await t.from("ticketeria_sessoes").select("id, evento_id, local_id, inicio, cancelada_em").in("evento_id", ids).order("inicio", { ascending: false }) : { data: [] };
+  const { data: sessoes } = ids.length > 0 ? await t.from("ticketeria_sessoes").select("id, evento_id, local_id, sala_id, inicio, fim, cancelada_em").in("evento_id", ids).order("inicio", { ascending: false }) : { data: [] };
+  // Os lugares que faltam em cada sessão à venda (para o calendário de divulgação não planejar vender mais do que cabe): a lotação da sala menos os ingressos pagos.
+  const idsDosLocais = [...new Set((sessoes ?? []).map(s => s.local_id))];
+  const { data: setores } = idsDosLocais.length > 0 ? await t.from("ticketeria_setores").select("sala_id, lugares").in("local_id", idsDosLocais).eq("arquivado", false) : { data: [] };
+  const lugaresDaSala = new Map<string, number>();
+  for (const x of setores ?? []) lugaresDaSala.set(x.sala_id, (lugaresDaSala.get(x.sala_id) ?? 0) + x.lugares);
+  const vendidosNaSessao = new Map<string, number>();
+  for (const p of pedidos) if (p.sessao_id) vendidosNaSessao.set(p.sessao_id, (vendidosNaSessao.get(p.sessao_id) ?? 0) + (quantidadePorPedido[p.id] ?? 0));
   const titulo = new Map((eventos ?? []).map(e => [e.id, e.titulo]));
   const fuso = new Map((locais ?? []).map(l => [l.id, l.fuso]));
   return {
@@ -42,7 +49,9 @@ export async function divulgacaoDaLoja(admin: Admin, lojaId: string, agora: numb
     por_dia: ingressosPorDia(pedidos, quantidadePorPedido),
     hoje: diaNoFuso(new Date(agora)),
     sessoes: (sessoes ?? []).filter(s => !s.cancelada_em).map(s => ({
-      id: s.id, evento: titulo.get(s.evento_id) ?? "Evento", quando: diaCurtoEHora(s.inicio, fuso.get(s.local_id)), a_venda: Date.parse(s.inicio) > agora, dia: diaNoFuso(s.inicio, fuso.get(s.local_id)),
+      id: s.id, evento: titulo.get(s.evento_id) ?? "Evento", evento_id: s.evento_id, quando: diaCurtoEHora(s.inicio, fuso.get(s.local_id)), a_venda: Date.parse(s.inicio) > agora, dia: diaNoFuso(s.inicio, fuso.get(s.local_id)),
+      fim: s.fim && diaNoFuso(s.fim, fuso.get(s.local_id)) > diaNoFuso(s.inicio, fuso.get(s.local_id)) ? diaNoFuso(s.fim, fuso.get(s.local_id)) : null,
+      lugares_restantes: lugaresDaSala.has(s.sala_id) ? Math.max(0, (lugaresDaSala.get(s.sala_id) ?? 0) - (vendidosNaSessao.get(s.id) ?? 0)) : null,
     })),
   };
 }

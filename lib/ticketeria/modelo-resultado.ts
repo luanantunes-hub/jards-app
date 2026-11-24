@@ -12,19 +12,28 @@ export type PontoDaCurva = { gasto_centavos: number; ingressos: number };
 export type CanalDoResultado = {
   canal: string; porcento: number; baixo: number; alto: number; ingressos: number; gasto_centavos: number; custo_por_ingresso_centavos: number | null;
   saturacao_gasto_centavos: number | null; margem_grande: boolean; gasto_constante: boolean; curva: PontoDaCurva[];
+  /** A parte do efeito de uma semana que passa para a seguinte (o adstock do canal, de 0 a 0,95); null nas rodadas antigas, que não o gravavam. */
+  atraso?: number | null;
+  /** A parte das vendas que o canal trouxe NO TOTAL, com o boca a boca e a urgência que ele puxa (lib/ticketeria/efeito-total.ts); null quando não há o que somar e nas rodadas antigas. */
+  porcento_total?: number | null;
+  /** Só na entrada que o job manda: os ingressos do canal em cada semana da tabela (para a conta do efeito total; não é gravado). */
+  por_semana?: number[];
 };
 export type DiagnosticosDoModelo = { r_hat_maximo: number; divergencias: number; ess_minimo: number };
 /** As partes em que a base ("venderia de qualquer jeito") se divide: o nível normal da loja, a tendência e a época do ano e cada controle que entrou no modelo. */
-export const CHAVES_DAS_PARTES = ["nivel", "tendencia", "proximidade", "feriado", "preco_e_lotes", "cupom", "visitas"] as const;
+export const CHAVES_DAS_PARTES = ["nivel", "tendencia", "proximidade", "feriado", "lugares", "boca", "urgencia", "imprensa", "ferias", "preco_e_lotes", "cupom", "visitas"] as const;
 export type ChaveDaParte = (typeof CHAVES_DAS_PARTES)[number];
 /** Pode ser negativa: o preço mais alto ou a falta de uma data de pico também seguram a venda. */
-export type ParteDaBase = { chave: ChaveDaParte; porcento: number; baixo: number; alto: number };
+export type ParteDaBase = { chave: ChaveDaParte; porcento: number; baixo: number; alto: number; /** Só nas datas que podem importar (férias, imprensa): quanto as semanas delas venderam a mais que sem elas (0,31 = 31%). */ efeito_na_semana?: number | null;
+  /** Só no boca a boca e na urgência: quantos ingressos por semana vale uma unidade do controle (para a conta do efeito total). */ efeito_por_unidade?: number | null };
 export const MAX_PARTES_DA_BASE = 12;
 /** A soma das partes pode destoar da base por arredondamento (e só por isso). */
 export const TOLERANCIA_DA_SOMA_DAS_PARTES = 3;
 export type ResultadoDoModelo = {
   motor: string; versao_motor: string; semanas: number; confianca: Confianca; diagnosticos: DiagnosticosDoModelo;
   base: { porcento: number; baixo: number; alto: number; partes: ParteDaBase[] }; canais: CanalDoResultado[];
+  /** Só na entrada que o job manda: as semanas da tabela e os ingressos de cada uma, na ordem de `por_semana` (para a conta do efeito total; não são gravadas). */
+  datas?: string[]; ingressos_por_semana?: number[];
 };
 
 /**
@@ -50,7 +59,9 @@ export function lerPartesDaBase(entrada: unknown): ParteDaBase[] | null {
     const p = numero(o.porcento, -100, 100); const lo = numero(o.baixo, -100, 100); const hi = numero(o.alto, -100, 100);
     if (!chave || p === null || lo === null || hi === null || lo > hi) return null;
     vistas.add(chave);
-    partes.push({ chave, porcento: casas(p, 2), baixo: casas(lo, 2), alto: casas(hi, 2) });
+    const efeito = o.efeito_na_semana === undefined || o.efeito_na_semana === null ? null : numero(o.efeito_na_semana, -1, 10);
+    const porUnidade = o.efeito_por_unidade === undefined || o.efeito_por_unidade === null ? null : numero(o.efeito_por_unidade, -1000000, 1000000);
+    partes.push({ chave, porcento: casas(p, 2), baixo: casas(lo, 2), alto: casas(hi, 2), ...(efeito !== null ? { efeito_na_semana: casas(efeito, 3) } : {}), ...(porUnidade !== null ? { efeito_por_unidade: casas(porUnidade, 3) } : {}) });
   }
   return partes;
 }
@@ -114,31 +125,43 @@ export function lerResultadoDoModelo(entrada: unknown): { ok: true; resultado: R
     }
     vistos.add(canal);
     const constante = c.gasto_constante === true;
-    canais.push({ canal, porcento: casas(p, 2), baixo: casas(lo, 2), alto: casas(hi, 2), ingressos, gasto_centavos: gasto, custo_por_ingresso_centavos: custo, saturacao_gasto_centavos: sat, margem_grande: temMargemGrande(p, lo, hi), gasto_constante: constante, curva });
+    const atraso = c.atraso === null || c.atraso === undefined ? null : numero(c.atraso, 0, 0.95);
+    if (c.atraso != null && atraso === null) return { ok: false, problema: "atraso" };
+    // Os ingressos por semana (para o efeito total): uma lista do tamanho das semanas, de números finitos; o que não for isso é ignorado (o total fica de fora, o resto grava).
+    const porSemana = Array.isArray(c.por_semana) && c.por_semana.length === semanas && c.por_semana.every(v => numero(v, -1000000, 1000000) !== null) ? (c.por_semana as number[]) : undefined;
+    canais.push({ canal, porcento: casas(p, 2), baixo: casas(lo, 2), alto: casas(hi, 2), ingressos, gasto_centavos: gasto, custo_por_ingresso_centavos: custo, saturacao_gasto_centavos: sat, margem_grande: temMargemGrande(p, lo, hi), gasto_constante: constante, curva, atraso: atraso === null ? null : casas(atraso, 3), ...(porSemana ? { por_semana: porSemana } : {}) });
   }
   const soma = bp + canais.reduce((s, c) => s + c.porcento, 0);
   if (soma < 90 || soma > 110) return { ok: false, problema: "soma" };
   const diagnosticos = { r_hat_maximo: casas(rHat, 4), divergencias, ess_minimo: ess };
-  return { ok: true, resultado: { motor, versao_motor: versao, semanas, confianca: confiancaDoResultado(semanas, diagnosticos, canais), diagnosticos, base: { porcento: casas(bp, 2), baixo: casas(bb, 2), alto: casas(ba, 2), partes }, canais } };
+  const datas = Array.isArray(e.datas) && e.datas.length === semanas && e.datas.every(d => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) ? (e.datas as string[]) : undefined;
+  const ingressosPorSemana = Array.isArray(e.ingressos_por_semana) && e.ingressos_por_semana.length === semanas && e.ingressos_por_semana.every(v => inteiro(v, 100000000) !== null) ? (e.ingressos_por_semana as number[]) : undefined;
+  return { ok: true, resultado: { motor, versao_motor: versao, semanas, confianca: confiancaDoResultado(semanas, diagnosticos, canais), diagnosticos, base: { porcento: casas(bp, 2), baixo: casas(bb, 2), alto: casas(ba, 2), partes }, canais, ...(datas && ingressosPorSemana ? { datas, ingressos_por_semana: ingressosPorSemana } : {}) } };
 }
 
 // ─── O modelo ao lado dos links ─────────────────────────────────────────────
 
-export type LinhaDaComparacao = { canal: string; modelo: number; baixo: number; alto: number; links: number | null; custoPorIngressoCentavos: number | null; gastoCentavos: number; margemGrande: boolean; gastoConstante: boolean };
+export type LinhaDaComparacao = { canal: string; modelo: number; baixo: number; alto: number; links: number | null; custoPorIngressoCentavos: number | null; gastoCentavos: number; margemGrande: boolean; gastoConstante: boolean;
+  /** O efeito total (com o boca a boca e a urgência que o canal puxa) e o custo por ingresso no total; null quando não vale. */ total: number | null; custoNoTotalCentavos: number | null };
 const ANUNCIOS = new Set(["meta-ads", "google-ads"]);
 
 /**
  * O que o modelo diz de cada canal ao lado do que os links de divulgação mostram (a parte de cada canal nos ingressos vendidos por link, em %). Anúncios pagos de Meta e de Google não se
  * separam nos links (o produtor escolhe "Anúncio pago"): ficam sem número nos links e entram juntos em `anuncios`.
  */
+/** O canal antes da separação de marca e eventos ("meta-ads-marca" → "meta-ads"): os links não sabem dessa divisão. */
+const canalSemParte = (canal: string): string => canalDoGasto(canal.replace(/-(marca|eventos)$/, ""));
+
 export function compararComOsLinks(canais: CanalDoResultado[], ingressosPorCanalDoLink: Record<string, number>): { linhas: LinhaDaComparacao[]; anuncios: { modelo: number; links: number | null } | null } {
   const total = Object.values(ingressosPorCanalDoLink).reduce((s, n) => s + n, 0);
   const parteDoLink = (chave: string): number | null => (total > 0 ? Math.round(((ingressosPorCanalDoLink[chave] ?? 0) / total) * 100) : null);
   const linhas = canais.map(c => ({
-    canal: c.canal, modelo: c.porcento, baixo: c.baixo, alto: c.alto, links: ANUNCIOS.has(canalDoGasto(c.canal)) ? null : parteDoLink(canalDoGasto(c.canal)),
+    canal: c.canal, modelo: c.porcento, baixo: c.baixo, alto: c.alto, links: ANUNCIOS.has(canalSemParte(c.canal)) || /-(marca|eventos)$/.test(c.canal) ? null : parteDoLink(canalDoGasto(c.canal)),
     custoPorIngressoCentavos: c.custo_por_ingresso_centavos, gastoCentavos: c.gasto_centavos, margemGrande: c.margem_grande, gastoConstante: c.gasto_constante,
+    total: typeof c.porcento_total === "number" && c.porcento_total > c.porcento ? c.porcento_total : null,
+    custoNoTotalCentavos: typeof c.porcento_total === "number" && c.porcento_total > c.porcento && c.porcento > 0 && c.ingressos > 0 && c.gasto_centavos > 0 ? Math.round(c.gasto_centavos / (c.ingressos * (c.porcento_total / c.porcento))) : null,
   }));
-  const pagos = canais.filter(c => ANUNCIOS.has(canalDoGasto(c.canal)));
+  const pagos = canais.filter(c => ANUNCIOS.has(canalSemParte(c.canal)));
   return { linhas, anuncios: pagos.length > 0 ? { modelo: Math.round(pagos.reduce((s, c) => s + c.porcento, 0)), links: parteDoLink("anuncio-pago") } : null };
 }
 

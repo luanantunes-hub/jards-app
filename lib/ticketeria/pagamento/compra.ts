@@ -29,6 +29,8 @@ export type ItemDaCompra = { ingresso_id: string; quantidade: number };
 export type LugaresDoIngresso = { ingresso_id: string; assentos: { fileira: string; numero: number }[] };
 /** `termos` é a versão dos Termos de compra que o comprador aceitou: precisa ser a atual (lib/ticketeria/termos-de-compra.ts). `cupom` é o código do cupom de desconto, em maiúsculas, ou null. */
 export type CorpoDaCompra = { sessao_id: string; itens: ItemDaCompra[]; nome: string; email: string; documento: string; termos: string; meio: MeioDaCompra; parcelas: number; cupom: string | null; lugares: LugaresDoIngresso[];
+  /** O comprador declarou que ele, ou quem acompanha, precisa de lugar para cadeira de rodas ou com mobilidade reduzida (libera os lugares reservados de acessibilidade). */
+  acessibilidade: boolean;
   /** De qual link de divulgação a pessoa veio (canal, ação, utm), ou null. Só rótulo: nunca barra a compra. */ origem: OrigemDaCompra | null;
   /** O aceite de novidades do produtor (caixa desmarcada de início) e, se informado, o WhatsApp. null: a pessoa não aceitou, e nada é guardado. */ novidades: NovidadesDaCompra | null };
 
@@ -117,7 +119,7 @@ export function lerCorpoDaCompra(entrada: unknown): LeituraDaCompra {
   const lugares = lerLugares(e.lugares, itens);
   if (lugares === null) problemas.push("lugares");
   if (problemas.length > 0) return { ok: false, problemas };
-  return { ok: true, corpo: { sessao_id: sessao.toLowerCase(), itens, nome, email, documento, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: meio as MeioDaCompra, parcelas: parcelas as number, cupom, lugares: lugares ?? [], origem: lerOrigem(e.origem), novidades: aceitouNovidades ? { versao: VERSAO_DAS_NOVIDADES, whatsapp } : null } };
+  return { ok: true, corpo: { sessao_id: sessao.toLowerCase(), itens, nome, email, documento, termos: VERSAO_DOS_TERMOS_DE_COMPRA, meio: meio as MeioDaCompra, parcelas: parcelas as number, cupom, lugares: lugares ?? [], acessibilidade: e.acessibilidade === true, origem: lerOrigem(e.origem), novidades: aceitouNovidades ? { versao: VERSAO_DAS_NOVIDADES, whatsapp } : null } };
 }
 
 /** O que o comprador precisa entender quando a compra não segue. */

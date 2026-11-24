@@ -16,7 +16,8 @@ test("a busca ignora acento e maiúscula", () => {
 });
 
 test("acha páginas do módulo, eventos e compras (por nome, e-mail ou código), cada um com o seu destino", () => {
-  assert.deepEqual(buscarNaTicketeria("vend", eventos, compras).map(r => [r.grupo, r.href]), [["Páginas", "/ingressos/vendas"]]);
+  assert.deepEqual(buscarNaTicketeria("vend", eventos, compras).map(r => [r.grupo, r.href]), [["Páginas", "/ingressos/vender"]], "Vendas é a página das caixas");
+  assert.deepEqual(buscarNaTicketeria("pedidos", eventos, compras).map(r => [r.grupo, r.href]), [["Páginas", "/ingressos/vendas"]], "Pedidos fica em Financeiro");
   const hamlet = buscarNaTicketeria("hamlet", eventos, compras);
   assert.deepEqual(hamlet.map(r => r.chave), ["e:e1"], "a compra não entra só porque o evento tem o mesmo nome");
 });

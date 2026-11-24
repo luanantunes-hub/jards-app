@@ -146,6 +146,27 @@
   .acao-principal:focus-visible { outline-color: Highlight; }
 }
 
+/* Dentro da Ticketeria (a classe `cantos-ticketeria` vai no body quando o módulo está aberto) o botão de criar é BRANCO, com letra e borda escuras (#282525), menor e menos arredondado que o
+   resto (pedido do dono em 22/11/2026): 32px de altura, canto de 8px (a regra geral da Ticketeria dá 12px; o seletor com `.rounded` vence), sem degradê nem sombra. Passar por cima acinzenta
+   de leve. O restante do Jards não muda. */
+body.cantos-ticketeria .acao-principal {
+  background-color: #fff;
+  background-image: none;
+  border-color: #282525;
+  color: #282525;
+  font-weight: 400;
+  box-shadow: none;
+  text-shadow: none;
+  height: 2rem;
+  padding-inline: .75rem;
+  gap: .375rem;
+}
+body.cantos-ticketeria .acao-principal.rounded { border-radius: .5rem; }
+body.cantos-ticketeria .acao-principal:hover { background-color: rgba(13, 13, 13, .05); box-shadow: none; }
+body.cantos-ticketeria .acao-principal:active { background-color: rgba(13, 13, 13, .09); box-shadow: none; }
+body.cantos-ticketeria .acao-principal:focus-visible { box-shadow: 0 0 0 3px rgba(40, 37, 37, .16); }
+body.cantos-ticketeria .acao-principal:disabled { box-shadow: none; text-shadow: none; }
+
 /* Ação de salvar (o botão verde dos rodapés de folha, modal e formulário): o mesmo volume discreto do
    botão de criar, em verde liso (#2E8932, sem degradê): linha de luz de 1px no topo, linha de sombra na
    base e sombra curta tingida de verde. Hover amigo: o verde clareia um tom
@@ -779,6 +800,17 @@ table thead th > span > span {
   font-family: var(--font-jakarta), var(--font-google-sans), system-ui, sans-serif;
   font-weight: 300;
 }
+/* Idiomas de outra escrita (lib/i18n/fontes.ts): a fonte da escrita vem primeiro e cobre também o latim (números, nomes em letras latinas), para
+   a página inteira ter uma voz só. Com a Jakarta na frente, o navegador usaria a fonte de reserva dela (que declara todos os caracteres) em vez da
+   fonte da escrita. O russo fica na Google Sans, que já cobre o cirílico. As variáveis --font-noto-* vêm do ProvedorDeIdioma. */
+.fonte-ticketeria:lang(zh),
+.fonte-ticketeria:lang(zh) :is(h1, h2, .font-display) { font-family: var(--font-noto-sc), var(--font-jakarta), var(--font-google-sans), system-ui, sans-serif; }
+.fonte-ticketeria:lang(ja),
+.fonte-ticketeria:lang(ja) :is(h1, h2, .font-display) { font-family: var(--font-noto-jp), var(--font-jakarta), var(--font-google-sans), system-ui, sans-serif; }
+.fonte-ticketeria:lang(ar),
+.fonte-ticketeria:lang(ar) :is(h1, h2, .font-display) { font-family: var(--font-noto-ar), var(--font-jakarta), var(--font-google-sans), system-ui, sans-serif; }
+/* Japonês não tem espaço entre palavras: onde o navegador sabe (auto-phrase), a linha quebra entre frases, não no meio de uma palavra. */
+.fonte-ticketeria:lang(ja) { word-break: auto-phrase; }
 .fonte-ticketeria .font-normal { font-weight: 300; }
 .fonte-ticketeria .font-medium { font-weight: 400; }
 .fonte-ticketeria .font-semibold { font-weight: 500; }

@@ -11,7 +11,7 @@ import type { IngressoComEspera, PessoaNaEspera, SessaoComEspera } from "@/lib/t
 // e-mail, na ordem de chegada, quando voltam lugares. Só desenho: os dados e as ações chegam por props.
 
 // Lado de quem compra (segue o site da pessoa, como as telas de CompraView).
-const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#282525] px-5 py-3 text-[0.9375rem] text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] disabled:cursor-not-allowed disabled:bg-black/20";
+const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#6450D2] px-5 py-3 text-[0.9375rem] text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6450D2] disabled:cursor-not-allowed disabled:bg-black/20";
 const BOTAO_SECUNDARIO = "inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-[0.875rem] text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
 const ROTULO_COMPRA = "mb-1.5 block text-[0.6875rem] uppercase tracking-[.08em] text-black/50";
 const CAMPO_COMPRA = "h-12 w-full rounded-xl border border-black/15 bg-white px-3.5 text-[1rem] text-[#282525] placeholder:text-black/30 focus:border-[#282525] focus:outline-none";
@@ -68,7 +68,8 @@ export function TelaNaListaDeEspera({ site, evento, ingresso, email, quantidade,
 // Lado do produtor (Ticketeria > Lista de espera).
 
 const BORDA = "rgba(13,13,13,.08)";
-const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
+// `relative`: o texto `sr-only` do cabeçalho (posicionado de forma absoluta) fica dentro da célula; solto, contava como parte da página e criava um segundo scroll, com espaço em branco, em listas compridas.
+const CABECALHO = "relative px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
 const CELULA = "px-4 py-2.5 text-[0.8125rem] text-[#282525]";
 
 export type { IngressoComEspera, PessoaNaEspera, SessaoComEspera };

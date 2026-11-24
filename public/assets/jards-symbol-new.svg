@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="582" height="868" viewBox="624 1858 582 868" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:affinity="https://www.affinity.studio/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;">
+    <g transform="matrix(-0,2.930726,-2.930726,0,2058.351574,1677.324947)">
+        <path d="M259.129,291.661L356.911,291.661L356.911,291.998C356.911,346.028 313.123,389.913 259.129,390.07L259.129,291.661" style="fill:rgb(100,80,210);fill-rule:nonzero;stroke:rgb(100,80,210);stroke-width:0.64px;"/>
+    </g>
+    <g transform="matrix(2.930726,-0,0,2.930726,-132.424593,1580.14501)">
+        <path d="M259.129,291.661L356.911,291.661L356.911,291.998C356.911,346.028 313.123,389.913 259.129,390.07L259.129,291.661" style="fill:rgb(100,80,210);fill-rule:nonzero;stroke:rgb(100,80,210);stroke-width:0.64px;"/>
+    </g>
+    <g transform="matrix(2.930726,0,0,2.930726,157.698214,1581.855088)">
+        <path d="M160.09,291.659L160.09,291.076C160.09,182.818 247.979,94.929 356.236,94.929L356.911,94.929L356.911,291.659L160.09,291.659Z" style="fill:rgb(255,85,40);fill-rule:nonzero;stroke:rgb(255,85,40);stroke-width:0.64px;stroke-linecap:butt;"/>
+    </g>
+    <g transform="matrix(1,0,0,1,232.392778,1099.097546)">
+        <text x="1251.228px" y="1539.655px" style="font-family:'GoogleSans-SemiBold', 'Google Sans';font-weight:600;font-size:625px;fill:rgb(255,85,40);">ja<tspan style="letter-spacing:-12.5px">r</tspan>ds</text>
+    </g>
+</svg>

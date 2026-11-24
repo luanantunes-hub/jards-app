@@ -60,8 +60,12 @@ test("cada pacote de ilustrações tem a sua pasta, com os arquivos numerados de
     const arquivos = readdirSync(new URL(`../public/ilustracoes/${pacote.id}`, import.meta.url)).sort();
     assert.deepEqual(arquivos, Array.from({ length: pacote.total }, (_, i) => `${String(i + 1).padStart(2, "0")}.png`), pacote.nome);
   }
-  const { readdirSync: pastas } = await import("node:fs");
-  assert.deepEqual(pastas(new URL("../public/ilustracoes", import.meta.url)).sort(), PACOTES_DE_ILUSTRACOES.map((pacote) => pacote.id).sort(), "toda pasta de ilustração é um pacote registrado");
+  const pastasDePacote = readdirSync(new URL("../public/ilustracoes", import.meta.url), { withFileTypes: true })
+    .filter((entrada) => entrada.isDirectory())
+    .map((entrada) => entrada.name)
+    .filter((pasta) => readdirSync(new URL(`../public/ilustracoes/${pasta}`, import.meta.url)).some((arquivo) => /^\d{2}\.png$/.test(arquivo)))
+    .sort();
+  assert.deepEqual(pastasDePacote, PACOTES_DE_ILUSTRACOES.map((pacote) => pacote.id).sort(), "toda pasta com ilustrações numeradas é um pacote registrado");
 });
 
 test("pacotes: o Tamanduá no dia a dia é o ativo, com 15 desenhos, e o endereço de cada um segue a pasta do pacote", () => {

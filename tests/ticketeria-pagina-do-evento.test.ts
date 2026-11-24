@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { APARENCIA_PADRAO } from "../lib/ticketeria/aparencia";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { EventoDoSiteView } from "../components/ticketeria/EventoDoSiteView";
@@ -15,7 +16,7 @@ import type { EventoPublicoDoDominio } from "../lib/ticketeria/site-publico";
 
 const sessao = (extra: Partial<SessaoNaApi> = {}): SessaoNaApi => ({ id: "s1", inicio: "2026-12-12T23:00:00.000Z", quando: "Sábado, 12 de dezembro, às 20h", local: "Teatro Municipal, São Paulo/SP", local_nome: "Teatro Municipal", cidade: "São Paulo", uf: "SP", estado: "aberta", a_partir_de_centavos: 5000, poucos: false, url: "https://jards.com.br/comprar/s1", ...extra });
 const evento = (extra: Partial<EventoNaApi> = {}): EventoNaApi => ({ id: "e1", slug: "hamlet", titulo: "Hamlet", descricao: "A tragédia do príncipe.\n\nDuas horas e meia.", classificacao: "14 anos", imagem: "https://a.com/capa.jpg", sessoes: [sessao()], ...extra });
-const dados = (e: EventoNaApi = evento()): EventoPublicoDoDominio => ({ titulo: "Cia Atores de Mar", cor: "#1C0E33", tema: "editorial", organizacao: "Cia Atores de Mar Ltda", agora: 0, menu: [{ slug: "inicio", titulo: "Início" }, { slug: "contato", titulo: "Contato" }], evento: e });
+const dados = (e: EventoNaApi = evento()): EventoPublicoDoDominio => ({ titulo: "Cia Atores de Mar", cor: "#1C0E33", tema: "editorial", organizacao: "Cia Atores de Mar Ltda", agora: 0, aparencia: APARENCIA_PADRAO, caminhoDoPrimeiroEvento: null, menu: [{ slug: "inicio", titulo: "Início" }, { slug: "contato", titulo: "Contato" }], evento: e });
 
 test("os endereços: /e/<slug> no domínio da pessoa e a partir da base do site", () => {
   assert.equal(enderecoDoEvento("atoresdemar.com.br", "hamlet"), "https://atoresdemar.com.br/e/hamlet");

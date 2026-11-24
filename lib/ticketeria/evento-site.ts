@@ -257,3 +257,18 @@ export function filtrarAgenda(itens: readonly ItemDaAgenda[], f: { mes: string |
     });
   });
 }
+
+/** A chamada do destaque "próximo evento": "Próximo espetáculo · faltam 8 dias", "... · amanhã" ou "... · hoje". Sem sessão por vir, só "Próximo espetáculo". */
+export function chamadaDoProximoEvento(contagem: { dias: number } | null): string {
+  if (contagem === null) return "Próximo espetáculo";
+  return `Próximo espetáculo · ${contagem.dias === 0 ? "hoje" : contagem.dias === 1 ? "amanhã" : `faltam ${contagem.dias} dias`}`;
+}
+
+/** Os botões do destaque "próximo evento": a primeira sessão à venda leva à compra; esgotado, à lista de espera; sem venda, à página do evento. "Ver todas as datas" só quando há mais de uma. */
+export function botoesDoProximoEvento(item: Pick<ItemDaAgenda, "estado" | "lista" | "slug">): { principal: { texto: string; url: string | null }; secundario: { texto: string } | null } {
+  const aberta = item.lista.find(s => s.estado === "aberta");
+  const principal = item.estado === "aberta" && aberta ? { texto: "Escolher ingressos", url: aberta.url }
+    : item.estado === "esgotado" && item.lista[0] ? { texto: "Entrar na lista de espera", url: item.lista[0].url }
+      : { texto: "Ver o evento", url: null };
+  return { principal, secundario: item.lista.length > 1 ? { texto: "Ver todas as datas" } : null };
+}

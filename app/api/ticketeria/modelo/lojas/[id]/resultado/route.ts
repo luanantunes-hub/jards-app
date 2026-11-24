@@ -5,6 +5,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { lerResultadoDoModelo } from "@/lib/ticketeria/modelo-resultado";
+import { comEfeitoTotal } from "@/lib/ticketeria/efeito-total-servidor";
 import { recusarSemTokenDoModelo } from "@/lib/ticketeria/modelo-token";
 import type { Json } from "@/lib/supabase/types";
 
@@ -32,7 +33,9 @@ export async function POST(req: NextRequest, rota: { params: Promise<{ id: strin
   }
   const leitura = lerResultadoDoModelo(bruto);
   if (!leitura.ok) return resposta({ error: "dados_invalidos", problema: leitura.problema }, 400);
-  const { data, error } = await t.rpc("fn_ticketeria_mmm_gravar", { p_loja: lojaId, p_resultado: leitura.resultado as unknown as Json });
+  // O efeito total de cada canal (com o boca a boca e a urgência que ele puxa) é calculado aqui, com as sessões da loja; a rodada grava mesmo se a conta não der.
+  const resultado = await comEfeitoTotal(createAdminClient(), lojaId, leitura.resultado);
+  const { data, error } = await t.rpc("fn_ticketeria_mmm_gravar", { p_loja: lojaId, p_resultado: resultado as unknown as Json });
   if (error) { console.error("[ticketeria] gravar resultado do modelo:", error.message); return resposta({ error: "falha_ao_gravar" }, 500); }
   return resposta({ ok: true, situacao: "ok", id: data, confianca: leitura.resultado.confianca }, 201);
 }

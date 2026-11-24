@@ -22,7 +22,8 @@ function ListEmptyState({ title, description }: { title: string; description?: s
 }
 const ROTULO = "text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45";
 const CELULA = "px-4 py-3 text-[0.8125rem] text-[#282525]";
-const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
+// `relative`: o texto `sr-only` do cabeçalho (posicionado de forma absoluta) fica dentro da célula; solto, contava como parte da página e criava um segundo scroll, com espaço em branco, em listas compridas.
+const CABECALHO = "relative px-4 py-2.5 text-left text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/35";
 const LINK = "rounded-xl text-[0.8125rem] text-black/55 underline-offset-2 transition hover:text-black/75 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
 const CANCELAR = "rounded-xl px-4 py-2.5 text-[0.75rem] font-normal text-black/35 transition hover:text-black/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
 
@@ -111,7 +112,7 @@ export function SessoesDeVendas({ sessoes }: { sessoes: SessaoDeVendas[] }) {
 export type FiltroDasCompras = "todas" | "pagas" | "aguardando";
 const FILTROS: [FiltroDasCompras, string][] = [["todas", "Todas"], ["pagas", "Pagas"], ["aguardando", "Aguardando"]];
 
-export function ComprasDeVendas({ compras, filtro, onFiltrar, onAbrir }: { compras: CompraDaLista[]; filtro: FiltroDasCompras; onFiltrar?: (f: FiltroDasCompras) => void; onAbrir?: (id: string) => void }) {
+export function ComprasDeVendas({ compras, filtro, onFiltrar, onAbrir, haMais = false, onVerMais, carregando = false }: { compras: CompraDaLista[]; filtro: FiltroDasCompras; onFiltrar?: (f: FiltroDasCompras) => void; onAbrir?: (id: string) => void; /** Há mais compras além das mostradas (a lista vem de página em página). */ haMais?: boolean; onVerMais?: () => void; /** Buscando: a lista fica esmaecida (troca de filtro) ou o botão trabalha (ver mais). */ carregando?: boolean }) {
   return (
     <section aria-label="Compras">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
@@ -124,9 +125,9 @@ export function ComprasDeVendas({ compras, filtro, onFiltrar, onAbrir }: { compr
       </div>
       <ListTableSurface>
         {compras.length === 0 ? (
-          <ListEmptyState title="Nenhuma compra aqui" />
+          <ListEmptyState title={carregando ? "Buscando…" : "Nenhuma compra aqui"} />
         ) : (
-          <table className="w-full min-w-[46rem] border-collapse">
+          <table className={`w-full min-w-[46rem] border-collapse transition-opacity ${carregando ? "opacity-60" : ""}`} aria-busy={carregando}>
             <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Compra</th><th className={CABECALHO}>Comprador</th><th className={CABECALHO}>Sessão</th><th className={`${CABECALHO} text-right`}>Ingressos</th><th className={`${CABECALHO} text-right`}>Valor</th><th className={CABECALHO}><span className="sr-only">Situação</span></th></tr></thead>
             <tbody className="divide-y divide-black/[.08]">
               {compras.map(c => (
@@ -143,6 +144,13 @@ export function ComprasDeVendas({ compras, filtro, onFiltrar, onAbrir }: { compr
           </table>
         )}
       </ListTableSurface>
+      {haMais && (
+        <div className="flex justify-center pt-3">
+          <button type="button" onClick={onVerMais} disabled={carregando} className="h-9 rounded-xl px-4 text-[0.75rem] font-normal text-black/55 transition hover:bg-black/[.04] hover:text-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">
+            {carregando ? "Buscando…" : "Ver mais compras"}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
@@ -242,13 +250,13 @@ export function ReembolsosDeVendas({ reembolsos, onTentarDeNovo, tentando }: { r
 }
 
 /** A página inteira, sem o cabeçalho (que é da página): resumo, sessões e compras. Sem venda nenhuma, o convite. */
-export function VendasView({ resumo, sessoes, compras, filtro, onFiltrar, onAbrir, reembolsos = [], onTentarDeNovo, tentando }: { resumo: ResumoDasVendas; sessoes: SessaoDeVendas[]; compras: CompraDaLista[]; filtro: FiltroDasCompras; onFiltrar?: (f: FiltroDasCompras) => void; onAbrir?: (id: string) => void; reembolsos?: ReembolsoDaLista[]; onTentarDeNovo?: (id: string) => void; tentando?: string | null }) {
+export function VendasView({ resumo, sessoes, compras, filtro, onFiltrar, onAbrir, reembolsos = [], onTentarDeNovo, tentando, haMais, onVerMais, carregando }: { resumo: ResumoDasVendas; sessoes: SessaoDeVendas[]; compras: CompraDaLista[]; filtro: FiltroDasCompras; onFiltrar?: (f: FiltroDasCompras) => void; onAbrir?: (id: string) => void; reembolsos?: ReembolsoDaLista[]; onTentarDeNovo?: (id: string) => void; tentando?: string | null; haMais?: boolean; onVerMais?: () => void; carregando?: boolean }) {
   return (
     <div className="space-y-6">
       <ResumoDeVendas resumo={resumo} />
       {sessoes.length > 0 && <SessoesDeVendas sessoes={sessoes} />}
       {reembolsos.length > 0 && <ReembolsosDeVendas reembolsos={reembolsos} onTentarDeNovo={onTentarDeNovo} tentando={tentando} />}
-      <ComprasDeVendas compras={compras} filtro={filtro} onFiltrar={onFiltrar} onAbrir={onAbrir} />
+      <ComprasDeVendas compras={compras} filtro={filtro} onFiltrar={onFiltrar} onAbrir={onAbrir} haMais={haMais} onVerMais={onVerMais} carregando={carregando} />
     </div>
   );
 }

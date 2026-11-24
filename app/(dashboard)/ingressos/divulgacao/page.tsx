@@ -8,20 +8,31 @@ import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
 import { ListContent, ListPageHeader, PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { AcaoSheet, AcoesDaLoja, DivulgacaoDaLoja, LinkDeDivulgacaoSheet } from "@/components/ticketeria/DivulgacaoView";
+import { AchadosDaImprensaView, ImprensaDaLojaView, PicoSemExplicacaoAviso, VeiculosAcompanhadosView, useDaImprensa, useImprensa, type AchadoDaImprensa, type VeiculoAcompanhado } from "@/components/ticketeria/ImprensaView";
 import { HistoricoDaLoja, ImportarPlanilhaSheet } from "@/components/ticketeria/HistoricoView";
 import { DatasDePicoSheet } from "@/components/ticketeria/DatasDePicoSheet";
 import { SimularOrcamentoSheet } from "@/components/ticketeria/SimularOrcamentoSheet";
+import { AvisosDeEsgotamento } from "@/components/ticketeria/EsgotamentoView";
+import type { EventoEsgotado, EventoQuaseEsgotado } from "@/lib/ticketeria/esgotamento";
+import { CampanhasDaLoja, type CampanhaDaTela, type EventoDaTela } from "@/components/ticketeria/CampanhasView";
+import { CalendarioDeDivulgacao, PlanejarDivulgacaoSheet, PreviaDoCalendario, type PlanoDoCalendario } from "@/components/ticketeria/CalendarioDeDivulgacaoView";
+import { faltaAtraso } from "@/lib/ticketeria/modelo-calendario";
+import { canaisComCurva } from "@/lib/ticketeria/modelo-recomendacao";
 import { PlanoBDoModelo } from "@/components/ticketeria/PlanoBView";
 import { CabecalhoDoPainel, PreviaComExemplo, PrimeirosDados } from "@/components/ticketeria/PainelView";
+import { ExpectativaSheet, ParecidosSheet, RitmoComparado, SemParecido, useEscolhasDoRitmo } from "@/components/ticketeria/RitmoComparadoView";
+import { candidatosDoEvento, preverPorComparacao } from "@/lib/ticketeria/ritmo-comparado";
+import { MIN_COMPRADORES_PARA_COMPARAR } from "@/lib/ticketeria/publico-em-comum";
 import { confiancaMostrada } from "@/lib/ticketeria/modelo-confianca";
 import { blocoDeInvestir, blocoDoTamanhoDosCanais } from "@/lib/ticketeria/modelo-painel";
 import { lerDataDePico, type CamposDaDataDePico, type DataDePico } from "@/lib/ticketeria/modelo-controles";
-import { ModeloDaLoja, ResultadoDoModelo } from "@/components/ticketeria/ModeloView";
+import { ControlesDoModelo, CurvaDaCasaSheet, ModeloDaLoja, ResultadoDoModelo, bocaQuePesa } from "@/components/ticketeria/ModeloView";
+import { rampaPadrao } from "@/lib/ticketeria/modelo-controles";
 import type { ResultadoParaATela } from "@/lib/ticketeria/modelo-servidor";
 import type { ProntidaoDoModelo } from "@/lib/ticketeria/modelo";
 import type { CorpoDaImportacao, ImportacaoDaLista, TipoDeHistorico } from "@/lib/ticketeria/historico";
 import { CARTOES, ConexoesDaLoja, EscolherContaSheet, type ContaParaEscolher, type EstadoDeMidia, type ProvedorDoCartao } from "@/components/ticketeria/ConexoesView";
-import { gastoParaCampo, lerAcao, resumirDivulgacao, type CamposDaAcao, type DivulgacaoDaLoja as DadosDaDivulgacao } from "@/lib/ticketeria/divulgacao";
+import { CANAL_DA_IMPRENSA, assuntoDoNome, gastoParaCampo, lerAcao, resumirDivulgacao, type CamposDaAcao, type DivulgacaoDaLoja as DadosDaDivulgacao } from "@/lib/ticketeria/divulgacao";
 
 type Aba = "origem" | "acoes" | "conexoes" | "historico" | "modelo";
 const ABAS: { valor: Aba; rotulo: string }[] = [{ valor: "origem", rotulo: "De onde vieram" }, { valor: "acoes", rotulo: "Ações e gasto" }, { valor: "conexoes", rotulo: "Conexões" }, { valor: "historico", rotulo: "Histórico" }, { valor: "modelo", rotulo: "Modelo" }];
@@ -65,6 +76,22 @@ export default function DivulgacaoPage() {
   // As datas de pico da loja (a folha "Adicionar uma data sua" da aba Modelo).
   const [datasDePico, setDatasDePico] = useState<DataDePico[]>([]);
   const [simulando, setSimulando] = useState(false);
+  // O calendário de divulgação de um evento: a folha aberta e o plano montado (aparece no topo da aba Modelo).
+  const [planejando, setPlanejando] = useState(false);
+  const [plano, setPlano] = useState<PlanoDoCalendario | null>(null);
+  // A folha da curva de venda da casa (o "Ver a curva" do ritmo de venda).
+  const [verCurva, setVerCurva] = useState(false);
+  // As campanhas do Meta e do Google com a marcação marca/evento (aba Conexões).
+  const [campanhas, setCampanhas] = useState<{ campanhas: CampanhaDaTela[]; eventos: EventoDaTela[] } | null>(null);
+  const [salvandoCampanhas, setSalvandoCampanhas] = useState(false);
+  const [erroDasCampanhas, setErroDasCampanhas] = useState<string | null>(null);
+  const [avisoDasCampanhas, setAvisoDasCampanhas] = useState<string | null>(null);
+  const [folhaParecidos, setFolhaParecidos] = useState(false);
+  const [folhaExpectativa, setFolhaExpectativa] = useState(false);
+  // O ritmo comparado com eventos parecidos: a escolha dos parecidos e a expectativa ficam neste navegador.
+  const ritmo = prontidao?.ritmo ?? null;
+  const comparacao = ritmo?.comparacao ?? null;
+  const { escolhas, salvarEscolhas, expectativa, salvarExpectativa } = useEscolhasDoRitmo(estado?.lojaId ?? null, comparacao?.sessaoId ?? null);
   const [folhaDeDatas, setFolhaDeDatas] = useState<{ valores: CamposDaDataDePico; erro: string | null } | null>(null);
 
   useEffect(() => {
@@ -121,7 +148,45 @@ export default function DivulgacaoPage() {
     return () => { ativo = false; };
   }, [aba, estado?.lojaId, versao]);
 
-  const abrirNova = useCallback((hoje: string) => { setAcaoErro(null); setAcao({ id: null, valores: { nome: "", canal: "instagram", inicio: hoje, fim: hoje, gasto: "" } }); }, []);
+  const abrirNova = useCallback((hoje: string, canal: string = "instagram") => { setAcaoErro(null); setAcao({ id: null, valores: { nome: "", canal, inicio: hoje, fim: hoje, gasto: "" } }); }, []);
+  // A imprensa da loja (só na aba Ações e gasto): cada marcação medida pelas vendas, o peso de cada veículo e o pico de venda sem explicação.
+  const imprensa = useImprensa(aba === "acoes" ? estado?.lojaId ?? null : null, versao);
+  // O monitoramento: o que a leitura da imprensa achou e os veículos acompanhados.
+  const achados = useDaImprensa<{ aConfirmar: AchadoDaImprensa[]; registrados: AchadoDaImprensa[] }>(aba === "acoes" ? estado?.lojaId ?? null : null, "achados", versao);
+  const veiculos = useDaImprensa<{ veiculos: VeiculoAcompanhado[]; sugestoes: { nome: string; vezes: number }[] }>(aba === "acoes" ? estado?.lojaId ?? null : null, "veiculos", versao);
+  const [achadoOcupado, setAchadoOcupado] = useState<string | null>(null);
+  async function decidirAchado(id: string, acaoDoAchado: "confirmar" | "descartar" | "desfazer") {
+    if (!estado?.lojaId) return;
+    setAchadoOcupado(id);
+    await fetch(`/api/ticketeria/lojas/${estado.lojaId}/imprensa/achados/${id}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ acao: acaoDoAchado }) }).catch(() => null);
+    setAchadoOcupado(null);
+    setVersao(v => v + 1);
+  }
+  async function acompanharSite(site: string): Promise<string | null> {
+    if (!estado?.lojaId) return "Não foi possível acompanhar agora.";
+    const r = await fetch(`/api/ticketeria/lojas/${estado.lojaId}/imprensa/veiculos`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site }) }).catch(() => null);
+    if (!r) return "Não foi possível acompanhar agora. Tente de novo.";
+    if (!r.ok) { const c = (await r.json().catch(() => null)) as { mensagem?: string } | null; return c?.mensagem ?? "Não foi possível acompanhar agora. Tente de novo."; }
+    setVersao(v => v + 1);
+    return null;
+  }
+  async function pararDeAcompanhar(id: string) {
+    if (!estado?.lojaId) return;
+    await fetch(`/api/ticketeria/lojas/${estado.lojaId}/imprensa/veiculos/${id}`, { method: "DELETE" }).catch(() => null);
+    setVersao(v => v + 1);
+  }
+  // "Registrar uma crítica ou matéria" no Modelo: abre a folha de ação já no canal da imprensa.
+  const abrirImprensa = useCallback(() => { const hoje = estado?.dados?.hoje; if (hoje) abrirNova(hoje, CANAL_DA_IMPRENSA); }, [estado, abrirNova]);
+
+  /** Abre uma ação para editar; na imprensa, o veículo, o assunto (o nome sem o veículo) e o evento voltam aos campos. */
+  function abrirAcao(id: string) {
+    const a = estado?.dados?.acoes.find(x => x.id === id);
+    if (!a) return;
+    setAcaoErro(null);
+    setAcao({ id, valores: a.canal === CANAL_DA_IMPRENSA
+      ? { nome: assuntoDoNome(a.nome, a.veiculo), canal: a.canal, inicio: a.inicio, fim: a.fim, gasto: "", veiculo: a.veiculo ?? a.nome, eventoId: a.evento_id }
+      : { nome: a.nome, canal: a.canal, inicio: a.inicio, fim: a.fim, gasto: gastoParaCampo(a.gasto_centavos) } });
+  }
 
   async function salvar() {
     if (!acao || !estado?.lojaId || !organizationId) return;
@@ -238,25 +303,74 @@ export default function DivulgacaoPage() {
     try { await fetch(`/api/ticketeria/lojas/${estado.lojaId}/historico/${id}`, { method: "DELETE" }); } finally { setDesfazendo(null); setVersao(v => v + 1); }
   }
 
+  // Os avisos de esgotamento (aba Ações e gasto): anúncio gastando com o evento esgotado e evento quase esgotado.
+  const [esgotamento, setEsgotamento] = useState<{ esgotados: EventoEsgotado[]; quase: EventoQuaseEsgotado[] } | null>(null);
+  const lojaDoEsgotamento = estado?.lojaId ?? null;
+  useEffect(() => {
+    if (aba !== "acoes" || !lojaDoEsgotamento) return;
+    let ativo = true;
+    void (async () => {
+      try {
+        const r = await fetch(`/api/ticketeria/lojas/${lojaDoEsgotamento}/esgotamento`, { cache: "no-store" });
+        if (r.ok && ativo) setEsgotamento((await r.json()) as { esgotados: EventoEsgotado[]; quase: EventoQuaseEsgotado[] });
+      } catch { /* sem aviso, a aba segue normal */ }
+    })();
+    return () => { ativo = false; };
+  }, [aba, lojaDoEsgotamento]);
+  const lojaDasCampanhas = estado?.lojaId ?? null;
+  useEffect(() => {
+    if (aba !== "conexoes" || !lojaDasCampanhas) return;
+    let ativo = true;
+    void (async () => {
+      try {
+        const r = await fetch(`/api/ticketeria/lojas/${lojaDasCampanhas}/campanhas`, { cache: "no-store" });
+        if (r.ok && ativo) setCampanhas((await r.json()) as { campanhas: CampanhaDaTela[]; eventos: EventoDaTela[] });
+      } catch { /* a lista fica como estava */ }
+    })();
+    return () => { ativo = false; };
+  }, [aba, lojaDasCampanhas]);
+
+  async function salvarCampanhas(itens: { id: string; marcacao: "marca" | "evento" | null; evento_id: string | null }[]): Promise<boolean> {
+    if (!lojaDasCampanhas) return false;
+    setSalvandoCampanhas(true); setErroDasCampanhas(null); setAvisoDasCampanhas(null);
+    try {
+      const r = await fetch(`/api/ticketeria/lojas/${lojaDasCampanhas}/campanhas`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ itens }) });
+      const d = (await r.json().catch(() => ({}))) as { campanhas?: CampanhaDaTela[] };
+      if (!r.ok || !d.campanhas) { setErroDasCampanhas("Não foi possível salvar agora. Tente de novo em instantes."); return false; }
+      setCampanhas(c => (c ? { ...c, campanhas: d.campanhas as CampanhaDaTela[] } : c));
+      setAvisoDasCampanhas("Salvo. O modelo usa a marcação na próxima rodada.");
+      return true;
+    } catch {
+      setErroDasCampanhas("Sem conexão. Tente de novo.");
+      return false;
+    } finally {
+      setSalvandoCampanhas(false);
+    }
+  }
   if (estado === undefined || !organizationId) return <DetailPageSkeleton />;
   const dados = estado.dados;
+  const candidatos = comparacao ? candidatosDoEvento({ id: comparacao.sessaoId, localId: comparacao.localId, precoMedioCentavos: comparacao.precoMedioCentavos, compradores: comparacao.compradores }, comparacao.curvas, escolhas) : [];
+  const previsaoPorComparacao = ritmo && comparacao ? preverPorComparacao({ vendidos: ritmo.vendidos, lugares: ritmo.lugares, diasAteASessao: ritmo.diasAteASessao, parecidos: candidatos.filter(c => c.usado).map(c => c.curva) }) : null;
   // O gasto por semana de cada canal (o mais comum nas semanas com gasto): a base da previsão e do simulador.
   const gastoSemanal: Record<string, number> = Object.fromEntries((prontidao?.canais ?? []).filter(c => c.medianaCentavos > 0).map(c => [c.canal, c.medianaCentavos]));
   // O dia da próxima sessão à venda: o plano B não sugere experimento perto de uma sessão.
   const proximaSessao = (dados?.sessoes ?? []).filter(x => x.a_venda && x.dia && x.dia >= (dados?.hoje ?? "")).map(x => x.dia as string).sort()[0] ?? null;
   // O ranking de canais e o simulador só abrem com confiança boa (ver lib/ticketeria/modelo-painel.ts).
   const podeSimular = !!resultadoDoModelo && blocoDeInvestir(confiancaMostrada(resultadoDoModelo.execucao.confianca, prontidao?.resumo?.sessoes ?? null), resultadoDoModelo.execucao.semanas, resultadoDoModelo.canais.some(c => c.gasto_constante)).aberto;
+  // O calendário abre onde o simulador abre, e só com o atraso de cada canal (rodadas novas do modelo).
+  const podePlanejar = podeSimular && !!resultadoDoModelo && canaisComCurva(resultadoDoModelo.canais).length > 0 && !faltaAtraso(canaisComCurva(resultadoDoModelo.canais));
   const acoes = (
     <>
       {dados && aba === "acoes" && <SecondaryListAction onClick={() => abrirNova(dados.hoje)}>Registrar ação</SecondaryListAction>}
       {dados && aba === "modelo" && podeSimular && Object.keys(gastoSemanal).length > 0 && <SecondaryListAction onClick={() => setSimulando(true)}>Simular orçamento</SecondaryListAction>}
+      {dados && aba === "modelo" && podePlanejar && <SecondaryListAction onClick={() => setPlanejando(true)}>Planejar evento</SecondaryListAction>}
       {dados && aba === "historico" && <SecondaryListAction onClick={() => { setErroDeImportar(null); setFolhaDeImportar(true); }}>Importar planilha</SecondaryListAction>}
       {dados && <PrimaryListAction onClick={() => setCriando(true)}><Link2 size={13} aria-hidden="true" /> Criar link de divulgação</PrimaryListAction>}
     </>
   );
   return (
     <>
-      <ListPageHeader title="Divulgação" actions={dados ? acoes : undefined} />
+      <ListPageHeader title="Marketing" actions={dados ? acoes : undefined} />
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded-xl border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {dados && (
@@ -277,34 +391,52 @@ export default function DivulgacaoPage() {
                     <CabecalhoDoPainel
                       resumo={[prontidao.resumo ? `${prontidao.resumo.eventos} ${prontidao.resumo.eventos === 1 ? "evento" : "eventos"}` : null, resultadoDoModelo ? `${resultadoDoModelo.execucao.semanas} semanas` : prontidao.semanas > 0 ? `${prontidao.semanas} semanas` : null].filter(Boolean).join(" · ") || "primeiros dados"}
                       frase={resultadoDoModelo && blocoDoTamanhoDosCanais(resultadoDoModelo.execucao.semanas, confiancaMostrada(resultadoDoModelo.execucao.confianca, prontidao.resumo?.sessoes ?? null)).aberto ? "O modelo já estima o tamanho de cada canal, com margem larga." : "Já dá para ver o que é medido, e cada integração que você faz deixa o resto mais preciso."} />
-                    <PrimeirosDados ritmo={prontidao.ritmo ?? null} origem={resumirDivulgacao(dados.linhas, null).canais.map(c => ({ rotulo: c.rotulo, ingressos: c.ingressos }))} />
-                    {resultadoDoModelo && <ResultadoDoModelo resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} sessoes={prontidao.resumo?.sessoes ?? null} eventos={prontidao.resumo?.eventos ?? null} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />}
+                    <PrimeirosDados semConta={!!previsaoPorComparacao} ritmo={prontidao.ritmo ?? null} origem={resumirDivulgacao(dados.linhas, null).canais.map(c => ({ rotulo: c.rotulo, ingressos: c.ingressos }))} />
+                    {ritmo && (previsaoPorComparacao
+                      ? <RitmoComparado ritmo={ritmo} previsao={previsaoPorComparacao} candidatos={candidatos} porPublico={(comparacao?.compradores ?? 0) >= MIN_COMPRADORES_PARA_COMPARAR} onAjustar={() => setFolhaParecidos(true)} />
+                      : <SemParecido ritmo={ritmo} temHistorico={(comparacao?.curvas.length ?? 0) > 0} expectativa={expectativa} onExpectativa={() => setFolhaExpectativa(true)} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />)}
+                    {plano && resultadoDoModelo && podePlanejar && <CalendarioDeDivulgacao plano={plano} canais={resultadoDoModelo.canais} semanasDoModelo={resultadoDoModelo.execucao.semanas} bocaABoca={bocaQuePesa(resultadoDoModelo.execucao.base.partes)} onAjustar={() => setPlanejando(true)} onFechar={() => setPlano(null)} />}
+                    {resultadoDoModelo && <ResultadoDoModelo onPlanejar={podePlanejar ? () => setPlanejando(true) : undefined} resultado={resultadoDoModelo} gastoSemanal={gastoSemanal} sessoes={prontidao.resumo?.sessoes ?? null} eventos={prontidao.resumo?.eventos ?? null} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />}
                     {!resultadoDoModelo && (
                       <div className="space-y-3">
                         <h3 className="text-[0.625rem] font-normal uppercase tracking-[.08em] text-black/45">O que abre com mais dados (prévia com exemplo)</h3>
                         <PreviaComExemplo tipo="canais" motivo={blocoDoTamanhoDosCanais(prontidao.semanas, "baixa").motivo ?? ""} acao="Conectar o Meta e o Google Ads" onAcao={() => setAba("conexoes")} />
                         <PreviaComExemplo tipo="investir" motivo={blocoDeInvestir("baixa", prontidao.semanas, false).motivo ?? ""} acao="Importar vendas anteriores encurta isso." onAcao={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />
+                        <PreviaDoCalendario motivo={blocoDeInvestir("baixa", prontidao.semanas, false).motivo ?? ""} acao="Importar vendas anteriores encurta isso." onAcao={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} />
                       </div>
                     )}
-                    {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} />}
+                    {resultadoDoModelo && prontidao.pronto && <ControlesDoModelo controles={prontidao.controles} partes={resultadoDoModelo.execucao.base.partes} permanente={!!prontidao.resumo?.permanente} semanas={prontidao.semanas} marcacoesDeImprensa={prontidao.resumo?.imprensa ?? 0} onImprensa={abrirImprensa} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} onConexoes={() => setAba("conexoes")} onCurva={() => setVerCurva(true)} />}
+                    {(!resultadoDoModelo || !prontidao.pronto) && <ModeloDaLoja onCurva={() => setVerCurva(true)} onImprensa={abrirImprensa} prontidao={prontidao} onImportar={() => { setAba("historico"); setErroDeImportar(null); setFolhaDeImportar(true); }} onConexoes={() => setAba("conexoes")} onDatas={() => setFolhaDeDatas({ valores: { dia: "", nome: "" }, erro: null })} />}
                     {(!resultadoDoModelo || !prontidao.pronto || resultadoDoModelo.execucao.confianca !== "boa") && <PlanoBDoModelo acoes={dados.acoes} canais={prontidao.canais} hoje={dados.hoje} proximaSessao={proximaSessao} onRegistrar={valores => { setAcaoErro(null); setAcao({ id: null, valores }); }} />}
                   </div>)
                 : <p className="text-[0.8125rem] text-black/40" aria-live="polite">Conferindo os dados…</p>)
               : aba === "historico"
               ? <HistoricoDaLoja importacoes={historico.importacoes} semanas={historico.semanas} desfazendo={desfazendo} onDesfazer={id => void desfazerImportacao(id)} onImportar={() => { setErroDeImportar(null); setFolhaDeImportar(true); }} />
               : aba === "conexoes"
-              ? <ConexoesDaLoja estados={conexoes} aviso={avisoMidia} ocupado={ocupadoMidia} onConectar={conectar} onEscolherConta={p => void abrirEscolha(p)} onLer={p => void ler(p)} onDesconectar={p => void desconectar(p)} />
-              : <AcoesDaLoja acoes={dados.acoes} por_dia={dados.por_dia} hoje={dados.hoje} onRegistrar={() => abrirNova(dados.hoje)}
-                  onAbrir={id => { const a = dados.acoes.find(x => x.id === id); if (a) { setAcaoErro(null); setAcao({ id, valores: { nome: a.nome, canal: a.canal, inicio: a.inicio, fim: a.fim, gasto: gastoParaCampo(a.gasto_centavos) } }); } }} />}
+              ? <div className="space-y-6"><ConexoesDaLoja estados={conexoes} aviso={avisoMidia} ocupado={ocupadoMidia} onConectar={conectar} onEscolherConta={p => void abrirEscolha(p)} onLer={p => void ler(p)} onDesconectar={p => void desconectar(p)} />{campanhas && <CampanhasDaLoja campanhas={campanhas.campanhas} eventos={campanhas.eventos} salvando={salvandoCampanhas} erro={erroDasCampanhas} aviso={avisoDasCampanhas} onSalvar={salvarCampanhas} />}</div>
+              : <div className="space-y-4">
+                  {imprensa?.pico && <PicoSemExplicacaoAviso pico={imprensa.pico}
+                    onRegistrar={() => { const p = imprensa.pico; if (p) { setAcaoErro(null); setAcao({ id: null, valores: { nome: "", canal: CANAL_DA_IMPRENSA, inicio: p.dia, fim: p.dia, gasto: "", veiculo: "", eventoId: p.eventoId } }); } }}
+                    onDescartar={() => { const p = imprensa.pico; if (p && estado?.lojaId) void fetch(`/api/ticketeria/lojas/${estado.lojaId}/imprensa/pico`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ evento_id: p.eventoId, dia: p.dia }) }).then(() => setVersao(v => v + 1)); }} />}
+                  {achados && <AchadosDaImprensaView aConfirmar={achados.aConfirmar} registrados={achados.registrados} hoje={dados.hoje} ocupado={achadoOcupado} onDecidir={(id, x) => void decidirAchado(id, x)} />}
+                  {esgotamento && <AvisosDeEsgotamento esgotados={esgotamento.esgotados} quase={esgotamento.quase} />}<AcoesDaLoja acoes={imprensa ? dados.acoes.filter(x => x.canal !== CANAL_DA_IMPRENSA) : dados.acoes} por_dia={dados.por_dia} hoje={dados.hoje} onRegistrar={() => abrirNova(dados.hoje)}
+                  onAbrir={id => abrirAcao(id)} />
+                  {imprensa && <ImprensaDaLojaView imprensa={imprensa} onAbrir={id => abrirAcao(id)} />}
+                  {veiculos && <VeiculosAcompanhadosView veiculos={veiculos.veiculos} sugestoes={veiculos.sugestoes} onAcompanhar={acompanharSite} onParar={id => void pararDeAcompanhar(id)} />}</div>}
           </div>
         )}
       </ListContent>
       {criando && dados && <LinkDeDivulgacaoSheet sessoes={dados.sessoes} origem={window.location.origin} sessaoInicial={sessaoId} onClose={() => setCriando(false)} />}
       {folhaDeImportar && <ImportarPlanilhaSheet existentes={historico.importacoes} erro={erroDeImportar} importando={importando} onClose={() => setFolhaDeImportar(false)} onImportar={c => void importar(c)} />}
       {escolhendo && <EscolherContaSheet fonte={CARTOES[escolhendo.provedor].fonte} tipo={escolhendo.provedor === "ga4" ? "visitas" : "gasto"} contas={escolhendo.contas} escolhida={escolhendo.escolhida} erro={escolhendo.erro} salvando={salvando} onEscolher={id => setEscolhendo(e => (e ? { ...e, escolhida: id } : e))} onClose={() => setEscolhendo(null)} onSalvar={() => void confirmarConta()} />}
+      {folhaParecidos && <ParecidosSheet candidatos={candidatos} onSalvar={salvarEscolhas} onClose={() => setFolhaParecidos(false)} />}
+      {folhaExpectativa && ritmo && <ExpectativaSheet lugares={ritmo.lugares} valorInicial={expectativa} onSalvar={salvarExpectativa} onClose={() => setFolhaExpectativa(false)} />}
+      {verCurva && prontidao?.resumo?.curva && <CurvaDaCasaSheet curva={prontidao.resumo.curva.curva} eventos={prontidao.resumo.curva.eventos} rampa={rampaPadrao()} onClose={() => setVerCurva(false)} />}
+      {planejando && dados && resultadoDoModelo && <PlanejarDivulgacaoSheet sessoes={dados.sessoes} canais={resultadoDoModelo.canais} gastoSemanal={gastoSemanal} hoje={dados.hoje} inicial={plano} onMontar={p => { setPlano(p); setPlanejando(false); }} onClose={() => setPlanejando(false)} />}
       {simulando && resultadoDoModelo && <SimularOrcamentoSheet canais={resultadoDoModelo.canais} gastoSemanal={gastoSemanal} confianca={resultadoDoModelo.execucao.confianca} semanas={resultadoDoModelo.execucao.semanas} onClose={() => setSimulando(false)} />}
       {folhaDeDatas && <DatasDePicoSheet datas={datasDePico} valores={folhaDeDatas.valores} erro={folhaDeDatas.erro} salvando={salvando} onMudar={(campo, valor) => setFolhaDeDatas(f => (f ? { ...f, valores: { ...f.valores, [campo]: valor } } : f))} onClose={() => setFolhaDeDatas(null)} onAdicionar={() => void adicionarData()} onApagar={id => void apagarData(id)} />}
-      {acao && <AcaoSheet editando={acao.id !== null} valores={acao.valores} erro={acaoErro} salvando={salvando} onMudar={(campo, valor) => setAcao(a => (a ? { ...a, valores: { ...a.valores, [campo]: valor } } : a))} onClose={() => setAcao(null)} onSalvar={() => void salvar()} onApagar={() => void apagar()} />}
+      {acao && <AcaoSheet editando={acao.id !== null} valores={acao.valores} erro={acaoErro} salvando={salvando} veiculos={imprensa?.conhecidos ?? []}
+        eventos={[...new Map((estado?.dados?.sessoes ?? []).filter(x => x.evento_id).map(x => [x.evento_id as string, { id: x.evento_id as string, titulo: x.evento }])).values()]} onMudar={(campo, valor) => setAcao(a => (a ? { ...a, valores: { ...a.valores, [campo]: valor } } : a))} onClose={() => setAcao(null)} onSalvar={() => void salvar()} onApagar={() => void apagar()} />}
     </>
   );
 }

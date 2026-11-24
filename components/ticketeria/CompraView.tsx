@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { create as criarQr } from "qrcode";
+import { SeletorDeIdioma } from "@/components/i18n/SeletorDeIdioma";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TEXTO_DAS_NOVIDADES } from "@/lib/ticketeria/novidades";
 import { formatarMoeda } from "@/lib/ticketeria/recebimentos";
@@ -9,14 +10,29 @@ import { disponivelNasFaixas, totalNasFaixas, type IngressoDaVitrine } from "@/l
 // A compra de ingressos desenhada (passo C da T5): quatro telas de quem compra, sem login, no celular primeiro. Só desenho: os dados e as ações chegam por
 // props (a página busca no servidor e liga os botões). Segue o site da pessoa (fundo branco, cabeçalho na cor dela, ação principal em tinta #282525).
 
-export const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#282525] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] disabled:cursor-not-allowed disabled:bg-black/20";
+export const BOTAO = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#6450D2] px-5 py-3 text-[0.9375rem] font-normal text-white transition hover:bg-[#5342BA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6450D2] disabled:cursor-not-allowed disabled:bg-black/20";
 export const BOTAO_SECUNDARIO = "inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-[0.875rem] font-normal text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-normal uppercase tracking-[.08em] text-black/50";
 const CAMPO = "h-12 w-full rounded-xl border border-black/15 bg-white px-3.5 text-[1rem] text-[#282525] placeholder:text-black/30 focus:border-[#282525] focus:outline-none";
 const ETIQUETA = "inline-flex rounded-xl border bg-white px-2 py-1 text-[0.625rem] font-normal uppercase tracking-[.08em]";
 
+/** O preço de um ingresso, com o ⓘ quando ele está ajustado pela demanda (preço dinâmico): toque no preço abre a explicação, sem clique obrigatório e sem etapa a mais. Sem JavaScript (details). */
+export function PrecoDoIngresso({ centavos, ajustado }: { centavos: number; ajustado?: boolean }) {
+  const texto = centavos === 0 ? "Gratuito" : formatarMoeda(centavos);
+  if (!ajustado || centavos === 0) return <p className="mt-1 text-[0.9375rem] tabular-nums">{texto}</p>;
+  return (
+    <details className="mt-1">
+      <summary className="flex w-fit cursor-pointer list-none items-baseline gap-1.5 text-[0.9375rem] tabular-nums [&::-webkit-details-marker]:hidden">
+        {texto}
+        <span role="img" aria-label="Por que o preço varia?" className="text-[0.8125rem] text-black/45">ⓘ</span>
+      </summary>
+      <p className="mt-1 max-w-[18rem] text-[0.75rem] leading-snug text-black/55">O preço deste ingresso varia conforme a procura. O valor que você vê agora fica garantido durante a sua compra.</p>
+    </details>
+  );
+}
+
 /** A moldura das telas: cabeçalho na cor do site da pessoa e o miolo estreito (34rem), que no celular ocupa a largura toda. */
-export function Moldura({ titulo, cor = "#1C0E33", passo, children, rodape }: { titulo: string; cor?: string; passo?: { atual: number; total: number }; children: ReactNode; rodape?: ReactNode }) {
+export function Moldura({ titulo, cor = "#1C0E33", passo, children, rodape, seletorDeIdioma }: { titulo: string; cor?: string; passo?: { atual: number; total: number }; children: ReactNode; rodape?: ReactNode; seletorDeIdioma?: boolean }) {
   const texto = textoSobreCor(cor);
   return (
     <div className="min-h-screen bg-white text-[#282525]">
@@ -24,6 +40,8 @@ export function Moldura({ titulo, cor = "#1C0E33", passo, children, rodape }: { 
         <div className="mx-auto flex w-full max-w-[34rem] items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <span className="text-[1.0625rem] font-medium tracking-[-.01em]">{titulo}</span>
           {passo && <span className="text-[0.6875rem] font-normal uppercase tracking-[.08em] opacity-70">Passo {passo.atual} de {passo.total}</span>}
+          {/* Só nas telas já traduzidas, dentro do ProvedorDeIdioma; as demais seguem em português até a vez delas. */}
+          {seletorDeIdioma && <SeletorDeIdioma />}
         </div>
       </header>
       <main className="mx-auto w-full max-w-[34rem] px-4 pb-32 pt-6 sm:px-6">{children}</main>
@@ -106,7 +124,7 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
                   <p className="text-[1rem] font-normal">{i.nome}</p>
                   <p className="mt-0.5 text-[0.8125rem] text-black/55">{i.numerado.setor} · lugares numerados</p>
                   {i.descricao && <p className="mt-0.5 text-[0.8125rem] text-black/55">{i.descricao}</p>}
-                  <p className="mt-1 text-[0.9375rem] tabular-nums">{preco === 0 ? "Gratuito" : formatarMoeda(preco)}</p>
+                  <PrecoDoIngresso centavos={preco} ajustado={i.ajustado} />
                   {escolhidos.length > 0 && (
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       <ul className="flex flex-wrap gap-1.5" aria-label={`Lugares escolhidos: ${i.nome}`}>
@@ -125,7 +143,7 @@ export function TelaEscolherIngressos({ site, evento, ingressos, quantidades, on
               <div className="min-w-0">
                 <p className="text-[1rem] font-normal">{i.nome}</p>
                 {i.descricao && <p className="mt-0.5 text-[0.8125rem] text-black/55">{i.descricao}</p>}
-                {!esgotado && <p className="mt-1 text-[0.9375rem] tabular-nums">{preco === 0 ? "Gratuito" : formatarMoeda(preco)}</p>}
+                {!esgotado && <PrecoDoIngresso centavos={preco} ajustado={i.ajustado} />}
               </div>
               {esgotado
                 ? (
