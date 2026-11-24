@@ -11,7 +11,7 @@ import { ListContent, ListEmptyState, ListPageHeader, ListTableSurface, PrimaryL
 import { LocalSheet, type LocalEditavel } from "@/components/ticketeria/FolhasDosEventos";
 import { SetorSheet, type SetorEditavel } from "@/components/ticketeria/SetorDoLocal";
 import { SalaSheet } from "@/components/ticketeria/SalaDoEspaco";
-import { MapaDaSalaSheet } from "@/components/ticketeria/MapaDaSalaSheet";
+import { DesenhoDaSalaSheet } from "@/components/ticketeria/DesenhoDaSalaSheet";
 import { salasDoEspaco, type SalaDoEspaco } from "@/lib/ticketeria/salas";
 
 type Setor = SetorEditavel & { local_id: string; sala_id: string; ordem: number };
@@ -112,7 +112,7 @@ export default function LocaisPage() {
                         {podeEditar && !local.arquivado && (
                           <>
                             <button type="button" onClick={() => setFolha({ tipo: "setor", local, sala: salasDele[0] })} className="rounded-xl px-2 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">+ Setor</button>
-                            {salasDele[0] && deles.some(setor => setor.numerado && !setor.arquivado) && <button type="button" onClick={() => setFolha({ tipo: "mapa-sala", local, sala: salasDele[0] })} className="rounded-xl px-2 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Mapa da sala</button>}
+                            {salasDele[0] && <button type="button" onClick={() => setFolha({ tipo: "mapa-sala", local, sala: salasDele[0] })} className="rounded-xl px-2 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Desenhar a sala</button>}
                             <button type="button" onClick={() => setFolha({ tipo: "sala", local })} className="rounded-xl px-2 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">+ Sala</button>
                           </>
                         )}
@@ -127,7 +127,7 @@ export default function LocaisPage() {
                               {dela.length === 0 && <span className="text-[0.6875rem] text-black/45">Sem setores</span>}
                               {dela.map(setor => botaoDoSetor(setor, local))}
                               {podeEditar && !local.arquivado && !sala.arquivado && <button type="button" onClick={() => setFolha({ tipo: "setor", local, sala })} className="rounded-xl px-2 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">+ Setor</button>}
-                              {podeEditar && !local.arquivado && !sala.arquivado && dela.some(setor => setor.numerado && !setor.arquivado) && <button type="button" onClick={() => setFolha({ tipo: "mapa-sala", local, sala })} className="rounded-xl px-2 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Mapa da sala</button>}
+                              {podeEditar && !local.arquivado && !sala.arquivado && <button type="button" onClick={() => setFolha({ tipo: "mapa-sala", local, sala })} className="rounded-xl px-2 py-1 text-[0.6875rem] font-normal text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Desenhar a sala</button>}
                             </div>
                           );
                         })}
@@ -143,7 +143,7 @@ export default function LocaisPage() {
       </ListContent>
       {folha?.tipo === "local" && organizationId && <LocalSheet organizationId={organizationId} nomeDaOrganizacao={nomeDaOrganizacao} local={folha.local} onClose={() => setFolha(null)} onSaved={recarregar} />}
       {folha?.tipo === "setor" && organizationId && <SetorSheet organizationId={organizationId} localId={folha.local.id} salaId={folha.setor?.sala_id ?? folha.sala?.id} nomeDoLocal={[folha.local.nome, folha.sala && salasDoEspaco(salas, folha.local.id).length > 1 ? folha.sala.nome : null].filter(Boolean).join(" · ")} setor={folha.setor} onClose={() => setFolha(null)} onSaved={recarregar} />}
-      {folha?.tipo === "mapa-sala" && organizationId && <MapaDaSalaSheet organizationId={organizationId} sala={folha.sala} nomeDoLocal={folha.local.nome} onClose={() => setFolha(null)} onSaved={recarregar} />}
+      {folha?.tipo === "mapa-sala" && organizationId && <DesenhoDaSalaSheet organizationId={organizationId} localId={folha.local.id} sala={folha.sala} nomeDoLocal={folha.local.nome} onClose={() => setFolha(null)} onSaved={recarregar} />}
       {folha?.tipo === "sala" && organizationId && <SalaSheet organizationId={organizationId} localId={folha.local.id} nomeDoLocal={folha.local.nome} salasDoLocal={salas.filter(sala => sala.local_id === folha.local.id)} setoresPorSala={setoresPorSala} sala={folha.sala} onClose={() => setFolha(null)} onSaved={recarregar} onAviso={setAviso} />}
     </>
   );

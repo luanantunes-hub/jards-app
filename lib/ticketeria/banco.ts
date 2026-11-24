@@ -3670,6 +3670,10 @@ export type BancoDaTicketeria = {
         Args: { p_setor: string; p_fileiras: Json; p_corredor: boolean; p_layout: Json | null };
         Returns: Json;
       };
+      fn_ticketeria_salvar_desenho_da_sala: {
+        Args: { p_sala: string; p_setores: Json; p_planta: Json };
+        Returns: Json;
+      };
       fn_ticketeria_reservar_com_lugares: {
         Args: { p_sessao: string; p_itens: Json; p_nome: string; p_email: string; p_minutos: number; p_codigo: string | null; p_lugares: Json | null };
         Returns: Json;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Copy, Redo2, Undo2 } from "lucide-react";
 import { CAMAROTE_MAX, COLUNAS_MAX, MESA_MAX, MESA_MIN, colunasDoCamarote, conferirLayout, rotuloDoGrupo, type Layout, type Numeracao } from "@/lib/ticketeria/mapa-layout";
 import {
@@ -40,13 +41,25 @@ const PASSO_DO_RAIO = 4;
 /** Desfazer e refazer do desenho: o estado fica com quem guarda o layout (a folha do setor); aqui só os botões e os atalhos. */
 export type HistoricoDoEditor = { podeDesfazer: boolean; podeRefazer: boolean; onDesfazer: () => void; onRefazer: () => void };
 
-export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBloco, historico }: {
+/**
+ * O editor a serviço do desenho da SALA: os blocos têm setor (cada um é pintado com o setor a que pertence), os modelos são ACRESCENTADOS ao desenho em vez de o trocarem e não há "voltar à lista
+ * de fileiras". `setores`: os setores da sala com a cor; `onAtribuir`: dá (ou tira, com null) o setor a estes blocos; `onNovoSetor`: a pessoa quer criar um setor; `onModelo`: um modelo escolhido.
+ */
+export type EdicaoDaSala = {
+  setores: { id: string; nome: string; cor: string }[];
+  onAtribuir: (blocos: string[], setor: string | null) => void;
+  onNovoSetor: () => void;
+  onModelo: (modelo: Layout) => void;
+};
+
+export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBloco, historico, sala }: {
   layout: Layout | null;
   /** `agrupar`: a mudança faz parte de um gesto (arrastar, girar) e entra no histórico junto com as vizinhas dele. */
   onLayout: (l: Layout | null, agrupar?: boolean) => void;
   blocoEscolhido: string | null;
   onEscolherBloco: (id: string | null) => void;
   historico?: HistoricoDoEditor;
+  sala?: EdicaoDaSala;
 }) {
   const [modelo, setModelo] = useState<ModeloId | null>(null);
   const [parametros, setParametros] = useState<ParametrosDoModelo>(PARAMETROS_PADRAO);
@@ -107,12 +120,12 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
         </div>
       )}
       <div>
-        <p className="text-[0.6875rem] uppercase tracking-[.08em] text-black/40">Modelo</p>
+        <p className="text-[0.6875rem] uppercase tracking-[.08em] text-black/40">{sala ? "Acrescentar ao desenho" : "Modelo"}</p>
         <div role="radiogroup" aria-label="Modelo do desenho" className="mt-2 grid gap-2 sm:grid-cols-3">
           {MODELOS.map(m => {
-            const ativo = modelo === m;
+            const ativo = !sala && modelo === m;
             return (
-              <button key={m} type="button" role="radio" aria-checked={ativo} onClick={() => usarModelo(m, ativo ? parametros : PARAMETROS_PADRAO)}
+              <button key={m} type="button" role="radio" aria-checked={ativo} onClick={() => (sala ? sala.onModelo(layoutDoModelo(m, PARAMETROS_PADRAO)) : usarModelo(m, ativo ? parametros : PARAMETROS_PADRAO))}
                 className={`rounded-xl border px-3.5 py-3 text-left transition ${FOCO} ${ativo ? "border-[#6450D2] bg-[#6450D2]/[.05]" : "border-black/[.12] bg-white hover:bg-black/[.03]"}`}>
                 <span className="block text-[0.8125rem] text-[#282525]">{MODELO_EM_TEXTO[m].nome}</span>
                 <span className="mt-0.5 block text-[0.6875rem] leading-snug text-black/50">{MODELO_EM_TEXTO[m].descricao}</span>
@@ -120,7 +133,7 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
             );
           })}
         </div>
-        {modelo && (
+        {!sala && modelo && (
           <div className="mt-3 space-y-2 rounded-xl border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {CAMPOS_DO_MODELO[modelo].map(c => (
               <Passo key={c.campo} rotulo={c.rotulo} valor={String(parametros[c.campo])} menosDesligado={parametros[c.campo] <= c.min} maisDesligado={parametros[c.campo] >= c.max}
@@ -129,7 +142,7 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
             <p className="text-[0.6875rem] text-black/45">Mudar estes números refaz o desenho do modelo.</p>
           </div>
         )}
-        {!layout && <p className="mt-2 text-[0.75rem] text-black/50">Sem modelo, o mapa segue como uma lista de fileiras.</p>}
+        {!sala && !layout && <p className="mt-2 text-[0.75rem] text-black/50">Sem modelo, o mapa segue como uma lista de fileiras.</p>}
       </div>
 
       {layout && (
@@ -138,7 +151,11 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
             <div role="radiogroup" aria-label="Bloco" className="flex flex-wrap items-center gap-1.5">
               {layout.blocos.map((b, i) => (
                 <button key={b.id} type="button" role="radio" aria-checked={b.id === blocoEscolhido} onClick={() => onEscolherBloco(b.id)}
-                  className={`h-8 rounded-xl border px-3 text-[0.75rem] transition ${FOCO} ${b.id === blocoEscolhido ? "border-[#6450D2] bg-[#6450D2]/[.06] text-[#282525]" : "border-black/[.12] bg-white text-black/60 hover:bg-black/[.04]"}`}>{b.grupo ? rotuloDoGrupo(b.fileiras[0]?.nome ?? "", b.grupo.forma) : `Bloco ${i + 1}`}</button>
+                  className={`h-8 rounded-xl border px-3 text-[0.75rem] transition ${FOCO} ${b.id === blocoEscolhido ? "border-[#6450D2] bg-[#6450D2]/[.06] text-[#282525]" : "border-black/[.12] bg-white text-black/60 hover:bg-black/[.04]"}`}>
+                  {sala && <span aria-hidden="true" className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-middle" style={{ background: sala.setores.find(x => x.id === b.setor)?.cor ?? "rgba(0,0,0,.2)" }} />}
+                  {b.grupo ? rotuloDoGrupo(b.fileiras[0]?.nome ?? "", b.grupo.forma) : `Bloco ${i + 1}`}
+                  {sala && <span className="ml-1 text-black/45">· {sala.setores.find(x => x.id === b.setor)?.nome ?? "sem setor"}</span>}
+                </button>
               ))}
             </div>
             <button type="button" className={BOTAO} onClick={() => { const novo = maisUmBloco(layout); onLayout(novo); onEscolherBloco(novo.blocos[novo.blocos.length - 1].id); }} disabled={layout.blocos.length >= 30}>+ Bloco</button>
@@ -149,6 +166,18 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
           {bloco ? (
             <div className="mt-3 space-y-3 rounded-xl border bg-white px-4 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <p className="text-[0.8125rem] font-medium text-[#282525]">{bloco.grupo ? rotuloDoGrupo(bloco.fileiras[0]?.nome ?? "", bloco.grupo.forma) : `Bloco ${indice}`}</p>
+              {sala && (
+                <div>
+                  <p className="mb-1.5 text-[0.8125rem] text-black/65">Setor</p>
+                  <Dropdown ariaLabel="Setor deste bloco" value={bloco.setor ?? ""} onChange={v => { if (v === "__novo") sala.onNovoSetor(); else sala.onAtribuir([bloco.id], v === "" ? null : v); }}
+                    options={[{ value: "", label: "Sem setor" }, ...sala.setores.map(x => ({ value: x.id, label: x.nome })), { value: "__novo", label: "Criar um setor…" }]} />
+                  {bloco.setor && layout.blocos.filter(b => !b.setor).length >= 2 && (
+                    <button type="button" className="mt-2 text-[0.75rem] text-black/55 underline underline-offset-2 hover:text-black/75" onClick={() => sala.onAtribuir(layout.blocos.filter(b => !b.setor).map(b => b.id), bloco.setor)}>
+                      Dar este setor a todos os blocos sem setor ({layout.blocos.filter(b => !b.setor).length})
+                    </button>
+                  )}
+                </div>
+              )}
               {!bloco.grupo ? (
               <>
               <div>
@@ -229,9 +258,9 @@ export function EditorDoLayout({ layout, onLayout, blocoEscolhido, onEscolherBlo
             </ul>
           )}
 
-          <div className="mt-3">
+          {!sala && (<div className="mt-3">
             <button type="button" className="text-[0.75rem] text-black/55 underline underline-offset-2 hover:text-black/75" onClick={() => { onLayout(null); onEscolherBloco(null); setModelo(null); }}>Voltar à lista de fileiras</button>
-          </div>
+          </div>)}
         </div>
       )}
     </div>

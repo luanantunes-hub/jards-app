@@ -141,6 +141,7 @@ export function mensagemDoErroDoMapa(erro: { code?: string; message?: string }):
   if (m.includes("setor_com_vendas")) return "Este setor já tem ingressos vendidos sem lugar marcado para uma sessão que ainda vai acontecer. Os lugares numerados valem para setores sem vendas.";
   if (m.includes("lugares_excedidos")) return "Os ingressos deste setor oferecem mais lugares do que o mapa tem. Diminua as quantidades dos lotes ou aumente o mapa.";
   if (m.includes("setor_arquivado")) return "Esse setor está arquivado. Tire-o do arquivo antes de montar o mapa.";
+  if (m.includes("setor_de_outra_sala") || m.includes("planta_invalida") || m.includes("desenho_invalido")) return "O desenho da sala não bate com os setores desta sala. Feche, abra de novo e refaça o que faltar.";
   if (m.includes("layout_inconsistente")) return "O desenho não bate com os lugares do mapa. Refaça o desenho e salve de novo.";
   if (m.includes("layout_invalido")) return "O desenho do mapa não está no formato aceito.";
   if (m.includes("mapa_invalido")) return "O mapa não está no formato aceito: fileiras de 1 a 4 letras ou números, até 60 fileiras e 80 lugares por fileira.";
